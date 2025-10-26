@@ -168,11 +168,15 @@ public class OverlayControlView extends View {
     private void drawJoystick(Canvas canvas, ControlElement element, int width, int height) {
         RectF rect = getElementRect(element, width, height);
         
+        // 使用最小边作为直径，确保摇杆是圆形的
+        float diameter = Math.min(rect.width(), rect.height());
+        float radius = diameter / 2;
+        
         // 绘制外圈
         int alpha = (int) (element.getOpacity() * 255);
         elementPaint.setColor(element.getBackgroundColor());
         elementPaint.setAlpha(alpha);
-        canvas.drawCircle(rect.centerX(), rect.centerY(), rect.width() / 2, elementPaint);
+        canvas.drawCircle(rect.centerX(), rect.centerY(), radius, elementPaint);
         
         // 绘制边框
         Paint borderPaint = new Paint();
@@ -181,7 +185,7 @@ public class OverlayControlView extends View {
         borderPaint.setColor(element.getBorderColor());
         borderPaint.setStrokeWidth(element.getBorderWidth());
         borderPaint.setAlpha(alpha);
-        canvas.drawCircle(rect.centerX(), rect.centerY(), rect.width() / 2, borderPaint);
+        canvas.drawCircle(rect.centerX(), rect.centerY(), radius, borderPaint);
         
         // 查找活跃触摸
         ActiveTouch activeTouch = findActiveTouchForElement(element);
@@ -193,7 +197,7 @@ public class OverlayControlView extends View {
             float deltaX = activeTouch.currentX - rect.centerX();
             float deltaY = activeTouch.currentY - rect.centerY();
             float distance = (float) Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-            float maxDistance = rect.width() / 2 * 0.7f;  // 70% 半径
+            float maxDistance = radius * 0.7f;  // 70% 半径
             
             if (distance > maxDistance) {
                 float scale = maxDistance / distance;
@@ -208,7 +212,7 @@ public class OverlayControlView extends View {
         // 绘制内圈（摇杆）
         joystickPaint.setColor(element.getPressedColor());
         joystickPaint.setAlpha(alpha);
-        canvas.drawCircle(knobX, knobY, rect.width() / 4, joystickPaint);
+        canvas.drawCircle(knobX, knobY, radius / 2, joystickPaint);
     }
     
     private void drawCrossKey(Canvas canvas, ControlElement element, boolean isPressed, int width, int height) {

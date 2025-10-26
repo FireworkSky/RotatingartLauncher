@@ -8,15 +8,23 @@ import androidx.core.view.WindowInsetsControllerCompat;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
+import android.graphics.PixelFormat;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.FrameLayout;
 import android.widget.Toast;
 
 import com.app.ralaunch.game.GameLauncher;
+import com.app.ralaunch.model.ControlElement;
+import com.app.ralaunch.model.ControlLayout;
+import com.app.ralaunch.utils.ControlLayoutManager;
+import com.app.ralaunch.view.OverlayControlView;
 
 import org.libsdl.app.SDLActivity;
 
@@ -24,6 +32,8 @@ public class GameActivity extends SDLActivity {
     private static final String TAG = "GameActivity";
     private static final int STORAGE_PERMISSION_REQUEST_CODE = 1001;
     public static GameActivity mainActivity;
+    private OverlayControlView controlView;
+    private ControlLayoutManager layoutManager;
 
     static {
         try {
@@ -55,6 +65,9 @@ public class GameActivity extends SDLActivity {
         Log.d(TAG, "游戏目录: " + assemblyPath);
         Log.d(TAG, "引擎类型: " + engineType);
         Log.d(TAG, "将从 assets 解压并启动 Assembly-Main.dll");
+
+        // 初始化控制布局管理器
+        initializeControlLayout();
 
         checkAndRequestStoragePermissions();
     }
@@ -183,6 +196,151 @@ public class GameActivity extends SDLActivity {
             runOnUiThread(() -> {
                 Toast.makeText(this, "设置启动参数失败: " + e.getMessage(), Toast.LENGTH_LONG).show();
             });
+        }
+    }
+
+    /**
+     * 初始化控制布局
+     */
+    private void initializeControlLayout() {
+        try {
+            layoutManager = new ControlLayoutManager(this);
+            
+            // 获取当前控制布局（默认使用 tModLoader 默认布局）
+            ControlLayout layout = layoutManager.getCurrentLayout();
+            if (layout == null) {
+                // 尝试设置为 tModLoader 默认布局
+                layoutManager.setCurrentLayout("tModLoader 默认");
+                layout = layoutManager.getCurrentLayout();
+                
+                if (layout == null && !layoutManager.getAllLayouts().isEmpty()) {
+                    // 如果还是没有，使用第一个可用布局
+                    layout = layoutManager.getAllLayouts().get(0);
+                    layoutManager.setCurrentLayout(layout.getName());
+                    Log.w(TAG, "使用第一个可用布局: " + layout.getName());
+                }
+            }
+            
+            if (layout != null) {
+                Log.d(TAG, "已加载控制布局: " + layout.getName());
+                // 创建 final 引用以便在 lambda 中使用
+                final ControlLayout finalLayout = layout;
+                
+                // 延迟设置控制覆盖层，等待 SDL Surface 创建完成
+                Thread setupThread = new Thread(() -> {
+                    try {
+                        Thread.sleep(1000); // 等待 SDL Surface 初始化
+                        runOnUiThread(() -> setupControlOverlay(finalLayout));
+                    } catch (InterruptedException e) {
+                        Log.e(TAG, "线程中断", e);
+                    }
+                }, "SetupControlsThread");
+                setupThread.start();
+            } else {
+                Log.w(TAG, "没有可用的控制布局");
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "初始化控制布局失败", e);
+        }
+    }
+
+    /**
+     * 设置控制覆盖层
+     */
+    private void setupControlOverlay(ControlLayout layout) {
+        try {
+            // 创建控制视图
+            controlView = new OverlayControlView(this);
+            controlView.setControlLayout(layout);
+            
+            // 设置事件监听器，将虚拟控制映射到 SDL 输入
+            controlView.setOnControlEventListener(new OverlayControlView.OnControlEventListener() {
+                @Override
+                public void onButtonDown(ControlElement element) {
+                    int keyCode = element.getKeyCode();
+                    if (keyCode > 0) {
+                        Log.d(TAG, "虚拟按键按下: " + element.getName() + " -> KeyCode: " + keyCode);
+                        SDLActivity.onNativeKeyDown(keyCode);
+                    }
+                }
+
+                @Override
+                public void onButtonUp(ControlElement element) {
+                    int keyCode = element.getKeyCode();
+                    if (keyCode > 0) {
+                        Log.d(TAG, "虚拟按键抬起: " + element.getName() + " -> KeyCode: " + keyCode);
+                        SDLActivity.onNativeKeyUp(keyCode);
+                    }
+                }
+
+                @Override
+                public void onJoystickMove(ControlElement element, float deltaX, float deltaY) {
+                    // 摇杆移动映射到方向键或WASD
+                    // tModLoader/Terraria 使用方向键或WASD进行移动
+                    
+                    // 处理水平方向
+                    if (Math.abs(deltaX) > 0.3f) {
+                        if (deltaX > 0) {
+                            // 向右 - 模拟 D 键
+                            SDLActivity.onNativeKeyDown(KeyEvent.KEYCODE_D);
+                        } else {
+                            // 向左 - 模拟 A 键
+                            SDLActivity.onNativeKeyDown(KeyEvent.KEYCODE_A);
+                        }
+                    } else {
+                        // 释放水平方向键
+                        SDLActivity.onNativeKeyUp(KeyEvent.KEYCODE_D);
+                        SDLActivity.onNativeKeyUp(KeyEvent.KEYCODE_A);
+                    }
+                    
+                    // 处理垂直方向
+                    if (Math.abs(deltaY) > 0.3f) {
+                        if (deltaY > 0) {
+                            // 向下 - 模拟 S 键
+                            SDLActivity.onNativeKeyDown(KeyEvent.KEYCODE_S);
+                        } else {
+                            // 向上 - 模拟 W 键
+                            SDLActivity.onNativeKeyDown(KeyEvent.KEYCODE_W);
+                        }
+                    } else {
+                        // 释放垂直方向键
+                        SDLActivity.onNativeKeyUp(KeyEvent.KEYCODE_W);
+                        SDLActivity.onNativeKeyUp(KeyEvent.KEYCODE_S);
+                    }
+                }
+
+                @Override
+                public void onMouseMove(float deltaX, float deltaY) {
+                    // 鼠标移动
+                    SDLActivity.onNativeMouse(0, 2, deltaX, deltaY, true);
+                }
+
+                @Override
+                public void onMouseScroll(float deltaX, float deltaY) {
+                    // 鼠标滚轮（如果需要）
+                    // 可以映射到特定按键或鼠标事件
+                }
+            });
+            
+            // 将控制视图添加到根布局
+            ViewGroup rootView = (ViewGroup) mLayout;
+            if (rootView != null) {
+                FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT
+                );
+                controlView.setLayoutParams(params);
+                
+                // 确保控制视图在最上层
+                controlView.setZ(Float.MAX_VALUE);
+                rootView.addView(controlView);
+                
+                Log.d(TAG, "控制覆盖层已添加到视图");
+            } else {
+                Log.e(TAG, "无法获取根视图");
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "设置控制覆盖层失败", e);
         }
     }
 
