@@ -25,7 +25,7 @@ Rotating Art Launcher 是一个专为 Android 平台设计的游戏启动器，�
 
 ## ✨ 特性
 
-- 🎮 **原生 .NET 支持** - 集成完整的 .NET 6.0 Runtime，支持运行 .NET 程序集
+- 🎮 **原生 .NET 支持** - 集成完整的 .NET 8.0 Runtime，支持运行 .NET 程序集
 - 🚀 **FNA/XNA 框架兼容** - 完美支持 FNA 和 XNA 游戏框架
 - 📦 **自动资源提取** - 从 APK 资源自动解压游戏程序集和依赖
 - 🖥️ **全屏沉浸式** - 支持全屏显示和刘海屏适配
@@ -47,68 +47,6 @@ Rotating Art Launcher 是一个专为 Android 平台设计的游戏启动器，�
 - **存储空间**: 至少 500MB 可用空间
 - **RAM**: 建议 4GB 或以上
 
-## 🛠️ 构建
-
-### 前置要求
-
-- Android Studio Arctic Fox 或更高版本
-- Android SDK (API 34)
-- NDK r25c 或更高版本
-- CMake 3.22.1+
-- JDK 17+
-
-### 构建步骤
-
-1. **克隆仓库**
-```bash
-git clone https://github.com/Fireworkshh/Rotating-art-Launcher.git
-cd Rotating-art-Launcher
-```
-
-2. **准备资源文件**
-
-将以下文件放入 `app/src/main/assets/` 目录：
-- `Assembly-Main.zip` - 游戏启动程序集
-- `.NET Runtime` 文件（如需要）
-
-3. **使用 Android Studio 构建**
-- 用 Android Studio 打开项目
-- 等待 Gradle 同步完成
-- 点击 `Build > Make Project`
-- 运行到设备或模拟器
-
-4. **命令行构建**
-```bash
-# Windows
-gradlew.bat assembleDebug
-
-# Linux/Mac
-./gradlew assembleDebug
-```
-
-生成的 APK 位于: `app/build/outputs/apk/debug/`
-
-## 🏗️ 项目结构
-
-```
-Rotating-art-Launcher/
-├── app/
-│   ├── src/
-│   │   ├── main/
-│   │   │   ├── java/          # Java 源代码
-│   │   │   ├── cpp/           # C/C++ 原生代码
-│   │   │   │   ├── SDL/       # SDL2 框架
-│   │   │   │   ├── gl4es/     # OpenGL 兼容层
-│   │   │   │   └── *.c/h      # JNI 和启动代码
-│   │   │   ├── jnilibs/       # 原生库文件
-│   │   │   ├── assets/        # 资源文件
-│   │   │   └── res/           # Android 资源
-│   │   └── AndroidManifest.xml
-│   └── build.gradle
-├── lfilepickerlibrary/        # 文件选择器库
-├── LICENSE                    # LGPLv3.0 协议
-└── README.md
-```
 
 ## 🔧 技术栈
 
@@ -123,7 +61,7 @@ Rotating-art-Launcher/
 - **框架**: 
   - SDL2 - 跨平台媒体层
   - GL4ES - OpenGL 到 OpenGL ES 转换层
-- **运行时**: .NET 6.0 CoreCLR
+- **运行时**: .NET 8.0 CoreCLR
 
 ### 核心组件
 - **GameLauncher** - 游戏启动管理
@@ -132,27 +70,7 @@ Rotating-art-Launcher/
 - **FNA3D** - FNA 3D 渲染引擎
 - **FAudio** - 音频引擎
 
-## 📚 核心功能
 
-### 1. .NET 程序集启动
-```java
-GameLauncher.launchDotnetAppHost(context, gamePath, assemblyName);
-```
-
-### 2. 资源自动解压
-- 从 APK assets 提取 `Assembly-Main.zip`
-- 解压到游戏目录
-- 验证并加载 `Assembly-Main.dll`
-
-### 3. JNI 集成
-- 初始化 JNI 环境
-- 加载原生库
-- 桥接 Java 和 .NET
-
-### 4. 全屏模式
-- 隐藏状态栏和导航栏
-- 刘海屏适配
-- 沉浸式体验
 
 ## 🐛 已知问题
 
