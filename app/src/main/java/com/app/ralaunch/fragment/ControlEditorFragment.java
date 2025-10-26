@@ -194,7 +194,7 @@ public class ControlEditorFragment extends Fragment {
 
     private void saveLayout() {
         if (controlLayout != null) {
-            layoutManager.updateLayout(controlLayout);
+            layoutManager.saveLayout(controlLayout);
             Toast.makeText(getContext(), "布局已保存", Toast.LENGTH_SHORT).show();
         }
     }
