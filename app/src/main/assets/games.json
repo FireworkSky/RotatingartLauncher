@@ -1,0 +1,67 @@
+[
+  {
+    "id": "tmodloader",
+    "name": "tModLoader",
+    "displayName": "tModLoader",
+    "engine": "FNA",
+    "description": "Terraria Mod Loader - 一个强大的 Terraria 模组加载器",
+    "icon": "ic_tmodloader",
+    "assembly": "Assembly-Main.dll",
+    "requiredFiles": [
+      {
+        "type": "game",
+        "description": "Terraria 游戏安装脚本",
+        "extensions": [".sh"],
+        "required": true
+      },
+      {
+        "type": "tmodloader",
+        "description": "tModLoader 安装包",
+        "extensions": [".zip"],
+        "required": true
+      }
+    ],
+    "installSteps": [
+      {
+        "name": "解压 tModLoader",
+        "description": "解压 tModLoader 到游戏目录",
+        "action": "extract",
+        "sourceFile": "tmodloader",
+        "targetPath": "tModLoader"
+      },
+      {
+        "name": "安装 Terraria",
+        "description": "运行 Terraria 安装脚本",
+        "action": "execute",
+        "sourceFile": "game",
+        "targetPath": "Terraria"
+      }
+    ],
+    "launchParams": {
+      "workingDirectory": "tModLoader",
+      "arguments": ["--skip-intro"]
+    }
+  },
+  {
+    "id": "stardew",
+    "name": "StardewValley",
+    "displayName": "Stardew Valley",
+    "engine": "MonoGame",
+    "description": "星露谷物语 - 一个温馨的农场模拟 RPG 游戏",
+    "icon": "ic_stardew_valley",
+    "assembly": "Stardew Valley.dll",
+    "requiredFiles": [
+      {
+        "type": "game",
+        "description": "Stardew Valley 游戏文件",
+        "extensions": [".sh", ".tar"],
+        "required": true
+      }
+    ],
+    "installSteps": [],
+    "launchParams": {
+      "workingDirectory": ".",
+      "arguments": []
+    }
+  }
+]

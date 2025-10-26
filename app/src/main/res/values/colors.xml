@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 亮色主题颜色 -->
+    <color name="light_background_primary">#FFFFFF</color>
+    <color name="light_background_secondary">#F5F5F5</color>
+    <color name="light_background_card">#FAFAFA</color>
+    <color name="light_text_primary">#212121</color>
+    <color name="light_text_secondary">#757575</color>
+    <color name="light_text_hint">#BDBDBD</color>
+
+    <!-- 基础背景色 -->
+    <color name="background_primary">#121212</color>
+    <color name="background_secondary">#1A1A1A</color>
+    <color name="background_card">#252525</color>
+    <color name="background_dark">#000000</color>
+
+    <!-- 文本颜色 -->
+    <color name="text_primary">#FFFFFF</color>
+    <color name="text_secondary">#BBBBBB</color>
+    <color name="text_hint">#666666</color>
+
+    <!-- 强调色 -->
+    <color name="accent_green">#4CAF50</color>
+    <color name="accent_blue">#2196F3</color>
+    <color name="accent_orange">#FF9800</color>
+
+    <!-- 状态色 -->
+    <color name="selected_card_color">#2D3A45</color>
+    <color name="card_background">#252525</color>
+
+    <!-- 按钮颜色 -->
+    <color name="button_primary">#363636</color>
+    <color name="button_secondary">#2B2B2B</color>
+    <color name="button_disabled">#666666</color>
+    <color name="selected_item_background">#2A4CAF50</color>
+</resources>

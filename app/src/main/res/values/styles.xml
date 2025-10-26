@@ -1,0 +1,30 @@
+<resources>
+    <!-- 暗色弹出菜单主题 -->
+    <style name="PopupMenuDark" parent="ThemeOverlay.AppCompat.Dark">
+        <item name="android:colorBackground">#252525</item>
+        <item name="android:background">@drawable/bg_popup_menu</item>
+        <item name="android:textColor">#FFFFFF</item>
+    </style>
+
+    <!-- 暗色对话框主题 -->
+    <style name="AlertDialogDark" parent="ThemeOverlay.AppCompat.Dark">
+        <item name="colorPrimary">@color/accent_green</item>
+        <item name="colorAccent">@color/accent_green</item>
+        <item name="android:windowBackground">#1E1E1E</item>
+        <item name="android:textColorPrimary">#FFFFFF</item>
+        <item name="android:textColorSecondary">#CCCCCC</item>
+        <item name="buttonBarPositiveButtonStyle">@style/DialogButtonStyle</item>
+        <item name="buttonBarNegativeButtonStyle">@style/DialogButtonStyle.Negative</item>
+    </style>
+
+    <!-- 对话框按钮样式 -->
+    <style name="DialogButtonStyle" parent="Widget.AppCompat.Button.Borderless">
+        <item name="android:textColor">@color/accent_green</item>
+        <item name="android:padding">8dp</item>
+        <item name="android:minWidth">64dp</item>
+    </style>
+
+    <style name="DialogButtonStyle.Negative">
+        <item name="android:textColor">#CCCCCC</item>
+    </style>
+</resources>

@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#121212"
+    android:padding="16dp">
+
+    <!-- 应用标题 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|center_horizontal"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:layout_marginTop="20dp"
+        android:layout_marginBottom="20dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Rotating art Launcher"
+            android:textColor="#FFFFFF"
+            android:textSize="28sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.02" />
+
+    </LinearLayout>
+
+    <!-- 法律声明布局 -->
+    <LinearLayout
+        android:id="@+id/legalLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:orientation="vertical"
+        android:background="@drawable/bg_rounded_corner"
+        android:backgroundTint="#1E1E1E"
+        android:padding="32dp"
+        android:elevation="8dp"
+        android:visibility="visible">  <!-- 改为 visible -->
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="法律声明"
+            android:textColor="#FFFFFF"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:layout_marginBottom="24dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="本启动器是第三方工具，需要原始游戏文件才能运行。您必须拥有合法授权的游戏副本才能使用本软件。本启动器开发者与原游戏创作者无关联，对因使用本软件而产生的任何法律后果不承担责任。"
+            android:textColor="#CCCCCC"
+            android:textSize="16sp"
+            android:lineSpacingExtra="6dp"
+            android:layout_marginBottom="32dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:weightSum="2"
+            android:layout_marginTop="16dp">
+
+            <Button
+                android:id="@+id/secondaryButtonLegal"
+                android:layout_width="0dp"
+                android:layout_height="52dp"
+                android:layout_weight="1"
+                android:layout_marginEnd="12dp"
+                android:background="@drawable/secondary_button"
+                android:text="退出应用"
+                android:textColor="#FFFFFF"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:contentDescription="退出应用按钮" />
+
+            <Button
+                android:id="@+id/primaryButtonLegal"
+                android:layout_width="0dp"
+                android:layout_height="52dp"
+                android:layout_weight="1"
+                android:layout_marginStart="12dp"
+                android:background="@drawable/selector_button"
+                android:text="接受并继续"
+                android:textColor="#FFFFFF"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:contentDescription="接受法律声明并继续按钮" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <!-- 组件解压布局 -->
+    <LinearLayout
+        android:id="@+id/extractionLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:orientation="vertical"
+        android:background="@drawable/bg_rounded_corner"
+        android:backgroundTint="#1E1E1E"
+        android:padding="32dp"
+        android:elevation="8dp"
+        android:visibility="gone">  <!-- 保持 gone -->
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Rotating art Launcher"
+            android:textColor="#FFFFFF"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:layout_marginBottom="16dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="启动器需要安装这些内容，才能够确保游戏能够正常启动。这些内容已经包含在应用中，需要解压之后才能正常使用，点击下方按钮，开始解压并更新这些内容。"
+            android:textColor="#CCCCCC"
+            android:textSize="16sp"
+            android:lineSpacingExtra="6dp"
+            android:layout_marginBottom="24dp"
+            android:gravity="center" />
+
+        <!-- 总体进度 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginBottom="20dp">
+
+            <TextView
+                android:id="@+id/overallProgressText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="准备安装..."
+                android:textColor="#4CAF50"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="8dp" />
+
+            <ProgressBar
+                android:id="@+id/overallProgressBar"
+                style="?android:attr/progressBarStyleHorizontal"
+                android:layout_width="match_parent"
+                android:layout_height="12dp"
+                android:progressTint="#4CAF50"
+                android:progressBackgroundTint="#252525" />
+
+        </LinearLayout>
+
+        <!-- 组件列表 -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/componentsRecyclerView"
+            android:layout_width="match_parent"
+            android:layout_height="300dp"
+            android:layout_marginBottom="24dp"
+            android:contentDescription="需要安装的组件列表" />
+
+        <Button
+            android:id="@+id/primaryButtonExtraction"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:background="@drawable/selector_button"
+            android:text="同意并安装"
+            android:textColor="#FFFFFF"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:contentDescription="同意并安装组件按钮" />
+
+    </LinearLayout>
+
+</FrameLayout>

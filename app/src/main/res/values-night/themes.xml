@@ -1,0 +1,43 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme. -->
+    <style name="Theme.raLaunch" parent="Theme.MaterialComponents.DayNight.DarkActionBar">
+        <!-- 主要颜色 -->
+        <item name="colorPrimary">@color/background_primary</item>
+        <item name="colorPrimaryVariant">@color/background_dark</item>
+        <item name="colorOnPrimary">@color/text_primary</item>
+
+        <!-- 次要颜色 -->
+        <item name="colorSecondary">@color/accent_green</item>
+        <item name="colorSecondaryVariant">@color/accent_green</item>
+        <item name="colorOnSecondary">@color/text_primary</item>
+
+        <!-- 背景色 -->
+        <item name="android:colorBackground">@color/background_primary</item>
+        <item name="android:windowBackground">@color/background_primary</item>
+
+        <!-- 状态栏颜色 -->
+        <item name="android:statusBarColor">@color/background_dark</item>
+        <item name="android:navigationBarColor">@color/background_dark</item>
+
+        <!-- 文本颜色 -->
+        <item name="android:textColorPrimary">@color/text_primary</item>
+        <item name="android:textColorSecondary">@color/text_secondary</item>
+
+        <!-- 强调色（移除紫色） -->
+        <item name="colorAccent">@color/accent_green</item>
+    </style>
+
+    <!-- 全屏主题 -->
+    <style name="FullScreenTheme" parent="Theme.raLaunch">
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowActionBar">false</item>
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:windowBackground">@color/background_dark</item>
+        <!-- 忽略刘海屏设置 -->
+        <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
+        <!-- 隐藏状态栏 -->
+        <item name="android:windowTranslucentStatus">false</item>
+        <item name="android:windowTranslucentNavigation">false</item>
+    </style>
+</resources>

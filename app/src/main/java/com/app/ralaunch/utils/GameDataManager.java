@@ -1,0 +1,122 @@
+package com.app.ralaunch.utils;
+
+import android.content.Context;
+import android.util.Log;
+import com.app.ralaunch.adapter.GameItem;
+import com.app.ralaunch.model.GameConfig;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.List;
+import java.io.File;
+
+public class GameDataManager {
+    private static final String TAG = "GameDataManager";
+    private static final String PREF_NAME = "game_launcher_prefs";
+    private static final String KEY_GAME_LIST = "game_list";
+
+    private Context context;
+    private GameConfigManager configManager;
+
+    public GameDataManager(Context context) {
+        this.context = context;
+        this.configManager = new GameConfigManager(context);
+    }
+
+    public GameConfigManager getConfigManager() {
+        return configManager;
+    }
+
+    // 获取游戏安装基础目录
+    public File getGamesBaseDirectory() {
+        File externalDir = context.getExternalFilesDir(null);
+        File gamesDir = new File(externalDir, "games");
+        if (!gamesDir.exists()) {
+            gamesDir.mkdirs();
+        }
+        return gamesDir;
+    }
+
+    // 为特定游戏创建安装目录
+    public File createGameDirectory(String gameId, String gameName) {
+        File baseDir = getGamesBaseDirectory();
+        String dirName = gameId + "_" + System.currentTimeMillis();
+        File gameDir = new File(baseDir, dirName);
+        if (!gameDir.exists()) {
+            gameDir.mkdirs();
+        }
+        return gameDir;
+    }
+
+    // 获取游戏程序集路径
+    public String getGameAssemblyPath(String gameId, File gameDir) {
+        GameConfig config = configManager.getGameConfig(gameId);
+        if (config != null && config.getAssembly() != null) {
+            return new File(gameDir, config.getAssembly()).getAbsolutePath();
+        }
+        return new File(gameDir, "Game.dll").getAbsolutePath();
+    }
+
+    // 获取游戏工作目录
+    public String getGameWorkingDirectory(String gameId, File gameDir) {
+        GameConfig config = configManager.getGameConfig(gameId);
+        if (config != null &&
+                config.getLaunchParams() != null &&
+                config.getLaunchParams().getWorkingDirectory() != null) {
+
+            return new File(gameDir, config.getLaunchParams().getWorkingDirectory()).getAbsolutePath();
+        }
+        return gameDir.getAbsolutePath();
+    }
+
+    // 保存和加载游戏列表
+    public void saveGameList(List<GameItem> gameList) {
+        try {
+            Gson gson = new Gson();
+            String gameListJson = gson.toJson(gameList);
+            context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+                    .edit()
+                    .putString(KEY_GAME_LIST, gameListJson)
+                    .apply();
+            Log.d(TAG, "游戏列表保存成功，项目数: " + gameList.size());
+        } catch (Exception e) {
+            Log.e(TAG, "保存游戏列表时发生错误: " + e.getMessage());
+        }
+    }
+
+    public List<GameItem> loadGameList() {
+        try {
+            String gameListJson = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+                    .getString(KEY_GAME_LIST, null);
+            if (gameListJson != null && !gameListJson.isEmpty()) {
+                Gson gson = new Gson();
+                Type listType = new TypeToken<ArrayList<GameItem>>(){}.getType();
+                List<GameItem> result = gson.fromJson(gameListJson, listType);
+                Log.d(TAG, "成功加载游戏列表，项目数: " + (result != null ? result.size() : 0));
+                return result != null ? result : new ArrayList<>();
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "加载游戏列表时发生错误: " + e.getMessage());
+        }
+        return new ArrayList<>();
+    }
+
+    public void addGame(GameItem game) {
+        List<GameItem> gameList = loadGameList();
+        gameList.add(0, game);
+        saveGameList(gameList);
+    }
+
+    public void removeGame(int position) {
+        List<GameItem> gameList = loadGameList();
+        if (position >= 0 && position < gameList.size()) {
+            gameList.remove(position);
+            saveGameList(gameList);
+        }
+    }
+
+    public void updateGameList(List<GameItem> gameList) {
+        saveGameList(gameList);
+    }
+}

@@ -1,0 +1,21 @@
+<resources>
+    <!-- 设置页面相关 -->
+    <string name="app_name">Rotating art Launcher</string>
+
+    <string name="settings">设置</string>
+    <string name="theme_settings">主题设置</string>
+    <string name="theme_system">跟随系统</string>
+    <string name="theme_dark">暗色主题</string>
+    <string name="theme_light">亮色主题</string>
+    <string name="language_settings">语言设置</string>
+    <string name="language_system">跟随系统</string>
+    <string name="language_english">English</string>
+    <string name="language_chinese">中文</string>
+    <string name="app_info">应用信息</string>
+    <string name="app_version">版本 1.0.0</string>
+    <string name="app_description">Rotating art Launcher - 游戏启动器</string>
+    <string name="restart_required">重启应用</string>
+    <string name="restart_app_message">语言设置已更改，需要重启应用才能生效</string>
+    <string name="ok">确定</string>
+    <string name="later">稍后</string>
+</resources>

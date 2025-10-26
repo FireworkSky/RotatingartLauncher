@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/menu_add_button"
+        android:title="添加按钮" />
+
+    <item
+        android:id="@+id/menu_add_joystick"
+        android:title="添加摇杆" />
+
+    <item
+        android:id="@+id/menu_add_cross"
+        android:title="添加方向键" />
+
+    <item
+        android:id="@+id/menu_load_default"
+        android:title="加载默认布局" />
+
+    <item
+        android:id="@+id/menu_save_layout"
+        android:title="保存布局" />
+
+    <item
+        android:id="@+id/menu_clear_all"
+        android:title="清空所有控件" />
+</menu>

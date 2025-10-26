@@ -1,0 +1,27 @@
+name: Build (iOS/tvOS)
+
+on: [push, pull_request]
+
+jobs:
+  Build:
+    name: ${{ matrix.platform.name }}
+    runs-on: macos-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+        - { name: iOS, target: Static Library-iOS, sdk: iphoneos }
+        - { name: iOS Sim, target: Static Library-iOS, sdk: iphonesimulator }
+        - { name: tvOS, target: Static Library-tvOS, sdk: appletvos }
+        - { name: tvOS Sim, target: Static Library-tvOS, sdk: appletvsimulator }
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build
+        run: xcodebuild -project Xcode/SDL/SDL.xcodeproj -target '${{ matrix.platform.target }}' -configuration Release -sdk ${{ matrix.platform.sdk }} OTHER_CFLAGS="-fno-objc-msgsend-selector-stubs" GCC_PREPROCESSOR_DEFINITIONS='$GCC_PREPROCESSOR_DEFINITIONS SDL_MAIN_HANDLED=1' clean build
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SDL2 Artifacts ${{ matrix.platform.name }}
+          path: Xcode/SDL/build/Release-*/*.a
