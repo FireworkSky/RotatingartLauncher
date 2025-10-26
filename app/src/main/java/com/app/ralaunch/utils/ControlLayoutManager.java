@@ -14,10 +14,7 @@ import org.json.JSONException;
 import java.io.*;
 import java.util.*;
 
-/**
- * 控制布局管理器 - 参考 PojavLauncher 设计
- * 提供布局的创建、保存、加载、导入、导出等功能
- */
+
 public class ControlLayoutManager {
     private static final String TAG = "ControlLayoutManager";
     private static final String PREF_NAME = "control_layouts";
