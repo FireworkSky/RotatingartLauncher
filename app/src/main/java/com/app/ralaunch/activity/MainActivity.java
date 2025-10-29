@@ -32,12 +32,11 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.app.ralaunch.R;
+import com.app.ralaunch.fragment.AddGameOptionsFragment;
 import com.app.ralaunch.fragment.ControlLayoutFragment;
-import com.app.ralaunch.fragment.DownloadOptionsFragment;
 import com.app.ralaunch.fragment.FileBrowserFragment;
 import com.app.ralaunch.fragment.InitializationFragment;
 import com.app.ralaunch.fragment.LocalImportFragment;
-import com.app.ralaunch.fragment.SelectGameFragment;
 import com.app.ralaunch.adapter.GameAdapter;
 import com.app.ralaunch.adapter.GameItem;
 import com.app.ralaunch.fragment.SettingsFragment;
@@ -52,8 +51,7 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity implements
         GameAdapter.OnGameClickListener,
         GameAdapter.OnGameDeleteListener,
-        SelectGameFragment.OnGameSelectedListener,
-        DownloadOptionsFragment.OnDownloadOptionSelectedListener,
+        AddGameOptionsFragment.OnGameSourceSelectedListener,
         SettingsFragment.OnSettingsBackListener,
         FileBrowserFragment.OnPermissionRequestListener,
         LocalImportFragment.OnImportCompleteListener {
@@ -367,38 +365,29 @@ public class MainActivity extends AppCompatActivity implements
         View fragmentContainer = findViewById(R.id.fragmentContainer);
         fragmentContainer.setVisibility(View.VISIBLE);
 
-        SelectGameFragment selectGameFragment = new SelectGameFragment();
-        selectGameFragment.setOnGameSelectedListener(this);
-        selectGameFragment.setOnBackToMainListener(this::hideAddGameFragment);
+        // 显示添加游戏选项页面
+        AddGameOptionsFragment addGameOptionsFragment = new AddGameOptionsFragment();
+        addGameOptionsFragment.setOnGameSourceSelectedListener(this);
+        addGameOptionsFragment.setOnBackListener(this::hideAddGameFragment);
 
-        pageManager.showPage(selectGameFragment, "select_game");
+        pageManager.showPage(addGameOptionsFragment, "add_game_options");
     }
 
     @Override
-    public void onGameSelected(String gameType, String gameName, String engineType) {
-        DownloadOptionsFragment downloadFragment = new DownloadOptionsFragment();
-        downloadFragment.setGameInfo(gameType, gameName, engineType);
-        downloadFragment.setOnDownloadOptionSelectedListener(this);
-        downloadFragment.setOnBackListener(this::onBackFromDownload);
-
-        pageManager.showPage(downloadFragment, "download_options");
-    }
-
-    @Override
-    public void onDownloadOptionSelected(String gameType, String gameName, String engineType, String optionType) {
-        if ("local".equals(optionType)) {
-            // 直接跳转到本地导入页面
+    public void onGameSourceSelected(String sourceType) {
+        if ("local".equals(sourceType)) {
+            // 跳转到本地导入页面
             LocalImportFragment localImportFragment = new LocalImportFragment();
-            localImportFragment.setGameInfo(gameType, gameName, engineType);
             localImportFragment.setOnImportCompleteListener(this);
             localImportFragment.setOnBackListener(this::onBackFromLocalImport);
 
             pageManager.showPage(localImportFragment, "local_import");
-        } else if ("download".equals(optionType)) {
-            // 下载完成后直接视为安装完成
-            // 这里可以添加下载完成后的处理逻辑
-            showToast("下载完成，游戏已准备就绪");
-            // 可以在这里添加游戏到列表
+        } else if ("download".equals(sourceType)) {
+            // TODO: 跳转到在线下载页面
+            // 这里可以创建一个专门的下载页面
+            showToast("在线下载功能即将开放");
+            // 暂时返回主界面
+            hideAddGameFragment();
         }
     }
 
@@ -407,10 +396,6 @@ public class MainActivity extends AppCompatActivity implements
     public void onImportComplete(String gameType, String gameName, String gamePath, String engineType) {
         // 导入完成后直接添加游戏到列表
         addGameToList(gameType, gameName, gamePath, engineType);
-    }
-
-    private void onBackFromDownload() {
-        pageManager.goBack();
     }
 
     private void onBackFromLocalImport() {

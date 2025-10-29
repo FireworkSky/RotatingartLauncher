@@ -167,29 +167,17 @@ public class OverlayControlView extends View {
 
     private void drawJoystick(Canvas canvas, ControlElement element, int width, int height) {
         RectF rect = getElementRect(element, width, height);
-<<<<<<< Updated upstream
-        
-        // 使用最小边作为直径，确保摇杆是圆形的
-        float diameter = Math.min(rect.width(), rect.height());
-        float radius = diameter / 2;
-        
-=======
 
         // 使用最小边作为直径，确保摇杆是圆形的
         float diameter = Math.min(rect.width(), rect.height());
         float radius = diameter / 2;
 
->>>>>>> Stashed changes
         // 绘制外圈
         int alpha = (int) (element.getOpacity() * 255);
         elementPaint.setColor(element.getBackgroundColor());
         elementPaint.setAlpha(alpha);
         canvas.drawCircle(rect.centerX(), rect.centerY(), radius, elementPaint);
-<<<<<<< Updated upstream
-        
-=======
 
->>>>>>> Stashed changes
         // 绘制边框
         Paint borderPaint = new Paint();
         borderPaint.setAntiAlias(true);
@@ -198,11 +186,7 @@ public class OverlayControlView extends View {
         borderPaint.setStrokeWidth(element.getBorderWidth());
         borderPaint.setAlpha(alpha);
         canvas.drawCircle(rect.centerX(), rect.centerY(), radius, borderPaint);
-<<<<<<< Updated upstream
-        
-=======
 
->>>>>>> Stashed changes
         // 查找活跃触摸
         ActiveTouch activeTouch = findActiveTouchForElement(element);
         float knobX = rect.centerX();
@@ -214,11 +198,7 @@ public class OverlayControlView extends View {
             float deltaY = activeTouch.currentY - rect.centerY();
             float distance = (float) Math.sqrt(deltaX * deltaX + deltaY * deltaY);
             float maxDistance = radius * 0.7f;  // 70% 半径
-<<<<<<< Updated upstream
-            
-=======
 
->>>>>>> Stashed changes
             if (distance > maxDistance) {
                 float scale = maxDistance / distance;
                 deltaX *= scale;
@@ -483,3 +463,4 @@ public class OverlayControlView extends View {
         invalidate();
     }
 }
+

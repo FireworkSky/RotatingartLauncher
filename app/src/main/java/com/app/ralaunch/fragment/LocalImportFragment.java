@@ -1,10 +1,6 @@
 package com.app.ralaunch.fragment;
 
-import android.content.Context;
-import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
-import android.os.Environment;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -20,16 +16,8 @@ import androidx.fragment.app.Fragment;
 import com.app.ralaunch.R;
 import com.app.ralaunch.activity.MainActivity;
 import com.app.ralaunch.utils.GameExtractor;
-import com.leon.lfilepickerlibrary.LFilePicker;
-import com.leon.lfilepickerlibrary.utils.Constant;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.util.List;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
 
 public class LocalImportFragment extends Fragment {
 
@@ -50,10 +38,10 @@ public class LocalImportFragment extends Fragment {
     private String gameFilePath;
     private String tmodloaderFilePath;
 
-    // 游戏信息
-    private String gameType;
-    private String gameName;
-    private String engineType;
+    // 游戏信息 - 固定为tmodloader
+    private String gameType = "tmodloader";
+    private String gameName = "tModLoader";
+    private String engineType = "FNA";
     public static File gameDir;
 
     public interface OnImportCompleteListener {
@@ -72,12 +60,6 @@ public class LocalImportFragment extends Fragment {
         this.backListener = listener;
     }
 
-    public void setGameInfo(String gameType, String gameName, String engineType) {
-        this.gameType = gameType;
-        this.gameName = gameName;
-        this.engineType = engineType;
-    }
-
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -94,10 +76,6 @@ public class LocalImportFragment extends Fragment {
                 backListener.onBack();
             }
         });
-
-        // 设置页面标题
-        TextView pageTitle = view.findViewById(R.id.pageTitle);
-        pageTitle.setText("本地导入 - " + gameName);
 
         // 初始化控件
         selectGameFileButton = view.findViewById(R.id.selectGameFileButton);
@@ -162,43 +140,16 @@ public class LocalImportFragment extends Fragment {
                 .commit();
     }
 
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-
-        if (resultCode == getActivity().RESULT_OK) {
-            if (requestCode == 1001) {
-                // 游戏文件选择
-                List<String> list = data.getStringArrayListExtra(Constant.RESULT_INFO);
-                if (list != null && !list.isEmpty()) {
-                    gameFilePath = list.get(0);
-                    File file = new File(gameFilePath);
-                    gameFileText.setText("已选择: " + file.getName());
-                    updateImportButtonState();
-                }
-            } else if (requestCode == 1002) {
-                // tModLoader 文件选择
-                List<String> list = data.getStringArrayListExtra(Constant.RESULT_INFO);
-                if (list != null && !list.isEmpty()) {
-                    tmodloaderFilePath = list.get(0);
-                    File file = new File(tmodloaderFilePath);
-                    tmodloaderFileText.setText("已选择: " + file.getName());
-                    updateImportButtonState();
-                }
-            }
-        }
-    }
-
     private void updateImportButtonState() {
         boolean hasGameFile = gameFilePath != null && !gameFilePath.isEmpty();
         boolean hasTmodloaderFile = tmodloaderFilePath != null && !tmodloaderFilePath.isEmpty();
 
         startImportButton.setEnabled(hasGameFile && hasTmodloaderFile);
-
+        
         if (hasGameFile && hasTmodloaderFile) {
-            startImportButton.setBackgroundTintList(getResources().getColorStateList(R.color.button_primary));
+            startImportButton.setAlpha(1.0f);
         } else {
-            startImportButton.setBackgroundTintList(getResources().getColorStateList(R.color.button_disabled));
+            startImportButton.setAlpha(0.5f);
         }
     }
 
