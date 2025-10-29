@@ -2,12 +2,10 @@ package com.app.ralaunch.activity;
 
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-import androidx.core.view.WindowCompat;
-import androidx.core.view.WindowInsetsCompat;
-import androidx.core.view.WindowInsetsControllerCompat;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
+<<<<<<< Updated upstream
 import android.graphics.PixelFormat;
 import android.os.Build;
 import android.os.Bundle;
@@ -18,6 +16,10 @@ import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
+=======
+import android.os.Bundle;
+import android.util.Log;
+>>>>>>> Stashed changes
 import android.widget.Toast;
 
 import com.app.ralaunch.game.GameLauncher;
@@ -37,11 +39,10 @@ public class GameActivity extends SDLActivity {
 
     static {
         try {
-            System.loadLibrary("coreclr");
-            System.loadLibrary("rustcorehost");
+            // CoreCLR 将通过 dlopen 动态加载，不需要在这里加载
             System.loadLibrary("c++_shared");
             System.loadLibrary("System.Security.Cryptography.Native.Android");
-            Log.d(TAG, "All libraries loaded successfully");
+            Log.d(TAG, "Libraries loaded successfully");
         } catch (UnsatisfiedLinkError e) {
             Log.e(TAG, "Failed to load library: " + e.getMessage());
         }
@@ -53,19 +54,16 @@ public class GameActivity extends SDLActivity {
         Log.d(TAG, "onCreate: started");
         mainActivity = this;
 
-        // 设置全屏和隐藏刘海屏
-        setupFullscreenMode();
-
         // 获取传递的游戏信息
         String gameName = getIntent().getStringExtra("GAME_NAME");
-        String assemblyPath = getIntent().getStringExtra("GAME_PATH"); // 游戏目录路径
+        String assemblyPath = getIntent().getStringExtra("GAME_PATH"); // 现在这是程序集路径
         String engineType = getIntent().getStringExtra("ENGINE_TYPE");
 
         Log.d(TAG, "启动游戏: " + gameName);
-        Log.d(TAG, "游戏目录: " + assemblyPath);
+        Log.d(TAG, "程序集路径: " + assemblyPath);
         Log.d(TAG, "引擎类型: " + engineType);
-        Log.d(TAG, "将从 assets 解压并启动 Assembly-Main.dll");
 
+<<<<<<< Updated upstream
         // 初始化控制布局管理器
         initializeControlLayout();
 
@@ -125,6 +123,9 @@ public class GameActivity extends SDLActivity {
             // 重新应用全屏设置，防止系统栏重新出现
             setupFullscreenMode();
         }
+=======
+        setLaunchParams();
+>>>>>>> Stashed changes
     }
 
     @Override
@@ -132,24 +133,7 @@ public class GameActivity extends SDLActivity {
         return "SDL_main";
     }
 
-    // 检查并请求存储权限
-    private void checkAndRequestStoragePermissions() {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                != PackageManager.PERMISSION_GRANTED ||
-                ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)
-                        != PackageManager.PERMISSION_GRANTED) {
 
-            ActivityCompat.requestPermissions(this,
-                    new String[]{
-                            Manifest.permission.READ_EXTERNAL_STORAGE,
-                            Manifest.permission.WRITE_EXTERNAL_STORAGE
-                    },
-                    STORAGE_PERMISSION_REQUEST_CODE);
-        } else {
-            // 已经有权限，设置启动参数
-            setLaunchParams();
-        }
-    }
 
     // 处理权限请求结果
     @Override

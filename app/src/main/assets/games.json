@@ -6,7 +6,7 @@
     "engine": "FNA",
     "description": "Terraria Mod Loader - 一个强大的 Terraria 模组加载器",
     "icon": "ic_tmodloader",
-    "assembly": "Assembly-Main.dll",
+    "assembly": "tModLoader.dll",
     "requiredFiles": [
       {
         "type": "game",

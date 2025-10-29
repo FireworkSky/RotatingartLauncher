@@ -5,8 +5,7 @@ project("main")
 set(SDL_SOURCE_DIR ${CMAKE_SOURCE_DIR}/SDL)
 set(GL4ES_SOURCE_DIR ${CMAKE_SOURCE_DIR}/gl4es)
 #set(LGOG_SOURCE_DIR ${CMAKE_SOURCE_DIR}/lgogdownloader)
-# 根据当前编译的架构动态选择库路径
-set(RUSTDOTNET_LIB_PATH ${CMAKE_SOURCE_DIR}/../jnilibs/${ANDROID_ABI}/librustcorehost.so)
+# 移除 rustcorehost，现在直接使用 CoreCLR API
 
 # 添加SDL子项目
 add_subdirectory(${SDL_SOURCE_DIR})
@@ -28,8 +27,8 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
         log
         SDL2
         GL
+        dl  # 添加 dl 库用于 dlopen/dlsym
        # lgogdownloader
-        ${RUSTDOTNET_LIB_PATH}
 )
 
 # 包含 SDL 和 gl4es 头文件
