@@ -11,15 +11,6 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
-<<<<<<< Updated upstream
-import org.json.JSONException;
-
-import java.io.*;
-import java.util.*;
-
-
-=======
->>>>>>> Stashed changes
 public class ControlLayoutManager {
     private static final String PREF_NAME = "control_layouts";
     private static final String KEY_LAYOUTS = "saved_layouts";

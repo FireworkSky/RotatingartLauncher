@@ -4,8 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#121212"
-    android:orientation="vertical"
-    android:padding="16dp">
+    android:orientation="vertical">
 
     <!-- 顶部标题栏 -->
     <LinearLayout
@@ -13,12 +12,12 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:layout_marginBottom="20dp">
+        android:padding="16dp">
 
         <ImageButton
             android:id="@+id/backButton"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
             android:src="@drawable/ic_arrow_back"
             android:background="?android:attr/selectableItemBackgroundBorderless"
             android:contentDescription="返回"
@@ -31,191 +30,52 @@
             android:layout_weight="1"
             android:text="本地导入"
             android:textColor="#FFFFFF"
-            android:textSize="20sp"
+            android:textSize="24sp"
             android:textStyle="bold"
             android:gravity="center"
             android:paddingStart="16dp"
             android:paddingEnd="16dp" />
 
+        <!-- 占位，保持标题居中 -->
+        <View
+            android:layout_width="40dp"
+            android:layout_height="40dp" />
+
     </LinearLayout>
 
+    <!-- 分隔线 -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#2A2A2A"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp" />
+
     <!-- 主要内容区域 -->
-    <ScrollView
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1">
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:padding="16dp">
 
+        <!-- 文件选择卡片容器 - 横向排列 -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:orientation="horizontal"
+            android:weightSum="2"
+            android:layout_marginBottom="16dp">
 
-            <!-- 文件选择区域 -->
+            <!-- 游戏本体文件卡片 -->
             <androidx.cardview.widget.CardView
-                android:layout_width="match_parent"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginEnd="8dp"
                 app:cardCornerRadius="12dp"
-                app:cardElevation="2dp"
-                app:cardBackgroundColor="#1E1E1E"
-                android:layout_marginBottom="16dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="20dp">
-
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="选择文件"
-                        android:textColor="#FFFFFF"
-                        android:textSize="18sp"
-                        android:textStyle="bold"
-                        android:layout_marginBottom="16dp" />
-
-                    <!-- 游戏文件选择 -->
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:layout_marginBottom="20dp">
-
-                        <TextView
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="游戏本体文件"
-                            android:textColor="#CCCCCC"
-                            android:textSize="14sp"
-                            android:textStyle="bold"
-                            android:layout_marginBottom="8dp" />
-
-                        <TextView
-                            android:id="@+id/gameFileText"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="请选择 Terraria 游戏文件 (.sh)"
-                            android:textColor="#888888"
-                            android:textSize="12sp"
-                            android:layout_marginBottom="8dp" />
-
-                        <Button
-                            android:id="@+id/selectGameFileButton"
-                            android:layout_width="match_parent"
-                            android:layout_height="44dp"
-                            android:text="选择文件"
-                            android:textColor="#FFFFFF"
-                            android:textSize="14sp"
-                            android:background="@drawable/bg_rounded_corner"
-                            android:backgroundTint="#2196F3"
-                            android:drawableStart="@drawable/ic_file"
-                            android:drawablePadding="8dp" />
-
-                    </LinearLayout>
-
-                    <!-- tModLoader 文件选择 -->
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical">
-
-                        <TextView
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="tModLoader 文件"
-                            android:textColor="#CCCCCC"
-                            android:textSize="14sp"
-                            android:textStyle="bold"
-                            android:layout_marginBottom="8px" />
-
-                        <TextView
-                            android:id="@+id/tmodloaderFileText"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="请选择 tModLoader 文件 (.zip)"
-                            android:textColor="#888888"
-                            android:textSize="12sp"
-                            android:layout_marginBottom="8dp" />
-
-                        <Button
-                            android:id="@+id/selectTmodloaderButton"
-                            android:layout_width="match_parent"
-                            android:layout_height="44dp"
-                            android:text="选择文件"
-                            android:textColor="#FFFFFF"
-                            android:textSize="14sp"
-                            android:background="@drawable/bg_rounded_corner"
-                            android:backgroundTint="#FF9800"
-                            android:drawableStart="@drawable/ic_zip"
-                            android:drawablePadding="8dp" />
-
-                    </LinearLayout>
-
-                </LinearLayout>
-
-            </androidx.cardview.widget.CardView>
-
-            <!-- 开始导入按钮 -->
-            <Button
-                android:id="@+id/startImportButton"
-                android:layout_width="match_parent"
-                android:layout_height="52dp"
-                android:text="开始导入"
-                android:textColor="#FFFFFF"
-                android:textSize="16sp"
-                android:textStyle="bold"
-                android:background="@drawable/bg_rounded_corner"
-                android:backgroundTint="@color/button_primary"
-                android:layout_marginBottom="16dp"
-                android:enabled="false" />
-
-            <!-- 导入进度区域 -->
-            <LinearLayout
-                android:id="@+id/importProgressContainer"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:background="@drawable/bg_rounded_corner"
-                android:backgroundTint="#1A1A1A"
-                android:padding="20dp"
-                android:visibility="gone"
-                android:elevation="4dp">
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="导入进度"
-                    android:textColor="#FFFFFF"
-                    android:textSize="18sp"
-                    android:textStyle="bold"
-                    android:layout_marginBottom="16dp" />
-
-                <ProgressBar
-                    android:id="@+id/importProgress"
-                    style="?android:attr/progressBarStyleHorizontal"
-                    android:layout_width="match_parent"
-                    android:layout_height="8dp"
-                    android:progress="0"
-                    android:progressTint="#4CAF50"
-                    android:backgroundTint="#333333" />
-
-                <TextView
-                    android:id="@+id/importStatus"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="准备导入..."
-                    android:textColor="#BBBBBB"
-                    android:textSize="14sp"
-                    android:layout_marginTop="12dp" />
-
-            </LinearLayout>
-
-            <!-- 说明区域 -->
-            <androidx.cardview.widget.CardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="2dp"
+                app:cardElevation="4dp"
                 app:cardBackgroundColor="#1E1E1E">
 
                 <LinearLayout
@@ -224,29 +84,177 @@
                     android:orientation="vertical"
                     android:padding="16dp">
 
-                    <TextView
+                    <!-- 图标和标题 -->
+                    <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="文件说明"
-                        android:textColor="#FFFFFF"
-                        android:textSize="16sp"
-                        android:textStyle="bold"
-                        android:layout_marginBottom="12dp" />
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginBottom="10dp">
 
+                        <FrameLayout
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:background="@drawable/bg_circle"
+                            android:backgroundTint="#1565C0">
+
+                            <ImageView
+                                android:layout_width="24dp"
+                                android:layout_height="24dp"
+                                android:layout_gravity="center"
+                                android:src="@drawable/ic_file"
+                                app:tint="#FFFFFF" />
+
+                        </FrameLayout>
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical"
+                            android:layout_marginStart="12dp">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="游戏本体"
+                                android:textColor="#FFFFFF"
+                                android:textSize="15sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Terraria (.sh)"
+                                android:textColor="#BBBBBB"
+                                android:textSize="11sp"
+                                android:layout_marginTop="2dp" />
+
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                    <!-- 已选择的文件名 -->
                     <TextView
+                        android:id="@+id/gameFileText"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="• 游戏本体: Terraria Linux 安装文件 (terraria_v1_4_4_9_v4_60321.sh)"
-                        android:textColor="#CCCCCC"
+                        android:text="未选择"
+                        android:textColor="#888888"
                         android:textSize="12sp"
-                        android:layout_marginBottom="4dp" />
+                        android:padding="10dp"
+                        android:background="@drawable/bg_rounded_corner"
+                        android:backgroundTint="#252525"
+                        android:layout_marginBottom="10dp"
+                        android:ellipsize="end"
+                        android:maxLines="1" />
 
-                    <TextView
+                    <Button
+                        android:id="@+id/selectGameFileButton"
+                        android:layout_width="match_parent"
+                        android:layout_height="44dp"
+                        android:text="选择文件"
+                        android:textColor="#FFFFFF"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        android:background="@drawable/bg_rounded_corner"
+                        android:backgroundTint="#2196F3" />
+
+                </LinearLayout>
+
+            </androidx.cardview.widget.CardView>
+
+            <!-- tModLoader 文件卡片 -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="8dp"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="4dp"
+                app:cardBackgroundColor="#1E1E1E">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <!-- 图标和标题 -->
+                    <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="• tModLoader: tModLoader 压缩包文件 (tmodloader.zip)"
-                        android:textColor="#CCCCCC"
-                        android:textSize="12sp" />
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginBottom="10dp">
+
+                        <FrameLayout
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:background="@drawable/bg_circle"
+                            android:backgroundTint="#E65100">
+
+                            <ImageView
+                                android:layout_width="24dp"
+                                android:layout_height="24dp"
+                                android:layout_gravity="center"
+                                android:src="@drawable/ic_zip"
+                                app:tint="#FFFFFF" />
+
+                        </FrameLayout>
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical"
+                            android:layout_marginStart="12dp">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="tModLoader"
+                                android:textColor="#FFFFFF"
+                                android:textSize="15sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="模组加载器 (.zip)"
+                                android:textColor="#BBBBBB"
+                                android:textSize="11sp"
+                                android:layout_marginTop="2dp" />
+
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                    <!-- 已选择的文件名 -->
+                    <TextView
+                        android:id="@+id/tmodloaderFileText"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="未选择"
+                        android:textColor="#888888"
+                        android:textSize="12sp"
+                        android:padding="10dp"
+                        android:background="@drawable/bg_rounded_corner"
+                        android:backgroundTint="#252525"
+                        android:layout_marginBottom="10dp"
+                        android:ellipsize="end"
+                        android:maxLines="1" />
+
+                    <Button
+                        android:id="@+id/selectTmodloaderButton"
+                        android:layout_width="match_parent"
+                        android:layout_height="44dp"
+                        android:text="选择文件"
+                        android:textColor="#FFFFFF"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        android:background="@drawable/bg_rounded_corner"
+                        android:backgroundTint="#FF9800" />
 
                 </LinearLayout>
 
@@ -254,6 +262,53 @@
 
         </LinearLayout>
 
-    </ScrollView>
+        <!-- 开始导入按钮 -->
+        <Button
+            android:id="@+id/startImportButton"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:text="开始导入"
+            android:textColor="#FFFFFF"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            android:background="@drawable/bg_rounded_corner"
+            android:backgroundTint="#4CAF50"
+            android:elevation="4dp"
+            android:enabled="false"
+            android:alpha="0.5" />
+
+    </LinearLayout>
+
+    <!-- 导入进度区域 -->
+    <LinearLayout
+        android:id="@+id/importProgressContainer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:background="#121212"
+        android:padding="32dp"
+        android:visibility="gone">
+
+        <ProgressBar
+            android:id="@+id/importProgress"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="8dp"
+            android:progress="0"
+            android:progressTint="#4CAF50"
+            android:backgroundTint="#333333"
+            android:layout_marginBottom="16dp" />
+
+        <TextView
+            android:id="@+id/importStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="准备导入..."
+            android:textColor="#FFFFFF"
+            android:textSize="16sp"
+            android:gravity="center" />
+
+    </LinearLayout>
 
 </LinearLayout>

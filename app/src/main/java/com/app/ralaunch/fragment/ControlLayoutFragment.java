@@ -48,7 +48,7 @@ public class ControlLayoutFragment extends Fragment implements ControlLayoutAdap
         View view = inflater.inflate(R.layout.fragment_control_layout, container, false);
 
         layoutManager = new ControlLayoutManager(requireContext());
-        layouts = layoutManager.getAllLayouts();
+        layouts = layoutManager.getLayouts();
 
         initUI(view);
         setupRecyclerView();
@@ -106,8 +106,8 @@ public class ControlLayoutFragment extends Fragment implements ControlLayoutAdap
         }
 
         ControlLayout newLayout = new ControlLayout(name);
-        layoutManager.saveLayout(newLayout);
-        layouts = layoutManager.getAllLayouts();
+        layoutManager.addLayout(newLayout);
+        layouts = layoutManager.getLayouts();
         adapter.updateLayouts(layouts);
         updateEmptyState();
 
@@ -120,7 +120,7 @@ public class ControlLayoutFragment extends Fragment implements ControlLayoutAdap
         editorFragment.setControlLayout(layout);
         editorFragment.setOnEditorBackListener(() -> {
             // 返回时刷新列表
-            layouts = layoutManager.getAllLayouts();
+            layouts = layoutManager.getLayouts();
             adapter.updateLayouts(layouts);
             getParentFragmentManager().beginTransaction()
                     .replace(R.id.fragmentContainer, this)
@@ -154,8 +154,8 @@ public class ControlLayoutFragment extends Fragment implements ControlLayoutAdap
                 .setTitle("删除布局")
                 .setMessage("确定要删除布局 \"" + layout.getName() + "\" 吗？")
                 .setPositiveButton("删除", (dialog, which) -> {
-                    layoutManager.deleteLayout(layout.getName());
-                    layouts = layoutManager.getAllLayouts();
+                    layoutManager.removeLayout(layout.getName());
+                    layouts = layoutManager.getLayouts();
                     adapter.updateLayouts(layouts);
                     updateEmptyState();
                     Toast.makeText(getContext(), "布局已删除", Toast.LENGTH_SHORT).show();
