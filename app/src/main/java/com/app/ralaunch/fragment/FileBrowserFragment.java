@@ -149,7 +149,17 @@ public class FileBrowserFragment extends Fragment implements FileBrowserAdapter.
                 loadInitialDirectory();
                 hidePermissionDeniedState();
             } else {
+                activity.requestRequiredPermissions(new MainActivity.PermissionCallback() {
+                    @Override
+                    public void onPermissionsGranted() {
+                        checkPermissionsAndLoadFiles();
+                    }
 
+                    @Override
+                    public void onPermissionsDenied() {
+
+                    }
+                });
                 showPermissionDeniedState();
 
             }

@@ -22,7 +22,7 @@ add_library(${CMAKE_PROJECT_NAME} SHARED
 
 # 链接库
 target_link_libraries(${CMAKE_PROJECT_NAME}
-        egl
+        EGL
         android
         log
         SDL2
