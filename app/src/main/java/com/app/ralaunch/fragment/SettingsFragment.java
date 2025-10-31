@@ -1,6 +1,7 @@
 package com.app.ralaunch.fragment;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.content.res.Resources;
@@ -9,6 +10,7 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
@@ -16,6 +18,7 @@ import androidx.appcompat.app.AppCompatDelegate;
 import androidx.fragment.app.Fragment;
 
 import com.app.ralaunch.R;
+import com.app.ralaunch.activity.DebugActivity;
 import com.app.ralaunch.utils.RuntimePreference;
 
 import java.util.Locale;
@@ -39,6 +42,7 @@ public class SettingsFragment extends Fragment {
     private RadioGroup themeRadioGroup;
     private RadioGroup languageRadioGroup;
     private RadioGroup architectureRadioGroup;
+    private Button debugButton;
 
     // 设置键值
     private static final String PREFS_NAME = "AppSettings";
@@ -84,6 +88,7 @@ public class SettingsFragment extends Fragment {
         themeRadioGroup = view.findViewById(R.id.themeRadioGroup);
         languageRadioGroup = view.findViewById(R.id.languageRadioGroup);
         architectureRadioGroup = view.findViewById(R.id.architectureRadioGroup);
+        debugButton = view.findViewById(R.id.debugButton);
 
         // 主题选择监听
         themeRadioGroup.setOnCheckedChangeListener((group, checkedId) -> {
@@ -124,6 +129,13 @@ public class SettingsFragment extends Fragment {
                 architecture = RuntimePreference.ARCH_X86_64;
             }
             RuntimePreference.setArchitecture(requireContext(), architecture);
+        });
+
+        // 调试按钮监听
+        debugButton.setOnClickListener(v -> {
+            // 启动调试活动
+             Intent intent = new Intent(getActivity(), DebugActivity.class);
+             startActivity(intent);
         });
     }
 

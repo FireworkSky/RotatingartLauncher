@@ -163,7 +163,7 @@ public class GameActivity extends SDLActivity {
 
             // 验证程序集文件是否存在
             File assemblyFile = new File(finalAssemblyPath);
-            if (!assemblyFile.exists()) {
+            if (!assemblyFile.exists() || !assemblyFile.isFile()) {
                 Log.e(TAG, "Assembly file not found: " + finalAssemblyPath);
                 runOnUiThread(() -> {
                     Toast.makeText(this, "程序集文件不存在: " + finalAssemblyPath, Toast.LENGTH_LONG).show();
