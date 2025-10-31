@@ -13,6 +13,7 @@
 
 #define LOG_TAG "GameLauncher"
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
+#define LOGW(...) __android_log_print(ANDROID_LOG_WARN, LOG_TAG, __VA_ARGS__)
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
 
 /** 主程序集路径 */
@@ -137,13 +138,22 @@ int launch_with_coreclr_passthrough() {
     
     coreclr_shutdown_ptr coreclr_shutdown = (coreclr_shutdown_ptr)dlsym(coreclrLib, "coreclr_shutdown");
     const char* err3 = dlerror();
-    if (err3) LOGE("dlsym coreclr_shutdown fail: %s", err3);
+    if (err3) {
+        LOGW("dlsym coreclr_shutdown fail: %s (可能在 .NET 7+ 中已移除，将跳过)", err3);
+    }
     
-    if (!coreclr_initialize || !coreclr_execute_assembly || !coreclr_shutdown) { 
+    // 注意: coreclr_shutdown 在 .NET 7+ 中可能不存在，这是正常的
+    if (!coreclr_initialize || !coreclr_execute_assembly) { 
         dlclose(coreclrLib); 
         LOGE("coreclr dlsym fail: init=%p, exec=%p, shutdown=%p", 
              coreclr_initialize, coreclr_execute_assembly, coreclr_shutdown); 
         return -12; 
+    }
+    
+    if (coreclr_shutdown) {
+        LOGI("CoreCLR shutdown function available");
+    } else {
+        LOGW("CoreCLR shutdown function not available (expected in .NET 7+)");
     }
     
     // 7. 准备 CoreCLR 初始化参数
@@ -175,13 +185,19 @@ int launch_with_coreclr_passthrough() {
     const char* argv[] = { h_appPath };
     rc = coreclr_execute_assembly(hostHandle, domainId, 1, argv, g_launcherDll, &exitCode);
     
-    // 10. 关闭 CoreCLR 运行时
-    coreclr_shutdown(hostHandle, domainId);
+    // 10. 关闭 CoreCLR 运行时（如果函数可用）
+    if (coreclr_shutdown) {
+        LOGI("Calling coreclr_shutdown");
+        coreclr_shutdown(hostHandle, domainId);
+    } else {
+        LOGW("Skipping coreclr_shutdown (not available in this .NET version)");
+    }
     
     // 11. 卸载 CoreCLR 动态库
     dlclose(coreclrLib);
     
     // 12. 返回退出码
+    LOGI("CoreCLR execution finished with result: %d", rc == 0 ? (int)exitCode : -20);
     return rc == 0 ? (int)exitCode : -20;
 }
 
