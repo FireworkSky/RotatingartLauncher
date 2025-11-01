@@ -74,18 +74,42 @@ public class GameActivity extends SDLActivity {
         boolean modLoaderEnabled = getIntent().getBooleanExtra("MOD_LOADER_ENABLED", true); // ModLoader 开关状态
         String runtimePref = getIntent().getStringExtra("DOTNET_FRAMEWORK"); // 可选："net6"、"net8"、"net10"、"auto"
 
-        Log.d(TAG, "启动游戏: " + gameName);
-        Log.d(TAG, "程序集路径: " + assemblyPath);
-        Log.d(TAG, "游戏本体路径: " + gameBodyPath);
-        Log.d(TAG, "ModLoader 启用: " + modLoaderEnabled);
+        boolean isBootstrapper = getIntent().getBooleanExtra("IS_BOOTSTRAPPER", false); // 是否为引导程序
+        String gameBasePath = getIntent().getStringExtra("GAME_BASE_PATH"); // 游戏根目录路径（仅引导程序使用）
+        String bootstrapperAssemblyPath = getIntent().getStringExtra("BOOTSTRAPPER_ASSEMBLY_PATH"); // 引导程序程序集路径（仅引导程序使用）
+        String bootstrapperEntryPoint = getIntent().getStringExtra("BOOTSTRAPPER_ENTRY_POINT"); // 引导程序入口点（仅引导程序使用）
+        String bootstrapperCurrentDir = getIntent().getStringExtra("BOOTSTRAPPER_CURRENT_DIR"); // 引导程序工作目录（仅引导程序使用）
 
-        // 如有按次覆盖的运行时偏好，从 Intent 写入到 app_prefs 供本次启动解析
-        if (runtimePref != null && !runtimePref.isEmpty()) {
-            try { RuntimePreference.setDotnetFramework(this, runtimePref); }
-            catch (Throwable t) { Log.w(TAG, "Failed to apply runtime preference from intent: " + t.getMessage()); }
+        if (!isBootstrapper){
+            Log.d(TAG, "启动游戏: " + gameName);
+            Log.d(TAG, "程序集路径: " + assemblyPath);
+            Log.d(TAG, "游戏本体路径: " + gameBodyPath);
+            Log.d(TAG, "ModLoader 启用: " + modLoaderEnabled);
+
+            // 如有按次覆盖的运行时偏好，从 Intent 写入到 app_prefs 供本次启动解析
+            if (runtimePref != null && !runtimePref.isEmpty()) {
+                try { RuntimePreference.setDotnetFramework(this, runtimePref); }
+                catch (Throwable t) { Log.w(TAG, "Failed to apply runtime preference from intent: " + t.getMessage()); }
+            }
+
+            setLaunchParams();
+        } else {
+            Log.d(TAG, "启动 Bootstrapper");
+            Log.d(TAG, "游戏根目录路径: " + gameBasePath);
+            Log.d(TAG, "Bootstrapper 程序集路径: " + bootstrapperAssemblyPath);
+            Log.d(TAG, "Bootstrapper 入口点: " + bootstrapperEntryPoint);
+            Log.d(TAG, "Bootstrapper 工作目录: " + bootstrapperCurrentDir);
+
+            if (gameBasePath == null || bootstrapperAssemblyPath == null || bootstrapperEntryPoint == null || bootstrapperCurrentDir == null) {
+                Log.e(TAG, "Bootstrapper 启动参数不完整");
+                runOnUiThread(() -> {
+                    Toast.makeText(this, "Bootstrapper 启动参数不完整", Toast.LENGTH_SHORT).show();
+                });
+                finish();
+            }
+
+            setBootstrapperParams(gameBasePath, bootstrapperAssemblyPath, bootstrapperEntryPoint, bootstrapperCurrentDir);
         }
-
-        setLaunchParams();
     }
 
     @Override
@@ -186,6 +210,39 @@ public class GameActivity extends SDLActivity {
             Log.e(TAG, "Error setting launch parameters: " + e.getMessage(), e);
             runOnUiThread(() -> {
                 Toast.makeText(this, "设置启动参数失败: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            });
+        }
+    }
+
+    private void setBootstrapperParams(String gameBasePath, String bootstrapperAssemblyPath, String bootstrapperEntryPoint, String bootstrapperCurrentDir) {
+        try {
+            Log.d(TAG, "Setting bootstrapper parameters for SDL_main...");
+
+            // 验证引导程序程序集文件是否存在
+            File assemblyFile = new File(bootstrapperAssemblyPath);
+            if (!assemblyFile.exists() || !assemblyFile.isFile()) {
+                Log.e(TAG, "Bootstrapper assembly file not found: " + bootstrapperAssemblyPath);
+                runOnUiThread(() -> {
+                    Toast.makeText(this, "引导程序程序集文件不存在: " + bootstrapperAssemblyPath, Toast.LENGTH_LONG).show();
+                });
+                return;
+            }
+
+            // 直接启动引导程序程序集
+            int result = GameLauncher.launchAssemblyDirect(this, bootstrapperAssemblyPath);
+
+            if (result == 0) {
+                Log.d(TAG, "Bootstrapper parameters set successfully, SDL_main will handle the execution");
+            } else {
+                Log.e(TAG, "Failed to set bootstrapper parameters: " + result);
+                runOnUiThread(() -> {
+                    Toast.makeText(this, "设置引导程序参数失败: " + result, Toast.LENGTH_LONG).show();
+                });
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error setting bootstrapper parameters: " + e.getMessage(), e);
+            runOnUiThread(() -> {
+                Toast.makeText(this, "设置引导程序参数失败: " + e.getMessage(), Toast.LENGTH_LONG).show();
             });
         }
     }

@@ -1,13 +1,16 @@
 package com.app.ralaunch.game;
 
 import android.content.Context;
+import android.content.Intent;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.app.ralaunch.activity.GameActivity;
+import com.app.ralaunch.adapter.GameItem;
+
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.nio.file.Paths;
 import java.util.Enumeration;
@@ -26,9 +29,13 @@ public class Bootstrapper {
         this.bootstrapperBasePath = Objects.requireNonNull(bootstrapperBasePath);
     }
 
-    public int launch(Context ctx, String gameBasePath) {
+    public int launch(Context ctx, GameItem game) {
         Log.i(TAG, "Launching bootstrapper");
-        // TODO: Implement bootstrapper launch logic
+        Intent intent = new Intent(ctx, GameActivity.class);
+        intent.putExtra("IS_BOOTSTRAPPER", true);
+
+        // TODO: set parameters
+        ctx.startActivity(intent);
         return 0;
     }
 
@@ -85,13 +92,9 @@ public class Bootstrapper {
                     }
 
                     // Extract file
-                    try (InputStream in = zipFile.getInputStream(entry);
-                         FileOutputStream out = new FileOutputStream(entryDestination)) {
-                        byte[] buffer = new byte[8192];
-                        int length;
-                        while ((length = in.read(buffer)) > 0) {
-                            out.write(buffer, 0, length);
-                        }
+                    try (InputStream in = zipFile.getInputStream(entry)) {
+                        java.nio.file.Files.copy(in, entryDestination.toPath(), 
+                            java.nio.file.StandardCopyOption.REPLACE_EXISTING);
                         Log.d(TAG, "Extracted: " + entry.getName());
                     }
                 }

@@ -33,6 +33,7 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.app.ralaunch.R;
+import com.app.ralaunch.RaLaunchApplication;
 import com.app.ralaunch.fragment.AddGameOptionsFragment;
 import com.app.ralaunch.fragment.ControlLayoutFragment;
 import com.app.ralaunch.fragment.FileBrowserFragment;
@@ -41,7 +42,6 @@ import com.app.ralaunch.fragment.LocalImportFragment;
 import com.app.ralaunch.adapter.GameAdapter;
 import com.app.ralaunch.adapter.GameItem;
 import com.app.ralaunch.fragment.SettingsFragment;
-import com.app.ralaunch.utils.GameDataManager;
 import com.app.ralaunch.utils.PageManager;
 import com.daimajia.androidanimations.library.Techniques;
 import com.app.ralaunch.utils.PermissionHelper;
@@ -65,11 +65,8 @@ public class MainActivity extends AppCompatActivity implements
     private RecyclerView gameRecyclerView;
     private GameAdapter gameAdapter;
     private List<GameItem> gameList;
-    private GameDataManager gameDataManager;
-
-    // 权限请求
-    private ActivityResultLauncher<String[]> requestPermissionLauncher;
     private ActivityResultLauncher<Intent> manageAllFilesLauncher;
+    private ActivityResultLauncher<String[]> requestPermissionLauncher;
     private PermissionCallback currentPermissionCallback;
 
     // 界面控件
@@ -109,21 +106,16 @@ public class MainActivity extends AppCompatActivity implements
 
         setContentView(R.layout.activity_main);
 
+        // 初始化界面
+        setupUI();
 
         // 初始化权限请求
         initializePermissionLaunchers();
 
-        // 初始化游戏数据管理器
-        gameDataManager = new GameDataManager(this);
-
-        initializeGameData();
-        setupUI();
-
         // 检查初始化状态
         SharedPreferences prefs = getSharedPreferences("app_prefs", MODE_PRIVATE);
-        boolean legalAgreed = prefs.getBoolean("legal_agreed", false);
         boolean componentsExtracted = prefs.getBoolean("components_extracted", false);
-
+        boolean legalAgreed = prefs.getBoolean("legal_agreed", false);
         if (!legalAgreed || !componentsExtracted) {
             showInitializationFragment();
         } else {
@@ -212,7 +204,7 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     private void initializeGameData() {
-        gameList = gameDataManager.loadGameList();
+        gameList = RaLaunchApplication.getGameDataManager().loadGameList();
     }
 
     private void setupUI() {
@@ -278,7 +270,7 @@ public class MainActivity extends AppCompatActivity implements
             if (selectedGame != null) {
                 selectedGame.setModLoaderEnabled(isChecked);
                 // 保存状态到配置文件
-                gameDataManager.saveGameList(gameList);
+                RaLaunchApplication.getGameDataManager().saveGameList(gameList);
                 showToast(isChecked ? "已启用 ModLoader" : "已禁用 ModLoader");
             }
         });
@@ -301,7 +293,7 @@ public class MainActivity extends AppCompatActivity implements
                 // 更新游戏路径
                 selectedGame.setGamePath(newPath);
                 // 保存到配置文件
-                gameDataManager.saveGameList(gameList);
+                RaLaunchApplication.getGameDataManager().saveGameList(gameList);
                 showToast("程序集路径已保存");
                 
                 Log.d("MainActivity", "Updated game path: " + newPath);
@@ -477,9 +469,9 @@ public class MainActivity extends AppCompatActivity implements
 
     // 实现 OnImportCompleteListener
     @Override
-    public void onImportComplete(String gameType, String gameName, String gamePath, String gameBodyPath, String engineType, String iconPath) {
+    public void onImportComplete(String gameType, GameItem newGame) {
         // 导入完成后直接添加游戏到列表
-        addGameToList(gameType, gameName, gamePath, gameBodyPath, engineType, iconPath);
+        addGameToList(gameType, newGame);
     }
 
     private void onBackFromLocalImport() {
@@ -501,7 +493,7 @@ public class MainActivity extends AppCompatActivity implements
         getSupportFragmentManager().popBackStack("add_game", FragmentManager.POP_BACK_STACK_INCLUSIVE);
     }
 
-    private void addGameToList(String gameType, String gameName, String gamePath, String gameBodyPath, String engineType, String iconPath) {
+    private void addGameToList(String gameType, GameItem newGame) {
         int iconResId = R.drawable.ic_game_default;
 
         switch (gameType) {
@@ -514,29 +506,22 @@ public class MainActivity extends AppCompatActivity implements
                 break;
         }
 
-        File gameFile = new File(gamePath);
-        if (!gameFile.exists()) {
-            showToast("警告: 游戏文件路径不存在: " + gamePath);
-        }
+        newGame.setIconResId(iconResId);
 
-        GameItem newGame = new GameItem(gameName, gamePath, iconResId);
-        newGame.setEngineType(engineType);
-        
-        // 如果有自定义图标路径，设置它
-        if (iconPath != null && new File(iconPath).exists()) {
-            newGame.setIconPath(iconPath);
-            Log.d("MainActivity", "Set custom icon path: " + iconPath);
+        File gameFile = new File(newGame.getGamePath());
+        if (!gameFile.exists()) {
+            showToast("警告: 游戏文件路径不存在: " + newGame.getGamePath());
         }
         
-        // 对于 modloader，保存游戏本体路径
-        if (gameBodyPath != null) {
-            newGame.setGameBodyPath(gameBodyPath);
-            Log.d("MainActivity", "Set game body path: " + gameBodyPath);
+        // 检查自定义图标路径
+        if (newGame.getIconPath() == null || !new File(newGame.getIconPath()).exists()) {
+            newGame.setIconPath(null);
+            Log.d("MainActivity", "invalid icon path: " + newGame.getIconPath());
         }
 
         gameList.add(0, newGame);
         gameAdapter.updateGameList(gameList);
-        gameDataManager.addGame(newGame);
+        RaLaunchApplication.getGameDataManager().addGame(newGame);
 
         showToast("游戏添加成功！");
         hideAddGameFragment();
@@ -546,7 +531,7 @@ public class MainActivity extends AppCompatActivity implements
         YoYo.with(Techniques.Flash)
                 .duration(600)
                 .playOn(gameRecyclerView);
-
+        gameList = RaLaunchApplication.getGameDataManager().loadGameList();
         gameAdapter.updateGameList(gameList);
         showToast("游戏列表已刷新");
     }
@@ -564,10 +549,10 @@ public class MainActivity extends AppCompatActivity implements
 
         new AlertDialog.Builder(this)
                 .setTitle("删除游戏")
-                .setMessage("确定要删除 " + game.getGameName() + " 吗？")
+                .setMessage(String.format("确定要删除 %s 吗？", game.getGameName()))
                 .setPositiveButton("删除", (dialog, which) -> {
                     gameAdapter.removeGame(position);
-                    gameDataManager.removeGame(position);
+                    RaLaunchApplication.getGameDataManager().removeGame(position);
                     showToast("游戏已删除");
                 })
                 .setNegativeButton("取消", null)

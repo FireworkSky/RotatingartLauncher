@@ -86,9 +86,11 @@ public final class RuntimeManager {
     }
 
     private static boolean assetExists(Context ctx, String name) {
-        try { InputStream is = ctx.getAssets().open(name); if (is != null) { is.close(); return true; } }
-        catch (Exception ignored) {}
-        return false;
+        try (InputStream is = ctx.getAssets().open(name)) {
+            return true;
+        } catch (Exception ignored) {
+            return false;
+        }
     }
 
     private static void copyAssetDirRecursively(Context ctx, String assetDir, File destRoot) throws Exception {
@@ -104,8 +106,7 @@ public final class RuntimeManager {
                 File parent = out.getParentFile();
                 if (parent != null && !parent.exists()) parent.mkdirs();
                 try (InputStream is = ctx.getAssets().open(assetPath); FileOutputStream fos = new FileOutputStream(out)) {
-                    byte[] buf = new byte[8192]; int len;
-                    while ((len = is.read(buf)) > 0) fos.write(buf, 0, len);
+                    StreamUtils.transferTo(is, fos);
                 }
             }
         }
@@ -115,18 +116,17 @@ public final class RuntimeManager {
         destDir.mkdirs();
         try (InputStream is = ctx.getAssets().open(assetPath); ZipInputStream zis = new ZipInputStream(is)) {
             ZipEntry entry;
-            byte[] buf = new byte[8192];
             while ((entry = zis.getNextEntry()) != null) {
                 File out = new File(destDir, entry.getName());
                 if (entry.isDirectory()) {
                     out.mkdirs();
                 } else {
                     File parent = out.getParentFile();
-                    if (parent != null && !parent.exists()) parent.mkdirs();
-                    try (FileOutputStream fos = new FileOutputStream(out)) {
-                        int len;
-                        while ((len = zis.read(buf)) > 0) fos.write(buf, 0, len);
+                    if (parent != null && !parent.exists()) {
+                        parent.mkdirs();
                     }
+                    java.nio.file.Files.copy(zis, out.toPath(),
+                        java.nio.file.StandardCopyOption.REPLACE_EXISTING);
                 }
                 zis.closeEntry();
             }

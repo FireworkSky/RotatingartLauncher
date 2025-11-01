@@ -15,10 +15,18 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import com.app.ralaunch.R;
 import com.app.ralaunch.activity.MainActivity;
+import com.app.ralaunch.adapter.GameItem;
+import com.app.ralaunch.game.Bootstrapper;
+import com.app.ralaunch.game.BootstrapperManifest;
 import com.app.ralaunch.utils.GameExtractor;
 import com.app.ralaunch.utils.GameInfoParser;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.LinkOption;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 /**
  * 本地导入Fragment
@@ -34,22 +42,27 @@ import java.io.File;
  */
 public class LocalImportFragment extends Fragment {
 
+    private static final String TAG = "LocalImportFragment";
+
     private OnImportCompleteListener importCompleteListener;
     private OnBackListener backListener;
 
     // 界面控件
     private Button selectGameFileButton;
     private Button selectModLoaderButton;
+    private Button selectBootstrapperButton;
     private Button startImportButton;
     private LinearLayout importProgressContainer;
     private ProgressBar importProgress;
     private TextView importStatus;
     private TextView gameFileText;
     private TextView modLoaderFileText;
+    private TextView bootstrapperFileText;
 
     // 文件路径
     private String gameFilePath;
     private String modLoaderFilePath;
+    private String bootstrapperFilePath;
 
     // 游戏信息 - 将从.sh文件中读取
     private String gameType = "modloader";
@@ -60,7 +73,7 @@ public class LocalImportFragment extends Fragment {
     public static File gameDir;
 
     public interface OnImportCompleteListener {
-        void onImportComplete(String gameType, String gameName, String gamePath, String gameBodyPath, String engineType, String iconPath);
+        void onImportComplete(String gameType, GameItem newGame);
     }
 
     public interface OnBackListener {
@@ -95,16 +108,19 @@ public class LocalImportFragment extends Fragment {
         // 初始化控件
         selectGameFileButton = view.findViewById(R.id.selectGameFileButton);
         selectModLoaderButton = view.findViewById(R.id.selectModLoaderButton);
+        selectBootstrapperButton = view.findViewById(R.id.selectBootstrapperButton);
         startImportButton = view.findViewById(R.id.startImportButton);
         importProgressContainer = view.findViewById(R.id.importProgressContainer);
         importProgress = view.findViewById(R.id.importProgress);
         importStatus = view.findViewById(R.id.importStatus);
         gameFileText = view.findViewById(R.id.gameFileText);
         modLoaderFileText = view.findViewById(R.id.modLoaderFileText);
+        bootstrapperFileText = view.findViewById(R.id.bootstrapperFileText);
 
         // 设置按钮点击事件
         selectGameFileButton.setOnClickListener(v -> selectGameFile());
         selectModLoaderButton.setOnClickListener(v -> selectModLoaderFile());
+        selectBootstrapperButton.setOnClickListener(v -> selectBootstrapperFile());
         startImportButton.setOnClickListener(v -> startImport());
 
         // 初始状态
@@ -127,8 +143,8 @@ public class LocalImportFragment extends Fragment {
                             if (getActivity() != null) {
                                 ((MainActivity) getActivity()).showToast("检测到游戏: " + gameName + " " + gameVersion);
                             }
-                            Log.d("LocalImportFragment", "Game info: " + gameInfo);
-                            Log.d("LocalImportFragment", "Icon path: " + gameIconPath);
+                            Log.d(TAG, "Game info: " + gameInfo);
+                            Log.d(TAG, "Icon path: " + gameIconPath);
                         } else {
                             gameName = "未知游戏";
                             if (getActivity() != null) {
@@ -147,6 +163,15 @@ public class LocalImportFragment extends Fragment {
             modLoaderFilePath = filePath;
             File file = new File(modLoaderFilePath);
             modLoaderFileText.setText("已选择: " + file.getName());
+            updateImportButtonState();
+        });
+    }
+
+    private void selectBootstrapperFile() {
+        openFileBrowser("bootstrapper", new String[]{".zip"}, filePath -> {
+            bootstrapperFilePath = filePath;
+            File file = new File(bootstrapperFilePath);
+            bootstrapperFileText.setText("已选择: " + file.getName());
             updateImportButtonState();
         });
     }
@@ -195,15 +220,15 @@ public class LocalImportFragment extends Fragment {
         startImportButton.setEnabled(false);
 
         // 添加日志检查gameName的值
-        Log.d("LocalImportFragment", "startImport() - gameName: " + gameName);
-        Log.d("LocalImportFragment", "startImport() - gameVersion: " + gameVersion);
-        Log.d("LocalImportFragment", "startImport() - gameIconPath: " + gameIconPath);
-        Log.d("LocalImportFragment", "startImport() - gameFilePath: " + gameFilePath);
-        Log.d("LocalImportFragment", "startImport() - hasModLoader: " + hasModLoader);
-        
+        Log.d(TAG, "startImport() - gameName: " + gameName);
+        Log.d(TAG, "startImport() - gameVersion: " + gameVersion);
+        Log.d(TAG, "startImport() - gameIconPath: " + gameIconPath);
+        Log.d(TAG, "startImport() - gameFilePath: " + gameFilePath);
+        Log.d(TAG, "startImport() - hasModLoader: " + hasModLoader);
+
         // 如果游戏信息丢失，重新解析
         if (gameName == null || gameVersion == null) {
-            Log.w("LocalImportFragment", "Game info lost, re-parsing...");
+            Log.w(TAG, "Game info lost, re-parsing...");
             importStatus.setText("正在读取游戏信息...");
             
             new Thread(() -> {
@@ -214,9 +239,9 @@ public class LocalImportFragment extends Fragment {
                             gameName = gameInfo.name;
                             gameVersion = gameInfo.version;
                             gameIconPath = gameInfo.iconPath;
-                            Log.d("LocalImportFragment", "Re-parsed game info: " + gameName + " " + gameVersion);
-                            Log.d("LocalImportFragment", "Re-parsed icon path: " + gameIconPath);
-                            
+                            Log.d(TAG, "Re-parsed game info: " + gameName + " " + gameVersion);
+                            Log.d(TAG, "Re-parsed icon path: " + gameIconPath);
+
                             // 继续导入
                             continueImport();
                         } else {
@@ -239,29 +264,22 @@ public class LocalImportFragment extends Fragment {
         // 创建游戏目录
         gameDir = createGameDirectory();
         String outputPath = gameDir.getAbsolutePath();
-        Log.d("LocalImportFragment", "Created game directory: " + outputPath);
-        
+        Log.d(TAG, "Created game directory: " + outputPath);
+
         // 复制图标到游戏目录
-        if (gameIconPath != null && new File(gameIconPath).exists()) {
-            try {
-                File iconSource = new File(gameIconPath);
-                File iconDest = new File(gameDir, "icon.png");
-                
-                java.io.FileInputStream fis = new java.io.FileInputStream(iconSource);
-                java.io.FileOutputStream fos = new java.io.FileOutputStream(iconDest);
-                byte[] buffer = new byte[8192];
-                int read;
-                while ((read = fis.read(buffer)) != -1) {
-                    fos.write(buffer, 0, read);
+        if (gameIconPath != null) {
+            Path iconSrc = Paths.get(gameIconPath);
+            if (Files.exists(iconSrc) && Files.isRegularFile(iconSrc)) {
+                try {
+                    Path iconDest = Paths.get(gameDir.getAbsolutePath(), "icon.png");
+                    Files.copy(iconSrc, iconDest, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+
+                    // 更新图标路径为游戏目录中的路径
+                    gameIconPath = iconDest.toAbsolutePath().toString();
+                    Log.d(TAG, "Icon copied to: " + gameIconPath);
+                } catch (Exception e) {
+                    Log.e(TAG, "Failed to copy icon", e);
                 }
-                fis.close();
-                fos.close();
-                
-                // 更新图标路径为游戏目录中的路径
-                gameIconPath = iconDest.getAbsolutePath();
-                Log.d("LocalImportFragment", "Icon copied to: " + gameIconPath);
-            } catch (Exception e) {
-                Log.e("LocalImportFragment", "Failed to copy icon", e);
             }
         }
 
@@ -296,7 +314,7 @@ public class LocalImportFragment extends Fragment {
 
                                 // 验证程序集文件是否存在
                                 if (!assemblyFile.exists()) {
-                                    Log.w("LocalImportFragment", "ModLoader.dll not found at: " + finalGamePath);
+                                    Log.w(TAG, "ModLoader.dll not found at: " + finalGamePath);
                                     finalGamePath = modLoaderPath;
                                 }
                                 
@@ -305,18 +323,32 @@ public class LocalImportFragment extends Fragment {
                                 File gameBodyFile = new File(gamePath, "Terraria.exe");
                                 if (gameBodyFile.exists()) {
                                     gameBodyPath = gameBodyFile.getAbsolutePath();
-                                    Log.d("LocalImportFragment", "Game body path: " + gameBodyPath);
+                                    Log.d(TAG, "Game body path: " + gameBodyPath);
                                 } else {
-                                    Log.w("LocalImportFragment", "Terraria.exe not found at: " + gameBodyFile.getAbsolutePath());
+                                    Log.w(TAG, "Terraria.exe not found at: " + gameBodyFile.getAbsolutePath());
                                 }
 
-                                Log.d("LocalImportFragment", "Final game path: " + finalGamePath);
-                                Log.d("LocalImportFragment", "GameExtractor returned gamePath: " + gamePath);
-                                Log.d("LocalImportFragment", "GameExtractor returned modLoaderPath: " + modLoaderPath);
+                                Log.d(TAG, "Final game path: " + finalGamePath);
+                                Log.d(TAG, "GameExtractor returned gamePath: " + gamePath);
+                                Log.d(TAG, "GameExtractor returned modLoaderPath: " + modLoaderPath);
+
+                                var newGame = new GameItem();
+                                newGame.setGameName(gameName);
+                                try {
+                                    newGame.setGameBasePath(gameDir.getCanonicalPath());
+                                } catch (IOException e) {
+                                    throw new RuntimeException(e);
+                                }
+                                newGame.setGamePath(finalGamePath);
+                                newGame.setGameBodyPath(gameBodyPath);
+                                newGame.setEngineType(engineType);
+                                newGame.setIconPath(gameIconPath);
+
+                                tryToImportBootstrapper(newGame);
 
                                 // 导入完成，返回结果
                                 if (importCompleteListener != null) {
-                                    importCompleteListener.onImportComplete(gameType, gameName, finalGamePath, gameBodyPath, engineType, gameIconPath);
+                                    importCompleteListener.onImportComplete(gameType, newGame);
                                 }
                             });
                             }
@@ -361,15 +393,28 @@ public class LocalImportFragment extends Fragment {
                                 String finalGamePath = gameFile.getAbsolutePath();
                                 
                                 if (!gameFile.exists()) {
-                                    Log.w("LocalImportFragment", "Terraria.exe not found at: " + finalGamePath);
+                                    Log.w(TAG, "Terraria.exe not found at: " + finalGamePath);
                                     finalGamePath = gamePath;
                                 }
 
-                                Log.d("LocalImportFragment", "Pure game path: " + finalGamePath);
+                                Log.d(TAG, "Pure game path: " + finalGamePath);
+
+                                var newGame = new GameItem();
+                                newGame.setGameName(gameName);
+                                try {
+                                    newGame.setGameBasePath(gameDir.getCanonicalPath());
+                                } catch (IOException e) {
+                                    throw new RuntimeException(e);
+                                }
+                                newGame.setGamePath(finalGamePath);
+                                newGame.setEngineType(engineType);
+                                newGame.setIconPath(gameIconPath);
+
+                                tryToImportBootstrapper(newGame);
 
                                 // 导入完成，返回结果（纯游戏没有 gameBodyPath）
                                 if (importCompleteListener != null) {
-                                    importCompleteListener.onImportComplete(gameType, gameName, finalGamePath, null, engineType, gameIconPath);
+                                    importCompleteListener.onImportComplete(gameType, newGame);
                                 }
                             });
                             }
@@ -389,6 +434,34 @@ public class LocalImportFragment extends Fragment {
                         }
                     });
         }
+    }
+
+    private boolean tryToImportBootstrapper(GameItem newGame) {
+        try {
+            boolean hasBootstrapper = bootstrapperFilePath != null && !bootstrapperFilePath.isEmpty();
+            if (hasBootstrapper && Files.exists(Paths.get(bootstrapperFilePath)) && Files.isRegularFile(Paths.get(bootstrapperFilePath))) {
+                Log.d(TAG, "Bootstrapper selected: " + bootstrapperFilePath);
+                // 处理 Bootstrapper 的逻辑（如果需要）
+                // 目前假设 Bootstrapper 不影响导入流程
+                var manifest = BootstrapperManifest.FromZip(bootstrapperFilePath);
+                if (manifest == null) {
+                    Log.e(TAG, "Failed to read bootstrapper manifest");
+                    return false;
+                }
+
+                if (!Bootstrapper.ExtractBootstrapper(bootstrapperFilePath, newGame.getGameBasePath())) {
+                    Log.e(TAG, "Failed to extract bootstrapper");
+                    return false;
+                }
+
+                newGame.setBootstrapperPresent(true);
+                newGame.setBootstrapperBasePath(manifest.getExtractDirectory());
+                return true;
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to extract bootstrapper", e);
+        }
+        return false;
     }
 
     private File createGameDirectory() {

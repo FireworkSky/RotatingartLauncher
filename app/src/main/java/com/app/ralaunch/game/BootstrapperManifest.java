@@ -24,6 +24,9 @@ public class BootstrapperManifest {
             .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
             .create();
 
+    @SerializedName("game_id")
+    private String gameId = ""; // e.g. "tModLoader"
+
     @SerializedName("dotnet_version")
     private String dotnetVersion = "";
 
@@ -31,13 +34,13 @@ public class BootstrapperManifest {
     private Map<String, String> runtimeProperties;
 
     @SerializedName("entry_assembly")
-    private String entryAssembly = "";
+    private String entryAssembly = ""; // path relative to game_path
 
     @SerializedName("entry_point")
     private String entryPoint = "";
 
     @SerializedName("working_directory")
-    private String workingDirectory = "";
+    private String workingDirectory = ""; // path relative to game_path
 
     @SerializedName("envs")
     private Map<String, String> envs;
@@ -46,9 +49,17 @@ public class BootstrapperManifest {
     private List<String> args;
 
     @SerializedName("extract_directory")
-    private String extractDirectory = "";
+    private String extractDirectory = ""; // path relative to game_path
 
     // Getters and Setters
+    public String getGameId() {
+        return gameId;
+    }
+
+    public void setGameId(String gameId) {
+        this.gameId = gameId;
+    }
+
     public String getDotnetVersion() {
         return dotnetVersion;
     }

@@ -16,6 +16,7 @@
         android:required="true" />
 
     <application
+        android:name=".RaLaunchApplication"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:enableOnBackInvokedCallback="true"

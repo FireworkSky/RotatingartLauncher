@@ -2,6 +2,8 @@ package com.app.ralaunch.utils;
 
 import android.util.Log;
 
+import com.app.ralaunch.RaLaunchApplication;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -78,8 +80,9 @@ public class GameInfoParser {
 
                 Log.d(TAG, "Found offset(lines): " + info.offset + ", filesize: " + info.filesize);
 
-                // 2. 创建临时目录（使用线程ID确保唯一性）
-                File tempDir = new File(shFile.getParent(), ".temp_extract_" + Thread.currentThread().getId());
+                // 2. 创建临时目录（使用应用程序cache目录）
+                File tempDir = new File(RaLaunchApplication.getAppContext().getCacheDir(),
+                    "temp_extract_" + Thread.currentThread().getId());
                 if (!tempDir.exists()) {
                     tempDir.mkdirs();
                 }
@@ -297,11 +300,7 @@ public class GameInfoParser {
                 
                 try (java.io.InputStream is = zf.getInputStream(gameinfoEntry);
                      java.io.FileOutputStream fos = new java.io.FileOutputStream(gameinfoFile)) {
-                    byte[] buffer = new byte[8192];
-                    int read;
-                    while ((read = is.read(buffer)) != -1) {
-                        fos.write(buffer, 0, read);
-                    }
+                    StreamUtils.transferTo(is, fos);
                 }
                 Log.d(TAG, "Gameinfo extracted to: " + gameinfoFile.getAbsolutePath());
             } else {
@@ -316,11 +315,7 @@ public class GameInfoParser {
                 
                 try (java.io.InputStream is = zf.getInputStream(iconEntry);
                      java.io.FileOutputStream fos = new java.io.FileOutputStream(iconFile)) {
-                    byte[] buffer = new byte[8192];
-                    int read;
-                    while ((read = is.read(buffer)) != -1) {
-                        fos.write(buffer, 0, read);
-                    }
+                    StreamUtils.transferTo(is, fos);
                 }
                 iconPath = iconFile.getAbsolutePath();
                 Log.d(TAG, "Icon extracted to: " + iconPath);
@@ -423,12 +418,7 @@ public class GameInfoParser {
         try {
             File gameinfoFile = new File(outputDir, "gameinfo");
             try (java.io.FileOutputStream fos = new java.io.FileOutputStream(gameinfoFile)) {
-                byte[] buffer = new byte[8192];
-                int read;
-                
-                while ((read = zis.read(buffer)) != -1) {
-                    fos.write(buffer, 0, read);
-                }
+                StreamUtils.transferTo(zis, fos);
             }
             Log.d(TAG, "Gameinfo extracted from ZIP to: " + gameinfoFile.getAbsolutePath());
             return gameinfoFile;
@@ -445,12 +435,7 @@ public class GameInfoParser {
         try {
             File iconFile = new File(outputDir, "icon.png");
             try (java.io.FileOutputStream fos = new java.io.FileOutputStream(iconFile)) {
-                byte[] buffer = new byte[8192];
-                int read;
-                
-                while ((read = zis.read(buffer)) != -1) {
-                    fos.write(buffer, 0, read);
-                }
+                StreamUtils.transferTo(zis, fos);
             }
             Log.d(TAG, "Icon extracted from ZIP to: " + iconFile.getAbsolutePath());
             return iconFile.getAbsolutePath();
