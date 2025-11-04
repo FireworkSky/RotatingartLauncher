@@ -26,6 +26,12 @@ int g_verboseLogging = 0;
 /** 全局渲染器类型 */
 char* g_renderer = NULL;
 
+/** Bootstrap DLL 路径 */
+char* g_bootstrapDll = NULL;
+
+/** 目标游戏程序集路径 */
+char* g_targetGameAssembly = NULL;
+
 /**
  * @brief 清理所有全局内存分配
  * 
@@ -37,7 +43,10 @@ void CleanupGlobalMemory() {
     free(g_dotnetPath);
     free(g_frameworkVersion);
     free(g_renderer);
+    free(g_bootstrapDll);
+    free(g_targetGameAssembly);
     g_appPath = g_dotnetPath = g_frameworkVersion = g_renderer = NULL;
+    g_bootstrapDll = g_targetGameAssembly = NULL;
 }
 
 /**
@@ -50,7 +59,16 @@ void CleanupGlobalMemory() {
  * 如果参数为 NULL，对应的全局变量将保持为 NULL。
  */
 void Params_SetLaunch(const char* appPath, const char* dotnetPath) {
+    // ⚠️ 保存全局设置（这些不应该被清理）
+    char* savedRenderer = g_renderer ? strdup(g_renderer) : NULL;
+    int savedVerboseLogging = g_verboseLogging;
+    
     CleanupGlobalMemory();
+    
+    // ⚠️ 恢复全局设置
+    g_renderer = savedRenderer;
+    g_verboseLogging = savedVerboseLogging;
+    
     if (appPath) g_appPath = strdup(appPath);
     if (dotnetPath) g_dotnetPath = strdup(dotnetPath);
     LOGI("Launch params set: appPath=%s, dotnetPath=%s", g_appPath, g_dotnetPath);
@@ -68,11 +86,54 @@ void Params_SetLaunch(const char* appPath, const char* dotnetPath) {
  * 表示使用自动版本选择（通常选择最高可用版本）。
  */
 void Params_SetLaunchWithRuntime(const char* appPath, const char* dotnetPath, const char* frameworkVersion) {
+    // ⚠️ 保存全局设置（这些不应该被清理）
+    char* savedRenderer = g_renderer ? strdup(g_renderer) : NULL;
+    int savedVerboseLogging = g_verboseLogging;
+    
     CleanupGlobalMemory();
+    
+    // ⚠️ 恢复全局设置
+    g_renderer = savedRenderer;
+    g_verboseLogging = savedVerboseLogging;
+    
     if (appPath) g_appPath = strdup(appPath);
     if (dotnetPath) g_dotnetPath = strdup(dotnetPath);
     if (frameworkVersion && frameworkVersion[0]) g_frameworkVersion = strdup(frameworkVersion);
     LOGI("Launch params set: appPath=%s, dotnetPath=%s, frameworkVersion=%s", g_appPath, g_dotnetPath, g_frameworkVersion ? g_frameworkVersion : "<auto>");
+}
+
+/**
+ * @brief 设置Bootstrap启动参数
+ * 
+ * @param bootstrapDll Bootstrap程序集路径
+ * @param targetGameAssembly 目标游戏程序集路径
+ * @param dotnetPath .NET 运行时根目录路径
+ * 
+ * 此函数用于Bootstrap反射启动模式，Bootstrap将通过反射加载并启动目标游戏程序集。
+ */
+void Params_SetBootstrapLaunch(const char* bootstrapDll, const char* targetGameAssembly, const char* dotnetPath) {
+    // ⚠️ 保存全局设置（这些不应该被清理）
+    char* savedRenderer = g_renderer ? strdup(g_renderer) : NULL;
+    int savedVerboseLogging = g_verboseLogging;
+    
+    // 先清理旧的全局变量
+    CleanupGlobalMemory();
+    
+    // ⚠️ 恢复全局设置
+    g_renderer = savedRenderer;
+    g_verboseLogging = savedVerboseLogging;
+    
+    // 设置Bootstrap特定的变量
+    if (bootstrapDll) g_bootstrapDll = strdup(bootstrapDll);
+    if (targetGameAssembly) g_targetGameAssembly = strdup(targetGameAssembly);
+    if (dotnetPath) g_dotnetPath = strdup(dotnetPath);
+    
+    // 同时设置传统的启动变量，以便 launch_with_coreclr_passthrough 可以使用
+    // 在Bootstrap模式下，主程序集是Bootstrap.dll
+    if (bootstrapDll) g_appPath = strdup(bootstrapDll);
+    
+    LOGI("Bootstrap launch params set: bootstrapDll=%s, targetGameAssembly=%s, dotnetPath=%s", 
+         g_bootstrapDll, g_targetGameAssembly, g_dotnetPath);
 }
 
 

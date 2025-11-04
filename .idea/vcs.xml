@@ -2,5 +2,11 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/app/src/main/cpp/FAudio" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/app/src/main/cpp/FNA3D" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/app/src/main/cpp/FNA3D/MojoShader" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/app/src/main/cpp/SDL3" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/app/src/main/cpp/Theorafile" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/build-tools/bootstrap" vcs="Git" />
   </component>
 </project>

@@ -87,6 +87,15 @@ public class GameLauncher {
     private static native void setLaunchParamsWithGameBody(String appPath, String gameBodyPath, String dotnetPath);
 
     /**
+     * JNI 方法：设置Bootstrap启动参数
+     * 
+     * @param bootstrapDll Bootstrap程序集路径
+     * @param targetGameAssembly 目标游戏程序集路径
+     * @param dotnetPath .NET 运行时根目录路径
+     */
+    private static native void setBootstrapLaunchParams(String bootstrapDll, String targetGameAssembly, String dotnetPath);
+
+    /**
      * 使用应用程序主机模式启动 .NET 应用
      * 
      * <p>此方法通过 SDL_main 入口点启动应用，适用于大多数 .NET 游戏。
@@ -372,5 +381,155 @@ public class GameLauncher {
             Log.w(TAG, "resolvePreferredFrameworkVersion failed: " + e.getMessage(), e);
             return null;
         }
+    }
+
+    /**
+     * 使用Bootstrap模式启动游戏
+     * 
+     * <p>Bootstrap模式通过反射加载并启动目标游戏程序集，允许在启动前执行自定义初始化逻辑。
+     * 
+     * @param context Android 上下文
+     * @param targetGameAssembly 目标游戏程序集路径（例如：tModLoader.dll）
+     * @return 0 表示参数设置成功，-1 表示失败
+     */
+    public static int launchWithBootstrap(Context context, String targetGameAssembly) {
+        try {
+            // 设置详细日志模式
+            boolean verboseLogging = RuntimePreference.isVerboseLogging(context);
+            setVerboseLogging(verboseLogging);
+            Log.d(TAG, "Verbose logging: " + (verboseLogging ? "enabled" : "disabled"));
+            
+            // 设置渲染器
+            String renderer = RuntimePreference.getEffectiveRenderer(context);
+            setRenderer(renderer);
+            Log.d(TAG, "Renderer set to: " + renderer);
+            
+            // 🐛 调试：检测设备架构
+            String deviceArch = com.app.ralaunch.utils.RuntimePreference.getDeviceArchitecture();
+            String userArch = com.app.ralaunch.utils.RuntimePreference.getArchitecture(context);
+            String effectiveArch = com.app.ralaunch.utils.RuntimePreference.getEffectiveArchitecture(context);
+            Log.d(TAG, "🔍 Architecture Detection:");
+            Log.d(TAG, "  Device Architecture: " + deviceArch);
+            Log.d(TAG, "  User Preference: " + userArch);
+            Log.d(TAG, "  Effective Architecture: " + effectiveArch);
+            
+            Log.d(TAG, "Preparing to launch with Bootstrap");
+            Log.d(TAG, "  Target Game: " + targetGameAssembly);
+
+            // 验证目标游戏文件存在性
+            File targetGameFile = new File(targetGameAssembly);
+            if (!targetGameFile.exists()) {
+                Log.e(TAG, "Target game assembly not found: " + targetGameAssembly);
+                return -1;
+            }
+
+            // 解压Bootstrap.zip到游戏目录的bootstrap文件夹
+            File gameDir = targetGameFile.getParentFile();
+            File bootstrapDir = new File(gameDir, "bootstrap");
+            
+            if (!bootstrapDir.exists()) {
+                bootstrapDir.mkdirs();
+                Log.d(TAG, "Created bootstrap directory: " + bootstrapDir.getAbsolutePath());
+            }
+
+            File bootstrapDll = new File(bootstrapDir, "Bootstrap.dll");
+            
+            // 总是重新解压Bootstrap.zip以确保使用最新版本
+            if (bootstrapDir.exists()) {
+                Log.d(TAG, "Deleting old bootstrap directory to update");
+                deleteRecursive(bootstrapDir);
+            }
+            
+            Log.d(TAG, "Extracting Bootstrap.zip to: " + bootstrapDir.getAbsolutePath());
+            
+            // 直接从assets解压Bootstrap.zip
+            try (java.io.InputStream is = context.getAssets().open("Bootstrap.zip");
+                 java.util.zip.ZipInputStream zis = new java.util.zip.ZipInputStream(is)) {
+                
+                java.util.zip.ZipEntry entry;
+                byte[] buffer = new byte[8192];
+                
+                while ((entry = zis.getNextEntry()) != null) {
+                    File entryFile = new File(bootstrapDir, entry.getName());
+                    
+                    if (entry.isDirectory()) {
+                        entryFile.mkdirs();
+                    } else {
+                        entryFile.getParentFile().mkdirs();
+                        
+                        try (java.io.FileOutputStream fos = new java.io.FileOutputStream(entryFile)) {
+                            int bytesRead;
+                            while ((bytesRead = zis.read(buffer)) != -1) {
+                                fos.write(buffer, 0, bytesRead);
+                            }
+                        }
+                    }
+                    zis.closeEntry();
+                }
+            }
+            
+            Log.d(TAG, "Bootstrap extracted successfully");
+
+            // 获取 .NET 运行时路径并构建 TPA/NSP
+            java.io.File dotnetRoot = com.app.ralaunch.utils.RuntimeManager.getDotnetRoot(context);
+            if (dotnetRoot == null || !dotnetRoot.exists()) {
+                Log.e(TAG, "Failed to get .NET runtime path");
+                return -1;
+            }
+
+            String selected = com.app.ralaunch.utils.RuntimeManager.getSelectedVersion(context);
+            if (selected == null) {
+                Log.e(TAG, "No runtime version installed");
+                return -1;
+            }
+
+            java.io.File runtimeVerDir = new java.io.File(com.app.ralaunch.utils.RuntimeManager.getSharedRoot(context), selected);
+            if (!runtimeVerDir.exists()) {
+                Log.e(TAG, "Runtime version dir missing: " + runtimeVerDir);
+                return -1;
+            }
+
+            // 构建游戏目录的 TPA (包含bootstrap子目录)
+            String tpa = com.app.ralaunch.utils.RuntimeManager.buildTrustedAssemblies(runtimeVerDir, gameDir);
+            String nsp = com.app.ralaunch.utils.RuntimeManager.buildNativeSearchPaths(runtimeVerDir, gameDir);
+
+            Log.d(TAG, "Using runtime version: " + selected);
+            Log.d(TAG, "TPA size: " + tpa.length() + " bytes");
+
+            // 设置完整的启动参数（包含 TPA 和 NSP）
+            setLaunchParamsFull(
+                bootstrapDll.getAbsolutePath(),  // appPath (Bootstrap.dll)
+                dotnetRoot.getAbsolutePath(),     // dotnetPath
+                gameDir.getAbsolutePath(),        // appDir (游戏目录)
+                tpa,                              // trustedAssemblies
+                nsp,                              // nativeSearchPaths
+                bootstrapDll.getAbsolutePath()    // mainAssemblyPath (Bootstrap.dll)
+            );
+            
+            // 设置Bootstrap参数（将目标游戏程序集路径传递给Native层）
+            setBootstrapLaunchParams(bootstrapDll.getAbsolutePath(), targetGameAssembly, dotnetRoot.getAbsolutePath());
+
+            Log.d(TAG, "Bootstrap launch parameters set successfully");
+            return 0;
+
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to prepare bootstrap launch", e);
+            return -1;
+        }
+    }
+    
+    /**
+     * 递归删除目录及其所有内容
+     */
+    private static void deleteRecursive(File fileOrDirectory) {
+        if (fileOrDirectory.isDirectory()) {
+            File[] children = fileOrDirectory.listFiles();
+            if (children != null) {
+                for (File child : children) {
+                    deleteRecursive(child);
+                }
+            }
+        }
+        fileOrDirectory.delete();
     }
 }

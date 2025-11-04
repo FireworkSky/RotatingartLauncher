@@ -16,4 +16,44 @@
     <string name="restart_app_message">Language settings have been changed. The app needs to restart to take effect.</string>
     <string name="ok">OK</string>
     <string name="later">Later</string>
+    
+    <!-- 游戏内菜单 -->
+    <string-array name="game_menu_items">
+        <item>切换控制显示</item>
+        <item>编辑控制布局</item>
+        <item>快速设置</item>
+        <item>退出游戏</item>
+    </string-array>
+    
+    <!-- 编辑模式菜单 -->
+    <string-array name="editor_menu_items">
+        <item>添加按钮</item>
+        <item>添加摇杆</item>
+        <item>保存布局</item>
+        <item>加载布局</item>
+        <item>重置为默认</item>
+        <item>退出编辑</item>
+    </string-array>
+    
+    <string name="game_menu_toggle_controls">切换控制显示</string>
+    <string name="game_menu_edit_controls">编辑控制布局</string>
+    <string name="game_menu_quick_settings">快速设置</string>
+    <string name="game_menu_exit">退出游戏</string>
+    <string name="game_menu_controls_on">控制已显示</string>
+    <string name="game_menu_controls_off">控制已隐藏</string>
+    <string name="game_menu_exit_confirm">确认退出</string>
+    <string name="game_menu_exit_message">是否退出游戏？</string>
+    <string name="game_menu_yes">是</string>
+    <string name="game_menu_no">否</string>
+    
+    <string name="editor_add_button">添加按钮</string>
+    <string name="editor_add_joystick">添加摇杆</string>
+    <string name="editor_save">保存布局</string>
+    <string name="editor_load">加载布局</string>
+    <string name="editor_reset">重置为默认</string>
+    <string name="editor_exit">退出编辑</string>
+    <string name="editor_mode_on">已进入编辑模式</string>
+    <string name="editor_mode_off">已退出编辑模式</string>
+    <string name="editor_exit_confirm">确认退出编辑</string>
+    <string name="editor_exit_message">是否退出编辑模式？未保存的修改将丢失。</string>
 </resources>

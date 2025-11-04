@@ -14,20 +14,19 @@ set(THEORAFILE_SOURCE_DIR ${CMAKE_SOURCE_DIR}/Theorafile)
 # 添加gl4es子项目
 add_subdirectory(${GL4ES_SOURCE_DIR})
 
-# 配置SDL：同时支持原生GLES和gl4es两种渲染器
+# 配置SDL：支持原生GLES和gl4es两种渲染器
 # 默认启用原生GLES（Android标准），gl4es作为可选项通过运行时切换
 set(SDL_VIDEO_OPENGL ON CACHE BOOL "Enable OpenGL support" FORCE)
 set(SDL_VIDEO_OPENGL_ES ON CACHE BOOL "Enable OpenGL ES (native renderer)" FORCE)
 set(SDL_VIDEO_OPENGL_EGL ON CACHE BOOL "Enable EGL (for native GLES)" FORCE)
 set(SDL_OPENGLES ON CACHE BOOL "Enable OpenGL ES" FORCE)
-# 添加全局编译定义，让SDL知道我们同时支持gl4es和native GLES
+# 添加全局编译定义，让SDL知道我们支持gl4es和native GLES
 add_compile_definitions(SDL_VIDEO_OPENGL_GL4ES)
 
 # 添加SDL子项目
 add_subdirectory(${SDL_SOURCE_DIR})
 
-# ⚠️ SDL2 需要链接 gl4es (GL) 以便 SDL_androidgl4es.c 能找到 AGL 符号
-# 在 Android 上使用 gl4es 时，SDL2 需要访问 gl4es 的 AGL 接口函数
+# SDL2 需要链接 gl4es (静态)，用于 OpenGL 符号
 target_link_libraries(SDL2 PRIVATE GL)
 
 # 添加 FAudio 子项目
@@ -72,7 +71,6 @@ add_library(${CMAKE_PROJECT_NAME} SHARED
         dotnet_trust.c
         dotnet_host.c
         jni_bridge.c
-      
 )
 
 # 链接库
@@ -96,7 +94,7 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
        # lgogdownloader
 )
 
-# ⚠️ 关键：导出gl4es AGL符号，使其对dlsym可见
+# ⚠️ 关键：导出 gl4es 符号，使其对 dlsym 可见
 # 这样SDL可以通过dlsym(NULL, "aglCreateContext2")找到这些函数
 target_link_options(${CMAKE_PROJECT_NAME} PRIVATE
         -Wl,--export-dynamic    # 导出所有符号到动态符号表

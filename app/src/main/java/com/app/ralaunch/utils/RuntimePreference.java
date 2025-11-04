@@ -20,17 +20,28 @@ public final class RuntimePreference {
     private static final String KEY_ARCHITECTURE = "runtime_architecture";
     private static final String KEY_VERBOSE_LOGGING = "runtime_verbose_logging";
     private static final String KEY_RENDERER = "fna_renderer";
+    private static final String KEY_PERFORMANCE_MONITOR = "performance_monitor_enabled";
     
     // CPU 架构常量
     public static final String ARCH_ARM64 = "arm64";
     public static final String ARCH_X86_64 = "x86_64";
     public static final String ARCH_AUTO = "auto";
     
-    // 渲染器常量
-    public static final String RENDERER_OPENGLES3 = "opengles3";        // 原生 OpenGL ES 3（Android 原生支持，推荐）
-    public static final String RENDERER_OPENGL_GL4ES = "opengl_gl4es";  // 桌面 OpenGL 通过 gl4es 翻译到 GLES
-    public static final String RENDERER_VULKAN = "vulkan";               // Vulkan（实验性）
-    public static final String RENDERER_AUTO = "auto";                   // 自动选择（默认 OpenGL ES 3）
+            // 渲染器常量
+            public static final String RENDERER_OPENGLES3 = "opengles3";        // 原生 OpenGL ES 3（Android 原生支持，推荐）
+            public static final String RENDERER_OPENGL_GL4ES = "opengl_gl4es";  // 桌面 OpenGL 通过 gl4es 翻译到 GLES
+            public static final String RENDERER_VULKAN = "vulkan";               // Vulkan（实验性）
+            public static final String RENDERER_AUTO = "auto";                   // 自动选择（默认 OpenGL ES 3）
+
+    // 加载native库以支持架构检测
+    static {
+        try {
+            System.loadLibrary("SDL2");
+            android.util.Log.d("RuntimePreference", "Native library loaded for architecture detection");
+        } catch (UnsatisfiedLinkError e) {
+            android.util.Log.w("RuntimePreference", "Failed to load native library: " + e.getMessage());
+        }
+    }
 
     private RuntimePreference() {}
 
@@ -85,11 +96,34 @@ public final class RuntimePreference {
     }
 
     /**
+     * Native方法：获取真实的CPU架构（在Native层检测）
+     * 
+     * @return arm64, x86_64, arm, x86, 或 unknown
+     */
+    private static native String getNativeArchitecture();
+    
+    /**
      * 获取当前设备的 CPU 架构
      * 
      * @return arm64 或 x86_64
+     * 
+     * 注意：此方法现在使用Native层检测，比Build.SUPPORTED_ABIS更可靠。
+     * 特别是在x86模拟器+ARM翻译层的情况下，Build.SUPPORTED_ABIS会返回错误的架构。
      */
     public static String getDeviceArchitecture() {
+        try {
+            // 优先使用Native层检测（最可靠）
+            String nativeArch = getNativeArchitecture();
+            if (nativeArch != null && !nativeArch.equals("unknown")) {
+                android.util.Log.d("RuntimePreference", "Using native architecture: " + nativeArch);
+                return nativeArch;
+            }
+        } catch (UnsatisfiedLinkError e) {
+            // Native库未加载，回退到Java检测
+            android.util.Log.w("RuntimePreference", "Native arch detection failed, falling back to Java detection");
+        }
+        
+        // 回退：使用Java层检测
         String[] abis = android.os.Build.SUPPORTED_ABIS;
         if (abis != null && abis.length > 0) {
             String primaryAbi = abis[0];
@@ -178,6 +212,30 @@ public final class RuntimePreference {
             return RENDERER_OPENGLES3;
         }
         return renderer;
+    }
+
+    /**
+     * 设置性能监控开关
+     * 
+     * @param context Android 上下文
+     * @param enabled 是否启用性能监控
+     */
+    public static void setPerformanceMonitorEnabled(Context context, boolean enabled) {
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+                .edit()
+                .putBoolean(KEY_PERFORMANCE_MONITOR, enabled)
+                .apply();
+    }
+
+    /**
+     * 获取性能监控开关
+     * 
+     * @param context Android 上下文
+     * @return 是否启用性能监控，默认为 false（关闭）
+     */
+    public static boolean isPerformanceMonitorEnabled(Context context) {
+        SharedPreferences sp = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        return sp.getBoolean(KEY_PERFORMANCE_MONITOR, false);
     }
 }
 

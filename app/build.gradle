@@ -37,11 +37,12 @@ android {
     }
 
     // 生成分 ABI 构建产物，便于在模拟器/真机上分别安装
+    // 注意：Zink 渲染器仅支持 arm64-v8a（需要 libOSMesa_25.so）
     splits {
         abi {
             enable true
             reset()
-            include 'arm64-v8a', 'x86_64'
+            include 'arm64-v8a'  // 仅编译 arm64-v8a（Zink 支持）
             universalApk false
         }
     }

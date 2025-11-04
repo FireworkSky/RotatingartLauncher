@@ -43,6 +43,7 @@ public class SettingsFragment extends Fragment {
     private RadioGroup architectureRadioGroup;
     private RadioGroup rendererRadioGroup;
     private SwitchCompat switchVerboseLogging;
+    private SwitchCompat switchPerformanceMonitor;
 
     // 设置键值
     private static final String PREFS_NAME = "AppSettings";
@@ -90,7 +91,9 @@ public class SettingsFragment extends Fragment {
         architectureRadioGroup = view.findViewById(R.id.architectureRadioGroup);
         rendererRadioGroup = view.findViewById(R.id.rendererRadioGroup);
         switchVerboseLogging = view.findViewById(R.id.switchVerboseLogging);
+        switchPerformanceMonitor = view.findViewById(R.id.switchPerformanceMonitor);
         View verboseLoggingContainer = view.findViewById(R.id.verboseLoggingContainer);
+        View performanceMonitorContainer = view.findViewById(R.id.performanceMonitorContainer);
 
         // 主题选择监听
         themeRadioGroup.setOnCheckedChangeListener((group, checkedId) -> {
@@ -143,8 +146,10 @@ public class SettingsFragment extends Fragment {
                 renderer = RuntimePreference.RENDERER_OPENGLES3;
             } else if (checkedId == R.id.rendererOpenGL) {
                 renderer = RuntimePreference.RENDERER_OPENGL_GL4ES;
-            } else {
+            } else if (checkedId == R.id.rendererVulkan) {
                 renderer = RuntimePreference.RENDERER_VULKAN;
+            } else {
+                renderer = RuntimePreference.RENDERER_AUTO; // 默认自动选择
             }
             RuntimePreference.setRenderer(requireContext(), renderer);
             
@@ -169,6 +174,22 @@ public class SettingsFragment extends Fragment {
         verboseLoggingContainer.setOnClickListener(v -> {
             switchVerboseLogging.setChecked(!switchVerboseLogging.isChecked());
         });
+        
+        // 性能监控开关监听
+        switchPerformanceMonitor.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            RuntimePreference.setPerformanceMonitorEnabled(requireContext(), isChecked);
+            String message = isChecked ? 
+                "已启用性能监控，进入游戏后生效" : 
+                "已禁用性能监控";
+            Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
+        });
+        
+        // 点击整个容器时切换开关
+        if (performanceMonitorContainer != null) {
+            performanceMonitorContainer.setOnClickListener(v -> {
+                switchPerformanceMonitor.setChecked(!switchPerformanceMonitor.isChecked());
+            });
+        }
     }
 
     private void loadSettings() {
@@ -242,6 +263,10 @@ public class SettingsFragment extends Fragment {
         // 加载详细日志设置
         boolean verboseLogging = RuntimePreference.isVerboseLogging(requireContext());
         switchVerboseLogging.setChecked(verboseLogging);
+        
+        // 加载性能监控设置
+        boolean performanceMonitor = RuntimePreference.isPerformanceMonitorEnabled(requireContext());
+        switchPerformanceMonitor.setChecked(performanceMonitor);
     }
 
     private void saveThemeSetting(int themeMode) {

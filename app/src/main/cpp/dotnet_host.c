@@ -11,6 +11,7 @@
 #include <android/log.h>
 #include <signal.h>
 #include <ucontext.h>
+#include <sys/stat.h>
 #include "dotnet_params.h"
 #include "jni_bridge.h"
 
@@ -36,6 +37,57 @@ char* g_nativeSearchPaths = NULL;
 
 /** 启动器 DLL 路径 */
 char* g_launcherDll = NULL;
+
+/** 外部声明（定义在 dotnet_params.c） */
+extern char* g_bootstrapDll;
+extern char* g_targetGameAssembly;
+
+/** CoreCLR 全局句柄（供回调使用） */
+static void* g_coreclr_hostHandle = NULL;
+static unsigned int g_coreclr_domainId = 0;
+static void* g_coreclr_execute_assembly_fn = NULL;
+
+/**
+ * @brief Native回调函数：供C#调用coreclr_execute_assembly
+ * 
+ * @param assemblyPath 要执行的程序集路径
+ * @return 执行结果码
+ */
+static int native_execute_assembly_callback(const char* assemblyPath) {
+    LOGI("[Native Callback] executeAssembly called for: %s", assemblyPath);
+    LOGI("[Native Callback] g_coreclr_hostHandle = %p", g_coreclr_hostHandle);
+    LOGI("[Native Callback] g_coreclr_domainId = %u", g_coreclr_domainId);
+    LOGI("[Native Callback] g_coreclr_execute_assembly_fn = %p", g_coreclr_execute_assembly_fn);
+    
+    // 在Android/Mono上，hostHandle可能为NULL，但只要有execute_assembly_fn就可以继续
+    if (!g_coreclr_execute_assembly_fn) {
+        LOGE("[Native Callback] ERROR: execute_assembly_fn is NULL!");
+        return -1;
+    }
+    
+    if (!g_coreclr_hostHandle) {
+        LOGI("[Native Callback] hostHandle is NULL (normal on Android/Mono)");
+    }
+    
+    // 定义函数指针类型
+    typedef int (*coreclr_execute_assembly_ptr)(void*,unsigned int,int,const char**,const char*,unsigned int*);
+    
+    unsigned int gameExitCode = 0;
+    const char* args[] = { assemblyPath };
+    
+    coreclr_execute_assembly_ptr exec_fn = (coreclr_execute_assembly_ptr)g_coreclr_execute_assembly_fn;
+    int result = exec_fn(
+        g_coreclr_hostHandle,
+        g_coreclr_domainId,
+        1,
+        args,
+        assemblyPath,
+        &gameExitCode
+    );
+    
+    LOGI("[Native Callback] coreclr_execute_assembly returned: %d, exitCode: %u", result, gameExitCode);
+    return result == 0 ? (int)gameExitCode : result;
+}
 
 /**
  * @brief 信号处理函数：捕获崩溃信号并记录详细信息
@@ -322,6 +374,16 @@ int launch_with_coreclr_passthrough() {
             setenv("LIBGL_LOGERR", "1", 1);  // 记录错误
             setenv("LIBGL_DEBUG", "1", 1);   // 调试信息
             
+            // 设置工作目录到tModLoader目录
+            if (h_appDir && strlen(h_appDir) > 0) {
+                LOGI("🔧 Setting working directory to: %s", h_appDir);
+                if (chdir(h_appDir) != 0) {
+                    LOGW("⚠️ Failed to change working directory to %s", h_appDir);
+                } else {
+                    LOGI("✅ Working directory set successfully");
+                }
+            }
+            
             LOGI("✓ FNA renderer: OpenGL + gl4es AGL (Android, static-linked)");
         } else if (strcmp(g_renderer, "vulkan") == 0) {
             // Vulkan 渲染器（实验性）
@@ -404,6 +466,7 @@ int launch_with_coreclr_passthrough() {
     typedef int (*coreclr_initialize_ptr)(const char*,const char*,int,const char**,const char**,void**,unsigned int*);
     typedef int (*coreclr_execute_assembly_ptr)(void*,unsigned int,int,const char**,const char*,unsigned int*);
     typedef int (*coreclr_shutdown_ptr)(void*,unsigned int);
+    typedef int (*coreclr_create_delegate_ptr)(void*,unsigned int,const char*,const char*,const char*,void**);
     
     // 7. 获取 CoreCLR API 函数指针
     dlerror(); // 清除之前的错误
@@ -421,11 +484,15 @@ int launch_with_coreclr_passthrough() {
         LOGW("dlsym coreclr_shutdown fail: %s (可能在 .NET 7+ 中已移除，将跳过)", err3);
     }
     
+    coreclr_create_delegate_ptr coreclr_create_delegate = (coreclr_create_delegate_ptr)dlsym(coreclrLib, "coreclr_create_delegate");
+    const char* err4 = dlerror();
+    if (err4) LOGE("dlsym coreclr_create_delegate fail: %s", err4);
+    
     // 注意: coreclr_shutdown 在 .NET 7+ 中可能不存在，这是正常的
     if (!coreclr_initialize || !coreclr_execute_assembly) { 
         dlclose(coreclrLib); 
-        LOGE("coreclr dlsym fail: init=%p, exec=%p, shutdown=%p", 
-             coreclr_initialize, coreclr_execute_assembly, coreclr_shutdown); 
+        LOGE("coreclr dlsym fail: init=%p, exec=%p, shutdown=%p, delegate=%p", 
+             coreclr_initialize, coreclr_execute_assembly, coreclr_shutdown, coreclr_create_delegate); 
         return -12; 
     }
     
@@ -434,6 +501,9 @@ int launch_with_coreclr_passthrough() {
     } else {
         LOGW("CoreCLR shutdown function not available (expected in .NET 7+)");
     }
+    
+    // 保存coreclr_execute_assembly函数指针供回调使用
+    g_coreclr_execute_assembly_fn = (void*)coreclr_execute_assembly;
     
     // 7. 准备 CoreCLR 初始化参数
     const char* keys[] = { 
@@ -476,6 +546,8 @@ int launch_with_coreclr_passthrough() {
     LOGI(">>> About to call coreclr_initialize...");
     int rc = coreclr_initialize(g_launcherDll, "AppDomain", 4, keys, vals, &hostHandle, &domainId);
     LOGI("<<< coreclr_initialize returned: %d", rc);
+    LOGI("    hostHandle = %p (from coreclr_initialize)", hostHandle);
+    LOGI("    domainId = %u (from coreclr_initialize)", domainId);
     
     if (rc != 0) { 
         dlclose(coreclrLib); 
@@ -483,16 +555,120 @@ int launch_with_coreclr_passthrough() {
         return -13; 
     }
     
-    // 8.5 注：TMLContentManagerPatch 已禁用
-    // 原因：补丁依赖MonoMod，加载会导致CoreCLR断言失败
-    // 当前策略：依赖已修改的System.Linq.dll（First()方法返回default而不是抛异常）
-    LOGI("ℹ️  TMLContentManagerPatch disabled - relying on modified System.Linq.dll");
+    // 注意：在Android/Mono上，hostHandle和domainId可能都是0，但只要rc==0就表示成功
+    // 我们信任返回值，而不是检查句柄是否为NULL
+    if (!hostHandle || domainId == 0) {
+        LOGI("ℹ️  hostHandle=%p, domainId=%u (may be 0 on Android/Mono, this is normal)", hostHandle, domainId);
+    }
     
-    // 9. 执行主程序集
-    LOGI("🎮 Starting main game assembly...");
+    // 9. Bootstrap模式：通过coreclr_create_delegate调用托管方法
     unsigned int exitCode = 0;
-    const char* argv[] = { h_appPath };
-    rc = coreclr_execute_assembly(hostHandle, domainId, 1, argv, g_launcherDll, &exitCode);
+    
+    if (g_bootstrapDll && g_targetGameAssembly) {
+        LOGI("🚀 Using Bootstrap mode via coreclr_create_delegate");
+        LOGI("   Bootstrap: %s", g_bootstrapDll);
+        LOGI("   Target Game: %s", g_targetGameAssembly);
+        
+        // 定义委托类型（匹配UnmanagedCallersOnly签名）
+        typedef void (*SetCallbackDelegate)(void* callbackPtr);
+        typedef int (*LaunchGameDelegate)(const char* targetGamePathPtr);
+        
+        SetCallbackDelegate setCallbackFunc = NULL;
+        LaunchGameDelegate launchGameFunc = NULL;
+        
+        // 1. 创建SetExecuteAssemblyCallback委托
+        rc = coreclr_create_delegate(
+            hostHandle,
+            domainId,
+            "Bootstrap",
+            "AssemblyMain.Program",
+            "SetExecuteAssemblyCallback",
+            (void**)&setCallbackFunc
+        );
+        
+        if (rc != 0) {
+            LOGE("Failed to create SetExecuteAssemblyCallback delegate: %d", rc);
+            dlclose(coreclrLib);
+            return -14;
+        }
+        
+        LOGI("✅ SetExecuteAssemblyCallback delegate created");
+        
+        // 2. 保存CoreCLR句柄供回调使用
+        g_coreclr_hostHandle = hostHandle;
+        g_coreclr_domainId = domainId;
+        LOGI("✅ CoreCLR handles saved: hostHandle=%p, domainId=%u, execute_fn=%p", 
+             g_coreclr_hostHandle, g_coreclr_domainId, g_coreclr_execute_assembly_fn);
+        
+        // 3. 将回调函数指针传递给C#（使用全局函数native_execute_assembly_callback）
+        LOGI("Setting executeAssembly callback...");
+        setCallbackFunc((void*)native_execute_assembly_callback);
+        
+        // 4. 创建LaunchGame委托
+        rc = coreclr_create_delegate(
+            hostHandle,
+            domainId,
+            "Bootstrap",
+            "AssemblyMain.Program",
+            "LaunchGame",
+            (void**)&launchGameFunc
+        );
+        
+        if (rc != 0) {
+            LOGE("Failed to create LaunchGame delegate: %d", rc);
+            dlclose(coreclrLib);
+            return -15;
+        }
+        
+        LOGI("✅ LaunchGame delegate created");
+        
+        // 5. 调用Bootstrap.LaunchGame
+        LOGI("🎮 Calling Bootstrap.LaunchGame(\"%s\")", g_targetGameAssembly);
+        LOGI("LaunchGame function pointer: %p", launchGameFunc);
+        LOGI("Target game assembly pointer: %p", g_targetGameAssembly);
+        LOGI("Target game assembly string: \"%s\"", g_targetGameAssembly);
+        
+        int result = launchGameFunc(g_targetGameAssembly);
+        
+        LOGI("Bootstrap.LaunchGame returned: %d", result);
+        
+        if (result == 0) {
+            LOGI("✅ Bootstrap.LaunchGame completed successfully");
+        } else if (result < 0) {
+            LOGE("❌ Bootstrap.LaunchGame failed with error code: %d", result);
+            switch (result) {
+                case -1: LOGE("  → Unknown error"); break;
+                case -2: LOGE("  → targetGamePathPtr is null"); break;
+                case -3: LOGE("  → String parsing failed"); break;
+                case -4: LOGE("  → String is empty"); break;
+                case -5: LOGE("  → File does not exist"); break;
+                case -6: LOGE("  → Callback not set"); break;
+                case -7: LOGE("  → Initialization failed (general)"); break;
+                case -71: LOGE("  → Cannot get directory name"); break;
+                case -72: LOGE("  → Directory does not exist"); break;
+                case -73: LOGE("  → Cannot set working directory"); break;
+                case -74: LOGE("  → Basic environment setup failed"); break;
+                case -75: LOGE("  → Assembly cache build failed"); break;
+                case -76: LOGE("  → GetEntryAssembly patch failed"); break;
+                case -77: LOGE("  → LoggingHooks patch failed"); break;
+                case -78: LOGE("  → TryFixFileCasings patch failed"); break;
+                case -79: LOGE("  → ApplyPatch failed"); break;
+                case -8: LOGE("  → Callback execution failed"); break;
+                default: LOGE("  → Unknown error code"); break;
+            }
+        } else {
+            LOGW("⚠️ Bootstrap.LaunchGame returned non-zero code: %d", result);
+        }
+        
+        exitCode = (unsigned int)result;
+    } else {
+        LOGI("🎮 Using direct launch mode");
+        LOGI("   Game Assembly: %s", h_appPath);
+        
+        // 直接启动模式
+        const char* directArgs[] = { h_appPath };
+        rc = coreclr_execute_assembly(hostHandle, domainId, 1, directArgs, h_appPath, &exitCode);
+    }
     
     // 10. 关闭 CoreCLR 运行时（如果函数可用）
     if (coreclr_shutdown) {

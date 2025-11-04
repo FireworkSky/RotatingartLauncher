@@ -1,3 +1,6 @@
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
 package net.dot.android.crypto;
 
 import java.security.cert.CertificateException;
@@ -36,12 +39,4 @@ public final class DotnetProxyTrustManager implements X509TrustManager {
     }
 
     static native boolean verifyRemoteCertificate(long sslStreamProxyHandle);
-    
-    static {
-        try {
-            System.loadLibrary("SDL2");
-        } catch (UnsatisfiedLinkError e) {
-            android.util.Log.e("DotnetProxyTrustManager", "Failed to load native library", e);
-        }
-    }
 }

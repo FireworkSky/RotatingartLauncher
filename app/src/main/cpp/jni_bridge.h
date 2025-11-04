@@ -90,4 +90,16 @@ void Java_com_app_ralaunch_game_GameLauncher_setLaunchParams(
 void Java_com_app_ralaunch_game_GameLauncher_setLaunchParamsWithRuntime(
     JNIEnv *env, jclass clazz, jstring appPath, jstring dotnetPath, jstring frameworkVersion);
 
+/**
+ * @brief JNI 函数：设置Bootstrap启动参数
+ * 
+ * @param env JNI 环境指针
+ * @param clazz Java 类引用
+ * @param bootstrapDll Bootstrap程序集路径
+ * @param targetGameAssembly 目标游戏程序集路径
+ * @param dotnetPath .NET 运行时路径
+ */
+void Java_com_app_ralaunch_game_GameLauncher_setBootstrapLaunchParams(
+    JNIEnv *env, jclass clazz, jstring bootstrapDll, jstring targetGameAssembly, jstring dotnetPath);
+
 

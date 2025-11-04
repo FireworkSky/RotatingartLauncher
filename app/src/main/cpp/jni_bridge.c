@@ -229,4 +229,86 @@ Java_com_app_ralaunch_game_GameLauncher_setRenderer(
     }
 }
 
+/**
+ * @brief JNI 函数：设置Bootstrap启动参数
+ * 
+ * @param env JNI 环境指针
+ * @param clazz Java 类引用
+ * @param bootstrapDll Bootstrap程序集路径
+ * @param targetGameAssembly 目标游戏程序集路径
+ * @param dotnetPath .NET 运行时路径
+ * 
+ * 从 Java 层接收Bootstrap启动参数并传递给 dotnet_params 模块。
+ * Bootstrap将通过反射加载并启动目标游戏程序集。
+ */
+JNIEXPORT void JNICALL
+Java_com_app_ralaunch_game_GameLauncher_setBootstrapLaunchParams(
+    JNIEnv *env, jclass clazz, jstring bootstrapDll, jstring targetGameAssembly, jstring dotnetPath) {
+    (void)clazz;
+    
+    // 从 dotnet_host.c 中导入外部变量
+    extern char* h_appDir;
+    
+    const char* bootstrap_dll = (*env)->GetStringUTFChars(env, bootstrapDll, 0);
+    const char* target_game = (*env)->GetStringUTFChars(env, targetGameAssembly, 0);
+    const char* dotnet_path = (*env)->GetStringUTFChars(env, dotnetPath, 0);
+    
+    // 设置Bootstrap启动参数
+    Params_SetBootstrapLaunch(bootstrap_dll, target_game, dotnet_path);
+    
+    // 从目标游戏路径中提取目录（Bootstrap需要在游戏目录运行）
+    if (h_appDir) {
+        free(h_appDir);
+        h_appDir = NULL;
+    }
+    
+    if (target_game) {
+        char* target_game_copy = strdup(target_game);
+        char* last_slash = strrchr(target_game_copy, '/');
+        if (last_slash) {
+            *last_slash = '\0';
+            h_appDir = strdup(target_game_copy);
+        } else {
+            h_appDir = strdup(".");
+        }
+        free(target_game_copy);
+    }
+    
+    (*env)->ReleaseStringUTFChars(env, bootstrapDll, bootstrap_dll);
+    (*env)->ReleaseStringUTFChars(env, targetGameAssembly, target_game);
+    (*env)->ReleaseStringUTFChars(env, dotnetPath, dotnet_path);
+}
+
+/**
+ * @brief 获取Native层的真实CPU架构
+ * 
+ * @param env JNI环境指针
+ * @param clazz Java类引用
+ * @return CPU架构字符串："arm64", "x86_64", "arm", "x86", 或 "unknown"
+ * 
+ * 此函数在Native层通过编译时宏直接检测当前进程的真实CPU架构，
+ * 比Java层的Build.SUPPORTED_ABIS更可靠，尤其是在使用ARM翻译层的x86模拟器上。
+ */
+JNIEXPORT jstring JNICALL Java_com_app_ralaunch_utils_RuntimePreference_getNativeArchitecture(
+    JNIEnv* env, jclass clazz) {
+    (void)clazz; // 未使用的参数
+    
+    #if defined(__aarch64__) || defined(__arm64__)
+        LOGI("Native architecture detected: arm64");
+        return (*env)->NewStringUTF(env, "arm64");
+    #elif defined(__x86_64__) || defined(__amd64__)
+        LOGI("Native architecture detected: x86_64");
+        return (*env)->NewStringUTF(env, "x86_64");
+    #elif defined(__arm__)
+        LOGI("Native architecture detected: arm");
+        return (*env)->NewStringUTF(env, "arm");
+    #elif defined(__i386__)
+        LOGI("Native architecture detected: x86");
+        return (*env)->NewStringUTF(env, "x86");
+    #else
+        LOGE("Native architecture UNKNOWN!");
+        return (*env)->NewStringUTF(env, "unknown");
+    #endif
+}
+
 

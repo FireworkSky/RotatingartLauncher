@@ -1,5 +1,6 @@
 package com.app.ralaunch.fragment;
 
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -127,21 +128,23 @@ public class ControlLayoutFragment extends Fragment implements ControlLayoutAdap
     }
 
     private void openLayoutEditor(ControlLayout layout) {
-        ControlEditorFragment editorFragment = new ControlEditorFragment();
-        editorFragment.setControlLayout(layout);
-        editorFragment.setOnEditorBackListener(() -> {
-            // 返回时刷新列表
+        // 使用新的编辑器Activity
+        Intent intent = new Intent(getActivity(), com.app.ralaunch.controls.editor.ControlEditorActivity.class);
+        startActivity(intent);
+        // 编辑器关闭后会自动回到这里，无需Fragment切换
+    }
+    
+    @Override
+    public void onResume() {
+        super.onResume();
+        // 从编辑器返回时刷新列表
+        if (layoutManager != null) {
             layouts = layoutManager.getLayouts();
-            adapter.updateLayouts(layouts);
-            getParentFragmentManager().beginTransaction()
-                    .replace(R.id.fragmentContainer, this)
-                    .commit();
-        });
+            if (adapter != null) {
+                adapter.updateLayouts(layouts);
+            }
+        }
 
-        getParentFragmentManager().beginTransaction()
-                .replace(R.id.fragmentContainer, editorFragment)
-                .addToBackStack("editor")
-                .commit();
     }
 
     private void updateEmptyState() {

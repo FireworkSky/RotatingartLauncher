@@ -52,6 +52,15 @@
             <meta-data android:name="SDL_HINT_ORIENTATIONS" android:value="LandscapeLeft LandscapeRight" />
         </activity>
 
+        <!-- 控制布局编辑器 -->
+        <activity
+            android:name=".controls.editor.ControlEditorActivity"
+            android:exported="false"
+            android:label="控制布局编辑器"
+            android:screenOrientation="landscape"
+            android:launchMode="singleTop"
+            android:theme="@style/Theme.AppCompat.NoActionBar" />
+
         <!-- 文件提供者 -->
         <provider
             android:name="bin.mt.file.content.MTDataFilesProvider"

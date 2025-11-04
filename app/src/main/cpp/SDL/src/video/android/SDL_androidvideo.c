@@ -139,7 +139,7 @@ static SDL_VideoDevice *Android_CreateDevice(void)
     SDL_bool use_gl4es = (gl_driver && SDL_strcasecmp(gl_driver, "gl4es") == 0);
     
 #if defined(SDL_VIDEO_OPENGL_GL4ES) && defined(SDL_VIDEO_OPENGL_EGL)
-    /* Both renderers available - choose at runtime */
+    /* Both gl4es and native GLES available - choose at runtime */
     if (use_gl4es) {
         SDL_Log("🎨 Using gl4es renderer (OpenGL 2.1 Compatibility Profile)");
         device->GL_LoadLibrary = Android_GL4ES_LoadLibrary;
@@ -164,6 +164,46 @@ static SDL_VideoDevice *Android_CreateDevice(void)
         device->GL_SwapWindow = Android_GLES_SwapWindow;
         device->GL_DeleteContext = Android_GLES_DeleteContext;
     }
+#elif defined(SDL_VIDEO_OPENGL_GL4ES)
+    /* Only gl4es available */
+    SDL_Log("🎨 Using gl4es renderer (OpenGL 2.1 Compatibility Profile)");
+    device->GL_LoadLibrary = Android_GL4ES_LoadLibrary;
+        SDL_Log("🎨 Using gl4es renderer (OpenGL 2.1 Compatibility Profile)");
+        device->GL_LoadLibrary = Android_GL4ES_LoadLibrary;
+        device->GL_GetProcAddress = Android_GL4ES_GetProcAddress;
+        device->GL_UnloadLibrary = Android_GL4ES_UnloadLibrary;
+        device->GL_CreateContext = Android_GL4ES_CreateContext;
+        device->GL_MakeCurrent = Android_GL4ES_MakeCurrent;
+        device->GL_SetSwapInterval = Android_GL4ES_SetSwapInterval;
+        device->GL_GetSwapInterval = Android_GL4ES_GetSwapInterval;
+        device->GL_SwapWindow = Android_GL4ES_SwapWindow;
+        device->GL_DeleteContext = Android_GL4ES_DeleteContext;
+        device->GL_GetDrawableSize = Android_GL4ES_GetDrawableSize;
+    } else {
+        SDL_Log("🎨 Using native OpenGL ES renderer (default)");
+        device->GL_LoadLibrary = Android_GLES_LoadLibrary;
+        device->GL_GetProcAddress = Android_GLES_GetProcAddress;
+        device->GL_UnloadLibrary = Android_GLES_UnloadLibrary;
+        device->GL_CreateContext = Android_GLES_CreateContext;
+        device->GL_MakeCurrent = Android_GLES_MakeCurrent;
+        device->GL_SetSwapInterval = Android_GLES_SetSwapInterval;
+        device->GL_GetSwapInterval = Android_GLES_GetSwapInterval;
+        device->GL_SwapWindow = Android_GLES_SwapWindow;
+        device->GL_DeleteContext = Android_GLES_DeleteContext;
+    }
+#elif defined(SDL_VIDEO_OPENGL_ZINK)
+    /* Only Zink available */
+    SDL_Log("🎨 Using Zink renderer (OpenGL 3.3 on Vulkan via OSMesa)");
+    device->GL_LoadLibrary = Android_ZINK_LoadLibrary;
+    device->GL_GetProcAddress = Android_ZINK_GetProcAddress;
+    device->GL_UnloadLibrary = Android_ZINK_UnloadLibrary;
+    device->GL_CreateContext = Android_ZINK_CreateContext;
+    device->GL_MakeCurrent = Android_ZINK_MakeCurrent;
+    device->GL_SetSwapInterval = Android_ZINK_SetSwapInterval;
+    device->GL_GetSwapInterval = Android_ZINK_GetSwapInterval;
+    device->GL_SwapWindow = Android_ZINK_SwapWindow;
+    device->GL_DeleteContext = Android_ZINK_DeleteContext;
+    device->GL_GetDrawableSize = Android_ZINK_GetDrawableSize;
 #elif defined(SDL_VIDEO_OPENGL_GL4ES)
     /* Only gl4es available */
     SDL_Log("🎨 Using gl4es renderer (OpenGL 2.1 Compatibility Profile)");

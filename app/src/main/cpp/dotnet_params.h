@@ -47,6 +47,16 @@ extern int g_verboseLogging;
 extern char* g_renderer;
 
 /**
+ * @brief Bootstrap DLL 路径（用于反射启动）
+ */
+extern char* g_bootstrapDll;
+
+/**
+ * @brief 目标游戏程序集路径（传递给Bootstrap）
+ */
+extern char* g_targetGameAssembly;
+
+/**
  * @brief 清理所有全局内存分配
  * 
  * 释放 g_appPath、g_dotnetPath 和 g_frameworkVersion 的内存，
@@ -77,5 +87,16 @@ void Params_SetLaunch(const char* appPath, const char* dotnetPath);
  * 则行为等同于 Params_SetLaunch。
  */
 void Params_SetLaunchWithRuntime(const char* appPath, const char* dotnetPath, const char* frameworkVersion);
+
+/**
+ * @brief 设置Bootstrap启动参数
+ * 
+ * @param bootstrapDll Bootstrap程序集路径
+ * @param targetGameAssembly 目标游戏程序集路径
+ * @param dotnetPath .NET 运行时根目录路径
+ * 
+ * 此函数用于Bootstrap反射启动模式，Bootstrap将通过反射加载并启动目标游戏程序集。
+ */
+void Params_SetBootstrapLaunch(const char* bootstrapDll, const char* targetGameAssembly, const char* dotnetPath);
 
 
