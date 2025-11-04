@@ -1,15 +1,10 @@
 package com.app.ralaunch.activity;
 
-import android.Manifest;
 import android.app.AlertDialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
-import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
 import android.view.Window;
@@ -21,11 +16,8 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
-import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
@@ -42,6 +34,7 @@ import com.app.ralaunch.fragment.LocalImportFragment;
 import com.app.ralaunch.adapter.GameAdapter;
 import com.app.ralaunch.adapter.GameItem;
 import com.app.ralaunch.fragment.SettingsFragment;
+import com.app.ralaunch.fragment.SettingsMiscFragment;
 import com.app.ralaunch.utils.PageManager;
 import com.daimajia.androidanimations.library.Techniques;
 import com.app.ralaunch.utils.PermissionHelper;
@@ -121,7 +114,7 @@ public class MainActivity extends AppCompatActivity implements
         } else {
             initializeApp();
         }
-        SettingsFragment.applySavedSettings(this);
+        SettingsMiscFragment.applySavedSettings(this);
     }
 
     private void showInitializationFragment() {
@@ -158,7 +151,7 @@ public class MainActivity extends AppCompatActivity implements
         // 初始化完成后重新设置运行时选择器
         setupRuntimeSpinner();
 
-        SettingsFragment.applySavedSettings(this);
+        SettingsMiscFragment.applySavedSettings(this);
     }
 
     /**

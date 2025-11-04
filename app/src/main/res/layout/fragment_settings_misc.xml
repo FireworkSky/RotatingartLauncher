@@ -1,0 +1,568 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background_primary"
+    tools:context=".fragment.SettingsMiscFragment">
+
+    <!-- 设置内容 -->
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingHorizontal="16dp"
+            android:paddingBottom="32dp">
+
+            <!-- 外观设置分组 -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="外观"
+                android:textColor="@color/accent_green"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.05"
+                android:layout_marginTop="16dp"
+                android:layout_marginBottom="8dp"
+                android:layout_marginStart="4dp" />
+
+            <!-- 主题设置卡片 -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="0dp"
+                app:strokeWidth="0dp"
+                app:cardBackgroundColor="@color/background_card">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingVertical="8dp">
+
+                    <!-- 主题标题 -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:paddingHorizontal="20dp"
+                        android:paddingVertical="12dp">
+
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:src="@drawable/ic_settings"
+                            app:tint="@color/text_primary"
+                            android:layout_marginEnd="16dp" />
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/theme_settings"
+                            android:textColor="@color/text_primary"
+                            android:textSize="15sp"
+                            android:textStyle="bold" />
+
+                    </LinearLayout>
+
+                    <!-- 分隔线 -->
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:layout_marginHorizontal="20dp"
+                        android:background="@color/text_hint"
+                        android:alpha="0.1" />
+
+                    <!-- 主题选项 -->
+                    <RadioGroup
+                        android:id="@+id/themeRadioGroup"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:paddingHorizontal="20dp"
+                        android:paddingTop="8dp">
+
+                        <RadioButton
+                            android:id="@+id/themeSystem"
+                            android:layout_width="match_parent"
+                            android:layout_height="48dp"
+                            android:text="@string/theme_system"
+                            android:textColor="@color/text_primary"
+                            android:textSize="14sp"
+                            android:buttonTint="@color/accent_green"
+                            android:paddingStart="8dp"
+                            android:background="?attr/selectableItemBackground" />
+
+                        <RadioButton
+                            android:id="@+id/themeDark"
+                            android:layout_width="match_parent"
+                            android:layout_height="48dp"
+                            android:text="@string/theme_dark"
+                            android:textColor="@color/text_primary"
+                            android:textSize="14sp"
+                            android:buttonTint="@color/accent_green"
+                            android:paddingStart="8dp"
+                            android:background="?attr/selectableItemBackground" />
+
+                        <RadioButton
+                            android:id="@+id/themeLight"
+                            android:layout_width="match_parent"
+                            android:layout_height="48dp"
+                            android:text="@string/theme_light"
+                            android:textColor="@color/text_primary"
+                            android:textSize="14sp"
+                            android:buttonTint="@color/accent_green"
+                            android:paddingStart="8dp"
+                            android:background="?attr/selectableItemBackground" />
+
+                    </RadioGroup>
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- 语言设置卡片 -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="0dp"
+                app:strokeWidth="0dp"
+                app:cardBackgroundColor="@color/background_card">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingVertical="8dp">
+
+                    <!-- 语言标题 -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:paddingHorizontal="20dp"
+                        android:paddingVertical="12dp">
+
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:src="@drawable/ic_language"
+                            app:tint="@color/text_primary"
+                            android:layout_marginEnd="16dp" />
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/language_settings"
+                            android:textColor="@color/text_primary"
+                            android:textSize="15sp"
+                            android:textStyle="bold" />
+
+                    </LinearLayout>
+
+                    <!-- 分隔线 -->
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:layout_marginHorizontal="20dp"
+                        android:background="@color/text_hint"
+                        android:alpha="0.1" />
+
+                    <!-- 语言选项 -->
+                    <RadioGroup
+                        android:id="@+id/languageRadioGroup"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:paddingHorizontal="20dp"
+                        android:paddingTop="8dp">
+
+                        <RadioButton
+                            android:id="@+id/languageSystem"
+                            android:layout_width="match_parent"
+                            android:layout_height="48dp"
+                            android:text="@string/language_system"
+                            android:textColor="@color/text_primary"
+                            android:textSize="14sp"
+                            android:buttonTint="@color/accent_green"
+                            android:paddingStart="8dp"
+                            android:background="?attr/selectableItemBackground" />
+
+                        <RadioButton
+                            android:id="@+id/languageEnglish"
+                            android:layout_width="match_parent"
+                            android:layout_height="48dp"
+                            android:text="@string/language_english"
+                            android:textColor="@color/text_primary"
+                            android:textSize="14sp"
+                            android:buttonTint="@color/accent_green"
+                            android:paddingStart="8dp"
+                            android:background="?attr/selectableItemBackground" />
+
+                        <RadioButton
+                            android:id="@+id/languageChinese"
+                            android:layout_width="match_parent"
+                            android:layout_height="48dp"
+                            android:text="@string/language_chinese"
+                            android:textColor="@color/text_primary"
+                            android:textSize="14sp"
+                            android:buttonTint="@color/accent_green"
+                            android:paddingStart="8dp"
+                            android:background="?attr/selectableItemBackground" />
+
+                    </RadioGroup>
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- 运行时设置分组 -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="运行时"
+                android:textColor="@color/accent_green"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.05"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="8dp"
+                android:layout_marginStart="4dp" />
+
+            <!-- 运行时架构卡片 -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="0dp"
+                app:strokeWidth="0dp"
+                app:cardBackgroundColor="@color/background_card">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingVertical="8dp">
+
+                    <!-- 架构标题 -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:paddingHorizontal="20dp"
+                        android:paddingVertical="12dp">
+
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:src="@drawable/ic_game"
+                            app:tint="@color/text_primary"
+                            android:layout_marginEnd="16dp" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="CPU 架构"
+                                android:textColor="@color/text_primary"
+                                android:textSize="15sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="选择 .NET 运行时架构"
+                                android:textColor="@color/text_secondary"
+                                android:textSize="12sp"
+                                android:layout_marginTop="2dp" />
+
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                    <!-- 分隔线 -->
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:layout_marginHorizontal="20dp"
+                        android:background="@color/text_hint"
+                        android:alpha="0.1" />
+
+                    <!-- 架构选项 -->
+                    <RadioGroup
+                        android:id="@+id/architectureRadioGroup"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:paddingHorizontal="20dp"
+                        android:paddingTop="8dp">
+
+                        <RadioButton
+                            android:id="@+id/archAuto"
+                            android:layout_width="match_parent"
+                            android:layout_height="48dp"
+                            android:text="自动检测（推荐）"
+                            android:textColor="@color/text_primary"
+                            android:textSize="14sp"
+                            android:buttonTint="@color/accent_green"
+                            android:paddingStart="8dp"
+                            android:background="?attr/selectableItemBackground" />
+
+                        <RadioButton
+                            android:id="@+id/archArm64"
+                            android:layout_width="match_parent"
+                            android:layout_height="48dp"
+                            android:text="ARM64"
+                            android:textColor="@color/text_primary"
+                            android:textSize="14sp"
+                            android:buttonTint="@color/accent_green"
+                            android:paddingStart="8dp"
+                            android:background="?attr/selectableItemBackground" />
+
+                        <RadioButton
+                            android:id="@+id/archX86_64"
+                            android:layout_width="match_parent"
+                            android:layout_height="48dp"
+                            android:text="x86_64"
+                            android:textColor="@color/text_primary"
+                            android:textSize="14sp"
+                            android:buttonTint="@color/accent_green"
+                            android:paddingStart="8dp"
+                            android:background="?attr/selectableItemBackground" />
+
+                    </RadioGroup>
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- FNA 渲染器卡片 -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="0dp"
+                app:strokeWidth="0dp"
+                app:cardBackgroundColor="@color/background_card">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingVertical="8dp">
+
+                    <!-- 渲染器标题 -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:paddingHorizontal="20dp"
+                        android:paddingVertical="12dp">
+
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:src="@drawable/ic_game"
+                            app:tint="@color/text_primary"
+                            android:layout_marginEnd="16dp" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="FNA 渲染器"
+                                android:textColor="@color/text_primary"
+                                android:textSize="15sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="选择图形渲染后端"
+                                android:textColor="@color/text_secondary"
+                                android:textSize="12sp"
+                                android:layout_marginTop="2dp" />
+
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                    <!-- 分隔线 -->
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:layout_marginHorizontal="20dp"
+                        android:background="@color/text_hint"
+                        android:alpha="0.1" />
+
+                    <!-- 渲染器选项 -->
+                    <RadioGroup
+                        android:id="@+id/rendererRadioGroup"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:paddingHorizontal="20dp"
+                        android:paddingTop="8dp">
+
+                        <RadioButton
+                            android:id="@+id/rendererAuto"
+                            android:layout_width="match_parent"
+                            android:layout_height="48dp"
+                            android:text="自动选择（推荐）"
+                            android:textColor="@color/text_primary"
+                            android:textSize="14sp"
+                            android:buttonTint="@color/accent_green"
+                            android:paddingStart="8dp"
+                            android:background="?attr/selectableItemBackground" />
+
+                        <RadioButton
+                            android:id="@+id/rendererOpenGLES3"
+                            android:layout_width="match_parent"
+                            android:layout_height="48dp"
+                            android:text="OpenGL ES 3（原生）"
+                            android:textColor="@color/text_primary"
+                            android:textSize="14sp"
+                            android:buttonTint="@color/accent_green"
+                            android:paddingStart="8dp"
+                            android:background="?attr/selectableItemBackground" />
+
+                        <RadioButton
+                            android:id="@+id/rendererOpenGL"
+                            android:layout_width="match_parent"
+                            android:layout_height="48dp"
+                            android:text="OpenGL (gl4es)"
+                            android:textColor="@color/text_primary"
+                            android:textSize="14sp"
+                            android:buttonTint="@color/accent_green"
+                            android:paddingStart="8dp"
+                            android:background="?attr/selectableItemBackground" />
+
+                        <RadioButton
+                            android:id="@+id/rendererVulkan"
+                            android:layout_width="match_parent"
+                            android:layout_height="48dp"
+                            android:text="Vulkan（实验性）"
+                            android:textColor="@color/text_primary"
+                            android:textSize="14sp"
+                            android:buttonTint="@color/accent_green"
+                            android:paddingStart="8dp"
+                            android:background="?attr/selectableItemBackground" />
+
+                    </RadioGroup>
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- 关于分组 -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="关于"
+                android:textColor="@color/accent_green"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.05"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="8dp"
+                android:layout_marginStart="4dp" />
+
+            <!-- 应用信息卡片 -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="0dp"
+                app:strokeWidth="0dp"
+                app:cardBackgroundColor="@color/background_card">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="20dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginBottom="12dp">
+
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:src="@drawable/ic_info"
+                            app:tint="@color/text_primary"
+                            android:layout_marginEnd="16dp" />
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/app_info"
+                            android:textColor="@color/text_primary"
+                            android:textSize="15sp"
+                            android:textStyle="bold" />
+
+                    </LinearLayout>
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/app_version"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="13sp"
+                        android:layout_marginStart="40dp"
+                        android:layout_marginBottom="4dp" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/app_description"
+                        android:textColor="@color/text_hint"
+                        android:textSize="12sp"
+                        android:lineSpacingExtra="4dp"
+                        android:layout_marginStart="40dp" />
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+        </LinearLayout>
+
+    </androidx.core.widget.NestedScrollView>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>
