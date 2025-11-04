@@ -14,33 +14,34 @@
     <uses-feature android:glEsVersion="0x00020000" android:required="true" />
 
     <application
+        android:name=".RaLaunchApplication"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
+        android:enableOnBackInvokedCallback="true"
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
-        android:roundIcon="@mipmap/ic_launcher_round"
         android:requestLegacyExternalStorage="true"
-
+        android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.raLaunch"
-        tools:targetApi="31"
-        android:enableOnBackInvokedCallback="true">
-
+        tools:targetApi="31">
+        <activity
+            android:name=".activity.DebugActivity"
+            android:exported="false" />
         <!-- 主活动 -->
         <activity
             android:name=".activity.MainActivity"
-            android:exported="true"
             android:configChanges="orientation|screenSize|keyboardHidden|screenLayout|smallestScreenSize|uiMode"
+            android:exported="true"
             android:screenOrientation="landscape"
             android:theme="@style/FullScreenTheme">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-        </activity>
-
-        <!-- 添加 GameActivity 声明 -->
+        </activity> <!-- 添加 GameActivity 声明 -->
         <activity
             android:name=".activity.GameActivity"
             android:exported="true"
@@ -72,7 +73,6 @@
                 <action android:name="android.content.action.DOCUMENTS_PROVIDER" />
             </intent-filter>
         </provider>
-
     </application>
 
 </manifest>

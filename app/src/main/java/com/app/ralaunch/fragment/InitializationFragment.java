@@ -333,7 +333,7 @@ public class InitializationFragment extends Fragment {
             deleteDirectory(outputDir);
         }
         outputDir.mkdirs();
-        
+
         for (int i = 0; i < totalComponents; i++) {
             ComponentItem component = components.get(i);
             
@@ -393,9 +393,10 @@ public class InitializationFragment extends Fragment {
         } finally {
             // 清理临时文件
             if (tempZipFile != null && tempZipFile.exists()) {
-                boolean deleted = tempZipFile.delete();
-                if (!deleted) {
-                    Log.w(TAG, "Failed to delete temp file: " + tempZipFile.getAbsolutePath());
+                try {
+                    java.nio.file.Files.deleteIfExists(tempZipFile.toPath());
+                } catch (IOException e) {
+                    Log.w(TAG, "Failed to delete temp file: " + tempZipFile.getAbsolutePath(), e);
                 }
             }
         }
@@ -406,19 +407,10 @@ public class InitializationFragment extends Fragment {
      */
     private void copyAssetToFile(AssetManager assetManager, String assetFileName, 
                                   File targetFile) throws IOException {
-        try (InputStream inputStream = assetManager.open(assetFileName);
-             FileOutputStream outputStream = new FileOutputStream(targetFile)) {
-            
-            byte[] buffer = new byte[8192];
-            int length;
-            long totalRead = 0;
-            
-            while ((length = inputStream.read(buffer)) > 0) {
-                outputStream.write(buffer, 0, length);
-                totalRead += length;
-            }
-            
-            Log.d(TAG, "Copied " + totalRead + " bytes from assets");
+        try (InputStream inputStream = assetManager.open(assetFileName)) {
+            java.nio.file.Files.copy(inputStream, targetFile.toPath(),
+                java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            Log.d(TAG, "Copied asset file to " + targetFile.getAbsolutePath());
         }
     }
     
@@ -444,15 +436,10 @@ public class InitializationFragment extends Fragment {
      */
     private boolean extractWithSevenZipJBinding(File zipFile, File targetDir,
                                                 ComponentItem component, int componentIndex) {
-        RandomAccessFile randomAccessFile = null;
-        RandomAccessFileInStream inStream = null;
-        IInArchive inArchive = null;
-        
-        try {
-            randomAccessFile = new RandomAccessFile(zipFile, "r");
-            inStream = new RandomAccessFileInStream(randomAccessFile);
-            inArchive = SevenZip.openInArchive(null, inStream);
-            
+        try (RandomAccessFile randomAccessFile = new RandomAccessFile(zipFile, "r");
+             RandomAccessFileInStream inStream = new RandomAccessFileInStream(randomAccessFile);
+             IInArchive inArchive = SevenZip.openInArchive(null, inStream)) {
+
             int totalItems = inArchive.getNumberOfItems();
             Log.d(TAG, "Archive contains " + totalItems + " items");
             
@@ -469,15 +456,6 @@ public class InitializationFragment extends Fragment {
         } catch (Exception e) {
             Log.e(TAG, "SevenZipJBinding extraction failed", e);
             return false;
-        } finally {
-            // 关闭资源
-            try {
-                if (inArchive != null) inArchive.close();
-                if (inStream != null) inStream.close();
-                if (randomAccessFile != null) randomAccessFile.close();
-            } catch (Exception e) {
-                Log.e(TAG, "Error closing archive resources", e);
-            }
         }
     }
     
@@ -622,11 +600,10 @@ public class InitializationFragment extends Fragment {
      */
     private boolean extractWithZipInputStream(File zipFile, File targetDir,
                                               ComponentItem component, int componentIndex) {
-        try {
+        try (FileInputStream fis = new FileInputStream(zipFile);
+             ZipInputStream zis = new ZipInputStream(fis)) {
+
             updateComponentStatus(componentIndex, 40, "使用备用方法解压...");
-            
-            FileInputStream fis = new FileInputStream(zipFile);
-            ZipInputStream zis = new ZipInputStream(fis);
             
             // 统计总条目数
             int totalEntries = countZipEntries(zipFile);
@@ -634,8 +611,7 @@ public class InitializationFragment extends Fragment {
             
             ZipEntry entry;
             int entriesProcessed = 0;
-            byte[] buffer = new byte[8192];
-            
+
             while ((entry = zis.getNextEntry()) != null) {
                 String fileName = entry.getName();
                 
@@ -668,12 +644,8 @@ public class InitializationFragment extends Fragment {
                         parent.mkdirs();
                     }
                     
-                    try (FileOutputStream fos = new FileOutputStream(outputFile)) {
-                        int length;
-                        while ((length = zis.read(buffer)) > 0) {
-                            fos.write(buffer, 0, length);
-                        }
-                    }
+                    java.nio.file.Files.copy(zis, outputFile.toPath(),
+                        java.nio.file.StandardCopyOption.REPLACE_EXISTING);
                 }
                 
                 zis.closeEntry();
@@ -685,7 +657,6 @@ public class InitializationFragment extends Fragment {
                 updateComponentStatus(componentIndex, progress, status);
             }
             
-            zis.close();
             return true;
             
         } catch (Exception e) {

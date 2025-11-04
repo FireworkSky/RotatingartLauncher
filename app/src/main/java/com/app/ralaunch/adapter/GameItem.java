@@ -14,12 +14,15 @@ package com.app.ralaunch.adapter;
 public class GameItem {
     private String gameName;
     private String gameDescription;
+    private String gameBasePath; // 存放单一游戏相关资源的根目录
     private String gamePath; // 主程序集路径（对于 modloader 就是 ModLoader.dll）
     private String gameBodyPath; // 游戏本体路径（对于 modloader 就是 Terraria.exe）
     private String iconPath; // 图标路径（从exe提取）
     private String engineType; // 引擎类型
     private int iconResId; // 图标资源ID
     private boolean modLoaderEnabled = true; // ModLoader 是否启用（默认启用）
+    private boolean isBootstrapperPresent = false; // Bootstrapper 是否存在（默认不存在）
+    private String bootstrapperBasePath; // Bootstrapper 基础路径 （相对于）
 
     // 默认构造函数（Gson需要）
     public GameItem() {
@@ -55,6 +58,14 @@ public class GameItem {
     public void setGameDescription(String gameDescription) {
         this.gameDescription = gameDescription;
     }
+    public String getGameBasePath() {
+        return gameBasePath;
+    }
+
+    public void setGameBasePath(String gameBasePath) {
+        this.gameBasePath = gameBasePath;
+    }
+
 
     public String getGamePath() {
         return gamePath;
@@ -102,5 +113,21 @@ public class GameItem {
 
     public void setModLoaderEnabled(boolean modLoaderEnabled) {
         this.modLoaderEnabled = modLoaderEnabled;
+    }
+
+    public boolean isBootstrapperPresent() {
+        return isBootstrapperPresent;
+    }
+
+    public void setBootstrapperPresent(boolean bootstrapperPresent) {
+        isBootstrapperPresent = bootstrapperPresent;
+    }
+
+    public String getBootstrapperBasePath() {
+        return bootstrapperBasePath;
+    }
+
+    public void setBootstrapperBasePath(String bootstrapperBasePath) {
+        this.bootstrapperBasePath = bootstrapperBasePath;
     }
 }

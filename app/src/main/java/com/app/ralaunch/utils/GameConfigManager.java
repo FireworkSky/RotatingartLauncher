@@ -40,13 +40,10 @@ public class GameConfigManager {
     }
 
     private void loadGameConfigs() {
-        try {
-            AssetManager assetManager = context.getAssets();
-            InputStream inputStream = assetManager.open(CONFIG_FILE);
+        try (InputStream inputStream = context.getAssets().open(CONFIG_FILE)) {
             int size = inputStream.available();
             byte[] buffer = new byte[size];
             inputStream.read(buffer);
-            inputStream.close();
 
             String json = new String(buffer, "UTF-8");
             Gson gson = new Gson();

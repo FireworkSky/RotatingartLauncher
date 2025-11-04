@@ -417,33 +417,23 @@ public class GameExtractor {
                 targetDir.mkdirs();
             }
 
-            RandomAccessFile randomAccessFile = new RandomAccessFile(archiveFile, "r");
-            RandomAccessFileInStream inStream = new RandomAccessFileInStream(randomAccessFile);
+            try (RandomAccessFile randomAccessFile = new RandomAccessFile(archiveFile, "r");
+                 RandomAccessFileInStream inStream = new RandomAccessFileInStream(randomAccessFile);
+                 IInArchive inArchive = SevenZip.openInArchive(null, inStream)) {
 
-            try {
-                IInArchive inArchive = SevenZip.openInArchive(null, inStream);
+                int totalItems = inArchive.getNumberOfItems();
+                Log.d(TAG, "Archive contains " + totalItems + " items");
 
-                try {
-                    int totalItems = inArchive.getNumberOfItems();
-                    Log.d(TAG, "Archive contains " + totalItems + " items");
+                // 创建自定义回调
+                GameDataExtractCallback callback = new GameDataExtractCallback(
+                        inArchive, targetDir, "data/noarch/game/",
+                        listener, startProgress, progressRange, totalItems);
 
-                    // 创建自定义回调
-                    GameDataExtractCallback callback = new GameDataExtractCallback(
-                            inArchive, targetDir, "data/noarch/game/",
-                            listener, startProgress, progressRange, totalItems);
+                // 提取所有文件
+                inArchive.extract(null, false, callback);
 
-                    // 提取所有文件
-                    inArchive.extract(null, false, callback);
-
-                    Log.d(TAG, "SevenZip extraction completed successfully");
-                    return true;
-
-                } finally {
-                    inArchive.close();
-                }
-            } finally {
-                inStream.close();
-                randomAccessFile.close();
+                Log.d(TAG, "SevenZip extraction completed successfully");
+                return true;
             }
 
         } catch (Exception e) {
@@ -581,8 +571,7 @@ public class GameExtractor {
             listener.onProgress("正在解压游戏文件...", startProgress);
         }
 
-        try {
-            ZipFile zip = new ZipFile(zipFile);
+        try (ZipFile zip = new ZipFile(zipFile)) {
             java.util.Enumeration<? extends ZipEntry> entries = zip.entries();
 
             // 先统计需要解压的文件数量
@@ -597,7 +586,6 @@ public class GameExtractor {
             // 重新开始解压
             entries = zip.entries();
             int processedFiles = 0;
-            byte[] buffer = new byte[8192];
 
             while (entries.hasMoreElements()) {
                 ZipEntry entry = entries.nextElement();
@@ -624,13 +612,9 @@ public class GameExtractor {
                     }
 
                     // 解压文件
-                    try (InputStream is = zip.getInputStream(entry);
-                         FileOutputStream fos = new FileOutputStream(targetFile)) {
-
-                        int length;
-                        while ((length = is.read(buffer)) > 0) {
-                            fos.write(buffer, 0, length);
-                        }
+                    try (InputStream is = zip.getInputStream(entry)) {
+                        java.nio.file.Files.copy(is, targetFile.toPath(),
+                            java.nio.file.StandardCopyOption.REPLACE_EXISTING);
                     }
 
                     processedFiles++;
@@ -641,7 +625,6 @@ public class GameExtractor {
                 }
             }
 
-            zip.close();
 
             if (listener != null) {
                 listener.onProgress("游戏文件解压完成", startProgress + progressRange);
@@ -736,14 +719,9 @@ public class GameExtractor {
      * 复制文件
      */
     private static boolean copyFile(File sourceFile, File targetFile) {
-        try (FileInputStream in = new FileInputStream(sourceFile);
-             FileOutputStream out = new FileOutputStream(targetFile)) {
-
-            byte[] buffer = new byte[8192];
-            int length;
-            while ((length = in.read(buffer)) > 0) {
-                out.write(buffer, 0, length);
-            }
+        try {
+            java.nio.file.Files.copy(sourceFile.toPath(), targetFile.toPath(),
+                java.nio.file.StandardCopyOption.REPLACE_EXISTING);
             return true;
         } catch (IOException e) {
             Log.e(TAG, "Failed to copy file: " + sourceFile.getAbsolutePath() + " to " + targetFile.getAbsolutePath(), e);
@@ -757,13 +735,11 @@ public class GameExtractor {
             listener.onProgress("正在解压ModLoader...", startProgress);
         }
 
-        try {
-            ZipFile zip = new ZipFile(zipFile);
+        try (ZipFile zip = new ZipFile(zipFile)) {
             java.util.Enumeration<? extends ZipEntry> entries = zip.entries();
 
             int totalEntries = zip.size();
             int processedEntries = 0;
-            byte[] buffer = new byte[8192];
 
             while (entries.hasMoreElements()) {
                 ZipEntry entry = entries.nextElement();
@@ -807,13 +783,9 @@ public class GameExtractor {
                 }
 
                 // 解压文件
-                try (InputStream is = zip.getInputStream(entry);
-                     FileOutputStream fos = new FileOutputStream(targetFile)) {
-
-                    int length;
-                    while ((length = is.read(buffer)) > 0) {
-                        fos.write(buffer, 0, length);
-                    }
+                try (InputStream is = zip.getInputStream(entry)) {
+                    java.nio.file.Files.copy(is, targetFile.toPath(),
+                        java.nio.file.StandardCopyOption.REPLACE_EXISTING);
                 }
 
                 processedEntries++;
@@ -823,7 +795,6 @@ public class GameExtractor {
                 }
             }
 
-            zip.close();
 
             if (listener != null) {
                 listener.onProgress("ModLoader解压完成", startProgress + progressRange);
@@ -850,12 +821,12 @@ public class GameExtractor {
 
         for (String filename : filesToCleanup) {
             File file = new File(outputDir, filename);
-            if (file.exists()) {
-                if (file.delete()) {
+            try {
+                if (java.nio.file.Files.deleteIfExists(file.toPath())) {
                     Log.d(TAG, "Successfully removed: " + file.getAbsolutePath());
-                } else {
-                    Log.e(TAG, "Failed to cleanup: " + file.getAbsolutePath());
                 }
+            } catch (IOException e) {
+                Log.e(TAG, "Failed to cleanup: " + file.getAbsolutePath(), e);
             }
         }
 
