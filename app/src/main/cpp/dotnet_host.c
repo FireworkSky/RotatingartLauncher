@@ -1,6 +1,8 @@
 /**
  * @file dotnet_host.c
  * @brief .NET CoreCLR 宿主启动器实现
+ * 
+ * 参考 .NET Runtime corehost 实现增强错误处理
  */
 
 #include <dlfcn.h>
@@ -12,6 +14,7 @@
 #include <signal.h>
 #include <ucontext.h>
 #include <sys/stat.h>
+#include <errno.h>
 #include "dotnet_params.h"
 #include "jni_bridge.h"
 
@@ -19,6 +22,13 @@
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
 #define LOGW(...) __android_log_print(ANDROID_LOG_WARN, LOG_TAG, __VA_ARGS__)
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
+
+// CoreCLR 错误码定义（参考 corehost）
+#define CORECLR_E_INVALID_OPERATION     0x80131509
+#define CORECLR_E_FILE_NOT_FOUND        0x80070002
+#define CORECLR_E_TYPE_LOAD             0x80131522
+#define CORECLR_E_METHOD_NOT_FOUND      0x80131513
+#define CORECLR_E_ASSEMBLY_NOT_FOUND    0x80131040
 
 /** 主程序集路径 */
 char* h_appPath = NULL;
@@ -46,6 +56,99 @@ extern char* g_targetGameAssembly;
 static void* g_coreclr_hostHandle = NULL;
 static unsigned int g_coreclr_domainId = 0;
 static void* g_coreclr_execute_assembly_fn = NULL;
+
+/**
+ * @brief 将 CoreCLR 错误码转换为可读的错误消息
+ * 参考 corehost 的错误处理
+ */
+static const char* get_coreclr_error_message(int error_code) {
+    switch (error_code) {
+        case 0: return "Success";
+        case 0x80004001: return "Not implemented";
+        case 0x80004002: return "No such interface supported";
+        case 0x80004005: return "Unspecified error";
+        case 0x80070002: return "File not found";
+        case 0x80070057: return "Invalid argument";
+        case 0x8007000E: return "Out of memory";
+        case 0x80131040: return "Assembly not found";
+        case 0x80131509: return "Invalid operation";
+        case 0x80131513: return "Method not found";
+        case 0x80131522: return "Type load exception";
+        case 0x80131700: return "IO exception";
+        default: return "Unknown error";
+    }
+}
+
+/**
+ * @brief 验证关键文件是否存在
+ * 参考 corehost 的依赖检查
+ */
+static int validate_runtime_dependencies(const char* runtime_dir) {
+    LOGI("🔍 Validating runtime dependencies in: %s", runtime_dir);
+    
+    // 检查关键的 CoreCLR 文件
+    const char* required_files[] = {
+        "libcoreclr.so",
+        "System.Private.CoreLib.dll",
+        NULL
+    };
+    
+    char file_path[2048];
+    int missing_count = 0;
+    
+    for (int i = 0; required_files[i] != NULL; i++) {
+        snprintf(file_path, sizeof(file_path), "%s/%s", runtime_dir, required_files[i]);
+        
+        struct stat st;
+        if (stat(file_path, &st) != 0) {
+            LOGE("❌ Missing required file: %s (errno: %d, %s)", 
+                 required_files[i], errno, strerror(errno));
+            missing_count++;
+        } else {
+            LOGI("✅ Found: %s (%ld bytes)", required_files[i], st.st_size);
+        }
+    }
+    
+    if (missing_count > 0) {
+        LOGE("❌ Missing %d required runtime file(s)", missing_count);
+        return 0;
+    }
+    
+    LOGI("✅ All required runtime files present");
+    return 1;
+}
+
+/**
+ * @brief 验证 TPA (Trusted Platform Assemblies) 列表
+ */
+static void validate_tpa_list(const char* tpa) {
+    if (!tpa || strlen(tpa) == 0) {
+        LOGE("❌ TPA list is empty!");
+        return;
+    }
+    
+    int count = 1;
+    for (const char* p = tpa; *p; p++) {
+        if (*p == ':') count++;
+    }
+    
+    LOGI("📦 TPA contains %d assemblies", count);
+    
+    // 检查关键程序集
+    const char* critical_assemblies[] = {
+        "System.Private.CoreLib.dll",
+        "System.Runtime.dll",
+        NULL
+    };
+    
+    for (int i = 0; critical_assemblies[i] != NULL; i++) {
+        if (strstr(tpa, critical_assemblies[i]) == NULL) {
+            LOGW("⚠️  Critical assembly not in TPA: %s", critical_assemblies[i]);
+        } else {
+            LOGI("✅ Found critical assembly: %s", critical_assemblies[i]);
+        }
+    }
+}
 
 /**
  * @brief Native回调函数：供C#调用coreclr_execute_assembly
@@ -555,6 +658,43 @@ int launch_with_coreclr_passthrough() {
     void* hostHandle; 
     unsigned int domainId;
     
+    // === 预检查阶段 ===
+    LOGI("========== CoreCLR Pre-Initialization Checks ==========");
+    
+    // 验证运行时依赖
+    char runtime_dir[1536];
+    if (g_nativeSearchPaths && strlen(g_nativeSearchPaths) > 0) {
+        strncpy(runtime_dir, g_nativeSearchPaths, sizeof(runtime_dir) - 1);
+        runtime_dir[sizeof(runtime_dir) - 1] = '\0';
+        
+        // 提取第一个路径
+        char* colon = strchr(runtime_dir, ':');
+        if (colon) *colon = '\0';
+        
+        if (!validate_runtime_dependencies(runtime_dir)) {
+            LOGE("❌ Runtime dependency validation failed!");
+            dlclose(coreclrLib);
+            return -13;
+        }
+    } else {
+        LOGW("⚠️  No native search paths specified, skipping dependency check");
+    }
+    
+    // 验证 TPA 列表
+    validate_tpa_list(g_trustedAssemblies);
+    
+    // 验证启动程序集存在
+    struct stat st;
+    if (stat(g_launcherDll, &st) != 0) {
+        LOGE("❌ Launcher assembly not found: %s (errno: %d, %s)", 
+             g_launcherDll, errno, strerror(errno));
+        dlclose(coreclrLib);
+        return -13;
+    }
+    LOGI("✅ Launcher assembly exists: %s (%ld bytes)", g_launcherDll, st.st_size);
+    
+    LOGI("=======================================================");
+    
     // 打印初始化参数以便调试
     LOGI("========== CoreCLR Initialization Parameters ==========");
     LOGI("Executable Path: %s", g_launcherDll);
@@ -567,15 +707,33 @@ int launch_with_coreclr_passthrough() {
     
     LOGI(">>> About to call coreclr_initialize...");
     int rc = coreclr_initialize(g_launcherDll, "AppDomain", 4, keys, vals, &hostHandle, &domainId);
-    LOGI("<<< coreclr_initialize returned: %d", rc);
+    LOGI("<<< coreclr_initialize returned: 0x%08X (%d)", rc, rc);
     LOGI("    hostHandle = %p (from coreclr_initialize)", hostHandle);
     LOGI("    domainId = %u (from coreclr_initialize)", domainId);
     
-    if (rc != 0) { 
+    if (rc != 0) {
+        const char* error_msg = get_coreclr_error_message(rc);
+        LOGE("❌ coreclr_initialize FAILED!");
+        LOGE("   Error Code: 0x%08X (%d)", rc, rc);
+        LOGE("   Error Message: %s", error_msg);
+        LOGE("   Executable: %s", g_launcherDll);
+        LOGE("   App Domain: AppDomain");
+        
+        // 打印可能的原因
+        LOGE("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        LOGE("Possible causes:");
+        LOGE("  1. Missing or corrupted runtime files");
+        LOGE("  2. Invalid TPA (Trusted Platform Assemblies) list");
+        LOGE("  3. Incompatible .NET runtime version");
+        LOGE("  4. Missing System.Private.CoreLib.dll");
+        LOGE("  5. Insufficient memory or permissions");
+        LOGE("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        
         dlclose(coreclrLib); 
-        LOGE("coreclr_initialize fail: %d", rc); 
         return -13; 
     }
+    
+    LOGI("✅ CoreCLR initialized successfully!");
     
     // 注意：在Android/Mono上，hostHandle和domainId可能都是0，但只要rc==0就表示成功
     // 我们信任返回值，而不是检查句柄是否为NULL
@@ -609,12 +767,25 @@ int launch_with_coreclr_passthrough() {
         );
         
         if (rc != 0) {
-            LOGE("Failed to create SetExecuteAssemblyCallback delegate: %d", rc);
+            const char* error_msg = get_coreclr_error_message(rc);
+            LOGE("❌ Failed to create SetExecuteAssemblyCallback delegate!");
+            LOGE("   Error Code: 0x%08X (%d)", rc, rc);
+            LOGE("   Error Message: %s", error_msg);
+            LOGE("   Assembly: Bootstrap");
+            LOGE("   Type: AssemblyMain.Program");
+            LOGE("   Method: SetExecuteAssemblyCallback");
+            LOGE("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            LOGE("Possible causes:");
+            LOGE("  1. Bootstrap.dll not in TPA list");
+            LOGE("  2. Incorrect class/method name");
+            LOGE("  3. Method signature mismatch");
+            LOGE("  4. Assembly version incompatibility");
+            LOGE("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
             dlclose(coreclrLib);
             return -14;
         }
         
-        LOGI("✅ SetExecuteAssemblyCallback delegate created");
+        LOGI("✅ SetExecuteAssemblyCallback delegate created successfully");
         
         // 2. 保存CoreCLR句柄供回调使用
         g_coreclr_hostHandle = hostHandle;
@@ -637,12 +808,25 @@ int launch_with_coreclr_passthrough() {
         );
         
         if (rc != 0) {
-            LOGE("Failed to create LaunchGame delegate: %d", rc);
+            const char* error_msg = get_coreclr_error_message(rc);
+            LOGE("❌ Failed to create LaunchGame delegate!");
+            LOGE("   Error Code: 0x%08X (%d)", rc, rc);
+            LOGE("   Error Message: %s", error_msg);
+            LOGE("   Assembly: Bootstrap");
+            LOGE("   Type: AssemblyMain.Program");
+            LOGE("   Method: LaunchGame");
+            LOGE("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            LOGE("Possible causes:");
+            LOGE("  1. Bootstrap.dll not in TPA list");
+            LOGE("  2. Incorrect class/method name");
+            LOGE("  3. Method signature mismatch (should accept string)");
+            LOGE("  4. Method not marked with [UnmanagedCallersOnly]");
+            LOGE("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
             dlclose(coreclrLib);
             return -15;
         }
         
-        LOGI("✅ LaunchGame delegate created");
+        LOGI("✅ LaunchGame delegate created successfully");
         
         // 5. 调用Bootstrap.LaunchGame
         LOGI("🎮 Calling Bootstrap.LaunchGame(\"%s\")", g_targetGameAssembly);
@@ -689,7 +873,28 @@ int launch_with_coreclr_passthrough() {
         
         // 直接启动模式
         const char* directArgs[] = { h_appPath };
+        LOGI("🎯 Executing assembly: %s", h_appPath);
         rc = coreclr_execute_assembly(hostHandle, domainId, 1, directArgs, h_appPath, &exitCode);
+        
+        if (rc != 0) {
+            const char* error_msg = get_coreclr_error_message(rc);
+            LOGE("❌ Assembly execution FAILED!");
+            LOGE("   Error Code: 0x%08X (%d)", rc, rc);
+            LOGE("   Error Message: %s", error_msg);
+            LOGE("   Assembly: %s", h_appPath);
+            LOGE("   Exit Code: %u", exitCode);
+            LOGE("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            LOGE("Possible causes:");
+            LOGE("  1. Entry point (Main method) not found");
+            LOGE("  2. Assembly dependencies missing");
+            LOGE("  3. Runtime exception in managed code");
+            LOGE("  4. Incorrect assembly format");
+            LOGE("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        } else if (exitCode != 0) {
+            LOGW("⚠️  Assembly executed but returned non-zero exit code: %u", exitCode);
+        } else {
+            LOGI("✅ Assembly executed successfully");
+        }
     }
     
     // 10. 关闭 CoreCLR 运行时（如果函数可用）

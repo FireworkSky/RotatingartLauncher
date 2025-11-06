@@ -40,11 +40,49 @@ public class GameExtractor {
         void onComplete(String gamePath, String modLoaderPath);
         void onError(String error);
     }
+    
+    /**
+     * 检查可用存储空间
+     * @param outputDir 目标目录
+     * @param inputFile 输入文件
+     * @param listener 监听器
+     * @return 是否有足够空间
+     */
+    private static boolean checkAvailableSpace(File outputDir, File inputFile, ExtractionListener listener) {
+        long availableSpace = outputDir.getUsableSpace();
+        long requiredSpace = inputFile.length() * 3; // 预留3倍空间用于解压
+        
+        Log.d(TAG, String.format("Space check: available=%.1f GB, required=%.1f GB",
+            availableSpace / 1024.0 / 1024 / 1024,
+            requiredSpace / 1024.0 / 1024 / 1024));
+        
+        if (availableSpace < requiredSpace) {
+            String errorMsg = String.format(
+                "存储空间不足！\n需要约 %.1f GB\n可用 %.1f GB\n\n请释放更多空间后重试",
+                requiredSpace / 1024.0 / 1024 / 1024,
+                availableSpace / 1024.0 / 1024 / 1024
+            );
+            Log.e(TAG, errorMsg);
+            if (listener != null) {
+                listener.onError(errorMsg);
+            }
+            return false;
+        }
+        return true;
+    }
 
     public static void installCompleteGame(String shFilePath, String modLoaderZipPath,
                                            String outputDir, ExtractionListener listener) {
         new Thread(() -> {
             try {
+                File inputFile = new File(shFilePath);
+                File outDir = new File(outputDir);
+                
+                // 检查可用空间
+                if (!checkAvailableSpace(outDir, inputFile, listener)) {
+                    return; // 空间不足，直接返回
+                }
+                
                 // 先读取游戏信息
                 GameInfoParser.GameInfo gameInfo = GameInfoParser.extractGameInfo(shFilePath);
                 String gameName = (gameInfo != null && gameInfo.name != null) ? gameInfo.name : "Unknown";
@@ -332,6 +370,23 @@ public class GameExtractor {
             outputDir.mkdirs();
         }
 
+        // 检查可用空间
+        long availableSpace = outputDir.getUsableSpace();
+        long requiredSpace = filesize > 0 ? filesize * 3 : inputFile.length() * 3; // 预留3倍空间用于解压
+        
+        Log.d(TAG, "Available space: " + (availableSpace / 1024 / 1024) + " MB");
+        Log.d(TAG, "Required space (estimated): " + (requiredSpace / 1024 / 1024) + " MB");
+        
+        if (availableSpace < requiredSpace) {
+            String errorMsg = String.format(
+                "存储空间不足！需要约 %.1f GB，可用 %.1f GB",
+                requiredSpace / 1024.0 / 1024 / 1024,
+                availableSpace / 1024.0 / 1024 / 1024
+            );
+            Log.e(TAG, errorMsg);
+            throw new IOException(errorMsg);
+        }
+
         long totalSize = inputFile.length();
         Log.d(TAG, "Total file size: " + totalSize);
 
@@ -438,7 +493,24 @@ public class GameExtractor {
 
         } catch (Exception e) {
             Log.e(TAG, "SevenZip extraction failed", e);
-            // 如果SevenZip解压失败，回退到原来的ZipFile方法
+            
+            // 检查是否是空间不足错误
+            String errorMessage = e.getMessage();
+            if (errorMessage != null && (errorMessage.contains("ENOSPC") || 
+                errorMessage.contains("No space left on device"))) {
+                Log.e(TAG, "Extraction failed: Out of disk space");
+                if (listener != null) {
+                    long availableSpace = targetDir.getUsableSpace();
+                    String spaceMsg = String.format(
+                        "存储空间不足！当前可用: %.1f GB\n请释放更多空间后重试",
+                        availableSpace / 1024.0 / 1024 / 1024
+                    );
+                    listener.onError(spaceMsg);
+                }
+                return false;
+            }
+            
+            // 其他错误：如果SevenZip解压失败，回退到原来的ZipFile方法
             Log.d(TAG, "Falling back to standard ZipFile extraction");
             return extractGameDataDirect(archiveFile, targetDir, startProgress, progressRange, listener);
         }
