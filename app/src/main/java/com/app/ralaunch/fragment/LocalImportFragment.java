@@ -399,7 +399,34 @@ public class LocalImportFragment extends Fragment {
                                     Log.d(TAG, "GameExtractor returned modLoaderPath: " + modLoaderPath);
 
                                     var newGame = new GameItem();
-                                    newGame.setGameName(gameName);
+                                    
+                                    // 如果有模组加载器，提取模组加载器的信息
+                                    String iconSourcePath;
+                                    String displayName;
+                                    if (modLoaderPath != null && !modLoaderPath.isEmpty()) {
+                                        // 使用模组加载器的程序集
+                                        iconSourcePath = finalGamePath;
+                                        
+                                        // 尝试从程序集文件名提取名称
+                                        File modLoaderFile = new File(finalGamePath);
+                                        if (modLoaderFile.exists() && modLoaderFile.isFile()) {
+                                            String modLoaderName = modLoaderFile.getName().replace(".dll", "").replace(".exe", "");
+                                            displayName = gameName + " (" + modLoaderName + ")";
+                                            Log.i(TAG, "Using ModLoader assembly: " + modLoaderName);
+                                        } else {
+                                            displayName = gameName + " (Modded)";
+                                        }
+                                        
+                                        // 自动启用模组加载器
+                                        newGame.setModLoaderEnabled(true);
+                                        Log.i(TAG, "ModLoader detected, enabled automatically");
+                                    } else {
+                                        // 使用游戏本体
+                                        iconSourcePath = gameBodyPath;
+                                        displayName = gameName;
+                                    }
+                                    
+                                    newGame.setGameName(displayName);
                                     try {
                                         newGame.setGameBasePath(gameDir.getCanonicalPath());
                                     } catch (IOException e) {
@@ -409,8 +436,8 @@ public class LocalImportFragment extends Fragment {
                                     newGame.setGameBodyPath(gameBodyPath);
                                     newGame.setEngineType(engineType);
                                     
-                                    // 尝试从游戏程序集中提取图标
-                                    String extractedIconPath = extractIconFromExecutable(gameBodyPath, gameIconPath);
+                                    // 从正确的程序集中提取图标
+                                    String extractedIconPath = extractIconFromExecutable(iconSourcePath, gameIconPath);
                                     newGame.setIconPath(extractedIconPath);
 
                                     tryToImportBootstrapper(newGame);
@@ -486,7 +513,25 @@ public class LocalImportFragment extends Fragment {
                                     }
 
                                     var newGame = new GameItem();
-                                    newGame.setGameName(gameName);
+                                    
+                                    // 检测是否有 SMAPI（模组加载器）
+                                    String iconSourcePath;
+                                    String displayName;
+                                    if (smapiPaths != null) {
+                                        // 检测到 SMAPI，使用 SMAPI 的信息
+                                        iconSourcePath = finalGamePath;  // SMAPI 启动器
+                                        displayName = gameName + " (SMAPI)";
+                                        
+                                        // 自动启用模组加载器
+                                        newGame.setModLoaderEnabled(true);
+                                        Log.i(TAG, "SMAPI detected, enabled automatically");
+                                    } else {
+                                        // 纯游戏
+                                        iconSourcePath = finalGamePath;
+                                        displayName = gameName;
+                                    }
+                                    
+                                    newGame.setGameName(displayName);
                                     try {
                                         newGame.setGameBasePath(currentGameDir.getCanonicalPath());
                                     } catch (IOException e) {
@@ -502,8 +547,7 @@ public class LocalImportFragment extends Fragment {
                                     
                                     newGame.setEngineType(engineType);
                                     
-                                    // 尝试从游戏程序集中提取图标（优先使用游戏本体）
-                                    String iconSourcePath = (gameBodyPath != null) ? gameBodyPath : finalGamePath;
+                                    // 从正确的程序集中提取图标
                                     String extractedIconPath = extractIconFromExecutable(iconSourcePath, gameIconPath);
                                     newGame.setIconPath(extractedIconPath);
 
