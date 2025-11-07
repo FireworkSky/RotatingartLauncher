@@ -345,7 +345,7 @@ public class GogShFileExtractor implements ExtractorCollection.IExtractor {
     public boolean extract() {
         try {
             // 获取 MakeSelf SH 文件的头部信息
-            extractionListener.onProgress("正在提取安装脚本...", 0.1f, state);
+            extractionListener.onProgress("正在提取安装脚本...", 0.01f, state);
             MakeSelfShFile shFile = MakeSelfShFile.parse(this.sourcePath);
             if (shFile == null) {
                 Log.e(TAG, "[extract] MakeSelf SH file is null");
@@ -368,7 +368,7 @@ public class GogShFileExtractor implements ExtractorCollection.IExtractor {
                     throw new IOException("MakeSelf Sh 文件头部信息无效，超出文件总大小");
                 }
 
-                extractionListener.onProgress("正在提取MojoSetup归档...", 0.2f, state);
+                extractionListener.onProgress("正在提取MojoSetup归档...", 0.02f, state);
 
                 // 提取 mojosetup.tar.gz
                 Path mojosetupPath = acquireTempFilePath(EXTRACTED_MOJOSETUP_TAR_GZ_FILENAME);
@@ -378,7 +378,7 @@ public class GogShFileExtractor implements ExtractorCollection.IExtractor {
                     srcChannel.transferTo(shFile.offset, shFile.filesize, mojosetupChannel);
                 }
 
-                extractionListener.onProgress("正在提取游戏数据...", 0.3f, state);
+                extractionListener.onProgress("正在提取游戏数据...", 0.03f, state);
 
                 // 提取 game_data.zip
                 Path gameDataPath = acquireTempFilePath(EXTRACTED_GAME_DATA_ZIP_FILENAME);
@@ -391,7 +391,7 @@ public class GogShFileExtractor implements ExtractorCollection.IExtractor {
                             gameDataChannel);
                 }
 
-                extractionListener.onProgress("正在解析游戏数据...", 0.35f, state);
+                extractionListener.onProgress("正在解析游戏数据...", 0.09f, state);
 
                 Log.d(TAG, "Extraction from MakeSelf SH file completed successfully");
 
@@ -403,7 +403,7 @@ public class GogShFileExtractor implements ExtractorCollection.IExtractor {
                     throw new IOException("解析 game_data.zip 失败");
                 }
 
-                extractionListener.onProgress("正在解压游戏数据...", 0.4f, state);
+                extractionListener.onProgress("正在解压游戏数据...", 0.1f, state);
 
                 var zipExtractor = new BasicSevenZipExtractor(
                         gameDataPath,
@@ -412,7 +412,7 @@ public class GogShFileExtractor implements ExtractorCollection.IExtractor {
                         new ExtractorCollection.ExtractionListener() {
                             @Override
                             public void onProgress(String message, float progress, HashMap<String, Object> state) {
-                                extractionListener.onProgress(message, 0.4f + progress * 0.6f, state);
+                                extractionListener.onProgress(message, 0.1f + progress * 0.9f, state);
                             }
 
                             @Override
