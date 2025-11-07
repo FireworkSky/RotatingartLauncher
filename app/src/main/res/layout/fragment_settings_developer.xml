@@ -195,7 +195,7 @@
                         android:orientation="vertical">
 
                         <Button
-                            android:id="@+id/debugButton"
+                            android:id="@+id/btn_enter_debug_page"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:text="进入调试页面"

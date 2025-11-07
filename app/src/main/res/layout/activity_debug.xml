@@ -24,6 +24,28 @@
                 android:backgroundTint="@color/accent_green"
                 android:text="测试Bootstrapper" />
 
+            <Button
+                android:id="@+id/btn_test_extractor"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:backgroundTint="@color/accent_green"
+                android:text="测试Extractor" />
+
+            <ProgressBar
+                android:id="@+id/debug_shared_progressbar"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                style="?android:attr/progressBarStyleHorizontal" />
+
+            <TextView
+                android:id="@+id/debug_shared_text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="Debug Information"
+                android:textSize="14sp" />
+
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 

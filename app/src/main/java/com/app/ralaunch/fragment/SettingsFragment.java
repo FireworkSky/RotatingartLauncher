@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
@@ -438,6 +439,7 @@ public class SettingsFragment extends Fragment {
         TextView tvVerboseLoggingValue = rootView.findViewById(R.id.tvVerboseLoggingValue);
         MaterialCardView performanceMonitorCard = rootView.findViewById(R.id.performanceMonitorCard);
         TextView tvPerformanceMonitorValue = rootView.findViewById(R.id.tvPerformanceMonitorValue);
+        Button btn_enter_debug_page = rootView.findViewById(R.id.btn_enter_debug_page);
         
         if (verboseLoggingCard == null || performanceMonitorCard == null) {
             return;
@@ -496,6 +498,14 @@ public class SettingsFragment extends Fragment {
                 })
                 .show(getParentFragmentManager(), "performance_monitor");
         });
+
+        // 进入调试页面按钮
+        if (btn_enter_debug_page != null) {
+            btn_enter_debug_page.setOnClickListener(v -> {
+                // 打开调试Activity
+                startActivity(new android.content.Intent(requireContext(), com.app.ralaunch.activity.DebugActivity.class));
+            });
+        }
     }
     
     private void updateVerboseLoggingDisplay(SettingsManager settingsManager, TextView textView) {

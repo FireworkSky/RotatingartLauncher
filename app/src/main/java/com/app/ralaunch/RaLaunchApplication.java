@@ -20,6 +20,9 @@ public class RaLaunchApplication extends Application {
 
         // 初始化 GameDataManager
         gameDataManager = new GameDataManager(appContext);
+
+        // 初始化 ralib
+        com.app.ralib.Shared.init(appContext);
     }
 
     /**
