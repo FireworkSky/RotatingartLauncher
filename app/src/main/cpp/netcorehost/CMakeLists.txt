@@ -47,6 +47,11 @@ target_include_directories(netcorehost
 if(WIN32)
     # Windows不需要额外链接库
     target_link_libraries(netcorehost PRIVATE)
+elseif(ANDROID)
+    # Android平台：链接dl库和.NET的libnethost.a
+    # libnethost.a位于jniLibs目录中，根据ABI选择
+    set(NETHOST_LIB_PATH ${CMAKE_CURRENT_SOURCE_DIR}/native/${ANDROID_ABI}/libnethost.a)
+    target_link_libraries(netcorehost PRIVATE dl ${NETHOST_LIB_PATH})
 else()
     # Unix/Linux/macOS需要链接dl库用于动态加载
     target_link_libraries(netcorehost PRIVATE dl)
