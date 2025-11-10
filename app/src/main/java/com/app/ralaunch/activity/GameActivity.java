@@ -34,8 +34,6 @@ import com.app.ralaunch.utils.RuntimePreference;
 import com.app.ralaunch.game.GameLauncher;
 import com.app.ralaunch.controls.ControlLayout;
 import com.app.ralaunch.controls.SDLInputBridge;
-import com.app.ralaunch.utils.PerformanceMonitor;
-import com.app.ralaunch.views.PerformanceOverlay;
 
 import org.libsdl.app.SDLActivity;
 
@@ -69,8 +67,6 @@ public class GameActivity extends SDLActivity {
     private boolean mIsInEditor = false; // 是否处于编辑模式
     private boolean mHasUnsavedChanges = false; // 是否有未保存的修改
     private SideEditDialog mSideEditDialog; // 编辑对话框
-    private PerformanceMonitor mPerformanceMonitor; // 性能监控器
-    private PerformanceOverlay mPerformanceOverlay; // 性能显示UI
 
     // gl4es加载：已禁用静态预加载以避免EGL冲突
     // 现在由SDL通过SDL_VIDEO_GL_DRIVER环境变量在需要时延迟加载
@@ -188,65 +184,53 @@ public class GameActivity extends SDLActivity {
     // 设置启动参数
     private void setLaunchParams() {
         try {
-
-            // 获取程序集路径和游戏本体路径
-            String assemblyPath = getIntent().getStringExtra("GAME_PATH");
-            String gameBodyPath = getIntent().getStringExtra("GAME_BODY_PATH");
-            boolean modLoaderEnabled = getIntent().getBooleanExtra("MOD_LOADER_ENABLED", true);
-            String assemblyName = getIntent().getStringExtra("GAME_NAME");
-
-            // 根据 ModLoader 开关状态选择正确的程序集路径
-            final String finalAssemblyPath;
-            if (gameBodyPath != null && !gameBodyPath.isEmpty()) {
-                // 有游戏本体路径，说明是 modloader 游戏
-                if (!modLoaderEnabled) {
-                    // ModLoader 关闭，使用游戏本体 DLL
-                    // gameBodyPath 格式: /path/to/Terraria.exe
-                    // 需要转换为: /path/to/Terraria.dll
-                    File gameBodyFile = new File(gameBodyPath);
-                    File gameBodyDir = gameBodyFile.getParentFile();
-                    String gameBodyName = gameBodyFile.getName().replace(".exe", ".dll");
-                    finalAssemblyPath = new File(gameBodyDir, gameBodyName).getAbsolutePath();
-
-                } else {
-                    finalAssemblyPath = assemblyPath;
-
-                }
-            } else {
-                finalAssemblyPath = assemblyPath;
-            }
-
-            // 验证程序集文件是否存在
-            File assemblyFile = new File(finalAssemblyPath);
-            if (!assemblyFile.exists() || !assemblyFile.isFile()) {
-                Log.e(TAG, "Assembly file not found: " + finalAssemblyPath);
+            // 获取程序集路径
+            String assemblyPath = getIntent().getStringExtra("ASSEMBLY_PATH");
+            String gameName = getIntent().getStringExtra("GAME_NAME");
+            
+            if (assemblyPath == null || assemblyPath.isEmpty()) {
+                Log.e(TAG, "Assembly path is null or empty");
                 runOnUiThread(() -> {
-                    Toast.makeText(this, "程序集文件不存在: " + finalAssemblyPath, Toast.LENGTH_LONG).show();
+                    Toast.makeText(this, "程序集路径为空", Toast.LENGTH_LONG).show();
                 });
+                finish();
                 return;
             }
 
-            // 根据设置选择启动方式
-            com.app.ralaunch.utils.SettingsManager settingsManager = 
-                com.app.ralaunch.utils.SettingsManager.getInstance(this);
-            int launchMode = settingsManager.getLaunchMode();
-            
-            int result;
-            result = GameLauncher.launchAssemblyDirect(this, finalAssemblyPath);
+            // 验证程序集文件是否存在
+            File assemblyFile = new File(assemblyPath);
+            if (!assemblyFile.exists() || !assemblyFile.isFile()) {
+                Log.e(TAG, "Assembly file not found: " + assemblyPath);
+                runOnUiThread(() -> {
+                    Toast.makeText(this, "程序集文件不存在: " + assemblyPath, Toast.LENGTH_LONG).show();
+                });
+                finish();
+                return;
+            }
+
+            Log.i(TAG, "================================================");
+            Log.i(TAG, "Starting game: " + (gameName != null ? gameName : "Unknown"));
+            Log.i(TAG, "Assembly: " + assemblyPath);
+            Log.i(TAG, "================================================");
+
+            // 直接启动程序集
+            int result = GameLauncher.launchAssemblyDirect(this, assemblyPath);
 
             if (result == 0) {
-
+                Log.i(TAG, "✅ Launch parameters set successfully");
             } else {
-                Log.e(TAG, "Failed to set launch parameters: " + result);
+                Log.e(TAG, "❌ Failed to set launch parameters: " + result);
                 runOnUiThread(() -> {
                     Toast.makeText(this, "设置启动参数失败: " + result, Toast.LENGTH_LONG).show();
                 });
+                finish();
             }
         } catch (Exception e) {
-            Log.e(TAG, "Error setting launch parameters: " + e.getMessage(), e);
+            Log.e(TAG, "❌ Exception in setLaunchParams: " + e.getMessage(), e);
             runOnUiThread(() -> {
-                Toast.makeText(this, "设置启动参数失败: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                Toast.makeText(this, "启动失败: " + e.getMessage(), Toast.LENGTH_LONG).show();
             });
+            finish();
         }
     }
 
@@ -328,23 +312,6 @@ public class GameActivity extends SDLActivity {
             // 优先加载自定义布局，如果不存在则加载默认布局
             mControlLayout.loadCustomOrDefaultLayout();
 
-            // 检查是否启用性能监控
-            boolean performanceEnabled = RuntimePreference.isPerformanceMonitorEnabled(this);
-
-            if (performanceEnabled) {
-                // 初始化性能监控
-                mPerformanceMonitor = new PerformanceMonitor(this);
-
-                // 创建性能显示UI
-                mPerformanceOverlay = new PerformanceOverlay(this);
-
-                // 启动监控（1秒更新间隔）
-                mPerformanceMonitor.startMonitoring(1000, mPerformanceOverlay);
-
-            } else {
-
-            }
-
             // 添加到SDL Surface上（延迟到SDL Surface创建后）
             runOnUiThread(() -> {
                 try {
@@ -356,12 +323,6 @@ public class GameActivity extends SDLActivity {
                             ViewGroup.LayoutParams.MATCH_PARENT
                         );
                         contentView.addView(mControlLayout, params);
-
-                        // 添加性能显示层到最上层（如果已启用）
-                        if (mPerformanceOverlay != null) {
-                            contentView.addView(mPerformanceOverlay, params);
-
-                        }
                     }
                 } catch (Exception e) {
                     Log.e(TAG, "Failed to add virtual controls to layout", e);
@@ -786,11 +747,6 @@ public class GameActivity extends SDLActivity {
     @Override
     protected void onDestroy() {
 
-        // 停止性能监控
-        if (mPerformanceMonitor != null) {
-            mPerformanceMonitor.stopMonitoring();
-
-        }
 
         super.onDestroy();
     }

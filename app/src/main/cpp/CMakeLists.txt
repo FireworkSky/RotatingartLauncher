@@ -86,6 +86,14 @@ add_library(${CMAKE_PROJECT_NAME} SHARED
 #    - gl4es提供这些符号
 # 2. gl4es内部链接到系统的EGL和GLESv2
 #    - 用于实际的GLES调用
+# 查找 nethost 静态库
+set(NETHOST_LIB_DIR ${CMAKE_SOURCE_DIR}/../jnilibs/${ANDROID_ABI})
+set(NETHOST_LIB ${NETHOST_LIB_DIR}/libnethost.a)
+if(NOT EXISTS ${NETHOST_LIB})
+    message(WARNING "nethost library not found at ${NETHOST_LIB}, skipping")
+    set(NETHOST_LIB "")
+endif()
+
 target_link_libraries(${CMAKE_PROJECT_NAME}
         android
         log
@@ -96,6 +104,12 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
         netcorehost # .NET Core Hosting库
        # lgogdownloader
 )
+
+# 如果找到 nethost 静态库，则链接它
+if(NETHOST_LIB)
+    target_link_libraries(${CMAKE_PROJECT_NAME} ${NETHOST_LIB})
+    message(STATUS "Linking nethost static library: ${NETHOST_LIB}")
+endif()
 
 # ⚠️ 关键：导出 gl4es 符号，使其对 dlsym 可见
 # 这样SDL可以通过dlsym(NULL, "aglCreateContext2")找到这些函数

@@ -70,6 +70,18 @@
                 android:src="@drawable/ic_refresh"
                 app:tint="?attr/textPrimary" />
 
+            <!-- 视图切换按钮 (使用 ralib 组件) -->
+            <com.app.ralib.ui.ViewSwitcherButton
+                android:id="@+id/viewSwitchButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="12dp"
+                android:layout_gravity="center_vertical"
+                app:primaryIcon="@drawable/ralib_ic_grid_view"
+                app:secondaryIcon="@drawable/ralib_ic_folder_view"
+                app:primaryLabel=""
+                app:secondaryLabel="" />
+
             <!-- 添加游戏按钮 -->
             <ImageButton
                 android:id="@+id/addGameButton"
@@ -107,6 +119,7 @@
                     app:cardElevation="4dp"
                     app:cardBackgroundColor="?attr/backgroundCard">
 
+                    <!-- 游戏RecyclerView -->
                     <androidx.recyclerview.widget.RecyclerView
                         android:id="@+id/gameRecyclerView"
                         android:layout_width="match_parent"
@@ -118,6 +131,13 @@
                         android:scrollbars="vertical"
                         app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
                         app:spanCount="2" />
+
+                    <!-- 文件浏览器容器 -->
+                    <FrameLayout
+                        android:id="@+id/fileBrowserContainer"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:visibility="gone" />
 
                 </androidx.cardview.widget.CardView>
 
@@ -350,22 +370,15 @@
 
                 </com.google.android.material.card.MaterialCardView>
 
-                <!-- 启动游戏按钮 -->
-                <Button
+                <!-- 启动游戏按钮 - 现代化设计 -->
+                <com.app.ralib.ui.ModernButton
                     android:id="@+id/launchGameButton"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
-                    android:background="@drawable/bg_rounded_transparent"
-                    android:backgroundTint="@color/accent_primary"
-                    android:text="启动游戏"
-                    android:textColor="@android:color/white"
-                    android:textSize="14sp"
-                    android:textStyle="bold"
-                    android:paddingVertical="12dp"
-                    android:drawableStart="@drawable/ic_play"
-                    android:drawablePadding="8dp"
-                    android:gravity="center"
+                    app:buttonText="启动游戏"
+                    app:buttonIcon="@drawable/ic_play"
+                    app:buttonColor="@color/accent_primary"
                     android:visibility="gone" />
 
                 <!-- 空状态提示卡片 -->

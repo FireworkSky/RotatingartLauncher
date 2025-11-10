@@ -38,7 +38,13 @@ import java.util.List;
  */
 public class FileBrowserFragment extends Fragment implements FileBrowserAdapter.OnFileClickListener {
 
+    // 模式常量
+    public static final int MODE_SELECT_FILE = 0;  // 选择文件模式（默认）
+    public static final int MODE_SELECT_ASSEMBLY = 1;  // 选择程序集模式（dll/exe）
+    
+    private int mode = MODE_SELECT_FILE;
     private OnFileSelectedListener fileSelectedListener;
+    private OnAssemblySelectedListener assemblySelectedListener;
     private OnBackListener backListener;
 
     // 界面控件
@@ -64,6 +70,9 @@ public class FileBrowserFragment extends Fragment implements FileBrowserAdapter.
     
     // 排序模式: 0=名称, 1=大小, 2=时间
     private int sortMode = 0;
+    
+    // 权限请求监听器
+    private OnPermissionRequestListener permissionRequestListener;
 
     // 权限请求监听器
     public interface OnPermissionRequestListener {
@@ -73,17 +82,37 @@ public class FileBrowserFragment extends Fragment implements FileBrowserAdapter.
     public interface OnFileSelectedListener {
         void onFileSelected(String filePath, String fileType);
     }
+    
+    public interface OnAssemblySelectedListener {
+        void onAssemblySelected(String assemblyPath);
+    }
 
     public interface OnBackListener {
         void onBack();
+    }
+    
+    public void setMode(int mode) {
+        this.mode = mode;
+        if (mode == MODE_SELECT_ASSEMBLY) {
+            // 程序集模式：只显示 dll/exe 文件
+            setFileType("assembly", new String[]{".dll", ".exe"});
+        }
     }
 
     public void setOnFileSelectedListener(OnFileSelectedListener listener) {
         this.fileSelectedListener = listener;
     }
+    
+    public void setOnFileSelectedListener(OnAssemblySelectedListener listener) {
+        this.assemblySelectedListener = listener;
+    }
 
     public void setOnBackListener(OnBackListener listener) {
         this.backListener = listener;
+    }
+    
+    public void setOnPermissionRequestListener(OnPermissionRequestListener listener) {
+        this.permissionRequestListener = listener;
     }
 
     public void setFileType(String fileType, String[] extensions) {
@@ -150,16 +179,20 @@ public class FileBrowserFragment extends Fragment implements FileBrowserAdapter.
 
         // 确认按钮
         confirmButton.setOnClickListener(v -> {
-            if (selectedFile != null && fileSelectedListener != null) {
-                fileSelectedListener.onFileSelected(selectedFile.getAbsolutePath(), fileType);
+            if (selectedFile != null) {
+                if (mode == MODE_SELECT_ASSEMBLY && assemblySelectedListener != null) {
+                    assemblySelectedListener.onAssemblySelected(selectedFile.getAbsolutePath());
+                } else if (fileSelectedListener != null) {
+                    fileSelectedListener.onFileSelected(selectedFile.getAbsolutePath(), fileType);
+                }
             }
         });
 
         // 权限拒绝状态的授权按钮
         Button grantPermissionButton = view.findViewById(R.id.grantPermissionButton);
         grantPermissionButton.setOnClickListener(v -> {
-            if (getActivity() instanceof OnPermissionRequestListener) {
-                ((OnPermissionRequestListener) getActivity()).onPermissionRequest(new MainActivity.PermissionCallback() {
+            if (permissionRequestListener != null) {
+                permissionRequestListener.onPermissionRequest(new MainActivity.PermissionCallback() {
                     @Override public void onPermissionsGranted() { loadInitialDirectory(); hidePermissionDeniedState(); }
                     @Override public void onPermissionsDenied() { showPermissionDeniedState(); }
                 });
@@ -329,6 +362,11 @@ public class FileBrowserFragment extends Fragment implements FileBrowserAdapter.
     }
 
     private void updateConfirmButton() {
+        // 检查 Fragment 是否已 attach，避免崩溃
+        if (!isAdded() || getContext() == null) {
+            return;
+        }
+        
         if (selectedFile != null) {
             confirmButton.setEnabled(true);
             confirmButton.setBackgroundTintList(getResources().getColorStateList(R.color.button_secondary));

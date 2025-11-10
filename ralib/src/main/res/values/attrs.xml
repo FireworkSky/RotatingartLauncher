@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- ViewSwitcherButton 自定义属性 -->
+    <declare-styleable name="ViewSwitcherButton">
+        <attr name="primaryIcon" format="reference" />
+        <attr name="secondaryIcon" format="reference" />
+        <attr name="primaryLabel" format="string" />
+        <attr name="secondaryLabel" format="string" />
+    </declare-styleable>
+
+    <!-- ModernButton 自定义属性 -->
+    <declare-styleable name="ModernButton">
+        <attr name="buttonText" format="string" />
+        <attr name="buttonIcon" format="reference" />
+        <attr name="buttonColor" format="color" />
+    </declare-styleable>
+
+    <!-- ModernProgressBar 自定义属性 -->
+    <declare-styleable name="ModernProgressBar">
+        <attr name="progressColor" format="color" />
+        <attr name="showPercentage" format="boolean" />
+    </declare-styleable>
+</resources>

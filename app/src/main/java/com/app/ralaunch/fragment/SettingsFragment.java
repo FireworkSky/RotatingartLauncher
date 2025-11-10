@@ -295,34 +295,6 @@ public class SettingsFragment extends Fragment {
                     .show(getParentFragmentManager(), "renderer");
             });
         }
-        
-        // 启动方式设置
-        MaterialCardView launchModeCard = rootView.findViewById(R.id.launchModeCard);
-        TextView tvLaunchModeValue = rootView.findViewById(R.id.tvLaunchModeValue);
-        
-        if (launchModeCard != null && tvLaunchModeValue != null) {
-            updateLaunchModeDisplay(settingsManager, tvLaunchModeValue);
-            
-            launchModeCard.setOnClickListener(v -> {
-                List<OptionSelectorDialog.Option> options = Arrays.asList(
-                    new OptionSelectorDialog.Option("0", "Bootstrap（推荐）", "使用引导程序启动，支持更多功能"),
-                    new OptionSelectorDialog.Option("1", "直接启动", "直接加载游戏程序集，更快但功能受限")
-                );
-                
-                new OptionSelectorDialog()
-                    .setTitle("启动方式")
-                    .setIcon(R.drawable.ic_play)
-                    .setOptions(options)
-                    .setCurrentValue(String.valueOf(settingsManager.getLaunchMode()))
-                    .setOnOptionSelectedListener(value -> {
-                        int mode = Integer.parseInt(value);
-                        settingsManager.setLaunchMode(mode);
-                        updateLaunchModeDisplay(settingsManager, tvLaunchModeValue);
-                        Toast.makeText(requireContext(), "启动方式已更改", Toast.LENGTH_SHORT).show();
-                    })
-                    .show(getParentFragmentManager(), "launch_mode");
-            });
-        }
     }
 
     /**
@@ -437,17 +409,14 @@ public class SettingsFragment extends Fragment {
         // 找到卡片和显示文本
         MaterialCardView verboseLoggingCard = rootView.findViewById(R.id.verboseLoggingCard);
         TextView tvVerboseLoggingValue = rootView.findViewById(R.id.tvVerboseLoggingValue);
-        MaterialCardView performanceMonitorCard = rootView.findViewById(R.id.performanceMonitorCard);
-        TextView tvPerformanceMonitorValue = rootView.findViewById(R.id.tvPerformanceMonitorValue);
         Button btn_enter_debug_page = rootView.findViewById(R.id.btn_enter_debug_page);
         
-        if (verboseLoggingCard == null || performanceMonitorCard == null) {
+        if (verboseLoggingCard == null) {
             return;
         }
         
         // 更新显示值
         updateVerboseLoggingDisplay(settingsManager, tvVerboseLoggingValue);
-        updatePerformanceMonitorDisplay(settingsManager, tvPerformanceMonitorValue);
         
         // 设置详细日志点击事件
         verboseLoggingCard.setOnClickListener(v -> {
@@ -474,31 +443,6 @@ public class SettingsFragment extends Fragment {
                 .show(getParentFragmentManager(), "verbose_logging");
         });
         
-        // 设置性能监控点击事件
-        performanceMonitorCard.setOnClickListener(v -> {
-            List<OptionSelectorDialog.Option> options = Arrays.asList(
-                new OptionSelectorDialog.Option("true", "开启", "实时显示 FPS、内存、GC 信息"),
-                new OptionSelectorDialog.Option("false", "关闭", "不显示性能信息")
-            );
-            
-            new OptionSelectorDialog()
-                .setTitle("性能监控")
-                .setIcon(R.drawable.ic_game)
-                .setOptions(options)
-                .setCurrentValue(String.valueOf(settingsManager.isPerformanceMonitorEnabled()))
-                .setOnOptionSelectedListener(value -> {
-                    boolean enabled = Boolean.parseBoolean(value);
-                    settingsManager.setPerformanceMonitorEnabled(enabled);
-                    updatePerformanceMonitorDisplay(settingsManager, tvPerformanceMonitorValue);
-                    
-                    String message = enabled ?
-                            "已启用性能监控，进入游戏后生效" :
-                            "已禁用性能监控";
-                    Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
-                })
-                .show(getParentFragmentManager(), "performance_monitor");
-        });
-
         // 进入调试页面按钮
         if (btn_enter_debug_page != null) {
             btn_enter_debug_page.setOnClickListener(v -> {
@@ -510,10 +454,6 @@ public class SettingsFragment extends Fragment {
     
     private void updateVerboseLoggingDisplay(SettingsManager settingsManager, TextView textView) {
         textView.setText(settingsManager.isVerboseLogging() ? "开启" : "关闭");
-    }
-    
-    private void updatePerformanceMonitorDisplay(SettingsManager settingsManager, TextView textView) {
-        textView.setText(settingsManager.isPerformanceMonitorEnabled() ? "开启" : "关闭");
     }
     
     private void updateThemeDisplay(SettingsManager settingsManager, TextView textView) {
@@ -545,9 +485,4 @@ public class SettingsFragment extends Fragment {
         textView.setText(display);
     }
     
-    private void updateLaunchModeDisplay(SettingsManager settingsManager, TextView textView) {
-        int mode = settingsManager.getLaunchMode();
-        String display = mode == 0 ? "Bootstrap" : mode == 1 ? "直接启动" : "Bootstrap";
-        textView.setText(display);
-    }
 }

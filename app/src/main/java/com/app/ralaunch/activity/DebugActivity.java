@@ -14,7 +14,6 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.app.ralaunch.R;
 import com.app.ralaunch.RaLaunchApplication;
-import com.app.ralaunch.game.Bootstrapper;
 import com.app.ralib.Shared;
 import com.app.ralib.extractors.BasicSevenZipExtractor;
 import com.app.ralib.extractors.ExtractorCollection;
@@ -50,7 +49,8 @@ public class DebugActivity extends AppCompatActivity {
     private void setupUI() {
         btn_test_bootstrapper = findViewById(R.id.btn_test_bootstrapper);
         btn_test_bootstrapper.setOnClickListener(v -> {
-            onTestBootstrapperClicked();
+            // onTestBootstrapperClicked();  // Bootstrapper 已移除
+            android.widget.Toast.makeText(this, "Bootstrapper 功能已移除", android.widget.Toast.LENGTH_SHORT).show();
         });
 
         btn_test_extractor = findViewById(R.id.btn_test_extractor);
@@ -62,13 +62,9 @@ public class DebugActivity extends AppCompatActivity {
         debug_shared_text = findViewById(R.id.debug_shared_text);
     }
 
-    private void onTestBootstrapperClicked() {
-
-        var src = "/sdcard/RotatingArtLauncher.Bootstrap.tModLoader.zip";
-        var basePath = getExternalFilesDir(null).getAbsolutePath();
-
-        Bootstrapper.ExtractBootstrapper(src, basePath);
-    }
+    // private void onTestBootstrapperClicked() {
+    //     // Bootstrapper 功能已移除
+    // }
 
     private void onTestExtractorClicked() {
         Log.d(TAG, "Test Extractor button clicked");

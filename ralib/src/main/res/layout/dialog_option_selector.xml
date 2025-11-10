@@ -1,34 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 通用选择对话框 -->
+<!-- 通用选择对话框 - 现代化简约设计 -->
 <com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="32dp"
-    app:cardCornerRadius="32dp"
-    app:cardElevation="16dp"
-    app:cardBackgroundColor="?attr/backgroundCard">
+    android:layout_margin="24dp"
+    app:cardCornerRadius="20dp"
+    app:cardElevation="4dp"
+    app:cardBackgroundColor="#FAFAFA">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="24dp">
+        android:padding="20dp">
 
-        <!-- 标题栏 -->
+        <!-- 标题栏 - 简化版 -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center_vertical"
-            android:layout_marginBottom="20dp">
+            android:layout_marginBottom="16dp">
 
             <ImageView
                 android:id="@+id/ivIcon"
-                android:layout_width="32dp"
-                android:layout_height="32dp"
-                app:tint="@color/accent_primary"
-                android:layout_marginEnd="12dp" />
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:tint="#666666"
+                android:layout_marginEnd="10dp"
+                android:visibility="gone" />
 
             <LinearLayout
                 android:layout_width="0dp"
@@ -41,8 +42,8 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="选择选项"
-                    android:textColor="?attr/textPrimary"
-                    android:textSize="20sp"
+                    android:textColor="#212121"
+                    android:textSize="18sp"
                     android:textStyle="bold" />
 
                 <TextView
@@ -50,7 +51,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="选择一个选项"
-                    android:textColor="?attr/textSecondary"
+                    android:textColor="#757575"
                     android:textSize="12sp"
                     android:layout_marginTop="2dp"
                     android:visibility="gone" />
@@ -59,33 +60,35 @@
 
             <ImageButton
                 android:id="@+id/btnClose"
-                android:layout_width="32dp"
-                android:layout_height="32dp"
+                android:layout_width="28dp"
+                android:layout_height="28dp"
                 android:src="@drawable/ralib_ic_close"
                 android:background="@drawable/ralib_bg_circle"
-                android:backgroundTint="?attr/backgroundSecondary"
+                android:backgroundTint="#F0F0F0"
                 android:contentDescription="关闭"
-                app:tint="?attr/textSecondary" />
+                android:tint="#757575" />
 
         </LinearLayout>
 
-        <!-- 当前值显示 -->
+        <!-- 当前值显示 - 低调版 -->
         <LinearLayout
             android:id="@+id/currentValueContainer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:background="@drawable/ralib_bg_card_8dp"
-            android:padding="16dp"
-            android:layout_marginBottom="20dp"
-            android:gravity="center_vertical">
+            android:backgroundTint="#F5F5F5"
+            android:padding="12dp"
+            android:layout_marginBottom="16dp"
+            android:gravity="center_vertical"
+            android:visibility="gone">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="当前："
-                android:textColor="?attr/textSecondary"
-                android:textSize="14sp" />
+                android:textColor="#9E9E9E"
+                android:textSize="13sp" />
 
             <TextView
                 android:id="@+id/tvCurrentValue"
@@ -94,27 +97,19 @@
                 android:layout_weight="1"
                 android:layout_marginStart="8dp"
                 android:text="当前值"
-                android:textColor="@color/accent_primary"
-                android:textSize="16sp"
+                android:textColor="#4CAF50"
+                android:textSize="14sp"
                 android:textStyle="bold" />
 
             <ImageView
-                android:layout_width="20dp"
-                android:layout_height="20dp"
+                android:layout_width="18dp"
+                android:layout_height="18dp"
                 android:src="@drawable/ralib_ic_check_circle"
-                app:tint="@color/accent_primary" />
+                android:tint="#4CAF50" />
 
         </LinearLayout>
 
-        <!-- 选项列表 -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="选择选项"
-            android:textColor="?attr/textSecondary"
-            android:textSize="12sp"
-            android:textStyle="bold"
-            android:layout_marginBottom="12dp" />
+        <!-- 选项列表 - 移除标题 -->
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rvOptions"

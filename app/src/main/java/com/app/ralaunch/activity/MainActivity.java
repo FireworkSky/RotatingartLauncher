@@ -7,6 +7,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
@@ -42,6 +43,7 @@ import com.daimajia.androidanimations.library.YoYo;
 import com.app.ralaunch.utils.RuntimeManager;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements
@@ -67,7 +69,7 @@ public class MainActivity extends AppCompatActivity implements
     private TextView selectedGameName;
     private TextView selectedGameDescription;
     private android.widget.EditText selectedGamePath;
-    private Button launchGameButton;
+    private com.app.ralib.ui.ModernButton launchGameButton;
     private CardView emptySelectionText;
     private LinearLayout mainLayout;
     private LinearLayout modLoaderSwitchContainer;
@@ -78,7 +80,12 @@ public class MainActivity extends AppCompatActivity implements
     private ImageButton settingsButton;
     private ImageButton addGameButton;
     private ImageButton refreshButton;
+    private com.app.ralib.ui.ViewSwitcherButton viewSwitchButton;
+    private View fileBrowserContainer;
+    private com.app.ralib.ui.GameFileBrowser gameFileBrowser;
     private GameItem selectedGame;
+    private File selectedAssemblyFile;
+    private boolean isFileBrowserMode = false;
 
     // 权限回调接口
     public interface PermissionCallback {
@@ -220,6 +227,7 @@ public class MainActivity extends AppCompatActivity implements
         // 初始化RecyclerView
         gameRecyclerView = findViewById(R.id.gameRecyclerView);
         gameRecyclerView.setLayoutManager(new GridLayoutManager(this, 2));
+        fileBrowserContainer = findViewById(R.id.fileBrowserContainer);
         pageManager = new PageManager(getSupportFragmentManager(), R.id.fragmentContainer);
 
         gameAdapter = new GameAdapter(gameList, this, this);
@@ -250,24 +258,36 @@ public class MainActivity extends AppCompatActivity implements
             refreshGameList();
         });
 
+        // 视图切换按钮 (ralib 组件)
+        viewSwitchButton = findViewById(R.id.viewSwitchButton);
+        if (viewSwitchButton != null) {
+            viewSwitchButton.setOnStateChangedListener(isSecondary -> {
+                if (isSecondary) {
+                    showFileBrowserMode();
+                } else {
+                    showGameListMode();
+                }
+            });
+        }
+
         // 启动游戏按钮
         launchGameButton.setOnClickListener(v -> {
-            if (selectedGame != null) {
+            YoYo.with(Techniques.Pulse)
+                    .duration(200)
+                    .playOn(v);
+            
+            if (isFileBrowserMode) {
+                // 文件浏览器模式：启动选中的程序集
+                launchSelectedAssembly();
+            } else if (selectedGame != null) {
+                // 游戏列表模式：启动选中的游戏
                 launchGame(selectedGame);
             } else {
                 showToast("请先选择一个游戏");
             }
         });
 
-        // ModLoader 开关监听
-        modLoaderSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            if (selectedGame != null) {
-                selectedGame.setModLoaderEnabled(isChecked);
-                // 保存状态到配置文件
-                RaLaunchApplication.getGameDataManager().saveGameList(gameList);
-                showToast(isChecked ? "已启用 ModLoader" : "已禁用 ModLoader");
-            }
-        });
+        // ModLoader 开关监听已移除 - 现在直接启动选中的程序集
 
         // 保存游戏路径按钮
         saveGamePathButton.setOnClickListener(v -> {
@@ -537,29 +557,20 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     private void addGameToList(String gameType, GameItem newGame) {
-        int iconResId = R.drawable.ic_game_default;
-
-        switch (gameType) {
-            case "modloader":
-                // 使用动态图标，不再使用硬编码资源
-                iconResId = R.drawable.ic_game_default;
-                break;
-            case "stardew":
-                iconResId = R.drawable.ic_stardew_valley;
-                break;
-        }
-
-        newGame.setIconResId(iconResId);
-
+        // 验证游戏文件是否存在
         File gameFile = new File(newGame.getGamePath());
         if (!gameFile.exists()) {
             showToast("警告: 游戏文件路径不存在: " + newGame.getGamePath());
         }
         
-        // 检查自定义图标路径
+        // 检查自定义图标路径是否有效
         if (newGame.getIconPath() == null || !new File(newGame.getIconPath()).exists()) {
             newGame.setIconPath(null);
-
+        }
+        
+        // 如果没有图标路径且没有设置图标资源ID，使用默认图标
+        if ((newGame.getIconPath() == null || newGame.getIconPath().isEmpty()) && newGame.getIconResId() == 0) {
+            newGame.setIconResId(R.drawable.ic_game_default);
         }
 
         gameList.add(0, newGame);
@@ -570,13 +581,158 @@ public class MainActivity extends AppCompatActivity implements
         hideAddGameFragment();
     }
 
+    /**
+     * 显示文件浏览器模式 - 在游戏列表区域显示文件浏览器
+     */
+    private void showFileBrowserMode() {
+        isFileBrowserMode = true;
+        
+        YoYo.with(Techniques.FadeOut)
+                .duration(200)
+                .onEnd(animator -> {
+                    gameRecyclerView.setVisibility(View.GONE);
+                    fileBrowserContainer.setVisibility(View.VISIBLE);
+                    
+                    // 在游戏列表区域嵌入文件浏览器
+                    showGameFileBrowserInContainer();
+                    
+                    // 右侧显示提示
+                    selectedGameInfo.setVisibility(View.GONE);
+                    emptySelectionText.setVisibility(View.VISIBLE);
+                    launchGameButton.setVisibility(View.GONE);
+                    
+                    YoYo.with(Techniques.FadeIn)
+                            .duration(200)
+                            .playOn(fileBrowserContainer);
+                })
+                .playOn(gameRecyclerView);
+        
+        showInfoSnackbar("文件浏览器模式 - 选择 DLL/EXE 文件启动");
+    }
+    
+    /**
+     * 显示游戏列表模式
+     */
+    private void showGameListMode() {
+        isFileBrowserMode = false;
+        
+        YoYo.with(Techniques.FadeOut)
+                .duration(200)
+                .onEnd(animator -> {
+                    fileBrowserContainer.setVisibility(View.GONE);
+                    ((ViewGroup) fileBrowserContainer).removeAllViews();
+                    
+                    gameRecyclerView.setVisibility(View.VISIBLE);
+                    showNoGameSelected();
+                    
+                    YoYo.with(Techniques.FadeIn)
+                            .duration(200)
+                            .playOn(gameRecyclerView);
+                })
+                .playOn(fileBrowserContainer);
+        
+        showInfoSnackbar("游戏列表模式");
+    }
+    
+    /**
+     * 在容器中显示游戏文件浏览器
+     */
+    private void showGameFileBrowserInContainer() {
+        // 移除旧的视图
+        if (fileBrowserContainer != null) {
+            ((ViewGroup) fileBrowserContainer).removeAllViews();
+        }
+        
+        // 创建新的文件浏览器
+        gameFileBrowser = new com.app.ralib.ui.GameFileBrowser(this);
+        
+        // 设置起始目录为游戏目录
+        String gamesDir = getExternalFilesDir(null).getAbsolutePath() + "/games";
+        gameFileBrowser.setDirectory(gamesDir);
+        
+        // 设置文件选择监听器
+        gameFileBrowser.setOnFileSelectedListener(this::onGameFileSelected);
+        
+        // 添加到容器 (fileBrowserContainer 是 FrameLayout)
+        ((ViewGroup) fileBrowserContainer).addView(gameFileBrowser,
+                new ViewGroup.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.MATCH_PARENT));
+    }
+    
+    /**
+     * 游戏文件浏览器选择了文件
+     */
+    private void onGameFileSelected(File file) {
+        selectedAssemblyFile = file;
+        
+        // 显示右侧启动面板
+        showFileBrowserSelection(file);
+    }
+    
+    /**
+     * 显示文件浏览器选择的文件信息
+     */
+    private void showFileBrowserSelection(File file) {
+        selectedGameInfo.setVisibility(View.VISIBLE);
+        emptySelectionText.setVisibility(View.GONE);
+        launchGameButton.setVisibility(View.VISIBLE);
+        
+        // 设置文件名
+        selectedGameName.setText(file.getName());
+        
+        // 设置文件路径
+        selectedGameDescription.setText(file.getParent());
+        selectedGamePath.setText(file.getAbsolutePath());
+        
+        // 设置默认图标
+        selectedGameImage.setImageResource(R.drawable.ic_game_default);
+        
+        // 尝试提取图标
+        new Thread(() -> {
+            String iconPath = com.app.ralaunch.utils.IconExtractorHelper
+                    .extractGameIcon(this, file.getAbsolutePath());
+            if (iconPath != null && !iconPath.isEmpty()) {
+                android.graphics.Bitmap bitmap = android.graphics.BitmapFactory.decodeFile(iconPath);
+                if (bitmap != null) {
+                    runOnUiThread(() -> selectedGameImage.setImageBitmap(bitmap));
+                }
+            }
+        }).start();
+        
+        // 添加动画
+        YoYo.with(Techniques.SlideInRight)
+                .duration(300)
+                .playOn(selectedGameInfo);
+    }
+    
+    /**
+     * 从文件浏览器启动选中的文件
+     */
+    private void launchSelectedAssembly() {
+        if (selectedAssemblyFile == null) {
+            showToast("请先选择一个 DLL 或 EXE 文件");
+            return;
+        }
+        
+        // 启动游戏
+        Intent intent = new Intent(MainActivity.this, GameActivity.class);
+        intent.putExtra("ASSEMBLY_PATH", selectedAssemblyFile.getAbsolutePath());
+        intent.putExtra("GAME_NAME", selectedAssemblyFile.getName());
+        
+        startActivity(intent);
+    }
+    
     private void refreshGameList() {
         YoYo.with(Techniques.Flash)
                 .duration(600)
                 .playOn(gameRecyclerView);
+        
+        // 重新加载游戏列表
         gameList = RaLaunchApplication.getGameDataManager().loadGameList();
         gameAdapter.updateGameList(gameList);
-        showToast("游戏列表已刷新");
+        
+        showInfoSnackbar("已刷新游戏列表");
     }
 
     @Override
@@ -645,16 +801,35 @@ public class MainActivity extends AppCompatActivity implements
      */
     private boolean deleteGameFiles(GameItem game) {
         try {
-            // 从游戏路径获取游戏根目录
-            String gamePath = game.getGamePath();
-            if (gamePath == null || gamePath.isEmpty()) {
-                Log.w("MainActivity", "游戏路径为空，无法删除文件");
-                return false;
+            // 优先使用 gameBasePath（游戏根目录）
+            String gameBasePath = game.getGameBasePath();
+            File gameDir = null;
+            
+            if (gameBasePath != null && !gameBasePath.isEmpty()) {
+                gameDir = new File(gameBasePath);
+                Log.i("MainActivity", "使用游戏根目录: " + gameBasePath);
+            } else {
+                // 如果没有 gameBasePath，尝试从 gamePath 推断
+                String gamePath = game.getGamePath();
+                if (gamePath == null || gamePath.isEmpty()) {
+                    Log.w("MainActivity", "游戏路径为空，无法删除文件");
+                    return false;
+                }
+                
+                File gameFile = new File(gamePath);
+                // 尝试找到 /games/ 目录下的第一级子目录作为游戏根目录
+                File parent = gameFile.getParentFile();
+                while (parent != null && !parent.getName().equals("games")) {
+                    gameDir = parent;
+                    parent = parent.getParentFile();
+                }
+                
+                if (gameDir == null) {
+                    gameDir = gameFile.getParentFile();
+                }
+                
+                Log.i("MainActivity", "从游戏路径推断根目录: " + (gameDir != null ? gameDir.getAbsolutePath() : "null"));
             }
-
-            // 获取游戏根目录 (假设路径类似: /data/.../files/games/GameName/game.dll)
-            File gameFile = new File(gamePath);
-            File gameDir = gameFile.getParentFile(); // 获取游戏目录
 
             if (gameDir == null || !gameDir.exists()) {
                 Log.w("MainActivity", "游戏目录不存在: " + (gameDir != null ? gameDir.getAbsolutePath() : "null"));
@@ -668,12 +843,15 @@ public class MainActivity extends AppCompatActivity implements
                 return false;
             }
 
+            Log.i("MainActivity", "准备删除游戏目录: " + gameDir.getAbsolutePath());
+            
             // 递归删除目录
             boolean success = deleteDirectory(gameDir);
 
             if (success) {
+                Log.i("MainActivity", "✅ 游戏目录删除成功: " + gameDir.getName());
             } else {
-                Log.w("MainActivity", "删除游戏目录失败: " + gameDir.getName());
+                Log.w("MainActivity", "❌ 删除游戏目录失败: " + gameDir.getName());
             }
 
             return success;
@@ -757,14 +935,8 @@ public class MainActivity extends AppCompatActivity implements
             selectedGameImage.setImageResource(R.drawable.ic_game_default);
         }
 
-        // 检查是否是 modloader 类型游戏，如果是则显示开关
-        if (game.getGameBodyPath() != null && !game.getGameBodyPath().isEmpty()) {
-            // 有 gameBodyPath 说明是 modloader 游戏
-            modLoaderSwitchContainer.setVisibility(View.VISIBLE);
-            modLoaderSwitch.setChecked(game.isModLoaderEnabled());
-        } else {
-            modLoaderSwitchContainer.setVisibility(View.GONE);
-        }
+        // ModLoader 开关已移除 - 直接启动选中的程序集
+        modLoaderSwitchContainer.setVisibility(View.GONE);
 
         YoYo.with(Techniques.Tada)
                 .duration(800)
@@ -784,14 +956,31 @@ public class MainActivity extends AppCompatActivity implements
                 .duration(800)
                 .playOn(launchGameButton);
 
+        // 验证程序集文件是否存在
+        String assemblyPath = game.getGamePath();
+        File assemblyFile = new File(assemblyPath);
+        
+        if (!assemblyFile.exists() || !assemblyFile.isFile()) {
+            showErrorSnackbar("程序集文件不存在: " + assemblyPath);
+            Log.e("MainActivity", "Assembly file not found: " + assemblyPath);
+            return;
+        }
+        
         showToast("启动游戏: " + game.getGameName());
+        Log.i("MainActivity", "Launching game: " + game.getGameName());
+        Log.i("MainActivity", "Assembly path: " + assemblyPath);
 
+        // 直接传递程序集路径给 GameActivity
         Intent intent = new Intent(MainActivity.this, GameActivity.class);
         intent.putExtra("GAME_NAME", game.getGameName());
-        intent.putExtra("GAME_PATH", game.getGamePath());
-        intent.putExtra("GAME_BODY_PATH", game.getGameBodyPath()); // 添加游戏本体路径
-        intent.putExtra("MOD_LOADER_ENABLED", game.isModLoaderEnabled()); // 添加 ModLoader 开关状态
-        // 不再传递引擎类型，避免误导性的日志或行为
+        intent.putExtra("ASSEMBLY_PATH", assemblyPath);  // 使用新的参数名
+        
+        // 如果有 Bootstrapper 配置，传递相关参数
+        if (game.isBootstrapperPresent() && game.getBootstrapperBasePath() != null) {
+            intent.putExtra("USE_BOOTSTRAPPER", true);
+            intent.putExtra("GAME_BASE_PATH", game.getGameBasePath());
+            intent.putExtra("BOOTSTRAPPER_BASE_PATH", game.getBootstrapperBasePath());
+        }
 
         startActivity(intent);
         overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);

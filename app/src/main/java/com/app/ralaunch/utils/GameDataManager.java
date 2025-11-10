@@ -3,7 +3,6 @@ package com.app.ralaunch.utils;
 import android.content.Context;
 import android.util.Log;
 import com.app.ralaunch.adapter.GameItem;
-import com.app.ralaunch.model.GameConfig;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
@@ -17,7 +16,6 @@ import java.io.File;
  * 管理用户添加的游戏列表，提供：
  * - 从 SharedPreferences 加载和保存游戏列表
  * - 添加、删除和更新游戏项
- * - 自动补全游戏配置信息
  * - 路径有效性验证
  * 
  * 游戏数据持久化存储，应用重启后保留
@@ -28,15 +26,9 @@ public class GameDataManager {
     private static final String KEY_GAME_LIST = "game_list";
 
     private Context context;
-    private GameConfigManager configManager;
 
     public GameDataManager(Context context) {
         this.context = context;
-        this.configManager = new GameConfigManager(context);
-    }
-
-    public GameConfigManager getConfigManager() {
-        return configManager;
     }
 
     // 获取游戏安装基础目录
@@ -62,22 +54,13 @@ public class GameDataManager {
 
     // 获取游戏程序集路径
     public String getGameAssemblyPath(String gameId, File gameDir) {
-        GameConfig config = configManager.getGameConfig(gameId);
-        if (config != null && config.getAssembly() != null) {
-            return new File(gameDir, config.getAssembly()).getAbsolutePath();
-        }
+        // 默认返回 Game.dll，如果需要特定程序集名称，可以从 GameItem 中获取
         return new File(gameDir, "Game.dll").getAbsolutePath();
     }
 
     // 获取游戏工作目录
     public String getGameWorkingDirectory(String gameId, File gameDir) {
-        GameConfig config = configManager.getGameConfig(gameId);
-        if (config != null &&
-                config.getLaunchParams() != null &&
-                config.getLaunchParams().getWorkingDirectory() != null) {
-
-            return new File(gameDir, config.getLaunchParams().getWorkingDirectory()).getAbsolutePath();
-        }
+        // 默认返回游戏目录本身
         return gameDir.getAbsolutePath();
     }
 

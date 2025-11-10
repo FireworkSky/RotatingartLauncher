@@ -19,7 +19,7 @@ import java.io.IOException;
  * 设置分类：
  * - 主题设置（theme_mode, app_language）
  * - 运行时设置（dotnet_framework, runtime_architecture）
- * - 开发者设置（verbose_logging, performance_monitor）
+ * - 开发者设置（verbose_logging）
  * - FNA设置（fna_renderer）
  */
 public class SettingsManager {
@@ -43,13 +43,8 @@ public class SettingsManager {
         public static final String DOTNET_FRAMEWORK = "dotnet_framework";
         public static final String RUNTIME_ARCHITECTURE = "runtime_architecture";
         
-        // 启动设置
-        public static final String LAUNCH_MODE = "launch_mode";
-        
         // 开发者设置
         public static final String VERBOSE_LOGGING = "verbose_logging";
-        public static final String PERFORMANCE_MONITOR = "performance_monitor";
-        
         // FNA设置
         public static final String FNA_RENDERER = "fna_renderer";
     }
@@ -60,9 +55,7 @@ public class SettingsManager {
         public static final int APP_LANGUAGE = 0; // 跟随系统
         public static final String DOTNET_FRAMEWORK = "auto";
         public static final String RUNTIME_ARCHITECTURE = "auto";
-        public static final int LAUNCH_MODE = 0; // 0=Bootstrap, 1=直接启动
         public static final boolean VERBOSE_LOGGING = false;
-        public static final boolean PERFORMANCE_MONITOR = false;
         public static final String FNA_RENDERER = "auto";
     }
     
@@ -210,15 +203,6 @@ public class SettingsManager {
         putString(Keys.RUNTIME_ARCHITECTURE, architecture);
     }
     
-    // 启动设置
-    public int getLaunchMode() {
-        return getInt(Keys.LAUNCH_MODE, Defaults.LAUNCH_MODE);
-    }
-    
-    public void setLaunchMode(int mode) {
-        putInt(Keys.LAUNCH_MODE, mode);
-    }
-    
     // 开发者设置
     public boolean isVerboseLogging() {
         return getBoolean(Keys.VERBOSE_LOGGING, Defaults.VERBOSE_LOGGING);
@@ -226,14 +210,6 @@ public class SettingsManager {
     
     public void setVerboseLogging(boolean enabled) {
         putBoolean(Keys.VERBOSE_LOGGING, enabled);
-    }
-    
-    public boolean isPerformanceMonitorEnabled() {
-        return getBoolean(Keys.PERFORMANCE_MONITOR, Defaults.PERFORMANCE_MONITOR);
-    }
-    
-    public void setPerformanceMonitorEnabled(boolean enabled) {
-        putBoolean(Keys.PERFORMANCE_MONITOR, enabled);
     }
     
     // FNA设置

@@ -19,12 +19,6 @@ static JavaVM* g_jvm = NULL;
 /** 标记当前线程是否由此模块附加到 JVM */
 static int g_threadAttached = 0;
 
-/** 游戏性能数据（C#侧更新，Java侧读取） */
-static float g_gameFps = 0.0f;
-static float g_managedMemoryMB = 0.0f;
-static int g_gcGen0Count = 0;
-static int g_gcGen1Count = 0;
-static int g_gcGen2Count = 0;
 
 /**
  * @brief JNI_OnLoad 生命周期回调实现
@@ -182,121 +176,6 @@ JNIEXPORT jstring JNICALL Java_com_app_ralaunch_utils_RuntimePreference_getNativ
     #endif
 }
 
-/**
- * ═══════════════════════════════════════════════════════════════
- * 游戏性能数据接口（供C#和Java双向通信）
- * ═══════════════════════════════════════════════════════════════
- */
-
-/**
- * @brief [C#调用] 更新游戏性能数据
- * 
- * C#侧定期调用此方法更新性能数据，Java侧通过getter读取
- * 
- * @param fps 当前FPS
- * @param managedMemoryMB C#托管内存（MB）
- * @param gen0 GC Gen0计数
- * @param gen1 GC Gen1计数
- * @param gen2 GC Gen2计数
- */
-JNIEXPORT void JNICALL
-Java_com_app_ralaunch_utils_PerformanceMonitor_updateGamePerformanceNative(
-    JNIEnv* env, jclass clazz,
-    jfloat fps, jfloat managedMemoryMB,
-    jint gen0, jint gen1, jint gen2) {
-    (void)env;
-    (void)clazz;
-    
-    g_gameFps = fps;
-    g_managedMemoryMB = managedMemoryMB;
-    g_gcGen0Count = gen0;
-    g_gcGen1Count = gen1;
-    g_gcGen2Count = gen2;
-}
-
-/**
- * @brief [Java调用] 获取C#游戏真实FPS
- * 
- * @return 游戏真实渲染帧率
- */
-JNIEXPORT jfloat JNICALL
-Java_com_app_ralaunch_utils_PerformanceMonitor_getGameFpsNative(
-    JNIEnv* env, jclass clazz) {
-    (void)env;
-    (void)clazz;
-    return g_gameFps;
-}
-
-/**
- * @brief [Java调用] 获取C#托管内存（MB）
- * 
- * @return C#托管内存大小（MB）
- */
-JNIEXPORT jfloat JNICALL
-Java_com_app_ralaunch_utils_PerformanceMonitor_getManagedMemoryNative(
-    JNIEnv* env, jclass clazz) {
-    (void)env;
-    (void)clazz;
-    return g_managedMemoryMB;
-}
-
-/**
- * @brief [Java调用] 获取GC统计信息
- * 
- * @return int数组 [Gen0, Gen1, Gen2]
- */
-JNIEXPORT jintArray JNICALL
-Java_com_app_ralaunch_utils_PerformanceMonitor_getGCStatsNative(
-    JNIEnv* env, jclass clazz) {
-    (void)clazz;
-    
-    jintArray result = (*env)->NewIntArray(env, 3);
-    if (result == NULL) {
-        return NULL;
-    }
-    
-    jint stats[3] = { g_gcGen0Count, g_gcGen1Count, g_gcGen2Count };
-    (*env)->SetIntArrayRegion(env, result, 0, 3, stats);
-    
-    return result;
-}
-
-/**
- * @brief [C#调用] P/Invoke wrapper - 更新游戏性能数据
- * 
- * C#通过P/Invoke调用此函数，避免直接操作JNI
- * 
- * @param fps 当前FPS
- * @param managedMemoryMB C#托管内存（MB）
- * @param gen0 GC Gen0计数
- * @param gen1 GC Gen1计数
- * @param gen2 GC Gen2计数
- */
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-__attribute__((visibility("default")))
-JNIEXPORT void JNICALL UpdateGamePerformance(
-    float fps, float managedMemoryMB,
-    int gen0, int gen1, int gen2) {
-    // 更新全局变量
-    g_gameFps = fps;
-    g_managedMemoryMB = managedMemoryMB;
-    g_gcGen0Count = gen0;
-    g_gcGen1Count = gen1;
-    g_gcGen2Count = gen2;
-    
-    // 调试日志（仅在FPS>0时打印）
-    if (fps > 0) {
-        LOGI("[PerformanceReporter] C# -> Native: FPS=%.1f Memory=%.1fMB GC(Gen0=%d Gen1=%d Gen2=%d)", 
-             fps, managedMemoryMB, gen0, gen1, gen2);
-    }
-}
-
-#ifdef __cplusplus
-}
-#endif
 
 // ============================================================================
 // 图标提取器JNI函数

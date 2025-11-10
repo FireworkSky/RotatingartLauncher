@@ -20,18 +20,17 @@ public final class RuntimePreference {
     private static final String KEY_ARCHITECTURE = "runtime_architecture";
     private static final String KEY_VERBOSE_LOGGING = "runtime_verbose_logging";
     private static final String KEY_RENDERER = "fna_renderer";
-    private static final String KEY_PERFORMANCE_MONITOR = "performance_monitor_enabled";
     
     // CPU 架构常量
     public static final String ARCH_ARM64 = "arm64";
     public static final String ARCH_X86_64 = "x86_64";
     public static final String ARCH_AUTO = "auto";
     
-            // 渲染器常量
-            public static final String RENDERER_OPENGLES3 = "opengles3";        // 原生 OpenGL ES 3（Android 原生支持，推荐）
-            public static final String RENDERER_OPENGL_GL4ES = "opengl_gl4es";  // 桌面 OpenGL 通过 gl4es 翻译到 GLES
-            public static final String RENDERER_VULKAN = "vulkan";               // Vulkan（实验性）
-            public static final String RENDERER_AUTO = "auto";                   // 自动选择（默认 OpenGL ES 3）
+    // 渲染器常量
+    public static final String RENDERER_OPENGLES3 = "opengles3";        // 原生 OpenGL ES 3（Android 原生支持，推荐）
+    public static final String RENDERER_OPENGL_GL4ES = "opengl_gl4es";  // 桌面 OpenGL 通过 gl4es 翻译到 GLES
+    public static final String RENDERER_VULKAN = "vulkan";               // Vulkan（实验性）
+    public static final String RENDERER_AUTO = "auto";                   // 自动选择（默认 OpenGL ES 3）
 
     // 加载native库以支持架构检测
     static {
@@ -201,24 +200,81 @@ public final class RuntimePreference {
         }
         return renderer;
     }
-
+    
     /**
-     * 设置性能监控开关
+     * 获取 .NET 运行时根目录路径
      * 
-     * @param context Android 上下文
-     * @param enabled 是否启用性能监控
+     * @return .NET 运行时目录路径（通常为 /data/data/com.app.ralaunch/files/dotnet-arm64）
      */
-    public static void setPerformanceMonitorEnabled(Context context, boolean enabled) {
-        SettingsManager.getInstance(context).setPerformanceMonitorEnabled(enabled);
+    public static String getDotnetRootPath() {
+        try {
+            Context appContext = com.app.ralaunch.RaLaunchApplication.getAppContext();
+            if (appContext == null) {
+                android.util.Log.w("RuntimePreference", "Application context is null, cannot get dotnet root path");
+                return null;
+            }
+            
+            // 根据设备架构选择正确的 .NET 运行时
+            // 检测架构
+            String architecture = android.os.Build.SUPPORTED_ABIS[0];
+            String dotnetDir;
+            
+            if (architecture.contains("arm64") || architecture.contains("aarch64")) {
+                dotnetDir = "dotnet-arm64";
+            } else if (architecture.contains("x86_64") || architecture.contains("x64")) {
+                dotnetDir = "dotnet-x64";
+            } else {
+                android.util.Log.w("RuntimePreference", "Unknown architecture: " + architecture + ", defaulting to arm64");
+                dotnetDir = "dotnet-arm64";
+            }
+            
+            String dotnetPath = appContext.getFilesDir().getAbsolutePath() + "/" + dotnetDir;
+            android.util.Log.d("RuntimePreference", "Dotnet root path: " + dotnetPath);
+            
+            return dotnetPath;
+            
+        } catch (Exception e) {
+            android.util.Log.e("RuntimePreference", "Failed to get dotnet root path", e);
+            return null;
+        }
+    }
+    
+    /**
+     * 获取首选的 .NET Framework 主版本号
+     * 
+     * @return 框架主版本号（6/7/8/9/10），0 表示自动选择最高版本
+     */
+    public static int getPreferredFrameworkMajor() {
+        try {
+            Context appContext = com.app.ralaunch.RaLaunchApplication.getAppContext();
+            if (appContext == null) {
+                android.util.Log.w("RuntimePreference", "Application context is null, using auto framework");
+                return 0; // 自动选择
+            }
+            
+            String framework = getDotnetFramework(appContext);
+            
+            // 解析框架版本
+            switch (framework) {
+                case "net6":
+                    return 6;
+                case "net7":
+                    return 7;
+                case "net8":
+                    return 8;
+                case "net9":
+                    return 9;
+                case "net10":
+                    return 10;
+                case "auto":
+                default:
+                    return 0; // 0 表示自动选择最高版本
+            }
+            
+        } catch (Exception e) {
+            android.util.Log.e("RuntimePreference", "Failed to get preferred framework major", e);
+            return 0;
+        }
     }
 
-    /**
-     * 获取性能监控开关
-     * 
-     * @param context Android 上下文
-     * @return 是否启用性能监控，默认为 false（关闭）
-     */
-    public static boolean isPerformanceMonitorEnabled(Context context) {
-        return SettingsManager.getInstance(context).isPerformanceMonitorEnabled();
-    }
 }

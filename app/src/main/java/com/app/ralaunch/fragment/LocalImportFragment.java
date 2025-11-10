@@ -16,8 +16,6 @@ import androidx.fragment.app.Fragment;
 import com.app.ralaunch.R;
 import com.app.ralaunch.activity.MainActivity;
 import com.app.ralaunch.adapter.GameItem;
-import com.app.ralaunch.game.Bootstrapper;
-import com.app.ralaunch.game.BootstrapperManifest;
 import com.app.ralaunch.utils.GameExtractor;
 import com.app.ralaunch.utils.IconExtractorHelper;
 import com.app.ralib.extractors.GogShFileExtractor;
@@ -52,22 +50,18 @@ public class LocalImportFragment extends Fragment {
     // 界面控件
     private Button selectGameFileButton;
     private Button selectModLoaderButton;
-    private Button selectBootstrapperButton;
     private Button startImportButton;
     private LinearLayout importProgressContainer;
-    private ProgressBar importProgress;
-    private TextView importStatus;
+    private com.app.ralib.ui.ModernProgressBar modernProgressBar;
     private TextView gameFileText;
     private TextView modLoaderFileText;
-    private TextView bootstrapperFileText;
 
     // 文件路径
     private String gameFilePath;
     private String modLoaderFilePath;
-    private String bootstrapperFilePath;
 
     // 游戏信息 - 将从.sh文件中读取
-    private String gameType = "modloader";
+    private String gameType = "game";  // 通用游戏类型
     private String gameName = null;  // 将从gameinfo读取
     private String gameVersion = null;  // 将从gameinfo读取
     private String gameIconPath = null;  // 将从gameinfo读取
@@ -110,19 +104,15 @@ public class LocalImportFragment extends Fragment {
         // 初始化控件
         selectGameFileButton = view.findViewById(R.id.selectGameFileButton);
         selectModLoaderButton = view.findViewById(R.id.selectModLoaderButton);
-        selectBootstrapperButton = view.findViewById(R.id.selectBootstrapperButton);
         startImportButton = view.findViewById(R.id.startImportButton);
         importProgressContainer = view.findViewById(R.id.importProgressContainer);
-        importProgress = view.findViewById(R.id.importProgress);
-        importStatus = view.findViewById(R.id.importStatus);
+        modernProgressBar = view.findViewById(R.id.modernProgressBar);
         gameFileText = view.findViewById(R.id.gameFileText);
         modLoaderFileText = view.findViewById(R.id.modLoaderFileText);
-        bootstrapperFileText = view.findViewById(R.id.bootstrapperFileText);
 
         // 设置按钮点击事件
         selectGameFileButton.setOnClickListener(v -> selectGameFile());
         selectModLoaderButton.setOnClickListener(v -> selectModLoaderFile());
-        selectBootstrapperButton.setOnClickListener(v -> selectBootstrapperFile());
         startImportButton.setOnClickListener(v -> startImport());
 
         // 初始状态
@@ -133,7 +123,16 @@ public class LocalImportFragment extends Fragment {
         openFileBrowser("game", new String[]{".sh"}, filePath -> {
             gameFilePath = filePath;
             File file = new File(gameFilePath);
-            gameFileText.setText("已选择: " + file.getName());
+            
+            // 确保UI更新在主线程执行
+            if (getActivity() != null && isAdded()) {
+                getActivity().runOnUiThread(() -> {
+                    gameFileText.setText("已选择: " + file.getName());
+                    updateImportButtonState();
+                });
+            }
+            
+            // 在后台线程解析游戏信息
             new Thread(() -> {
                 var gdzf = GogShFileExtractor.GameDataZipFile.parseFromGogShFile(Paths.get(filePath));
                 if (getActivity() != null && isAdded()) {
@@ -153,7 +152,6 @@ public class LocalImportFragment extends Fragment {
                                 ((MainActivity) getActivity()).showToast("无法读取游戏信息，使用默认名称");
                             }
                         }
-                        updateImportButtonState();
                     });
                 }
             }).start();
@@ -175,19 +173,17 @@ public class LocalImportFragment extends Fragment {
                 Log.d("LocalImportFragment", "ModLoader base name: " + modLoaderBaseName);
             }
 
-            modLoaderFileText.setText("已选择: " + fileName);
-            updateImportButtonState();
+            // 确保UI更新在主线程执行
+            if (getActivity() != null && isAdded()) {
+                getActivity().runOnUiThread(() -> {
+                    modLoaderFileText.setText("已选择: " + fileName);
+                    updateImportButtonState();
+                });
+            }
         });
     }
 
-    private void selectBootstrapperFile() {
-        openFileBrowser("bootstrapper", new String[]{".zip"}, filePath -> {
-            bootstrapperFilePath = filePath;
-            File file = new File(bootstrapperFilePath);
-            bootstrapperFileText.setText("已选择: " + file.getName());
-            updateImportButtonState();
-        });
-    }
+  
 
     private interface FileChosen { void onChosen(String path); }
 
@@ -242,7 +238,7 @@ public class LocalImportFragment extends Fragment {
         // 如果游戏信息丢失，重新解析
         if (gameName == null || gameVersion == null) {
             Log.w(TAG, "Game info lost, re-parsing...");
-            importStatus.setText("正在读取游戏信息...");
+            modernProgressBar.setStatusText("正在读取游戏信息...");
 
             new Thread(() -> {
                 var gdzf = GogShFileExtractor.GameDataZipFile.parseFromGogShFile(Paths.get(gameFilePath));
@@ -258,7 +254,7 @@ public class LocalImportFragment extends Fragment {
                             // 继续导入
                             continueImport();
                         } else {
-                            importStatus.setText("无法读取游戏信息");
+                            modernProgressBar.setStatusText("无法读取游戏信息");
                             startImportButton.setEnabled(true);
                             if (getActivity() != null) {
                                 ((MainActivity) getActivity()).showToast("无法读取游戏信息，导入失败");
@@ -274,8 +270,36 @@ public class LocalImportFragment extends Fragment {
     }
 
     private void continueImport() {
+        // 确定目录名称：优先使用 ModLoader 名称
+        String directoryBaseName = gameName; // 默认使用游戏名称
+        
+        // 如果有 ModLoader，尝试从文件名提取名称
+        boolean hasModLoader = modLoaderFilePath != null && !modLoaderFilePath.isEmpty();
+        if (hasModLoader && modLoaderBaseName != null && !modLoaderBaseName.isEmpty()) {
+            directoryBaseName = modLoaderBaseName; // 使用 ModLoader 名称
+            Log.i(TAG, "Using ModLoader name for directory: " + directoryBaseName);
+        } else if (hasModLoader) {
+            // 如果有 modLoaderFilePath 但没有 modLoaderBaseName，尝试从路径提取
+            try {
+                String modLoaderFileName = new File(modLoaderFilePath).getName();
+                // 移除扩展名
+                if (modLoaderFileName.endsWith(".zip")) {
+                    directoryBaseName = modLoaderFileName.substring(0, modLoaderFileName.length() - 4);
+                } else if (modLoaderFileName.contains(".")) {
+                    directoryBaseName = modLoaderFileName.substring(0, modLoaderFileName.lastIndexOf('.'));
+                } else {
+                    directoryBaseName = modLoaderFileName;
+                }
+                Log.i(TAG, "Extracted ModLoader name from file: " + directoryBaseName);
+            } catch (Exception e) {
+                Log.w(TAG, "Failed to extract ModLoader name, using game name", e);
+            }
+        } else {
+            Log.i(TAG, "No ModLoader, using game name for directory: " + directoryBaseName);
+        }
+        
         // 创建游戏目录
-        gameDir = createGameDirectory();
+        gameDir = createGameDirectory(directoryBaseName);
         String outputPath = gameDir.getAbsolutePath();
         Log.d(TAG, "Created game directory: " + outputPath);
 
@@ -296,9 +320,7 @@ public class LocalImportFragment extends Fragment {
             }
         }
 
-        // 检查是否有 ModLoader
-        boolean hasModLoader = modLoaderFilePath != null && !modLoaderFilePath.isEmpty();
-
+        // 开始导入流程（hasModLoader 已在开头定义）
         if (hasModLoader) {
             // 有 ModLoader，使用完整导入逻辑
             GameExtractor.installCompleteGame(gameFilePath, modLoaderFilePath, outputPath,
@@ -307,8 +329,8 @@ public class LocalImportFragment extends Fragment {
                         public void onProgress(String message, int progress) {
                             if (getActivity() != null && isAdded()) {
                                 getActivity().runOnUiThread(() -> {
-                                    importStatus.setText(message);
-                                    importProgress.setProgress(progress);
+                                    modernProgressBar.setStatusText(message);
+                                    modernProgressBar.setProgress(progress);
                                 });
                             }
                         }
@@ -317,8 +339,8 @@ public class LocalImportFragment extends Fragment {
                         public void onComplete(String gamePath, String modLoaderPath) {
                             if (getActivity() != null && isAdded()) {
                                 getActivity().runOnUiThread(() -> {
-                                    importStatus.setText("导入完成！");
-                                    importProgress.setProgress(100);
+                                    modernProgressBar.setStatusText("导入完成！");
+                                    modernProgressBar.setProgress(100);
 
                                     // 根据模组zip文件名推断程序集名称
                                     File modLoaderDir = new File(modLoaderPath);
@@ -412,10 +434,10 @@ public class LocalImportFragment extends Fragment {
                                         File modLoaderFile = new File(finalGamePath);
                                         if (modLoaderFile.exists() && modLoaderFile.isFile()) {
                                             String modLoaderName = modLoaderFile.getName().replace(".dll", "").replace(".exe", "");
-                                            displayName = gameName + " (" + modLoaderName + ")";
+                                            displayName = modLoaderName; // 直接使用 ModLoader 名称，不加括号
                                             Log.i(TAG, "Using ModLoader assembly: " + modLoaderName);
                                         } else {
-                                            displayName = gameName + " (Modded)";
+                                            displayName = gameName; // 使用游戏名称
                                         }
 
                                         // 自动启用模组加载器
@@ -441,7 +463,7 @@ public class LocalImportFragment extends Fragment {
                                     String extractedIconPath = extractIconFromExecutable(iconSourcePath, gameIconPath);
                                     newGame.setIconPath(extractedIconPath);
 
-                                    tryToImportBootstrapper(newGame);
+                                    // Bootstrapper 导入功能已移除
 
                                     // 导入完成，返回结果
                                     if (importCompleteListener != null) {
@@ -455,7 +477,7 @@ public class LocalImportFragment extends Fragment {
                         public void onError(String error) {
                             if (getActivity() != null && isAdded()) {
                                 getActivity().runOnUiThread(() -> {
-                                    importStatus.setText("导入失败: " + error);
+                                    modernProgressBar.setStatusText("导入失败: " + error);
                                     if (getActivity() != null) {
                                         ((MainActivity) getActivity()).showToast("导入失败: " + error);
                                     }
@@ -472,8 +494,8 @@ public class LocalImportFragment extends Fragment {
                         public void onProgress(String message, int progress) {
                             if (getActivity() != null && isAdded()) {
                                 getActivity().runOnUiThread(() -> {
-                                    importStatus.setText(message);
-                                    importProgress.setProgress(progress);
+                                    modernProgressBar.setStatusText(message);
+                                    modernProgressBar.setProgress(progress);
                                 });
                             }
                         }
@@ -482,8 +504,8 @@ public class LocalImportFragment extends Fragment {
                         public void onComplete(String gamePath, String modLoaderPath) {
                             if (getActivity() != null && isAdded()) {
                                 getActivity().runOnUiThread(() -> {
-                                    importStatus.setText("导入完成！");
-                                    importProgress.setProgress(100);
+                                    modernProgressBar.setStatusText("导入完成！");
+                                    modernProgressBar.setProgress(100);
 
                                     // 🔍 检测是否为 SMAPI（星露谷物语模组加载器）
                                     File currentGameDir = new File(gamePath);
@@ -521,7 +543,7 @@ public class LocalImportFragment extends Fragment {
                                     if (smapiPaths != null) {
                                         // 检测到 SMAPI，使用 SMAPI 的信息
                                         iconSourcePath = finalGamePath;  // SMAPI 启动器
-                                        displayName = gameName + " (SMAPI)";
+                                        displayName = "SMAPI"; // 直接使用 SMAPI 名称，不加括号
 
                                         // 自动启用模组加载器
                                         newGame.setModLoaderEnabled(true);
@@ -552,7 +574,7 @@ public class LocalImportFragment extends Fragment {
                                     String extractedIconPath = extractIconFromExecutable(iconSourcePath, gameIconPath);
                                     newGame.setIconPath(extractedIconPath);
 
-                                    tryToImportBootstrapper(newGame);
+                                    // Bootstrapper 导入功能已移除
 
                                     // 导入完成，返回结果
                                     if (importCompleteListener != null) {
@@ -566,7 +588,7 @@ public class LocalImportFragment extends Fragment {
                         public void onError(String error) {
                             if (getActivity() != null && isAdded()) {
                                 getActivity().runOnUiThread(() -> {
-                                    importStatus.setText("导入失败: " + error);
+                                    modernProgressBar.setStatusText("导入失败: " + error);
                                     if (getActivity() != null) {
                                         ((MainActivity) getActivity()).showToast("导入失败: " + error);
                                     }
@@ -653,35 +675,9 @@ public class LocalImportFragment extends Fragment {
         return null;
     }
 
-    private boolean tryToImportBootstrapper(GameItem newGame) {
-        try {
-            boolean hasBootstrapper = bootstrapperFilePath != null && !bootstrapperFilePath.isEmpty();
-            if (hasBootstrapper && Files.exists(Paths.get(bootstrapperFilePath)) && Files.isRegularFile(Paths.get(bootstrapperFilePath))) {
-                Log.d(TAG, "Bootstrapper selected: " + bootstrapperFilePath);
-                // 处理 Bootstrapper 的逻辑（如果需要）
-                // 目前假设 Bootstrapper 不影响导入流程
-                var manifest = BootstrapperManifest.FromZip(bootstrapperFilePath);
-                if (manifest == null) {
-                    Log.e(TAG, "Failed to read bootstrapper manifest");
-                    return false;
-                }
+    // tryToImportBootstrapper 方法已移除
 
-                if (!Bootstrapper.ExtractBootstrapper(bootstrapperFilePath, newGame.getGameBasePath())) {
-                    Log.e(TAG, "Failed to extract bootstrapper");
-                    return false;
-                }
-
-                newGame.setBootstrapperPresent(true);
-                newGame.setBootstrapperBasePath(manifest.getExtractDirectory());
-                return true;
-            }
-        } catch (Exception e) {
-            Log.e(TAG, "Failed to extract bootstrapper", e);
-        }
-        return false;
-    }
-
-    private File createGameDirectory() {
+    private File createGameDirectory(String baseName) {
         File externalDir = MainActivity.mainActivity.getExternalFilesDir(null);
 
         // 创建更结构化的目录
@@ -690,8 +686,8 @@ public class LocalImportFragment extends Fragment {
             gamesDir.mkdirs();
         }
 
-        // 使用游戏名称和版本号（如果有）
-        String dirName = gameName != null ? gameName : "Unknown";
+        // 使用传入的基础名称（可能是游戏名称或 ModLoader 名称）和版本号（如果有）
+        String dirName = baseName != null ? baseName : (gameName != null ? gameName : "Unknown");
         if (gameVersion != null) {
             dirName += "_" + gameVersion;
         }
@@ -702,6 +698,7 @@ public class LocalImportFragment extends Fragment {
             gameDir.mkdirs();
         }
 
+        Log.i(TAG, "Created game directory with name: " + dirName);
         return gameDir;
     }
 
