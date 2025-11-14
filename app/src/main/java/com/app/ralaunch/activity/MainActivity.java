@@ -41,6 +41,8 @@ import com.daimajia.androidanimations.library.Techniques;
 import com.app.ralaunch.utils.PermissionHelper;
 import com.daimajia.androidanimations.library.YoYo;
 import com.app.ralaunch.utils.RuntimeManager;
+import com.app.ralaunch.utils.AppLogger;
+import com.app.ralib.error.ErrorHandler;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -97,9 +99,15 @@ public class MainActivity extends AppCompatActivity implements
     protected void onCreate(Bundle savedInstanceState) {
         // 应用保存的主题设置（必须在 super.onCreate 之前）
         applyThemeFromSettings();
-        
+
         super.onCreate(savedInstanceState);
         mainActivity = this;
+
+        // 初始化日志系统
+        initializeLogger();
+
+        // 初始化错误处理器
+        ErrorHandler.init(this);
 
         // 设置全屏和横屏
         requestWindowFeature(Window.FEATURE_NO_TITLE);
@@ -205,6 +213,20 @@ public class MainActivity extends AppCompatActivity implements
 
     private void initializeGameData() {
         gameList = RaLaunchApplication.getGameDataManager().loadGameList();
+    }
+
+    /**
+     * Initialize logging system
+     */
+    private void initializeLogger() {
+        try {
+            File logDir = new File(getExternalFilesDir(null), "logs");
+            AppLogger.init(logDir);
+            AppLogger.info("MainActivity", "RALaunch started");
+            AppLogger.dumpSystemInfo();
+        } catch (Exception e) {
+            Log.e("MainActivity", "Failed to initialize logger", e);
+        }
     }
 
     private void setupUI() {
@@ -849,9 +871,9 @@ public class MainActivity extends AppCompatActivity implements
             boolean success = deleteDirectory(gameDir);
 
             if (success) {
-                Log.i("MainActivity", "✅ 游戏目录删除成功: " + gameDir.getName());
+                Log.i("MainActivity", "[OK] 游戏目录删除成功: " + gameDir.getName());
             } else {
-                Log.w("MainActivity", "❌ 删除游戏目录失败: " + gameDir.getName());
+                Log.w("MainActivity", "[ERROR] 删除游戏目录失败: " + gameDir.getName());
             }
 
             return success;
@@ -1105,9 +1127,20 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+        // 更新ErrorHandler的Activity引用
+        ErrorHandler.setCurrentActivity(this);
+    }
+
+    @Override
     protected void onDestroy() {
         super.onDestroy();
         // 在应用退出时保存游戏列表
         // gameDataManager.updateGameList(gameList);
+
+        // 关闭日志系统
+        AppLogger.info("MainActivity", "RALaunch stopped");
+        AppLogger.close();
     }
 }

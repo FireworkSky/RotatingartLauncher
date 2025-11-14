@@ -130,7 +130,7 @@ typedef int32_t (NETHOST_CALLTYPE *get_hostfxr_path_fn)(
     size_t* buffer_size,
     const get_hostfxr_parameters* parameters);
 
-// 静态链接的 nethost 函数声明（来自 libnethost.a）
+// 自定义实现的 nethost 函数声明（兼容 libnethost 接口）
 extern "C" {
     NETHOST_API int32_t NETHOST_CALLTYPE get_hostfxr_path(
         char_t* buffer,

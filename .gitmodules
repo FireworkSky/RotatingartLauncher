@@ -10,3 +10,6 @@
 [submodule "app/src/main/cpp/SDL3"]
 	path = app/src/main/cpp/SDL3
 	url = https://github.com/libsdl-org/SDL.git
+[submodule "app/src/main/cpp/box64"]
+	path = app/src/main/cpp/box64
+	url = https://github.com/liamelui/zomdroid-box64.git

@@ -3,31 +3,31 @@ project("main")
 
 # 设置路径
 set(SDL_SOURCE_DIR ${CMAKE_SOURCE_DIR}/SDL)
-set(GL4ES_SOURCE_DIR ${CMAKE_SOURCE_DIR}/gl4es)
 set(FNA3D_SOURCE_DIR ${CMAKE_SOURCE_DIR}/FNA3D)
 set(FAUDIO_SOURCE_DIR ${CMAKE_SOURCE_DIR}/FAudio)
 set(THEORAFILE_SOURCE_DIR ${CMAKE_SOURCE_DIR}/Theorafile)
 #set(LGOG_SOURCE_DIR ${CMAKE_SOURCE_DIR}/lgogdownloader)
 # 移除 rustcorehost，现在直接使用 CoreCLR API
 
-# ⚠️ 重要：gl4es必须在SDL之前添加，这样SDL才能找到正确的OpenGL库
-# 添加gl4es子项目
-add_subdirectory(${GL4ES_SOURCE_DIR})
 
-# 配置SDL：支持原生GLES和gl4es两种渲染器
-# 默认启用原生GLES（Android标准），gl4es作为可选项通过运行时切换
+# 配置SDL：支持原生GLES和MobileGL两种渲染器
+# 默认启用原生GLES（Android标准），MobileGL作为可选项通过运行时切换
 set(SDL_VIDEO_OPENGL ON CACHE BOOL "Enable OpenGL support" FORCE)
 set(SDL_VIDEO_OPENGL_ES ON CACHE BOOL "Enable OpenGL ES (native renderer)" FORCE)
 set(SDL_VIDEO_OPENGL_EGL ON CACHE BOOL "Enable EGL (for native GLES)" FORCE)
 set(SDL_OPENGLES ON CACHE BOOL "Enable OpenGL ES" FORCE)
-# 添加全局编译定义，让SDL知道我们支持gl4es和native GLES
+# 添加全局编译定义，让SDL知道我们支持MobileGL和native GLES
 add_compile_definitions(SDL_VIDEO_OPENGL_GL4ES)
+
+find_library(CXX_SHARED_LIB c++_shared REQUIRED)
+message(STATUS "Using libc++ shared: ${CXX_SHARED_LIB}")
+set(CMAKE_ANDROID_STL_TYPE c++_shared)
 
 # 添加SDL子项目
 add_subdirectory(${SDL_SOURCE_DIR})
 
-# SDL2 需要链接 gl4es (静态)，用于 OpenGL 符号
-target_link_libraries(SDL2 PRIVATE GL)
+# SDL2 不再静态链接 GL，而是运行时动态加载 EGL
+# target_link_libraries(SDL2 PRIVATE GL)
 
 # 添加 FAudio 子项目
 # 配置 FAudio 使用 SDL2
@@ -66,6 +66,8 @@ add_subdirectory(${FNA3D_SOURCE_DIR})
 set(CMAKE_SKIP_INSTALL_RULES OFF)
 set(CMAKE_INSTALL_PREFIX ${_OLD_CMAKE_INSTALL_PREFIX})
 
+
+
 # 添加你的主程序源码
 add_library(${CMAKE_PROJECT_NAME} SHARED
         sdl_entry.c
@@ -73,60 +75,47 @@ add_library(${CMAKE_PROJECT_NAME} SHARED
         framework_utils.cpp
         jni_bridge.c
         error_handler.c
+        console_bridge.c
+        And64InlineHook/And64InlineHook.cpp
+        hostpolicy_hook.cpp
+        app_logger.c
+        app_logger_jni.c
 )
 
 # 链接库
-# ⚠️ SDL+OpenGL方案（Gish项目验证）
-# 
-# 架构：SDL (OpenGL) → gl4es静态库 → GLES后端
-# 
-# 链接顺序很重要：
-# 1. GL (gl4es) 必须在SDL2之前
-#    - SDL2需要OpenGL符号
-#    - gl4es提供这些符号
-# 2. gl4es内部链接到系统的EGL和GLESv2
-#    - 用于实际的GLES调用
-# 查找 nethost 静态库
-set(NETHOST_LIB_DIR ${CMAKE_SOURCE_DIR}/../jnilibs/${ANDROID_ABI})
-set(NETHOST_LIB ${NETHOST_LIB_DIR}/libnethost.a)
-if(NOT EXISTS ${NETHOST_LIB})
-    message(WARNING "nethost library not found at ${NETHOST_LIB}, skipping")
-    set(NETHOST_LIB "")
-endif()
-
 target_link_libraries(${CMAKE_PROJECT_NAME}
         android
         log
-        GL          # gl4es静态库，提供OpenGL API
-        SDL2        # SDL2使用OpenGL后端
-        dl          # 用于dlopen/dlsym
+        # GL 现在是共享库，运行时动态加载，不再静态链接
+        SDL2        # SDL2使用EGL后端
+        dl          # 用于dlopen/dlsym（动态加载EGL库）
+        FAudio-shared  # FAudio音频库（FNA需要）
         FNA3D       # FNA3D图形库
+        theorafile  # Theorafile视频库（FNA需要）
+        mojoshader  # MojoShader着色器库（FNA3D需要）
         netcorehost # .NET Core Hosting库
+        c++_shared
+        ${CXX_SHARED_LIB}
        # lgogdownloader
 )
 
-# 如果找到 nethost 静态库，则链接它
-if(NETHOST_LIB)
-    target_link_libraries(${CMAKE_PROJECT_NAME} ${NETHOST_LIB})
-    message(STATUS "Linking nethost static library: ${NETHOST_LIB}")
-endif()
-
-# ⚠️ 关键：导出 gl4es 符号，使其对 dlsym 可见
-# 这样SDL可以通过dlsym(NULL, "aglCreateContext2")找到这些函数
-target_link_options(${CMAKE_PROJECT_NAME} PRIVATE
-        -Wl,--export-dynamic    # 导出所有符号到动态符号表
-)
+# 不再需要导出 gl4es 符号，因为 GL 是独立的共享库，通过 dlopen 加载
+# target_link_options(${CMAKE_PROJECT_NAME} PRIVATE
+#         -Wl,--export-dynamic
+# )
 
 # 包含 SDL、gl4es、FNA3D 和 netcorehost 头文件
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
         ${SDL_SOURCE_DIR}/include
-        ${GL4ES_SOURCE_DIR}/include
+
         ${FNA3D_SOURCE_DIR}/include
         ${NETCOREHOST_SOURCE_DIR}/include
         ${LGOG_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/And64InlineHook
 )
 
 # 安装共享库到APK的lib目录
-# 这确保所有动态链接的so文件都被打包到APK中
-install(TARGETS ${CMAKE_PROJECT_NAME} SDL2 FAudio-shared FNA3D DESTINATION ${CMAKE_INSTALL_LIBDIR})
+# 包括：libmain.so, SDL2, FAudio, FNA3D, netcorehost, mojoshader, theorafile
+# GL (libGL.so) 和 shaderconv 通过 GL4ESPlus 的 CMakeLists.txt 单独安装
+install(TARGETS ${CMAKE_PROJECT_NAME} SDL2 FAudio-shared FNA3D netcorehost DESTINATION ${CMAKE_INSTALL_LIBDIR})
 install(TARGETS mojoshader theorafile DESTINATION ${CMAKE_INSTALL_LIBDIR})

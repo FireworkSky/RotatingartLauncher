@@ -25,6 +25,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.widget.Toast;
 import com.app.ralaunch.R;
+import com.app.ralaunch.utils.AppLogger;
 import com.app.ralaunch.controls.ControlConfig;
 import com.app.ralaunch.controls.ControlData;
 import com.app.ralaunch.controls.editor.ControlEditorActivity;
@@ -73,31 +74,50 @@ public class GameActivity extends SDLActivity {
     // 原因：过早加载会导致gl4es和SDL的EGL同时初始化，引发pthread_mutex_lock错误
 
     @Override
+    public void loadLibraries() {
+        try {
+            RuntimePreference.applyRendererEnvironment(this);
+            AppLogger.info(TAG, "Renderer environment applied before native library load");
+        } catch (Exception e) {
+            AppLogger.warn(TAG, "Failed to apply renderer environment before loading libraries: " + e.getMessage());
+        }
+        super.loadLibraries();
+    }
+
+    @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         mainActivity = this;
 
+        // 记录 GameActivity 启动
+        AppLogger.info(TAG, "================================================");
+        AppLogger.info(TAG, "GameActivity.onCreate() started");
+        AppLogger.info(TAG, "================================================");
+
         // 强制横屏，防止 SDL 在运行时将方向改为 FULL_SENSOR 导致旋转为竖屏
         try {
             setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+            AppLogger.info(TAG, "Screen orientation set to landscape");
         } catch (Exception e) {
-            Log.w(TAG, "Failed to set orientation onCreate: " + e.getMessage());
+            AppLogger.warn(TAG, "Failed to set orientation onCreate: " + e.getMessage());
         }
 
         // 设置全屏模式，隐藏状态栏和导航栏
         try {
             enableFullscreen();
+            AppLogger.info(TAG, "Fullscreen mode enabled");
         } catch (Exception e) {
-            Log.w(TAG, "Failed to enable fullscreen: " + e.getMessage());
+            AppLogger.warn(TAG, "Failed to enable fullscreen: " + e.getMessage());
         }
 
         // 允许窗口与输入法交互，避免 SurfaceView 阻止 IME（清除 ALT_FOCUSABLE_IM）
         try {
             getWindow().clearFlags(WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM);
             getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
+            AppLogger.info(TAG, "Window IME flags configured");
         } catch (Throwable t) {
-            Log.w(TAG, "Failed to adjust window flags for IME: " + t.getMessage());
+            AppLogger.warn(TAG, "Failed to adjust window flags for IME: " + t.getMessage());
         }
 
         // 键盘交互改由 SDL/MonoGame 层处理，这里不再添加任何 UI 或手动逻辑
@@ -122,18 +142,25 @@ public class GameActivity extends SDLActivity {
         String bootstrapperCurrentDir = getIntent().getStringExtra("BOOTSTRAPPER_CURRENT_DIR"); // 引导程序工作目录（仅引导程序使用）
 
         if (!isBootstrapper){
+            AppLogger.info(TAG, "Normal game launch mode");
 
             // 如有按次覆盖的运行时偏好，从 Intent 写入到 app_prefs 供本次启动解析
             if (runtimePref != null && !runtimePref.isEmpty()) {
-                try { RuntimePreference.setDotnetFramework(this, runtimePref); }
-                catch (Throwable t) { Log.w(TAG, "Failed to apply runtime preference from intent: " + t.getMessage()); }
+                try {
+                    RuntimePreference.setDotnetFramework(this, runtimePref);
+                    AppLogger.info(TAG, "Runtime preference set: " + runtimePref);
+                }
+                catch (Throwable t) {
+                    AppLogger.warn(TAG, "Failed to apply runtime preference from intent: " + t.getMessage());
+                }
             }
 
             setLaunchParams();
         } else {
+            AppLogger.info(TAG, "Bootstrapper launch mode");
 
             if (gameBasePath == null || bootstrapperAssemblyPath == null || bootstrapperEntryPoint == null || bootstrapperCurrentDir == null) {
-                Log.e(TAG, "Bootstrapper 启动参数不完整");
+                AppLogger.error(TAG, "Bootstrapper parameters incomplete");
                 runOnUiThread(() -> {
                     Toast.makeText(this, "Bootstrapper 启动参数不完整", Toast.LENGTH_SHORT).show();
                 });
@@ -141,6 +168,48 @@ public class GameActivity extends SDLActivity {
             }
 
             setBootstrapperParams(gameBasePath, bootstrapperAssemblyPath, bootstrapperEntryPoint, bootstrapperCurrentDir);
+        }
+        
+        // 初始化开发者控制台
+        initializeConsole();
+        
+        // 设置返回键处理器（使用新的 OnBackPressedCallback API）
+        setupBackPressedHandler();
+    }
+    
+    /**
+     * 设置返回键处理器
+     * 注意: SDLActivity 继承自 Activity (不是 AppCompatActivity),
+     * 所以我们使用传统的 onBackPressed() 重写方法
+     */
+    private void setupBackPressedHandler() {
+        // 对于 SDLActivity, 我们在 onBackPressed() 方法中处理
+        // 这里只是一个占位方法,实际逻辑在 onBackPressed() 中
+        AppLogger.info(TAG, "Back pressed handler ready (using onBackPressed override)");
+    }
+    
+    /**
+     * 初始化开发者控制台
+     */
+    private void initializeConsole() {
+        try {
+            com.app.ralaunch.console.ConsoleManager consoleManager =
+                com.app.ralaunch.console.ConsoleManager.getInstance(this);
+
+            // 初始化控制台服务
+            consoleManager.initializeService();
+
+            // 如果启用，显示控制台
+            if (consoleManager.isConsoleEnabled()) {
+                // 延迟显示，等待界面完全加载
+                new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
+                    consoleManager.showConsole(this);
+                }, 1000);
+            }
+
+            AppLogger.info(TAG, "Console initialized");
+        } catch (Exception e) {
+            AppLogger.error(TAG, "Failed to initialize console: " + e.getMessage(), e);
         }
     }
 
@@ -150,11 +219,11 @@ public class GameActivity extends SDLActivity {
         // 若系统因为 SDL 的请求发生了旋转，这里立即拉回横屏
         try {
             if (newConfig.orientation != Configuration.ORIENTATION_LANDSCAPE) {
-
                 setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+                AppLogger.info(TAG, "Orientation enforced back to landscape");
             }
         } catch (Exception e) {
-            Log.w(TAG, "Failed to enforce landscape in onConfigurationChanged: " + e.getMessage());
+            AppLogger.warn(TAG, "Failed to enforce landscape in onConfigurationChanged: " + e.getMessage());
         }
     }
 
@@ -187,9 +256,9 @@ public class GameActivity extends SDLActivity {
             // 获取程序集路径
             String assemblyPath = getIntent().getStringExtra("ASSEMBLY_PATH");
             String gameName = getIntent().getStringExtra("GAME_NAME");
-            
+
             if (assemblyPath == null || assemblyPath.isEmpty()) {
-                Log.e(TAG, "Assembly path is null or empty");
+                AppLogger.error(TAG, "Assembly path is null or empty");
                 runOnUiThread(() -> {
                     Toast.makeText(this, "程序集路径为空", Toast.LENGTH_LONG).show();
                 });
@@ -200,7 +269,7 @@ public class GameActivity extends SDLActivity {
             // 验证程序集文件是否存在
             File assemblyFile = new File(assemblyPath);
             if (!assemblyFile.exists() || !assemblyFile.isFile()) {
-                Log.e(TAG, "Assembly file not found: " + assemblyPath);
+                AppLogger.error(TAG, "Assembly file not found: " + assemblyPath);
                 runOnUiThread(() -> {
                     Toast.makeText(this, "程序集文件不存在: " + assemblyPath, Toast.LENGTH_LONG).show();
                 });
@@ -208,25 +277,25 @@ public class GameActivity extends SDLActivity {
                 return;
             }
 
-            Log.i(TAG, "================================================");
-            Log.i(TAG, "Starting game: " + (gameName != null ? gameName : "Unknown"));
-            Log.i(TAG, "Assembly: " + assemblyPath);
-            Log.i(TAG, "================================================");
+            AppLogger.info(TAG, "================================================");
+            AppLogger.info(TAG, "Starting game: " + (gameName != null ? gameName : "Unknown"));
+            AppLogger.info(TAG, "Assembly: " + assemblyPath);
+            AppLogger.info(TAG, "================================================");
 
             // 直接启动程序集
             int result = GameLauncher.launchAssemblyDirect(this, assemblyPath);
 
             if (result == 0) {
-                Log.i(TAG, "✅ Launch parameters set successfully");
+                AppLogger.info(TAG, "Launch parameters set successfully");
             } else {
-                Log.e(TAG, "❌ Failed to set launch parameters: " + result);
+                AppLogger.error(TAG, "Failed to set launch parameters: " + result);
                 runOnUiThread(() -> {
                     Toast.makeText(this, "设置启动参数失败: " + result, Toast.LENGTH_LONG).show();
                 });
                 finish();
             }
         } catch (Exception e) {
-            Log.e(TAG, "❌ Exception in setLaunchParams: " + e.getMessage(), e);
+            AppLogger.error(TAG, "Exception in setLaunchParams: " + e.getMessage(), e);
             runOnUiThread(() -> {
                 Toast.makeText(this, "启动失败: " + e.getMessage(), Toast.LENGTH_LONG).show();
             });
@@ -236,30 +305,31 @@ public class GameActivity extends SDLActivity {
 
     private void setBootstrapperParams(String gameBasePath, String bootstrapperAssemblyPath, String bootstrapperEntryPoint, String bootstrapperCurrentDir) {
         try {
-
             // 验证引导程序程序集文件是否存在
             File assemblyFile = new File(bootstrapperAssemblyPath);
             if (!assemblyFile.exists() || !assemblyFile.isFile()) {
-                Log.e(TAG, "Bootstrapper assembly file not found: " + bootstrapperAssemblyPath);
+                AppLogger.error(TAG, "Bootstrapper assembly file not found: " + bootstrapperAssemblyPath);
                 runOnUiThread(() -> {
                     Toast.makeText(this, "引导程序程序集文件不存在: " + bootstrapperAssemblyPath, Toast.LENGTH_LONG).show();
                 });
                 return;
             }
 
+            AppLogger.info(TAG, "Launching bootstrapper: " + bootstrapperAssemblyPath);
+
             // 直接启动引导程序程序集
             int result = GameLauncher.launchAssemblyDirect(this, bootstrapperAssemblyPath);
 
             if (result == 0) {
-
+                AppLogger.info(TAG, "Bootstrapper parameters set successfully");
             } else {
-                Log.e(TAG, "Failed to set bootstrapper parameters: " + result);
+                AppLogger.error(TAG, "Failed to set bootstrapper parameters: " + result);
                 runOnUiThread(() -> {
                     Toast.makeText(this, "设置引导程序参数失败: " + result, Toast.LENGTH_LONG).show();
                 });
             }
         } catch (Exception e) {
-            Log.e(TAG, "Error setting bootstrapper parameters: " + e.getMessage(), e);
+            AppLogger.error(TAG, "Error setting bootstrapper parameters: " + e.getMessage(), e);
             runOnUiThread(() -> {
                 Toast.makeText(this, "设置引导程序参数失败: " + e.getMessage(), Toast.LENGTH_LONG).show();
             });
@@ -291,7 +361,7 @@ public class GameActivity extends SDLActivity {
             try {
                 enableFullscreen();
             } catch (Exception e) {
-                Log.w(TAG, "Failed to re-enable fullscreen: " + e.getMessage());
+                AppLogger.warn(TAG, "Failed to re-enable fullscreen: " + e.getMessage());
             }
         }
     }
@@ -301,6 +371,7 @@ public class GameActivity extends SDLActivity {
      */
     private void initializeVirtualControls() {
         try {
+            AppLogger.info(TAG, "Initializing virtual controls...");
 
             // 创建输入桥接
             mInputBridge = new SDLInputBridge();
@@ -325,7 +396,7 @@ public class GameActivity extends SDLActivity {
                         contentView.addView(mControlLayout, params);
                     }
                 } catch (Exception e) {
-                    Log.e(TAG, "Failed to add virtual controls to layout", e);
+                    AppLogger.error(TAG, "Failed to add virtual controls to layout", e);
                 }
             });
 
@@ -335,9 +406,9 @@ public class GameActivity extends SDLActivity {
                 disableSDLTextInput();
             }, 2000); // 等待2秒让SDL完全初始化
 
-            Log.i(TAG, "Virtual controls initialized successfully");
+            AppLogger.info(TAG, "Virtual controls initialized successfully");
         } catch (Exception e) {
-            Log.e(TAG, "Failed to initialize virtual controls", e);
+            AppLogger.error(TAG, "Failed to initialize virtual controls", e);
         }
     }
 
@@ -433,9 +504,9 @@ public class GameActivity extends SDLActivity {
                 mDrawerLayout.closeDrawers();
             });
 
-            Log.i(TAG, "Game menu setup successfully");
+            AppLogger.info(TAG, "Game menu setup successfully");
         } catch (Exception e) {
-            Log.e(TAG, "Failed to setup game menu", e);
+            AppLogger.error(TAG, "Failed to setup game menu", e);
         }
     }
 
@@ -450,12 +521,36 @@ public class GameActivity extends SDLActivity {
             case 1: // 编辑控制布局
                 enterEditMode();
                 break;
-            case 2: // 快速设置
+            case 2: // 显示控制台
+                toggleConsole();
+                break;
+            case 3: // 快速设置
                 showQuickSettings();
                 break;
-            case 3: // 退出游戏
+            case 4: // 退出游戏
                 showExitConfirmDialog();
                 break;
+        }
+    }
+    
+    /**
+     * 切换控制台显示/隐藏
+     */
+    private void toggleConsole() {
+        try {
+            com.app.ralaunch.console.ConsoleManager consoleManager = 
+                com.app.ralaunch.console.ConsoleManager.getInstance(this);
+            
+            if (!consoleManager.isConsoleEnabled()) {
+                Toast.makeText(this, "控制台未启用\n请在设置→开发者设置中开启", Toast.LENGTH_LONG).show();
+                return;
+            }
+
+            consoleManager.toggleConsole(this);
+            AppLogger.info(TAG, "Console toggled");
+        } catch (Exception e) {
+            AppLogger.error(TAG, "Failed to toggle console: " + e.getMessage(), e);
+            Toast.makeText(this, "控制台切换失败: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -726,27 +821,48 @@ public class GameActivity extends SDLActivity {
         }
     }
 
+    /**
+     * 处理返回键按下事件
+     * 注意: SDLActivity 的 onBackPressed() 会调用 super.onBackPressed() 导致直接退出
+     * 我们在这里完全覆盖这个行为,不调用 super,而是显示确认对话框
+     */
     @Override
     public void onBackPressed() {
-        // 如果抽屉菜单打开，先关闭它
+        AppLogger.debug(TAG, "onBackPressed() called - handling back button");
+
+        // 如果抽屉菜单打开,先关闭它
         if (mDrawerLayout != null && mGameMenu != null && mDrawerLayout.isDrawerOpen(mGameMenu)) {
+            AppLogger.debug(TAG, "Closing drawer menu");
             mDrawerLayout.closeDrawers();
             return;
         }
 
-        // 如果在编辑模式，提示退出编辑
+        // 如果在编辑模式,提示退出编辑
         if (mIsInEditor) {
+            AppLogger.debug(TAG, "Exiting edit mode");
             exitEditMode();
             return;
         }
 
         // 否则显示退出确认对话框
+        // 关键: 这里不调用 super.onBackPressed(), 这样可以阻止 SDLActivity 和 Activity 的默认 finish() 行为
+        AppLogger.debug(TAG, "Showing exit confirmation dialog");
         showExitConfirmDialog();
+        // 绝对不要调用 super.onBackPressed() !!!
     }
 
     @Override
     protected void onDestroy() {
+        AppLogger.info(TAG, "GameActivity.onDestroy() called");
 
+        // 清理控制台
+        try {
+            com.app.ralaunch.console.ConsoleManager consoleManager =
+                com.app.ralaunch.console.ConsoleManager.getInstance(this);
+            consoleManager.shutdown();
+        } catch (Exception e) {
+            AppLogger.error(TAG, "Failed to shutdown console: " + e.getMessage(), e);
+        }
 
         super.onDestroy();
     }

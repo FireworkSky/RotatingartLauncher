@@ -150,31 +150,18 @@ public class InitializationFragment extends Fragment {
      */
     private List<ComponentItem> createComponentList() {
         List<ComponentItem> componentList = new ArrayList<>();
-        
-        // 获取当前架构设置
-        String arch = com.app.ralaunch.utils.RuntimePreference.getEffectiveArchitecture(requireContext());
 
-        // 根据架构选择对应的 zip 文件
-        String zipFileName;
-        String componentName;
-        String componentDesc;
-        
-        if ("arm64".equals(arch)) {
-            zipFileName = "dotnet-arm64.zip";
-            componentName = "dotnet-arm64";
-            componentDesc = ".NET 7/8/9/10 运行时（ARM64）";
-        } else {
-            zipFileName = "dotnet-x64.zip";
-            componentName = "dotnet-x64";
-            componentDesc = ".NET 7/8/9/10 运行时（x86_64）";
-        }
-        
+
+        String zipFileName = "dotnet.zip";
+        String componentName = "dotnet";
+        String componentDesc = ".NET 7/8/9/10 运行时";
+
         componentList.add(new ComponentItem(
             componentName,
             componentDesc,
             zipFileName
         ));
-        
+
         return componentList;
     }
     
@@ -312,10 +299,9 @@ public class InitializationFragment extends Fragment {
     private void extractAllComponents() throws Exception {
 
         int totalComponents = components.size();
-        
-        // 获取架构特定的目标目录
-        String arch = com.app.ralaunch.utils.RuntimePreference.getEffectiveArchitecture(requireContext());
-        String dirName = "dotnet-" + arch;
+
+        // 获取目标目录（仅支持 ARM64）
+        String dirName = "dotnet";
         File outputDir = new File(requireActivity().getFilesDir(), dirName);
 
         // 在开始解压前先清理目标目录
@@ -362,16 +348,15 @@ public class InitializationFragment extends Fragment {
             // 2. 从assets复制到临时文件
             copyAssetToFile(assetManager, component.getFileName(), tempZipFile);
             updateComponentStatus(componentIndex, 30, "文件准备完成");
-            
-            // 3. 获取架构特定的目标目录
-            String arch = com.app.ralaunch.utils.RuntimePreference.getEffectiveArchitecture(requireContext());
-            String dirName = "dotnet-" + arch;
+
+            // 3. 获取目标目录（仅支持 ARM64）
+            String dirName = "dotnet";
             File outputDir = new File(requireActivity().getFilesDir(), dirName);
             if (!outputDir.exists()) {
                 outputDir.mkdirs();
             }
-            
-            // 4. 解压文件到架构特定目录
+
+            // 4. 解压文件到目标目录
             boolean success = extractZipFile(tempZipFile, outputDir, component, componentIndex);
             
             return success;

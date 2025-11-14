@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/console_overlay"
+    android:clickable="true"
+    android:focusable="true">
+
+    <!-- 主控制台容器 -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/consoleContainer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="16dp"
+        app:cardBackgroundColor="@color/console_background"
+        app:cardCornerRadius="12dp"
+        app:cardElevation="8dp"
+        app:strokeColor="@color/console_border"
+        app:strokeWidth="1dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <!-- 标题栏 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@color/console_surface"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:padding="12dp">
+
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:contentDescription="@string/app_name"
+                    android:src="@drawable/ralib_ic_close"
+                    android:tint="@color/console_accent" />
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:layout_weight="1"
+                    android:text="开发者控制台"
+                    android:textColor="@color/console_text_primary"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <!-- 最小化按钮 -->
+                <ImageButton
+                    android:id="@+id/btnMinimize"
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="最小化"
+                    android:padding="6dp"
+                    android:src="@drawable/ralib_ic_arrow_up"
+                    android:tint="@color/console_text_secondary" />
+
+                <!-- 清除按钮 -->
+                <ImageButton
+                    android:id="@+id/btnClear"
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="清除"
+                    android:padding="6dp"
+                    android:src="@drawable/ralib_ic_close"
+                    android:tint="@color/console_text_secondary" />
+
+                <!-- 关闭按钮 -->
+                <ImageButton
+                    android:id="@+id/btnClose"
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="关闭"
+                    android:padding="6dp"
+                    android:src="@drawable/ralib_ic_close"
+                    android:tint="@color/console_error" />
+            </LinearLayout>
+
+            <!-- 控制台内容区域 -->
+            <LinearLayout
+                android:id="@+id/consoleContent"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="visible">
+
+                <!-- 统计信息栏 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@color/console_surface_variant"
+                    android:orientation="horizontal"
+                    android:padding="8dp">
+
+                    <TextView
+                        android:id="@+id/txtMessageCount"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="消息: 0"
+                        android:textColor="@color/console_text_secondary"
+                        android:textSize="12sp" />
+
+                    <TextView
+                        android:id="@+id/txtErrorCount"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp"
+                        android:text="错误: 0"
+                        android:textColor="@color/console_error"
+                        android:textSize="12sp" />
+
+                    <TextView
+                        android:id="@+id/txtWarningCount"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp"
+                        android:text="警告: 0"
+                        android:textColor="@color/console_warning"
+                        android:textSize="12sp" />
+                </LinearLayout>
+
+                <!-- 日志滚动区域 -->
+                <androidx.core.widget.NestedScrollView
+                    android:layout_width="match_parent"
+                    android:layout_height="300dp"
+                    android:scrollbars="vertical">
+
+                    <TextView
+                        android:id="@+id/txtConsoleOutput"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="monospace"
+                        android:padding="12dp"
+                        android:text="控制台就绪...\n"
+                        android:textColor="@color/console_text_primary"
+                        android:textIsSelectable="true"
+                        android:textSize="12sp" />
+                </androidx.core.widget.NestedScrollView>
+
+                <!-- 输入区域 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@color/console_surface"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="8dp">
+
+                    <EditText
+                        android:id="@+id/etConsoleInput"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:background="@color/console_surface_variant"
+                        android:fontFamily="monospace"
+                        android:hint="输入命令..."
+                        android:imeOptions="actionSend"
+                        android:inputType="text"
+                        android:padding="12dp"
+                        android:textColor="@color/console_text_primary"
+                        android:textColorHint="@color/console_text_hint"
+                        android:textSize="14sp" />
+
+                    <Button
+                        android:id="@+id/btnSend"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:backgroundTint="@color/console_accent"
+                        android:text="发送"
+                        android:textColor="@color/console_text_primary" />
+                </LinearLayout>
+            </LinearLayout>
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+    <!-- 最小化后的浮动按钮 -->
+
+
+</FrameLayout>
+

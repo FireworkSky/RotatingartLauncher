@@ -38,14 +38,13 @@ public final class RuntimeManager {
     private RuntimeManager() {}
 
     /**
-     * 获取 .NET 运行时根目录（根据架构选择）
-     * 
+     * 获取 .NET 运行时根目录
+     *
      * @param ctx Android 上下文
-     * @return .NET 运行时根目录（如 /data/data/com.app/files/dotnet-arm64）
+     * @return .NET 运行时根目录（/data/data/com.app/files/dotnet）
      */
     public static File getDotnetRoot(Context ctx) {
-        String arch = RuntimePreference.getEffectiveArchitecture(ctx);
-        String dirName = "dotnet-" + arch;
+        String dirName = "dotnet";
         
         File archSpecificDir = new File(ctx.getFilesDir(), dirName);
         if (archSpecificDir.exists()) {
@@ -225,7 +224,14 @@ public final class RuntimeManager {
            .commit(); // 使用 commit() 确保立即保存
         
         if (success) {
-
+            if (version != null) {
+                int major = getMajorVersion(version);
+                if (major > 0) {
+                    RuntimePreference.setDotnetFramework(ctx, "net" + major);
+                }
+            } else {
+                RuntimePreference.setDotnetFramework(ctx, "auto");
+            }
         } else {
             Log.e(TAG, "Failed to save runtime version: " + version);
         }

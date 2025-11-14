@@ -12,6 +12,10 @@
 
 #include <jni.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @brief JNI_OnLoad 生命周期回调
  * 
@@ -67,3 +71,6 @@ JavaVM* Bridge_GetJavaVM();
  */
 void Bridge_NotifyGameExit(int exitCode);
 
+#ifdef __cplusplus
+}
+#endif

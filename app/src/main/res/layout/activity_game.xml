@@ -7,29 +7,46 @@
     android:layout_height="match_parent"
     android:fitsSystemWindows="false">
 
-    <!-- 主游戏内容区域（SDLSurface + ControlLayout） -->
-    <FrameLayout
-        android:id="@+id/game_content_frame"
+    <!-- 主游戏内容区域的外层容器 -->
+    <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent">
         
-        <!-- 游戏控制布局会动态添加到这里 -->
+        <!-- 游戏内容区域（SDLSurface + ControlLayout） -->
+        <FrameLayout
+            android:id="@+id/game_content_frame"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+            
+            <!-- 游戏控制布局会动态添加到这里 -->
+            
+        </FrameLayout>
         
-        <!-- 悬浮菜单按钮 -->
-        <ImageButton
-            android:id="@+id/game_drawer_button"
-            android:layout_width="48dp"
-            android:layout_height="24dp"
-            android:layout_gravity="center_horizontal|top"
-            android:padding="4dp"
-            android:elevation="15dp"
-            android:src="@android:drawable/arrow_down_float"
-            android:background="@android:color/transparent"
-            android:tint="?attr/textPrimary"
-            android:contentDescription="游戏菜单"
-            android:visibility="gone" />
-
-    </FrameLayout>
+        <!-- 悬浮UI层 (确保在游戏内容之上) -->
+        <FrameLayout
+            android:id="@+id/game_overlay_frame"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clickable="false"
+            android:focusable="false">
+            
+            <!-- 悬浮菜单按钮 -->
+            <ImageButton
+                android:id="@+id/game_drawer_button"
+                android:layout_width="48dp"
+                android:layout_height="24dp"
+                android:layout_gravity="center_horizontal|top"
+                android:padding="4dp"
+                android:elevation="15dp"
+                android:src="@android:drawable/arrow_down_float"
+                android:background="@android:color/transparent"
+                android:tint="?attr/textPrimary"
+                android:contentDescription="游戏菜单"
+                android:visibility="gone" />
+        
+        </FrameLayout>
+        
+    </RelativeLayout>
 
     <!-- 右侧抽屉菜单 -->
     <ListView

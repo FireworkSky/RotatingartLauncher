@@ -28,6 +28,11 @@ public class AssemblyPatcher {
     private static final String TAG = "AssemblyPatcher";
     private static final String PATCH_ARCHIVE = "MonoMod_Patch.zip";
     
+    // [WARN] 强制更新版本号：每次修改 MonoMod 后增加此版本号
+    // 这会强制删除所有旧的补丁程序集并重新安装
+    private static final int PATCH_VERSION = 3; // ← 更新 MonoMod 后增加这个数字（跳过 Mono.Cecil）
+    private static final String VERSION_FILE = ".monomod_patch_version";
+    
     /**
      * 应用补丁到游戏目录
      * 
@@ -36,6 +41,11 @@ public class AssemblyPatcher {
      * @return 替换的程序集数量
      */
     public static int applyPatches(Context context, String gameDirectory) {
+        // [OK] 检查是否需要强制更新
+        if (shouldForceUpdate(gameDirectory)) {
+            Log.w(TAG, "🔄 检测到补丁版本更新，强制清理旧版本补丁...");
+            cleanOldPatches(gameDirectory);
+        }
         Log.i(TAG, "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
         Log.i(TAG, "🔧 开始应用 MonoMod 补丁");
         Log.i(TAG, "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
@@ -46,11 +56,11 @@ public class AssemblyPatcher {
             Map<String, byte[]> patchAssemblies = loadPatchArchive(context);
             
             if (patchAssemblies.isEmpty()) {
-                Log.w(TAG, "⚠️  未找到补丁程序集");
+                Log.w(TAG, "[WARN]  未找到补丁程序集");
                 return 0;
             }
             
-            Log.i(TAG, "✅ 已加载 " + patchAssemblies.size() + " 个补丁程序集:");
+            Log.i(TAG, "[OK] 已加载 " + patchAssemblies.size() + " 个补丁程序集:");
             for (String assemblyName : patchAssemblies.keySet()) {
                 Log.i(TAG, "   - " + assemblyName);
             }
@@ -61,29 +71,67 @@ public class AssemblyPatcher {
             
             Log.i(TAG, "  找到 " + gameAssemblies.size() + " 个游戏程序集");
             
-            // 3. 应用补丁
+            // 3. 应用补丁（替换已有的程序集）
             int patchedCount = 0;
             for (File assemblyFile : gameAssemblies) {
                 String assemblyName = assemblyFile.getName();
                 
+                // [WARN] 跳过 Mono.Cecil，因为 tModLoader 需要特定版本（0.11.6.0）
+                if (assemblyName.startsWith("Mono.Cecil")) {
+                    Log.i(TAG, "⏭️  跳过（使用游戏自带版本）: " + assemblyName);
+                    continue;
+                }
+                
                 if (patchAssemblies.containsKey(assemblyName)) {
                     if (replaceAssembly(assemblyFile, patchAssemblies.get(assemblyName))) {
-                        Log.i(TAG, "✅ 已替换: " + assemblyName);
+                        Log.i(TAG, "[OK] 已替换: " + assemblyName);
                         patchedCount++;
                     } else {
-                        Log.w(TAG, "⚠️  替换失败: " + assemblyName);
+                        Log.w(TAG, "[WARN]  替换失败: " + assemblyName);
+                    }
+                }
+            }
+            
+            // 4. 添加缺失的补丁程序集（如果游戏目录中不存在）
+            for (Map.Entry<String, byte[]> entry : patchAssemblies.entrySet()) {
+                String assemblyName = entry.getKey();
+                
+                // [WARN] 跳过 Mono.Cecil，因为 tModLoader 需要特定版本（0.11.6.0）
+                if (assemblyName.startsWith("Mono.Cecil")) {
+                    continue;
+                }
+                
+                boolean alreadyExists = false;
+                
+                for (File assemblyFile : gameAssemblies) {
+                    if (assemblyFile.getName().equals(assemblyName)) {
+                        alreadyExists = true;
+                        break;
+                    }
+                }
+                
+                if (!alreadyExists) {
+                    File newAssemblyFile = new File(gameDir, assemblyName);
+                    if (replaceAssembly(newAssemblyFile, entry.getValue())) {
+                        Log.i(TAG, "[OK] 已添加: " + assemblyName);
+                        patchedCount++;
+                    } else {
+                        Log.w(TAG, "[WARN]  添加失败: " + assemblyName);
                     }
                 }
             }
             
             Log.i(TAG, "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            Log.i(TAG, "✅ 补丁应用完成，共替换 " + patchedCount + " 个程序集");
+            Log.i(TAG, "[OK] 补丁应用完成，共替换 " + patchedCount + " 个程序集");
             Log.i(TAG, "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            
+            // [OK] 保存当前补丁版本号
+            saveCurrentVersion(gameDirectory);
             
             return patchedCount;
             
         } catch (Exception e) {
-            Log.e(TAG, "❌ 应用补丁失败", e);
+            Log.e(TAG, "[ERROR] 应用补丁失败", e);
             return -1;
         }
     }
@@ -129,7 +177,7 @@ public class AssemblyPatcher {
             inputStream.close();
             
         } catch (IOException e) {
-            Log.w(TAG, "⚠️  无法加载 " + PATCH_ARCHIVE + ": " + e.getMessage());
+            Log.w(TAG, "[WARN]  无法加载 " + PATCH_ARCHIVE + ": " + e.getMessage());
         }
         
         return assemblies;
@@ -224,6 +272,106 @@ public class AssemblyPatcher {
         
         inputStream.close();
         outputStream.close();
+    }
+    
+    /**
+     * 检查是否需要强制更新补丁
+     * 
+     * @param gameDirectory 游戏目录路径
+     * @return 如果需要强制更新返回 true
+     */
+    private static boolean shouldForceUpdate(String gameDirectory) {
+        File versionFile = new File(gameDirectory, VERSION_FILE);
+        
+        if (!versionFile.exists()) {
+            Log.i(TAG, "  版本文件不存在，需要首次安装补丁");
+            return true;
+        }
+        
+        try {
+            InputStream is = new java.io.FileInputStream(versionFile);
+            byte[] buffer = new byte[16];
+            int length = is.read(buffer);
+            is.close();
+            
+            String versionStr = new String(buffer, 0, length).trim();
+            int installedVersion = Integer.parseInt(versionStr);
+            
+            Log.i(TAG, "  已安装补丁版本: " + installedVersion + ", 当前版本: " + PATCH_VERSION);
+            
+            if (installedVersion < PATCH_VERSION) {
+                Log.w(TAG, "  [WARN] 检测到新版本补丁，需要更新！");
+                return true;
+            }
+            
+            return false;
+            
+        } catch (Exception e) {
+            Log.w(TAG, "  读取版本文件失败，将强制更新", e);
+            return true;
+        }
+    }
+    
+    /**
+     * 清理旧版本的补丁程序集
+     * 
+     * @param gameDirectory 游戏目录路径
+     */
+    private static void cleanOldPatches(String gameDirectory) {
+        File gameDir = new File(gameDirectory);
+        
+        // 删除所有 MonoMod 相关的 DLL（但保留 Mono.Cecil，因为 tModLoader 自带特定版本）
+        String[] monoModDlls = {
+            "MonoMod.RuntimeDetour.dll",
+            "MonoMod.Core.dll",
+            "MonoMod.Utils.dll",
+            "MonoMod.Backports.dll",
+            "MonoMod.ILHelpers.dll",
+            // 注意：不删除 Mono.Cecil，避免版本冲突
+            // "Mono.Cecil.dll",
+            // "Mono.Cecil.Pdb.dll",
+            // "Mono.Cecil.Mdb.dll",
+            // "Mono.Cecil.Rocks.dll",
+            "Iced.dll"
+        };
+        
+        int deletedCount = 0;
+        for (String dllName : monoModDlls) {
+            File dllFile = new File(gameDir, dllName);
+            if (dllFile.exists()) {
+                if (dllFile.delete()) {
+                    Log.i(TAG, "  [OK] 已删除旧版本: " + dllName);
+                    deletedCount++;
+                } else {
+                    Log.w(TAG, "  ✗ 删除失败: " + dllName);
+                }
+            }
+        }
+        
+        // 删除版本文件
+        File versionFile = new File(gameDir, VERSION_FILE);
+        if (versionFile.exists()) {
+            versionFile.delete();
+        }
+        
+        Log.i(TAG, "  已清理 " + deletedCount + " 个旧版本补丁文件");
+    }
+    
+    /**
+     * 保存当前补丁版本号
+     * 
+     * @param gameDirectory 游戏目录路径
+     */
+    private static void saveCurrentVersion(String gameDirectory) {
+        try {
+            File versionFile = new File(gameDirectory, VERSION_FILE);
+            FileOutputStream fos = new FileOutputStream(versionFile);
+            fos.write(String.valueOf(PATCH_VERSION).getBytes());
+            fos.close();
+            Log.i(TAG, "  [OK] 已保存补丁版本: " + PATCH_VERSION);
+        } catch (IOException e) {
+            Log.w(TAG, "  保存版本文件失败", e);
+        }
     }
 }
 

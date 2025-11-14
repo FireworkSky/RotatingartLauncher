@@ -96,7 +96,7 @@ int CustomEGL_Init(ANativeWindow* nativeWindow, CustomEGLContext* ctx) {
     // 设置swap interval (vsync)
     eglSwapInterval(ctx->display, 1);
 
-    LOGI("✅ Custom EGL initialization complete!");
+    LOGI("[OK] Custom EGL initialization complete!");
     return 0;
 }
 

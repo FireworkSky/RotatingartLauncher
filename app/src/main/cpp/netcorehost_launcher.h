@@ -18,14 +18,20 @@ extern "C" {
  * @param main_assembly 主程序集名称（如 "MyGame.dll"）
  * @param dotnet_root .NET 运行时根目录（可选，NULL 表示使用系统默认）
  * @param framework_major 首选框架主版本号（如 8 表示 .NET 8，0 表示最高版本）
+ * @param hostfxr_override_path 可选，用于指定 hostfxr.so 的替代路径
+ * @param argc 命令行参数数量（不包括程序集路径本身，0 表示无参数）
+ * @param argv 命令行参数数组（不包括程序集路径本身，NULL 表示无参数）
  * 
  * @return 0 成功，负数表示失败
  */
 int netcorehost_set_params(
-    const char* app_dir, 
+    const char* app_dir,
     const char* main_assembly,
     const char* dotnet_root,
-    int framework_major);
+    int framework_major,
+    const char* hostfxr_override_path,
+    int argc,
+    const char* const* argv);
 
 /**
  * @brief 启动 .NET 应用程序

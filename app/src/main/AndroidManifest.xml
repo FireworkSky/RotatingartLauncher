@@ -47,7 +47,9 @@
             android:exported="true"
             android:configChanges="orientation|keyboardHidden|screenSize|screenLayout|smallestScreenSize|uiMode"
             android:screenOrientation="landscape"
-            android:theme="@style/FullScreenTheme">
+            android:theme="@style/FullScreenTheme"
+            android:hardwareAccelerated="false">
+            <!-- 禁用硬件加速以避免与游戏 OpenGL 上下文冲突 -->
             <!-- 强制 SDL 使用横屏方向 -->
             <meta-data android:name="SDL_ORIENTATION" android:value="Landscape" />
             <meta-data android:name="SDL_HINT_ORIENTATIONS" android:value="LandscapeLeft LandscapeRight" />

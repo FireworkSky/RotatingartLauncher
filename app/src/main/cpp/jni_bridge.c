@@ -144,37 +144,7 @@ void Bridge_NotifyGameExit(int exitCode) {
 // - setBootstrapLaunchParams
 // ======================================================================
 
-/**
- * @brief 获取Native层的真实CPU架构
- * 
- * @param env JNI环境指针
- * @param clazz Java类引用
- * @return CPU架构字符串："arm64", "x86_64", "arm", "x86", 或 "unknown"
- * 
- * 此函数在Native层通过编译时宏直接检测当前进程的真实CPU架构，
- * 比Java层的Build.SUPPORTED_ABIS更可靠，尤其是在使用ARM翻译层的x86模拟器上。
- */
-JNIEXPORT jstring JNICALL Java_com_app_ralaunch_utils_RuntimePreference_getNativeArchitecture(
-    JNIEnv* env, jclass clazz) {
-    (void)clazz; // 未使用的参数
-    
-    #if defined(__aarch64__) || defined(__arm64__)
-        LOGI("Native architecture detected: arm64");
-        return (*env)->NewStringUTF(env, "arm64");
-    #elif defined(__x86_64__) || defined(__amd64__)
-        LOGI("Native architecture detected: x86_64");
-        return (*env)->NewStringUTF(env, "x86_64");
-    #elif defined(__arm__)
-        LOGI("Native architecture detected: arm");
-        return (*env)->NewStringUTF(env, "arm");
-    #elif defined(__i386__)
-        LOGI("Native architecture detected: x86");
-        return (*env)->NewStringUTF(env, "x86");
-    #else
-        LOGE("Native architecture UNKNOWN!");
-        return (*env)->NewStringUTF(env, "unknown");
-    #endif
-}
+// 架构检测功能已移除 - 本应用仅支持 ARM64 架构
 
 
 // ============================================================================

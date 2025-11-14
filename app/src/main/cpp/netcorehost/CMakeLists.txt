@@ -15,6 +15,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 # 源文件
 set(NETCOREHOST_SOURCES
     src/nethost.cpp
+    src/nethost_stub.cpp
     src/hostfxr.cpp
     src/error.cpp
     src/pdcstring.cpp
@@ -33,8 +34,8 @@ set(NETCOREHOST_HEADERS
     include/netcorehost/bindings.hpp
 )
 
-# 创建静态库
-add_library(netcorehost STATIC ${NETCOREHOST_SOURCES} ${NETCOREHOST_HEADERS})
+# 创建动态库，供主程序与其他模块共享
+add_library(netcorehost SHARED ${NETCOREHOST_SOURCES} ${NETCOREHOST_HEADERS})
 
 # 设置目标属性
 target_include_directories(netcorehost
@@ -48,10 +49,9 @@ if(WIN32)
     # Windows不需要额外链接库
     target_link_libraries(netcorehost PRIVATE)
 elseif(ANDROID)
-    # Android平台：链接dl库和.NET的libnethost.a
-    # libnethost.a位于jniLibs目录中，根据ABI选择
-    set(NETHOST_LIB_PATH ${CMAKE_CURRENT_SOURCE_DIR}/native/${ANDROID_ABI}/libnethost.a)
-    target_link_libraries(netcorehost PRIVATE dl ${NETHOST_LIB_PATH})
+    # Android平台：链接 dl 库与 libc++_shared
+    find_library(CXX_SHARED_LIB c++_shared REQUIRED)
+    target_link_libraries(netcorehost PRIVATE dl log ${CXX_SHARED_LIB})
 else()
     # Unix/Linux/macOS需要链接dl库用于动态加载
     target_link_libraries(netcorehost PRIVATE dl)
@@ -74,5 +74,11 @@ install(TARGETS netcorehost
 
 install(DIRECTORY include/netcorehost
     DESTINATION include
+)
+
+install(TARGETS netcorehost
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    RUNTIME DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )
 

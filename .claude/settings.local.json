@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(./gradlew assembleDebug:*)",
+      "Bash(wsl.exe bash:*)",
+      "Bash(powershell -Command:*)",
+      "Bash(wsl hexdump:*)",
+      "Bash(wsl readelf:*)",
+      "Bash(wsl objdump:*)",
+      "Bash(cat:*)",
+      "Bash(python3:*)",
+      "Bash(wsl bash:*)",
+      "Bash(adb logcat:*)",
+      "Bash(adb shell:*)",
+      "Bash(rmdir:*)",
+      "Bash(find:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

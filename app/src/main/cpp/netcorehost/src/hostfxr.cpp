@@ -62,14 +62,22 @@ std::shared_ptr<Hostfxr> Hostfxr::load_from_path(const PdCString& path) {
 #else
     LibraryHandle lib = LOAD_LIBRARY(path.c_str());
 #endif
-    
+
     if (!lib) {
+#ifdef __ANDROID__
+        // 在 Android 上输出 dlerror() 帮助诊断
+        const char* dl_error = dlerror();
+        __android_log_print(ANDROID_LOG_ERROR, "NetCoreHost",
+            "dlopen failed: %s", dl_error ? dl_error : "unknown error");
+        __android_log_print(ANDROID_LOG_ERROR, "NetCoreHost",
+            "Path: %s", path.c_str());
+#endif
         throw HostingException(
             HostingError::CoreHostLibLoadFailure,
             "Failed to load hostfxr library from: " + path.to_string()
         );
     }
-    
+
     // 使用 new 而不是 make_shared，因为构造函数是私有的
     return std::shared_ptr<Hostfxr>(new Hostfxr(lib, path));
 }

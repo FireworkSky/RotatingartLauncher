@@ -16,6 +16,7 @@ import androidx.fragment.app.Fragment;
 import com.app.ralaunch.R;
 import com.app.ralib.dialog.OptionSelectorDialog;
 import com.app.ralaunch.utils.SettingsManager;
+import com.app.ralaunch.utils.RuntimePreference;
 import com.google.android.material.card.MaterialCardView;
 
 import java.util.ArrayList;
@@ -239,34 +240,8 @@ public class SettingsFragment extends Fragment {
             });
         }
         
-        // CPU架构设置
-        MaterialCardView architectureCard = rootView.findViewById(R.id.architectureCard);
-        TextView tvArchitectureValue = rootView.findViewById(R.id.tvArchitectureValue);
-        
-        if (architectureCard != null && tvArchitectureValue != null) {
-            updateArchitectureDisplay(settingsManager, tvArchitectureValue);
-            
-            architectureCard.setOnClickListener(v -> {
-                List<OptionSelectorDialog.Option> options = Arrays.asList(
-                    new OptionSelectorDialog.Option("auto", "自动检测（推荐）", "根据设备自动选择架构"),
-                    new OptionSelectorDialog.Option("arm64", "ARM64", "适用于ARM64设备"),
-                    new OptionSelectorDialog.Option("x86_64", "x86_64", "适用于x86_64设备")
-                );
-                
-                new OptionSelectorDialog()
-                    .setTitle("CPU 架构")
-                    .setIcon(R.drawable.ic_game)
-                    .setOptions(options)
-                    .setCurrentValue(settingsManager.getRuntimeArchitecture())
-                    .setOnOptionSelectedListener(value -> {
-                        settingsManager.setRuntimeArchitecture(value);
-                        updateArchitectureDisplay(settingsManager, tvArchitectureValue);
-                        Toast.makeText(requireContext(), "架构已更改", Toast.LENGTH_SHORT).show();
-                    })
-                    .show(getParentFragmentManager(), "architecture");
-            });
-        }
-        
+        // CPU架构设置已移除 - 默认仅支持 ARM64
+
         // FNA渲染器设置
         MaterialCardView rendererCard = rootView.findViewById(R.id.rendererCard);
         TextView tvRendererValue = rootView.findViewById(R.id.tvRendererValue);
@@ -276,19 +251,19 @@ public class SettingsFragment extends Fragment {
             
             rendererCard.setOnClickListener(v -> {
                 List<OptionSelectorDialog.Option> options = Arrays.asList(
-                    new OptionSelectorDialog.Option("auto", "自动选择（推荐）", "自动选择最佳渲染器"),
-                    new OptionSelectorDialog.Option("opengl_native", "OpenGL ES 3（原生）", "使用原生OpenGL ES 3"),
-                    new OptionSelectorDialog.Option("opengl_gl4es", "OpenGL (gl4es)", "通过gl4es转换层"),
-                    new OptionSelectorDialog.Option("vulkan", "Vulkan（实验性）", "使用Vulkan API")
+                    new OptionSelectorDialog.Option(RuntimePreference.RENDERER_AUTO, "自动选择（推荐）", "自动选择最佳渲染器"),
+                    new OptionSelectorDialog.Option(RuntimePreference.RENDERER_OPENGLES3, "OpenGL ES 3（原生）", "使用原生 OpenGL ES 3"),
+                    new OptionSelectorDialog.Option(RuntimePreference.RENDERER_OPENGL_GL4ES, "OpenGL (gl4es+)", "通过 gl4es+ 转换层"),
+                    new OptionSelectorDialog.Option(RuntimePreference.RENDERER_VULKAN, "Vulkan（实验性）", "使用 Vulkan API")
                 );
                 
                 new OptionSelectorDialog()
                     .setTitle("FNA 渲染器")
                     .setIcon(R.drawable.ic_game)
                     .setOptions(options)
-                    .setCurrentValue(settingsManager.getFnaRenderer())
+                    .setCurrentValue(RuntimePreference.normalizeRendererValue(settingsManager.getFnaRenderer()))
                     .setOnOptionSelectedListener(value -> {
-                        settingsManager.setFnaRenderer(value);
+                        settingsManager.setFnaRenderer(RuntimePreference.normalizeRendererValue(value));
                         updateRendererDisplay(settingsManager, tvRendererValue);
                         Toast.makeText(requireContext(), "渲染器已更改", Toast.LENGTH_SHORT).show();
                     })
@@ -405,8 +380,12 @@ public class SettingsFragment extends Fragment {
     private void setupDeveloperSettings(View rootView) {
         // 获取设置管理器
         SettingsManager settingsManager = SettingsManager.getInstance(requireContext());
+        com.app.ralaunch.console.ConsoleManager consoleManager = 
+            com.app.ralaunch.console.ConsoleManager.getInstance(requireContext());
         
         // 找到卡片和显示文本
+        MaterialCardView consoleEnabledCard = rootView.findViewById(R.id.consoleEnabledCard);
+        TextView tvConsoleEnabledValue = rootView.findViewById(R.id.tvConsoleEnabledValue);
         MaterialCardView verboseLoggingCard = rootView.findViewById(R.id.verboseLoggingCard);
         TextView tvVerboseLoggingValue = rootView.findViewById(R.id.tvVerboseLoggingValue);
         Button btn_enter_debug_page = rootView.findViewById(R.id.btn_enter_debug_page);
@@ -416,7 +395,35 @@ public class SettingsFragment extends Fragment {
         }
         
         // 更新显示值
+        updateConsoleEnabledDisplay(consoleManager, tvConsoleEnabledValue);
         updateVerboseLoggingDisplay(settingsManager, tvVerboseLoggingValue);
+        
+        // 设置开发者控制台点击事件
+        if (consoleEnabledCard != null) {
+            consoleEnabledCard.setOnClickListener(v -> {
+                List<OptionSelectorDialog.Option> options = Arrays.asList(
+                    new OptionSelectorDialog.Option("true", "开启", "显示 C# Console 输出和输入界面"),
+                    new OptionSelectorDialog.Option("false", "关闭", "禁用开发者控制台")
+                );
+                
+                new OptionSelectorDialog()
+                    .setTitle("开发者控制台")
+                    .setIcon(R.drawable.ic_bug)
+                    .setOptions(options)
+                    .setCurrentValue(String.valueOf(consoleManager.isConsoleEnabled()))
+                    .setOnOptionSelectedListener(value -> {
+                        boolean enabled = Boolean.parseBoolean(value);
+                        consoleManager.setConsoleEnabled(enabled);
+                        updateConsoleEnabledDisplay(consoleManager, tvConsoleEnabledValue);
+                        
+                        String message = enabled ?
+                                "已启用开发者控制台，启动游戏时生效" :
+                                "已禁用开发者控制台";
+                        Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
+                    })
+                    .show(getParentFragmentManager(), "console_enabled");
+            });
+        }
         
         // 设置详细日志点击事件
         verboseLoggingCard.setOnClickListener(v -> {
@@ -452,6 +459,10 @@ public class SettingsFragment extends Fragment {
         }
     }
     
+    private void updateConsoleEnabledDisplay(com.app.ralaunch.console.ConsoleManager consoleManager, TextView textView) {
+        textView.setText(consoleManager.isConsoleEnabled() ? "开启" : "关闭");
+    }
+    
     private void updateVerboseLoggingDisplay(SettingsManager settingsManager, TextView textView) {
         textView.setText(settingsManager.isVerboseLogging() ? "开启" : "关闭");
     }
@@ -468,20 +479,24 @@ public class SettingsFragment extends Fragment {
         textView.setText(language >= 0 && language < languages.length ? languages[language] : "跟随系统");
     }
     
-    private void updateArchitectureDisplay(SettingsManager settingsManager, TextView textView) {
-        String arch = settingsManager.getRuntimeArchitecture();
-        String display = arch.equals("auto") ? "自动检测" : 
-                        arch.equals("arm64") ? "ARM64" :
-                        arch.equals("x86_64") ? "x86_64" : "自动检测";
-        textView.setText(display);
-    }
-    
     private void updateRendererDisplay(SettingsManager settingsManager, TextView textView) {
-        String renderer = settingsManager.getFnaRenderer();
-        String display = renderer.equals("auto") ? "自动选择" :
-                        renderer.equals("opengl_native") ? "OpenGL ES 3" :
-                        renderer.equals("opengl_gl4es") ? "OpenGL (gl4es)" :
-                        renderer.equals("vulkan") ? "Vulkan" : "自动选择";
+        String renderer = RuntimePreference.normalizeRendererValue(settingsManager.getFnaRenderer());
+        String display;
+        switch (renderer) {
+            case RuntimePreference.RENDERER_OPENGLES3:
+                display = "OpenGL ES 3";
+                break;
+            case RuntimePreference.RENDERER_OPENGL_GL4ES:
+                display = "OpenGL (gl4es+)";
+                break;
+            case RuntimePreference.RENDERER_VULKAN:
+                display = "Vulkan";
+                break;
+            case RuntimePreference.RENDERER_AUTO:
+            default:
+                display = "自动选择";
+                break;
+        }
         textView.setText(display);
     }
     

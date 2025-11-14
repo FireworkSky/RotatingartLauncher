@@ -5,42 +5,28 @@ import android.content.SharedPreferences;
 
 /**
  * 运行时框架偏好设置管理
- * 
+ *
  * 管理 .NET Framework 版本偏好设置：
  * - 保存和读取用户选择的框架版本（net6/net7/net8/net9/net10/auto）
- * - 保存和读取用户选择的 CPU 架构（arm64/x86_64/auto）
  * - 提供统一的偏好存取接口
- * 
+ *
  * 注意：此类主要用于兼容旧的框架版本选择方式，
  * 新的运行时管理推荐使用 RuntimeManager
+ *
+ * 本应用仅支持 ARM64 架构。
  */
 public final class RuntimePreference {
+    private static final String TAG = "RuntimePreference";
     private static final String PREFS = "app_prefs";
     private static final String KEY_DOTNET = "dotnet_framework";
-    private static final String KEY_ARCHITECTURE = "runtime_architecture";
     private static final String KEY_VERBOSE_LOGGING = "runtime_verbose_logging";
     private static final String KEY_RENDERER = "fna_renderer";
-    
-    // CPU 架构常量
-    public static final String ARCH_ARM64 = "arm64";
-    public static final String ARCH_X86_64 = "x86_64";
-    public static final String ARCH_AUTO = "auto";
     
     // 渲染器常量
     public static final String RENDERER_OPENGLES3 = "opengles3";        // 原生 OpenGL ES 3（Android 原生支持，推荐）
     public static final String RENDERER_OPENGL_GL4ES = "opengl_gl4es";  // 桌面 OpenGL 通过 gl4es 翻译到 GLES
     public static final String RENDERER_VULKAN = "vulkan";               // Vulkan（实验性）
     public static final String RENDERER_AUTO = "auto";                   // 自动选择（默认 OpenGL ES 3）
-
-    // 加载native库以支持架构检测
-    static {
-        try {
-            System.loadLibrary("SDL2");
-            android.util.Log.d("RuntimePreference", "Native library loaded for architecture detection");
-        } catch (UnsatisfiedLinkError e) {
-            android.util.Log.w("RuntimePreference", "Failed to load native library: " + e.getMessage());
-        }
-    }
 
     private RuntimePreference() {}
 
@@ -69,81 +55,6 @@ public final class RuntimePreference {
         return sp.getString(KEY_DOTNET, "auto");
     }
 
-    /**
-     * 设置运行时 CPU 架构偏好
-     * 
-     * @param context Android 上下文
-     * @param architecture 架构（arm64/x86_64/auto）
-     */
-    public static void setArchitecture(Context context, String architecture) {
-        if (architecture == null) return;
-        SettingsManager.getInstance(context).setRuntimeArchitecture(architecture);
-    }
-
-    /**
-     * 获取运行时 CPU 架构偏好
-     * 
-     * @param context Android 上下文
-     * @return 架构，默认为 "auto"（自动检测设备架构）
-     */
-    public static String getArchitecture(Context context) {
-        return SettingsManager.getInstance(context).getRuntimeArchitecture();
-    }
-
-    /**
-     * Native方法：获取真实的CPU架构（在Native层检测）
-     * 
-     * @return arm64, x86_64, arm, x86, 或 unknown
-     */
-    private static native String getNativeArchitecture();
-    
-    /**
-     * 获取当前设备的 CPU 架构
-     * 
-     * @return arm64 或 x86_64
-     * 
-     * 注意：此方法现在使用Native层检测，比Build.SUPPORTED_ABIS更可靠。
-     * 特别是在x86模拟器+ARM翻译层的情况下，Build.SUPPORTED_ABIS会返回错误的架构。
-     */
-    public static String getDeviceArchitecture() {
-        try {
-            // 优先使用Native层检测（最可靠）
-            String nativeArch = getNativeArchitecture();
-            if (nativeArch != null && !nativeArch.equals("unknown")) {
-                android.util.Log.d("RuntimePreference", "Using native architecture: " + nativeArch);
-                return nativeArch;
-            }
-        } catch (UnsatisfiedLinkError e) {
-            // Native库未加载，回退到Java检测
-            android.util.Log.w("RuntimePreference", "Native arch detection failed, falling back to Java detection");
-        }
-        
-        // 回退：使用Java层检测
-        String[] abis = android.os.Build.SUPPORTED_ABIS;
-        if (abis != null && abis.length > 0) {
-            String primaryAbi = abis[0];
-            if (primaryAbi.startsWith("arm64") || primaryAbi.startsWith("armeabi")) {
-                return ARCH_ARM64;
-            } else if (primaryAbi.startsWith("x86_64")) {
-                return ARCH_X86_64;
-            }
-        }
-        return ARCH_ARM64; // 默认返回 ARM64
-    }
-
-    /**
-     * 获取实际应该使用的架构（考虑 auto 模式）
-     * 
-     * @param context Android 上下文
-     * @return 实际的架构（arm64 或 x86_64）
-     */
-    public static String getEffectiveArchitecture(Context context) {
-        String arch = getArchitecture(context);
-        if (ARCH_AUTO.equals(arch)) {
-            return getDeviceArchitecture();
-        }
-        return arch;
-    }
 
     /**
      * 设置运行时详细日志开关
@@ -183,7 +94,13 @@ public final class RuntimePreference {
      * @return 渲染器，默认为 "auto"（自动选择 gl4es）
      */
     public static String getRenderer(Context context) {
-        return SettingsManager.getInstance(context).getFnaRenderer();
+        SettingsManager manager = SettingsManager.getInstance(context);
+        String raw = manager.getFnaRenderer();
+        String normalized = normalizeRendererValue(raw);
+        if (!normalized.equals(raw)) {
+            manager.setFnaRenderer(normalized);
+        }
+        return normalized;
     }
 
     /**
@@ -200,11 +117,174 @@ public final class RuntimePreference {
         }
         return renderer;
     }
+
+    /**
+     * 归一化渲染器值，兼容旧版字符串
+     */
+    public static String normalizeRendererValue(String value) {
+        if (value == null || value.isEmpty()) {
+            return RENDERER_AUTO;
+        }
+        if ("opengl_native".equals(value)) {
+            return RENDERER_OPENGLES3;
+        }
+        return value;
+    }
+
+    /**
+     * 根据设置应用 FNA 渲染器相关的环境变量
+     *
+     * 新的EGL架构说明：
+     * 1. FNA3D_OPENGL_LIBRARY: 指定EGL库路径（默认libEGL.so）
+     * 2. FNA3D_OPENGL_DRIVER: 控制OpenGL绑定类型（native/gl4es/desktop）
+     * 3. LIBGL_ES: 指定OpenGL ES版本（1/2/3）
+     * 4. FORCE_VSYNC: 强制启用垂直同步
+     */
+    public static void applyRendererEnvironment(Context context) {
+        String renderer = getEffectiveRenderer(context);
+        boolean useOpenGLPath = true;
+        String driverValue = "native";
+        String forceDriver = "OpenGL";
+        String eglLibrary = "libEGL.so";  // 默认系统EGL库
+
+        switch (renderer) {
+            case RENDERER_OPENGL_GL4ES:
+                // gl4es渲染器：使用gl4es提供的EGL实现
+                // libGL.so 包含了 gl4es 的 EGL + OpenGL ES 实现
+                driverValue = "gl4es";
+                eglLibrary = context.getApplicationInfo().nativeLibraryDir + "/libGL.so";
+                android.util.Log.i(TAG, "使用 gl4es 渲染器: " + eglLibrary);
+                break;
+
+            case RENDERER_VULKAN:
+                // Vulkan渲染器
+                useOpenGLPath = false;
+                driverValue = null;
+                forceDriver = "Vulkan";
+                break;
+
+            case RENDERER_OPENGLES3:
+            default:
+                // 原生OpenGL ES 3渲染器（Android系统自带）
+                driverValue = "native";
+                eglLibrary = "libEGL.so";  // 系统的 EGL 实现
+                android.util.Log.i(TAG, "使用原生渲染器: " + eglLibrary);
+                break;
+        }
+
+        // ===== 设置FNA3D核心环境变量 =====
+
+        // 强制使用的驱动类型（OpenGL或Vulkan）
+        if (forceDriver != null) {
+            setEnv("FNA3D_FORCE_DRIVER", forceDriver);
+        } else {
+            unsetEnv("FNA3D_FORCE_DRIVER");
+        }
+
+        // OpenGL驱动实现类型（native/gl4es/desktop）
+        if (driverValue != null) {
+            setEnv("FNA3D_OPENGL_DRIVER", driverValue);
+        } else {
+            unsetEnv("FNA3D_OPENGL_DRIVER");
+        }
+
+        // ===== EGL库路径（SDL会读取此变量加载正确的EGL实现） =====
+        if (eglLibrary != null && useOpenGLPath) {
+            setEnv("FNA3D_OPENGL_LIBRARY", eglLibrary);
+        } else {
+            unsetEnv("FNA3D_OPENGL_LIBRARY");
+        }
+
+        // ===== OpenGL相关环境变量 =====
+        if (useOpenGLPath) {
+            // FNA3D OpenGL配置
+            setEnv("FNA3D_OPENGL_FORCE_CORE_PROFILE", "0");
+            setEnv("FNA3D_OPENGL_FORCE_ES3", "1");
+            setEnv("FNA3D_OPENGL_FORCE_VER_MAJOR", "3");
+            setEnv("FNA3D_OPENGL_FORCE_VER_MINOR", "0");
+            setEnv("FNA3D_OPENGL_FORCE_COMPATIBILITY_PROFILE", "1");
+
+            // gl4es特定配置（如果使用gl4es）
+            if ("gl4es".equals(driverValue)) {
+                setEnv("LIBGL_ES", "3");           // OpenGL ES 3.0
+                setEnv("LIBGL_GL", "30");          // 模拟OpenGL 3.0
+                setEnv("LIBGL_LOGERR", "1");       // 启用错误日志
+                setEnv("LIBGL_DEBUG", "0");        // 调试模式（0=关闭，1=基础，2=详细）
+
+                // gl4es性能优化选项
+                setEnv("LIBGL_BATCH", "1");        // 启用批处理（提升性能）
+                setEnv("LIBGL_NOERROR", "0");      // 不忽略错误
+                setEnv("LIBGL_NODEPTHTEX", "0");   // 支持深度纹理
+            } else {
+                // 原生渲染器：设置OpenGL ES版本
+                setEnv("LIBGL_ES", "3");           // 使用OpenGL ES 3.0
+
+                // 清除gl4es特定变量
+                unsetEnv("LIBGL_GL");
+                unsetEnv("LIBGL_LOGERR");
+                unsetEnv("LIBGL_DEBUG");
+                unsetEnv("LIBGL_BATCH");
+                unsetEnv("LIBGL_NOERROR");
+                unsetEnv("LIBGL_NODEPTHTEX");
+            }
+        } else {
+            // Vulkan路径：清除所有OpenGL相关变量
+            unsetEnv("FNA3D_OPENGL_FORCE_CORE_PROFILE");
+            unsetEnv("FNA3D_OPENGL_FORCE_ES3");
+            unsetEnv("FNA3D_OPENGL_FORCE_VER_MAJOR");
+            unsetEnv("FNA3D_OPENGL_FORCE_VER_MINOR");
+            unsetEnv("FNA3D_OPENGL_FORCE_COMPATIBILITY_PROFILE");
+            unsetEnv("LIBGL_ES");
+            unsetEnv("LIBGL_GL");
+            unsetEnv("LIBGL_LOGERR");
+            unsetEnv("LIBGL_DEBUG");
+            unsetEnv("LIBGL_BATCH");
+            unsetEnv("LIBGL_NOERROR");
+            unsetEnv("LIBGL_NODEPTHTEX");
+        }
+
+        // ===== VSync设置 =====
+        // 可以从设置中读取VSync偏好
+        boolean enableVsync = true;  // 默认启用
+        if (enableVsync) {
+            setEnv("FORCE_VSYNC", "true");
+        } else {
+            unsetEnv("FORCE_VSYNC");
+        }
+
+        // ===== 同步到 System Property（供 GameLauncher 预加载使用） =====
+        System.setProperty("fna.renderer", renderer);
+
+        android.util.Log.i(TAG, "========================================");
+        android.util.Log.i(TAG, "渲染器环境变量已应用 (EGL Backend)");
+        android.util.Log.i(TAG, "  渲染器: " + renderer);
+        android.util.Log.i(TAG, "  驱动类型: " + driverValue);
+        android.util.Log.i(TAG, "  EGL库: " + eglLibrary);
+        android.util.Log.i(TAG, "  使用OpenGL: " + useOpenGLPath);
+        android.util.Log.i(TAG, "  VSync: " + enableVsync);
+        android.util.Log.i(TAG, "========================================");
+    }
+
+    private static void setEnv(String key, String value) {
+        try {
+            android.system.Os.setenv(key, value, true);
+        } catch (android.system.ErrnoException e) {
+            android.util.Log.w(TAG, "无法设置环境变量 " + key + ": " + e.getMessage());
+        }
+    }
+
+    private static void unsetEnv(String key) {
+        try {
+            android.system.Os.unsetenv(key);
+        } catch (android.system.ErrnoException e) {
+            android.util.Log.w(TAG, "无法清除环境变量 " + key + ": " + e.getMessage());
+        }
+    }
     
     /**
      * 获取 .NET 运行时根目录路径
-     * 
-     * @return .NET 运行时目录路径（通常为 /data/data/com.app.ralaunch/files/dotnet-arm64）
+     *
+     * @return .NET 运行时目录路径（/data/data/com.app.ralaunch/files/dotnet）
      */
     public static String getDotnetRootPath() {
         try {
@@ -214,19 +294,8 @@ public final class RuntimePreference {
                 return null;
             }
             
-            // 根据设备架构选择正确的 .NET 运行时
-            // 检测架构
-            String architecture = android.os.Build.SUPPORTED_ABIS[0];
-            String dotnetDir;
-            
-            if (architecture.contains("arm64") || architecture.contains("aarch64")) {
-                dotnetDir = "dotnet-arm64";
-            } else if (architecture.contains("x86_64") || architecture.contains("x64")) {
-                dotnetDir = "dotnet-x64";
-            } else {
-                android.util.Log.w("RuntimePreference", "Unknown architecture: " + architecture + ", defaulting to arm64");
-                dotnetDir = "dotnet-arm64";
-            }
+            // .NET 运行时目录（默认 ARM64 架构）
+            String dotnetDir = "dotnet";
             
             String dotnetPath = appContext.getFilesDir().getAbsolutePath() + "/" + dotnetDir;
             android.util.Log.d("RuntimePreference", "Dotnet root path: " + dotnetPath);

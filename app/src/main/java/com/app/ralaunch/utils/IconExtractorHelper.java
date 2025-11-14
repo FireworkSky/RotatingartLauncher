@@ -45,7 +45,7 @@ public class IconExtractorHelper {
             if (success) {
                 File iconFile = new File(iconPath);
                 if (iconFile.exists() && iconFile.length() > 0) {
-                    Log.i(TAG, "✅ Icon extracted successfully: " + iconPath);
+                    Log.i(TAG, "[OK] Icon extracted successfully: " + iconPath);
                     return iconPath;
                 } else {
                     Log.e(TAG, "Icon file was not created or is empty");

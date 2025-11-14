@@ -21,6 +21,7 @@
     <string-array name="game_menu_items">
         <item>切换控制显示</item>
         <item>编辑控制布局</item>
+        <item>显示控制台</item>
         <item>快速设置</item>
         <item>退出游戏</item>
     </string-array>

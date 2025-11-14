@@ -392,18 +392,24 @@ public class LocalImportFragment extends Fragment {
 
                                     if (assemblyFile == null || !assemblyFile.exists()) {
                                         Log.w(TAG, "No valid ModLoader DLL found, using directory path: " + modLoaderPath);
+                                        // 如果最终路径仍然是目录，尝试在其下递归查找 DLL（优先 SMAPI）
+                                        File resolved = resolveExecutableFromDirectory(modLoaderDir);
+                                        if (resolved != null) {
+                                            finalGamePath = resolved.getAbsolutePath();
+                                            Log.i(TAG, "Resolved executable from directory: " + finalGamePath);
+                                        }
                                     }
 
                                     // 🔍 检测 SMAPI（星露谷物语模组加载器）
                                     String[] smapiPaths = GameExtractor.detectAndConfigureSMAPI(requireContext(), modLoaderDir);
 
-                                    String gameBodyPath;
+                                    String gameBodyPath = null;
                                     if (smapiPaths != null) {
-                                        // ✅ 检测到 SMAPI，使用检测到的路径
+                                        // [OK] 检测到 SMAPI，使用检测到的路径
                                         finalGamePath = smapiPaths[0];  // SMAPI 启动器路径
-                                        gameBodyPath = smapiPaths[1];   // 游戏本体路径
+                                        gameBodyPath = smapiPaths[1];   // 游戏本体路径（可能为 null）
 
-                                        Log.d(TAG, "✅ SMAPI 已自动配置:");
+                                        Log.d(TAG, "[OK] SMAPI 已自动配置:");
                                         Log.d(TAG, "  - SMAPI 启动器: " + finalGamePath);
                                         Log.d(TAG, "  - 游戏本体: " + gameBodyPath);
                                         Log.d(TAG, "  - 提示: 游戏将通过 SMAPI 启动，支持模组功能");
@@ -445,7 +451,7 @@ public class LocalImportFragment extends Fragment {
                                         Log.i(TAG, "ModLoader detected, enabled automatically");
                                     } else {
                                         // 使用游戏本体
-                                        iconSourcePath = gameBodyPath;
+                                        iconSourcePath = (gameBodyPath != null) ? gameBodyPath : finalGamePath;
                                         displayName = gameName;
                                     }
 
@@ -515,11 +521,11 @@ public class LocalImportFragment extends Fragment {
                                     String gameBodyPath = null;
 
                                     if (smapiPaths != null) {
-                                        // ✅ 检测到 SMAPI
+                                        // [OK] 检测到 SMAPI
                                         finalGamePath = smapiPaths[0];  // SMAPI 启动器
                                         gameBodyPath = smapiPaths[1];   // 游戏本体
 
-                                        Log.d(TAG, "✅ SMAPI 已自动配置（纯游戏导入）:");
+                                        Log.d(TAG, "[OK] SMAPI 已自动配置（纯游戏导入）:");
                                         Log.d(TAG, "  - SMAPI 启动器: " + finalGamePath);
                                         Log.d(TAG, "  - 游戏本体: " + gameBodyPath);
                                         Log.d(TAG, "  - 提示: 游戏将通过 SMAPI 启动，支持模组功能");
@@ -852,7 +858,7 @@ public class LocalImportFragment extends Fragment {
                     // 尝试高清化图标
                     String upscaledPath = upscaleIcon(extractedIconPath);
                     if (upscaledPath != null) {
-                        Log.i(TAG, "✅ Icon upscaled successfully: " + upscaledPath);
+                        Log.i(TAG, "[OK] Icon upscaled successfully: " + upscaledPath);
                         return upscaledPath;
                     } else if (fallbackIconPath != null) {
                         Log.w(TAG, "Upscaling failed, using fallback GOG icon");
@@ -860,7 +866,7 @@ public class LocalImportFragment extends Fragment {
                     }
                 }
 
-                Log.i(TAG, "✅ Successfully extracted icon to: " + extractedIconPath);
+                Log.i(TAG, "[OK] Successfully extracted icon to: " + extractedIconPath);
                 return extractedIconPath;
             } else {
                 Log.w(TAG, "Icon extraction returned null or file doesn't exist, using fallback");
@@ -870,5 +876,65 @@ public class LocalImportFragment extends Fragment {
             Log.e(TAG, "Failed to extract icon from executable: " + e.getMessage(), e);
             return fallbackIconPath;
         }
+    }
+
+    private File resolveExecutableFromDirectory(File baseDir) {
+        if (baseDir == null || !baseDir.exists()) {
+            return null;
+        }
+        // 优先查找 StardewModdingAPI.dll / .exe
+        String[] preferredNames = {
+                "StardewModdingAPI.dll",
+                "StardewModdingAPI.exe",
+                "Stardew Valley.dll",
+                "Stardew Valley.exe",
+                "tModLoader.dll",
+                "ModLoader.dll"
+        };
+        for (String name : preferredNames) {
+            File candidate = findFileRecursively(baseDir, name);
+            if (candidate != null && candidate.isFile()) {
+                return candidate;
+            }
+        }
+        // 回退：查找任意 DLL
+        File anyDll = findFirstFileRecursively(baseDir, name -> name.toLowerCase().endsWith(".dll") || name.toLowerCase().endsWith(".exe"));
+        return anyDll;
+    }
+
+    private File findFileRecursively(File dir, String targetName) {
+        File[] files = dir.listFiles();
+        if (files == null) {
+            return null;
+        }
+        for (File file : files) {
+            if (file.isDirectory()) {
+                File result = findFileRecursively(file, targetName);
+                if (result != null) {
+                    return result;
+                }
+            } else if (file.getName().equalsIgnoreCase(targetName)) {
+                return file;
+            }
+        }
+        return null;
+    }
+
+    private File findFirstFileRecursively(File dir, java.util.function.Predicate<String> predicate) {
+        File[] files = dir.listFiles();
+        if (files == null) {
+            return null;
+        }
+        for (File file : files) {
+            if (file.isDirectory()) {
+                File result = findFirstFileRecursively(file, predicate);
+                if (result != null) {
+                    return result;
+                }
+            } else if (predicate.test(file.getName())) {
+                return file;
+            }
+        }
+        return null;
     }
 }

@@ -1,6 +1,4 @@
-// Licensed to the .NET Foundation under one or more agreements.
-// The .NET Foundation licenses this file to you under the MIT license.
-
+// Source code is decompiled from a .class file using FernFlower decompiler (from Intellij IDEA).
 package net.dot.android.crypto;
 
 import java.nio.ByteBuffer;
@@ -14,108 +12,69 @@ public final class PalPbkdf2 {
     private static final int ERROR_UNSUPPORTED_ALGORITHM = -1;
     private static final int SUCCESS = 1;
 
-    public static int pbkdf2OneShot(String algorithmName, byte[] password, ByteBuffer salt, int iterations, ByteBuffer destination) {
-        // salt and destination are DirectByteBuffers that point to memory created by .NET.
-        // These must not be touched after this method returns.
-
-        // We do not ever expect a ShortBufferException to ever get thrown since the buffer destination length is always
-        // checked. Let it go through the checked exception and JNI will handle it as a generic failure.
-        // InvalidKeyException should not throw except the the case of an empty key, which we already handle. Let JNI
-        // handle it as a generic failure.
-
-        // We use a custom implementation of PBKDF2 instead of the one provided by the Android platform for two reasons:
-        // The first is that Android only added support for PBKDF2 + SHA-2 family of agorithms in API level 26, and we
-        // need to support SHA-2 prior to that.
-        // The second is that PBEKeySpec only supports char-based passwords, whereas .NET supports arbitrary byte keys.
-
-        if (algorithmName == null || password == null || destination == null) {
-            // These are essentially asserts since the .NET side should have already validated these.
-            throw new IllegalArgumentException("algorithmName, password, and destination must not be null.");
-        }
-        // The .NET side already validates the hash algorithm name inputs.
-        String javaAlgorithmName = "Hmac" + algorithmName;
-        Mac mac;
-
-        try {
-            mac = Mac.getInstance(javaAlgorithmName);
-        }
-        catch (NoSuchAlgorithmException nsae) {
-            return ERROR_UNSUPPORTED_ALGORITHM;
-        }
-
-        if (password.length == 0) {
-            // SecretKeySpec does not permit empty keys. Since HMAC just zero extends the key, a single zero byte key is
-            // the same as an empty key.
-            password = new byte[] { 0 };
-        }
-
-        // Since the salt needs to be read for each block, mark its current position before entering the loop.
-        if (salt != null) {
-            salt.mark();
-        }
-
-        SecretKeySpec key = new SecretKeySpec(password, javaAlgorithmName);
-        try {
-            mac.init(key);
-        } catch (InvalidKeyException e) {
-            // This should not happen since we validated the key above
-            return ERROR_UNSUPPORTED_ALGORITHM;
-        }
-
-        // Since this is a one-shot, it should not be possible to exceed the extract limit since the .NET side is
-        // limited to the length of a span (2^31 - 1 bytes). It would only take ~128 million SHA-1 blocks to fill an entire
-        // span, and 128 million fits in a signed 32-bit integer.
-        int blockCounter = 1;
-        int destinationOffset = 0;
-        byte[] blockCounterBuffer = new byte[4]; // Big-endian 32-bit integer
-        byte[] block = new byte[mac.getMacLength()];
-        byte[] u = new byte[block.length];
-
-        while (destinationOffset < destination.capacity()) {
-            writeBigEndianInt(blockCounter, blockCounterBuffer);
-
-            if (salt != null) {
-                mac.update(salt);
-                salt.reset(); // Resets it back to the previous mark. It does not consume the mark, so we don't need to mark again.
-            }
-
-            mac.update(blockCounterBuffer);
-            try {
-                mac.doFinal(u, 0);
-            } catch (ShortBufferException e) {
-                // This should not happen since u buffer is the correct size
-                return ERROR_UNSUPPORTED_ALGORITHM;
-            }
-
-            System.arraycopy(u, 0, block, 0, block.length);
-
-            // Start at 2 since we did the first iteration above.
-            for (int i = 2; i <= iterations; i++) {
-                mac.update(u);
-                try {
-                    mac.doFinal(u, 0);
-                } catch (ShortBufferException e) {
-                    // This should not happen since u buffer is the correct size
-                    return ERROR_UNSUPPORTED_ALGORITHM;
-                }
-
-                for (int j = 0; j < u.length; j++) {
-                    block[j] ^= u[j];
-                }
-            }
-
-            destination.put(block, 0, Math.min(block.length, destination.capacity() - destinationOffset));
-            destinationOffset += block.length;
-            blockCounter++;
-        }
-
-        return SUCCESS;
+    public PalPbkdf2() {
     }
 
-    private static void writeBigEndianInt(int value, byte[] destination) {
-        destination[0] = (byte)((value >> 24) & 0xFF);
-        destination[1] = (byte)((value >> 16) & 0xFF);
-        destination[2] = (byte)((value >> 8) & 0xFF);
-        destination[3] = (byte)(value & 0xFF);
+    public static int pbkdf2OneShot(String var0, byte[] var1, ByteBuffer var2, int var3, ByteBuffer var4) throws ShortBufferException, InvalidKeyException, IllegalArgumentException {
+        if (var0 != null && var1 != null && var4 != null) {
+            String var5 = "Hmac" + var0;
+
+            Mac var6;
+            try {
+                var6 = Mac.getInstance(var5);
+            } catch (NoSuchAlgorithmException var15) {
+                return -1;
+            }
+
+            if (var1.length == 0) {
+                var1 = new byte[]{0};
+            }
+
+            if (var2 != null) {
+                var2.mark();
+            }
+
+            SecretKeySpec var7 = new SecretKeySpec(var1, var5);
+            var6.init(var7);
+            int var8 = 1;
+            int var9 = 0;
+            byte[] var10 = new byte[4];
+            byte[] var11 = new byte[var6.getMacLength()];
+
+            for(byte[] var12 = new byte[var11.length]; var9 < var4.capacity(); ++var8) {
+                writeBigEndianInt(var8, var10);
+                if (var2 != null) {
+                    var6.update(var2);
+                    var2.reset();
+                }
+
+                var6.update(var10);
+                var6.doFinal(var12, 0);
+                System.arraycopy(var12, 0, var11, 0, var11.length);
+
+                for(int var13 = 2; var13 <= var3; ++var13) {
+                    var6.update(var12);
+                    var6.doFinal(var12, 0);
+
+                    for(int var14 = 0; var14 < var12.length; ++var14) {
+                        var11[var14] ^= var12[var14];
+                    }
+                }
+
+                var4.put(var11, 0, Math.min(var11.length, var4.capacity() - var9));
+                var9 += var11.length;
+            }
+
+            return 1;
+        } else {
+            throw new IllegalArgumentException("algorithmName, password, and destination must not be null.");
+        }
+    }
+
+    private static void writeBigEndianInt(int var0, byte[] var1) {
+        var1[0] = (byte)(var0 >> 24 & 255);
+        var1[1] = (byte)(var0 >> 16 & 255);
+        var1[2] = (byte)(var0 >> 8 & 255);
+        var1[3] = (byte)(var0 & 255);
     }
 }

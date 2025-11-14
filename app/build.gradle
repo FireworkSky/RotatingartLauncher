@@ -5,15 +5,26 @@ plugins {
 android {
     namespace 'com.app.ralaunch'
     compileSdk 35
+    ndkVersion "28.0.13004108"
 
     defaultConfig {
         applicationId "com.app.ralaunch"
-        minSdk 26
+        minSdk 28
         targetSdk 35
         versionCode 1
         versionName "1.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+        // 只编译 arm64-v8a 架构
+        // 保持默认 ABI 配置，依赖 splits 中的筛选
+
+        externalNativeBuild {
+            cmake {
+                targets "main"
+            // 使用 splits.abi.include 控制打包 ABI
+            }
+        }
     }
 
     buildTypes {
@@ -42,6 +53,11 @@ android {
         viewBinding true
     }
 
+    packagingOptions {
+        pickFirst "lib/arm64-v8a/libc++_shared.so"
+        pickFirst "lib/arm64-v8a/libnetcorehost.so"
+    }
+
     // 临时只针对真机arm64-v8a编译，避免Gradle打包重复资源
     splits {
         abi {
@@ -51,10 +67,21 @@ android {
             universalApk false
         }
     }
+
+    // 使用预编译的 System.Security.Cryptography jar，实现官方托管绑定
+    sourceSets {
+        main {
+            java {
+                exclude 'net/dot/android/crypto/**'
+            }
+        }
+    }
 }
 
 dependencies {
     implementation 'net.java.dev.jna:jna:5.12.0'
+
+   implementation files('src/main/Jar/libSystem.Security.Cryptography.Native.Android.jar')
 
 
     implementation 'com.nineoldandroids:library:2.3.0'

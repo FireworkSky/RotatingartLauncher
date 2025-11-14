@@ -29,73 +29,165 @@
 #include "../SDL_sysvideo.h"
 
 #include <android/log.h>
+#include <android/native_window.h>
 #include <stdlib.h>
+#include <dlfcn.h>
+#include <EGL/egl.h>
 
-#define LOG_TAG "SDL_GL4ES"
+#define LOG_TAG "SDL_GL4ES_EGL"
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
 
-/* ⚠️ 直接声明 gl4es AGL 函数（编译时链接，静态库符号）
- * gl4es 已静态链接到 libmain.so，这些符号在链接时可见
- * 无需使用 dlsym 动态查找，直接使用 extern 声明
+/* ===== EGL Function Pointers =====
+ * 动态加载EGL函数，支持多种EGL实现（系统原生、gl4es等）
  */
-struct TagItem;  /* Forward declaration */
-extern void* aglCreateContext2(unsigned long* errorCode, struct TagItem* tags);
-extern void aglDestroyContext(void* context);
-extern void aglMakeCurrent(void* context);
-extern void aglSwapBuffers(void);
-extern void* aglGetProcAddress(const char* proc);
-extern int aglSetParams2(struct TagItem* tags);
+static EGLBoolean (*eglMakeCurrent_p)(EGLDisplay dpy, EGLSurface draw, EGLSurface read, EGLContext ctx) = NULL;
+static EGLBoolean (*eglDestroyContext_p)(EGLDisplay dpy, EGLContext ctx) = NULL;
+static EGLBoolean (*eglDestroySurface_p)(EGLDisplay dpy, EGLSurface surface) = NULL;
+static EGLBoolean (*eglTerminate_p)(EGLDisplay dpy) = NULL;
+static EGLBoolean (*eglReleaseThread_p)(void) = NULL;
+static EGLContext (*eglGetCurrentContext_p)(void) = NULL;
+static EGLDisplay (*eglGetDisplay_p)(NativeDisplayType display) = NULL;
+static EGLBoolean (*eglInitialize_p)(EGLDisplay dpy, EGLint *major, EGLint *minor) = NULL;
+static EGLBoolean (*eglChooseConfig_p)(EGLDisplay dpy, const EGLint *attrib_list, EGLConfig *configs, EGLint config_size, EGLint *num_config) = NULL;
+static EGLBoolean (*eglGetConfigAttrib_p)(EGLDisplay dpy, EGLConfig config, EGLint attribute, EGLint *value) = NULL;
+static EGLBoolean (*eglBindAPI_p)(EGLenum api) = NULL;
+static EGLSurface (*eglCreatePbufferSurface_p)(EGLDisplay dpy, EGLConfig config, const EGLint *attrib_list) = NULL;
+static EGLSurface (*eglCreateWindowSurface_p)(EGLDisplay dpy, EGLConfig config, NativeWindowType window, const EGLint *attrib_list) = NULL;
+static EGLBoolean (*eglSwapBuffers_p)(EGLDisplay dpy, EGLSurface draw) = NULL;
+static EGLint (*eglGetError_p)(void) = NULL;
+static EGLContext (*eglCreateContext_p)(EGLDisplay dpy, EGLConfig config, EGLContext share_list, const EGLint *attrib_list) = NULL;
+static EGLBoolean (*eglSwapInterval_p)(EGLDisplay dpy, EGLint interval) = NULL;
+static EGLSurface (*eglGetCurrentSurface_p)(EGLint readdraw) = NULL;
+static EGLBoolean (*eglQuerySurface_p)(EGLDisplay display, EGLSurface surface, EGLint attribute, EGLint *value) = NULL;
+static __eglMustCastToProperFunctionPointerType (*eglGetProcAddress_p)(const char *procname) = NULL;
 
-/* gl4es configuration constants (similar to AmigaOS OGLES2_CCT_*) */
-#define GL4ES_CCT_WINDOW        1
-#define GL4ES_CCT_DEPTH         2
-#define GL4ES_CCT_STENCIL       3
-#define GL4ES_CCT_VSYNC         4
-#define GL4ES_CCT_RESIZE_VIEWPORT 5
-
-struct TagItem {
-    unsigned int ti_Tag;
-    unsigned long ti_Data;
-};
-
-#define TAG_DONE 0
-
-/* 全局变量：存储当前AGL上下文和窗口
- * SDL_WindowData在禁用EGL后没有egl_context/egl_surface字段
- * 我们用全局变量管理AGL上下文（Android只有一个窗口）
+/* ===== EGL Context Management =====
+ * 存储EGL上下文、显示和配置信息
  */
-static void* g_agl_current_context = NULL;
-static SDL_Window* g_agl_current_window = NULL;
+typedef struct {
+    EGLContext context;
+    EGLSurface surface;
+    EGLConfig config;
+    EGLint format;
+    ANativeWindow* native_window;
+} SDL_EGLContext;
 
-/* gl4es 函数已通过 extern 声明直接链接，无需运行时初始化 */
+static EGLDisplay g_egl_display = EGL_NO_DISPLAY;
+static SDL_EGLContext* g_current_context = NULL;
+static void* g_egl_library = NULL;
+
+/* ===== EGL Loader =====
+ * 动态加载EGL库和函数指针
+ * 支持从环境变量 FNA3D_OPENGL_LIBRARY 指定EGL库路径
+ */
+static int load_egl_library(void)
+{
+    const char* egl_lib_path = getenv("FNA3D_OPENGL_LIBRARY");
+    if (!egl_lib_path || egl_lib_path[0] == '\0') {
+        egl_lib_path = "libEGL.so";
+    }
+
+    LOGI("Loading EGL library: %s", egl_lib_path);
+    g_egl_library = dlopen(egl_lib_path, RTLD_LOCAL | RTLD_LAZY);
+
+    if (!g_egl_library) {
+        LOGE("Failed to load EGL library: %s", dlerror());
+        return -1;
+    }
+
+    /* 加载eglGetProcAddress，其他函数通过它获取 */
+    eglGetProcAddress_p = dlsym(g_egl_library, "eglGetProcAddress");
+    if (!eglGetProcAddress_p) {
+        LOGE("Failed to load eglGetProcAddress: %s", dlerror());
+        dlclose(g_egl_library);
+        g_egl_library = NULL;
+        return -1;
+    }
+
+    /* 通过eglGetProcAddress加载所有EGL函数 */
+    #define LOAD_EGL_FUNC(name) \
+        name##_p = (void*)eglGetProcAddress_p(#name); \
+        if (!name##_p) { \
+            LOGE("Failed to load " #name); \
+            dlclose(g_egl_library); \
+            g_egl_library = NULL; \
+            return -1; \
+        }
+
+    LOAD_EGL_FUNC(eglBindAPI)
+    LOAD_EGL_FUNC(eglChooseConfig)
+    LOAD_EGL_FUNC(eglCreateContext)
+    LOAD_EGL_FUNC(eglCreatePbufferSurface)
+    LOAD_EGL_FUNC(eglCreateWindowSurface)
+    LOAD_EGL_FUNC(eglDestroyContext)
+    LOAD_EGL_FUNC(eglDestroySurface)
+    LOAD_EGL_FUNC(eglGetConfigAttrib)
+    LOAD_EGL_FUNC(eglGetCurrentContext)
+    LOAD_EGL_FUNC(eglGetDisplay)
+    LOAD_EGL_FUNC(eglGetError)
+    LOAD_EGL_FUNC(eglInitialize)
+    LOAD_EGL_FUNC(eglMakeCurrent)
+    LOAD_EGL_FUNC(eglSwapBuffers)
+    LOAD_EGL_FUNC(eglReleaseThread)
+    LOAD_EGL_FUNC(eglSwapInterval)
+    LOAD_EGL_FUNC(eglTerminate)
+    LOAD_EGL_FUNC(eglGetCurrentSurface)
+    LOAD_EGL_FUNC(eglQuerySurface)
+
+    #undef LOAD_EGL_FUNC
+
+    LOGI("✅ EGL library loaded successfully");
+    return 0;
+}
 
 int
 Android_GL4ES_LoadLibrary(_THIS, const char* path)
 {
-    LOGI("🔵 Android_GL4ES_LoadLibrary called - gl4es functions linked directly");
+    LOGI("🔵 Android_GL4ES_LoadLibrary called (EGL backend)");
     LOGI("   path=%s, _this=%p", path ? path : "(null)", _this);
-    
-    /* gl4es 已静态链接，AGL 函数通过 extern 声明直接可用
-     * 不需要分配egl_data，因为我们不使用SDL的EGL代码路径
-     * 所有OpenGL操作通过我们的Android_GL4ES_*函数完成
-     */
-    
-    LOGI("✅ Android_GL4ES_LoadLibrary returning 0 (success)");
+
+    /* 加载EGL函数 */
+    if (load_egl_library() < 0) {
+        SDL_SetError("Failed to load EGL library");
+        return -1;
+    }
+
+    /* 初始化EGL Display */
+    g_egl_display = eglGetDisplay_p(EGL_DEFAULT_DISPLAY);
+    if (g_egl_display == EGL_NO_DISPLAY) {
+        LOGE("eglGetDisplay(EGL_DEFAULT_DISPLAY) returned EGL_NO_DISPLAY");
+        SDL_SetError("eglGetDisplay failed");
+        return -1;
+    }
+
+    if (eglInitialize_p(g_egl_display, NULL, NULL) != EGL_TRUE) {
+        LOGE("eglInitialize() failed: 0x%04x", eglGetError_p());
+        SDL_SetError("eglInitialize failed");
+        return -1;
+    }
+
+    LOGI("✅ EGL initialized successfully (display=%p)", g_egl_display);
     return 0;
 }
 
 void*
 Android_GL4ES_GetProcAddress(_THIS, const char* proc)
 {
-    LOGI("🔍 GetProcAddress: %s", proc ? proc : "(null)");
-    void* func = aglGetProcAddress(proc);
+    if (!proc) {
+        LOGE("GetProcAddress: proc is NULL");
+        return NULL;
+    }
 
-    if (func == NULL) {
-        LOGE("   ❌ Failed to load function '%s'", proc);
-        SDL_SetError("Failed to load GL function");
-    } else {
-        LOGI("   ✅ Loaded '%s' at %p", proc, func);
+    void* func = NULL;
+    if (eglGetProcAddress_p) {
+        func = (void*)eglGetProcAddress_p(proc);
+    }
+
+    if (!func) {
+        /* OpenGL 扩展函数返回 NULL 是正常的（不是所有驱动都支持所有扩展）
+         * 不要设置 SDL_SetError，这样游戏可以正确处理扩展不可用的情况 */
+        LOGI("GetProcAddress: '%s' not found (extension may not be available)", proc);
     }
 
     return func;
@@ -105,8 +197,42 @@ void
 Android_GL4ES_UnloadLibrary(_THIS)
 {
     LOGI("Android_GL4ES_UnloadLibrary called");
-    LOGI("gl4es library unload managed internally");
-    /* gl4es handles cleanup internally */
+
+    if (g_egl_display != EGL_NO_DISPLAY) {
+        if (eglTerminate_p) {
+            eglTerminate_p(g_egl_display);
+        }
+        g_egl_display = EGL_NO_DISPLAY;
+    }
+
+    if (g_egl_library) {
+        dlclose(g_egl_library);
+        g_egl_library = NULL;
+    }
+
+    /* 清空所有函数指针 */
+    eglMakeCurrent_p = NULL;
+    eglDestroyContext_p = NULL;
+    eglDestroySurface_p = NULL;
+    eglTerminate_p = NULL;
+    eglReleaseThread_p = NULL;
+    eglGetCurrentContext_p = NULL;
+    eglGetDisplay_p = NULL;
+    eglInitialize_p = NULL;
+    eglChooseConfig_p = NULL;
+    eglGetConfigAttrib_p = NULL;
+    eglBindAPI_p = NULL;
+    eglCreatePbufferSurface_p = NULL;
+    eglCreateWindowSurface_p = NULL;
+    eglSwapBuffers_p = NULL;
+    eglGetError_p = NULL;
+    eglCreateContext_p = NULL;
+    eglSwapInterval_p = NULL;
+    eglGetCurrentSurface_p = NULL;
+    eglQuerySurface_p = NULL;
+    eglGetProcAddress_p = NULL;
+
+    LOGI("✅ EGL library unloaded");
 }
 
 SDL_GLContext
@@ -115,154 +241,267 @@ Android_GL4ES_CreateContext(_THIS, SDL_Window* window)
     LOGI("🎯 Android_GL4ES_CreateContext called for window '%s'", window ? window->title : "NULL");
 
     SDL_WindowData* data = (SDL_WindowData*)window->driverdata;
-    if (!data) {
-        LOGE("Window has no driver data");
-        SDL_SetError("Window has no driver data");
+    if (!data || !data->native_window) {
+        LOGE("Window has no driver data or native window");
+        SDL_SetError("Window has no native window");
         return NULL;
     }
 
-    /* Delete old context if exists */
-    if (g_agl_current_context != NULL) {
-        LOGI("Old context found, deleting");
-        aglDestroyContext(g_agl_current_context);
-        g_agl_current_context = NULL;
-        g_agl_current_window = NULL;
+    /* 分配EGL上下文结构 */
+    SDL_EGLContext* egl_ctx = (SDL_EGLContext*)SDL_calloc(1, sizeof(SDL_EGLContext));
+    if (!egl_ctx) {
+        SDL_SetError("Out of memory");
+        return NULL;
     }
 
-    LOGI("Creating gl4es context with depth=%d, stencil=%d, native_window=%p",
-         _this->gl_config.depth_size, _this->gl_config.stencil_size, data->native_window);
-
-    /* Create gl4es context with configuration */
-    struct TagItem create_context_tags[] = {
-        {GL4ES_CCT_WINDOW, (unsigned long)data->native_window},
-        {GL4ES_CCT_DEPTH, _this->gl_config.depth_size},
-        {GL4ES_CCT_STENCIL, _this->gl_config.stencil_size},
-        {GL4ES_CCT_VSYNC, 0},
-        {GL4ES_CCT_RESIZE_VIEWPORT, 1},
-        {TAG_DONE, 0}
+    /* EGL配置属性 */
+    const EGLint egl_attribs[] = {
+        EGL_BLUE_SIZE, 8,
+        EGL_GREEN_SIZE, 8,
+        EGL_RED_SIZE, 8,
+        EGL_ALPHA_SIZE, 8,
+        EGL_DEPTH_SIZE, _this->gl_config.depth_size,
+        EGL_STENCIL_SIZE, _this->gl_config.stencil_size,
+        EGL_SURFACE_TYPE, EGL_WINDOW_BIT | EGL_PBUFFER_BIT,
+        EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
+        EGL_NONE
     };
 
-    unsigned long errCode = 0;
-    void* context = aglCreateContext2(&errCode, create_context_tags);
-
-    if (context) {
-        LOGI("gl4es context %p created successfully", context);
-        
-        g_agl_current_context = context;
-        g_agl_current_window = window;
-        
-        aglMakeCurrent(context);
-        
-        /* Clear buffers (important for depth buffer) */
-        /* We need to call OpenGL functions through function pointers */
-        typedef void (*glClear_func)(unsigned int mask);
-        typedef void (*glViewport_func)(int x, int y, int width, int height);
-        
-        glClear_func glClear = (glClear_func)aglGetProcAddress("glClear");
-        glViewport_func glViewport = (glViewport_func)aglGetProcAddress("glViewport");
-        
-        if (glClear && glViewport) {
-            glClear(0x00004100); /* GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT */
-            glViewport(0, 0, window->w, window->h);
-        }
-        
-        return context;
-    } else {
-        LOGE("Failed to create gl4es context (error code: %lu)", errCode);
-        SDL_SetError("Failed to create gl4es context");
+    EGLint num_configs = 0;
+    if (eglChooseConfig_p(g_egl_display, egl_attribs, NULL, 0, &num_configs) != EGL_TRUE) {
+        LOGE("eglChooseConfig failed: 0x%04x", eglGetError_p());
+        SDL_free(egl_ctx);
+        SDL_SetError("eglChooseConfig failed");
         return NULL;
     }
+
+    if (num_configs == 0) {
+        LOGE("No matching EGL config found");
+        SDL_free(egl_ctx);
+        SDL_SetError("No matching EGL config");
+        return NULL;
+    }
+
+    /* 选择第一个匹配的配置 */
+    eglChooseConfig_p(g_egl_display, egl_attribs, &egl_ctx->config, 1, &num_configs);
+    eglGetConfigAttrib_p(g_egl_display, egl_ctx->config, EGL_NATIVE_VISUAL_ID, &egl_ctx->format);
+
+    /* 检查环境变量决定绑定OpenGL ES还是Desktop OpenGL */
+    const char* renderer = getenv("FNA3D_OPENGL_DRIVER");
+    EGLBoolean bind_result;
+
+    if (renderer && strncmp(renderer, "desktop", 7) == 0) {
+        LOGI("Binding to Desktop OpenGL API");
+        bind_result = eglBindAPI_p(EGL_OPENGL_API);
+    } else {
+        LOGI("Binding to OpenGL ES API");
+        bind_result = eglBindAPI_p(EGL_OPENGL_ES_API);
+    }
+
+    if (!bind_result) {
+        LOGE("eglBindAPI failed: 0x%04x", eglGetError_p());
+    }
+
+    /* 从环境变量获取OpenGL ES版本 */
+    const char* libgl_es_str = getenv("LIBGL_ES");
+    int libgl_es = 2; /* 默认ES 2.0 */
+    if (libgl_es_str) {
+        libgl_es = atoi(libgl_es_str);
+        if (libgl_es < 1 || libgl_es > 3) {
+            libgl_es = 2;
+        }
+    }
+    LOGI("Creating OpenGL ES %d context", libgl_es);
+
+    const EGLint context_attribs[] = {
+        EGL_CONTEXT_CLIENT_VERSION, libgl_es,
+        EGL_NONE
+    };
+
+    egl_ctx->context = eglCreateContext_p(g_egl_display, egl_ctx->config,
+                                          EGL_NO_CONTEXT, context_attribs);
+
+    if (egl_ctx->context == EGL_NO_CONTEXT) {
+        LOGE("eglCreateContext failed: 0x%04x", eglGetError_p());
+        SDL_free(egl_ctx);
+        SDL_SetError("eglCreateContext failed");
+        return NULL;
+    }
+
+    /* 创建窗口表面 */
+    ANativeWindow_acquire(data->native_window);
+    ANativeWindow_setBuffersGeometry(data->native_window, 0, 0, egl_ctx->format);
+
+    egl_ctx->surface = eglCreateWindowSurface_p(g_egl_display, egl_ctx->config,
+                                                 data->native_window, NULL);
+    if (egl_ctx->surface == EGL_NO_SURFACE) {
+        LOGE("eglCreateWindowSurface failed: 0x%04x", eglGetError_p());
+        eglDestroyContext_p(g_egl_display, egl_ctx->context);
+        ANativeWindow_release(data->native_window);
+        SDL_free(egl_ctx);
+        SDL_SetError("eglCreateWindowSurface failed");
+        return NULL;
+    }
+
+    egl_ctx->native_window = data->native_window;
+
+    /* 激活上下文 */
+    if (eglMakeCurrent_p(g_egl_display, egl_ctx->surface, egl_ctx->surface,
+                         egl_ctx->context) != EGL_TRUE) {
+        LOGE("eglMakeCurrent failed: 0x%04x", eglGetError_p());
+        eglDestroySurface_p(g_egl_display, egl_ctx->surface);
+        eglDestroyContext_p(g_egl_display, egl_ctx->context);
+        ANativeWindow_release(data->native_window);
+        SDL_free(egl_ctx);
+        SDL_SetError("eglMakeCurrent failed");
+        return NULL;
+    }
+
+    g_current_context = egl_ctx;
+
+    LOGI("✅ EGL context created successfully (context=%p, surface=%p)",
+         egl_ctx->context, egl_ctx->surface);
+
+    return (SDL_GLContext)egl_ctx;
 }
 
 int
 Android_GL4ES_MakeCurrent(_THIS, SDL_Window* window, SDL_GLContext context)
 {
-    if (!window || !context) {
-        LOGI("Android_GL4ES_MakeCurrent called with window=%p context=%p", window, context);
-    }
+    SDL_EGLContext* egl_ctx = (SDL_EGLContext*)context;
 
-    if (window && context) {
-        if (context != g_agl_current_context) {
-            LOGE("Context pointer mismatch: %p <> %p (global)", context, g_agl_current_context);
-            SDL_SetError("Context pointer mismatch");
+    if (!window || !context) {
+        /* 解绑当前上下文 */
+        if (eglMakeCurrent_p(g_egl_display, EGL_NO_SURFACE, EGL_NO_SURFACE,
+                             EGL_NO_CONTEXT) == EGL_TRUE) {
+            g_current_context = NULL;
+            LOGI("Unbound current context");
+            return 0;
+        } else {
+            LOGE("Failed to unbind context: 0x%04x", eglGetError_p());
             return -1;
         }
-        
-        g_agl_current_window = window;
-        aglMakeCurrent(context);
     }
 
-    return 0;
+    if (eglMakeCurrent_p(g_egl_display, egl_ctx->surface, egl_ctx->surface,
+                         egl_ctx->context) == EGL_TRUE) {
+        g_current_context = egl_ctx;
+        return 0;
+    } else {
+        LOGE("eglMakeCurrent failed: 0x%04x", eglGetError_p());
+        SDL_SetError("eglMakeCurrent failed");
+        return -1;
+    }
 }
 
 int
 Android_GL4ES_SwapWindow(_THIS, SDL_Window* window)
 {
-    if (g_agl_current_context != NULL) {
-        /* Call glFinish before swap */
-        typedef void (*glFinish_func)(void);
-        glFinish_func glFinish = (glFinish_func)aglGetProcAddress("glFinish");
-        if (glFinish) {
-            glFinish();
-        }
-
-        aglSwapBuffers();
-        return 0;
-    } else {
-        LOGE("No gl4es context");
+    if (!g_current_context || !g_current_context->surface) {
+        LOGE("No current EGL context or surface");
         return -1;
     }
+
+    if (eglSwapBuffers_p(g_egl_display, g_current_context->surface) != EGL_TRUE) {
+        EGLint error = eglGetError_p();
+        if (error == EGL_BAD_SURFACE) {
+            LOGE("eglSwapBuffers: Bad surface, recreating...");
+            /* 表面可能已失效，尝试重新创建 */
+            /* 这里可以添加表面重新创建逻辑 */
+        }
+        LOGE("eglSwapBuffers failed: 0x%04x", error);
+        return -1;
+    }
+
+    return 0;
 }
 
 void
 Android_GL4ES_DeleteContext(_THIS, SDL_GLContext context)
 {
-    LOGI("Android_GL4ES_DeleteContext called with context=%p", context);
+    SDL_EGLContext* egl_ctx = (SDL_EGLContext*)context;
 
-    if (context) {
-        if (g_agl_current_context == context) {
-            LOGI("Destroying current gl4es context");
-            aglDestroyContext(context);
-            g_agl_current_context = NULL;
-            g_agl_current_window = NULL;
-        } else {
-            LOGI("Context %p is not current (%p), just deleting", context, g_agl_current_context);
-            aglDestroyContext(context);
-        }
-    } else {
-        LOGI("No context to delete");
+    if (!egl_ctx) {
+        LOGI("DeleteContext: context is NULL");
+        return;
     }
+
+    LOGI("Deleting EGL context %p", egl_ctx);
+
+    /* 如果是当前上下文，先解绑 */
+    if (g_current_context == egl_ctx) {
+        eglMakeCurrent_p(g_egl_display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+        g_current_context = NULL;
+    }
+
+    /* 销毁表面 */
+    if (egl_ctx->surface != EGL_NO_SURFACE) {
+        eglDestroySurface_p(g_egl_display, egl_ctx->surface);
+    }
+
+    /* 销毁上下文 */
+    if (egl_ctx->context != EGL_NO_CONTEXT) {
+        eglDestroyContext_p(g_egl_display, egl_ctx->context);
+    }
+
+    /* 释放Native Window */
+    if (egl_ctx->native_window) {
+        ANativeWindow_release(egl_ctx->native_window);
+    }
+
+    SDL_free(egl_ctx);
+    LOGI("✅ EGL context deleted");
 }
 
 void
 Android_GL4ES_GetDrawableSize(_THIS, SDL_Window* window, int* w, int* h)
 {
-    LOGI("📐 GetDrawableSize called for window '%s'", window ? window->title : "NULL");
-    if (w) {
-        *w = window->w;
-        LOGI("   width=%d", *w);
+    if (!g_current_context || !g_current_context->surface) {
+        /* 没有当前上下文，返回窗口大小 */
+        if (w) *w = window->w;
+        if (h) *h = window->h;
+        return;
     }
-    if (h) {
-        *h = window->h;
-        LOGI("   height=%d", *h);
+
+    /* 从EGL Surface查询实际尺寸（最可靠的方式） */
+    EGLint surface_width = 0, surface_height = 0;
+    if (eglQuerySurface_p(g_egl_display, g_current_context->surface,
+                          EGL_WIDTH, &surface_width) == EGL_TRUE &&
+        eglQuerySurface_p(g_egl_display, g_current_context->surface,
+                          EGL_HEIGHT, &surface_height) == EGL_TRUE) {
+        if (w) *w = surface_width;
+        if (h) *h = surface_height;
+    } else {
+        /* 查询失败，回退到窗口大小 */
+        if (w) *w = window->w;
+        if (h) *h = window->h;
     }
 }
 
 int
 Android_GL4ES_SetSwapInterval(_THIS, int interval)
 {
-    LOGI("Android_GL4ES_SetSwapInterval: %d", interval);
-    
-    /* gl4es handles vsync internally on Android */
-    /* We can store the preference but actual implementation is in gl4es */
-    
-    return 0; /* Success */
+    LOGI("SetSwapInterval: %d", interval);
+
+    /* 检查是否强制VSync（环境变量） */
+    const char* force_vsync = getenv("FORCE_VSYNC");
+    if (force_vsync && strcmp(force_vsync, "true") == 0) {
+        interval = 1;
+        LOGI("FORCE_VSYNC enabled, using interval=1");
+    }
+
+    if (eglSwapInterval_p(g_egl_display, interval) == EGL_TRUE) {
+        return 0;
+    } else {
+        LOGE("eglSwapInterval failed: 0x%04x", eglGetError_p());
+        return -1;
+    }
 }
 
 int
 Android_GL4ES_GetSwapInterval(_THIS)
 {
-    /* Return default value since gl4es manages this internally */
+    /* EGL没有标准的查询SwapInterval API，返回默认值 */
     return 1;
 }
 

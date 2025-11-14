@@ -21,14 +21,14 @@ import net.sf.sevenzipjbinding.impl.RandomAccessFileInStream;
 
 /**
  * 游戏解压器
- * 
+ *
  * 提供完整的游戏包解压功能，支持：
  * - ZIP 压缩包解压
  * - 7-Zip (7z) 压缩包解压
  * - 自动识别并提取游戏文件和 ModLoader
  * - 进度回调和错误处理
  * - 游戏信息提取和配置生成
- * 
+ *
  * 使用 SevenZipJBinding 库处理复杂压缩格式
  */
 public class GameExtractor {
@@ -39,7 +39,7 @@ public class GameExtractor {
         void onComplete(String gamePath, String modLoaderPath);
         void onError(String error);
     }
-    
+
     /**
      * 检查可用存储空间
      * @param outputDir 目标目录
@@ -50,16 +50,16 @@ public class GameExtractor {
     private static boolean checkAvailableSpace(File outputDir, File inputFile, ExtractionListener listener) {
         long availableSpace = outputDir.getUsableSpace();
         long requiredSpace = inputFile.length() * 3; // 预留3倍空间用于解压
-        
+
         Log.d(TAG, String.format("Space check: available=%.1f GB, required=%.1f GB",
-            availableSpace / 1024.0 / 1024 / 1024,
-            requiredSpace / 1024.0 / 1024 / 1024));
-        
+                availableSpace / 1024.0 / 1024 / 1024,
+                requiredSpace / 1024.0 / 1024 / 1024));
+
         if (availableSpace < requiredSpace) {
             String errorMsg = String.format(
-                "存储空间不足！\n需要约 %.1f GB\n可用 %.1f GB\n\n请释放更多空间后重试",
-                requiredSpace / 1024.0 / 1024 / 1024,
-                availableSpace / 1024.0 / 1024 / 1024
+                    "存储空间不足！\n需要约 %.1f GB\n可用 %.1f GB\n\n请释放更多空间后重试",
+                    requiredSpace / 1024.0 / 1024 / 1024,
+                    availableSpace / 1024.0 / 1024 / 1024
             );
             Log.e(TAG, errorMsg);
             if (listener != null) {
@@ -238,7 +238,7 @@ public class GameExtractor {
 
     /**
      * 检测并配置 SMAPI（星露谷物语模组加载器）
-     * 
+     *
      * @param context Android 上下文
      * @param gameDir 游戏目录
      * @return 包含 [modLoaderPath, gameBodyPath] 的数组，如果不是 SMAPI 则返回 null
@@ -249,7 +249,7 @@ public class GameExtractor {
             File installerDll = findSMAPIInstallerDll(gameDir);
             if (installerDll != null && installerDll.exists()) {
                 Log.i(TAG, "🔧 检测到 SMAPI 安装器: " + installerDll.getAbsolutePath());
-                
+
                 // 检查是否已安装 SMAPI
                 boolean smapiInstalled = checkSMAPIInstalled(gameDir);
                 if (!smapiInstalled) {
@@ -257,85 +257,85 @@ public class GameExtractor {
                     // 运行 SMAPI 安装器（通过 dotnet_host）
                     runSMAPIInstaller(context, installerDll, gameDir);
                 } else {
-                    Log.d(TAG, "✅ SMAPI 已安装");
+                    Log.d(TAG, "[OK] SMAPI 已安装");
                 }
             }
-            
+
             // 检查已安装的 SMAPI
             // SMAPI 可能的位置：
             // 1. 直接在游戏目录下
             // 2. 在 internal/linux/ 子目录中
-            
+
             File[] searchDirs = {
-                gameDir,                                          // 直接在根目录
-                new File(gameDir, "internal/linux"),             // Linux SMAPI 结构
-                new File(gameDir, "internal")                    // 其他可能结构
+                    gameDir,                                          // 直接在根目录
+                    new File(gameDir, "internal/linux"),             // Linux SMAPI 结构
+                    new File(gameDir, "internal")                    // 其他可能结构
             };
-            
+
             for (File searchDir : searchDirs) {
                 if (!searchDir.exists() || !searchDir.isDirectory()) {
                     continue;
                 }
-                
+
                 // 检查 SMAPI 标志文件
                 File smapiExe = new File(searchDir, "StardewModdingAPI.exe");
                 File smapiDll = new File(searchDir, "StardewModdingAPI.dll");
                 File gameExe = new File(searchDir, "Stardew Valley.exe");
                 File gameDll = new File(searchDir, "Stardew Valley.dll");
-                
+
                 // 检查是否存在 SMAPI
                 boolean hasSMAPI = smapiExe.exists() || smapiDll.exists();
                 boolean hasGameBody = gameExe.exists() || gameDll.exists();
-                
+
                 if (hasSMAPI && hasGameBody) {
-                    Log.d(TAG, "✅ 检测到 SMAPI (星露谷物语模组加载器)");
+                    Log.d(TAG, "[OK] 检测到 SMAPI (星露谷物语模组加载器)");
                     Log.d(TAG, "  检测位置: " + searchDir.getAbsolutePath());
-                    
+
                     // 确定 SMAPI 启动器路径（优先使用 .dll）
-                    String smapiPath = smapiDll.exists() ? 
-                        smapiDll.getAbsolutePath() : smapiExe.getAbsolutePath();
-                    
+                    String smapiPath = smapiDll.exists() ?
+                            smapiDll.getAbsolutePath() : smapiExe.getAbsolutePath();
+
                     // 确定游戏本体路径（优先使用 .dll）
-                    String gameBodyPath = gameDll.exists() ? 
-                        gameDll.getAbsolutePath() : gameExe.getAbsolutePath();
-                    
+                    String gameBodyPath = gameDll.exists() ?
+                            gameDll.getAbsolutePath() : gameExe.getAbsolutePath();
+
                     Log.d(TAG, "  SMAPI 启动器: " + smapiPath);
                     Log.d(TAG, "  游戏本体: " + gameBodyPath);
-                    
+
                     // 检查 Mods 目录（可能在不同位置）
                     File[] modsDirCandidates = {
-                        new File(searchDir, "Mods"),
-                        new File(gameDir, "Mods")
+                            new File(searchDir, "Mods"),
+                            new File(gameDir, "Mods")
                     };
-                    
+
                     for (File modsDir : modsDirCandidates) {
                         if (modsDir.exists() && modsDir.isDirectory()) {
                             Log.d(TAG, "  Mods 目录: " + modsDir.getAbsolutePath());
                             break;
                         }
                     }
-                    
+
                     return new String[] { smapiPath, gameBodyPath };
                 }
             }
-            
+
             return null;
         } catch (Exception e) {
             Log.e(TAG, "SMAPI 检测失败", e);
             return null;
         }
     }
-    
+
     /**
      * 查找 SMAPI.Installer.dll 文件
      */
     private static File findSMAPIInstallerDll(File gameDir) {
         File[] candidates = {
-            new File(gameDir, "internal/linux/SMAPI.Installer.dll"),
-            new File(gameDir, "internal/unix/SMAPI.Installer.dll"),
-            new File(gameDir, "SMAPI.Installer.dll")
+                new File(gameDir, "internal/linux/SMAPI.Installer.dll"),
+                new File(gameDir, "internal/unix/SMAPI.Installer.dll"),
+                new File(gameDir, "SMAPI.Installer.dll")
         };
-        
+
         for (File candidate : candidates) {
             if (candidate.exists() && candidate.isFile()) {
                 return candidate;
@@ -343,7 +343,7 @@ public class GameExtractor {
         }
         return null;
     }
-    
+
     /**
      * 检查 SMAPI 是否已安装
      */
@@ -352,7 +352,7 @@ public class GameExtractor {
         File smapiInternal = new File(gameDir, "smapi-internal");
         return smapiDll.exists() && smapiInternal.exists() && smapiInternal.isDirectory();
     }
-    
+
     /**
      * 运行 SMAPI 安装器
      */
@@ -361,23 +361,23 @@ public class GameExtractor {
             Log.i(TAG, "🚀 启动 SMAPI 安装器...");
             Log.i(TAG, "  安装器: " + installerDll.getAbsolutePath());
             Log.i(TAG, "  游戏目录: " + gameDir.getAbsolutePath());
-            
+
             // 构建参数：--install --game-path "游戏路径" --no-prompt
             String[] args = {
-                "--install",
-                "--game-path", gameDir.getAbsolutePath(),
-                "--no-prompt"
+                    "--install",
+                    "--game-path", gameDir.getAbsolutePath(),
+                    "--no-prompt"
             };
-            
+
             Log.i(TAG, "  参数: " + String.join(" ", args));
-            
+
             // 使用 netcorehost API 运行安装器
             // 注意：SMAPI 安装器需要通过 netcorehost 启动，这里暂时跳过
             // 用户需要手动运行安装器或使用其他方式安装 SMAPI
-            Log.w(TAG, "⚠️  SMAPI 安装器需要手动运行或使用其他方式安装");
-            Log.w(TAG, "⚠️  安装器路径: " + installerDll.getAbsolutePath());
-            Log.w(TAG, "⚠️  游戏目录: " + gameDir.getAbsolutePath());
-            
+            Log.w(TAG, "[WARN]  SMAPI 安装器需要手动运行或使用其他方式安装");
+            Log.w(TAG, "[WARN]  安装器路径: " + installerDll.getAbsolutePath());
+            Log.w(TAG, "[WARN]  游戏目录: " + gameDir.getAbsolutePath());
+
         } catch (Exception e) {
             Log.e(TAG, "运行 SMAPI 安装器失败", e);
         }
