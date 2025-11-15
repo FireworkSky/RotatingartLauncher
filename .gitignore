@@ -140,3 +140,6 @@ fabric.properties
 .idea/copilot.data.migration.ask2agent.xml
 .idea/copilot.data.migration.edit.xml
 .idea/copilotDiffState.xml
+
+Rotating-art-Launcher/
+tools/assemblypatch/.vs/

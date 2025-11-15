@@ -85,14 +85,7 @@
             android:layout_height="match_parent"
             android:visibility="gone"
             android:fillViewport="true">
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="控制设置"
-                android:textColor="?attr/textPrimary"
-                android:textSize="18sp"
-                android:padding="64dp"
-                android:gravity="center" />
+            <include layout="@layout/fragment_settings_controls" />
         </androidx.core.widget.NestedScrollView>
 
         <!-- 游戏设置内容 -->
@@ -102,14 +95,7 @@
             android:layout_height="match_parent"
             android:visibility="gone"
             android:fillViewport="true">
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="游戏设置"
-                android:textColor="?attr/textPrimary"
-                android:textSize="18sp"
-                android:padding="64dp"
-                android:gravity="center" />
+            <include layout="@layout/fragment_settings_game" />
         </androidx.core.widget.NestedScrollView>
 
         <!-- 启动器设置内容 -->
@@ -119,14 +105,7 @@
             android:layout_height="match_parent"
             android:visibility="gone"
             android:fillViewport="true">
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="启动器设置"
-                android:textColor="?attr/textPrimary"
-                android:textSize="18sp"
-                android:padding="64dp"
-                android:gravity="center" />
+            <include layout="@layout/fragment_settings_launcher" />
         </androidx.core.widget.NestedScrollView>
 
         <!-- 实验性设置内容 -->

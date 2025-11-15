@@ -14,6 +14,7 @@
 #include <stdio.h>
 #include <pthread.h>
 #include <time.h>
+#include <jni.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -54,6 +55,20 @@ void app_logger_log(LogLevel level, const char* tag, const char* fmt, ...);
 // Helper macros
 #define LOG_SUCCESS(tag, msg) LOGI(tag, "%s: OK", msg)
 #define LOG_FAILURE(tag, msg) LOGE(tag, "%s: FAILED", msg)
+
+// Error dialog support
+// Initialize JVM for error dialogs (call from JNI_OnLoad)
+void app_logger_init_jvm(JavaVM* vm);
+
+// Show error dialog from native code
+// title: dialog title
+// message: error message
+// is_fatal: whether this is a fatal error (will show exit button)
+void app_logger_show_error(const char* title, const char* message, int is_fatal);
+
+// Convenience macros for showing errors
+#define SHOW_ERROR(title, message) app_logger_show_error(title, message, 0)
+#define SHOW_FATAL_ERROR(title, message) app_logger_show_error(title, message, 1)
 
 #ifdef __cplusplus
 }

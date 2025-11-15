@@ -44,7 +44,7 @@ public class VirtualJoystick extends View implements ControlView {
     private float mStickRadius;
     private int mCurrentDirection = DIR_NONE;
     private boolean mIsTouching = false;
-    
+
     // 死区（防止漂移） - 优化为更小的死区提升灵敏度
     private static final float DEADZONE_PERCENT = 0.12f;
     
@@ -131,12 +131,13 @@ public class VirtualJoystick extends View implements ControlView {
                 canvas.drawLine(mCenterX, mCenterY, endX, endY, directionPaint);
             }
         }
-        
-        // 绘制摇杆（带阴影效果）
-        Paint shadowPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        shadowPaint.setColor(0x40000000);
-        shadowPaint.setStyle(Paint.Style.FILL);
-        canvas.drawCircle(mStickX + dpToPx(2), mStickY + dpToPx(2), mStickRadius, shadowPaint);
+
+        // 去除摇杆阴影效果，简化绘制
+//        // 绘制摇杆（带阴影效果）
+//        Paint shadowPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+//        shadowPaint.setColor(0x40000000);
+//        shadowPaint.setStyle(Paint.Style.FILL);
+//        canvas.drawCircle(mStickX + dpToPx(2), mStickY + dpToPx(2), mStickRadius, shadowPaint);
         
         canvas.drawCircle(mStickX, mStickY, mStickRadius, mStickPaint);
         canvas.drawCircle(mStickX, mStickY, mStickRadius, mStrokePaint);
@@ -203,6 +204,9 @@ public class VirtualJoystick extends View implements ControlView {
         if (mData.joystickMode == ControlData.JOYSTICK_MODE_MOUSE) {
             // 鼠标移动模式：将摇杆偏移量转换为鼠标移动
             sendMouseMove(dx, dy, distance);
+        } else if (mData.joystickMode == ControlData.JOYSTICK_MODE_SDL_CONTROLLER) {
+            // SDL控制器模式：发送模拟摇杆输入
+            sendSDLStick(dx, dy, distance, maxDistance);
         } else {
             // 键盘模式：计算方向并发送按键事件
             int newDirection = calculateDirection(dx, dy, distance);
@@ -221,10 +225,18 @@ public class VirtualJoystick extends View implements ControlView {
     private void handleRelease() {
         resetStick();
         
-        // 只在键盘模式下释放按键
+        // 根据模式执行不同的释放操作
         if (mData.joystickMode == ControlData.JOYSTICK_MODE_KEYBOARD) {
+            // 键盘模式：释放按键
             releaseDirection(mCurrentDirection);
             mCurrentDirection = DIR_NONE;
+        } else if (mData.joystickMode == ControlData.JOYSTICK_MODE_SDL_CONTROLLER) {
+            // SDL控制器模式：摇杆回中
+            if (mData.xboxUseRightStick) {
+                mInputBridge.sendXboxRightStick(0.0f, 0.0f);
+            } else {
+                mInputBridge.sendXboxLeftStick(0.0f, 0.0f);
+            }
         }
         
         invalidate();
@@ -371,35 +383,83 @@ public class VirtualJoystick extends View implements ControlView {
     }
     
     /**
+     * 发送SDL控制器摇杆输入（SDL控制器模式）
+     * 将摇杆偏移量转换为标准化的模拟摇杆值
+     */
+    private void sendSDLStick(float dx, float dy, float distance, float maxDistance) {
+        // 标准化偏移量到 [-1, 1] 范围
+        float normalizedX = 0.0f;
+        float normalizedY = 0.0f;
+
+        // 死区处理：在死区内返回0，死区外进行平滑映射
+        float deadzone = mRadius * DEADZONE_PERCENT;
+        if (distance > deadzone) {
+            // 计算超出死区的距离比例
+            float adjustedDistance = distance - deadzone;
+            float adjustedMax = maxDistance - deadzone;
+            float ratio = adjustedDistance / adjustedMax;
+
+            // 限制在 [0, 1] 范围
+            if (ratio > 1.0f) ratio = 1.0f;
+
+            // 应用方向
+            normalizedX = (dx / distance) * ratio;
+            normalizedY = (dy / distance) * ratio;
+        }
+
+        // 发送到对应的Xbox摇杆（左或右）
+        if (mData.xboxUseRightStick) {
+            mInputBridge.sendXboxRightStick(normalizedX, normalizedY);
+        } else {
+            mInputBridge.sendXboxLeftStick(normalizedX, normalizedY);
+        }
+    }
+
+    /**
      * 获取方向名称（用于日志）
      */
     private String getDirectionName(int direction) {
         switch (direction) {
-            case DIR_UP: return "上↑";
-            case DIR_UP_RIGHT: return "右上↗";
-            case DIR_RIGHT: return "右→";
-            case DIR_DOWN_RIGHT: return "右下↘";
-            case DIR_DOWN: return "下↓";
-            case DIR_DOWN_LEFT: return "左下↙";
-            case DIR_LEFT: return "左←";
-            case DIR_UP_LEFT: return "左上↖";
-            case DIR_NONE: return "无";
-            default: return "未知(" + direction + ")";
+            case DIR_UP: return "UP";
+            case DIR_UP_RIGHT: return "UP_RIGHT";
+            case DIR_RIGHT: return "RIGHT";
+            case DIR_DOWN_RIGHT: return "DOWN_RIGHT";
+            case DIR_DOWN: return "DOWN";
+            case DIR_DOWN_LEFT: return "DOWN_LEFT";
+            case DIR_LEFT: return "LEFT";
+            case DIR_UP_LEFT: return "UP_LEFT";
+            default: return "NONE";
         }
     }
-    
+
     @Override
     public ControlData getData() {
         return mData;
     }
-    
+
     @Override
     public void updateData(ControlData data) {
         mData = data;
         initPaints();
         invalidate();
     }
-    
+
+    /**
+     * 设置Xbox控制器模式下控制哪个摇杆
+     * @param useRightStick true=右摇杆, false=左摇杆（默认）
+     */
+    public void setXboxStickMode(boolean useRightStick) {
+        mData.xboxUseRightStick = useRightStick;
+    }
+
+    /**
+     * 获取当前控制的Xbox摇杆类型
+     * @return true=右摇杆, false=左摇杆
+     */
+    public boolean isXboxRightStick() {
+        return mData.xboxUseRightStick;
+    }
+
     private float dpToPx(float dp) {
         return dp * getResources().getDisplayMetrics().density;
     }

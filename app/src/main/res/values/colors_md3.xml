@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Material Design 3 颜色 - 浅色主题 -->
+
+    <!-- Surface 颜色 -->
+    <color name="md3_surface_container">#F3EDF7</color>
+    <color name="md3_surface_container_low">#F7F2FA</color>
+    <color name="md3_surface_container_highest">#E6E0E9</color>
+
+    <!-- Primary Container -->
+    <color name="md3_primary_container">#E8DEF8</color>
+    <color name="md3_on_primary_container">#21005D</color>
+
+    <!-- Secondary Container -->
+    <color name="md3_secondary_container">#E8DEF8</color>
+    <color name="md3_on_secondary_container">#1D192B</color>
+</resources>

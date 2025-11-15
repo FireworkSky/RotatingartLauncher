@@ -36,6 +36,27 @@ public class ControlData {
     // 特殊功能按键
     public static final int SPECIAL_KEYBOARD = -100; // 弹出Android键盘
     
+    // Xbox控制器按钮常量（负数范围 -200 ~ -214）
+    public static final int XBOX_BUTTON_A = -200;
+    public static final int XBOX_BUTTON_B = -201;
+    public static final int XBOX_BUTTON_X = -202;
+    public static final int XBOX_BUTTON_Y = -203;
+    public static final int XBOX_BUTTON_BACK = -204;
+    public static final int XBOX_BUTTON_GUIDE = -205;
+    public static final int XBOX_BUTTON_START = -206;
+    public static final int XBOX_BUTTON_LEFT_STICK = -207;
+    public static final int XBOX_BUTTON_RIGHT_STICK = -208;
+    public static final int XBOX_BUTTON_LB = -209;  // Left Shoulder/Bumper
+    public static final int XBOX_BUTTON_RB = -210;  // Right Shoulder/Bumper
+    public static final int XBOX_BUTTON_DPAD_UP = -211;
+    public static final int XBOX_BUTTON_DPAD_DOWN = -212;
+    public static final int XBOX_BUTTON_DPAD_LEFT = -213;
+    public static final int XBOX_BUTTON_DPAD_RIGHT = -214;
+
+    // Xbox控制器触发器常量（作为按钮使用，负数范围 -220 ~ -221）
+    public static final int XBOX_TRIGGER_LEFT = -220;   // Left Trigger (0.0 = 释放, 1.0 = 按下)
+    public static final int XBOX_TRIGGER_RIGHT = -221;  // Right Trigger (0.0 = 释放, 1.0 = 按下)
+
     @SerializedName("name")
     public String name;
     
@@ -83,12 +104,16 @@ public class ControlData {
     public int[] joystickKeys; // [up, right, down, left] 的键码
     
     @SerializedName("joystickMode")
-    public int joystickMode; // 0=键盘模式, 1=鼠标模式
-    
+    public int joystickMode; // 0=键盘模式, 1=鼠标模式, 2=SDL控制器模式
+
+    @SerializedName("xboxUseRightStick")
+    public boolean xboxUseRightStick; // Xbox控制器模式：true=右摇杆, false=左摇杆
+
     // 摇杆模式常量
-    public static final int JOYSTICK_MODE_KEYBOARD = 0; // 键盘按键模式（WASD等）
-    public static final int JOYSTICK_MODE_MOUSE = 1;    // 鼠标移动模式（瞄准）
-    
+    public static final int JOYSTICK_MODE_KEYBOARD = 0;    // 键盘按键模式（WASD等）
+    public static final int JOYSTICK_MODE_MOUSE = 1;       // 鼠标移动模式（瞄准）
+    public static final int JOYSTICK_MODE_SDL_CONTROLLER = 2; // SDL虚拟控制器模式（真实摇杆）
+
     public ControlData() {
         this("Button", TYPE_BUTTON);
     }
@@ -118,6 +143,7 @@ public class ControlData {
                 SDL_SCANCODE_A   // left
             };
             this.joystickMode = JOYSTICK_MODE_KEYBOARD; // 默认键盘模式
+            this.xboxUseRightStick = false; // 默认左摇杆
         }
     }
     
@@ -144,6 +170,7 @@ public class ControlData {
             this.joystickKeys = other.joystickKeys.clone();
         }
         this.joystickMode = other.joystickMode;
+        this.xboxUseRightStick = other.xboxUseRightStick;
     }
     
     /**

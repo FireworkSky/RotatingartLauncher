@@ -47,20 +47,20 @@ public class ConsoleMessage {
         String prefix = "";
         switch (level) {
             case ERROR:
-                prefix = "[ERROR]";
+                prefix = "";
                 break;
             case WARNING:
-                prefix = "[WARN]";
+                prefix = "";
                 break;
             case DEBUG:
-                prefix = "[DEBUG]";
+                prefix = "";
                 break;
             case INFO:
             default:
-                prefix = "[INFO]";
+                prefix = "";
                 break;
         }
-        return String.format("[%s] %s %s", getFormattedTimestamp(), prefix, message);
+        return String.format("[%s] %s%s", getFormattedTimestamp(), prefix, message);
     }
 }
 

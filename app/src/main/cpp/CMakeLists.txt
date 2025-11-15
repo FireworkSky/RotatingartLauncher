@@ -76,8 +76,6 @@ add_library(${CMAKE_PROJECT_NAME} SHARED
         jni_bridge.c
         error_handler.c
         console_bridge.c
-        And64InlineHook/And64InlineHook.cpp
-        hostpolicy_hook.cpp
         app_logger.c
         app_logger_jni.c
 )
@@ -111,7 +109,6 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
         ${FNA3D_SOURCE_DIR}/include
         ${NETCOREHOST_SOURCE_DIR}/include
         ${LGOG_SOURCE_DIR}/include
-        ${CMAKE_CURRENT_SOURCE_DIR}/And64InlineHook
 )
 
 # 安装共享库到APK的lib目录

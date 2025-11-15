@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/action_edit"
+        android:icon="@drawable/ic_edit"
+        android:title="编辑布局" />
+
+    <item
+        android:id="@+id/action_rename"
+        android:icon="@drawable/ic_edit"
+        android:title="重命名" />
+
+    <item
+        android:id="@+id/action_duplicate"
+        android:icon="@drawable/ic_copy"
+        android:title="复制布局" />
+
+    <item
+        android:id="@+id/action_set_default"
+        android:icon="@drawable/ic_star"
+        android:title="设为默认" />
+
+    <item
+        android:id="@+id/action_export"
+        android:icon="@drawable/ic_export"
+        android:title="导出布局" />
+
+    <item
+        android:id="@+id/action_delete"
+        android:icon="@drawable/ic_delete"
+        android:title="删除"
+        android:iconTint="@color/delete_button_bg" />
+</menu>

@@ -189,7 +189,7 @@ public class FloatingConsoleView implements ConsoleService.ConsoleListener {
                     .setDuration(300)
                     .start();
             
-            android.util.Log.i("FloatingConsoleView", "[OK] Console added to activity layout");
+            android.util.Log.i("FloatingConsoleView", "Console added to activity layout");
         } catch (Exception e) {
             android.util.Log.e("FloatingConsoleView", "Failed to show in activity: " + e.getMessage(), e);
         }

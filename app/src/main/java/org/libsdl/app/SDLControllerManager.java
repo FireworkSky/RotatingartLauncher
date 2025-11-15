@@ -1,6 +1,7 @@
 package org.libsdl.app;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -14,6 +15,8 @@ import android.view.InputDevice;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
+
+import androidx.annotation.Nullable;
 
 public class SDLControllerManager
 {
@@ -37,12 +40,15 @@ public class SDLControllerManager
     protected static SDLJoystickHandler mJoystickHandler;
     protected static SDLHapticHandler mHapticHandler;
 
+    protected static VirtualXboxController virtualXboxController = null;
+
     private static final String TAG = "SDLControllerManager";
 
     public static void initialize() {
         if (mJoystickHandler == null) {
             if (Build.VERSION.SDK_INT >= 19 /* Android 4.4 (KITKAT) */) {
-                mJoystickHandler = new SDLJoystickHandler_API19();
+                mJoystickHandler = new SDLJoyStickHandler_API19_VirtualJoystick();
+                virtualXboxController = ((SDLJoyStickHandler_API19_VirtualJoystick)mJoystickHandler).getController();
             } else {
                 mJoystickHandler = new SDLJoystickHandler_API16();
             }
@@ -55,6 +61,11 @@ public class SDLControllerManager
                 mHapticHandler = new SDLHapticHandler();
             }
         }
+    }
+
+    @Nullable
+    public static VirtualXboxController getVirtualController() {
+        return virtualXboxController;
     }
 
     // Joystick glue code, just a series of stubs that redirect to the SDLJoystickHandler instance
@@ -195,7 +206,7 @@ class SDLJoystickHandler_API16 extends SDLJoystickHandler {
         }
     }
 
-    private final ArrayList<SDLJoystick> mJoysticks;
+    protected final ArrayList<SDLJoystick> mJoysticks;
 
     public SDLJoystickHandler_API16() {
 
@@ -464,6 +475,169 @@ class SDLJoystickHandler_API19 extends SDLJoystickHandler_API16 {
             }
         }
         return button_mask;
+    }
+}
+
+class SDLJoyStickHandler_API19_VirtualJoystick extends SDLJoystickHandler_API19 {
+    // SDL integration for virtual Xbox controller
+
+    private final VirtualXboxController controller;
+    private final SDLJoystick virtualJoystick;
+    private boolean virtualJoystickAdded = false;
+
+    public SDLJoyStickHandler_API19_VirtualJoystick() {
+        super();
+
+        // Create the virtual controller
+        controller = new VirtualXboxController();
+
+        // Set up SDL joystick representation
+        virtualJoystick = new SDLJoystick();
+        virtualJoystick.device_id = VirtualXboxController.VIRTUAL_DEVICE_ID;
+        virtualJoystick.name = VirtualXboxController.CONTROLLER_NAME;
+        virtualJoystick.desc = VirtualXboxController.CONTROLLER_DESC;
+        virtualJoystick.axes = new ArrayList<>();
+        virtualJoystick.hats = new ArrayList<>();
+
+        // Set up event listener to forward controller events to SDL
+        controller.setEventListener(new VirtualXboxController.ControllerEventListener() {
+            @Override
+            public void onAxisChanged(int axis, float value) {
+                SDLControllerManager.onNativeJoy(VirtualXboxController.VIRTUAL_DEVICE_ID, axis, value);
+            }
+
+            @Override
+            public void onButtonChanged(int button, boolean pressed) {
+                int keycode = VirtualXboxController.mapButtonToKeycode(button);
+                if (keycode != -1) {
+                    if (pressed) {
+                        SDLControllerManager.onNativePadDown(VirtualXboxController.VIRTUAL_DEVICE_ID, keycode);
+                    } else {
+                        SDLControllerManager.onNativePadUp(VirtualXboxController.VIRTUAL_DEVICE_ID, keycode);
+                    }
+                }
+            }
+        });
+    }
+
+    /**
+     * Get the virtual Xbox controller instance
+     */
+    public VirtualXboxController getController() {
+        return controller;
+    }
+
+    @Override
+    protected SDLJoystick getJoystick(int device_id) {
+        if (device_id == VirtualXboxController.VIRTUAL_DEVICE_ID) {
+            return virtualJoystick;
+        }
+        return super.getJoystick(device_id);
+    }
+
+    @Override
+    public void pollInputDevices() {
+        // Register virtual Xbox controller on first poll
+        if (!virtualJoystickAdded) {
+            mJoysticks.add(virtualJoystick);
+
+            SDLControllerManager.nativeAddJoystick(
+                virtualJoystick.device_id,
+                virtualJoystick.name,
+                virtualJoystick.desc,
+                VirtualXboxController.XBOX_VENDOR_ID,
+                VirtualXboxController.XBOX_PRODUCT_ID,
+                false,  // is_accelerometer
+                controller.getButtonMask(),
+                VirtualXboxController.NUM_AXES,
+                controller.getAxisMask(),
+                0,  // nhats (we use buttons for dpad)
+                0   // nballs
+            );
+            virtualJoystickAdded = true;
+        }
+
+        // Process physical joysticks
+        int[] deviceIds = InputDevice.getDeviceIds();
+        for (int device_id : deviceIds) {
+            if (SDLControllerManager.isDeviceSDLJoystick(device_id)) {
+                SDLJoystick joystick = getJoystick(device_id);
+                if (joystick == null) {
+                    InputDevice joystickDevice = InputDevice.getDevice(device_id);
+                    if (joystickDevice == null) {
+                        continue;
+                    }
+
+                    joystick = new SDLJoystick();
+                    joystick.device_id = device_id;
+                    joystick.name = joystickDevice.getName();
+                    joystick.desc = getJoystickDescriptor(joystickDevice);
+                    joystick.axes = new ArrayList<>();
+                    joystick.hats = new ArrayList<>();
+
+                    List<InputDevice.MotionRange> ranges = joystickDevice.getMotionRanges();
+                    Collections.sort(ranges, new RangeComparator());
+                    for (InputDevice.MotionRange range : ranges) {
+                        if ((range.getSource() & InputDevice.SOURCE_CLASS_JOYSTICK) != 0) {
+                            if (range.getAxis() == MotionEvent.AXIS_HAT_X || range.getAxis() == MotionEvent.AXIS_HAT_Y) {
+                                joystick.hats.add(range);
+                            } else {
+                                joystick.axes.add(range);
+                            }
+                        }
+                    }
+
+                    mJoysticks.add(joystick);
+                    SDLControllerManager.nativeAddJoystick(
+                        joystick.device_id,
+                        joystick.name,
+                        joystick.desc,
+                        getVendorId(joystickDevice),
+                        getProductId(joystickDevice),
+                        false,
+                        getButtonMask(joystickDevice),
+                        joystick.axes.size(),
+                        getAxisMask(joystick.axes),
+                        joystick.hats.size() / 2,
+                        0
+                    );
+                }
+            }
+        }
+
+        /* Check removed devices (never remove virtual joystick) */
+        ArrayList<Integer> removedDevices = null;
+        for (SDLJoystick joystick : mJoysticks) {
+            int device_id = joystick.device_id;
+
+            // Never remove virtual joystick
+            if (device_id == VirtualXboxController.VIRTUAL_DEVICE_ID) {
+                continue;
+            }
+
+            int i;
+            for (i = 0; i < deviceIds.length; i++) {
+                if (device_id == deviceIds[i]) break;
+            }
+            if (i == deviceIds.length) {
+                if (removedDevices == null) {
+                    removedDevices = new ArrayList<>();
+                }
+                removedDevices.add(device_id);
+            }
+        }
+
+        if (removedDevices != null) {
+            for (int device_id : removedDevices) {
+                SDLControllerManager.nativeRemoveJoystick(device_id);
+                for (int i = 0; i < mJoysticks.size(); i++) {
+                    if (mJoysticks.get(i).device_id == device_id) {
+                        mJoysticks.remove(i);
+                        break;
+                    }
+                }
+            }
+        }
     }
 }
 

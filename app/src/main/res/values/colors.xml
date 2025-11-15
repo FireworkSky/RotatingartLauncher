@@ -1,18 +1,58 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- 浅色主题颜色（参考 FNALaunch 蓝紫渐变） -->
+    <!-- Material Design 3 颜色系统 -->
+
+    <!-- 主色调 (Primary) -->
+    <color name="md_theme_light_primary">#BB86FC</color>
+    <color name="md_theme_light_onPrimary">#FFFFFF</color>
+    <color name="md_theme_light_primaryContainer">#E8DAFF</color>
+    <color name="md_theme_light_onPrimaryContainer">#210042</color>
+
+    <!-- 次色调 (Secondary) -->
+    <color name="md_theme_light_secondary">#9965F4</color>
+    <color name="md_theme_light_onSecondary">#FFFFFF</color>
+    <color name="md_theme_light_secondaryContainer">#E0D5FF</color>
+    <color name="md_theme_light_onSecondaryContainer">#1A0052</color>
+
+    <!-- 三级色 (Tertiary) -->
+    <color name="md_theme_light_tertiary">#4CAF50</color>
+    <color name="md_theme_light_onTertiary">#FFFFFF</color>
+    <color name="md_theme_light_tertiaryContainer">#C8E6C9</color>
+    <color name="md_theme_light_onTertiaryContainer">#1B5E20</color>
+
+    <!-- 错误色 (Error) -->
+    <color name="md_theme_light_error">#B00020</color>
+    <color name="md_theme_light_errorContainer">#FFDAD6</color>
+    <color name="md_theme_light_onError">#FFFFFF</color>
+    <color name="md_theme_light_onErrorContainer">#410002</color>
+
+    <!-- 背景色 (Background) -->
+    <color name="md_theme_light_background">#FFFFFF</color>
+    <color name="md_theme_light_onBackground">#1C1B1F</color>
+
+    <!-- 表面色 (Surface) -->
+    <color name="md_theme_light_surface">#FAFAFA</color>
+    <color name="md_theme_light_onSurface">#1C1B1F</color>
+    <color name="md_theme_light_surfaceVariant">#F5F5F5</color>
+    <color name="md_theme_light_onSurfaceVariant">#49454F</color>
+
+    <!-- 轮廓线 (Outline) -->
+    <color name="md_theme_light_outline">#A4B4D8</color>
+    <color name="md_theme_light_outlineVariant">#CAC4D0</color>
+
+    <!-- 浅色主题颜色（向后兼容） -->
     <!-- 背景色 -->
     <color name="background_primary">#FFFFFF</color>
     <color name="background_secondary">#F5F5F5</color>
     <color name="background_card">#FAFAFA</color>
     <color name="background_sidebar">#E0E0E0</color>
     <color name="background_dark">#000000</color>
-    
+
     <!-- 文本颜色 -->
-    <color name="text_primary">#000000</color>
-    <color name="text_secondary">#616161</color>
+    <color name="text_primary">#1C1B1F</color>
+    <color name="text_secondary">#49454F</color>
     <color name="text_hint">#9E9E9E</color>
-    
+
     <!-- 分隔线 -->
     <color name="divider">#A4B4D8</color>
     

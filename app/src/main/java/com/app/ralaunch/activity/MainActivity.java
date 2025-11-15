@@ -27,13 +27,13 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.app.ralaunch.R;
 import com.app.ralaunch.RaLaunchApplication;
-import com.app.ralaunch.fragment.AddGameOptionsFragment;
+import com.app.ralaunch.dialog.LocalImportDialog;
 import com.app.ralaunch.fragment.ControlLayoutFragment;
 import com.app.ralaunch.fragment.FileBrowserFragment;
 import com.app.ralaunch.fragment.InitializationFragment;
 import com.app.ralaunch.fragment.LocalImportFragment;
 import com.app.ralaunch.adapter.GameAdapter;
-import com.app.ralaunch.adapter.GameItem;
+import com.app.ralaunch.model.GameItem;
 import com.app.ralaunch.fragment.SettingsFragment;
 import com.app.ralaunch.fragment.SettingsDialogFragment;
 import com.app.ralaunch.utils.PageManager;
@@ -42,7 +42,9 @@ import com.app.ralaunch.utils.PermissionHelper;
 import com.daimajia.androidanimations.library.YoYo;
 import com.app.ralaunch.utils.RuntimeManager;
 import com.app.ralaunch.utils.AppLogger;
+import com.app.ralaunch.utils.LocaleManager;
 import com.app.ralib.error.ErrorHandler;
+import android.content.Context;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -51,7 +53,6 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity implements
         GameAdapter.OnGameClickListener,
         GameAdapter.OnGameDeleteListener,
-        AddGameOptionsFragment.OnGameSourceSelectedListener,
         SettingsFragment.OnSettingsBackListener,
         FileBrowserFragment.OnPermissionRequestListener,
         LocalImportFragment.OnImportCompleteListener {
@@ -93,6 +94,12 @@ public class MainActivity extends AppCompatActivity implements
     public interface PermissionCallback {
         void onPermissionsGranted();
         void onPermissionsDenied();
+    }
+
+    @Override
+    protected void attachBaseContext(Context newBase) {
+        // 应用语言设置
+        super.attachBaseContext(LocaleManager.applyLanguage(newBase));
     }
 
     @Override
@@ -222,9 +229,10 @@ public class MainActivity extends AppCompatActivity implements
         try {
             File logDir = new File(getExternalFilesDir(null), "logs");
             AppLogger.init(logDir);
-            AppLogger.info("MainActivity", "RALaunch started");
-            AppLogger.dumpSystemInfo();
+
+
         } catch (Exception e) {
+            // 日志系统初始化失败时使用系统日志
             Log.e("MainActivity", "Failed to initialize logger", e);
         }
     }
@@ -358,15 +366,15 @@ public class MainActivity extends AppCompatActivity implements
      */
     private void setupRuntimeSelector() {
         if (btnRuntimeSelector == null || runtimeSelectContainer == null || tvCurrentRuntime == null) {
-            Log.w("MainActivity", "Runtime selector widgets not initialized yet");
+            AppLogger.warn("MainActivity", "Runtime selector widgets not initialized yet");
             return;
         }
-        
+
         java.util.List<String> versions = RuntimeManager.listInstalledVersions(this);
 
         if (versions.isEmpty()) {
             runtimeSelectContainer.setVisibility(View.GONE);
-            Log.w("MainActivity", "Runtime selector hidden - no versions found");
+            AppLogger.warn("MainActivity", "Runtime selector hidden - no versions found");
             return;
         }
         
@@ -479,17 +487,47 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     private void hideControlLayoutFragment() {
-        mainLayout.setVisibility(View.VISIBLE);
-        View fragmentContainer = findViewById(R.id.fragmentContainer);
-        fragmentContainer.setVisibility(View.GONE);
+        AppLogger.info("MainActivity", "hideControlLayoutFragment called");
 
+        // 获取Fragment容器
+        View fragmentContainer = findViewById(R.id.fragmentContainer);
+
+        // 先移除Fragment
         Fragment fragment = getSupportFragmentManager().findFragmentById(R.id.fragmentContainer);
         if (fragment != null) {
+            AppLogger.info("MainActivity", "Removing fragment: " + fragment.getClass().getSimpleName());
             FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
             transaction.remove(fragment);
-            transaction.commit();
+            transaction.commitNow(); // 使用 commitNow 立即执行
         }
-        getSupportFragmentManager().popBackStack("control_layout", FragmentManager.POP_BACK_STACK_INCLUSIVE);
+
+        // 清除回退栈
+        try {
+            getSupportFragmentManager().popBackStack("control_layout", FragmentManager.POP_BACK_STACK_INCLUSIVE);
+        } catch (Exception e) {
+            AppLogger.warn("MainActivity", "Failed to pop back stack: " + e.getMessage());
+        }
+
+        // 清除Fragment容器的背景并隐藏
+        if (fragmentContainer != null) {
+            fragmentContainer.setBackground(null);
+            fragmentContainer.setBackgroundColor(android.graphics.Color.TRANSPARENT);
+            fragmentContainer.setVisibility(View.GONE);
+            AppLogger.info("MainActivity", "Fragment container hidden and cleared");
+        }
+
+        // 显示主布局
+        mainLayout.setVisibility(View.VISIBLE);
+        mainLayout.bringToFront(); // 确保主布局在最前面
+        mainLayout.requestLayout();
+        mainLayout.invalidate();
+
+        // 强制刷新整个Activity视图
+        View rootView = getWindow().getDecorView();
+        rootView.requestLayout();
+        rootView.postInvalidate();
+
+        AppLogger.info("MainActivity", "Main layout visibility restored");
     }
 
     private void showMainLayout() {
@@ -522,34 +560,89 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     private void showAddGameFragment() {
+        // 直接显示本地导入对话框 - Material Design 3 风格
+        LocalImportDialog localImportDialog = new LocalImportDialog();
+
+        // 设置文件选择监听器
+        localImportDialog.setOnFileSelectionListener(new LocalImportDialog.OnFileSelectionListener() {
+            @Override
+            public void onSelectGameFile(LocalImportDialog dialog) {
+                // 打开文件浏览器选择游戏文件
+                showFileBrowserForSelection("game", new String[]{".sh"}, filePath -> {
+                    dialog.setGameFile(filePath);
+                    // 恢复对话框显示
+                    dialog.showDialog();
+                });
+            }
+
+            @Override
+            public void onSelectModLoaderFile(LocalImportDialog dialog) {
+                // 打开文件浏览器选择ModLoader文件
+                showFileBrowserForSelection("modloader", new String[]{".zip"}, filePath -> {
+                    dialog.setModLoaderFile(filePath);
+                    // 恢复对话框显示
+                    dialog.showDialog();
+                });
+            }
+        });
+
+        // 设置导入开始监听器
+        localImportDialog.setOnImportStartListener((gameFilePath, modLoaderFilePath, gameName, gameVersion) -> {
+            // 开始导入流程
+            startGameImport(gameFilePath, modLoaderFilePath, gameName, gameVersion);
+        });
+
+        localImportDialog.show(getSupportFragmentManager(), "local_import_dialog");
+    }
+
+    /**
+     * 显示文件浏览器选择文件
+     */
+    private void showFileBrowserForSelection(String fileType, String[] extensions, FileSelectionCallback callback) {
         mainLayout.setVisibility(View.GONE);
         View fragmentContainer = findViewById(R.id.fragmentContainer);
         fragmentContainer.setVisibility(View.VISIBLE);
 
-        // 显示添加游戏选项页面
-        AddGameOptionsFragment addGameOptionsFragment = new AddGameOptionsFragment();
-        addGameOptionsFragment.setOnGameSourceSelectedListener(this);
-        addGameOptionsFragment.setOnBackListener(this::hideAddGameFragment);
 
-        pageManager.showPage(addGameOptionsFragment, "add_game_options");
+        FileBrowserFragment fileBrowserFragment = new FileBrowserFragment();
+        fileBrowserFragment.setFileType(fileType, extensions);
+        fileBrowserFragment.setOnFileSelectedListener((filePath, selectedFileType) -> {
+            callback.onFileSelected(filePath);
+            hideAddGameFragment();
+        });
+        fileBrowserFragment.setOnBackListener(this::hideAddGameFragment);
+
+        pageManager.showPage(fileBrowserFragment, "file_browser");
     }
 
-    @Override
-    public void onGameSourceSelected(String sourceType) {
-        if ("local".equals(sourceType)) {
-            // 跳转到本地导入页面
-            LocalImportFragment localImportFragment = new LocalImportFragment();
-            localImportFragment.setOnImportCompleteListener(this);
-            localImportFragment.setOnBackListener(this::onBackFromLocalImport);
+    /**
+     * 开始游戏导入
+     */
+    private void startGameImport(String gameFilePath, String modLoaderFilePath, String gameName, String gameVersion) {
+        mainLayout.setVisibility(View.GONE);
+        View fragmentContainer = findViewById(R.id.fragmentContainer);
+        fragmentContainer.setVisibility(View.VISIBLE);
 
-            pageManager.showPage(localImportFragment, "local_import");
-        } else if ("download".equals(sourceType)) {
+        LocalImportFragment localImportFragment = new LocalImportFragment();
+        localImportFragment.setOnImportCompleteListener(this);
+        localImportFragment.setOnBackListener(this::onBackFromLocalImport);
 
-            // 这里可以创建一个专门的下载页面
-            showToast("在线下载功能即将开放");
-            // 暂时返回主界面
-            hideAddGameFragment();
-        }
+        // 传递文件路径给Fragment
+        Bundle args = new Bundle();
+        args.putString("gameFilePath", gameFilePath);
+        args.putString("modLoaderFilePath", modLoaderFilePath);
+        args.putString("gameName", gameName);
+        args.putString("gameVersion", gameVersion);
+        localImportFragment.setArguments(args);
+
+        pageManager.showPage(localImportFragment, "local_import");
+    }
+
+    /**
+     * 文件选择回调接口
+     */
+    private interface FileSelectionCallback {
+        void onFileSelected(String filePath);
     }
 
     // 实现 OnImportCompleteListener
@@ -829,12 +922,12 @@ public class MainActivity extends AppCompatActivity implements
             
             if (gameBasePath != null && !gameBasePath.isEmpty()) {
                 gameDir = new File(gameBasePath);
-                Log.i("MainActivity", "使用游戏根目录: " + gameBasePath);
+                AppLogger.info("MainActivity", "使用游戏根目录: " + gameBasePath);
             } else {
                 // 如果没有 gameBasePath，尝试从 gamePath 推断
                 String gamePath = game.getGamePath();
                 if (gamePath == null || gamePath.isEmpty()) {
-                    Log.w("MainActivity", "游戏路径为空，无法删除文件");
+                    AppLogger.warn("MainActivity", "游戏路径为空，无法删除文件");
                     return false;
                 }
                 
@@ -845,41 +938,41 @@ public class MainActivity extends AppCompatActivity implements
                     gameDir = parent;
                     parent = parent.getParentFile();
                 }
-                
+
                 if (gameDir == null) {
                     gameDir = gameFile.getParentFile();
                 }
-                
-                Log.i("MainActivity", "从游戏路径推断根目录: " + (gameDir != null ? gameDir.getAbsolutePath() : "null"));
+
+                AppLogger.info("MainActivity", "从游戏路径推断根目录: " + (gameDir != null ? gameDir.getAbsolutePath() : "null"));
             }
 
             if (gameDir == null || !gameDir.exists()) {
-                Log.w("MainActivity", "游戏目录不存在: " + (gameDir != null ? gameDir.getAbsolutePath() : "null"));
+                AppLogger.warn("MainActivity", "游戏目录不存在: " + (gameDir != null ? gameDir.getAbsolutePath() : "null"));
                 return false;
             }
 
             // 确认这是一个游戏目录（在 files/games/ 下）
             String dirPath = gameDir.getAbsolutePath();
             if (!dirPath.contains("/files/games/") && !dirPath.contains("/files/imported_games/")) {
-                Log.w("MainActivity", "路径不在游戏目录中，跳过删除: " + dirPath);
+                AppLogger.warn("MainActivity", "路径不在游戏目录中，跳过删除: " + dirPath);
                 return false;
             }
 
-            Log.i("MainActivity", "准备删除游戏目录: " + gameDir.getAbsolutePath());
+            AppLogger.info("MainActivity", "准备删除游戏目录: " + gameDir.getAbsolutePath());
             
             // 递归删除目录
             boolean success = deleteDirectory(gameDir);
 
             if (success) {
-                Log.i("MainActivity", "[OK] 游戏目录删除成功: " + gameDir.getName());
+                AppLogger.info("MainActivity", "游戏目录删除成功: " + gameDir.getName());
             } else {
-                Log.w("MainActivity", "[ERROR] 删除游戏目录失败: " + gameDir.getName());
+                AppLogger.warn("MainActivity", "删除游戏目录失败: " + gameDir.getName());
             }
 
             return success;
 
         } catch (Exception e) {
-            Log.e("MainActivity", "删除游戏文件时发生错误: " + e.getMessage());
+            AppLogger.error("MainActivity", "删除游戏文件时发生错误: " + e.getMessage());
             e.printStackTrace();
             return false;
         }
@@ -901,7 +994,7 @@ public class MainActivity extends AppCompatActivity implements
                 for (File child : children) {
                     boolean success = deleteDirectory(child);
                     if (!success) {
-                        Log.w("MainActivity", "无法删除: " + child.getAbsolutePath());
+                        AppLogger.warn("MainActivity", "无法删除: " + child.getAbsolutePath());
                     }
                 }
             }
@@ -981,16 +1074,16 @@ public class MainActivity extends AppCompatActivity implements
         // 验证程序集文件是否存在
         String assemblyPath = game.getGamePath();
         File assemblyFile = new File(assemblyPath);
-        
+
         if (!assemblyFile.exists() || !assemblyFile.isFile()) {
             showErrorSnackbar("程序集文件不存在: " + assemblyPath);
-            Log.e("MainActivity", "Assembly file not found: " + assemblyPath);
+            AppLogger.error("MainActivity", "Assembly file not found: " + assemblyPath);
             return;
         }
-        
+
         showToast("启动游戏: " + game.getGameName());
-        Log.i("MainActivity", "Launching game: " + game.getGameName());
-        Log.i("MainActivity", "Assembly path: " + assemblyPath);
+        AppLogger.info("MainActivity", "Launching game: " + game.getGameName());
+        AppLogger.info("MainActivity", "Assembly path: " + assemblyPath);
 
         // 直接传递程序集路径给 GameActivity
         Intent intent = new Intent(MainActivity.this, GameActivity.class);
@@ -1059,7 +1152,11 @@ public class MainActivity extends AppCompatActivity implements
     @Override
     public void onBackPressed() {
         if (mainLayout.getVisibility() != View.VISIBLE) {
-            if (pageManager.getBackStackCount() > 1) {
+            // 检查当前Fragment是否是ControlLayoutFragment
+            Fragment currentFragment = getSupportFragmentManager().findFragmentById(R.id.fragmentContainer);
+            if (currentFragment instanceof ControlLayoutFragment) {
+                hideControlLayoutFragment();
+            } else if (pageManager.getBackStackCount() > 1) {
                 pageManager.goBack();
             } else {
                 hideAddGameFragment();
@@ -1075,16 +1172,16 @@ public class MainActivity extends AppCompatActivity implements
         
         // 检查是否是 UI 模式改变（深色/浅色模式）
         int currentNightMode = newConfig.uiMode & android.content.res.Configuration.UI_MODE_NIGHT_MASK;
-        
-        android.util.Log.d("MainActivity", "配置改变: nightMode=" + currentNightMode);
-        
+
+        AppLogger.debug("MainActivity", "配置改变: nightMode=" + currentNightMode);
+
         // 检查设置
-        com.app.ralaunch.utils.SettingsManager settingsManager = 
-            com.app.ralaunch.utils.SettingsManager.getInstance(this);
-        
+        com.app.ralaunch.data.SettingsManager settingsManager =
+            com.app.ralaunch.data.SettingsManager.getInstance(this);
+
         // 如果设置为"跟随系统"，立即重建Activity以应用主题
         if (settingsManager.getThemeMode() == 0) {
-            android.util.Log.d("MainActivity", "跟随系统模式，重建Activity");
+            AppLogger.debug("MainActivity", "跟随系统模式，重建Activity");
             
             // 先关闭所有对话框，防止recreate后被恢复
             androidx.fragment.app.FragmentManager fm = getSupportFragmentManager();
@@ -1106,8 +1203,8 @@ public class MainActivity extends AppCompatActivity implements
      * 从设置中应用主题
      */
     private void applyThemeFromSettings() {
-        com.app.ralaunch.utils.SettingsManager settingsManager = 
-            com.app.ralaunch.utils.SettingsManager.getInstance(this);
+        com.app.ralaunch.data.SettingsManager settingsManager = 
+            com.app.ralaunch.data.SettingsManager.getInstance(this);
         int themeMode = settingsManager.getThemeMode(); // 0=跟随系统, 1=深色, 2=浅色（默认浅色）
         
         switch (themeMode) {
@@ -1139,8 +1236,12 @@ public class MainActivity extends AppCompatActivity implements
         // 在应用退出时保存游戏列表
         // gameDataManager.updateGameList(gameList);
 
-        // 关闭日志系统
-        AppLogger.info("MainActivity", "RALaunch stopped");
-        AppLogger.close();
+        // 只在应用真正退出时关闭日志系统（不是因为配置变化如旋转或主题切换）
+        if (!isChangingConfigurations()) {
+            AppLogger.info("MainActivity", "RALaunch stopped");
+            AppLogger.close();
+        } else {
+            AppLogger.info("MainActivity", "MainActivity recreating due to configuration change");
+        }
     }
 }

@@ -1,6 +1,12 @@
 package com.app.ralib.icon;
 
+import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.renderscript.Allocation;
+import android.renderscript.Element;
+import android.renderscript.RenderScript;
+import android.renderscript.ScriptIntrinsicConvolve3x3;
 import android.util.Log;
 
 import java.io.File;
@@ -335,6 +341,136 @@ public class IconExtractor {
         int bitCount;
         int bytesInRes;
         int id;
+    }
+
+    /**
+     * 高清化小图标（使用双三次插值+锐化）
+     *
+     * @param context Android Context
+     * @param iconPath 原始图标路径
+     * @return 高清化后的图标路径，失败返回null
+     */
+    public static String upscaleIcon(Context context, String iconPath) {
+        try {
+            // 读取原始图标
+            Bitmap original = BitmapFactory.decodeFile(iconPath);
+            if (original == null) {
+                Log.e(TAG, "Failed to decode original icon");
+                return null;
+            }
+
+            int originalWidth = original.getWidth();
+            int originalHeight = original.getHeight();
+
+            Log.i(TAG, String.format("Original icon size: %dx%d", originalWidth, originalHeight));
+
+            // 如果图标已经足够大,不需要高清化
+            if (originalWidth >= 128 && originalHeight >= 128) {
+                Log.i(TAG, "Icon is already large enough, skipping upscale");
+                original.recycle();
+                return iconPath;
+            }
+
+            // 目标尺寸：256x256（或原尺寸的8倍，取较小值）
+            int targetSize = Math.min(256, Math.max(originalWidth, originalHeight) * 8);
+
+            // 使用双三次插值放大
+            Bitmap upscaled = Bitmap.createScaledBitmap(original, targetSize, targetSize, true);
+
+            // 应用锐化滤镜提升清晰度
+            Bitmap sharpened = applySharpen(context, upscaled);
+
+            // 保存高清化后的图标
+            String upscaledPath = iconPath.replace(".png", "_upscaled.png");
+            FileOutputStream out = new FileOutputStream(upscaledPath);
+            sharpened.compress(Bitmap.CompressFormat.PNG, 100, out);
+            out.close();
+
+            // 清理
+            original.recycle();
+            upscaled.recycle();
+            sharpened.recycle();
+
+            Log.i(TAG, String.format("Icon upscaled from %dx%d to %dx%d",
+                    originalWidth, originalHeight, targetSize, targetSize));
+
+            return upscaledPath;
+
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to upscale icon: " + e.getMessage(), e);
+            return null;
+        }
+    }
+
+    /**
+     * 应用锐化滤镜
+     *
+     * @param context Android Context
+     * @param src 源图像
+     * @return 锐化后的图像，失败返回原图像
+     */
+    private static Bitmap applySharpen(Context context, Bitmap src) {
+        // 锐化卷积核
+        float[] sharpenKernel = {
+                0, -1, 0,
+                -1, 5, -1,
+                0, -1, 0
+        };
+
+        Bitmap result = Bitmap.createBitmap(src.getWidth(), src.getHeight(), src.getConfig());
+
+        RenderScript rs = null;
+        try {
+            rs = RenderScript.create(context);
+            Allocation input = Allocation.createFromBitmap(rs, src);
+            Allocation output = Allocation.createFromBitmap(rs, result);
+
+            ScriptIntrinsicConvolve3x3 convolution =
+                    ScriptIntrinsicConvolve3x3.create(rs, Element.U8_4(rs));
+
+            convolution.setInput(input);
+            convolution.setCoefficients(sharpenKernel);
+            convolution.forEach(output);
+
+            output.copyTo(result);
+
+            input.destroy();
+            output.destroy();
+            convolution.destroy();
+
+        } catch (Exception e) {
+            Log.w(TAG, "Failed to apply sharpen filter, using original: " + e.getMessage());
+            return src;
+        } finally {
+            if (rs != null) {
+                rs.destroy();
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * 检查图标是否需要高清化
+     *
+     * @param iconPath 图标文件路径
+     * @return true 表示需要高清化（图标小于5KB），false 表示不需要
+     */
+    public static boolean needsUpscale(String iconPath) {
+        try {
+            File iconFile = new File(iconPath);
+            if (!iconFile.exists()) {
+                return false;
+            }
+
+            long fileSize = iconFile.length();
+            // 如果图标文件小于5KB，可能是16x16或32x32的小图标，需要高清化
+            return fileSize < 5 * 1024;
+
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to check icon size: " + e.getMessage());
+            return false;
+        }
     }
 }
 

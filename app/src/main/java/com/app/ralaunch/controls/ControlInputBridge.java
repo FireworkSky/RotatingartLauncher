@@ -27,4 +27,32 @@ public interface ControlInputBridge {
      * @param deltaY Y轴移动量
      */
     void sendMouseMove(float deltaX, float deltaY);
+
+    /**
+     * 设置Xbox虚拟控制器左摇杆
+     * @param x X轴值 (-1.0 到 1.0)
+     * @param y Y轴值 (-1.0 到 1.0)
+     */
+    void sendXboxLeftStick(float x, float y);
+
+    /**
+     * 设置Xbox虚拟控制器右摇杆
+     * @param x X轴值 (-1.0 到 1.0)
+     * @param y Y轴值 (-1.0 到 1.0)
+     */
+    void sendXboxRightStick(float x, float y);
+
+    /**
+     * 发送Xbox控制器按钮事件
+     * @param xboxButton Xbox按钮代码 (ControlData.XBOX_BUTTON_*)
+     * @param isDown true=按下, false=释放
+     */
+    void sendXboxButton(int xboxButton, boolean isDown);
+
+    /**
+     * 发送Xbox控制器触发器事件
+     * @param xboxTrigger 触发器代码 (ControlData.XBOX_TRIGGER_LEFT/RIGHT)
+     * @param value 触发器值 (0.0 到 1.0)
+     */
+    void sendXboxTrigger(int xboxTrigger, float value);
 }

@@ -5,7 +5,6 @@ import android.content.res.AssetManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -24,6 +23,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.app.ralaunch.R;
 import com.app.ralaunch.adapter.ComponentAdapter;
 import com.app.ralaunch.model.ComponentItem;
+import com.app.ralaunch.utils.AppLogger;
 
 import net.sf.sevenzipjbinding.*;
 import net.sf.sevenzipjbinding.impl.RandomAccessFileInStream;
@@ -263,7 +263,7 @@ public class InitializationFragment extends Fragment {
      */
     private void startExtraction() {
         if (isExtracting.getAndSet(true)) {
-            Log.w(TAG, "Extraction already in progress");
+            AppLogger.warn(TAG, "Extraction already in progress");
             return;
         }
 
@@ -275,13 +275,13 @@ public class InitializationFragment extends Fragment {
         executorService.execute(() -> {
             try {
                 extractAllComponents();
-                
+
                 // 在主线程完成初始化
                 mainHandler.post(() -> {
                     completeInitialization();
                 });
             } catch (Exception e) {
-                Log.e(TAG, "Extraction failed", e);
+                AppLogger.error(TAG, "Extraction failed", e);
                 
                 // 在主线程恢复按钮状态并显示错误
                 mainHandler.post(() -> {
@@ -362,7 +362,7 @@ public class InitializationFragment extends Fragment {
             return success;
             
         } catch (Exception e) {
-            Log.e(TAG, "Error extracting component: " + component.getName(), e);
+            AppLogger.error(TAG, "Error extracting component: " + component.getName(), e);
             return false;
         } finally {
             // 清理临时文件
@@ -370,7 +370,7 @@ public class InitializationFragment extends Fragment {
                 try {
                     java.nio.file.Files.deleteIfExists(tempZipFile.toPath());
                 } catch (IOException e) {
-                    Log.w(TAG, "Failed to delete temp file: " + tempZipFile.getAbsolutePath(), e);
+                    AppLogger.warn(TAG, "Failed to delete temp file: " + tempZipFile.getAbsolutePath(), e);
                 }
             }
         }
@@ -426,7 +426,7 @@ public class InitializationFragment extends Fragment {
             return true;
             
         } catch (Exception e) {
-            Log.e(TAG, "SevenZipJBinding extraction failed", e);
+            AppLogger.error(TAG, "SevenZipJBinding extraction failed", e);
             return false;
         }
     }
@@ -527,7 +527,7 @@ public class InitializationFragment extends Fragment {
             }
             
             if (extractOperationResult != ExtractOperationResult.OK) {
-                Log.w(TAG, "Extraction operation result: " + extractOperationResult);
+                AppLogger.warn(TAG, "Extraction operation result: " + extractOperationResult);
             }
         }
         
@@ -632,7 +632,7 @@ public class InitializationFragment extends Fragment {
             return true;
             
         } catch (Exception e) {
-            Log.e(TAG, "ZipInputStream extraction failed", e);
+            AppLogger.error(TAG, "ZipInputStream extraction failed", e);
             return false;
         }
     }
@@ -650,7 +650,7 @@ public class InitializationFragment extends Fragment {
                 zis.closeEntry();
             }
         } catch (IOException e) {
-            Log.e(TAG, "Error counting zip entries", e);
+            AppLogger.error(TAG, "Error counting zip entries", e);
         }
         return count;
     }
@@ -721,8 +721,8 @@ public class InitializationFragment extends Fragment {
         
         String errorMessage = "解压失败: " + error.getMessage();
         Toast.makeText(requireActivity(), errorMessage, Toast.LENGTH_LONG).show();
-        
-        Log.e(TAG, "Extraction error handled", error);
+
+        AppLogger.error(TAG, "Extraction error handled", error);
     }
     
     /**
@@ -748,7 +748,7 @@ public class InitializationFragment extends Fragment {
             }
         } catch (Exception e) {
             Toast.makeText(requireActivity(), ".NET 环境安装成功！", Toast.LENGTH_SHORT).show();
-            Log.w(TAG, "Failed to get installed versions", e);
+            AppLogger.warn(TAG, "Failed to get installed versions", e);
         }
         
         // 延迟后回调，给用户看到成功状态的时间

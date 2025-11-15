@@ -1,7 +1,5 @@
 package com.app.ralaunch.utils;
 
-import android.util.Log;
-
 import com.app.ralib.extractors.BasicSevenZipExtractor;
 import com.app.ralib.extractors.ExtractorCollection;
 import com.app.ralib.extractors.GogShFileExtractor;
@@ -10,6 +8,7 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -51,7 +50,7 @@ public class GameExtractor {
         long availableSpace = outputDir.getUsableSpace();
         long requiredSpace = inputFile.length() * 3; // 预留3倍空间用于解压
 
-        Log.d(TAG, String.format("Space check: available=%.1f GB, required=%.1f GB",
+        AppLogger.debug(TAG, String.format("Space check: available=%.1f GB, required=%.1f GB",
                 availableSpace / 1024.0 / 1024 / 1024,
                 requiredSpace / 1024.0 / 1024 / 1024));
 
@@ -61,7 +60,7 @@ public class GameExtractor {
                     requiredSpace / 1024.0 / 1024 / 1024,
                     availableSpace / 1024.0 / 1024 / 1024
             );
-            Log.e(TAG, errorMsg);
+            AppLogger.error(TAG, errorMsg);
             if (listener != null) {
                 listener.onError(errorMsg);
             }
@@ -83,7 +82,7 @@ public class GameExtractor {
                         } else if (extractorIndex == 1) { // BasicSevenZipExtractor
                             listener.onProgress(message, (int)((0.7f+progress*0.3f)*100));
                         } else {
-                            Log.w(TAG, "Unknown extractor index: " + extractorIndex);
+                            AppLogger.warn(TAG, "Unknown extractor index: " + extractorIndex);
                         }
                     }
                 }
@@ -105,14 +104,14 @@ public class GameExtractor {
                         } else if (extractorIndex == 1) {
                             var gamePath = (Path)state.get(GogShFileExtractor.STATE_KEY_GAME_PATH);
                             if (gamePath == null) {
-                                Log.e(TAG, "Game path is null in state");
+                                AppLogger.error(TAG, "Game path is null in state");
                                 listener.onError("无法获取游戏路径");
                                 return;
                             }
                             var modLoaderPath = Paths.get(outputDir, "GoG Games", "ModLoader");
                             listener.onComplete(gamePath.toString(), modLoaderPath.toString());
                         } else {
-                            Log.w(TAG, "Unknown extractor index: " + extractorIndex);
+                            AppLogger.warn(TAG, "Unknown extractor index: " + extractorIndex);
                         }
                     }
                 }
@@ -133,7 +132,7 @@ public class GameExtractor {
                     .build()
                     .extractAllInNewThread();
         } catch (Exception e) {
-            Log.e(TAG, "Complete installation failed", e);
+            AppLogger.error(TAG, "Complete installation failed", e);
             if (listener != null) {
                 listener.onError("安装失败: " + e.getMessage());
             }
@@ -152,7 +151,7 @@ public class GameExtractor {
                     if (extractorIndex == 0) { // GogShFileExtractor
                         listener.onProgress(message, (int)(progress*100));
                     } else {
-                        Log.w(TAG, "Unknown extractor index: " + extractorIndex);
+                        AppLogger.warn(TAG, "Unknown extractor index: " + extractorIndex);
                     }
                 }
             }
@@ -171,13 +170,13 @@ public class GameExtractor {
                     if (extractorIndex == 0) {
                         var gamePath = (Path)state.get(GogShFileExtractor.STATE_KEY_GAME_PATH);
                         if (gamePath == null) {
-                            Log.e(TAG, "Game path is null in state");
+                            AppLogger.error(TAG, "Game path is null in state");
                             listener.onError("无法获取游戏路径");
                             return;
                         }
                         listener.onComplete(gamePath.toString(), null);
                     } else {
-                        Log.w(TAG, "Unknown extractor index: " + extractorIndex);
+                        AppLogger.warn(TAG, "Unknown extractor index: " + extractorIndex);
                     }
                 }
             }
@@ -194,192 +193,138 @@ public class GameExtractor {
     }
 
     /**
-     * 分析 ModLoader ZIP 文件结构，确定正确的解压前缀路径
+     * 智能分析 ZIP 文件结构,确定正确的解压前缀路径
      *
-     * @param zipFilePath ModLoader ZIP 文件路径
+     * 分析策略:
+     * 1. 如果ZIP只有一个根目录,使用该目录作为前缀
+     * 2. 如果有多个根目录,检查是否有明显的包装目录(如installer等)
+     * 3. 根据文件名推断可能的ModLoader类型
+     * 4. 如果无法确定,返回空路径(解压到当前目录)
+     *
+     * @param zipFilePath ZIP 文件路径
      * @return 适合解压的前缀路径
      */
     public static Path getProperExtractionPrefixForModLoaderZip(Path zipFilePath) {
         try (ZipFile zip = new ZipFile(zipFilePath.toFile())) {
-            List<String> rootEntries = Arrays.asList(zip.stream()
-                    .map(ZipEntry::getName)
-                    .filter(name -> {
-                        // Filter logic for root directory entries
-                        return !name.contains("/") || name.lastIndexOf('/') == name.length() - 1;
-                    })
-                    .toArray(String[]::new));
+            // 1. 收集所有根级条目(文件和目录)
+            List<String> rootEntries = new ArrayList<>();
+            List<String> rootDirs = new ArrayList<>();
 
+            zip.stream().forEach(entry -> {
+                String name = entry.getName();
+                // 提取根级路径(第一个/之前的部分)
+                int firstSlash = name.indexOf('/');
+                if (firstSlash > 0) {
+                    String rootDir = name.substring(0, firstSlash + 1);
+                    if (!rootDirs.contains(rootDir)) {
+                        rootDirs.add(rootDir);
+                    }
+                } else if (!name.isEmpty()) {
+                    // 根级文件
+                    rootEntries.add(name);
+                }
+            });
 
-            if (rootEntries.size() == 1) {
-                return Paths.get(rootEntries.get(0));
-            } else if (rootEntries.contains("ModLoader/")) {
-                return Paths.get("ModLoader");
-            } else if (rootEntries.contains("tModLoader/")) {
-                return Paths.get("tModLoader");
-            } else if (rootEntries.contains("SMAPI/")) {
-                return Paths.get("SMAPI");
+            AppLogger.debug(TAG, "ZIP结构分析: " + rootDirs.size() + " 个根目录, " +
+                    rootEntries.size() + " 个根文件");
+
+            // 2. 如果只有一个根目录且没有根文件,使用该目录
+            if (rootDirs.size() == 1 && rootEntries.isEmpty()) {
+                String singleRoot = rootDirs.get(0);
+                AppLogger.info(TAG, "检测到单一根目录: " + singleRoot);
+                return Paths.get(singleRoot);
+            }
+
+            // 3. 如果有多个根目录,尝试智能选择
+            if (rootDirs.size() > 1) {
+                // 3.1 优先选择非installer/setup等包装目录
+                String selected = selectBestRootDirectory(rootDirs, zipFilePath);
+                if (selected != null) {
+                    AppLogger.info(TAG, "智能选择根目录: " + selected);
+                    return Paths.get(selected);
+                }
+            }
+
+            // 4. 如果有根级文件,或无法智能选择,返回空路径
+            if (!rootEntries.isEmpty()) {
+                AppLogger.info(TAG, "检测到根级文件,直接解压");
             } else {
-                // Check for SMAPI with version number directory
-                for (String entry : rootEntries) {
-                    if (entry.matches("^SMAPI [\\d\\.]+ installer/$")) {
-                        return Paths.get(entry);
-                    }
-                }
+                AppLogger.warn(TAG, "无法确定最佳解压路径,使用默认策略");
             }
-
-            // unknown structure
             return Paths.get("");
+
         } catch (IOException e) {
-            Log.e(TAG, "Failed to analyze ModLoader ZIP structure", e);
+            AppLogger.error(TAG, "ZIP结构分析失败: " + e.getMessage(), e);
             return Paths.get("");
         }
     }
 
-
     /**
-     * 检测并配置 SMAPI（星露谷物语模组加载器）
+     * 从多个根目录中选择最佳的解压目录
      *
-     * @param context Android 上下文
-     * @param gameDir 游戏目录
-     * @return 包含 [modLoaderPath, gameBodyPath] 的数组，如果不是 SMAPI 则返回 null
+     * 选择策略:
+     * 1. 排除installer/setup/temp等临时/包装目录
+     * 2. 优先选择与ZIP文件名相关的目录
+     * 3. 选择名称最短的目录(通常是主目录)
+     *
+     * @param rootDirs 所有根目录列表
+     * @param zipFilePath ZIP文件路径(用于推断)
+     * @return 最佳目录名,如果无法确定返回null
      */
-    public static String[] detectAndConfigureSMAPI(android.content.Context context, File gameDir) {
-        try {
-            // 检查是否需要运行 SMAPI 安装器
-            File installerDll = findSMAPIInstallerDll(gameDir);
-            if (installerDll != null && installerDll.exists()) {
-                Log.i(TAG, "🔧 检测到 SMAPI 安装器: " + installerDll.getAbsolutePath());
-
-                // 检查是否已安装 SMAPI
-                boolean smapiInstalled = checkSMAPIInstalled(gameDir);
-                if (!smapiInstalled) {
-                    Log.i(TAG, "📦 SMAPI 尚未安装，准备运行安装器...");
-                    // 运行 SMAPI 安装器（通过 dotnet_host）
-                    runSMAPIInstaller(context, installerDll, gameDir);
-                } else {
-                    Log.d(TAG, "[OK] SMAPI 已安装");
-                }
-            }
-
-            // 检查已安装的 SMAPI
-            // SMAPI 可能的位置：
-            // 1. 直接在游戏目录下
-            // 2. 在 internal/linux/ 子目录中
-
-            File[] searchDirs = {
-                    gameDir,                                          // 直接在根目录
-                    new File(gameDir, "internal/linux"),             // Linux SMAPI 结构
-                    new File(gameDir, "internal")                    // 其他可能结构
-            };
-
-            for (File searchDir : searchDirs) {
-                if (!searchDir.exists() || !searchDir.isDirectory()) {
-                    continue;
-                }
-
-                // 检查 SMAPI 标志文件
-                File smapiExe = new File(searchDir, "StardewModdingAPI.exe");
-                File smapiDll = new File(searchDir, "StardewModdingAPI.dll");
-                File gameExe = new File(searchDir, "Stardew Valley.exe");
-                File gameDll = new File(searchDir, "Stardew Valley.dll");
-
-                // 检查是否存在 SMAPI
-                boolean hasSMAPI = smapiExe.exists() || smapiDll.exists();
-                boolean hasGameBody = gameExe.exists() || gameDll.exists();
-
-                if (hasSMAPI && hasGameBody) {
-                    Log.d(TAG, "[OK] 检测到 SMAPI (星露谷物语模组加载器)");
-                    Log.d(TAG, "  检测位置: " + searchDir.getAbsolutePath());
-
-                    // 确定 SMAPI 启动器路径（优先使用 .dll）
-                    String smapiPath = smapiDll.exists() ?
-                            smapiDll.getAbsolutePath() : smapiExe.getAbsolutePath();
-
-                    // 确定游戏本体路径（优先使用 .dll）
-                    String gameBodyPath = gameDll.exists() ?
-                            gameDll.getAbsolutePath() : gameExe.getAbsolutePath();
-
-                    Log.d(TAG, "  SMAPI 启动器: " + smapiPath);
-                    Log.d(TAG, "  游戏本体: " + gameBodyPath);
-
-                    // 检查 Mods 目录（可能在不同位置）
-                    File[] modsDirCandidates = {
-                            new File(searchDir, "Mods"),
-                            new File(gameDir, "Mods")
-                    };
-
-                    for (File modsDir : modsDirCandidates) {
-                        if (modsDir.exists() && modsDir.isDirectory()) {
-                            Log.d(TAG, "  Mods 目录: " + modsDir.getAbsolutePath());
-                            break;
-                        }
-                    }
-
-                    return new String[] { smapiPath, gameBodyPath };
-                }
-            }
-
-            return null;
-        } catch (Exception e) {
-            Log.e(TAG, "SMAPI 检测失败", e);
+    private static String selectBestRootDirectory(List<String> rootDirs, Path zipFilePath) {
+        if (rootDirs == null || rootDirs.isEmpty()) {
             return null;
         }
-    }
 
-    /**
-     * 查找 SMAPI.Installer.dll 文件
-     */
-    private static File findSMAPIInstallerDll(File gameDir) {
-        File[] candidates = {
-                new File(gameDir, "internal/linux/SMAPI.Installer.dll"),
-                new File(gameDir, "internal/unix/SMAPI.Installer.dll"),
-                new File(gameDir, "SMAPI.Installer.dll")
-        };
+        // 需要排除的包装目录关键词(小写)
+        List<String> excludeKeywords = Arrays.asList(
+                "installer", "setup", "temp", "tmp", "extract",
+                "package", "archive", "download"
+        );
 
-        for (File candidate : candidates) {
-            if (candidate.exists() && candidate.isFile()) {
-                return candidate;
-            }
+        // 过滤掉包装目录
+        List<String> filtered = rootDirs.stream()
+                .filter(dir -> {
+                    String lowerDir = dir.toLowerCase();
+                    return excludeKeywords.stream()
+                            .noneMatch(keyword -> lowerDir.contains(keyword));
+                })
+                .collect(java.util.stream.Collectors.toList());
+
+        if (filtered.isEmpty()) {
+            // 如果全部被过滤,返回原列表中名称最短的
+            return rootDirs.stream()
+                    .min(java.util.Comparator.comparingInt(String::length))
+                    .orElse(null);
         }
-        return null;
-    }
 
-    /**
-     * 检查 SMAPI 是否已安装
-     */
-    private static boolean checkSMAPIInstalled(File gameDir) {
-        File smapiDll = new File(gameDir, "StardewModdingAPI.dll");
-        File smapiInternal = new File(gameDir, "smapi-internal");
-        return smapiDll.exists() && smapiInternal.exists() && smapiInternal.isDirectory();
-    }
-
-    /**
-     * 运行 SMAPI 安装器
-     */
-    private static void runSMAPIInstaller(android.content.Context context, File installerDll, File gameDir) {
-        try {
-            Log.i(TAG, "🚀 启动 SMAPI 安装器...");
-            Log.i(TAG, "  安装器: " + installerDll.getAbsolutePath());
-            Log.i(TAG, "  游戏目录: " + gameDir.getAbsolutePath());
-
-            // 构建参数：--install --game-path "游戏路径" --no-prompt
-            String[] args = {
-                    "--install",
-                    "--game-path", gameDir.getAbsolutePath(),
-                    "--no-prompt"
-            };
-
-            Log.i(TAG, "  参数: " + String.join(" ", args));
-
-            // 使用 netcorehost API 运行安装器
-            // 注意：SMAPI 安装器需要通过 netcorehost 启动，这里暂时跳过
-            // 用户需要手动运行安装器或使用其他方式安装 SMAPI
-            Log.w(TAG, "[WARN]  SMAPI 安装器需要手动运行或使用其他方式安装");
-            Log.w(TAG, "[WARN]  安装器路径: " + installerDll.getAbsolutePath());
-            Log.w(TAG, "[WARN]  游戏目录: " + gameDir.getAbsolutePath());
-
-        } catch (Exception e) {
-            Log.e(TAG, "运行 SMAPI 安装器失败", e);
+        // 获取ZIP文件名(不含扩展名)
+        String zipName = zipFilePath.getFileName().toString();
+        int dotIndex = zipName.lastIndexOf('.');
+        if (dotIndex > 0) {
+            zipName = zipName.substring(0, dotIndex);
         }
+        final String finalZipName = zipName.toLowerCase();
+
+        // 优先选择与ZIP文件名相关的目录
+        String related = filtered.stream()
+                .filter(dir -> {
+                    String dirName = dir.replace("/", "").toLowerCase();
+                    return finalZipName.contains(dirName) || dirName.contains(finalZipName);
+                })
+                .findFirst()
+                .orElse(null);
+
+        if (related != null) {
+            return related;
+        }
+
+        // 否则选择名称最短的目录(通常是主目录)
+        return filtered.stream()
+                .min(java.util.Comparator.comparingInt(String::length))
+                .orElse(null);
     }
+
+
+
 }

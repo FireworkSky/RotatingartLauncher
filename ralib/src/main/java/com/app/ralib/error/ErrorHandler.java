@@ -240,6 +240,48 @@ public class ErrorHandler {
     }
 
     /**
+     * Show native error (called from C/C++ via JNI)
+     *
+     * @param title Error title
+     * @param message Error message
+     * @param isFatal Whether this is a fatal error
+     */
+    public static void showNativeError(String title, String message, boolean isFatal) {
+        getInstance().showNativeErrorDialog(title, message, isFatal);
+    }
+
+    /**
+     * Show native error dialog implementation
+     */
+    private void showNativeErrorDialog(String title, String message, boolean isFatal) {
+        mainHandler.post(() -> {
+            FragmentActivity activity = getActivity();
+            if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
+                return;
+            }
+
+            ErrorDialog dialog = isFatal
+                ? ErrorDialog.createFatal(title, new RuntimeException(message))
+                : ErrorDialog.create(title, new RuntimeException(message));
+
+            // 致命错误添加退出按钮
+            if (isFatal) {
+                dialog.setCustomAction("退出应用", () -> {
+                    activity.finishAffinity();
+                    System.exit(1);
+                });
+            }
+
+            try {
+                dialog.show(activity.getSupportFragmentManager(), "NativeErrorDialog");
+            } catch (Exception e) {
+                // 记录异常
+                logError("Failed to show native error dialog", e, false);
+            }
+        });
+    }
+
+    /**
      * Try-Catch辅助方法
      */
     public static void tryCatch(Runnable action) {

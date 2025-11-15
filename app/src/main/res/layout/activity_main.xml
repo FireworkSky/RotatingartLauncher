@@ -151,281 +151,293 @@
                 android:orientation="vertical"
                 android:paddingStart="8dp">
 
-                <!-- 选中的游戏信息卡片 -->
-                <androidx.cardview.widget.CardView
-                    android:id="@+id/selectedGameInfo"
+                <ScrollView
                     android:layout_width="match_parent"
                     android:layout_height="0dp"
-                    android:layout_weight="1"
-                    app:cardCornerRadius="16dp"
-                    app:cardElevation="4dp"
-                    app:cardBackgroundColor="?attr/backgroundCard"
-                    android:visibility="gone">
-
+                    android:layout_weight="1">
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
-                        android:orientation="vertical"
-                        android:padding="20dp"
+                        android:orientation="vertical">
 
-                        android:gravity="center">
+                        <!-- 空状态提示卡片 -->
+                        <androidx.cardview.widget.CardView
+                            android:id="@+id/emptySelectionText"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            app:cardCornerRadius="16dp"
+                            app:cardElevation="2dp"
+                            app:cardBackgroundColor="?attr/backgroundCard"
+                            android:visibility="visible">
 
-                        <!-- 游戏图标容器 -->
-                        <LinearLayout
-                            android:layout_width="100dp"
-                            android:layout_height="100dp"
-                            android:background="@drawable/bg_rounded_transparent"
-                            android:backgroundTint="?attr/backgroundCard"
-                            android:gravity="center"
-                            android:padding="12dp">
-
-                            <ImageView
-                                android:id="@+id/selectedGameImage"
+                            <LinearLayout
                                 android:layout_width="match_parent"
                                 android:layout_height="match_parent"
-                                android:scaleType="centerCrop"
-                                android:src="@drawable/ic_game_default" />
+                                android:orientation="vertical"
+                                android:gravity="center"
+                                android:padding="40dp">
 
-                        </LinearLayout>
+                                <ImageView
+                                    android:layout_width="64dp"
+                                    android:layout_height="64dp"
+                                    android:src="@drawable/ic_game_controller"
+                                    app:tint="#666666"
+                                    android:layout_marginBottom="16dp" />
 
-                        <!-- 游戏名称 -->
-                        <TextView
-                            android:id="@+id/selectedGameName"
+                                <TextView
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:gravity="center"
+                                    android:text="请选择一个游戏"
+                                    android:textColor="?attr/textHint"
+                                    android:textSize="16sp"
+                                    android:textStyle="bold" />
+
+                                <TextView
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:gravity="center"
+                                    android:text="点击左侧游戏开始"
+                                    android:textColor="?attr/textHint"
+                                    android:textSize="12sp"
+                                    android:layout_marginTop="8dp" />
+
+                            </LinearLayout>
+
+                        </androidx.cardview.widget.CardView>
+
+                        <!-- 选中的游戏信息卡片 -->
+                        <androidx.cardview.widget.CardView
+                            android:id="@+id/selectedGameInfo"
                             android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="16dp"
-                            android:gravity="center"
-                            android:text="游戏名称"
-                            android:textColor="?attr/textPrimary"
-                            android:textSize="18sp"
-                            android:textStyle="bold"
-                            android:maxLines="1"
-                            android:ellipsize="end" />
+                            android:layout_height="0dp"
+                            android:layout_weight="1"
+                            app:cardCornerRadius="16dp"
+                            app:cardElevation="4dp"
+                            app:cardBackgroundColor="?attr/backgroundCard"
+                            android:visibility="gone">
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:orientation="vertical"
+                                android:padding="20dp"
+
+                                android:gravity="center">
+
+                                <!-- 游戏图标容器 -->
+                                <LinearLayout
+                                    android:layout_width="100dp"
+                                    android:layout_height="100dp"
+                                    android:background="@drawable/bg_rounded_transparent"
+                                    android:backgroundTint="?attr/backgroundCard"
+                                    android:gravity="center"
+                                    android:padding="12dp">
+
+                                    <ImageView
+                                        android:id="@+id/selectedGameImage"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="match_parent"
+                                        android:scaleType="centerCrop"
+                                        android:src="@drawable/ic_game_default" />
+
+                                </LinearLayout>
+
+                                <!-- 游戏名称 -->
+                                <TextView
+                                    android:id="@+id/selectedGameName"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="16dp"
+                                    android:gravity="center"
+                                    android:text="游戏名称"
+                                    android:textColor="?attr/textPrimary"
+                                    android:textSize="18sp"
+                                    android:textStyle="bold"
+                                    android:maxLines="1"
+                                    android:ellipsize="end" />
 
 
 
-                        <!-- 游戏描述 -->
-                        <TextView
-                            android:id="@+id/selectedGameDescription"
+                                <!-- 游戏描述 -->
+                                <TextView
+                                    android:id="@+id/selectedGameDescription"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="8dp"
+                                    android:gravity="center"
+                                    android:text="游戏描述"
+                                    android:textColor="?attr/textHint"
+                                    android:textSize="12sp"
+                                    android:maxLines="2"
+                                    android:ellipsize="end" />
+
+                                <!-- 游戏程序集路径编辑区域 -->
+                                <LinearLayout
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="12dp"
+                                    android:orientation="vertical"
+                                    android:padding="12dp"
+                                    android:background="@drawable/bg_rounded_transparent"
+                                    android:backgroundTint="?attr/backgroundCard">
+
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="程序集路径"
+                                        android:textColor="?attr/textPrimary"
+                                        android:textSize="12sp"
+                                        android:textStyle="bold"
+                                        android:layout_marginBottom="8dp" />
+
+                                    <EditText
+                                        android:id="@+id/selectedGamePath"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:text="游戏路径"
+                                        android:textColor="?attr/textPrimary"
+                                        android:textSize="11sp"
+                                        android:background="@drawable/bg_rounded_transparent"
+                                        android:backgroundTint="?attr/backgroundCard"
+                                        android:padding="10dp"
+                                        android:maxLines="3"
+                                        android:ellipsize="end"
+                                        android:inputType="textMultiLine"
+                                        android:textCursorDrawable="@null"
+                                        android:layout_marginBottom="8dp" />
+
+                                    <Button
+                                        android:id="@+id/saveGamePathButton"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="36dp"
+                                        android:text="保存路径"
+                                        android:textColor="?attr/textPrimary"
+                                        android:textSize="12sp"
+                                        android:textStyle="bold"
+                                        android:background="@drawable/bg_rounded_transparent"
+                                        android:backgroundTint="@color/accent_primary" />
+
+                                </LinearLayout>
+
+                                <!-- ModLoader 开关 -->
+                                <LinearLayout
+                                    android:id="@+id/modLoaderSwitchContainer"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="16dp"
+                                    android:orientation="horizontal"
+                                    android:gravity="center_vertical"
+                                    android:padding="12dp"
+                                    android:background="@drawable/bg_rounded_transparent"
+                                    android:backgroundTint="?attr/backgroundCard"
+                                    android:visibility="gone">
+
+                                    <TextView
+                                        android:layout_width="0dp"
+                                        android:layout_height="wrap_content"
+                                        android:layout_weight="1"
+                                        android:text="启用 ModLoader"
+                                        android:textColor="?attr/textPrimary"
+                                        android:textSize="14sp"
+                                        android:textStyle="bold" />
+
+                                    <androidx.appcompat.widget.SwitchCompat
+                                        android:id="@+id/modLoaderSwitch"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:checked="true"
+                                        app:thumbTint="#FFFFFF"
+                                        app:trackTint="#666666" />
+
+                                </LinearLayout>
+
+                            </LinearLayout>
+
+                        </androidx.cardview.widget.CardView>
+
+                        <!-- 运行时版本选择 - 缩小版 -->
+                        <com.google.android.material.card.MaterialCardView
+                            android:id="@+id/runtimeSelectContainer"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="8dp"
-                            android:gravity="center"
-                            android:text="游戏描述"
-                            android:textColor="?attr/textHint"
-                            android:textSize="12sp"
-                            android:maxLines="2"
-                            android:ellipsize="end" />
-
-                        <!-- 游戏程序集路径编辑区域 -->
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="12dp"
-                            android:orientation="vertical"
-                            android:padding="12dp"
-                            android:background="@drawable/bg_rounded_transparent"
-                            android:backgroundTint="?attr/backgroundCard">
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="程序集路径"
-                                android:textColor="?attr/textPrimary"
-                                android:textSize="12sp"
-                                android:textStyle="bold"
-                                android:layout_marginBottom="8dp" />
-
-                            <EditText
-                                android:id="@+id/selectedGamePath"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:text="游戏路径"
-                                android:textColor="?attr/textPrimary"
-                                android:textSize="11sp"
-                            android:background="@drawable/bg_rounded_transparent"
-                            android:backgroundTint="?attr/backgroundCard"
-                                android:padding="10dp"
-                                android:maxLines="3"
-                                android:ellipsize="end"
-                                android:inputType="textMultiLine"
-                                android:textCursorDrawable="@null"
-                                android:layout_marginBottom="8dp" />
-
-                            <Button
-                                android:id="@+id/saveGamePathButton"
-                                android:layout_width="match_parent"
-                                android:layout_height="36dp"
-                                android:text="保存路径"
-                                android:textColor="?attr/textPrimary"
-                                android:textSize="12sp"
-                                android:textStyle="bold"
-                                android:background="@drawable/bg_rounded_transparent"
-                                android:backgroundTint="@color/accent_primary" />
-
-                        </LinearLayout>
-
-                        <!-- ModLoader 开关 -->
-                        <LinearLayout
-                            android:id="@+id/modLoaderSwitchContainer"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="16dp"
-                            android:orientation="horizontal"
-                            android:gravity="center_vertical"
-                            android:padding="12dp"
-                            android:background="@drawable/bg_rounded_transparent"
-                            android:backgroundTint="?attr/backgroundCard"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:foreground="?attr/selectableItemBackground"
+                            app:cardCornerRadius="12dp"
+                            app:cardElevation="2dp"
+                            app:strokeWidth="1dp"
+                            app:strokeColor="@color/accent_primary"
+                            app:cardBackgroundColor="?attr/backgroundCard"
                             android:visibility="gone">
 
-                            <TextView
-                                android:layout_width="0dp"
+                            <LinearLayout
+                                android:id="@+id/btnRuntimeSelector"
+                                android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:text="启用 ModLoader"
-                                android:textColor="?attr/textPrimary"
-                                android:textSize="14sp"
-                                android:textStyle="bold" />
+                                android:orientation="horizontal"
+                                android:padding="12dp"
+                                android:gravity="center_vertical">
 
-                            <androidx.appcompat.widget.SwitchCompat
-                                android:id="@+id/modLoaderSwitch"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:checked="true"
-                                app:thumbTint="#FFFFFF"
-                                app:trackTint="#666666" />
+                                <ImageView
+                                    android:layout_width="28dp"
+                                    android:layout_height="28dp"
+                                    android:src="@drawable/ic_settings"
+                                    android:background="@drawable/bg_circle"
+                                    android:backgroundTint="@color/accent_primary"
+                                    android:padding="6dp"
+                                    app:tint="?attr/backgroundCard"
+                                    android:layout_marginEnd="10dp" />
 
-                        </LinearLayout>
+                                <LinearLayout
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:orientation="vertical">
+
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text=".NET 运行时"
+                                        android:textColor="?attr/textSecondary"
+                                        android:textSize="10sp" />
+
+                                    <TextView
+                                        android:id="@+id/tvCurrentRuntime"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text=".NET 10.0.0"
+                                        android:textColor="?attr/textPrimary"
+                                        android:textSize="13sp"
+                                        android:textStyle="bold"
+                                        android:layout_marginTop="2dp" />
+
+                                </LinearLayout>
+
+                                <ImageView
+                                    android:layout_width="18dp"
+                                    android:layout_height="18dp"
+                                    android:src="@drawable/ic_arrow_forward"
+                                    app:tint="@color/accent_primary" />
+
+                            </LinearLayout>
+
+                        </com.google.android.material.card.MaterialCardView>
 
                     </LinearLayout>
-
-                </androidx.cardview.widget.CardView>
-
-                <!-- 运行时版本选择 - 缩小版 -->
-                <com.google.android.material.card.MaterialCardView
-                    android:id="@+id/runtimeSelectContainer"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:foreground="?attr/selectableItemBackground"
-                    app:cardCornerRadius="12dp"
-                    app:cardElevation="2dp"
-                    app:strokeWidth="1dp"
-                    app:strokeColor="@color/accent_primary"
-                    app:cardBackgroundColor="?attr/backgroundCard"
-                    android:visibility="gone">
-
-                    <LinearLayout
-                        android:id="@+id/btnRuntimeSelector"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:padding="12dp"
-                        android:gravity="center_vertical">
-
-                        <ImageView
-                            android:layout_width="28dp"
-                            android:layout_height="28dp"
-                            android:src="@drawable/ic_settings"
-                            android:background="@drawable/bg_circle"
-                            android:backgroundTint="@color/accent_primary"
-                            android:padding="6dp"
-                            app:tint="?attr/backgroundCard"
-                            android:layout_marginEnd="10dp" />
-
-                        <LinearLayout
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:orientation="vertical">
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text=".NET 运行时"
-                                android:textColor="?attr/textSecondary"
-                                android:textSize="10sp" />
-
-                            <TextView
-                                android:id="@+id/tvCurrentRuntime"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text=".NET 10.0.0"
-                                android:textColor="?attr/textPrimary"
-                                android:textSize="13sp"
-                                android:textStyle="bold"
-                                android:layout_marginTop="2dp" />
-
-                        </LinearLayout>
-
-                        <ImageView
-                            android:layout_width="18dp"
-                            android:layout_height="18dp"
-                            android:src="@drawable/ic_arrow_forward"
-                            app:tint="@color/accent_primary" />
-
-                    </LinearLayout>
-
-                </com.google.android.material.card.MaterialCardView>
+                </ScrollView>
 
                 <!-- 启动游戏按钮 - 现代化设计 -->
                 <com.app.ralib.ui.ModernButton
                     android:id="@+id/launchGameButton"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
+                    android:layout_marginTop="8dp"
                     app:buttonText="启动游戏"
                     app:buttonIcon="@drawable/ic_play"
                     app:buttonColor="@color/accent_primary"
                     android:visibility="gone" />
-
-                <!-- 空状态提示卡片 -->
-                <androidx.cardview.widget.CardView
-                    android:id="@+id/emptySelectionText"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    app:cardCornerRadius="16dp"
-                    app:cardElevation="2dp"
-                    app:cardBackgroundColor="?attr/backgroundCard"
-                    android:visibility="visible">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:orientation="vertical"
-                        android:gravity="center"
-                        android:padding="40dp">
-
-                        <ImageView
-                            android:layout_width="64dp"
-                            android:layout_height="64dp"
-                            android:src="@drawable/ic_game_controller"
-                            app:tint="#666666"
-                            android:layout_marginBottom="16dp" />
-
-                        <TextView
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:gravity="center"
-                            android:text="请选择一个游戏"
-                            android:textColor="?attr/textHint"
-                            android:textSize="16sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:gravity="center"
-                            android:text="点击左侧游戏开始"
-                            android:textColor="?attr/textHint"
-                            android:textSize="12sp"
-                            android:layout_marginTop="8dp" />
-
-                    </LinearLayout>
-
-                </androidx.cardview.widget.CardView>
 
             </LinearLayout>
 

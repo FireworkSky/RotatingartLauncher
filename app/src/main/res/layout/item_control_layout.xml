@@ -1,80 +1,95 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/layout_card"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="8dp"
-    app:cardCornerRadius="12dp"
-    app:cardElevation="2dp"
+    android:layout_marginHorizontal="16dp"
+    android:layout_marginVertical="6dp"
+    android:clickable="true"
+    android:focusable="true"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="0dp"
+    app:strokeWidth="0dp"
     app:cardBackgroundColor="?attr/backgroundCard">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:padding="16dp">
+        android:padding="16dp"
+        android:gravity="center_vertical">
 
+        <!-- 图标 -->
         <ImageView
-            android:layout_width="40dp"
-            android:layout_height="40dp"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
             android:src="@drawable/ic_controller"
-            app:tint="@color/accent_primary"
-            android:layout_marginEnd="16dp" />
+            app:tint="?attr/textPrimary"
+            android:layout_marginEnd="16dp"
+            android:padding="8dp"
+            android:background="@drawable/bg_card_8dp"
+            android:backgroundTint="?attr/backgroundSecondary" />
 
+        <!-- 布局信息 -->
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:orientation="vertical">
 
-            <TextView
-                android:id="@+id/layout_name"
-                android:layout_width="match_parent"
+            <LinearLayout
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="布局名称"
-                android:textColor="?attr/textPrimary"
-                android:textSize="16sp"
-                android:textStyle="bold" />
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:id="@+id/layout_name"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="布局名称"
+                    android:textColor="?attr/textPrimary"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <!-- 默认标识 -->
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/default_chip"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="默认"
+                    android:textSize="10sp"
+                    android:visibility="gone"
+                    android:layout_marginStart="8dp"
+                    app:chipMinHeight="20dp"
+                    app:chipCornerRadius="10dp"
+                    app:chipBackgroundColor="@color/accent_primary"
+                    style="@style/Widget.Material3.Chip.Assist" />
+
+            </LinearLayout>
 
             <TextView
                 android:id="@+id/layout_info"
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="5个控件"
-                android:textColor="?attr/textHint"
-                android:textSize="12sp"
-                android:layout_marginTop="2dp" />
+                android:textColor="?attr/textSecondary"
+                android:textSize="13sp"
+                android:layout_marginTop="4dp" />
 
         </LinearLayout>
 
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal">
-
-            <ImageButton
-                android:id="@+id/btn_set_default"
-                android:layout_width="36dp"
-                android:layout_height="36dp"
-                android:background="@drawable/bg_card_8dp"
-                android:backgroundTint="@color/accent_primary"
-                android:contentDescription="设为默认"
-                android:src="@drawable/ic_star"
-                app:tint="?attr/textPrimary"
-                android:layout_marginEnd="8dp" />
-
-            <ImageButton
-                android:id="@+id/btn_delete"
-                android:layout_width="36dp"
-                android:layout_height="36dp"
-                android:background="@drawable/bg_card_8dp"
-                android:backgroundTint="@color/delete_button_bg"
-                android:contentDescription="删除"
-                android:src="@drawable/ic_delete"
-                app:tint="?attr/textPrimary" />
-
-        </LinearLayout>
+        <!-- 菜单按钮 -->
+        <ImageButton
+            android:id="@+id/btn_menu"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="更多选项"
+            android:src="@drawable/ic_more_vert"
+            app:tint="?attr/textSecondary" />
 
     </LinearLayout>
 
-</androidx.cardview.widget.CardView>
+</com.google.android.material.card.MaterialCardView>

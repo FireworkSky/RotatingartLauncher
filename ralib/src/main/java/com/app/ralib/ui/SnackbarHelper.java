@@ -71,39 +71,51 @@ public class SnackbarHelper {
         View snackbarView = snackbar.getView();
         TextView textView = snackbarView.findViewById(com.google.android.material.R.id.snackbar_text);
         
-        // 根据类型设置样式
+        // 根据类型设置样式 - Material Design 3
         String icon;
-        int backgroundRes;
-        int textColorRes;
-        
+        int backgroundColor;
+        int strokeColor;
+        int textColor;
+
         switch (type) {
             case SUCCESS:
-                icon = "✓ ";
-                backgroundRes = com.app.ralib.R.drawable.bg_snackbar_success;
-                textColorRes = com.app.ralib.R.color.text_primary;
+                icon = "";
+                backgroundColor = context.getColor(com.app.ralib.R.color.snackbar_success);
+                strokeColor = context.getColor(com.app.ralib.R.color.snackbar_success_stroke);
+                textColor = context.getColor(com.app.ralib.R.color.snackbar_success_text);
                 break;
             case ERROR:
-                icon = "✕ ";
-                backgroundRes = com.app.ralib.R.drawable.bg_snackbar_error;
-                textColorRes = com.app.ralib.R.color.text_primary;
+                icon = "";
+                backgroundColor = context.getColor(com.app.ralib.R.color.snackbar_error);
+                strokeColor = context.getColor(com.app.ralib.R.color.snackbar_error_stroke);
+                textColor = context.getColor(com.app.ralib.R.color.snackbar_error_text);
                 textView.setMaxLines(3);
                 break;
             case WARNING:
-                icon = "⚠ ";
-                backgroundRes = com.app.ralib.R.drawable.bg_snackbar_info;
-                textColorRes = com.app.ralib.R.color.text_primary;
+                icon = "";
+                backgroundColor = context.getColor(com.app.ralib.R.color.snackbar_info);
+                strokeColor = context.getColor(com.app.ralib.R.color.snackbar_info_stroke);
+                textColor = context.getColor(com.app.ralib.R.color.snackbar_info_text);
                 break;
             case INFO:
             default:
-                icon = "ⓘ ";
-                backgroundRes = com.app.ralib.R.drawable.bg_snackbar_info;
-                textColorRes = com.app.ralib.R.color.text_primary;
+                icon = "";
+                backgroundColor = context.getColor(com.app.ralib.R.color.snackbar_info);
+                strokeColor = context.getColor(com.app.ralib.R.color.snackbar_info_stroke);
+                textColor = context.getColor(com.app.ralib.R.color.snackbar_info_text);
                 break;
         }
-        
+
+        // 创建带圆角和描边的背景
+        android.graphics.drawable.GradientDrawable background = new android.graphics.drawable.GradientDrawable();
+        background.setShape(android.graphics.drawable.GradientDrawable.RECTANGLE);
+        background.setColor(backgroundColor);
+        background.setCornerRadius(12 * context.getResources().getDisplayMetrics().density);
+        background.setStroke((int) (1 * context.getResources().getDisplayMetrics().density), strokeColor);
+
         // 应用样式
-        snackbarView.setBackgroundResource(backgroundRes);
-        textView.setTextColor(context.getColor(textColorRes));
+        snackbarView.setBackground(background);
+        textView.setTextColor(textColor);
         textView.setTextSize(14);
         
         if (textView.getMaxLines() == Integer.MAX_VALUE) {
@@ -138,34 +150,51 @@ public class SnackbarHelper {
         // 获取 Snackbar View
         View snackbarView = snackbar.getView();
         TextView textView = snackbarView.findViewById(com.google.android.material.R.id.snackbar_text);
-        
-        // 根据类型设置样式
+
+        // 根据类型设置样式 - Material Design 3
         String icon;
-        int backgroundRes;
-        
+        int backgroundColor;
+        int strokeColor;
+        int textColor;
+
         switch (type) {
             case SUCCESS:
-                icon = "✓ ";
-                backgroundRes = com.app.ralib.R.drawable.bg_snackbar_success;
+                icon = "";
+                backgroundColor = context.getColor(com.app.ralib.R.color.snackbar_success);
+                strokeColor = context.getColor(com.app.ralib.R.color.snackbar_success_stroke);
+                textColor = context.getColor(com.app.ralib.R.color.snackbar_success_text);
                 break;
             case ERROR:
-                icon = "✕ ";
-                backgroundRes = com.app.ralib.R.drawable.bg_snackbar_error;
+                icon = "";
+                backgroundColor = context.getColor(com.app.ralib.R.color.snackbar_error);
+                strokeColor = context.getColor(com.app.ralib.R.color.snackbar_error_stroke);
+                textColor = context.getColor(com.app.ralib.R.color.snackbar_error_text);
                 break;
             case WARNING:
-                icon = "⚠ ";
-                backgroundRes = com.app.ralib.R.drawable.bg_snackbar_info;
+                icon = "";
+                backgroundColor = context.getColor(com.app.ralib.R.color.snackbar_info);
+                strokeColor = context.getColor(com.app.ralib.R.color.snackbar_info_stroke);
+                textColor = context.getColor(com.app.ralib.R.color.snackbar_info_text);
                 break;
             case INFO:
             default:
-                icon = "ⓘ ";
-                backgroundRes = com.app.ralib.R.drawable.bg_snackbar_info;
+                icon = "";
+                backgroundColor = context.getColor(com.app.ralib.R.color.snackbar_info);
+                strokeColor = context.getColor(com.app.ralib.R.color.snackbar_info_stroke);
+                textColor = context.getColor(com.app.ralib.R.color.snackbar_info_text);
                 break;
         }
-        
+
+        // 创建带圆角和描边的背景
+        android.graphics.drawable.GradientDrawable background = new android.graphics.drawable.GradientDrawable();
+        background.setShape(android.graphics.drawable.GradientDrawable.RECTANGLE);
+        background.setColor(backgroundColor);
+        background.setCornerRadius(12 * context.getResources().getDisplayMetrics().density);
+        background.setStroke((int) (1 * context.getResources().getDisplayMetrics().density), strokeColor);
+
         // 应用样式
-        snackbarView.setBackgroundResource(backgroundRes);
-        textView.setTextColor(context.getColor(com.app.ralib.R.color.text_primary));
+        snackbarView.setBackground(background);
+        textView.setTextColor(textColor);
         textView.setTextSize(14);
         textView.setMaxLines(2);
         

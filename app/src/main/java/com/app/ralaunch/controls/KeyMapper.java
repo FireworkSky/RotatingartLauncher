@@ -19,10 +19,29 @@ public class KeyMapper {
         keys.put("⌨️ 键盘", ControlData.SPECIAL_KEYBOARD);
         
         // 鼠标按键
-        keys.put("鼠标左键", ControlData.MOUSE_LEFT);
-        keys.put("鼠标右键", ControlData.MOUSE_RIGHT);
-        keys.put("鼠标中键", ControlData.MOUSE_MIDDLE);
-        
+        keys.put("🖱️ 鼠标左键", ControlData.MOUSE_LEFT);
+        keys.put("🖱️ 鼠标右键", ControlData.MOUSE_RIGHT);
+        keys.put("🖱️ 鼠标中键", ControlData.MOUSE_MIDDLE);
+
+        // Xbox控制器按钮
+        keys.put("🎮 Xbox A", ControlData.XBOX_BUTTON_A);
+        keys.put("🎮 Xbox B", ControlData.XBOX_BUTTON_B);
+        keys.put("🎮 Xbox X", ControlData.XBOX_BUTTON_X);
+        keys.put("🎮 Xbox Y", ControlData.XBOX_BUTTON_Y);
+        keys.put("🎮 Xbox LB (左肩)", ControlData.XBOX_BUTTON_LB);
+        keys.put("🎮 Xbox RB (右肩)", ControlData.XBOX_BUTTON_RB);
+        keys.put("🎮 Xbox LT (左扳机)", ControlData.XBOX_TRIGGER_LEFT);
+        keys.put("🎮 Xbox RT (右扳机)", ControlData.XBOX_TRIGGER_RIGHT);
+        keys.put("🎮 Xbox Back", ControlData.XBOX_BUTTON_BACK);
+        keys.put("🎮 Xbox Start", ControlData.XBOX_BUTTON_START);
+        keys.put("🎮 Xbox Guide", ControlData.XBOX_BUTTON_GUIDE);
+        keys.put("🎮 Xbox L3 (左摇杆)", ControlData.XBOX_BUTTON_LEFT_STICK);
+        keys.put("🎮 Xbox R3 (右摇杆)", ControlData.XBOX_BUTTON_RIGHT_STICK);
+        keys.put("🎮 Xbox D-Pad ↑", ControlData.XBOX_BUTTON_DPAD_UP);
+        keys.put("🎮 Xbox D-Pad ↓", ControlData.XBOX_BUTTON_DPAD_DOWN);
+        keys.put("🎮 Xbox D-Pad ←", ControlData.XBOX_BUTTON_DPAD_LEFT);
+        keys.put("🎮 Xbox D-Pad →", ControlData.XBOX_BUTTON_DPAD_RIGHT);
+
         // 常用键盘按键
         keys.put("空格", ControlData.SDL_SCANCODE_SPACE);
         keys.put("回车", ControlData.SDL_SCANCODE_RETURN);

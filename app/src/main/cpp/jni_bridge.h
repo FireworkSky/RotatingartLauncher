@@ -64,12 +64,22 @@ JavaVM* Bridge_GetJavaVM();
 
 /**
  * @brief 通知 Java 层游戏已退出
- * 
+ *
  * @param exitCode 游戏退出码
- * 
+ *
  * 从 Native 代码调用 Java 层的 GameActivity.onGameExit() 静态方法。
  */
 void Bridge_NotifyGameExit(int exitCode);
+
+/**
+ * @brief 通知 Java 层游戏已退出(带错误消息)
+ *
+ * @param exitCode 游戏退出码
+ * @param errorMessage 错误消息(可为 NULL)
+ *
+ * 从 Native 代码调用 Java 层的 GameActivity.onGameExitWithMessage() 静态方法。
+ */
+void Bridge_NotifyGameExitWithMessage(int exitCode, const char* errorMessage);
 
 #ifdef __cplusplus
 }

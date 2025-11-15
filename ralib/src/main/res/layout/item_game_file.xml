@@ -9,7 +9,7 @@
     android:layout_marginBottom="2dp"
     app:cardCornerRadius="8dp"
     app:cardElevation="0dp"
-    app:cardBackgroundColor="#F8F9FA"
+    app:cardBackgroundColor="?attr/colorSurface"
     android:clickable="true"
     android:focusable="true"
     android:foreground="?android:attr/selectableItemBackground">
@@ -40,7 +40,7 @@
             android:layout_weight="1"
             android:layout_marginStart="16dp"
             android:textSize="14sp"
-            android:textColor="#212121"
+            android:textColor="?android:attr/textColorPrimary"
             android:maxLines="1"
             android:ellipsize="middle" />
 

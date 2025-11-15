@@ -1,18 +1,29 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- 深色主题 -->
-    <style name="Theme.raLaunch" parent="Theme.MaterialComponents.DayNight.NoActionBar">
-        <!-- Material 主要颜色 -->
-        <item name="colorPrimary">@color/background_primary</item>
-        <item name="colorPrimaryVariant">@color/background_secondary</item>
-        <item name="colorOnPrimary">@color/text_primary</item>
+    <!-- Material Design 3 深色主题 -->
+    <style name="Theme.raLaunch" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- Material 3 主要颜色 -->
+        <item name="colorPrimary">@color/accent_primary</item>
+        <item name="colorPrimaryVariant">@color/accent_secondary</item>
+        <item name="colorOnPrimary">@android:color/white</item>
+        <item name="colorPrimaryContainer">@color/background_card</item>
+        <item name="colorOnPrimaryContainer">@color/text_primary</item>
 
-        <!-- Material 次要颜色 -->
-        <item name="colorSecondary">@color/accent_primary</item>
-        <item name="colorSecondaryVariant">@color/accent_secondary</item>
-        <item name="colorOnSecondary">@color/background_primary</item>
+        <!-- Material 3 次要颜色 -->
+        <item name="colorSecondary">@color/accent_secondary</item>
+        <item name="colorSecondaryVariant">@color/accent_primary</item>
+        <item name="colorOnSecondary">@android:color/white</item>
+        <item name="colorSecondaryContainer">@color/background_secondary</item>
+        <item name="colorOnSecondaryContainer">@color/text_primary</item>
 
-        <!-- Material 背景色 -->
+        <!-- Material 3 表面颜色 -->
+        <item name="colorSurface">@color/background_card</item>
+        <item name="colorOnSurface">@color/text_primary</item>
+        <item name="colorSurfaceVariant">@color/background_secondary</item>
+        <item name="colorOnSurfaceVariant">@color/text_secondary</item>
+
+        <!-- Material 3 背景色 -->
         <item name="android:colorBackground">@color/background_primary</item>
+        <item name="colorOnBackground">@color/text_primary</item>
         <item name="android:windowBackground">@drawable/bg_main</item>
 
         <!-- 状态栏和导航栏 -->
@@ -21,13 +32,21 @@
         <item name="android:windowLightStatusBar">false</item>
         <item name="android:windowLightNavigationBar">false</item>
 
+        <!-- Material 3 轮廓颜色 -->
+        <item name="colorOutline">@color/divider</item>
+        <item name="colorOutlineVariant">@color/divider</item>
+
+        <!-- Material 3 错误颜色 -->
+        <item name="colorError">#CF6679</item>
+        <item name="colorOnError">@android:color/black</item>
+
         <!-- Material 文本颜色 -->
         <item name="android:textColorPrimary">@color/text_primary</item>
         <item name="android:textColorSecondary">@color/text_secondary</item>
 
-        <!-- Material 强调色 -->
+        <!-- Material 强调色 (向后兼容) -->
         <item name="colorAccent">@color/accent_primary</item>
-        
+
         <!-- 自定义主题属性 -->
         <item name="backgroundPrimary">@color/background_primary</item>
         <item name="backgroundSecondary">@color/background_secondary</item>
@@ -37,6 +56,11 @@
         <item name="textSecondary">@color/text_secondary</item>
         <item name="textHint">@color/text_hint</item>
         <item name="dividerColor">@color/divider</item>
+
+        <!-- Material 3 形状 -->
+        <item name="shapeAppearanceSmallComponent">@style/ShapeAppearance.Material3.Corner.Medium</item>
+        <item name="shapeAppearanceMediumComponent">@style/ShapeAppearance.Material3.Corner.Large</item>
+        <item name="shapeAppearanceLargeComponent">@style/ShapeAppearance.Material3.Corner.ExtraLarge</item>
     </style>
 
     <!-- 全屏主题 -->

@@ -389,7 +389,7 @@ public class GogShFileExtractor implements ExtractorCollection.IExtractor {
             extractionListener.onProgress("正在提取安装脚本...", 0.01f, state);
             MakeSelfShFile shFile = MakeSelfShFile.parse(this.sourcePath);
             if (shFile == null) {
-                Log.e(TAG, "[extract] MakeSelf SH file is null");
+                Log.e(TAG, "MakeSelf SH file is null");
                 throw new IOException("解析 MakeSelf Sh 文件头部失败");
             }
             Log.d(TAG, "Successfully parsed header - offset: " + shFile.offset + ", filesize: " + shFile.filesize);
@@ -405,7 +405,7 @@ public class GogShFileExtractor implements ExtractorCollection.IExtractor {
 
                 // sanity check
                 if (shFile.offset + shFile.filesize > srcChannel.size()) {
-                    Log.e(TAG, "[extract] Invalid offset/filesize: offset=" + shFile.offset + ", filesize=" + shFile.filesize + ", totalSize=" + srcChannel.size());
+                    Log.e(TAG, "Invalid offset/filesize: offset=" + shFile.offset + ", filesize=" + shFile.filesize + ", totalSize=" + srcChannel.size());
                     throw new IOException("MakeSelf Sh 文件头部信息无效，超出文件总大小");
                 }
 
@@ -440,7 +440,7 @@ public class GogShFileExtractor implements ExtractorCollection.IExtractor {
                 Log.d(TAG, "Trying to extract game_data.zip...");
                 GameDataZipFile gdzf = GameDataZipFile.parse(gameDataPath);
                 if (gdzf == null) {
-                    Log.e(TAG, "[extract] Failed to parse game_data.zip");
+                    Log.e(TAG, "Failed to parse game_data.zip");
                     throw new IOException("解析 game_data.zip 失败");
                 }
 
@@ -468,7 +468,7 @@ public class GogShFileExtractor implements ExtractorCollection.IExtractor {
                 zipExtractor.setState(state);
                 var isGameDataExtracted = zipExtractor.extract();
                 if (!isGameDataExtracted) {
-                    Log.e(TAG, "[extract] Failed to extract game_data.zip");
+                    Log.e(TAG, "Failed to extract game_data.zip");
                     throw new IOException("解压 game_data.zip 失败");
                 }
 
@@ -481,7 +481,7 @@ public class GogShFileExtractor implements ExtractorCollection.IExtractor {
             }
         }
         catch (Exception ex) {
-            Log.e(TAG, "[extract] Error when extracting source file", ex);
+            Log.e(TAG, "Error when extracting source file", ex);
             extractionListener.onError("GoG Sh 文件解压失败", ex, state);
             return false;
         }

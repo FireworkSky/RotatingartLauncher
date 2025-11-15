@@ -47,10 +47,13 @@ public class SideEditDialog {
     // 摇杆专用UI元素
     private TextView mTvJoystickModeLabel;
     private RadioGroup mRgJoystickMode;
-    private RadioButton mRbKeyboardMode, mRbMouseMode;
+    private RadioButton mRbKeyboardMode, mRbMouseMode, mRbSdlControllerMode;
     private TextView mTvJoystickKeysLabel;
     private Button mBtnEditJoystickKeys;
-    
+    private TextView mTvSdlStickLabel;
+    private RadioGroup mRgSdlStick;
+    private RadioButton mRbLeftStick, mRbRightStick;
+
     private ControlData mCurrentData;
     private ControlView mCurrentView;
     private int mScreenWidth, mScreenHeight;
@@ -120,7 +123,9 @@ public class SideEditDialog {
             mRgJoystickMode.setVisibility(View.GONE);
             mTvJoystickKeysLabel.setVisibility(View.GONE);
             mBtnEditJoystickKeys.setVisibility(View.GONE);
-            
+            mTvSdlStickLabel.setVisibility(View.GONE);
+            mRgSdlStick.setVisibility(View.GONE);
+
         } else if (data.type == ControlData.TYPE_JOYSTICK) {
             // 摇杆：显示模式选择和按键映射
             mTvJoystickModeLabel.setVisibility(View.VISIBLE);
@@ -132,12 +137,30 @@ public class SideEditDialog {
                 // 键盘模式：显示方向键映射
                 mTvJoystickKeysLabel.setVisibility(View.VISIBLE);
                 mBtnEditJoystickKeys.setVisibility(View.VISIBLE);
+                mTvSdlStickLabel.setVisibility(View.GONE);
+                mRgSdlStick.setVisibility(View.GONE);
                 updateJoystickKeysButtonText();
-            } else {
+            } else if (data.joystickMode == ControlData.JOYSTICK_MODE_MOUSE) {
                 mRbMouseMode.setChecked(true);
                 // 鼠标模式：隐藏方向键映射
                 mTvJoystickKeysLabel.setVisibility(View.GONE);
                 mBtnEditJoystickKeys.setVisibility(View.GONE);
+                mTvSdlStickLabel.setVisibility(View.GONE);
+                mRgSdlStick.setVisibility(View.GONE);
+            } else {
+                mRbSdlControllerMode.setChecked(true);
+                // SDL控制器模式：隐藏方向键映射，显示摇杆选择
+                mTvJoystickKeysLabel.setVisibility(View.GONE);
+                mBtnEditJoystickKeys.setVisibility(View.GONE);
+                mTvSdlStickLabel.setVisibility(View.VISIBLE);
+                mRgSdlStick.setVisibility(View.VISIBLE);
+
+                // 设置左右摇杆选择
+                if (data.xboxUseRightStick) {
+                    mRbRightStick.setChecked(true);
+                } else {
+                    mRbLeftStick.setChecked(true);
+                }
             }
             
             // 隐藏按钮相关选项
@@ -242,9 +265,14 @@ public class SideEditDialog {
         mRgJoystickMode = mDialogLayout.findViewById(R.id.rg_joystick_mode);
         mRbKeyboardMode = mDialogLayout.findViewById(R.id.rb_keyboard_mode);
         mRbMouseMode = mDialogLayout.findViewById(R.id.rb_mouse_mode);
+        mRbSdlControllerMode = mDialogLayout.findViewById(R.id.rb_sdl_controller_mode);
         mTvJoystickKeysLabel = mDialogLayout.findViewById(R.id.tv_joystick_keys_label);
         mBtnEditJoystickKeys = mDialogLayout.findViewById(R.id.btn_edit_joystick_keys);
-        
+        mTvSdlStickLabel = mDialogLayout.findViewById(R.id.tv_sdl_stick_label);
+        mRgSdlStick = mDialogLayout.findViewById(R.id.rg_sdl_stick);
+        mRbLeftStick = mDialogLayout.findViewById(R.id.rb_left_stick);
+        mRbRightStick = mDialogLayout.findViewById(R.id.rb_right_stick);
+
         // 设置监听器
         setupListeners();
         
@@ -295,8 +323,10 @@ public class SideEditDialog {
                 // 显示方向键映射
                 mTvJoystickKeysLabel.setVisibility(View.VISIBLE);
                 mBtnEditJoystickKeys.setVisibility(View.VISIBLE);
+                mTvSdlStickLabel.setVisibility(View.GONE);
+                mRgSdlStick.setVisibility(View.GONE);
                 updateJoystickKeysButtonText();
-                
+
                 // 初始化默认按键映射（如果为空）
                 if (mCurrentData.joystickKeys == null) {
                     mCurrentData.joystickKeys = new int[]{
@@ -311,17 +341,26 @@ public class SideEditDialog {
                 // 隐藏方向键映射
                 mTvJoystickKeysLabel.setVisibility(View.GONE);
                 mBtnEditJoystickKeys.setVisibility(View.GONE);
+                mTvSdlStickLabel.setVisibility(View.GONE);
+                mRgSdlStick.setVisibility(View.GONE);
+            } else {
+                mCurrentData.joystickMode = ControlData.JOYSTICK_MODE_SDL_CONTROLLER;
+                // 隐藏方向键映射，显示摇杆选择
+                mTvJoystickKeysLabel.setVisibility(View.GONE);
+                mBtnEditJoystickKeys.setVisibility(View.GONE);
+                mTvSdlStickLabel.setVisibility(View.VISIBLE);
+                mRgSdlStick.setVisibility(View.VISIBLE);
             }
-            
+
             // 更新视图
             if (mCurrentView != null) {
                 mCurrentView.updateData(mCurrentData);
             }
         });
-        
+
         // 编辑摇杆按键映射
         mBtnEditJoystickKeys.setOnClickListener(v -> showJoystickKeyEditDialog());
-        
+
         // X坐标滑块
         mSeekbarX.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
@@ -337,7 +376,7 @@ public class SideEditDialog {
             @Override public void onStartTrackingTouch(SeekBar seekBar) {}
             @Override public void onStopTrackingTouch(SeekBar seekBar) {}
         });
-        
+
         // Y坐标滑块
         mSeekbarY.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
@@ -390,6 +429,22 @@ public class SideEditDialog {
             }
             @Override public void onStartTrackingTouch(SeekBar seekBar) {}
             @Override public void onStopTrackingTouch(SeekBar seekBar) {}
+        });
+
+        // Xbox 摇杆选择切换
+        mRgSdlStick.setOnCheckedChangeListener((group, checkedId) -> {
+            if (mCurrentData == null) return;
+
+            if (checkedId == R.id.rb_left_stick) {
+                mCurrentData.xboxUseRightStick = false;
+            } else if (checkedId == R.id.rb_right_stick) {
+                mCurrentData.xboxUseRightStick = true;
+            }
+
+            // 更新视图
+            if (mCurrentView != null) {
+                mCurrentView.updateData(mCurrentData);
+            }
         });
     }
     

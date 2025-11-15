@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- RALib 暗色主题颜色定义 -->
+
+    <!-- 文本颜色 -->
+    <color name="text_primary">#E6E1E5</color>
+    <color name="text_secondary">#CAC4D0</color>
+    <color name="text_hint">#938F99</color>
+
+    <!-- 强调色(紫色系) -->
+    <color name="accent_primary">#D0BCFF</color>
+    <color name="accent_secondary">#CCC2DC</color>
+
+    <!-- Snackbar 颜色 - Material Design 3 暗色 -->
+    <!-- 信息提示 - 使用主色调 -->
+    <color name="snackbar_info">#4F378B</color>
+    <color name="snackbar_info_stroke">#D0BCFF</color>
+    <color name="snackbar_info_text">#EADDFF</color>
+
+    <!-- 成功提示 - 使用三级色 -->
+    <color name="snackbar_success">#388E3C</color>
+    <color name="snackbar_success_stroke">#81C784</color>
+    <color name="snackbar_success_text">#C8E6C9</color>
+
+    <!-- 错误提示 - 使用错误色 -->
+    <color name="snackbar_error">#8C1D18</color>
+    <color name="snackbar_error_stroke">#F2B8B5</color>
+    <color name="snackbar_error_text">#F9DEDC</color>
+
+    <!-- Error Dialog 颜色 -->
+    <color name="ralib_error_color">#F2B8B5</color>
+    <color name="ralib_warning_color">#FFB74D</color>
+    <color name="ralib_fatal_color">#EF5350</color>
+    <color name="ralib_error_background">#3A1414</color>
+</resources>

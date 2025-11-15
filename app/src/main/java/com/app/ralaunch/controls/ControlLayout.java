@@ -3,11 +3,12 @@ package com.app.ralaunch.controls;
 import android.content.Context;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
+
+import com.app.ralaunch.utils.AppLogger;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -60,7 +61,7 @@ public class ControlLayout extends FrameLayout {
      */
     public void loadLayout(ControlConfig config) {
         if (mInputBridge == null) {
-            Log.e(TAG, "InputBridge not set! Call setInputBridge() first.");
+            AppLogger.error(TAG, "InputBridge not set! Call setInputBridge() first.");
             return;
         }
         
@@ -68,7 +69,7 @@ public class ControlLayout extends FrameLayout {
         clearControls();
         
         if (config == null || config.controls == null) {
-            Log.w(TAG, "Empty config, loading default layout");
+            AppLogger.warn(TAG, "Empty config, loading default layout");
             loadDefaultLayout();
             return;
         }
@@ -99,7 +100,7 @@ public class ControlLayout extends FrameLayout {
                 return;
             }
         } catch (Exception e) {
-            Log.w(TAG, "Failed to load custom layout, falling back to default", e);
+            AppLogger.warn(TAG, "Failed to load custom layout, falling back to default", e);
         }
         
         // 如果自定义布局不存在或加载失败，使用默认布局
@@ -193,7 +194,7 @@ public class ControlLayout extends FrameLayout {
             case ControlData.TYPE_BUTTON:
                 return new VirtualButton(getContext(), data, mInputBridge);
             default:
-                Log.w(TAG, "Unknown control type: " + data.type);
+                AppLogger.warn(TAG, "Unknown control type: " + data.type);
                 return null;
         }
     }

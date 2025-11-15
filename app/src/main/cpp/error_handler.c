@@ -219,12 +219,12 @@ void error_handler_init(void) {
         if (sigaction(sig, &sa, &g_old_sigactions[sig]) != 0) {
             LOGW("Failed to register handler for signal %d (%s)", sig, get_signal_name(sig));
         } else {
-            LOGI("✓ Registered handler for %s", get_signal_name(sig));
+            LOGI("Registered handler for %s", get_signal_name(sig));
         }
     }
-    
+
     g_initialized = 1;
-    LOGI("✓ Error handler initialized successfully");
+    LOGI("Error handler initialized successfully");
 }
 
 void error_handler_set_jni_env(JNIEnv* env, JavaVM* vm) {
@@ -252,6 +252,6 @@ void error_handler_cleanup(void) {
     }
     
     g_initialized = 0;
-    LOGI("✓ Error handler cleaned up");
+    LOGI("Error handler cleaned up");
 }
 

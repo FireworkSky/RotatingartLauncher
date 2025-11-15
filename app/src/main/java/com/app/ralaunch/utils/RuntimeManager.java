@@ -3,7 +3,6 @@ package com.app.ralaunch.utils;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Build;
-import android.util.Log;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -73,7 +72,7 @@ public final class RuntimeManager {
         if (sharedRoot.exists()) {
 
         } else {
-            Log.w(TAG, "Shared root not found: " + sharedRoot.getAbsolutePath());
+            AppLogger.warn(TAG, "Shared root not found: " + sharedRoot.getAbsolutePath());
         }
         
         return sharedRoot;
@@ -139,7 +138,7 @@ public final class RuntimeManager {
     public static List<String> listInstalledVersions(Context ctx) {
         File shared = getSharedRoot(ctx);
         if (!shared.exists()) {
-            Log.w(TAG, "Shared runtime directory does not exist: " + shared.getAbsolutePath());
+            AppLogger.warn(TAG, "Shared runtime directory does not exist: " + shared.getAbsolutePath());
             return Collections.emptyList();
         }
         
@@ -196,10 +195,10 @@ public final class RuntimeManager {
 
                 return v;
             } else {
-                Log.w(TAG, "Selected version not found: " + v + ", falling back to latest");
+                AppLogger.warn(TAG, "Selected version not found: " + v + ", falling back to latest");
             }
         }
-        
+
         // 默认返回最新版本
         List<String> vers = listInstalledVersions(ctx);
         if (!vers.isEmpty()) {
@@ -207,8 +206,8 @@ public final class RuntimeManager {
 
             return latest;
         }
-        
-        Log.e(TAG, "No runtime versions installed");
+
+        AppLogger.error(TAG, "No runtime versions installed");
         return null;
     }
 
@@ -233,7 +232,7 @@ public final class RuntimeManager {
                 RuntimePreference.setDotnetFramework(ctx, "auto");
             }
         } else {
-            Log.e(TAG, "Failed to save runtime version: " + version);
+            AppLogger.error(TAG, "Failed to save runtime version: " + version);
         }
     }
     
@@ -250,7 +249,7 @@ public final class RuntimeManager {
                 return Integer.parseInt(parts[0]);
             }
         } catch (Exception e) {
-            Log.w(TAG, "Failed to parse major version from: " + version, e);
+            AppLogger.warn(TAG, "Failed to parse major version from: " + version + ": " + e.getMessage());
         }
         return -1;
     }

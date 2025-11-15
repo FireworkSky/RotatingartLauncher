@@ -268,6 +268,58 @@
                     android:textSize="14sp"
                     android:paddingStart="12dp"
                     android:paddingEnd="12dp" />
+
+                <RadioButton
+                    android:id="@+id/rb_sdl_controller_mode"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:text="🎮 Xbox手柄模式（模拟真实摇杆）"
+                    android:textColor="?attr/textPrimary"
+                    android:textSize="14sp"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp" />
+            </android.widget.RadioGroup>
+
+            <!-- Xbox手柄摇杆选择（仅SDL控制器模式显示） -->
+            <TextView
+                android:id="@+id/tv_sdl_stick_label"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Xbox摇杆选择"
+                android:textColor="?attr/textSecondary"
+                android:textSize="12sp"
+                android:layout_marginTop="16dp"
+                android:visibility="gone" />
+
+            <android.widget.RadioGroup
+                android:id="@+id/rg_sdl_stick"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:visibility="gone"
+                android:orientation="horizontal">
+
+                <RadioButton
+                    android:id="@+id/rb_left_stick"
+                    android:layout_width="0dp"
+                    android:layout_height="48dp"
+                    android:layout_weight="1"
+                    android:text="🕹️ 左摇杆"
+                    android:textColor="?attr/textPrimary"
+                    android:textSize="14sp"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp" />
+
+                <RadioButton
+                    android:id="@+id/rb_right_stick"
+                    android:layout_width="0dp"
+                    android:layout_height="48dp"
+                    android:layout_weight="1"
+                    android:text="🕹️ 右摇杆"
+                    android:textColor="?attr/textPrimary"
+                    android:textSize="14sp"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp" />
             </android.widget.RadioGroup>
 
             <!-- 摇杆按键映射（仅键盘模式显示） -->

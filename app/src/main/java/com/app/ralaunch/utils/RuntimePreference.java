@@ -3,6 +3,8 @@ package com.app.ralaunch.utils;
 import android.content.Context;
 import android.content.SharedPreferences;
 
+import com.app.ralaunch.data.SettingsManager;
+
 /**
  * 运行时框架偏好设置管理
  *

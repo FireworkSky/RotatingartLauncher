@@ -43,8 +43,26 @@ public class FileBrowserAdapter extends RecyclerView.Adapter<FileBrowserAdapter.
     }
 
     public void setSelectedFile(String filePath) {
+        String oldPath = this.selectedFilePath;
         this.selectedFilePath = filePath;
-        notifyDataSetChanged();
+
+        // 只刷新受影响的项，避免全局刷新
+        if (oldPath != null) {
+            for (int i = 0; i < fileList.size(); i++) {
+                if (fileList.get(i).getPath().equals(oldPath)) {
+                    notifyItemChanged(i);
+                    break;
+                }
+            }
+        }
+        if (filePath != null) {
+            for (int i = 0; i < fileList.size(); i++) {
+                if (fileList.get(i).getPath().equals(filePath)) {
+                    notifyItemChanged(i);
+                    break;
+                }
+            }
+        }
     }
 
     @NonNull
@@ -97,16 +115,11 @@ public class FileBrowserAdapter extends RecyclerView.Adapter<FileBrowserAdapter.
             holder.cardView.setCardElevation(2f);
         }
 
-        // 进入动画
-        AnimationHelper.enterAnimation(holder.itemView, position, 30);
-
-        // 点击事件
+        // 点击事件 - 移除动画以提升响应速度
         holder.itemView.setOnClickListener(v -> {
-            AnimationHelper.clickFeedback(v, () -> {
-                if (listener != null) {
-                    listener.onFileClick(fileItem);
-                }
-            });
+            if (listener != null) {
+                listener.onFileClick(fileItem);
+            }
         });
 
         // 长按事件

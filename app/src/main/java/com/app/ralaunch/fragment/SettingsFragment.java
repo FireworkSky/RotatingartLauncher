@@ -15,8 +15,10 @@ import androidx.fragment.app.Fragment;
 
 import com.app.ralaunch.R;
 import com.app.ralib.dialog.OptionSelectorDialog;
-import com.app.ralaunch.utils.SettingsManager;
+import com.app.ralaunch.data.SettingsManager;
+import com.app.ralaunch.dialog.PatchManagementDialog;
 import com.app.ralaunch.utils.RuntimePreference;
+import com.app.ralaunch.utils.LocaleManager;
 import com.google.android.material.card.MaterialCardView;
 
 import java.util.ArrayList;
@@ -135,6 +137,7 @@ public class SettingsFragment extends Fragment {
         
         // 初始化所有设置
         setupAppearanceSettings(view);
+        setupGameSettings(view);
         setupDeveloperSettings(view);
     }
     
@@ -153,39 +156,50 @@ public class SettingsFragment extends Fragment {
             
             themeCard.setOnClickListener(v -> {
                 List<OptionSelectorDialog.Option> options = Arrays.asList(
-                    new OptionSelectorDialog.Option("0", "跟随系统", "根据系统设置自动切换"),
-                    new OptionSelectorDialog.Option("1", "深色主题", "始终使用深色主题"),
-                    new OptionSelectorDialog.Option("2", "浅色主题", "始终使用浅色主题")
+                    new OptionSelectorDialog.Option("0",
+                        getString(R.string.theme_system),
+                        getString(R.string.settings_theme_desc_auto)),
+                    new OptionSelectorDialog.Option("1",
+                        getString(R.string.theme_dark),
+                        getString(R.string.settings_theme_desc_dark)),
+                    new OptionSelectorDialog.Option("2",
+                        getString(R.string.theme_light),
+                        getString(R.string.settings_theme_desc_light))
                 );
-                
+
                 OptionSelectorDialog dialog = new OptionSelectorDialog()
-                    .setTitle("主题设置")
+                    .setTitle(getString(R.string.theme_settings))
                     .setIcon(R.drawable.ic_settings)
                     .setOptions(options)
                     .setCurrentValue(String.valueOf(settingsManager.getThemeMode()))
-                    .setAutoCloseOnSelect(false)  // 禁用自动关闭，手动控制
+                    .setAutoCloseOnSelect(true)  // 启用自动关闭
                     .setOnOptionSelectedListener(value -> {
                         int themeMode = Integer.parseInt(value);
                         int oldThemeMode = settingsManager.getThemeMode();
-                        
-                        // 强制关闭所有对话框（防止recreate后被恢复）
-                        androidx.fragment.app.FragmentManager fm = getParentFragmentManager();
-                        for (androidx.fragment.app.Fragment fragment : fm.getFragments()) {
-                            if (fragment instanceof androidx.fragment.app.DialogFragment) {
-                                ((androidx.fragment.app.DialogFragment) fragment).dismissAllowingStateLoss();
-                            }
-                        }
-                        
+
                         // 如果主题有变化，刷新Activity
                         if (themeMode != oldThemeMode) {
                             settingsManager.setThemeMode(themeMode);
-                            
-                            // 延迟刷新Activity，确保对话框完全关闭
+
+                            // 延迟刷新Activity，等待对话框关闭动画完成
                             new android.os.Handler().postDelayed(() -> {
                                 if (isAdded() && getActivity() != null) {
-                                    requireActivity().recreate();
+                                    // 确保所有对话框都已关闭
+                                    androidx.fragment.app.FragmentManager fm = getParentFragmentManager();
+                                    for (androidx.fragment.app.Fragment fragment : fm.getFragments()) {
+                                        if (fragment instanceof androidx.fragment.app.DialogFragment) {
+                                            ((androidx.fragment.app.DialogFragment) fragment).dismissAllowingStateLoss();
+                                        }
+                                    }
+
+                                    // 再延迟一点点，确保对话框完全移除
+                                    new android.os.Handler().postDelayed(() -> {
+                                        if (isAdded() && getActivity() != null) {
+                                            requireActivity().recreate();
+                                        }
+                                    }, 50);
                                 }
-                            }, 100);
+                            }, 300);
                         }
                     });
                 dialog.show(getParentFragmentManager(), "theme_dialog");
@@ -195,27 +209,34 @@ public class SettingsFragment extends Fragment {
         // 语言设置
         MaterialCardView languageCard = rootView.findViewById(R.id.languageCard);
         TextView tvLanguageValue = rootView.findViewById(R.id.tvLanguageValue);
-        
+
         if (languageCard != null && tvLanguageValue != null) {
-            updateLanguageDisplay(settingsManager, tvLanguageValue);
-            
+            updateLanguageDisplay(tvLanguageValue);
+
             languageCard.setOnClickListener(v -> {
                 List<OptionSelectorDialog.Option> options = Arrays.asList(
-                    new OptionSelectorDialog.Option("0", "跟随系统", "使用系统语言设置"),
-                    new OptionSelectorDialog.Option("1", "English", "Use English"),
-                    new OptionSelectorDialog.Option("2", "简体中文", "使用简体中文")
+                    new OptionSelectorDialog.Option(LocaleManager.LANGUAGE_AUTO,
+                        getString(R.string.language_system),
+                        getString(R.string.settings_language_desc_auto)),
+                    new OptionSelectorDialog.Option(LocaleManager.LANGUAGE_EN,
+                        getString(R.string.language_english),
+                        getString(R.string.settings_language_desc_en)),
+                    new OptionSelectorDialog.Option(LocaleManager.LANGUAGE_ZH,
+                        getString(R.string.language_chinese),
+                        getString(R.string.settings_language_desc_zh))
                 );
-                
+
+                String currentLanguage = LocaleManager.getLanguage(requireContext());
+
                 OptionSelectorDialog dialog = new OptionSelectorDialog()
-                    .setTitle("语言设置")
+                    .setTitle(getString(R.string.language_settings))
                     .setIcon(R.drawable.ic_language)
                     .setOptions(options)
-                    .setCurrentValue(String.valueOf(settingsManager.getAppLanguage()))
+                    .setCurrentValue(currentLanguage)
                     .setAutoCloseOnSelect(false)  // 禁用自动关闭，手动控制
                     .setOnOptionSelectedListener(value -> {
-                        int language = Integer.parseInt(value);
-                        int oldLanguage = settingsManager.getAppLanguage();
-                        
+                        String oldLanguage = LocaleManager.getLanguage(requireContext());
+
                         // 强制关闭所有对话框（防止recreate后被恢复）
                         androidx.fragment.app.FragmentManager fm = getParentFragmentManager();
                         for (androidx.fragment.app.Fragment fragment : fm.getFragments()) {
@@ -223,11 +244,11 @@ public class SettingsFragment extends Fragment {
                                 ((androidx.fragment.app.DialogFragment) fragment).dismissAllowingStateLoss();
                             }
                         }
-                        
+
                         // 如果语言有变化，刷新Activity
-                        if (language != oldLanguage) {
-                            settingsManager.setAppLanguage(language);
-                            
+                        if (!value.equals(oldLanguage)) {
+                            LocaleManager.setLanguage(requireContext(), value);
+
                             // 延迟刷新Activity，确保对话框完全关闭
                             new android.os.Handler().postDelayed(() -> {
                                 if (isAdded() && getActivity() != null) {
@@ -240,34 +261,56 @@ public class SettingsFragment extends Fragment {
             });
         }
         
-        // CPU架构设置已移除 - 默认仅支持 ARM64
+    }
 
-        // FNA渲染器设置
+    /**
+     * 设置游戏设置面板
+     */
+    private void setupGameSettings(View rootView) {
+        SettingsManager settingsManager = SettingsManager.getInstance(requireContext());
+
+        // 渲染器设置
         MaterialCardView rendererCard = rootView.findViewById(R.id.rendererCard);
         TextView tvRendererValue = rootView.findViewById(R.id.tvRendererValue);
-        
+
         if (rendererCard != null && tvRendererValue != null) {
             updateRendererDisplay(settingsManager, tvRendererValue);
-            
+
             rendererCard.setOnClickListener(v -> {
                 List<OptionSelectorDialog.Option> options = Arrays.asList(
-                    new OptionSelectorDialog.Option(RuntimePreference.RENDERER_AUTO, "自动选择（推荐）", "自动选择最佳渲染器"),
-                    new OptionSelectorDialog.Option(RuntimePreference.RENDERER_OPENGLES3, "OpenGL ES 3（原生）", "使用原生 OpenGL ES 3"),
-                    new OptionSelectorDialog.Option(RuntimePreference.RENDERER_OPENGL_GL4ES, "OpenGL (gl4es+)", "通过 gl4es+ 转换层"),
-                    new OptionSelectorDialog.Option(RuntimePreference.RENDERER_VULKAN, "Vulkan（实验性）", "使用 Vulkan API")
+                    new OptionSelectorDialog.Option(RuntimePreference.RENDERER_AUTO,
+                        getString(R.string.renderer_auto),
+                        getString(R.string.renderer_auto_desc)),
+                    new OptionSelectorDialog.Option(RuntimePreference.RENDERER_OPENGLES3,
+                        getString(R.string.renderer_opengles3),
+                        getString(R.string.renderer_opengles3_desc)),
+                    new OptionSelectorDialog.Option(RuntimePreference.RENDERER_OPENGL_GL4ES,
+                        getString(R.string.renderer_opengl),
+                        getString(R.string.renderer_opengl_desc)),
+                    new OptionSelectorDialog.Option(RuntimePreference.RENDERER_VULKAN,
+                        getString(R.string.renderer_vulkan),
+                        getString(R.string.renderer_vulkan_desc))
                 );
-                
+
                 new OptionSelectorDialog()
-                    .setTitle("FNA 渲染器")
+                    .setTitle(getString(R.string.renderer_title))
                     .setIcon(R.drawable.ic_game)
                     .setOptions(options)
                     .setCurrentValue(RuntimePreference.normalizeRendererValue(settingsManager.getFnaRenderer()))
                     .setOnOptionSelectedListener(value -> {
                         settingsManager.setFnaRenderer(RuntimePreference.normalizeRendererValue(value));
                         updateRendererDisplay(settingsManager, tvRendererValue);
-                        Toast.makeText(requireContext(), "渲染器已更改", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(requireContext(), getString(R.string.renderer_changed), Toast.LENGTH_SHORT).show();
                     })
                     .show(getParentFragmentManager(), "renderer");
+            });
+        }
+
+        // 补丁管理
+        MaterialCardView patchManagementCard = rootView.findViewById(R.id.patchManagementCard);
+        if (patchManagementCard != null) {
+            patchManagementCard.setOnClickListener(v -> {
+                new PatchManagementDialog(requireContext()).show();
             });
         }
     }
@@ -344,31 +387,31 @@ public class SettingsFragment extends Fragment {
         // 外观设置
         Map<String, Object> item1 = new HashMap<>();
         item1.put("icon", R.drawable.ic_settings);
-        item1.put("category_name", "外观设置");
+        item1.put("category_name", getString(R.string.settings_appearance));
         list.add(item1);
 
         // 控制设置
         Map<String, Object> item2 = new HashMap<>();
         item2.put("icon", R.drawable.ic_controller);
-        item2.put("category_name", "控制设置");
+        item2.put("category_name", getString(R.string.settings_control));
         list.add(item2);
 
         // 游戏设置
         Map<String, Object> item3 = new HashMap<>();
         item3.put("icon", R.drawable.ic_game);
-        item3.put("category_name", "游戏设置");
+        item3.put("category_name", getString(R.string.settings_game));
         list.add(item3);
 
         // 启动器设置
         Map<String, Object> item4 = new HashMap<>();
         item4.put("icon", R.drawable.ic_launcher_foreground);
-        item4.put("category_name", "启动器设置");
+        item4.put("category_name", getString(R.string.settings_launcher));
         list.add(item4);
 
         // 实验性设置
         Map<String, Object> item5 = new HashMap<>();
         item5.put("icon", R.drawable.ic_bug);
-        item5.put("category_name", "实验性设置");
+        item5.put("category_name", getString(R.string.settings_developer));
         list.add(item5);
 
         return list;
@@ -402,12 +445,16 @@ public class SettingsFragment extends Fragment {
         if (consoleEnabledCard != null) {
             consoleEnabledCard.setOnClickListener(v -> {
                 List<OptionSelectorDialog.Option> options = Arrays.asList(
-                    new OptionSelectorDialog.Option("true", "开启", "显示 C# Console 输出和输入界面"),
-                    new OptionSelectorDialog.Option("false", "关闭", "禁用开发者控制台")
+                    new OptionSelectorDialog.Option("true",
+                        getString(R.string.developer_console_on),
+                        getString(R.string.developer_console_desc_on)),
+                    new OptionSelectorDialog.Option("false",
+                        getString(R.string.developer_console_off),
+                        getString(R.string.developer_console_desc_off))
                 );
-                
+
                 new OptionSelectorDialog()
-                    .setTitle("开发者控制台")
+                    .setTitle(getString(R.string.developer_console))
                     .setIcon(R.drawable.ic_bug)
                     .setOptions(options)
                     .setCurrentValue(String.valueOf(consoleManager.isConsoleEnabled()))
@@ -415,10 +462,10 @@ public class SettingsFragment extends Fragment {
                         boolean enabled = Boolean.parseBoolean(value);
                         consoleManager.setConsoleEnabled(enabled);
                         updateConsoleEnabledDisplay(consoleManager, tvConsoleEnabledValue);
-                        
+
                         String message = enabled ?
-                                "已启用开发者控制台，启动游戏时生效" :
-                                "已禁用开发者控制台";
+                                getString(R.string.developer_console_enabled) :
+                                getString(R.string.developer_console_disabled);
                         Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
                     })
                     .show(getParentFragmentManager(), "console_enabled");
@@ -428,12 +475,16 @@ public class SettingsFragment extends Fragment {
         // 设置详细日志点击事件
         verboseLoggingCard.setOnClickListener(v -> {
             List<OptionSelectorDialog.Option> options = Arrays.asList(
-                new OptionSelectorDialog.Option("true", "开启", "输出 CoreCLR 详细调试信息"),
-                new OptionSelectorDialog.Option("false", "关闭", "只输出基本信息")
+                new OptionSelectorDialog.Option("true",
+                    getString(R.string.verbose_logging_on),
+                    getString(R.string.verbose_logging_desc_on)),
+                new OptionSelectorDialog.Option("false",
+                    getString(R.string.verbose_logging_off),
+                    getString(R.string.verbose_logging_desc_off))
             );
-            
+
             new OptionSelectorDialog()
-                .setTitle("详细日志")
+                .setTitle(getString(R.string.verbose_logging))
                 .setIcon(R.drawable.ic_bug)
                 .setOptions(options)
                 .setCurrentValue(String.valueOf(settingsManager.isVerboseLogging()))
@@ -441,10 +492,10 @@ public class SettingsFragment extends Fragment {
                     boolean enabled = Boolean.parseBoolean(value);
                     settingsManager.setVerboseLogging(enabled);
                     updateVerboseLoggingDisplay(settingsManager, tvVerboseLoggingValue);
-                    
+
                     String message = enabled ?
-                            "已启用详细日志，重启应用后生效" :
-                            "已禁用详细日志";
+                            getString(R.string.verbose_logging_enabled) :
+                            getString(R.string.verbose_logging_disabled);
                     Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
                 })
                 .show(getParentFragmentManager(), "verbose_logging");
@@ -460,23 +511,41 @@ public class SettingsFragment extends Fragment {
     }
     
     private void updateConsoleEnabledDisplay(com.app.ralaunch.console.ConsoleManager consoleManager, TextView textView) {
-        textView.setText(consoleManager.isConsoleEnabled() ? "开启" : "关闭");
+        textView.setText(consoleManager.isConsoleEnabled() ?
+            getString(R.string.developer_console_on) :
+            getString(R.string.developer_console_off));
     }
-    
+
     private void updateVerboseLoggingDisplay(SettingsManager settingsManager, TextView textView) {
-        textView.setText(settingsManager.isVerboseLogging() ? "开启" : "关闭");
+        textView.setText(settingsManager.isVerboseLogging() ?
+            getString(R.string.verbose_logging_on) :
+            getString(R.string.verbose_logging_off));
     }
-    
+
     private void updateThemeDisplay(SettingsManager settingsManager, TextView textView) {
         int theme = settingsManager.getThemeMode();
-        String[] themes = {"跟随系统", "深色主题", "浅色主题"};
-        textView.setText(theme >= 0 && theme < themes.length ? themes[theme] : "跟随系统");
+        String display;
+        switch (theme) {
+            case 0:
+                display = getString(R.string.theme_system);
+                break;
+            case 1:
+                display = getString(R.string.theme_dark);
+                break;
+            case 2:
+                display = getString(R.string.theme_light);
+                break;
+            default:
+                display = getString(R.string.theme_system);
+                break;
+        }
+        textView.setText(display);
     }
     
-    private void updateLanguageDisplay(SettingsManager settingsManager, TextView textView) {
-        int language = settingsManager.getAppLanguage();
-        String[] languages = {"跟随系统", "English", "简体中文"};
-        textView.setText(language >= 0 && language < languages.length ? languages[language] : "跟随系统");
+    private void updateLanguageDisplay(TextView textView) {
+        String language = LocaleManager.getLanguage(requireContext());
+        String displayName = LocaleManager.getLanguageDisplayName(language);
+        textView.setText(displayName);
     }
     
     private void updateRendererDisplay(SettingsManager settingsManager, TextView textView) {
@@ -484,17 +553,17 @@ public class SettingsFragment extends Fragment {
         String display;
         switch (renderer) {
             case RuntimePreference.RENDERER_OPENGLES3:
-                display = "OpenGL ES 3";
+                display = getString(R.string.renderer_opengles3);
                 break;
             case RuntimePreference.RENDERER_OPENGL_GL4ES:
-                display = "OpenGL (gl4es+)";
+                display = getString(R.string.renderer_opengl);
                 break;
             case RuntimePreference.RENDERER_VULKAN:
-                display = "Vulkan";
+                display = getString(R.string.renderer_vulkan);
                 break;
             case RuntimePreference.RENDERER_AUTO:
             default:
-                display = "自动选择";
+                display = getString(R.string.renderer_auto);
                 break;
         }
         textView.setText(display);

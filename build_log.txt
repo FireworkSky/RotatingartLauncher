@@ -1,0 +1,243 @@
+> Task :app:preBuild UP-TO-DATE
+> Task :app:preDebugBuild UP-TO-DATE
+> Task :app:mergeDebugNativeDebugMetadata NO-SOURCE
+> Task :app:dataBindingMergeDependencyArtifactsDebug UP-TO-DATE
+> Task :app:generateDebugResValues UP-TO-DATE
+> Task :app:generateDebugResources
+> Task :ralib:preBuild UP-TO-DATE
+> Task :ralib:preDebugBuild UP-TO-DATE
+> Task :ralib:generateDebugResValues UP-TO-DATE
+> Task :ralib:generateDebugResources UP-TO-DATE
+> Task :ralib:packageDebugResources UP-TO-DATE
+> Task :app:packageDebugResources
+> Task :ralib:dataBindingMergeDependencyArtifactsDebug UP-TO-DATE
+> Task :ralib:parseDebugLocalResources UP-TO-DATE
+> Task :app:parseDebugLocalResources
+> Task :ralib:dataBindingGenBaseClassesDebug UP-TO-DATE
+> Task :ralib:generateDebugRFile UP-TO-DATE
+> Task :app:javaPreCompileDebug UP-TO-DATE
+> Task :ralib:writeDebugAarMetadata UP-TO-DATE
+> Task :app:checkDebugAarMetadata UP-TO-DATE
+> Task :app:mapDebugSourceSetPaths
+> Task :app:createDebugCompatibleScreenManifests UP-TO-DATE
+> Task :app:extractDeepLinksDebug UP-TO-DATE
+> Task :ralib:extractDeepLinksDebug UP-TO-DATE
+> Task :ralib:processDebugManifest UP-TO-DATE
+> Task :app:processDebugMainManifest UP-TO-DATE
+> Task :app:processDebugManifest UP-TO-DATE
+> Task :app:processDebugManifestForPackage UP-TO-DATE
+> Task :ralib:compileDebugLibraryResources UP-TO-DATE
+> Task :ralib:javaPreCompileDebug UP-TO-DATE
+> Task :ralib:compileDebugJavaWithJavac UP-TO-DATE
+> Task :ralib:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :app:mergeDebugShaders UP-TO-DATE
+> Task :app:compileDebugShaders NO-SOURCE
+> Task :app:generateDebugAssets UP-TO-DATE
+> Task :ralib:mergeDebugShaders UP-TO-DATE
+> Task :ralib:compileDebugShaders NO-SOURCE
+> Task :ralib:generateDebugAssets UP-TO-DATE
+> Task :ralib:mergeDebugAssets UP-TO-DATE
+> Task :app:mergeDebugAssets UP-TO-DATE
+> Task :app:compressDebugAssets UP-TO-DATE
+> Task :app:processDebugJavaRes NO-SOURCE
+> Task :ralib:processDebugJavaRes NO-SOURCE
+> Task :app:mergeDebugJavaResource UP-TO-DATE
+> Task :app:checkDebugDuplicateClasses UP-TO-DATE
+> Task :app:desugarDebugFileDependencies UP-TO-DATE
+> Task :app:mergeExtDexDebug UP-TO-DATE
+> Task :ralib:bundleLibRuntimeToDirDebug UP-TO-DATE
+> Task :app:configureCMakeDebug[arm64-v8a]
+> Task :app:mergeLibDexDebug UP-TO-DATE
+
+> Task :app:mergeDebugResources
+D:\Rotating-art-Launcher\app\src\main\res\values-en\strings.xml: Multiple substitutions specified in non-positional format of string resource string/import_storage_insufficient. Did you mean to add the formatted="false" attribute?
+C:\Users\Administrator\.gradle\caches\8.11.1\transforms\300e22d834027eeedffdbf25cdbc1d7d\transformed\material-1.12.0\res\values\values.xml: Multiple substitutions specified in non-positional format of string resource string/import_storage_insufficient. Did you mean to add the formatted="false" attribute?
+
+> Task :app:buildCMakeDebug[arm64-v8a][main]
+> Task :app:dataBindingGenBaseClassesDebug
+> Task :app:mergeDebugJniLibFolders UP-TO-DATE
+> Task :ralib:mergeDebugJniLibFolders UP-TO-DATE
+> Task :ralib:mergeDebugNativeLibs NO-SOURCE
+> Task :ralib:copyDebugJniLibsProjectOnly UP-TO-DATE
+> Task :app:mergeDebugNativeLibs UP-TO-DATE
+> Task :app:stripDebugDebugSymbols UP-TO-DATE
+> Task :app:validateSigningDebug UP-TO-DATE
+> Task :app:writeDebugAppMetadata UP-TO-DATE
+> Task :app:writeDebugSigningConfigVersions UP-TO-DATE
+> Task :ralib:stripDebugDebugSymbols NO-SOURCE
+> Task :ralib:copyDebugJniLibsProjectAndLocalJars UP-TO-DATE
+> Task :ralib:extractDebugAnnotations UP-TO-DATE
+> Task :ralib:extractDeepLinksForAarDebug UP-TO-DATE
+> Task :ralib:mergeDebugGeneratedProguardFiles UP-TO-DATE
+> Task :ralib:mergeDebugConsumerProguardFiles UP-TO-DATE
+> Task :ralib:prepareDebugArtProfile UP-TO-DATE
+> Task :ralib:prepareLintJarForPublish UP-TO-DATE
+> Task :ralib:mergeDebugJavaResource UP-TO-DATE
+> Task :ralib:syncDebugLibJars UP-TO-DATE
+> Task :ralib:bundleDebugAar UP-TO-DATE
+> Task :ralib:assembleDebug UP-TO-DATE
+> Task :app:processDebugResources
+
+> Task :app:compileDebugJavaWithJavac FAILED
+D:\Rotating-art-Launcher\app\src\main\java\com\app\ralaunch\dialog\PatchManagementDialog.java:18: 错误: 找不到符号
+import com.app.ralaunch.model.GameInfo;
+                             ^
+  符号:   类 GameInfo
+  位置: 程序包 com.app.ralaunch.model
+D:\Rotating-art-Launcher\app\src\main\java\com\app\ralaunch\dialog\PatchManagementDialog.java:19: 错误: 找不到符号
+import com.app.ralaunch.utils.GameDataManager;
+                             ^
+  符号:   类 GameDataManager
+  位置: 程序包 com.app.ralaunch.utils
+D:\Rotating-art-Launcher\app\src\main\java\com\app\ralaunch\utils\PatchManager.java:6: 错误: 找不到符号
+import com.app.ralaunch.model.GameInfo;
+                             ^
+  符号:   类 GameInfo
+  位置: 程序包 com.app.ralaunch.model
+D:\Rotating-art-Launcher\app\src\main\java\com\app\ralaunch\dialog\PatchManagementDialog.java:35: 错误: 找不到符号
+    private final GameDataManager gameDataManager;
+                  ^
+  符号:   类 GameDataManager
+  位置: 类 PatchManagementDialog
+D:\Rotating-art-Launcher\app\src\main\java\com\app\ralaunch\utils\PatchManager.java:174: 错误: 找不到符号
+    public boolean shouldApplyPatch(GameInfo gameInfo) {
+                                    ^
+  符号:   类 GameInfo
+  位置: 类 PatchManager
+D:\Rotating-art-Launcher\app\src\main\java\com\app\ralaunch\dialog\PatchManagementDialog.java:76: 错误: 找不到符号
+        private final List<GameInfo> games;
+                           ^
+  符号:   类 GameInfo
+  位置: 类 PatchManagementDialog.PatchGameAdapter
+D:\Rotating-art-Launcher\app\src\main\java\com\app\ralaunch\dialog\PatchManagementDialog.java:78: 错误: 找不到符号
+        public PatchGameAdapter(List<GameInfo> games) {
+                                     ^
+  符号:   类 GameInfo
+  位置: 类 PatchManagementDialog.PatchGameAdapter
+D:\Rotating-art-Launcher\app\src\main\java\com\app\ralaunch\dialog\PatchManagementDialog.java:115: 错误: 找不到符号
+            public void bind(GameInfo game) {
+                             ^
+  符号:   类 GameInfo
+  位置: 类 PatchManagementDialog.PatchGameAdapter.ViewHolder
+D:\Rotating-art-Launcher\app\src\main\java\com\app\ralaunch\dialog\PatchManagementDialog.java:40: 错误: 找不到符号
+        this.gameDataManager = new GameDataManager(context);
+                                   ^
+  符号:   类 GameDataManager
+  位置: 类 PatchManagementDialog
+D:\Rotating-art-Launcher\app\src\main\java\com\app\ralaunch\dialog\PatchManagementDialog.java:50: 错误: 找不到符号
+        List<GameInfo> games = gameDataManager.getGames();
+             ^
+  符号:   类 GameInfo
+  位置: 类 PatchManagementDialog
+D:\Rotating-art-Launcher\app\src\main\java\com\app\ralaunch\dialog\PatchManagementDialog.java:92: 错误: 找不到符号
+            GameInfo game = games.get(position);
+            ^
+  符号:   类 GameInfo
+  位置: 类 PatchManagementDialog.PatchGameAdapter
+D:\Rotating-art-Launcher\app\src\main\java\com\app\ralaunch\dialog\PatchManagementDialog.java:138: 错误: 无法将类 SnackbarHelper中的方法 show应用到给定类型;
+                    SnackbarHelper.show(
+                                  ^
+  需要: View,String,Type,int
+  找到:    ViewGroup,String
+  原因: 实际参数列表和形式参数列表长度不同
+D:\Rotating-art-Launcher\app\src\main\java\com\app\ralaunch\dialog\PatchManagementDialog.java:151: 错误: 找不到符号
+                    tvPatchStatus.setTextColor(context.getColor(R.color.md_theme_primary));
+                                                                       ^
+  符号:   变量 md_theme_primary
+  位置: 类 color
+D:\Rotating-art-Launcher\app\src\main\java\com\app\ralaunch\dialog\PatchManagementDialog.java:154: 错误: 找不到符号
+                    tvPatchStatus.setTextColor(context.getColor(R.color.md_theme_onSurfaceVariant));
+                                                                       ^
+  符号:   变量 md_theme_onSurfaceVariant
+  位置: 类 color
+注: 某些输入文件使用或覆盖了已过时的 API。
+注: 有关详细信息, 请使用 -Xlint:deprecation 重新编译。
+14 个错误
+[Incubating] Problems report is available at: file:///D:/Rotating-art-Launcher/build/reports/problems/problems-report.html
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:compileDebugJavaWithJavac'.
+> Compilation failed; see the compiler output below.
+  注: 有关详细信息, 请使用 -Xlint:deprecation 重新编译。
+  注: 某些输入文件使用或覆盖了已过时的 API。
+  D:\Rotating-art-Launcher\app\src\main\java\com\app\ralaunch\dialog\PatchManagementDialog.java:138: 错误: 无法将类 SnackbarHelper中的方法 show应用到给定类型;
+                      SnackbarHelper.show(
+                                    ^
+    需要: View,String,Type,int
+    找到:    ViewGroup,String
+    原因: 实际参数列表和形式参数列表长度不同
+  D:\Rotating-art-Launcher\app\src\main\java\com\app\ralaunch\dialog\PatchManagementDialog.java:18: 错误: 找不到符号
+  import com.app.ralaunch.model.GameInfo;
+                               ^
+    符号:   类 GameInfo
+    位置: 程序包 com.app.ralaunch.model
+  D:\Rotating-art-Launcher\app\src\main\java\com\app\ralaunch\dialog\PatchManagementDialog.java:19: 错误: 找不到符号
+  import com.app.ralaunch.utils.GameDataManager;
+                               ^
+    符号:   类 GameDataManager
+    位置: 程序包 com.app.ralaunch.utils
+  D:\Rotating-art-Launcher\app\src\main\java\com\app\ralaunch\utils\PatchManager.java:6: 错误: 找不到符号
+  import com.app.ralaunch.model.GameInfo;
+                               ^
+    符号:   类 GameInfo
+    位置: 程序包 com.app.ralaunch.model
+  D:\Rotating-art-Launcher\app\src\main\java\com\app\ralaunch\dialog\PatchManagementDialog.java:35: 错误: 找不到符号
+      private final GameDataManager gameDataManager;
+                    ^
+    符号:   类 GameDataManager
+    位置: 类 PatchManagementDialog
+  D:\Rotating-art-Launcher\app\src\main\java\com\app\ralaunch\utils\PatchManager.java:174: 错误: 找不到符号
+      public boolean shouldApplyPatch(GameInfo gameInfo) {
+                                      ^
+    符号:   类 GameInfo
+    位置: 类 PatchManager
+  D:\Rotating-art-Launcher\app\src\main\java\com\app\ralaunch\dialog\PatchManagementDialog.java:76: 错误: 找不到符号
+          private final List<GameInfo> games;
+                             ^
+    符号:   类 GameInfo
+    位置: 类 PatchManagementDialog.PatchGameAdapter
+  D:\Rotating-art-Launcher\app\src\main\java\com\app\ralaunch\dialog\PatchManagementDialog.java:78: 错误: 找不到符号
+          public PatchGameAdapter(List<GameInfo> games) {
+                                       ^
+    符号:   类 GameInfo
+    位置: 类 PatchManagementDialog.PatchGameAdapter
+  D:\Rotating-art-Launcher\app\src\main\java\com\app\ralaunch\dialog\PatchManagementDialog.java:115: 错误: 找不到符号
+              public void bind(GameInfo game) {
+                               ^
+    符号:   类 GameInfo
+    位置: 类 PatchManagementDialog.PatchGameAdapter.ViewHolder
+  D:\Rotating-art-Launcher\app\src\main\java\com\app\ralaunch\dialog\PatchManagementDialog.java:40: 错误: 找不到符号
+          this.gameDataManager = new GameDataManager(context);
+                                     ^
+    符号:   类 GameDataManager
+    位置: 类 PatchManagementDialog
+  D:\Rotating-art-Launcher\app\src\main\java\com\app\ralaunch\dialog\PatchManagementDialog.java:50: 错误: 找不到符号
+          List<GameInfo> games = gameDataManager.getGames();
+               ^
+    符号:   类 GameInfo
+    位置: 类 PatchManagementDialog
+  D:\Rotating-art-Launcher\app\src\main\java\com\app\ralaunch\dialog\PatchManagementDialog.java:92: 错误: 找不到符号
+              GameInfo game = games.get(position);
+              ^
+    符号:   类 GameInfo
+    位置: 类 PatchManagementDialog.PatchGameAdapter
+  D:\Rotating-art-Launcher\app\src\main\java\com\app\ralaunch\dialog\PatchManagementDialog.java:151: 错误: 找不到符号
+                      tvPatchStatus.setTextColor(context.getColor(R.color.md_theme_primary));
+                                                                         ^
+    符号:   变量 md_theme_primary
+    位置: 类 color
+  D:\Rotating-art-Launcher\app\src\main\java\com\app\ralaunch\dialog\PatchManagementDialog.java:154: 错误: 找不到符号
+                      tvPatchStatus.setTextColor(context.getColor(R.color.md_theme_onSurfaceVariant));
+                                                                         ^
+    符号:   变量 md_theme_onSurfaceVariant
+    位置: 类 color
+  14 个错误
+
+* Try:
+> Check your code and dependencies to fix the compilation error(s)
+> Run with --scan to get full insights.
+
+BUILD FAILED in 1s
+62 actionable tasks: 10 executed, 52 up-to-date

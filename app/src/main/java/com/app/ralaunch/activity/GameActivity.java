@@ -31,8 +31,9 @@ import com.app.ralaunch.controls.ControlData;
 import com.app.ralaunch.controls.editor.ControlEditorActivity;
 import com.app.ralaunch.controls.editor.SideEditDialog;
 import com.app.ralaunch.utils.RuntimePreference;
+import com.app.ralib.error.ErrorHandler;
 
-import com.app.ralaunch.game.GameLauncher;
+import com.app.ralaunch.core.GameLauncher;
 import com.app.ralaunch.controls.ControlLayout;
 import com.app.ralaunch.controls.SDLInputBridge;
 
@@ -161,9 +162,7 @@ public class GameActivity extends SDLActivity {
 
             if (gameBasePath == null || bootstrapperAssemblyPath == null || bootstrapperEntryPoint == null || bootstrapperCurrentDir == null) {
                 AppLogger.error(TAG, "Bootstrapper parameters incomplete");
-                runOnUiThread(() -> {
-                    Toast.makeText(this, "Bootstrapper 启动参数不完整", Toast.LENGTH_SHORT).show();
-                });
+                runOnUiThread(() -> ErrorHandler.showWarning("Bootstrapper 启动失败", "启动参数不完整"));
                 finish();
             }
 
@@ -244,7 +243,7 @@ public class GameActivity extends SDLActivity {
                 Toast.makeText(this, "存储权限已授予", Toast.LENGTH_SHORT).show();
                 setLaunchParams();
             } else {
-                Toast.makeText(this, "需要存储权限才能运行游戏", Toast.LENGTH_LONG).show();
+                ErrorHandler.showWarning("权限不足", "需要存储权限才能运行游戏");
                 finish();
             }
         }
@@ -259,9 +258,7 @@ public class GameActivity extends SDLActivity {
 
             if (assemblyPath == null || assemblyPath.isEmpty()) {
                 AppLogger.error(TAG, "Assembly path is null or empty");
-                runOnUiThread(() -> {
-                    Toast.makeText(this, "程序集路径为空", Toast.LENGTH_LONG).show();
-                });
+                runOnUiThread(() -> ErrorHandler.showWarning("启动失败", "程序集路径为空"));
                 finish();
                 return;
             }
@@ -270,9 +267,7 @@ public class GameActivity extends SDLActivity {
             File assemblyFile = new File(assemblyPath);
             if (!assemblyFile.exists() || !assemblyFile.isFile()) {
                 AppLogger.error(TAG, "Assembly file not found: " + assemblyPath);
-                runOnUiThread(() -> {
-                    Toast.makeText(this, "程序集文件不存在: " + assemblyPath, Toast.LENGTH_LONG).show();
-                });
+                runOnUiThread(() -> ErrorHandler.showWarning("启动失败", "程序集文件不存在: " + assemblyPath));
                 finish();
                 return;
             }
@@ -289,16 +284,12 @@ public class GameActivity extends SDLActivity {
                 AppLogger.info(TAG, "Launch parameters set successfully");
             } else {
                 AppLogger.error(TAG, "Failed to set launch parameters: " + result);
-                runOnUiThread(() -> {
-                    Toast.makeText(this, "设置启动参数失败: " + result, Toast.LENGTH_LONG).show();
-                });
+                runOnUiThread(() -> ErrorHandler.showWarning("启动失败", "设置启动参数失败: " + result));
                 finish();
             }
         } catch (Exception e) {
             AppLogger.error(TAG, "Exception in setLaunchParams: " + e.getMessage(), e);
-            runOnUiThread(() -> {
-                Toast.makeText(this, "启动失败: " + e.getMessage(), Toast.LENGTH_LONG).show();
-            });
+            runOnUiThread(() -> ErrorHandler.handleError("启动失败", e, false));
             finish();
         }
     }
@@ -309,9 +300,7 @@ public class GameActivity extends SDLActivity {
             File assemblyFile = new File(bootstrapperAssemblyPath);
             if (!assemblyFile.exists() || !assemblyFile.isFile()) {
                 AppLogger.error(TAG, "Bootstrapper assembly file not found: " + bootstrapperAssemblyPath);
-                runOnUiThread(() -> {
-                    Toast.makeText(this, "引导程序程序集文件不存在: " + bootstrapperAssemblyPath, Toast.LENGTH_LONG).show();
-                });
+                runOnUiThread(() -> ErrorHandler.showWarning("引导程序启动失败", "程序集文件不存在: " + bootstrapperAssemblyPath));
                 return;
             }
 
@@ -324,15 +313,11 @@ public class GameActivity extends SDLActivity {
                 AppLogger.info(TAG, "Bootstrapper parameters set successfully");
             } else {
                 AppLogger.error(TAG, "Failed to set bootstrapper parameters: " + result);
-                runOnUiThread(() -> {
-                    Toast.makeText(this, "设置引导程序参数失败: " + result, Toast.LENGTH_LONG).show();
-                });
+                runOnUiThread(() -> ErrorHandler.showWarning("引导程序启动失败", "设置参数失败: " + result));
             }
         } catch (Exception e) {
             AppLogger.error(TAG, "Error setting bootstrapper parameters: " + e.getMessage(), e);
-            runOnUiThread(() -> {
-                Toast.makeText(this, "设置引导程序参数失败: " + e.getMessage(), Toast.LENGTH_LONG).show();
-            });
+            runOnUiThread(() -> ErrorHandler.handleError("引导程序启动失败", e, false));
         }
     }
 
@@ -550,7 +535,7 @@ public class GameActivity extends SDLActivity {
             AppLogger.info(TAG, "Console toggled");
         } catch (Exception e) {
             AppLogger.error(TAG, "Failed to toggle console: " + e.getMessage(), e);
-            Toast.makeText(this, "控制台切换失败: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            ErrorHandler.handleError("控制台切换失败", e, false);
         }
     }
 
@@ -745,7 +730,7 @@ public class GameActivity extends SDLActivity {
             Toast.makeText(this, "布局已保存", Toast.LENGTH_SHORT).show();
         } catch (Exception e) {
             Log.e(TAG, "Failed to save layout", e);
-            Toast.makeText(this, "保存失败: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            ErrorHandler.handleError("保存布局失败", e, false);
         }
     }
 
@@ -784,7 +769,7 @@ public class GameActivity extends SDLActivity {
             startActivityForResult(intent, CONTROL_EDITOR_REQUEST_CODE);
         } catch (Exception e) {
             Log.e(TAG, "Failed to open control editor", e);
-            Toast.makeText(this, "无法打开控制编辑器: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            ErrorHandler.handleError("无法打开控制编辑器", e, false);
         }
     }
 
@@ -885,7 +870,7 @@ public class GameActivity extends SDLActivity {
             nativeCommitText.invoke(null, text, 1);
 
         } catch (Exception e) {
-            Log.e(TAG, "✗ 发送文本失败", e);
+            Log.e(TAG, "发送文本失败", e);
             Log.e(TAG, "错误详情: " + e.getMessage());
         }
     }
@@ -914,7 +899,7 @@ public class GameActivity extends SDLActivity {
             onNativeKeyUp.invoke(null, SDL_SCANCODE_BACKSPACE);
 
         } catch (Exception e) {
-            Log.e(TAG, "✗ 发送Backspace失败", e);
+            Log.e(TAG, "发送Backspace失败", e);
         }
     }
 
@@ -944,7 +929,7 @@ public class GameActivity extends SDLActivity {
                 if (result) {
                     return;
                 } else {
-                    Log.w(TAG, "⚠ SDLActivity.showTextInput()返回false");
+                    Log.w(TAG, "SDLActivity.showTextInput()返回false");
                 }
             } catch (Exception e) {
 
@@ -953,12 +938,12 @@ public class GameActivity extends SDLActivity {
             // 如果showTextInput失败，记录警告
             // （不再尝试其他备用方案，避免副作用）
 
-            Log.w(TAG, "⚠ 所有SDL文本输入启用方法都失败了");
-            Log.w(TAG, "⚠ 文本输入功能可能无法正常工作");
-            Log.w(TAG, "⚠ 建议：在游戏内使用内置虚拟键盘或连接蓝牙键盘");
+            Log.w(TAG, "所有SDL文本输入启用方法都失败了");
+            Log.w(TAG, "文本输入功能可能无法正常工作");
+            Log.w(TAG, "建议：在游戏内使用内置虚拟键盘或连接蓝牙键盘");
 
         } catch (Exception e) {
-            Log.e(TAG, "✗ 启用SDL文本输入时发生异常", e);
+            Log.e(TAG, "启用SDL文本输入时发生异常", e);
         }
     }
 
@@ -981,12 +966,25 @@ public class GameActivity extends SDLActivity {
     }
 
     public static void onGameExit(int exitCode) {
+        onGameExitWithMessage(exitCode, null);
+    }
 
+    /**
+     * Native 退出回调(带错误消息)
+     * 从 native 代码调用以通知游戏退出
+     */
+    public static void onGameExitWithMessage(int exitCode, String errorMessage) {
         mainActivity.runOnUiThread(() -> {
             if (exitCode == 0) {
                 Toast.makeText(mainActivity, "游戏已成功运行完成", Toast.LENGTH_LONG).show();
             } else {
-                Toast.makeText(mainActivity, "游戏运行失败，退出代码: " + exitCode, Toast.LENGTH_LONG).show();
+                String message;
+                if (errorMessage != null && !errorMessage.isEmpty()) {
+                    message = errorMessage + "\n退出代码: " + exitCode;
+                } else {
+                    message = "退出代码: " + exitCode;
+                }
+                ErrorHandler.showWarning("游戏运行失败", message);
             }
             mainActivity.finish();
         });

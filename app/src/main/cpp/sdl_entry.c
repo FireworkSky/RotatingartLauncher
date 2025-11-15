@@ -4,7 +4,6 @@
 #include <android/log.h>
 #include "netcorehost_launcher.h"
 #include "jni_bridge.h"
-#include "hostpolicy_hook.h"
 #include "app_logger.h"
 
 
@@ -28,8 +27,7 @@
 JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void* reserved) {
     (void)reserved;
 
-
-    InstallHostpolicyHook();
+    // Hook安装推迟到SDL_main，避免过早安装导致崩溃
 
     return Bridge_JNI_OnLoad(vm);
 }
@@ -80,8 +78,14 @@ __attribute__((visibility("default"))) int SDL_main(int argc, char* argv[]) {
     LOGI(".NET execution finished with result: %d", result);
     LOGI("================================================");
 
+    // 获取错误消息(如果有)
+    const char* error_message = netcorehost_get_last_error();
+
     // 清理资源
     netcorehost_cleanup();
+
+    // 通知 Java 层游戏已退出(带错误消息)
+    Bridge_NotifyGameExitWithMessage(result, error_message);
 
     return result;
 }

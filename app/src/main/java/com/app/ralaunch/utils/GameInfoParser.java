@@ -1,7 +1,5 @@
 package com.app.ralaunch.utils;
 
-import android.util.Log;
-
 import com.app.ralaunch.RaLaunchApplication;
 
 import java.io.BufferedReader;
@@ -62,7 +60,7 @@ public class GameInfoParser {
         try {
             File shFile = new File(shFilePath);
             if (!shFile.exists()) {
-                Log.e(TAG, "File not found: " + shFilePath);
+                AppLogger.error(TAG, "File not found: " + shFilePath);
                 return null;
             }
 
@@ -74,7 +72,7 @@ public class GameInfoParser {
                 
                 ExtractionInfo info = parseMakeselfHeader(headerContent);
                 if (info == null) {
-                    Log.e(TAG, "Failed to parse makeself header");
+                    AppLogger.error(TAG, "Failed to parse makeself header");
                     return null;
                 }
 
@@ -165,7 +163,7 @@ public class GameInfoParser {
                 return gameInfo;
             }
         } catch (Exception e) {
-            Log.e(TAG, "Failed to extract game info", e);
+            AppLogger.error(TAG, "Failed to extract game info", e);
             return null;
         }
     }
@@ -288,7 +286,7 @@ public class GameInfoParser {
                 }
 
             } else {
-                Log.w(TAG, "gameinfo not found at path: " + GAMEINFO_PATH);
+                AppLogger.warn(TAG, "gameinfo not found at path: " + GAMEINFO_PATH);
             }
             
             // 直接获取icon条目
@@ -304,7 +302,7 @@ public class GameInfoParser {
                 iconPath = iconFile.getAbsolutePath();
 
             } else {
-                Log.w(TAG, "icon not found at path: " + ICON_PATH);
+                AppLogger.warn(TAG, "icon not found at path: " + ICON_PATH);
             }
         }
         
@@ -368,9 +366,9 @@ public class GameInfoParser {
             }
 
             if (gameinfoFile == null) {
-                Log.w(TAG, "gameinfo not found in ZIP after scanning " + entryCount + " entries");
-                Log.w(TAG, "This means gameinfo is NOT in the game data ZIP");
-                Log.w(TAG, "We need to extract it from a different location in the .sh file");
+                AppLogger.warn(TAG, "gameinfo not found in ZIP after scanning " + entryCount + " entries");
+                AppLogger.warn(TAG, "This means gameinfo is NOT in the game data ZIP");
+                AppLogger.warn(TAG, "We need to extract it from a different location in the .sh file");
             } else {
 
             }
@@ -388,7 +386,7 @@ public class GameInfoParser {
                 gameInfo.iconPath = iconPath;
             }
         } else {
-            Log.w(TAG, "gameinfo file not found in archive");
+            AppLogger.warn(TAG, "gameinfo file not found in archive");
         }
         
         return gameInfo;
@@ -406,7 +404,7 @@ public class GameInfoParser {
 
             return gameinfoFile;
         } catch (IOException e) {
-            Log.e(TAG, "Failed to extract gameinfo from ZIP", e);
+            AppLogger.error(TAG, "Failed to extract gameinfo from ZIP", e);
             return null;
         }
     }
@@ -423,7 +421,7 @@ public class GameInfoParser {
 
             return iconFile.getAbsolutePath();
         } catch (IOException e) {
-            Log.e(TAG, "Failed to extract icon from ZIP", e);
+            AppLogger.error(TAG, "Failed to extract icon from ZIP", e);
             return null;
         }
     }
@@ -447,7 +445,7 @@ public class GameInfoParser {
 
             return gameinfoFile;
         } catch (IOException e) {
-            Log.e(TAG, "Failed to extract gameinfo", e);
+            AppLogger.error(TAG, "Failed to extract gameinfo", e);
             return null;
         }
     }
@@ -492,7 +490,7 @@ public class GameInfoParser {
         }
         
         if (gameInfo == null) {
-            Log.w(TAG, "gameinfo file not found in tar.gz");
+            AppLogger.warn(TAG, "gameinfo file not found in tar.gz");
         }
         return gameInfo;
     }
@@ -516,7 +514,7 @@ public class GameInfoParser {
 
             return iconFile.getAbsolutePath();
         } catch (IOException e) {
-            Log.e(TAG, "Failed to extract icon", e);
+            AppLogger.error(TAG, "Failed to extract icon", e);
             return null;
         }
     }
@@ -565,7 +563,7 @@ public class GameInfoParser {
             return info;
             
         } catch (IOException e) {
-            Log.e(TAG, "Failed to read gameinfo file", e);
+            AppLogger.error(TAG, "Failed to read gameinfo file", e);
             return null;
         }
     }

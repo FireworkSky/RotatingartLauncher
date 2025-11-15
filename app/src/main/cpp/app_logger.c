@@ -9,6 +9,7 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <errno.h>
+#include <jni.h>
 
 // Configuration
 #define MAX_LOG_LINE 2048
@@ -21,6 +22,11 @@ static FILE* g_log_file = NULL;
 static pthread_mutex_t g_log_mutex = PTHREAD_MUTEX_INITIALIZER;
 static char g_log_dir[MAX_PATH] = {0};
 static int g_initialized = 0;
+
+// JVM for error dialog callbacks
+static JavaVM* g_jvm = NULL;
+static jclass g_error_handler_class = NULL;
+static jmethodID g_show_error_method = NULL;
 
 // Level names
 static const char* level_names[] = {
@@ -64,16 +70,21 @@ static void get_timestamp_string(char* buf, size_t size) {
 static void strip_emojis(char* text) {
     if (!text) return;
 
-    // Simple ASCII cleanup - remove non-printable characters except newlines
     char* src = text;
     char* dst = text;
 
     while (*src) {
-        if ((*src >= 32 && *src <= 126) || *src == '\n' || *src == '\t') {
-            *dst++ = *src;
+        char c = *src;
+
+        // Keep only basic printable ASCII and common whitespace
+        if ((c >= 32 && c <= 126) || c == '\n' || c == '\r' || c == '\t') {
+            *dst++ = c;
         }
+        // Skip all other characters (emojis, special symbols, etc.)
+
         src++;
     }
+
     *dst = '\0';
 }
 
@@ -205,4 +216,121 @@ void app_logger_log(LogLevel level, const char* tag, const char* fmt, ...) {
     }
 
     pthread_mutex_unlock(&g_log_mutex);
+}
+
+// Initialize JVM for error dialogs
+void app_logger_init_jvm(JavaVM* vm) {
+    if (!vm) {
+        __android_log_print(ANDROID_LOG_ERROR, APP_TAG "/Logger",
+                          "Cannot initialize JVM: vm is NULL");
+        return;
+    }
+
+    g_jvm = vm;
+
+    JNIEnv* env = NULL;
+    if ((*vm)->GetEnv(vm, (void**)&env, JNI_VERSION_1_6) != JNI_OK) {
+        __android_log_print(ANDROID_LOG_ERROR, APP_TAG "/Logger",
+                          "Failed to get JNI environment");
+        g_jvm = NULL;
+        return;
+    }
+
+    // Find ErrorHandler class
+    jclass local_class = (*env)->FindClass(env, "com/app/ralib/error/ErrorHandler");
+    if (!local_class) {
+        __android_log_print(ANDROID_LOG_ERROR, APP_TAG "/Logger",
+                          "Failed to find ErrorHandler class");
+        (*env)->ExceptionClear(env);
+        g_jvm = NULL;
+        return;
+    }
+
+    // Create global reference
+    g_error_handler_class = (*env)->NewGlobalRef(env, local_class);
+    (*env)->DeleteLocalRef(env, local_class);
+
+    if (!g_error_handler_class) {
+        __android_log_print(ANDROID_LOG_ERROR, APP_TAG "/Logger",
+                          "Failed to create global reference to ErrorHandler");
+        g_jvm = NULL;
+        return;
+    }
+
+    // Find showNativeError method
+    g_show_error_method = (*env)->GetStaticMethodID(env, g_error_handler_class,
+                                                     "showNativeError",
+                                                     "(Ljava/lang/String;Ljava/lang/String;Z)V");
+    if (!g_show_error_method) {
+        __android_log_print(ANDROID_LOG_ERROR, APP_TAG "/Logger",
+                          "Failed to find showNativeError method");
+        (*env)->ExceptionClear(env);
+        (*env)->DeleteGlobalRef(env, g_error_handler_class);
+        g_error_handler_class = NULL;
+        g_jvm = NULL;
+        return;
+    }
+
+    __android_log_print(ANDROID_LOG_INFO, APP_TAG "/Logger",
+                      "JVM initialized for error dialogs");
+}
+
+// Show error dialog from native code
+void app_logger_show_error(const char* title, const char* message, int is_fatal) {
+    if (!g_jvm || !g_error_handler_class || !g_show_error_method) {
+        LOGE("Logger", "Cannot show error dialog: JVM not initialized");
+        LOGE("ErrorDialog", "%s: %s", title, message);
+        return;
+    }
+
+    // Log the error
+    LOGE("ErrorDialog", "%s: %s (fatal=%d)", title, message, is_fatal);
+
+    JNIEnv* env = NULL;
+    int need_detach = 0;
+
+    // Get JNI environment
+    int get_env_result = (*g_jvm)->GetEnv(g_jvm, (void**)&env, JNI_VERSION_1_6);
+    if (get_env_result == JNI_EDETACHED) {
+        if ((*g_jvm)->AttachCurrentThread(g_jvm, &env, NULL) != JNI_OK) {
+            LOGE("Logger", "Failed to attach current thread");
+            return;
+        }
+        need_detach = 1;
+    } else if (get_env_result != JNI_OK) {
+        LOGE("Logger", "Failed to get JNI environment: %d", get_env_result);
+        return;
+    }
+
+    // Create Java strings
+    jstring j_title = (*env)->NewStringUTF(env, title ? title : "Error");
+    jstring j_message = (*env)->NewStringUTF(env, message ? message : "Unknown error");
+    jboolean j_is_fatal = (jboolean)(is_fatal ? JNI_TRUE : JNI_FALSE);
+
+    if (!j_title || !j_message) {
+        LOGE("Logger", "Failed to create Java strings");
+        if (j_title) (*env)->DeleteLocalRef(env, j_title);
+        if (j_message) (*env)->DeleteLocalRef(env, j_message);
+        if (need_detach) (*g_jvm)->DetachCurrentThread(g_jvm);
+        return;
+    }
+
+    // Call Java method
+    (*env)->CallStaticVoidMethod(env, g_error_handler_class, g_show_error_method,
+                                  j_title, j_message, j_is_fatal);
+
+    // Check for exceptions
+    if ((*env)->ExceptionCheck(env)) {
+        LOGE("Logger", "Exception occurred while showing error dialog");
+        (*env)->ExceptionDescribe(env);
+        (*env)->ExceptionClear(env);
+    }
+
+    // Cleanup
+    (*env)->DeleteLocalRef(env, j_title);
+    (*env)->DeleteLocalRef(env, j_message);
+
+    if (need_detach) {
+        (*g_jvm)->DetachCurrentThread(g_jvm);
+    }
 }

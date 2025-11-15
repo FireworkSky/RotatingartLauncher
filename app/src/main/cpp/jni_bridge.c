@@ -7,6 +7,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "jni_bridge.h"
+#include "app_logger.h"
 
 #define LOG_TAG "GameLauncher"
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
@@ -22,15 +23,19 @@ static int g_threadAttached = 0;
 
 /**
  * @brief JNI_OnLoad 生命周期回调实现
- * 
+ *
  * @param vm JavaVM 指针
  * @return JNI_VERSION_1_6
- * 
+ *
  * 保存 JavaVM 指针供后续使用。
  */
 jint Bridge_JNI_OnLoad(JavaVM* vm) {
     LOGI("JNI_OnLoad called");
     g_jvm = vm;
+
+    // 初始化 app_logger 的 JVM（用于显示错误弹窗）
+    app_logger_init_jvm(vm);
+
     return JNI_VERSION_1_6;
 }
 
@@ -119,17 +124,41 @@ JavaVM* Bridge_GetJavaVM() {
  * 如果方法不存在或调用失败，会静默失败（不抛出异常）。
  */
 void Bridge_NotifyGameExit(int exitCode) {
+    Bridge_NotifyGameExitWithMessage(exitCode, NULL);
+}
+
+/**
+ * @brief 通知 Java 层游戏已退出(带错误消息)
+ *
+ * @param exitCode 游戏退出码
+ * @param errorMessage 错误消息(可为 NULL)
+ *
+ * 通过 JNI 调用 GameActivity.onGameExitWithMessage(int, String) 静态方法。
+ * 如果方法不存在或调用失败，会静默失败(不抛出异常)。
+ */
+void Bridge_NotifyGameExitWithMessage(int exitCode, const char* errorMessage) {
     JNIEnv* env = Bridge_GetJNIEnv();
     if (!env) return;
-    
+
     // 查找 GameActivity 类
     jclass clazz = (*env)->FindClass(env, "com/app/ralaunch/activity/GameActivity");
     if (clazz) {
-        // 查找 onGameExit 静态方法
-        jmethodID method = (*env)->GetStaticMethodID(env, clazz, "onGameExit", "(I)V");
+        // 查找 onGameExitWithMessage 静态方法
+        jmethodID method = (*env)->GetStaticMethodID(env, clazz, "onGameExitWithMessage", "(ILjava/lang/String;)V");
         if (method) {
+            // 转换错误消息为 Java String
+            jstring jErrorMessage = NULL;
+            if (errorMessage != NULL) {
+                jErrorMessage = (*env)->NewStringUTF(env, errorMessage);
+            }
+
             // 调用静态方法
-            (*env)->CallStaticVoidMethod(env, clazz, method, exitCode);
+            (*env)->CallStaticVoidMethod(env, clazz, method, exitCode, jErrorMessage);
+
+            // 清理本地引用
+            if (jErrorMessage != NULL) {
+                (*env)->DeleteLocalRef(env, jErrorMessage);
+            }
         }
         (*env)->DeleteLocalRef(env, clazz);
     }

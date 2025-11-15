@@ -11,13 +11,21 @@
     <color name="accent_primary">#BB86FC</color>
     <color name="accent_secondary">#9965F4</color>
     
-    <!-- Snackbar 颜色 -->
-    <color name="snackbar_success">#E8F5E9</color>
+    <!-- Snackbar 颜色 - Material Design 3 -->
+    <!-- 信息提示 - 使用主色调 -->
+    <color name="snackbar_info">#E8DAFF</color>
+    <color name="snackbar_info_stroke">#BB86FC</color>
+    <color name="snackbar_info_text">#210042</color>
+
+    <!-- 成功提示 - 使用三级色 -->
+    <color name="snackbar_success">#C8E6C9</color>
     <color name="snackbar_success_stroke">#4CAF50</color>
-    <color name="snackbar_error">#FFEBEE</color>
-    <color name="snackbar_error_stroke">#F44336</color>
-    <color name="snackbar_info">#E3F2FD</color>
-    <color name="snackbar_info_stroke">#2196F3</color>
+    <color name="snackbar_success_text">#1B5E20</color>
+
+    <!-- 错误提示 - 使用错误色 -->
+    <color name="snackbar_error">#FFDAD6</color>
+    <color name="snackbar_error_stroke">#B00020</color>
+    <color name="snackbar_error_text">#410002</color>
 
     <!-- Error Dialog 颜色 -->
     <color name="ralib_error_color">#F44336</color>

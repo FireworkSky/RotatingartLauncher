@@ -13,7 +13,15 @@
       "Bash(adb logcat:*)",
       "Bash(adb shell:*)",
       "Bash(rmdir:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(fi)",
+      "Bash(done)",
+      "Bash(\"D:/Rotating-art-Launcher/app/src/main/java/com/app/ralaunch/controls/ControlData.java\")",
+      "Bash(\"D:/Rotating-art-Launcher/app/src/main/java/com/app/ralaunch/controls/ControlInputBridge.java\")",
+      "Bash(\"D:/Rotating-art-Launcher/app/src/main/java/com/app/ralaunch/controls/KeyMapper.java\")",
+      "Bash(\"D:/Rotating-art-Launcher/app/src/main/java/com/app/ralaunch/controls/editor/SideEditDialog.java\")",
+      "Bash(\"D:/Rotating-art-Launcher/app/src/main/java/org/libsdl/app/SDLControllerManager.java\")",
+      "Bash(\"D:/Rotating-art-Launcher/app/src/main/java/org/libsdl/app/VirtualXboxController.java\")"
     ],
     "deny": [],
     "ask": []

@@ -1,6 +1,6 @@
 package com.app.ralaunch.console;
 
-import android.util.Log;
+import com.app.ralaunch.utils.AppLogger;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -52,7 +52,7 @@ public class ConsoleService {
             printWriter = new PrintWriter(consoleWriter, true);
             bufferedReader = new BufferedReader(consoleReader);
         } catch (IOException e) {
-            Log.e(TAG, "Failed to create console pipes", e);
+            AppLogger.error(TAG, "Failed to create console pipes", e);
         }
     }
 
@@ -83,14 +83,14 @@ public class ConsoleService {
                     }
                 } catch (IOException e) {
                     if (isRunning.get()) {
-                        Log.e(TAG, "Error reading console output", e);
+                        AppLogger.error(TAG, "Error reading console output", e);
                     }
                 }
             }
         }, "ConsoleOutputThread");
         outputThread.start();
 
-        Log.i(TAG, "Console service started");
+        AppLogger.info(TAG, "Console service started");
         logInfo("控制台服务已启动");
     }
 
@@ -113,10 +113,10 @@ public class ConsoleService {
             if (consoleWriter != null) consoleWriter.close();
             if (consoleReader != null) consoleReader.close();
         } catch (IOException e) {
-            Log.e(TAG, "Error closing console pipes", e);
+            AppLogger.error(TAG, "Error closing console pipes", e);
         }
 
-        Log.i(TAG, "Console service stopped");
+        AppLogger.info(TAG, "Console service stopped");
     }
 
     /**
@@ -167,16 +167,16 @@ public class ConsoleService {
      */
     public void sendInput(String input) {
         inputQueue.offer(input);
-        Log.d(TAG, "Input sent: " + input);
+        AppLogger.debug(TAG, "Input sent: " + input);
     }
 
     /**
      * C# Console.ReadLine 调用此方法获取输入（阻塞）
      */
     public String readInput() throws InterruptedException {
-        Log.d(TAG, "Waiting for input...");
+        AppLogger.debug(TAG, "Waiting for input...");
         String input = inputQueue.take();
-        Log.d(TAG, "Input received: " + input);
+        AppLogger.debug(TAG, "Input received: " + input);
         return input;
     }
 
@@ -247,14 +247,14 @@ public class ConsoleService {
      * 便捷方法：记录错误
      */
     public void logError(String message) {
-        writeOutput("[ERROR] " + message);
+        writeOutput(message);
     }
 
     /**
      * 便捷方法：记录警告
      */
     public void logWarning(String message) {
-        writeOutput("[WARN] " + message);
+        writeOutput(message);
     }
 
     /**

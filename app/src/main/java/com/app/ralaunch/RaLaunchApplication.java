@@ -2,7 +2,9 @@ package com.app.ralaunch;
 
 import android.app.Application;
 import android.content.Context;
-import com.app.ralaunch.utils.GameDataManager;
+import android.content.res.Configuration;
+import com.app.ralaunch.data.GameDataManager;
+import com.app.ralaunch.utils.LocaleManager;
 
 /**
  * 应用程序全局 Application 类
@@ -23,6 +25,19 @@ public class RaLaunchApplication extends Application {
 
         // 初始化 ralib
         com.app.ralib.Shared.init(appContext);
+    }
+
+    @Override
+    protected void attachBaseContext(Context base) {
+        // 应用语言设置
+        super.attachBaseContext(LocaleManager.applyLanguage(base));
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        // 当系统语言改变时重新应用语言设置
+        LocaleManager.applyLanguage(this);
     }
 
     /**

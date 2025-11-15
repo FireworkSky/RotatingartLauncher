@@ -156,9 +156,16 @@ public class FileBrowserFragment extends Fragment implements FileBrowserAdapter.
         sortButton = view.findViewById(R.id.sortButton);
 
         // 设置 RecyclerView
-        fileRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+        LinearLayoutManager layoutManager = new LinearLayoutManager(getContext());
+        fileRecyclerView.setLayoutManager(layoutManager);
         fileAdapter = new FileBrowserAdapter(filteredFileList, this);
         fileRecyclerView.setAdapter(fileAdapter);
+
+        // 优化 RecyclerView 性能
+        fileRecyclerView.setHasFixedSize(true);
+        fileRecyclerView.setItemViewCacheSize(20);
+        fileRecyclerView.setDrawingCacheEnabled(true);
+        fileRecyclerView.setDrawingCacheQuality(View.DRAWING_CACHE_QUALITY_HIGH);
         
         // 搜索框监听
         searchInput.addTextChangedListener(new android.text.TextWatcher() {

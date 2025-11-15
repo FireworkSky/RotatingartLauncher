@@ -5,7 +5,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
-import android.util.Log;
+import com.app.ralaunch.utils.AppLogger;
 
 /**
  * 控制台管理器
@@ -46,7 +46,7 @@ public class ConsoleManager {
      */
     public void setConsoleEnabled(boolean enabled) {
         preferences.edit().putBoolean(PREF_CONSOLE_ENABLED, enabled).apply();
-        Log.i(TAG, "Console enabled: " + enabled);
+        AppLogger.info(TAG, "Console enabled: " + enabled);
     }
 
     /**
@@ -55,7 +55,7 @@ public class ConsoleManager {
      */
     public void showConsole(Activity activity) {
         if (!isConsoleEnabled()) {
-            Log.d(TAG, "Console is disabled");
+            AppLogger.debug(TAG, "Console is disabled");
             return;
         }
 
@@ -72,13 +72,13 @@ public class ConsoleManager {
                 if (rootView != null) {
                     // 直接添加到 Activity 的内容视图
                     consoleView.showInActivity(rootView);
-                    Log.i(TAG, "[OK] Console shown in activity");
+                    AppLogger.info(TAG, "Console shown in activity");
                 } else {
-                    Log.e(TAG, "Failed to get activity root view");
+                    AppLogger.error(TAG, "Failed to get activity root view");
                 }
             }
         } catch (Exception e) {
-            Log.e(TAG, "Failed to show console: " + e.getMessage(), e);
+            AppLogger.error(TAG, "Failed to show console: " + e.getMessage(), e);
         }
     }
 
@@ -88,7 +88,7 @@ public class ConsoleManager {
     public void hideConsole() {
         if (consoleView != null && consoleView.isShowing()) {
             consoleView.hide();
-            Log.i(TAG, "Console hidden");
+            AppLogger.info(TAG, "Console hidden");
         }
     }
     
@@ -109,7 +109,7 @@ public class ConsoleManager {
     public void initializeService() {
         if (isConsoleEnabled()) {
             consoleService.start();
-            Log.i(TAG, "[OK] Console service started");
+            AppLogger.info(TAG, "Console service started");
         }
     }
 
@@ -122,7 +122,7 @@ public class ConsoleManager {
             consoleView = null;
         }
         consoleService.stop();
-        Log.i(TAG, "Console manager shutdown");
+        AppLogger.info(TAG, "Console manager shutdown");
     }
 
     /**

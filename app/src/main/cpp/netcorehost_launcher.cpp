@@ -7,7 +7,6 @@
  */
 
 #include "netcorehost_launcher.h"
-#include "hostpolicy_hook.h"
 #include <netcorehost/nethost.hpp>
 #include <netcorehost/hostfxr.hpp>
 #include <netcorehost/context.hpp>
@@ -42,6 +41,9 @@ JavaVM* Bridge_GetJavaVM();
 static char* g_app_path = nullptr;           // 程序集完整路径
 static char* g_dotnet_path = nullptr;        // .NET 运行时路径
 static int g_framework_major = 0;            // 框架主版本号
+
+// 错误消息缓冲区
+static char g_last_error[1024] = {0};
 
 /**
  * @brief 辅助函数：复制字符串
@@ -92,33 +94,38 @@ int netcorehost_set_params(
 
     // 3. 验证程序集存在
     if (access(g_app_path, F_OK) != 0) {
-        LOGE(LOG_TAG, "[ERROR] 程序集文件不存在: %s", g_app_path);
+        LOGE(LOG_TAG, "程序集文件不存在: %s", g_app_path);
         return -1;
     }
 
     // 4. 设置 DOTNET_ROOT 环境变量（如果提供）
     if (g_dotnet_path) {
         setenv("DOTNET_ROOT", g_dotnet_path, 1);
-        LOGI(LOG_TAG, "[OK] DOTNET_ROOT 环境变量已设置: %s", g_dotnet_path);
+        LOGI(LOG_TAG, "DOTNET_ROOT 环境变量已设置: %s", g_dotnet_path);
     }
 
     // 5. 根据用户选择的框架版本设置运行时策略
     LOGI(LOG_TAG, "📋 框架版本参数: framework_major=%d", framework_major);
 
     if (framework_major > 0) {
-        // 用户指定了版本，完全禁用版本滚动
-        setenv("DOTNET_ROLL_FORWARD", "Disable", 1);
-        setenv("DOTNET_ROLL_FORWARD_ON_NO_CANDIDATE_FX", "0", 1);
-        // 允许使用预发布版本（RC、Preview等）
+        // 策略：通过修改 DOTNET_ROOT 指向特定版本的运行时
+        // 这样框架解析器只能看到我们指定的版本
+        std::string versioned_dotnet_root = std::string(g_dotnet_path);
+
+        // 注意：不修改 DOTNET_ROOT，而是依赖 hostfxr 的版本选择逻辑
+        // 但我们强制使用 LatestMajor 来确保选择最高版本
+        setenv("DOTNET_ROLL_FORWARD", "LatestMajor", 1);
+        setenv("DOTNET_ROLL_FORWARD_ON_NO_CANDIDATE_FX", "2", 1);
         setenv("DOTNET_ROLL_FORWARD_TO_PRERELEASE", "1", 1);
-        LOGI(LOG_TAG, "[OK] 已设置精确版本模式: net%d.x", framework_major);
-        LOGI(LOG_TAG, "   （完全禁用版本滚动，允许使用 RC/Preview 版本）");
+
+        LOGI(LOG_TAG, "已设置强制使用最新运行时模式: 将使用 net%d.x", framework_major);
+        LOGI(LOG_TAG, "   （LatestMajor: 强制使用最高可用版本）");
     } else {
         // 自动模式，允许使用任何兼容版本
         setenv("DOTNET_ROLL_FORWARD", "LatestMajor", 1);
         setenv("DOTNET_ROLL_FORWARD_ON_NO_CANDIDATE_FX", "2", 1);
         setenv("DOTNET_ROLL_FORWARD_TO_PRERELEASE", "1", 1);
-        LOGI(LOG_TAG, "[OK] 已设置自动版本模式（使用最新可用运行时，包括预发布版本）");
+        LOGI(LOG_TAG, "已设置自动版本模式（使用最新可用运行时，包括预发布版本）");
     }
 
     setenv("COMPlus_DebugWriteToStdErr", "1", 1);
@@ -145,7 +152,7 @@ int netcorehost_set_params(
  */
 int netcorehost_launch() {
     if (!g_app_path) {
-        LOGE(LOG_TAG, "[ERROR] 错误：未设置应用路径！请先调用 netcorehostSetParams()");
+        LOGE(LOG_TAG, "错误：未设置应用路径！请先调用 netcorehostSetParams()");
         return -1;
     }
 
@@ -163,12 +170,11 @@ int netcorehost_launch() {
         if (chdir(app_dir.c_str()) == 0) {
             LOGI(LOG_TAG, "  工作目录: %s", app_dir.c_str());
         } else {
-            LOGW(LOG_TAG, "[WARN] 无法设置工作目录: %s", app_dir.c_str());
+            LOGW(LOG_TAG, "无法设置工作目录: %s", app_dir.c_str());
         }
     }
 
-    // 注意：hostpolicy 补丁已由 JNI_OnLoad 中的 hook 自动处理
-    // 不需要在这里手动调用 PatchHostpolicyStrings()
+    // 注意：libhostpolicy.so 已通过源码修改支持向下兼容
 
     LOGI(LOG_TAG, "==========================================");
     setenv("COREHOST_TRACEFILE", "/sdcard/Android/data/com.app.ralaunch/files/corehost_trace.log", 1);
@@ -195,18 +201,18 @@ int netcorehost_launch() {
 
     try {
         // 加载 hostfxr（自动从 DOTNET_ROOT 环境变量读取）
-        LOGI(LOG_TAG, "[LOADING] 加载 hostfxr...");
+        LOGI(LOG_TAG, "加载 hostfxr...");
         hostfxr = netcorehost::Nethost::load_hostfxr();
 
         if (!hostfxr) {
-            LOGE(LOG_TAG, "[ERROR] hostfxr 加载失败：返回空指针");
+            LOGE(LOG_TAG, "hostfxr 加载失败：返回空指针");
             return -1;
         }
 
-        LOGI(LOG_TAG, "[OK] hostfxr 加载成功");
+        LOGI(LOG_TAG, "hostfxr 加载成功");
 
         // 初始化 .NET 运行时
-        LOGI(LOG_TAG, "[LOADING] 初始化 .NET 运行时...");
+        LOGI(LOG_TAG, "初始化 .NET 运行时...");
         auto app_path_str = netcorehost::PdCString::from_str(g_app_path);
 
         std::unique_ptr<netcorehost::HostfxrContextForCommandLine> context;
@@ -220,15 +226,15 @@ int netcorehost_launch() {
         }
 
         if (!context) {
-            LOGE(LOG_TAG, "[ERROR] .NET 运行时初始化失败");
+            LOGE(LOG_TAG, ".NET 运行时初始化失败");
             return -1;
         }
 
-        LOGI(LOG_TAG, "[OK] .NET 运行时初始化成功");
+        LOGI(LOG_TAG, ".NET 运行时初始化成功");
 
         // 直接运行应用程序
         LOGI(LOG_TAG, "========================================");
-        LOGI(LOG_TAG, "[RUN] 运行应用程序...");
+        LOGI(LOG_TAG, "运行应用程序...");
         LOGI(LOG_TAG, "========================================");
 
         auto app_result = context->run_app();
@@ -237,13 +243,18 @@ int netcorehost_launch() {
         LOGI(LOG_TAG, "========================================");
 
         if (exit_code == 0) {
-            LOGI(LOG_TAG, "[OK] 应用程序正常退出");
+            LOGI(LOG_TAG, "应用程序正常退出");
+            g_last_error[0] = '\0';  // 清空错误消息
         } else if (exit_code < 0) {
             auto hosting_result = app_result.as_hosting_result();
-            LOGE(LOG_TAG, "[ERROR] 托管错误 (code: %d)", exit_code);
-            LOGE(LOG_TAG, "  %s", hosting_result.get_error_message().c_str());
+            std::string error_msg = hosting_result.get_error_message();
+            LOGE(LOG_TAG, "托管错误 (code: %d)", exit_code);
+            LOGE(LOG_TAG, "  %s", error_msg.c_str());
+            // 保存错误消息
+            snprintf(g_last_error, sizeof(g_last_error), "%s", error_msg.c_str());
         } else {
-            LOGW(LOG_TAG, "[WARN] 应用退出码: %d", exit_code);
+            LOGW(LOG_TAG, "应用退出码: %d", exit_code);
+            g_last_error[0] = '\0';  // 清空错误消息
         }
 
         LOGI(LOG_TAG, "========================================");
@@ -252,19 +263,33 @@ int netcorehost_launch() {
 
     } catch (const netcorehost::HostingException& ex) {
         LOGE(LOG_TAG, "========================================");
-        LOGE(LOG_TAG, "[ERROR] 托管错误");
+        LOGE(LOG_TAG, "托管错误");
         LOGE(LOG_TAG, "========================================");
         LOGE(LOG_TAG, "  %s", ex.what());
         LOGE(LOG_TAG, "========================================");
+        // 保存错误消息
+        snprintf(g_last_error, sizeof(g_last_error), "托管错误: %s", ex.what());
         return -1;
     } catch (const std::exception& ex) {
         LOGE(LOG_TAG, "========================================");
-        LOGE(LOG_TAG, "[ERROR] 意外错误");
+        LOGE(LOG_TAG, "意外错误");
         LOGE(LOG_TAG, "========================================");
         LOGE(LOG_TAG, "  %s", ex.what());
         LOGE(LOG_TAG, "========================================");
+        // 保存错误消息
+        snprintf(g_last_error, sizeof(g_last_error), "意外错误: %s", ex.what());
         return -2;
     }
+}
+
+/**
+ * @brief 获取最后一次错误的详细消息
+ */
+const char* netcorehost_get_last_error() {
+    if (g_last_error[0] == '\0') {
+        return nullptr;
+    }
+    return g_last_error;
 }
 
 /**
@@ -273,6 +298,7 @@ int netcorehost_launch() {
 void netcorehost_cleanup() {
     str_free(g_app_path);
     str_free(g_dotnet_path);
+    g_last_error[0] = '\0';  // 清空错误消息
     LOGI(LOG_TAG, "Cleanup complete");
 }
 

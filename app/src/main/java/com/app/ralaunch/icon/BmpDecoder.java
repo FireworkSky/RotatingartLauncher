@@ -1,7 +1,8 @@
 package com.app.ralaunch.icon;
 
 import android.graphics.Bitmap;
-import android.util.Log;
+
+import com.app.ralaunch.utils.AppLogger;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -22,7 +23,7 @@ public class BmpDecoder {
     public static Bitmap decodeBmpIcon(byte[] data) {
         try {
             if (data == null || data.length < 40) {
-                Log.e(TAG, "Invalid icon data: too short");
+                AppLogger.error(TAG, "Invalid icon data: too short");
                 return null;
             }
             
@@ -42,7 +43,7 @@ public class BmpDecoder {
             
             // 验证header size
             if (headerSize != 40) {
-                Log.e(TAG, "Invalid BITMAPINFOHEADER size: " + headerSize);
+                AppLogger.error(TAG, "Invalid BITMAPINFOHEADER size: " + headerSize);
                 return null;
             }
             
@@ -51,7 +52,7 @@ public class BmpDecoder {
 
             // 只支持常见的位深度
             if (bitCount != 32 && bitCount != 24 && bitCount != 8 && bitCount != 4 && bitCount != 1) {
-                Log.e(TAG, "Unsupported bit count: " + bitCount);
+                AppLogger.error(TAG, "Unsupported bit count: " + bitCount);
                 return null;
             }
             
@@ -89,7 +90,7 @@ public class BmpDecoder {
             return bitmap;
             
         } catch (Exception e) {
-            Log.e(TAG, "Failed to decode BMP: " + e.getMessage(), e);
+            AppLogger.error(TAG, "Failed to decode BMP: " + e.getMessage(), e);
             return null;
         }
     }

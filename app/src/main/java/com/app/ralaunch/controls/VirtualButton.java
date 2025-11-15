@@ -93,23 +93,27 @@ public class VirtualButton extends View implements ControlView {
         String keyName = KeyMapper.getKeyName(mData.keycode);
         String displayText = mData.name;
         
-        // 如果按键不是"未知"，则在名称下方显示按键
-        if (!keyName.startsWith("未知")) {
-            // 绘制名称（上半部分）
-            float nameY = getHeight() / 2f - dpToPx(4);
-            canvas.drawText(displayText, getWidth() / 2f, nameY, mTextPaint);
-            
-            // 绘制按键（下半部分，较小字体）
-            TextPaint keyPaint = new TextPaint(mTextPaint);
-            keyPaint.setTextSize(dpToPx(12));
-            keyPaint.setAlpha((int) (mData.opacity * 200)); // 稍微透明一点
-            float keyY = getHeight() / 2f + dpToPx(12);
-            canvas.drawText(keyName, getWidth() / 2f, keyY, keyPaint);
-        } else {
-            // 只显示名称（居中）
-            float textY = getHeight() / 2f - ((mTextPaint.descent() + mTextPaint.ascent()) / 2);
-            canvas.drawText(displayText, getWidth() / 2f, textY, mTextPaint);
-        }
+//        // 如果按键不是"未知"，则在名称下方显示按键
+//        if (!keyName.startsWith("未知")) {
+//            // 绘制名称（上半部分）
+//            float nameY = getHeight() / 2f - dpToPx(4);
+//            canvas.drawText(displayText, getWidth() / 2f, nameY, mTextPaint);
+//
+//            // 绘制按键（下半部分，较小字体）
+//            TextPaint keyPaint = new TextPaint(mTextPaint);
+//            keyPaint.setTextSize(dpToPx(12));
+//            keyPaint.setAlpha((int) (mData.opacity * 200)); // 稍微透明一点
+//            float keyY = getHeight() / 2f + dpToPx(12);
+//            canvas.drawText(keyName, getWidth() / 2f, keyY, keyPaint);
+//        } else {
+//            // 只显示名称（居中）
+//            float textY = getHeight() / 2f - ((mTextPaint.descent() + mTextPaint.ascent()) / 2);
+//            canvas.drawText(displayText, getWidth() / 2f, textY, mTextPaint);
+//        }
+        // 只显示名称（居中）
+        // 显示真实按键会挡视野
+        float textY = getHeight() / 2f - ((mTextPaint.descent() + mTextPaint.ascent()) / 2);
+        canvas.drawText(displayText, getWidth() / 2f, textY, mTextPaint);
     }
     
     @Override
@@ -203,9 +207,15 @@ public class VirtualButton extends View implements ControlView {
         if (mData.keycode >= 0) {
             // 键盘按键
             mInputBridge.sendKey(mData.keycode, isDown);
-
-        } else if (mData.keycode != ControlData.SPECIAL_KEYBOARD) {
-            // 鼠标按键（排除特殊功能键）
+        } else if (mData.keycode >= ControlData.XBOX_TRIGGER_RIGHT && mData.keycode <= ControlData.XBOX_TRIGGER_LEFT) {
+            // Xbox控制器触发器 (范围: -220 到 -221)
+            float triggerValue = isDown ? 1.0f : -1.0f;
+            mInputBridge.sendXboxTrigger(mData.keycode, triggerValue);
+        } else if (mData.keycode >= ControlData.XBOX_BUTTON_DPAD_RIGHT && mData.keycode <= ControlData.XBOX_BUTTON_A) {
+            // Xbox控制器按钮 (范围: -200 到 -214)
+            mInputBridge.sendXboxButton(mData.keycode, isDown);
+        } else if (mData.keycode >= ControlData.MOUSE_MIDDLE && mData.keycode <= ControlData.MOUSE_LEFT) {
+            // 鼠标按键 (范围: -1 到 -3)
             // 计算按钮中心点的屏幕坐标
             int[] location = new int[2];
             getLocationOnScreen(location);
@@ -213,8 +223,8 @@ public class VirtualButton extends View implements ControlView {
             float centerY = location[1] + getHeight() / 2.0f;
             
             mInputBridge.sendMouseButton(mData.keycode, isDown, centerX, centerY);
-
         }
+        // SPECIAL_KEYBOARD (-100) 不在这里处理，在handlePress中特殊处理
     }
     
     @Override

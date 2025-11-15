@@ -50,9 +50,9 @@ public class AppLogger {
      * Initialize logger with log directory
      */
     public static void init(File logDir) {
-        Log.e(TAG, "[DEBUG] ==================== AppLogger.init() START ====================");
-        Log.e(TAG, "[DEBUG] ENABLE_FILE_LOGGING: " + ENABLE_FILE_LOGGING);
-        Log.e(TAG, "[DEBUG] logDir: " + (logDir != null ? logDir.getAbsolutePath() : "NULL"));
+        Log.e(TAG, "==================== AppLogger.init() START ====================");
+        Log.e(TAG, "ENABLE_FILE_LOGGING: " + ENABLE_FILE_LOGGING);
+        Log.e(TAG, "logDir: " + (logDir != null ? logDir.getAbsolutePath() : "NULL"));
         if (!ENABLE_FILE_LOGGING) return;
 
         try {
@@ -65,8 +65,8 @@ public class AppLogger {
             logFile = new File(logDir, fileName);
 
             // Rotate old logs (keep last 7 days)
-            Log.e(TAG, "[DEBUG] logWriter created: " + (logWriter != null));
-            Log.e(TAG, "[DEBUG] logFile path: " + logFile.getAbsolutePath());
+            Log.e(TAG, "logWriter created: " + (logWriter != null));
+            Log.e(TAG, "logFile path: " + logFile.getAbsolutePath());
             rotateOldLogs(logDir, 7);
 
             logWriter = new PrintWriter(new FileWriter(logFile, true), true);
@@ -77,7 +77,7 @@ public class AppLogger {
             } catch (UnsatisfiedLinkError e) {
                 Log.w(TAG, "Native logger not available: " + e.getMessage());
             }
-            Log.e(TAG, "[DEBUG] AppLogger.init() completed successfully");
+            Log.e(TAG, "AppLogger.init() completed successfully");
 
             info("Logger", "Log system initialized: " + logFile.getAbsolutePath());
 
@@ -124,13 +124,22 @@ public class AppLogger {
      * Close logger and release resources
      */
     public static void close() {
+        // 先刷新并关闭文件写入器（同步执行，避免executor已关闭的问题）
         if (logWriter != null) {
-            executor.execute(() -> {
+            try {
                 logWriter.flush();
                 logWriter.close();
-            });
+            } catch (Exception e) {
+                Log.e(TAG, "Failed to close log writer", e);
+            }
         }
-        executor.shutdown();
+
+        // 关闭executor
+        try {
+            executor.shutdown();
+        } catch (Exception e) {
+            // Executor可能已经被关闭
+        }
 
         // Close native logger
         try {
@@ -152,6 +161,10 @@ public class AppLogger {
 
     public static void warn(String tag, String message) {
         log(Level.WARN, tag, message, null);
+    }
+
+    public static void warn(String tag, String message, Throwable throwable) {
+        log(Level.WARN, tag, message, throwable);
     }
 
     public static void info(String tag, String message) {
@@ -195,7 +208,12 @@ public class AppLogger {
 
         // Log to file asynchronously
         if (ENABLE_FILE_LOGGING && logWriter != null) {
-            executor.execute(() -> writeToFile(level, tag, cleanMessage, throwable));
+            try {
+                executor.execute(() -> writeToFile(level, tag, cleanMessage, throwable));
+            } catch (Exception e) {
+                // Executor已关闭，直接同步写入
+                writeToFile(level, tag, cleanMessage, throwable);
+            }
         }
     }
 
@@ -230,25 +248,18 @@ public class AppLogger {
     private static String stripEmojis(String text) {
         if (text == null) return "";
 
-        // Remove emojis (Unicode ranges)
-        String cleaned = text.replaceAll("[\\p{So}\\p{Sk}]", "");
+        StringBuilder result = new StringBuilder();
+        for (int i = 0; i < text.length(); i++) {
+            char c = text.charAt(i);
 
-        // Remove box drawing characters
-        cleaned = cleaned.replaceAll("[─━│┃┄┅┆┇┈┉┊┋┌┍┎┏┐┑┒┓└┕┖┗┘┙┚┛├┝┞┟┠┡┢┣┤┥┦┧┨┩┪┫┬┭┮┯┰┱┲┳┴┵┶┷┸┹┺┻┼┽┾┿╀╁╂╃╄╅╆╇╈╉╊╋╌╍╎╏═║╒╓╔╕╖╗╘╙╚╛╜╝╞╟╠╡╢╣╤╥╦╧╨╩╪╫╬╭╮╯╰╱╲╳╴╵╶╷╸╹╺╻╼╽╾╿]", "");
+            // Keep only basic printable ASCII and common whitespace
+            if ((c >= 32 && c <= 126) || c == '\n' || c == '\r' || c == '\t') {
+                result.append(c);
+            }
+            // Skip all other characters (emojis, special symbols, etc.)
+        }
 
-        // Replace common graphic characters
-        cleaned = cleaned.replace("✓", "[OK]")
-                        .replace("✗", "[FAIL]")
-                        .replace("⚠", "[WARN]")
-                        .replace("ℹ", "[INFO]")
-                        .replace("🔧", "[TOOL]")
-                        .replace("📂", "[DIR]")
-                        .replace("📄", "[FILE]")
-                        .replace("✅", "[OK]")
-                        .replace("❌", "[ERROR]")
-                        .replace("⏳", "[WAIT]");
-
-        return cleaned.trim();
+        return result.toString();
     }
 
     /**
@@ -258,18 +269,5 @@ public class AppLogger {
         return logFile;
     }
 
-    /**
-     * Dump system info to log
-     */
-    public static void dumpSystemInfo() {
-        info("System", "========================================");
-        info("System", "RALaunch System Information");
-        info("System", "========================================");
-        info("System", "Android Version: " + android.os.Build.VERSION.RELEASE);
-        info("System", "API Level: " + android.os.Build.VERSION.SDK_INT);
-        info("System", "Device: " + android.os.Build.MANUFACTURER + " " + android.os.Build.MODEL);
-        info("System", "ABI: " + android.os.Build.SUPPORTED_ABIS[0]);
-        info("System", "RAM: " + (Runtime.getRuntime().maxMemory() / 1024 / 1024) + " MB");
-        info("System", "========================================");
-    }
+
 }

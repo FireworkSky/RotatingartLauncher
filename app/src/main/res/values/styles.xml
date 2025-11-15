@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- 设置对话框样式 -->
-    <style name="SettingsDialogStyle" parent="Theme.MaterialComponents.DayNight.Dialog">
+    <!-- 设置对话框样式 - Material 3 -->
+    <style name="SettingsDialogStyle" parent="Theme.Material3.DayNight.Dialog">
         <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:windowIsFloating">true</item>
         <item name="android:backgroundDimEnabled">true</item>
         <item name="android:windowAnimationStyle">@style/DialogAnimation</item>
     </style>
 
-    <!-- 运行时选择对话框样式 -->
-    <style name="RuntimeDialogStyle" parent="Theme.MaterialComponents.DayNight.Dialog">
+    <!-- 运行时选择对话框样式 - Material 3 -->
+    <style name="RuntimeDialogStyle" parent="Theme.Material3.DayNight.Dialog">
         <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:windowIsFloating">true</item>
         <item name="android:backgroundDimEnabled">true</item>
@@ -23,11 +23,69 @@
         <item name="android:windowExitAnimation">@anim/dialog_exit</item>
     </style>
 
-    <!-- 圆角卡片样式 -->
-    <style name="RoundedCardStyle" parent="Widget.MaterialComponents.CardView">
+    <!-- 圆角卡片样式 - Material 3 -->
+    <style name="RoundedCardStyle" parent="Widget.Material3.CardView.Elevated">
         <item name="cardCornerRadius">16dp</item>
         <item name="cardElevation">4dp</item>
         <item name="cardBackgroundColor">?attr/backgroundCard</item>
+    </style>
+
+    <!-- 添加游戏对话框样式 -->
+    <style name="AddGameDialogStyle" parent="Theme.Material3.DayNight.Dialog">
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowIsFloating">true</item>
+        <item name="android:backgroundDimEnabled">true</item>
+        <item name="android:backgroundDimAmount">0.7</item>
+        <item name="android:windowAnimationStyle">@style/DialogAnimation</item>
+
+        <!-- 继承主题颜色属性 -->
+        <item name="backgroundPrimary">@color/background_primary</item>
+        <item name="backgroundSecondary">@color/background_secondary</item>
+        <item name="backgroundCard">@color/background_card</item>
+        <item name="textPrimary">@color/text_primary</item>
+        <item name="textSecondary">@color/text_secondary</item>
+        <item name="colorOutline">@color/divider</item>
+    </style>
+
+    <!-- Material 3 按钮样式 -->
+    <style name="Widget.App.Button.Filled" parent="Widget.Material3.Button">
+        <item name="cornerRadius">16dp</item>
+        <item name="android:minHeight">56dp</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="Widget.App.Button.Outlined" parent="Widget.Material3.Button.OutlinedButton">
+        <item name="cornerRadius">16dp</item>
+        <item name="android:minHeight">56dp</item>
+        <item name="strokeWidth">2dp</item>
+        <item name="android:textSize">16sp</item>
+    </style>
+
+    <style name="Widget.App.Button.Text" parent="Widget.Material3.Button.TextButton">
+        <item name="cornerRadius">16dp</item>
+        <item name="android:minHeight">48dp</item>
+        <item name="android:textSize">14sp</item>
+    </style>
+
+    <style name="Widget.App.Button.Elevated" parent="Widget.Material3.Button.ElevatedButton">
+        <item name="cornerRadius">16dp</item>
+        <item name="android:minHeight">56dp</item>
+        <item name="elevation">4dp</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <!-- Material 3 卡片样式 -->
+    <style name="Widget.App.CardView.Elevated" parent="Widget.Material3.CardView.Elevated">
+        <item name="cardCornerRadius">20dp</item>
+        <item name="cardElevation">4dp</item>
+    </style>
+
+    <style name="Widget.App.CardView.Outlined" parent="Widget.Material3.CardView.Outlined">
+        <item name="cardCornerRadius">20dp</item>
+        <item name="strokeWidth">1dp</item>
+        <item name="strokeColor">?attr/colorOutline</item>
     </style>
 
 </resources>

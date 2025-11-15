@@ -14,6 +14,7 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.app.ralaunch.R;
 import com.app.ralaunch.RaLaunchApplication;
+import com.app.ralaunch.utils.AppLogger;
 import com.app.ralib.Shared;
 import com.app.ralib.extractors.BasicSevenZipExtractor;
 import com.app.ralib.extractors.ExtractorCollection;
@@ -67,7 +68,7 @@ public class DebugActivity extends AppCompatActivity {
     // }
 
     private void onTestExtractorClicked() {
-        Log.d(TAG, "Test Extractor button clicked");
+        AppLogger.debug(TAG, "Test Extractor button clicked");
 
         new ExtractorCollection.Builder()
                 .addExtractor(new GogShFileExtractor(
@@ -78,7 +79,7 @@ public class DebugActivity extends AppCompatActivity {
                             @Override
                             public void onProgress(String message, float progress, HashMap<String, Object> state) {
                                 var logMsg = String.format("Extraction progress: %.2f%% - %s", progress*100, message);
-                                Log.i(TAG, logMsg);
+                                AppLogger.info(TAG, logMsg);
                                 runOnUiThread(() -> {
                                     debug_shared_text.setText(logMsg);
                                     debug_shared_progressbar.setProgress((int)(progress * 100));
@@ -88,7 +89,7 @@ public class DebugActivity extends AppCompatActivity {
                             @Override
                             public void onComplete(String message, HashMap<String, Object> state) {
                                 var logMsg = "Extraction complete: " + message;
-                                Log.i(TAG, logMsg);
+                                AppLogger.info(TAG, logMsg);
                                 runOnUiThread(() -> {
                                     debug_shared_text.setText(logMsg);
                                 });
@@ -97,7 +98,7 @@ public class DebugActivity extends AppCompatActivity {
                             @Override
                             public void onError(String message, Exception ex, HashMap<String, Object> state) {
                                 var logMsg = "Extraction error: " + message + "\n" + Log.getStackTraceString(ex);
-                                Log.i(TAG, "Extraction error: " + message, ex);
+                              //  AppLogger.info(TAG, "Extraction error: " + message, ex);
                                 runOnUiThread(() -> {
                                     debug_shared_text.setText(logMsg);
                                 });
@@ -118,7 +119,7 @@ public class DebugActivity extends AppCompatActivity {
 //                            @Override
 //                            public void onProgress(String message, float progress, HashMap<String, Object> state) {
 //                                var logMsg = String.format("Extraction progress: %.2f%% - %s", progress*100, message);
-//                                Log.i(TAG, logMsg);
+//                                AppLogger.info(TAG, logMsg);
 //                                runOnUiThread(() -> {
 //                                    debug_shared_text.setText(logMsg);
 //                                    debug_shared_progressbar.setProgress((int)(progress * 100));
@@ -128,7 +129,7 @@ public class DebugActivity extends AppCompatActivity {
 //                            @Override
 //                            public void onComplete(String message, HashMap<String, Object> state) {
 //                                var logMsg = "Extraction complete: " + message;
-//                                Log.i(TAG, logMsg);
+//                                AppLogger.info(TAG, logMsg);
 //                                runOnUiThread(() -> {
 //                                    debug_shared_text.setText(logMsg);
 //                                });
@@ -137,7 +138,7 @@ public class DebugActivity extends AppCompatActivity {
 //                            @Override
 //                            public void onError(String message, Exception ex, HashMap<String, Object> state) {
 //                                var logMsg = "Extraction error: " + message + "\n" + Log.getStackTraceString(ex);
-//                                Log.i(TAG, "Extraction error: " + message, ex);
+//                                AppLogger.info(TAG, "Extraction error: " + message, ex);
 //                                runOnUiThread(() -> {
 //                                    debug_shared_text.setText(logMsg);
 //                                });

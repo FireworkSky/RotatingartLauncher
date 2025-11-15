@@ -93,7 +93,7 @@ int Console_Bridge_Init(JNIEnv* env) {
         return -1;
     }
 
-    LOGI("[OK] Console Bridge initialized successfully");
+    LOGI("Console Bridge initialized successfully");
     return 0;
 }
 
@@ -182,7 +182,7 @@ int Console_Bridge_ReadInput(char* buffer, int buffer_size) {
     memcpy(buffer, input_chars, copy_len);
     buffer[copy_len] = '\0';
 
-    LOGI("[OK] Console input received: %s", buffer);
+    LOGI("Console input received: %s", buffer);
 
     (*env)->ReleaseStringUTFChars(env, java_input, input_chars);
     (*env)->DeleteLocalRef(env, java_input);
@@ -206,8 +206,8 @@ Java_com_app_ralaunch_console_ConsoleService_nativeSetConsoleOutputCallback(
     
     // TODO: 通过 hostfxr 设置 C# Console.Out 重定向
     // 这需要在 .NET 运行时初始化后调用托管代码来设置
-    
-    LOGI("[OK] Console output callback set");
+
+    LOGI("Console output callback set");
 }
 
 /**
@@ -224,7 +224,7 @@ Java_com_app_ralaunch_console_ConsoleService_nativeSetConsoleInputCallback(
     }
     
     // TODO: 通过 hostfxr 设置 C# Console.In 重定向
-    
-    LOGI("[OK] Console input callback set");
+
+    LOGI("Console input callback set");
 }
 

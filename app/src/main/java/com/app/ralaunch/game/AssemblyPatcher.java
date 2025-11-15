@@ -2,7 +2,8 @@ package com.app.ralaunch.game;
 
 import android.content.Context;
 import android.content.res.AssetManager;
-import android.util.Log;
+
+import com.app.ralaunch.utils.AppLogger;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -43,33 +44,33 @@ public class AssemblyPatcher {
     public static int applyPatches(Context context, String gameDirectory) {
         // [OK] 检查是否需要强制更新
         if (shouldForceUpdate(gameDirectory)) {
-            Log.w(TAG, "🔄 检测到补丁版本更新，强制清理旧版本补丁...");
+            AppLogger.warn(TAG, "🔄 检测到补丁版本更新，强制清理旧版本补丁...");
             cleanOldPatches(gameDirectory);
         }
-        Log.i(TAG, "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        Log.i(TAG, "🔧 开始应用 MonoMod 补丁");
-        Log.i(TAG, "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        Log.i(TAG, "  游戏目录: " + gameDirectory);
+        AppLogger.info(TAG, "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        AppLogger.info(TAG, "🔧 开始应用 MonoMod 补丁");
+        AppLogger.info(TAG, "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        AppLogger.info(TAG, "  游戏目录: " + gameDirectory);
         
         try {
             // 1. 从 assets 加载补丁归档
             Map<String, byte[]> patchAssemblies = loadPatchArchive(context);
             
             if (patchAssemblies.isEmpty()) {
-                Log.w(TAG, "[WARN]  未找到补丁程序集");
+                AppLogger.warn(TAG, "未找到补丁程序集");
                 return 0;
             }
-            
-            Log.i(TAG, "[OK] 已加载 " + patchAssemblies.size() + " 个补丁程序集:");
+
+            AppLogger.info(TAG, "已加载 " + patchAssemblies.size() + " 个补丁程序集:");
             for (String assemblyName : patchAssemblies.keySet()) {
-                Log.i(TAG, "   - " + assemblyName);
+                AppLogger.info(TAG, "   - " + assemblyName);
             }
             
             // 2. 扫描游戏目录中的程序集
             File gameDir = new File(gameDirectory);
             List<File> gameAssemblies = findGameAssemblies(gameDir);
             
-            Log.i(TAG, "  找到 " + gameAssemblies.size() + " 个游戏程序集");
+            AppLogger.info(TAG, "  找到 " + gameAssemblies.size() + " 个游戏程序集");
             
             // 3. 应用补丁（替换已有的程序集）
             int patchedCount = 0;
@@ -78,16 +79,16 @@ public class AssemblyPatcher {
                 
                 // [WARN] 跳过 Mono.Cecil，因为 tModLoader 需要特定版本（0.11.6.0）
                 if (assemblyName.startsWith("Mono.Cecil")) {
-                    Log.i(TAG, "⏭️  跳过（使用游戏自带版本）: " + assemblyName);
+                    AppLogger.info(TAG, "⏭️  跳过（使用游戏自带版本）: " + assemblyName);
                     continue;
                 }
                 
                 if (patchAssemblies.containsKey(assemblyName)) {
                     if (replaceAssembly(assemblyFile, patchAssemblies.get(assemblyName))) {
-                        Log.i(TAG, "[OK] 已替换: " + assemblyName);
+                        AppLogger.info(TAG, "已替换: " + assemblyName);
                         patchedCount++;
                     } else {
-                        Log.w(TAG, "[WARN]  替换失败: " + assemblyName);
+                        AppLogger.warn(TAG, "替换失败: " + assemblyName);
                     }
                 }
             }
@@ -113,17 +114,17 @@ public class AssemblyPatcher {
                 if (!alreadyExists) {
                     File newAssemblyFile = new File(gameDir, assemblyName);
                     if (replaceAssembly(newAssemblyFile, entry.getValue())) {
-                        Log.i(TAG, "[OK] 已添加: " + assemblyName);
+                        AppLogger.info(TAG, "已添加: " + assemblyName);
                         patchedCount++;
                     } else {
-                        Log.w(TAG, "[WARN]  添加失败: " + assemblyName);
+                        AppLogger.warn(TAG, "添加失败: " + assemblyName);
                     }
                 }
             }
             
-            Log.i(TAG, "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            Log.i(TAG, "[OK] 补丁应用完成，共替换 " + patchedCount + " 个程序集");
-            Log.i(TAG, "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            AppLogger.info(TAG, "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            AppLogger.info(TAG, "补丁应用完成，共替换 " + patchedCount + " 个程序集");
+            AppLogger.info(TAG, "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
             
             // [OK] 保存当前补丁版本号
             saveCurrentVersion(gameDirectory);
@@ -131,7 +132,7 @@ public class AssemblyPatcher {
             return patchedCount;
             
         } catch (Exception e) {
-            Log.e(TAG, "[ERROR] 应用补丁失败", e);
+            AppLogger.error(TAG, "应用补丁失败", e);
             return -1;
         }
     }
@@ -168,7 +169,7 @@ public class AssemblyPatcher {
                 
                 assemblies.put(fileName, assemblyData);
                 
-                Log.d(TAG, "  加载补丁: " + fileName + " (" + assemblyData.length + " bytes)");
+                AppLogger.debug(TAG, "  加载补丁: " + fileName + " (" + assemblyData.length + " bytes)");
                 
                 zipInputStream.closeEntry();
             }
@@ -177,7 +178,7 @@ public class AssemblyPatcher {
             inputStream.close();
             
         } catch (IOException e) {
-            Log.w(TAG, "[WARN]  无法加载 " + PATCH_ARCHIVE + ": " + e.getMessage());
+            AppLogger.warn(TAG, "无法加载 " + PATCH_ARCHIVE + ": " + e.getMessage());
         }
         
         return assemblies;
@@ -236,7 +237,7 @@ public class AssemblyPatcher {
             return true;
             
         } catch (IOException e) {
-            Log.e(TAG, "  替换失败: " + targetFile.getName(), e);
+            AppLogger.error(TAG, "  替换失败: " + targetFile.getName(), e);
             return false;
         }
     }
@@ -284,7 +285,7 @@ public class AssemblyPatcher {
         File versionFile = new File(gameDirectory, VERSION_FILE);
         
         if (!versionFile.exists()) {
-            Log.i(TAG, "  版本文件不存在，需要首次安装补丁");
+            AppLogger.info(TAG, "  版本文件不存在，需要首次安装补丁");
             return true;
         }
         
@@ -297,17 +298,17 @@ public class AssemblyPatcher {
             String versionStr = new String(buffer, 0, length).trim();
             int installedVersion = Integer.parseInt(versionStr);
             
-            Log.i(TAG, "  已安装补丁版本: " + installedVersion + ", 当前版本: " + PATCH_VERSION);
+            AppLogger.info(TAG, "  已安装补丁版本: " + installedVersion + ", 当前版本: " + PATCH_VERSION);
             
             if (installedVersion < PATCH_VERSION) {
-                Log.w(TAG, "  [WARN] 检测到新版本补丁，需要更新！");
+                AppLogger.warn(TAG, "检测到新版本补丁，需要更新！");
                 return true;
             }
             
             return false;
             
         } catch (Exception e) {
-            Log.w(TAG, "  读取版本文件失败，将强制更新", e);
+            AppLogger.warn(TAG, "  读取版本文件失败，将强制更新", e);
             return true;
         }
     }
@@ -340,10 +341,10 @@ public class AssemblyPatcher {
             File dllFile = new File(gameDir, dllName);
             if (dllFile.exists()) {
                 if (dllFile.delete()) {
-                    Log.i(TAG, "  [OK] 已删除旧版本: " + dllName);
+                    AppLogger.info(TAG, "已删除旧版本: " + dllName);
                     deletedCount++;
                 } else {
-                    Log.w(TAG, "  ✗ 删除失败: " + dllName);
+                    AppLogger.warn(TAG, "删除失败: " + dllName);
                 }
             }
         }
@@ -354,7 +355,7 @@ public class AssemblyPatcher {
             versionFile.delete();
         }
         
-        Log.i(TAG, "  已清理 " + deletedCount + " 个旧版本补丁文件");
+        AppLogger.info(TAG, "  已清理 " + deletedCount + " 个旧版本补丁文件");
     }
     
     /**
@@ -368,9 +369,9 @@ public class AssemblyPatcher {
             FileOutputStream fos = new FileOutputStream(versionFile);
             fos.write(String.valueOf(PATCH_VERSION).getBytes());
             fos.close();
-            Log.i(TAG, "  [OK] 已保存补丁版本: " + PATCH_VERSION);
+            AppLogger.info(TAG, "已保存补丁版本: " + PATCH_VERSION);
         } catch (IOException e) {
-            Log.w(TAG, "  保存版本文件失败", e);
+            AppLogger.warn(TAG, "保存版本文件失败", e);
         }
     }
 }

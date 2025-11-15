@@ -53,8 +53,17 @@ int netcorehost_set_params(
 int netcorehost_launch();
 
 /**
+ * @brief 获取最后一次错误的详细消息
+ *
+ * @return 错误消息字符串,如果没有错误则返回 NULL
+ *
+ * 注意:返回的字符串是内部缓冲区,调用者不应该释放它
+ */
+const char* netcorehost_get_last_error();
+
+/**
  * @brief 清理资源
- * 
+ *
  * 释放所有分配的内存和资源
  */
 void netcorehost_cleanup();

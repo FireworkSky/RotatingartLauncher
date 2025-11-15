@@ -1,7 +1,8 @@
 package com.app.ralaunch.icon;
 
 import android.graphics.Bitmap;
-import android.util.Log;
+
+import com.app.ralaunch.utils.AppLogger;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -38,7 +39,7 @@ public class IconExtractor {
             
             // 验证 PE 格式
             if (!reader.isPeFormat()) {
-                Log.e(TAG, "Not a valid PE file: " + exePath);
+                AppLogger.error(TAG, "Not a valid PE file: " + exePath);
                 return false;
             }
             
@@ -48,7 +49,7 @@ public class IconExtractor {
             // 读取资源 Section
             PeReader.ResourceSection resourceSection = reader.readResourceSection(peHeader);
             if (resourceSection == null) {
-                Log.e(TAG, "No resource section found");
+                AppLogger.error(TAG, "No resource section found");
                 return false;
             }
             
@@ -59,21 +60,21 @@ public class IconExtractor {
             // 查找图标组资源 (RT_GROUP_ICON)
             IconGroup iconGroup = findBestIconGroup(reader, resourceSection, rootDir);
             if (iconGroup == null) {
-                Log.e(TAG, "No icon group found");
+                AppLogger.error(TAG, "No icon group found");
                 return false;
             }
             
             // 选择最佳质量的图标（最大尺寸，最高位深度）
             IconGroupEntry bestEntry = selectBestIcon(iconGroup);
             if (bestEntry == null) {
-                Log.e(TAG, "No suitable icon entry found");
+                AppLogger.error(TAG, "No suitable icon entry found");
                 return false;
             }
             
             // 查找并读取图标数据
             byte[] iconData = findIconData(reader, resourceSection, rootDir, bestEntry.id);
             if (iconData == null) {
-                Log.e(TAG, "Icon data not found");
+                AppLogger.error(TAG, "Icon data not found");
                 return false;
             }
             
@@ -89,7 +90,7 @@ public class IconExtractor {
             // 检测图标格式并解码
             Bitmap bitmap = decodeIconData(iconData);
             if (bitmap == null) {
-                Log.e(TAG, "Failed to decode icon bitmap");
+                AppLogger.error(TAG, "Failed to decode icon bitmap");
                 return false;
             }
             
@@ -98,11 +99,11 @@ public class IconExtractor {
             bitmap.compress(Bitmap.CompressFormat.PNG, 100, out);
             out.close();
             
-            Log.i(TAG, "Icon extracted successfully to: " + outputPath);
+            AppLogger.info(TAG, "Icon extracted successfully to: " + outputPath);
             return true;
             
         } catch (Exception e) {
-            Log.e(TAG, "Failed to extract icon: " + e.getMessage(), e);
+            AppLogger.error(TAG, "Failed to extract icon: " + e.getMessage(), e);
             return false;
         } finally {
             if (file != null) {

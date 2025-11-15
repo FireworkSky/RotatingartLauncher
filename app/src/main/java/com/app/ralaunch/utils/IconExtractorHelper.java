@@ -1,7 +1,6 @@
 package com.app.ralaunch.utils;
 
 import android.content.Context;
-import android.util.Log;
 
 import com.app.ralib.icon.IconExtractor;
 
@@ -25,13 +24,13 @@ public class IconExtractorHelper {
      */
     public static String extractGameIcon(Context context, String gamePath) {
         if (gamePath == null || gamePath.isEmpty()) {
-            Log.w(TAG, "Game path is null or empty");
+            AppLogger.warn(TAG, "Game path is null or empty");
             return null;
         }
         
         File gameFile = new File(gamePath);
         if (!gameFile.exists()) {
-            Log.w(TAG, "Game file not found: " + gamePath);
+            AppLogger.warn(TAG, "Game file not found: " + gamePath);
             return null;
         }
         
@@ -45,18 +44,18 @@ public class IconExtractorHelper {
             if (success) {
                 File iconFile = new File(iconPath);
                 if (iconFile.exists() && iconFile.length() > 0) {
-                    Log.i(TAG, "[OK] Icon extracted successfully: " + iconPath);
+                    AppLogger.info(TAG, "Icon extracted successfully: " + iconPath);
                     return iconPath;
                 } else {
-                    Log.e(TAG, "Icon file was not created or is empty");
+                    AppLogger.error(TAG, "Icon file was not created or is empty");
                     return null;
                 }
             } else {
-                Log.e(TAG, "Icon extraction failed");
+                AppLogger.error(TAG, "Icon extraction failed");
                 return null;
             }
         } catch (Exception e) {
-            Log.e(TAG, "Exception during icon extraction: " + e.getMessage(), e);
+            AppLogger.error(TAG, "Exception during icon extraction: " + e.getMessage(), e);
             return null;
         }
     }

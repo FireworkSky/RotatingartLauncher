@@ -13,6 +13,7 @@ import android.widget.TextView;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.app.ralaunch.R;
+import com.app.ralaunch.model.GameItem;
 
 import java.util.List;
 

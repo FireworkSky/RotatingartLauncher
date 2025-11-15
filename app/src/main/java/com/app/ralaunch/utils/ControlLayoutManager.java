@@ -106,6 +106,10 @@ public class ControlLayoutManager {
         return layouts.isEmpty() ? null : layouts.get(0);
     }
 
+    public String getCurrentLayoutName() {
+        return currentLayoutName;
+    }
+
     public void setCurrentLayout(String layoutName) {
         this.currentLayoutName = layoutName;
         saveLayouts();
@@ -129,5 +133,9 @@ public class ControlLayoutManager {
                 break;
             }
         }
+    }
+
+    public void saveLayout(ControlLayout layout) {
+        updateLayout(layout);
     }
 }
