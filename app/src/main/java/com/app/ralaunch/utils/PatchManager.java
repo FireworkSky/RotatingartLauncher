@@ -109,8 +109,14 @@ public class PatchManager {
             for (int i = 0; i < patchesArray.length(); i++) {
                 JSONObject patchJson = patchesArray.getJSONObject(i);
                 PatchInfo patch = PatchInfo.fromJson(patchJson);
-                availablePatches.add(patch);
-                Log.d(TAG, "Loaded patch: " + patch.getPatchName() + " v" + patch.getVersion());
+
+                // 检查补丁程序集文件是否存在
+                if (isPatchAssemblyAvailable(patch.getDllFileName())) {
+                    availablePatches.add(patch);
+                    Log.d(TAG, "Loaded patch: " + patch.getPatchName() + " v" + patch.getVersion());
+                } else {
+                    Log.w(TAG, "Skipping patch (assembly not found): " + patch.getPatchName() + " (" + patch.getDllFileName() + ")");
+                }
             }
 
             Log.d(TAG, "Successfully loaded " + availablePatches.size() + " patches from JSON");
@@ -279,6 +285,35 @@ public class PatchManager {
      */
     private String generateKey(String gameId, String patchName) {
         return gameId + ":" + patchName;
+    }
+
+    /**
+     * 检查补丁程序集文件是否可用
+     * 优先检查外部存储，如果不存在则检查 assets
+     */
+    private boolean isPatchAssemblyAvailable(String dllFileName) {
+        // 1. 检查外部存储
+        File externalPatchesDir = getExternalPatchesDirectory();
+        File externalPatchFile = new File(externalPatchesDir, dllFileName);
+        if (externalPatchFile.exists()) {
+            return true;
+        }
+
+        // 2. 检查 assets
+        try {
+            String[] assetFiles = context.getAssets().list("patches");
+            if (assetFiles != null) {
+                for (String fileName : assetFiles) {
+                    if (fileName.equals(dllFileName)) {
+                        return true;
+                    }
+                }
+            }
+        } catch (IOException e) {
+            Log.w(TAG, "Failed to list assets: " + e.getMessage());
+        }
+
+        return false;
     }
 
     /**
