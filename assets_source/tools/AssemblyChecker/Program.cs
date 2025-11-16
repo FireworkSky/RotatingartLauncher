@@ -77,62 +77,27 @@ class Program
 
         try
         {
-            // 使用 PEReader 读取程序集元数据
-            using var fileStream = File.OpenRead(assemblyPath);
-            using var peReader = new PEReader(fileStream);
-
-            if (!peReader.HasMetadata)
-            {
-                result.Error = "不是有效的 .NET 程序集";
-                return result;
-            }
-
-            var metadataReader = peReader.GetMetadataReader();
+            // 简单检测：直接加载程序集并检查入口点
+            var assembly = Assembly.LoadFrom(assemblyPath);
             result.IsNetAssembly = true;
 
-            // 检查入口点（从 CorHeader 获取）
-            var corHeader = peReader.PEHeaders.CorHeader;
-            if (corHeader == null)
+            // 检查入口点
+            var entryPoint = assembly.EntryPoint;
+            result.HasEntryPoint = entryPoint != null;
+
+            if (result.HasEntryPoint && entryPoint != null)
             {
-                result.Error = "不是有效的 .NET 程序集（缺少 CorHeader）";
-                return result;
-            }
-
-            int entryPointToken = corHeader.EntryPointTokenOrRelativeVirtualAddress;
-            var entryPoint = MetadataTokens.EntityHandle(entryPointToken);
-            result.HasEntryPoint = !entryPoint.IsNil && entryPointToken != 0;
-
-            if (result.HasEntryPoint)
-            {
-                result.EntryPointToken = $"0x{entryPoint.GetHashCode():X8}";
-
-                // 获取入口点方法信息
-                try
-                {
-                    if (entryPoint.Kind == HandleKind.MethodDefinition)
-                    {
-                        var methodDef = metadataReader.GetMethodDefinition((MethodDefinitionHandle)entryPoint);
-                        var typeDef = metadataReader.GetTypeDefinition(methodDef.GetDeclaringType());
-
-                        string typeName = metadataReader.GetString(typeDef.Name);
-                        string methodName = metadataReader.GetString(methodDef.Name);
-                        string namespaceName = metadataReader.GetString(typeDef.Namespace);
-
-                        result.EntryPointMethod = $"{namespaceName}.{typeName}::{methodName}";
-                    }
-                }
-                catch
-                {
-                    // 忽略入口点详细信息提取失败
-                }
+                result.EntryPointMethod = $"{entryPoint.DeclaringType?.FullName}::{entryPoint.Name}";
             }
 
             // 获取程序集名称和版本
-            var assemblyDef = metadataReader.GetAssemblyDefinition();
-            result.AssemblyName = metadataReader.GetString(assemblyDef.Name);
-            result.AssemblyVersion = assemblyDef.Version.ToString();
+            var assemblyName = assembly.GetName();
+            result.AssemblyName = assemblyName.Name;
+            result.AssemblyVersion = assemblyName.Version?.ToString();
 
-            // 检查是否有嵌入的图标资源
+            // 检查是否有图标（使用 PEReader 检查资源）
+            using var fileStream = File.OpenRead(assemblyPath);
+            using var peReader = new PEReader(fileStream);
             result.HasIcon = HasIconResource(peReader);
 
             // 如果需要提取图标
@@ -154,7 +119,7 @@ class Program
         }
         catch (BadImageFormatException)
         {
-            result.Error = "不是有效的 PE 文件或 .NET 程序集";
+            result.Error = "不是有效的 .NET 程序集";
             return result;
         }
         catch (Exception ex)

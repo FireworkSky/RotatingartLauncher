@@ -472,6 +472,54 @@ public class IconExtractor {
             return false;
         }
     }
+
+    /**
+     * 检查 EXE/DLL 文件是否包含图标资源
+     *
+     * @param exePath EXE/DLL 文件路径
+     * @return true 表示包含图标，false 表示不包含或检查失败
+     */
+    public static boolean hasIcon(String exePath) {
+        RandomAccessFile file = null;
+        try {
+            file = new RandomAccessFile(new File(exePath), "r");
+            PeReader reader = new PeReader(file);
+
+            // 验证 PE 格式
+            if (!reader.isPeFormat()) {
+                return false;
+            }
+
+            // 读取 PE Header
+            PeReader.PeHeader peHeader = reader.readPeHeader();
+
+            // 读取资源 Section
+            PeReader.ResourceSection resourceSection = reader.readResourceSection(peHeader);
+            if (resourceSection == null) {
+                return false;
+            }
+
+            // 读取根资源目录
+            PeReader.ResourceDirectory rootDir = reader.readResourceDirectory(
+                resourceSection, resourceSection.resourceFileOffset);
+
+            // 查找图标组资源 (RT_GROUP_ICON)
+            IconGroup iconGroup = findBestIconGroup(reader, resourceSection, rootDir);
+            return iconGroup != null && iconGroup.entries != null && iconGroup.entries.length > 0;
+
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to check icon: " + e.getMessage());
+            return false;
+        } finally {
+            if (file != null) {
+                try {
+                    file.close();
+                } catch (IOException e) {
+                    // Ignore
+                }
+            }
+        }
+    }
 }
 
 

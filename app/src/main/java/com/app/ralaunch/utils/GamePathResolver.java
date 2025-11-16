@@ -1,5 +1,8 @@
 package com.app.ralaunch.utils;
 
+import android.content.Context;
+import com.app.ralib.icon.IconExtractor;
+
 import java.io.File;
 import java.util.function.Predicate;
 
@@ -10,6 +13,14 @@ import java.util.function.Predicate;
  */
 public class GamePathResolver {
     private static final String TAG = "GamePathResolver";
+    private static Context sContext;
+
+    /**
+     * 初始化上下文（需要在使用前调用一次）
+     */
+    public static void initialize(Context context) {
+        sContext = context.getApplicationContext();
+    }
 
     /**
      * 查找游戏可执行文件路径
@@ -30,22 +41,95 @@ public class GamePathResolver {
             return null;
         }
 
-        // 查找 .dll 文件
+        // 查找具有入口点和图标的 DLL 文件（游戏主程序）
+        File gameDll = findGameExecutable(gameDir, ".dll");
+        if (gameDll != null) {
+            AppLogger.info(TAG, "Found game DLL with entry point and icon: " + gameDll.getAbsolutePath());
+            return gameDll.getAbsolutePath();
+        }
+
+        // 查找具有入口点和图标的 EXE 文件
+        File gameExe = findGameExecutable(gameDir, ".exe");
+        if (gameExe != null) {
+            AppLogger.info(TAG, "Found game EXE with entry point and icon: " + gameExe.getAbsolutePath());
+            return gameExe.getAbsolutePath();
+        }
+
+        // 如果找不到符合条件的文件，降级为查找任意 DLL/EXE
         File dllFile = findFirstFileRecursively(gameDir, name -> name.endsWith(".dll"));
         if (dllFile != null) {
-            AppLogger.debug(TAG, "Found DLL file: " + dllFile.getAbsolutePath());
+            AppLogger.debug(TAG, "Found DLL file (no entry point check): " + dllFile.getAbsolutePath());
             return dllFile.getAbsolutePath();
         }
 
-        // 查找 .exe 文件
         File exeFile = findFirstFileRecursively(gameDir, name -> name.endsWith(".exe"));
         if (exeFile != null) {
-            AppLogger.debug(TAG, "Found EXE file: " + exeFile.getAbsolutePath());
+            AppLogger.debug(TAG, "Found EXE file (no entry point check): " + exeFile.getAbsolutePath());
             return exeFile.getAbsolutePath();
         }
 
         AppLogger.warn(TAG, "No executable file found in: " + gamePath);
         return null;
+    }
+
+    /**
+     * 查找游戏可执行文件（必须同时具有入口点和图标）
+     */
+    private static File findGameExecutable(File dir, String extension) {
+        return findFirstFileRecursively(dir, name -> {
+            if (!name.endsWith(extension)) {
+                return false;
+            }
+
+            File file = new File(dir, name);
+            String filePath = file.getAbsolutePath();
+
+            // 检查是否有图标（必须条件）
+            boolean hasIcon = IconExtractor.hasIcon(filePath);
+            if (!hasIcon) {
+                return false;
+            }
+
+            // 检查是否有入口点（如果 runtime 可用）
+            boolean hasEntryPoint = false;
+            if (sContext != null && isRuntimeAvailable()) {
+                try {
+                    hasEntryPoint = AssemblyChecker.hasEntryPoint(sContext, filePath);
+                } catch (Exception e) {
+                    // 如果检查失败，记录日志但不影响结果（降级为只检查图标）
+                    AppLogger.debug(TAG, "Failed to check entry point for " + name + ": " + e.getMessage());
+                    hasEntryPoint = true; // 假设有入口点
+                }
+            } else {
+                // runtime 不可用时，假设有入口点（只要有图标就认为是游戏）
+                hasEntryPoint = true;
+            }
+
+            if (hasEntryPoint && hasIcon) {
+                AppLogger.debug(TAG, String.format("File %s has entry point: %b, has icon: %b",
+                    name, hasEntryPoint, hasIcon));
+                return true;
+            }
+
+            return false;
+        });
+    }
+
+    /**
+     * 检查 .NET runtime 是否可用
+     */
+    private static boolean isRuntimeAvailable() {
+        if (sContext == null) {
+            return false;
+        }
+
+        try {
+            String dotnetPath = RuntimeManager.getDotnetPath(sContext);
+            File dotnetExe = new File(dotnetPath, "dotnet");
+            return dotnetExe.exists();
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     /**

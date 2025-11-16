@@ -255,6 +255,7 @@ public class GameActivity extends SDLActivity {
             // 获取程序集路径
             String assemblyPath = getIntent().getStringExtra("ASSEMBLY_PATH");
             String gameName = getIntent().getStringExtra("GAME_NAME");
+            String gameId = getIntent().getStringExtra("GAME_ID");
 
             if (assemblyPath == null || assemblyPath.isEmpty()) {
                 AppLogger.error(TAG, "Assembly path is null or empty");
@@ -277,8 +278,36 @@ public class GameActivity extends SDLActivity {
             AppLogger.info(TAG, "Assembly: " + assemblyPath);
             AppLogger.info(TAG, "================================================");
 
-            // 直接启动程序集
-            int result = GameLauncher.launchAssemblyDirect(this, assemblyPath);
+            // 获取启用的补丁配置
+            java.util.ArrayList<String> patchDllNames = getIntent().getStringArrayListExtra("ENABLED_PATCH_DLLS");
+            java.util.ArrayList<String> patchNames = getIntent().getStringArrayListExtra("ENABLED_PATCH_NAMES");
+
+            java.util.List<com.app.ralaunch.model.PatchInfo> enabledPatches = null;
+            if (patchDllNames != null && !patchDllNames.isEmpty()) {
+                enabledPatches = new java.util.ArrayList<>();
+                for (int i = 0; i < patchDllNames.size(); i++) {
+                    String dllName = patchDllNames.get(i);
+                    String patchName = (patchNames != null && i < patchNames.size()) ? patchNames.get(i) : dllName;
+
+                    // 创建PatchInfo对象（这里简化处理，实际应该从配置文件读取完整信息）
+                    com.app.ralaunch.model.PatchInfo patch = new com.app.ralaunch.model.PatchInfo(
+                        dllName, // patchId
+                        patchName, // patchName
+                        "", // description
+                        dllName, // dllFileName
+                        "" // targetGamePattern
+                    );
+                    enabledPatches.add(patch);
+                }
+
+                AppLogger.info(TAG, "Enabled patches: " + enabledPatches.size());
+                for (com.app.ralaunch.model.PatchInfo patch : enabledPatches) {
+                    AppLogger.info(TAG, "  - " + patch.getPatchName());
+                }
+            }
+
+            // 启动程序集（带补丁配置）
+            int result = GameLauncher.launchAssemblyDirect(this, assemblyPath, enabledPatches);
 
             if (result == 0) {
                 AppLogger.info(TAG, "Launch parameters set successfully");
@@ -387,9 +416,11 @@ public class GameActivity extends SDLActivity {
 
             // 确保SDL文本输入在启动时是禁用的
             // 延迟执行，等待SDL初始化完成
-            mLayout.postDelayed(() -> {
-                disableSDLTextInput();
-            }, 2000); // 等待2秒让SDL完全初始化
+            if (mLayout != null) {
+                mLayout.postDelayed(() -> {
+                    disableSDLTextInput();
+                }, 2000); // 等待2秒让SDL完全初始化
+            }
 
             AppLogger.info(TAG, "Virtual controls initialized successfully");
         } catch (Exception e) {

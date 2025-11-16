@@ -4,6 +4,7 @@ import android.app.Application;
 import android.content.Context;
 import android.content.res.Configuration;
 import com.app.ralaunch.data.GameDataManager;
+import com.app.ralaunch.utils.GamePathResolver;
 import com.app.ralaunch.utils.LocaleManager;
 
 /**
@@ -22,6 +23,9 @@ public class RaLaunchApplication extends Application {
 
         // 初始化 GameDataManager
         gameDataManager = new GameDataManager(appContext);
+
+        // 初始化 GamePathResolver
+        GamePathResolver.initialize(appContext);
 
         // 初始化 ralib
         com.app.ralib.Shared.init(appContext);
