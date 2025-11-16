@@ -306,7 +306,7 @@ void netcorehost_cleanup() {
  * @brief JNI 函数：设置启动参数（简化版 - 4个参数）
  */
 extern "C" JNIEXPORT jint JNICALL
-Java_com_app_ralaunch_game_GameLauncher_netcorehostSetParams(
+Java_com_app_ralaunch_core_GameLauncher_netcorehostSetParams(
         JNIEnv *env, jclass clazz,
         jstring appDir, jstring mainAssembly, jstring dotnetRoot, jint frameworkMajor) {
 
@@ -327,7 +327,7 @@ Java_com_app_ralaunch_game_GameLauncher_netcorehostSetParams(
  * @brief JNI 函数：启动应用
  */
 extern "C" JNIEXPORT jint JNICALL
-Java_com_app_ralaunch_game_GameLauncher_netcorehostLaunch(JNIEnv *env, jclass clazz) {
+Java_com_app_ralaunch_core_GameLauncher_netcorehostLaunch(JNIEnv *env, jclass clazz) {
     return netcorehost_launch();
 }
 
@@ -335,6 +335,6 @@ Java_com_app_ralaunch_game_GameLauncher_netcorehostLaunch(JNIEnv *env, jclass cl
  * @brief JNI 函数：清理资源
  */
 extern "C" JNIEXPORT void JNICALL
-Java_com_app_ralaunch_game_GameLauncher_netcorehostCleanup(JNIEnv *env, jclass clazz) {
+Java_com_app_ralaunch_core_GameLauncher_netcorehostCleanup(JNIEnv *env, jclass clazz) {
     netcorehost_cleanup();
 }
