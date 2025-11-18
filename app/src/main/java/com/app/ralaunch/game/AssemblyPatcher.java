@@ -102,11 +102,6 @@ public class AssemblyPatcher {
             for (File assemblyFile : gameAssemblies) {
                 String assemblyName = assemblyFile.getName();
 
-                // [WARN] 跳过 Mono.Cecil，因为 tModLoader 需要特定版本（0.11.6.0）
-                if (assemblyName.startsWith("Mono.Cecil")) {
-                    AppLogger.info(TAG, "⏭️  跳过（使用游戏自带版本）: " + assemblyName);
-                    continue;
-                }
 
                 if (allPatchAssemblies.containsKey(assemblyName)) {
                     if (replaceAssembly(assemblyFile, allPatchAssemblies.get(assemblyName))) {
@@ -121,11 +116,6 @@ public class AssemblyPatcher {
             // 6. 添加缺失的补丁程序集（如果游戏目录中不存在）
             for (Map.Entry<String, byte[]> entry : allPatchAssemblies.entrySet()) {
                 String assemblyName = entry.getKey();
-
-                // [WARN] 跳过 Mono.Cecil，因为 tModLoader 需要特定版本（0.11.6.0）
-                if (assemblyName.startsWith("Mono.Cecil")) {
-                    continue;
-                }
 
                 boolean alreadyExists = false;
 
