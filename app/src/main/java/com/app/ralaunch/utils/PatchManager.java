@@ -435,55 +435,32 @@ public class PatchManager {
     }
 
     /**
-     * 从 MonoMod_Patch.zip 中提取共享依赖库到补丁目录
-     * 目前提取: 0Harmony.dll
+     * 从 assets/patches 文件夹复制共享依赖库到外部存储 patches 根目录
+     * 目前复制: 0Harmony.dll
      */
     private void extractSharedDependencies(File patchesDir) {
-        String[] zipNames = {"MonoMod_Patch.zip"};
         String targetDll = "0Harmony.dll";
+        String assetPath = "patches/" + targetDll;
 
-        for (String zipName : zipNames) {
-            try {
-                java.io.InputStream zipStream = context.getAssets().open(zipName);
-                java.util.zip.ZipInputStream zis = new java.util.zip.ZipInputStream(zipStream);
-                java.util.zip.ZipEntry entry;
+        try {
+            // 从 assets/patches/0Harmony.dll 读取
+            java.io.InputStream inputStream = context.getAssets().open(assetPath);
 
-                byte[] harmonyData = null;
-                while ((entry = zis.getNextEntry()) != null) {
-                    String entryName = entry.getName();
-                    if (entryName.endsWith(targetDll) || entryName.equals(targetDll)) {
-                        java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
-                        byte[] buffer = new byte[8192];
-                        int len;
-                        while ((len = zis.read(buffer)) > 0) {
-                            baos.write(buffer, 0, len);
-                        }
-                        harmonyData = baos.toByteArray();
-                        baos.close();
-                        Log.d(TAG, "Found " + targetDll + " in " + zipName + " (" + harmonyData.length + " bytes)");
-                        break;
-                    }
-                    zis.closeEntry();
+            // 写入到外部存储 patches 根目录
+            File targetFile = new File(patchesDir, targetDll);
+            try (FileOutputStream fos = new FileOutputStream(targetFile)) {
+                byte[] buffer = new byte[8192];
+                int len;
+                while ((len = inputStream.read(buffer)) > 0) {
+                    fos.write(buffer, 0, len);
                 }
-
-                zis.close();
-                zipStream.close();
-
-                if (harmonyData != null) {
-                    // 复制到 patches 根目录
-                    File targetFile = new File(patchesDir, targetDll);
-                    try (FileOutputStream fos = new FileOutputStream(targetFile)) {
-                        fos.write(harmonyData);
-                        Log.d(TAG, "Extracted " + targetDll + " to patches directory");
-                    }
-                    return;
-                }
-            } catch (IOException e) {
-                Log.d(TAG, "Could not find " + zipName + " (trying next variant)");
+                Log.d(TAG, "Copied " + targetDll + " from assets to patches directory: " + targetFile.getAbsolutePath());
             }
-        }
 
-        Log.w(TAG, "Could not extract " + targetDll + " from MonoMod_Patch.zip");
+            inputStream.close();
+        } catch (IOException e) {
+            Log.w(TAG, "Failed to copy " + targetDll + " from assets: " + e.getMessage());
+        }
     }
 
     /**

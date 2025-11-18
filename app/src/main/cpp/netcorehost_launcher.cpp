@@ -7,6 +7,7 @@
  */
 
 #include "netcorehost_launcher.h"
+#include "corehost_trace_redirect.h"
 #include <netcorehost/nethost.hpp>
 #include <netcorehost/hostfxr.hpp>
 #include <netcorehost/context.hpp>
@@ -42,6 +43,8 @@ JavaVM* Bridge_GetJavaVM();
 static char* g_app_path = nullptr;           // 程序集完整路径
 static char* g_dotnet_path = nullptr;        // .NET 运行时路径
 static int g_framework_major = 0;            // 框架主版本号
+static char* g_startup_hooks_dll = nullptr;  // DOTNET_STARTUP_HOOKS 补丁DLL路径
+static bool g_enable_corehost_trace = false; // 是否启用 COREHOST_TRACE 重定向
 
 // 错误消息缓冲区
 static char g_last_error[1024] = {0};
@@ -201,6 +204,29 @@ int netcorehost_launch() {
     std::shared_ptr<netcorehost::Hostfxr> hostfxr;
 
     try {
+        // 根据设置决定是否初始化 COREHOST_TRACE 重定向
+        if (g_enable_corehost_trace) {
+            init_corehost_trace_redirect();
+            LOGI(LOG_TAG, "COREHOST_TRACE重定向已初始化");
+
+            // 启用 COREHOST_TRACE 以便捕获所有 .NET runtime 的 trace 输出
+            setenv("COREHOST_TRACE", "1", 1);
+            LOGI(LOG_TAG, "已启用 COREHOST_TRACE");
+        } else {
+            LOGI(LOG_TAG, "COREHOST_TRACE 已禁用（详细日志已关闭）");
+        }
+
+        // ======== 重要：在 hostfxr 初始化之前设置 DOTNET_STARTUP_HOOKS ========
+        // 如果 Java 层传递了 startup hooks DLL 路径，设置环境变量
+        if (g_startup_hooks_dll != nullptr && strlen(g_startup_hooks_dll) > 0) {
+            setenv("DOTNET_STARTUP_HOOKS", g_startup_hooks_dll, 1);
+            LOGI(LOG_TAG, "已设置 DOTNET_STARTUP_HOOKS=%s", g_startup_hooks_dll);
+            LOGI(LOG_TAG, "StartupHook 补丁将在应用 Main() 之前自动执行");
+        } else {
+            LOGI(LOG_TAG, "未设置 DOTNET_STARTUP_HOOKS，跳过补丁加载");
+        }
+        // ======== DOTNET_STARTUP_HOOKS 设置完成 ========
+
         // 加载 hostfxr（自动从 DOTNET_ROOT 环境变量读取）
         LOGI(LOG_TAG, "加载 hostfxr...");
         hostfxr = netcorehost::Nethost::load_hostfxr();
@@ -233,7 +259,11 @@ int netcorehost_launch() {
 
         LOGI(LOG_TAG, ".NET 运行时初始化成功");
 
-        // 直接运行应用程序
+        // 获取委托加载器（用于加载游戏）
+        LOGI(LOG_TAG, "获取委托加载器...");
+        auto loader = context->get_delegate_loader();
+
+        // 运行应用程序
         LOGI(LOG_TAG, "========================================");
         LOGI(LOG_TAG, "运行应用程序...");
         LOGI(LOG_TAG, "========================================");
@@ -322,6 +352,41 @@ Java_com_app_ralaunch_core_GameLauncher_netcorehostSetParams(
     if (dotnet_root) env->ReleaseStringUTFChars(dotnetRoot, dotnet_root);
 
     return result;
+}
+
+/**
+ * @brief JNI 函数：设置 DOTNET_STARTUP_HOOKS 补丁路径
+ */
+extern "C" JNIEXPORT void JNICALL
+Java_com_app_ralaunch_core_GameLauncher_netcorehostSetStartupHooks(
+        JNIEnv *env, jclass clazz, jstring startupHooksDll) {
+
+    // 释放旧的路径
+    if (g_startup_hooks_dll) {
+        free(g_startup_hooks_dll);
+        g_startup_hooks_dll = nullptr;
+    }
+
+    // 设置新的路径
+    if (startupHooksDll != nullptr) {
+        const char *dll_path = env->GetStringUTFChars(startupHooksDll, nullptr);
+        g_startup_hooks_dll = str_dup(dll_path);
+        env->ReleaseStringUTFChars(startupHooksDll, dll_path);
+
+        LOGI(LOG_TAG, "已设置 StartupHooks DLL: %s", g_startup_hooks_dll);
+    } else {
+        LOGI(LOG_TAG, "清除 StartupHooks DLL");
+    }
+}
+
+/**
+ * @brief JNI 函数：设置是否启用 COREHOST_TRACE
+ */
+extern "C" JNIEXPORT void JNICALL
+Java_com_app_ralaunch_core_GameLauncher_netcorehostSetCorehostTrace(
+        JNIEnv *env, jclass clazz, jboolean enabled) {
+    g_enable_corehost_trace = (enabled == JNI_TRUE);
+    LOGI(LOG_TAG, "COREHOST_TRACE 设置: %s", g_enable_corehost_trace ? "启用" : "禁用");
 }
 
 /**
@@ -471,6 +536,12 @@ Java_com_app_ralaunch_core_GameLauncher_netcorehostCallMethod(
         LOGI(LOG_TAG, "========================================");
 
         result = 0;
+
+        // 显式关闭上下文，确保 hostfxr 状态被清理
+        LOGI(LOG_TAG, "关闭运行时上下文...");
+        context->close();
+        context.reset();  // 显式销毁 context
+        LOGI(LOG_TAG, "运行时上下文已关闭");
 
     } catch (const netcorehost::HostingException& ex) {
         LOGE(LOG_TAG, "托管错误: %s", ex.what());
