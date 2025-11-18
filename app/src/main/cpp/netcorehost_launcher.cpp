@@ -391,6 +391,11 @@ Java_com_app_ralaunch_core_GameLauncher_netcorehostCallMethod(
 
         // 初始化运行时上下文
         LOGI(LOG_TAG, "初始化运行时上下文...");
+
+        // 设置 Core Host 跟踪日志
+        setenv("COREHOST_TRACEFILE", "/sdcard/Android/data/com.app.ralaunch/files/patches/corehost_trace.log", 1);
+        LOGI(LOG_TAG, "已设置 COREHOST_TRACEFILE 环境变量");
+
         auto assembly_path_pdc = netcorehost::PdCString::from_str(assembly_path.c_str());
 
         std::unique_ptr<netcorehost::HostfxrContextForRuntimeConfig> context;

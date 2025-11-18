@@ -206,6 +206,14 @@ public class GameLauncher {
             AppLogger.info(TAG, "Step 2/3: Executing patch entry points");
 
             if (enabledPatches != null && !enabledPatches.isEmpty()) {
+                // 调试：检查传入的补丁信息
+                for (com.app.ralaunch.model.PatchInfo patch : enabledPatches) {
+                    AppLogger.info(TAG, "DEBUG: Received patch: " + patch.getPatchName());
+                    AppLogger.info(TAG, "  hasEntryPoint: " + patch.hasEntryPoint());
+                    AppLogger.info(TAG, "  entryTypeName: " + patch.getEntryTypeName());
+                    AppLogger.info(TAG, "  entryMethodName: " + patch.getEntryMethodName());
+                }
+
                 // 按优先级排序（优先级高的先执行）
                 java.util.List<com.app.ralaunch.model.PatchInfo> sortedPatches = new java.util.ArrayList<>(enabledPatches);
                 java.util.Collections.sort(sortedPatches, (p1, p2) -> Integer.compare(p2.getPriority(), p1.getPriority()));
@@ -222,6 +230,9 @@ public class GameLauncher {
                     }
                 }
 
+                // 创建 PatchManager 以获取补丁路径
+                com.app.ralaunch.utils.PatchManager patchManager = new com.app.ralaunch.utils.PatchManager(context);
+
                 // 执行每个补丁的入口点
                 for (com.app.ralaunch.model.PatchInfo patch : sortedPatches) {
                     if (patch.hasEntryPoint()) {
@@ -229,9 +240,65 @@ public class GameLauncher {
                         AppLogger.info(TAG, "  Type: " + patch.getEntryTypeName());
                         AppLogger.info(TAG, "  Method: " + patch.getEntryMethodName());
 
+                        // 获取补丁DLL的完整路径
+                        String patchDllPath = patchManager.getPatchLibraryPath(patch);
+                        if (patchDllPath == null || patchDllPath.isEmpty()) {
+                            AppLogger.error(TAG, "Failed to get patch DLL path for: " + patch.getPatchName());
+                            continue;
+                        }
+
+                        // 将补丁DLL和runtimeconfig.json复制到游戏目录
+                        java.io.File patchFile = new java.io.File(patchDllPath);
+                        java.io.File patchDir = patchFile.getParentFile();
+                        String patchFileName = patchFile.getName();
+
+                        // 目标：游戏目录
+                        java.io.File targetDll = new java.io.File(appDir, patchFileName);
+                        String runtimeConfigName = patchFileName.replace(".dll", ".runtimeconfig.json");
+                        java.io.File sourceRuntimeConfig = new java.io.File(patchDir, runtimeConfigName);
+                        java.io.File targetRuntimeConfig = new java.io.File(appDir, runtimeConfigName);
+
+                        try {
+                            // 复制DLL
+                            java.nio.file.Files.copy(
+                                patchFile.toPath(),
+                                targetDll.toPath(),
+                                java.nio.file.StandardCopyOption.REPLACE_EXISTING
+                            );
+                            AppLogger.info(TAG, "  Copied DLL to game dir: " + targetDll.getAbsolutePath());
+
+                            // 复制runtimeconfig.json（如果存在）
+                            if (sourceRuntimeConfig.exists()) {
+                                java.nio.file.Files.copy(
+                                    sourceRuntimeConfig.toPath(),
+                                    targetRuntimeConfig.toPath(),
+                                    java.nio.file.StandardCopyOption.REPLACE_EXISTING
+                                );
+                                AppLogger.info(TAG, "  Copied runtimeconfig to game dir");
+                            }
+
+                            // 复制 0Harmony.dll 依赖库
+                            java.io.File harmonySource = new java.io.File(patchDir.getParentFile(), "0Harmony.dll");
+                            if (harmonySource.exists()) {
+                                java.io.File harmonyTarget = new java.io.File(appDir, "0Harmony.dll");
+                                java.nio.file.Files.copy(
+                                    harmonySource.toPath(),
+                                    harmonyTarget.toPath(),
+                                    java.nio.file.StandardCopyOption.REPLACE_EXISTING
+                                );
+                                AppLogger.info(TAG, "  Copied 0Harmony.dll to game dir");
+                            } else {
+                                AppLogger.warn(TAG, "  0Harmony.dll not found at: " + harmonySource.getAbsolutePath());
+                            }
+                        } catch (Exception e) {
+                            AppLogger.error(TAG, "Failed to copy patch files: " + e.getMessage());
+                            continue;
+                        }
+
+                        // 使用游戏目录作为appDir，补丁文件名作为assemblyName
                         int result = netcorehostCallMethod(
                             appDir,
-                            patch.getDllFileName(),
+                            patchFileName,
                             patch.getEntryTypeName(),
                             patch.getEntryMethodName(),
                             dotnetRoot,

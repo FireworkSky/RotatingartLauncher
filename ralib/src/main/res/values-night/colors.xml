@@ -27,6 +27,11 @@
     <color name="snackbar_error_stroke">#F2B8B5</color>
     <color name="snackbar_error_text">#F9DEDC</color>
 
+    <!-- 警告提示 - 使用橙色系 -->
+    <color name="snackbar_warning">#5D4037</color>
+    <color name="snackbar_warning_stroke">#FFB74D</color>
+    <color name="snackbar_warning_text">#FFE0B2</color>
+
     <!-- Error Dialog 颜色 -->
     <color name="ralib_error_color">#F2B8B5</color>
     <color name="ralib_warning_color">#FFB74D</color>

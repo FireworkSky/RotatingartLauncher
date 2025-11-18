@@ -23,6 +23,7 @@ public class PatchInfo {
     private String entryMethodName;   // 入口点方法名称（如 "Initialize"）
     private int priority;             // 优先级（数值越大越先执行）
     private boolean enabled;          // 是否启用
+    private String fullPath;          // 补丁文件夹完整路径（用于定位DLL文件）
 
     public PatchInfo(String patchId, String patchName, String patchDescription,
                      String dllFileName, String targetGamePattern) {
@@ -174,6 +175,14 @@ public class PatchInfo {
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
+    }
+
+    public String getFullPath() {
+        return fullPath;
+    }
+
+    public void setFullPath(String fullPath) {
+        this.fullPath = fullPath;
     }
 
     @Override

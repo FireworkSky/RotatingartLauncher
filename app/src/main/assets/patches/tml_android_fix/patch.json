@@ -1,0 +1,18 @@
+{
+  "id": "tml_android_fix",
+  "name": "tModLoader Android 修复补丁",
+  "description": "修复 tModLoader 在 Android 平台上的 InstallVerifier 空引用异常",
+  "version": "1.0.0",
+  "author": "RA Launcher Team",
+  "dllFileName": "TModLoaderPatch.dll",
+  "entryPoint": {
+    "typeName": "TModLoaderPatch.Patcher",
+    "methodName": "Initialize"
+  },
+  "targetGames": [
+    "tModLoader",
+    "Terraria"
+  ],
+  "priority": 200,
+  "enabled": true
+}

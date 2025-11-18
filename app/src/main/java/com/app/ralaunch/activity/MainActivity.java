@@ -1074,17 +1074,15 @@ public class MainActivity extends AppCompatActivity implements
         intent.putExtra("GAME_NAME", game.getGameName());
         intent.putExtra("ASSEMBLY_PATH", assemblyPath);  // 使用新的参数名
         intent.putExtra("GAME_ID", game.getGamePath());  // 传递游戏ID用于补丁配置
+        intent.putExtra("GAME_PATH", game.getGamePath());  // 传递游戏路径用于重新加载 GameItem
 
-        // 传递启用的补丁信息
+        // 传递启用的补丁ID列表（用于 GameActivity 重新加载补丁）
         if (!enabledPatches.isEmpty()) {
-            java.util.ArrayList<String> patchDllNames = new java.util.ArrayList<>();
-            java.util.ArrayList<String> patchNames = new java.util.ArrayList<>();
+            java.util.ArrayList<String> patchIds = new java.util.ArrayList<>();
             for (com.app.ralaunch.model.PatchInfo patch : enabledPatches) {
-                patchDllNames.add(patch.getDllFileName());
-                patchNames.add(patch.getPatchName());
+                patchIds.add(patch.getPatchId());
             }
-            intent.putStringArrayListExtra("ENABLED_PATCH_DLLS", patchDllNames);
-            intent.putStringArrayListExtra("ENABLED_PATCH_NAMES", patchNames);
+            intent.putStringArrayListExtra("ENABLED_PATCH_IDS", patchIds);
         }
 
         // 如果有 Bootstrapper 配置，传递相关参数

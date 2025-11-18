@@ -25,6 +25,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.widget.Toast;
 import com.app.ralaunch.R;
+import com.app.ralaunch.RaLaunchApplication;
 import com.app.ralaunch.utils.AppLogger;
 import com.app.ralaunch.controls.ControlConfig;
 import com.app.ralaunch.controls.ControlData;
@@ -251,30 +252,37 @@ public class GameActivity extends SDLActivity {
             AppLogger.info(TAG, "================================================");
 
             // 获取启用的补丁配置
-            java.util.ArrayList<String> patchDllNames = getIntent().getStringArrayListExtra("ENABLED_PATCH_DLLS");
-            java.util.ArrayList<String> patchNames = getIntent().getStringArrayListExtra("ENABLED_PATCH_NAMES");
+            java.util.ArrayList<String> patchIds = getIntent().getStringArrayListExtra("ENABLED_PATCH_IDS");
 
             java.util.List<com.app.ralaunch.model.PatchInfo> enabledPatches = null;
-            if (patchDllNames != null && !patchDllNames.isEmpty()) {
-                enabledPatches = new java.util.ArrayList<>();
-                for (int i = 0; i < patchDllNames.size(); i++) {
-                    String dllName = patchDllNames.get(i);
-                    String patchName = (patchNames != null && i < patchNames.size()) ? patchNames.get(i) : dllName;
+            if (patchIds != null && !patchIds.isEmpty()) {
+                // 从游戏路径重新加载 GameItem
+                String gamePath = getIntent().getStringExtra("GAME_PATH");
+                if (gamePath != null) {
+                    // 从游戏列表中查找 GameItem
+                    java.util.List<com.app.ralaunch.model.GameItem> gameList =
+                        RaLaunchApplication.getGameDataManager().loadGameList();
+                    com.app.ralaunch.model.GameItem gameItem = null;
+                    for (com.app.ralaunch.model.GameItem item : gameList) {
+                        if (item.getGamePath().equals(gamePath)) {
+                            gameItem = item;
+                            break;
+                        }
+                    }
 
-                    // 创建PatchInfo对象（这里简化处理，实际应该从配置文件读取完整信息）
-                    com.app.ralaunch.model.PatchInfo patch = new com.app.ralaunch.model.PatchInfo(
-                        dllName, // patchId
-                        patchName, // patchName
-                        "", // description
-                        dllName, // dllFileName
-                        "" // targetGamePattern
-                    );
-                    enabledPatches.add(patch);
-                }
+                    if (gameItem != null) {
+                        // 从 PatchManager 重新加载完整的补丁信息
+                        com.app.ralaunch.utils.PatchManager patchManager = new com.app.ralaunch.utils.PatchManager(this);
+                        enabledPatches = patchManager.getEnabledPatches(gameItem);
 
-                AppLogger.info(TAG, "Enabled patches: " + enabledPatches.size());
-                for (com.app.ralaunch.model.PatchInfo patch : enabledPatches) {
-                    AppLogger.info(TAG, "  - " + patch.getPatchName());
+                        AppLogger.info(TAG, "Enabled patches: " + enabledPatches.size());
+                        for (com.app.ralaunch.model.PatchInfo patch : enabledPatches) {
+                            AppLogger.info(TAG, "  - " + patch.getPatchName());
+                            if (patch.hasEntryPoint()) {
+                                AppLogger.info(TAG, "    Entry: " + patch.getEntryTypeName() + "." + patch.getEntryMethodName());
+                            }
+                        }
+                    }
                 }
             }
 

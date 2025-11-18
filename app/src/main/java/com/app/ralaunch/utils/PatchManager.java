@@ -70,61 +70,81 @@ public class PatchManager {
 
     /**
      * 从 JSON 文件加载补丁元数据
-     * 优先从外部存储读取，如果不存在则从 assets 读取
+     * 只从外部存储扫描补丁文件夹
      */
     private void loadPatchesFromJson() {
         try {
-            String jsonString = null;
-
-            // 1. 尝试从外部存储读取（用户自定义补丁）
-            File externalPatchMetadata = getExternalPatchMetadataFile();
-            if (externalPatchMetadata.exists()) {
-                Log.d(TAG, "Loading patches from external storage: " + externalPatchMetadata.getAbsolutePath());
-                try (FileInputStream fis = new FileInputStream(externalPatchMetadata)) {
-                    byte[] buffer = new byte[fis.available()];
-                    fis.read(buffer);
-                    jsonString = new String(buffer, StandardCharsets.UTF_8);
-                    Log.d(TAG, "Loaded external patch metadata");
-                } catch (Exception e) {
-                    Log.w(TAG, "Failed to load external patch metadata, falling back to assets", e);
-                    jsonString = null;
-                }
-            }
-
-            // 2. 如果外部存储不存在，从 assets 读取（内置补丁）
-            if (jsonString == null) {
-                Log.d(TAG, "Loading patches from assets");
-                java.io.InputStream is = context.getAssets().open("patches/patch_metadata.json");
-                byte[] buffer = new byte[is.available()];
-                is.read(buffer);
-                is.close();
-                jsonString = new String(buffer, StandardCharsets.UTF_8);
-            }
-
-            // 3. 解析 JSON
-            JSONObject jsonRoot = new JSONObject(jsonString);
-            JSONArray patchesArray = jsonRoot.getJSONArray("patches");
-
             availablePatches.clear();
-            for (int i = 0; i < patchesArray.length(); i++) {
-                JSONObject patchJson = patchesArray.getJSONObject(i);
-                PatchInfo patch = PatchInfo.fromJson(patchJson);
 
-                // 检查补丁程序集文件是否存在
-                if (isPatchAssemblyAvailable(patch.getDllFileName())) {
-                    availablePatches.add(patch);
-                    Log.d(TAG, "Loaded patch: " + patch.getPatchName() + " v" + patch.getVersion());
-                } else {
-                    Log.w(TAG, "Skipping patch (assembly not found): " + patch.getPatchName() + " (" + patch.getDllFileName() + ")");
-                }
-            }
+            // 只扫描外部存储的补丁文件夹
+            File externalPatchesDir = getExternalPatchesDirectory();
+            loadPatchesFromDirectory(externalPatchesDir, "external");
 
-            Log.d(TAG, "Successfully loaded " + availablePatches.size() + " patches from JSON");
+            Log.d(TAG, "Successfully loaded " + availablePatches.size() + " patches total");
         } catch (Exception e) {
-            Log.e(TAG, "Error loading patches from JSON", e);
-            throw new RuntimeException("Failed to load patch metadata", e);
+            Log.e(TAG, "Error loading patches", e);
+            throw new RuntimeException("Failed to load patches", e);
         }
     }
+
+    /**
+     * 从指定目录加载补丁
+     * 每个子文件夹代表一个补丁，包含 patch.json 和 DLL 文件
+     */
+    private void loadPatchesFromDirectory(File directory, String source) {
+        if (!directory.exists() || !directory.isDirectory()) {
+            Log.d(TAG, "Patches directory does not exist: " + directory.getAbsolutePath());
+            return;
+        }
+
+        File[] patchFolders = directory.listFiles(File::isDirectory);
+        if (patchFolders == null || patchFolders.length == 0) {
+            Log.d(TAG, "No patch folders found in: " + directory.getAbsolutePath());
+            return;
+        }
+
+        for (File patchFolder : patchFolders) {
+            try {
+                File patchJsonFile = new File(patchFolder, "patch.json");
+                if (!patchJsonFile.exists()) {
+                    Log.d(TAG, "Skipping folder (no patch.json): " + patchFolder.getName());
+                    continue;
+                }
+
+                // 读取 patch.json
+                byte[] jsonBytes = new byte[(int) patchJsonFile.length()];
+                try (FileInputStream fis = new FileInputStream(patchJsonFile)) {
+                    fis.read(jsonBytes);
+                }
+                String jsonString = new String(jsonBytes, StandardCharsets.UTF_8);
+                JSONObject patchJson = new JSONObject(jsonString);
+
+                // 解析补丁信息
+                PatchInfo patch = PatchInfo.fromJson(patchJson);
+
+                // 检查 DLL 文件是否存在
+                File dllFile = new File(patchFolder, patch.getDllFileName());
+                if (!dllFile.exists()) {
+                    Log.w(TAG, "Skipping patch (DLL not found): " + patch.getPatchName() +
+                          " (" + patch.getDllFileName() + ")");
+                    continue;
+                }
+
+                // 设置补丁的完整路径
+                patch.setFullPath(patchFolder.getAbsolutePath());
+
+                availablePatches.add(patch);
+                Log.d(TAG, "Loaded patch from " + source + ": " + patch.getPatchName() +
+                      " v" + patch.getVersion() + " at " + patchFolder.getAbsolutePath());
+                Log.d(TAG, "  Entry point: " + (patch.hasEntryPoint() ?
+                      patch.getEntryTypeName() + "." + patch.getEntryMethodName() : "none"));
+
+            } catch (Exception e) {
+                Log.w(TAG, "Failed to load patch from folder: " + patchFolder.getName(), e);
+            }
+        }
+    }
+
 
     /**
      * 获取所有可用的补丁
@@ -318,53 +338,74 @@ public class PatchManager {
 
     /**
      * 初始化外部补丁目录
-     * 首次运行时，将 assets 中的补丁程序集和配置文件复制到外部存储
+     * 首次运行时，将 assets/patches 中的所有补丁文件夹复制到外部存储
      */
     private void initializeExternalPatchesDirectory() {
         try {
             File externalPatchesDir = getExternalPatchesDirectory();
             File flagFile = new File(externalPatchesDir, ".initialized");
 
-            // 如果已经初始化过，跳过
+            // 检查是否需要初始化：标志文件存在且至少有一个补丁文件夹存在
             if (flagFile.exists()) {
-                Log.d(TAG, "External patches directory already initialized");
-                return;
+                // 检查是否真的有补丁文件夹
+                File[] existingPatches = externalPatchesDir.listFiles(File::isDirectory);
+                if (existingPatches != null && existingPatches.length > 0) {
+                    Log.d(TAG, "External patches directory already initialized with " + existingPatches.length + " patch(es)");
+                    return;
+                }
+                // 标志文件存在但没有补丁文件夹，需要重新初始化
+                Log.w(TAG, "Flag file exists but no patch folders found, re-initializing...");
             }
 
             Log.d(TAG, "Initializing external patches directory: " + externalPatchesDir.getAbsolutePath());
 
-            // 复制 patch_metadata.json
+            // 列出 assets/patches/ 中的所有文件夹
             try {
-                java.io.InputStream metadataStream = context.getAssets().open("patches/patch_metadata.json");
-                File metadataFile = new File(externalPatchesDir, "patch_metadata.json");
-                copyStream(metadataStream, new FileOutputStream(metadataFile));
-                metadataStream.close();
-                Log.d(TAG, "Copied patch_metadata.json to external storage");
-            } catch (IOException e) {
-                Log.w(TAG, "Failed to copy patch_metadata.json: " + e.getMessage());
-            }
+                String[] patchFolders = context.getAssets().list("patches");
+                if (patchFolders != null) {
+                    for (String folderName : patchFolders) {
+                        // 跳过文件（只处理文件夹）
+                        if (folderName.contains(".")) {
+                            continue;
+                        }
 
-            // 列出 assets/patches/ 中的所有 DLL 文件并复制
-            try {
-                String[] patchFiles = context.getAssets().list("patches");
-                if (patchFiles != null) {
-                    for (String fileName : patchFiles) {
-                        if (fileName.endsWith(".dll")) {
-                            try {
-                                java.io.InputStream dllStream = context.getAssets().open("patches/" + fileName);
-                                File dllFile = new File(externalPatchesDir, fileName);
-                                copyStream(dllStream, new FileOutputStream(dllFile));
-                                dllStream.close();
-                                Log.d(TAG, "Copied " + fileName + " to external storage");
-                            } catch (IOException e) {
-                                Log.w(TAG, "Failed to copy " + fileName + ": " + e.getMessage());
+                        try {
+                            // 创建对应的外部文件夹
+                            File patchFolder = new File(externalPatchesDir, folderName);
+                            if (!patchFolder.exists()) {
+                                patchFolder.mkdirs();
                             }
+
+                            // 列出文件夹中的所有文件
+                            String[] files = context.getAssets().list("patches/" + folderName);
+                            if (files != null) {
+                                for (String fileName : files) {
+                                    try {
+                                        String assetPath = "patches/" + folderName + "/" + fileName;
+                                        java.io.InputStream fileStream = context.getAssets().open(assetPath);
+                                        File targetFile = new File(patchFolder, fileName);
+                                        copyStream(fileStream, new FileOutputStream(targetFile));
+                                        fileStream.close();
+                                        Log.d(TAG, "Copied " + assetPath + " to " + targetFile.getAbsolutePath());
+                                    } catch (IOException e) {
+                                        Log.w(TAG, "Failed to copy file: " + fileName + " - " + e.getMessage());
+                                    }
+                                }
+                            }
+
+                            Log.d(TAG, "Copied patch folder: " + folderName);
+
+                        } catch (IOException e) {
+                            Log.w(TAG, "Failed to copy patch folder: " + folderName + " - " + e.getMessage());
                         }
                     }
                 }
             } catch (IOException e) {
-                Log.w(TAG, "Failed to list patch files: " + e.getMessage());
+                Log.w(TAG, "Failed to list patch folders: " + e.getMessage());
             }
+
+            // 从 MonoMod_Patch.zip 中提取共享依赖（0Harmony.dll）到所有补丁文件夹
+            extractSharedDependencies(externalPatchesDir);
 
             // 创建初始化标记文件
             try {
@@ -391,6 +432,58 @@ public class PatchManager {
         }
         output.flush();
         output.close();
+    }
+
+    /**
+     * 从 MonoMod_Patch.zip 中提取共享依赖库到补丁目录
+     * 目前提取: 0Harmony.dll
+     */
+    private void extractSharedDependencies(File patchesDir) {
+        String[] zipNames = {"MonoMod_Patch.zip"};
+        String targetDll = "0Harmony.dll";
+
+        for (String zipName : zipNames) {
+            try {
+                java.io.InputStream zipStream = context.getAssets().open(zipName);
+                java.util.zip.ZipInputStream zis = new java.util.zip.ZipInputStream(zipStream);
+                java.util.zip.ZipEntry entry;
+
+                byte[] harmonyData = null;
+                while ((entry = zis.getNextEntry()) != null) {
+                    String entryName = entry.getName();
+                    if (entryName.endsWith(targetDll) || entryName.equals(targetDll)) {
+                        java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
+                        byte[] buffer = new byte[8192];
+                        int len;
+                        while ((len = zis.read(buffer)) > 0) {
+                            baos.write(buffer, 0, len);
+                        }
+                        harmonyData = baos.toByteArray();
+                        baos.close();
+                        Log.d(TAG, "Found " + targetDll + " in " + zipName + " (" + harmonyData.length + " bytes)");
+                        break;
+                    }
+                    zis.closeEntry();
+                }
+
+                zis.close();
+                zipStream.close();
+
+                if (harmonyData != null) {
+                    // 复制到 patches 根目录
+                    File targetFile = new File(patchesDir, targetDll);
+                    try (FileOutputStream fos = new FileOutputStream(targetFile)) {
+                        fos.write(harmonyData);
+                        Log.d(TAG, "Extracted " + targetDll + " to patches directory");
+                    }
+                    return;
+                }
+            } catch (IOException e) {
+                Log.d(TAG, "Could not find " + zipName + " (trying next variant)");
+            }
+        }
+
+        Log.w(TAG, "Could not extract " + targetDll + " from MonoMod_Patch.zip");
     }
 
     /**
@@ -426,23 +519,38 @@ public class PatchManager {
 
     /**
      * 获取补丁库路径
-     * 优先从外部存储查找，如果不存在则使用内部存储
+     * 根据补丁信息查找对应的 DLL 文件路径（仅从外部存储）
      */
-    public String getPatchLibraryPath(String dllFileName) {
-        // 1. 尝试从外部存储获取（用户自定义补丁）
-        File externalPatchesDir = getExternalPatchesDirectory();
-        File externalPatchFile = new File(externalPatchesDir, dllFileName);
-        if (externalPatchFile.exists()) {
-            Log.d(TAG, "Using external patch: " + externalPatchFile.getAbsolutePath());
-            return externalPatchFile.getAbsolutePath();
+    public String getPatchLibraryPath(PatchInfo patchInfo) {
+        String fullPath = patchInfo.getFullPath();
+        String dllFileName = patchInfo.getDllFileName();
+
+        // 直接使用外部存储路径
+        if (fullPath != null) {
+            File dllFile = new File(fullPath, dllFileName);
+            if (dllFile.exists()) {
+                Log.d(TAG, "Using patch: " + dllFile.getAbsolutePath());
+                return dllFile.getAbsolutePath();
+            } else {
+                Log.w(TAG, "Patch DLL not found at expected path: " + dllFile.getAbsolutePath());
+            }
         }
 
-        // 2. 使用内部存储（从 assets 复制的补丁）
-        File patchDir = new File(context.getFilesDir(), "patches");
-        if (!patchDir.exists()) {
-            patchDir.mkdirs();
+        // 后备方案：在外部补丁目录中查找
+        File externalPatchesDir = getExternalPatchesDirectory();
+        File[] patchFolders = externalPatchesDir.listFiles(File::isDirectory);
+        if (patchFolders != null) {
+            for (File patchFolder : patchFolders) {
+                File dllFile = new File(patchFolder, dllFileName);
+                if (dllFile.exists()) {
+                    Log.d(TAG, "Found patch in external storage: " + dllFile.getAbsolutePath());
+                    return dllFile.getAbsolutePath();
+                }
+            }
         }
-        return new File(patchDir, dllFileName).getAbsolutePath();
+
+        Log.w(TAG, "Patch DLL not found: " + dllFileName);
+        return null;
     }
 
     /**
