@@ -187,25 +187,12 @@ public final class RuntimePreference {
         // ===== 设置 FNA3D 环境变量（根据渲染器类型） =====
         setEnv("FNA3D_FORCE_DRIVER", "OpenGL");
 
-        // 根据渲染器设置不同的 OpenGL 版本
-        switch (rendererId) {
-            case RendererConfig.RENDERER_GL4ES:
-                // gl4es 使用 OpenGL ES 2.0
-                setEnv("FNA3D_OPENGL_FORCE_ES3", "0");
-                setEnv("FNA3D_OPENGL_FORCE_VER_MAJOR", "2");
-                setEnv("FNA3D_OPENGL_FORCE_VER_MINOR", "0");
-                android.util.Log.i(TAG, "FNA3D configured for gl4es (GLES 2.0)");
-                break;
-
-            case RendererConfig.RENDERER_NATIVE_GLES:
-            default:
-                // Native 和其他渲染器使用 OpenGL ES 3.0
-                setEnv("FNA3D_OPENGL_FORCE_ES3", "1");
-                setEnv("FNA3D_OPENGL_FORCE_VER_MAJOR", "3");
-                setEnv("FNA3D_OPENGL_FORCE_VER_MINOR", "0");
-                android.util.Log.i(TAG, "FNA3D configured for native (GLES 3.0)");
-                break;
-        }
+        // 所有渲染器统一使用 OpenGL ES 3.0
+        // gl4es 会自动将 OpenGL 2.1 转换为 GLES 2.0，但 FNA3D 仍需要 ES3 特性
+        setEnv("FNA3D_OPENGL_FORCE_ES3", "1");
+        setEnv("FNA3D_OPENGL_FORCE_VER_MAJOR", "3");
+        setEnv("FNA3D_OPENGL_FORCE_VER_MINOR", "0");
+        android.util.Log.i(TAG, "FNA3D configured for OpenGL ES 3.0 (renderer: " + rendererId + ")");
 
         // VSync 设置
         setEnv("FORCE_VSYNC", "true");
