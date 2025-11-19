@@ -700,8 +700,8 @@ public class SDLActivity extends Activity implements View.OnSystemUiVisibilityCh
 
                     // [WARN] 关键：为 SDL 主线程设置 4MB 栈大小（防止栈溢出）
                     // tModLoader + 大型模组需要更大的栈空间
-                    ThreadGroup sdlThreadGroup = new ThreadGroup("SDLThreadGroup");
-                    mSDLThread = new Thread(sdlThreadGroup, new SDLMain(), "SDLThread", 4 * 1024 * 1024); // 4MB stack
+                    mSDLThread = new Thread(null, new SDLMain(), "SDLThread", 4 * 1024 * 1024); // 4MB stack
+                    mSDLThread.setPriority(Thread.MAX_PRIORITY);
                     
                     mSurface.enableSensor(Sensor.TYPE_ACCELEROMETER, true);
                     mSDLThread.start();
@@ -1859,7 +1859,13 @@ class SDLMain implements Runnable {
         String[] arguments = SDLActivity.mSingleton.getArguments();
 
         try {
+            // set thread priority to max for SDL thread
+            // this helps performance on some devices
+            // set step by step to avoid issues on some devices
+            android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_MORE_FAVORABLE);
+            android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_FOREGROUND);
             android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_DISPLAY);
+            android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_URGENT_DISPLAY);
         } catch (Exception e) {
 
         }

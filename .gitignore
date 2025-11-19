@@ -143,3 +143,5 @@ fabric.properties
 .idea/markdown.xml
 
 tools/assemblypatch/.vs/
+
+/app/release
