@@ -39,25 +39,45 @@ public class SettingsManager {
         // 主题设置
         public static final String THEME_MODE = "theme_mode";
         public static final String APP_LANGUAGE = "app_language";
-        
+        public static final String THEME_COLOR = "theme_color";
+
         // 运行时设置
         public static final String DOTNET_FRAMEWORK = "dotnet_framework";
         public static final String RUNTIME_ARCHITECTURE = "runtime_architecture";
-        
+
         // 开发者设置
         public static final String VERBOSE_LOGGING = "verbose_logging";
         // FNA设置
         public static final String FNA_RENDERER = "fna_renderer";
+
+        // CoreCLR 运行时配置
+        public static final String CORECLR_SERVER_GC = "coreclr_server_gc";
+        public static final String CORECLR_CONCURRENT_GC = "coreclr_concurrent_gc";
+        public static final String CORECLR_GC_HEAP_COUNT = "coreclr_gc_heap_count";
+        public static final String CORECLR_TIERED_COMPILATION = "coreclr_tiered_compilation";
+        public static final String CORECLR_QUICK_JIT = "coreclr_quick_jit";
+        public static final String CORECLR_JIT_OPTIMIZE_TYPE = "coreclr_jit_optimize_type";
+        public static final String CORECLR_RETAIN_VM = "coreclr_retain_vm";
     }
     
     // 默认值
     public static class Defaults {
         public static final int THEME_MODE = 2; // 亮色主题
         public static final int APP_LANGUAGE = 0; // 跟随系统
+        public static final int THEME_COLOR = 0xFF4CAF50; // 默认绿色
         public static final String DOTNET_FRAMEWORK = "auto";
         public static final String RUNTIME_ARCHITECTURE = "auto";
         public static final boolean VERBOSE_LOGGING = false;
         public static final String FNA_RENDERER = "auto";
+
+        // CoreCLR 默认值
+        public static final boolean CORECLR_SERVER_GC = false; // 移动端默认关闭 Server GC
+        public static final boolean CORECLR_CONCURRENT_GC = true; // 默认启用并发 GC
+        public static final String CORECLR_GC_HEAP_COUNT = "auto"; // 自动检测
+        public static final boolean CORECLR_TIERED_COMPILATION = true; // 默认启用分层编译
+        public static final boolean CORECLR_QUICK_JIT = true; // 默认启用快速 JIT
+        public static final int CORECLR_JIT_OPTIMIZE_TYPE = 0; // 0=混合, 1=体积, 2=速度
+        public static final boolean CORECLR_RETAIN_VM = false; // 默认不保留虚拟内存
     }
     
     private SettingsManager(Context context) {
@@ -186,7 +206,15 @@ public class SettingsManager {
     public void setAppLanguage(int language) {
         putInt(Keys.APP_LANGUAGE, language);
     }
-    
+
+    public int getThemeColor() {
+        return getInt(Keys.THEME_COLOR, Defaults.THEME_COLOR);
+    }
+
+    public void setThemeColor(int color) {
+        putInt(Keys.THEME_COLOR, color);
+    }
+
     // 运行时设置
     public String getDotnetFramework() {
         return getString(Keys.DOTNET_FRAMEWORK, Defaults.DOTNET_FRAMEWORK);
@@ -217,18 +245,76 @@ public class SettingsManager {
     public String getFnaRenderer() {
         return getString(Keys.FNA_RENDERER, Defaults.FNA_RENDERER);
     }
-    
+
     public void setFnaRenderer(String renderer) {
         putString(Keys.FNA_RENDERER, renderer);
     }
-    
+
+    // CoreCLR GC 设置
+    public boolean isServerGC() {
+        return getBoolean(Keys.CORECLR_SERVER_GC, Defaults.CORECLR_SERVER_GC);
+    }
+
+    public void setServerGC(boolean enabled) {
+        putBoolean(Keys.CORECLR_SERVER_GC, enabled);
+    }
+
+    public boolean isConcurrentGC() {
+        return getBoolean(Keys.CORECLR_CONCURRENT_GC, Defaults.CORECLR_CONCURRENT_GC);
+    }
+
+    public void setConcurrentGC(boolean enabled) {
+        putBoolean(Keys.CORECLR_CONCURRENT_GC, enabled);
+    }
+
+    public String getGCHeapCount() {
+        return getString(Keys.CORECLR_GC_HEAP_COUNT, Defaults.CORECLR_GC_HEAP_COUNT);
+    }
+
+    public void setGCHeapCount(String count) {
+        putString(Keys.CORECLR_GC_HEAP_COUNT, count);
+    }
+
+    public boolean isRetainVM() {
+        return getBoolean(Keys.CORECLR_RETAIN_VM, Defaults.CORECLR_RETAIN_VM);
+    }
+
+    public void setRetainVM(boolean enabled) {
+        putBoolean(Keys.CORECLR_RETAIN_VM, enabled);
+    }
+
+    // CoreCLR JIT 设置
+    public boolean isTieredCompilation() {
+        return getBoolean(Keys.CORECLR_TIERED_COMPILATION, Defaults.CORECLR_TIERED_COMPILATION);
+    }
+
+    public void setTieredCompilation(boolean enabled) {
+        putBoolean(Keys.CORECLR_TIERED_COMPILATION, enabled);
+    }
+
+    public boolean isQuickJIT() {
+        return getBoolean(Keys.CORECLR_QUICK_JIT, Defaults.CORECLR_QUICK_JIT);
+    }
+
+    public void setQuickJIT(boolean enabled) {
+        putBoolean(Keys.CORECLR_QUICK_JIT, enabled);
+    }
+
+    public int getJitOptimizeType() {
+        return getInt(Keys.CORECLR_JIT_OPTIMIZE_TYPE, Defaults.CORECLR_JIT_OPTIMIZE_TYPE);
+    }
+
+    public void setJitOptimizeType(int type) {
+        putInt(Keys.CORECLR_JIT_OPTIMIZE_TYPE, type);
+    }
+
     /**
      * 获取设置文件路径（用于调试）
      */
     public String getSettingsFilePath() {
         return settingsFile.getAbsolutePath();
     }
-    
+
     /**
      * 重新加载设置（用于调试）
      */

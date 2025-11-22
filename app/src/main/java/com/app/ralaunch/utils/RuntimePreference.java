@@ -187,12 +187,29 @@ public final class RuntimePreference {
         // ===== 设置 FNA3D 环境变量（根据渲染器类型） =====
         setEnv("FNA3D_FORCE_DRIVER", "OpenGL");
 
-        // 所有渲染器统一使用 OpenGL ES 3.0
-        // gl4es 会自动将 OpenGL 2.1 转换为 GLES 2.0，但 FNA3D 仍需要 ES3 特性
-        setEnv("FNA3D_OPENGL_FORCE_ES3", "1");
-        setEnv("FNA3D_OPENGL_FORCE_VER_MAJOR", "3");
-        setEnv("FNA3D_OPENGL_FORCE_VER_MINOR", "0");
-        android.util.Log.i(TAG, "FNA3D configured for OpenGL ES 3.0 (renderer: " + rendererId + ")");
+        // 根据渲染器类型设置 OpenGL 配置
+        // gl4es 和 zink 需要桌面 OpenGL，native 和 angle 使用 OpenGL ES 3.0
+        if (RendererConfig.RENDERER_GL4ES.equals(rendererId) ||
+            RendererConfig.RENDERER_ZINK.equals(rendererId)) {
+            // gl4es: OpenGL 2.1 Compatibility Profile
+            // zink: OpenGL 4.6 Core/Compatibility Profile
+            // 不设置 FNA3D_OPENGL_FORCE_ES3，让 FNA3D 使用桌面 OpenGL
+            unsetEnv("FNA3D_OPENGL_FORCE_ES3");
+            unsetEnv("FNA3D_OPENGL_FORCE_VER_MAJOR");
+            unsetEnv("FNA3D_OPENGL_FORCE_VER_MINOR");
+
+            if (RendererConfig.RENDERER_GL4ES.equals(rendererId)) {
+                android.util.Log.i(TAG, "FNA3D configured for Desktop OpenGL 2.1 Compatibility Profile (renderer: gl4es)");
+            } else {
+                android.util.Log.i(TAG, "FNA3D configured for Desktop OpenGL 4.6 (renderer: zink)");
+            }
+        } else {
+            // native 和 angle 使用 OpenGL ES 3.0
+            setEnv("FNA3D_OPENGL_FORCE_ES3", "1");
+            setEnv("FNA3D_OPENGL_FORCE_VER_MAJOR", "3");
+            setEnv("FNA3D_OPENGL_FORCE_VER_MINOR", "0");
+            android.util.Log.i(TAG, "FNA3D configured for OpenGL ES 3.0 (renderer: " + rendererId + ")");
+        }
 
         // VSync 设置
         setEnv("FORCE_VSYNC", "true");

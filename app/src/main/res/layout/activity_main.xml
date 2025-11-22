@@ -272,42 +272,6 @@
                                     android:maxLines="2"
                                     android:ellipsize="end" />
 
-                                <!-- 游戏程序集路径编辑区域 -->
-                                <LinearLayout
-                                    android:layout_width="match_parent"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginTop="8dp"
-                                    android:orientation="vertical"
-                                    android:padding="8dp"
-                                    android:background="@drawable/bg_rounded_transparent"
-                                    android:backgroundTint="?attr/backgroundCard">
-
-                                    <TextView
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:text="程序集路径"
-                                        android:textColor="?attr/textPrimary"
-                                        android:textSize="10sp"
-                                        android:textStyle="bold"
-                                        android:layout_marginBottom="4dp" />
-
-                                    <EditText
-                                        android:id="@+id/selectedGamePath"
-                                        android:layout_width="match_parent"
-                                        android:layout_height="wrap_content"
-                                        android:text="游戏路径"
-                                        android:textColor="?attr/textPrimary"
-                                        android:textSize="9sp"
-                                        android:background="@drawable/bg_rounded_transparent"
-                                        android:backgroundTint="?attr/backgroundCard"
-                                        android:padding="6dp"
-                                        android:maxLines="2"
-                                        android:ellipsize="end"
-                                        android:inputType="textMultiLine"
-                                        android:textCursorDrawable="@null" />
-
-                                </LinearLayout>
-
                                 <!-- ModLoader 开关 -->
                                 <LinearLayout
                                     android:id="@+id/modLoaderSwitchContainer"
@@ -416,16 +380,16 @@
                     </LinearLayout>
                 </ScrollView>
 
-                <!-- 启动游戏按钮 - 现代化设计 -->
+                <!-- 启动游戏按钮 - 现代化设计（缩小尺寸） -->
                 <com.app.ralib.ui.ModernButton
                     android:id="@+id/launchGameButton"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
+                    android:layout_height="48dp"
                     android:layout_marginTop="8dp"
                     app:buttonText="启动游戏"
                     app:buttonIcon="@drawable/ic_play"
                     app:buttonColor="@color/accent_primary"
-                    android:visibility="gone" />
+                    android:visibility="visible" />
 
             </LinearLayout>
 

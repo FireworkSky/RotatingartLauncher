@@ -70,4 +70,9 @@ extern SDL_bool Android_SetupGLFunctions(SDL_VideoDevice *device);
  */
 extern const char* Android_GetCurrentRenderer(void);
 
+/**
+ * 获取当前渲染器的EGL库路径
+ */
+extern const char* Android_GetCurrentRendererLibPath(void);
+
 #endif /* SDL_androidrenderer_h_ */

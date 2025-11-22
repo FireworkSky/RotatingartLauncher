@@ -19,6 +19,9 @@
 
 #include "SDL_androidrenderer.h"
 #include "SDL_androidgl.h"
+#ifdef SDL_VIDEO_OPENGL_GL4ES
+#include "SDL_androidgl4es.h"
+#endif
 #include "../SDL_egl_c.h"
 
 #include <dlfcn.h>
@@ -188,6 +191,20 @@ SDL_bool Android_LoadRenderer(const char *renderer_name)
         LOGI("  ⚠ LD_PRELOAD already set or cannot be set");
     }
 
+    /* 设置 FNA3D_OPENGL_DRIVER 让 FNA3D 知道使用哪个渲染器 */
+    if (backend->name && SDL_strcmp(backend->name, "native") != 0) {
+
+        /* 设置 SDL_VIDEO_GL_DRIVER 指向已加载的库
+    * 这样 SDL 就会使用这个库而不是再次 dlopen 系统库 */
+        setenv("SDL_VIDEO_GL_DRIVER", backend->egl_library, 1);
+        LOGI("  ✓ SDL_VIDEO_GL_DRIVER = %s", backend->egl_library);
+
+        setenv("FNA3D_OPENGL_DRIVER", backend->name, 1);
+        LOGI("  ✓ FNA3D_OPENGL_DRIVER = %s", backend->name);
+
+
+    }
+
     /* 对于 gl4es，设置额外的环境变量 */
     if (SDL_strcasecmp(backend->name, "gl4es") == 0) {
         setenv("LIBGL_ES", "2", 1);         /* 使用 GLES 2.0 */
@@ -207,8 +224,8 @@ SDL_bool Android_LoadRenderer(const char *renderer_name)
 /**
  * 设置 GL 函数指针
  *
- * 由于使用 LD_PRELOAD，所有渲染器都提供标准 EGL 接口
- * 因此直接使用 SDL 的 EGL 函数即可
+ * gl4es: 使用专用的 Android_GL4ES_* 函数（通过 AGL 接口）
+ * 其他渲染器: 使用标准 EGL 接口
  */
 SDL_bool Android_SetupGLFunctions(SDL_VideoDevice *device)
 {
@@ -221,7 +238,26 @@ SDL_bool Android_SetupGLFunctions(SDL_VideoDevice *device)
     renderer_name = current_renderer ? current_renderer->name : "native";
     LOGI("Setting up GL functions for renderer: %s", renderer_name);
 
-    /* 所有渲染器都使用标准 EGL 接口 */
+#ifdef SDL_VIDEO_OPENGL_GL4ES
+    /* gl4es 使用专用的 AGL 接口函数 */
+    if (SDL_strcasecmp(renderer_name, "gl4es") == 0) {
+        LOGI("🎨 Using gl4es renderer (OpenGL 2.1 via AGL interface)");
+        device->GL_LoadLibrary = Android_GL4ES_LoadLibrary;
+        device->GL_GetProcAddress = Android_GL4ES_GetProcAddress;
+        device->GL_UnloadLibrary = Android_GL4ES_UnloadLibrary;
+        device->GL_CreateContext = Android_GL4ES_CreateContext;
+        device->GL_MakeCurrent = Android_GL4ES_MakeCurrent;
+        device->GL_SetSwapInterval = Android_GL4ES_SetSwapInterval;
+        device->GL_GetSwapInterval = Android_GL4ES_GetSwapInterval;
+        device->GL_SwapWindow = Android_GL4ES_SwapWindow;
+        device->GL_DeleteContext = Android_GL4ES_DeleteContext;
+        LOGI("✓ gl4es GL functions configured");
+        return SDL_TRUE;
+    }
+#endif
+
+    /* 其他渲染器使用标准 EGL 接口 */
+    LOGI("🎨 Using standard EGL interface");
     device->GL_LoadLibrary = Android_GLES_LoadLibrary;
     device->GL_GetProcAddress = Android_GLES_GetProcAddress;
     device->GL_UnloadLibrary = Android_GLES_UnloadLibrary;
@@ -243,6 +279,14 @@ SDL_bool Android_SetupGLFunctions(SDL_VideoDevice *device)
 const char* Android_GetCurrentRenderer(void)
 {
     return current_renderer ? current_renderer->name : "none";
+}
+
+/**
+ * 获取当前渲染器的EGL库路径
+ */
+const char* Android_GetCurrentRendererLibPath(void)
+{
+    return current_renderer ? current_renderer->egl_library : NULL;
 }
 
 #endif /* SDL_VIDEO_DRIVER_ANDROID */

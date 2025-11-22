@@ -71,7 +71,7 @@ public class MainActivity extends AppCompatActivity implements
     private ImageView selectedGameImage;
     private TextView selectedGameName;
     private TextView selectedGameDescription;
-    private android.widget.EditText selectedGamePath;
+    // private android.widget.EditText selectedGamePath; // 已移除程序集路径显示
     private com.app.ralib.ui.ModernButton launchGameButton;
     private CardView emptySelectionText;
     private LinearLayout mainLayout;
@@ -244,7 +244,7 @@ public class MainActivity extends AppCompatActivity implements
         selectedGameImage = findViewById(R.id.selectedGameImage);
         selectedGameName = findViewById(R.id.selectedGameName);
         selectedGameDescription = findViewById(R.id.selectedGameDescription);
-        selectedGamePath = findViewById(R.id.selectedGamePath);
+        // selectedGamePath = findViewById(R.id.selectedGamePath); // 已移除程序集路径显示
         launchGameButton = findViewById(R.id.launchGameButton);
         emptySelectionText = findViewById(R.id.emptySelectionText);
         modLoaderSwitchContainer = findViewById(R.id.modLoaderSwitchContainer);
@@ -768,10 +768,10 @@ public class MainActivity extends AppCompatActivity implements
         
         // 设置文件名
         selectedGameName.setText(file.getName());
-        
+
         // 设置文件路径
         selectedGameDescription.setText(file.getParent());
-        selectedGamePath.setText(file.getAbsolutePath());
+        // selectedGamePath.setText(file.getAbsolutePath()); // 已移除程序集路径显示
         
         // 设置默认图标
         selectedGameImage.setImageResource(R.drawable.ic_game_default);
@@ -815,12 +815,10 @@ public class MainActivity extends AppCompatActivity implements
         YoYo.with(Techniques.Flash)
                 .duration(600)
                 .playOn(gameRecyclerView);
-        
+
         // 重新加载游戏列表
         gameList = RaLaunchApplication.getGameDataManager().loadGameList();
         gameAdapter.updateGameList(gameList);
-        
-        showInfoSnackbar("已刷新游戏列表");
     }
 
     @Override
@@ -990,7 +988,7 @@ public class MainActivity extends AppCompatActivity implements
 
         selectedGameName.setText(game.getGameName());
         selectedGameDescription.setText(game.getGameDescription());
-        selectedGamePath.setText(game.getGamePath());
+        // selectedGamePath.setText(game.getGamePath()); // 已移除程序集路径显示
 
         // 加载游戏图标 - 优先使用自定义图标路径，否则使用资源ID
         if (game.getIconPath() != null && !game.getIconPath().isEmpty()) {

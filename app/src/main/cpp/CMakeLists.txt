@@ -10,13 +10,18 @@ set(THEORAFILE_SOURCE_DIR ${CMAKE_SOURCE_DIR}/Theorafile)
 # 移除 rustcorehost，现在直接使用 CoreCLR API
 
 
-# 配置SDL：支持原生GLES和MobileGL两种渲染器
-# 默认启用原生GLES（Android标准），MobileGL作为可选项通过运行时切换
-set(SDL_VIDEO_OPENGL ON CACHE BOOL "Enable OpenGL support" FORCE)
+# ===== 双渲染器系统 =====
+# gl4es: 预编译的 libgl4es.so 放在 jniLibs 目录，运行时动态加载
+# angle: 预编译的 libEGL_angle.so/libGLESv2_angle.so 放在 jniLibs 目录
+# native: 使用系统原生 EGL/GLES
+
+# 配置SDL：同时支持原生GLES和gl4es两种渲染器
+set(SDL_VIDEO_OPENGL ON CACHE BOOL "Enable OpenGL support (for gl4es)" FORCE)
 set(SDL_VIDEO_OPENGL_ES ON CACHE BOOL "Enable OpenGL ES (native renderer)" FORCE)
-set(SDL_VIDEO_OPENGL_EGL ON CACHE BOOL "Enable EGL (for native GLES)" FORCE)
+set(SDL_VIDEO_OPENGL_EGL ON CACHE BOOL "Enable EGL" FORCE)
 set(SDL_OPENGLES ON CACHE BOOL "Enable OpenGL ES" FORCE)
-# 添加全局编译定义，让SDL知道我们支持MobileGL和native GLES
+
+# 添加gl4es编译定义，让SDL知道我们支持gl4es渲染器
 add_compile_definitions(SDL_VIDEO_OPENGL_GL4ES)
 
 find_library(CXX_SHARED_LIB c++_shared REQUIRED)
@@ -25,9 +30,6 @@ set(CMAKE_ANDROID_STL_TYPE c++_shared)
 
 # 添加SDL子项目
 add_subdirectory(${SDL_SOURCE_DIR})
-
-# SDL2 不再静态链接 GL，而是运行时动态加载 EGL
-# target_link_libraries(SDL2 PRIVATE GL)
 
 # 添加 FAudio 子项目
 # 配置 FAudio 使用 SDL2
@@ -68,6 +70,7 @@ set(CMAKE_INSTALL_PREFIX ${_OLD_CMAKE_INSTALL_PREFIX})
 
 
 
+
 # 添加你的主程序源码
 add_library(${CMAKE_PROJECT_NAME} SHARED
         sdl_entry.c
@@ -103,12 +106,7 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
        # lgogdownloader
 )
 
-# 不再需要导出 gl4es 符号，因为 GL 是独立的共享库，通过 dlopen 加载
-# target_link_options(${CMAKE_PROJECT_NAME} PRIVATE
-#         -Wl,--export-dynamic
-# )
-
-# 包含 SDL、gl4es、FNA3D 和 netcorehost 头文件
+# 包含 SDL、FNA3D 和 netcorehost 头文件
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
         ${SDL_SOURCE_DIR}/include
 
@@ -119,6 +117,6 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
 
 # 安装共享库到APK的lib目录
 # 包括：libmain.so, SDL2, FAudio, FNA3D, netcorehost, mojoshader, theorafile
-# GL (libGL.so) 和 shaderconv 通过 GL4ESPlus 的 CMakeLists.txt 单独安装
+# gl4es/angle 预编译库放在 jniLibs 目录，会自动打包
 install(TARGETS ${CMAKE_PROJECT_NAME} SDL2 FAudio-shared FNA3D netcorehost DESTINATION ${CMAKE_INSTALL_LIBDIR})
 install(TARGETS mojoshader theorafile DESTINATION ${CMAKE_INSTALL_LIBDIR})

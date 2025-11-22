@@ -81,7 +81,7 @@ public class AssemblyChecker {
                     ", assemblyVersion='" + assemblyVersion + '\'' +
                     ", hasIcon=" + hasIcon +
                     ", error='" + error + '\'' +
-                    '}';
+                     '}';
         }
     }
 

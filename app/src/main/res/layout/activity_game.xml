@@ -5,21 +5,27 @@
     android:id="@+id/game_drawer_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fitsSystemWindows="false">
+    android:fitsSystemWindows="false"
+    android:clipChildren="false"
+    android:clipToPadding="false">
 
     <!-- 主游戏内容区域的外层容器 -->
     <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:clipChildren="false"
+        android:clipToPadding="false">
         
         <!-- 游戏内容区域（SDLSurface + ControlLayout） -->
         <FrameLayout
             android:id="@+id/game_content_frame"
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
-            
+            android:layout_height="match_parent"
+            android:clipChildren="false"
+            android:clipToPadding="false">
+
             <!-- 游戏控制布局会动态添加到这里 -->
-            
+
         </FrameLayout>
         
         <!-- 悬浮UI层 (确保在游戏内容之上) -->
@@ -29,7 +35,7 @@
             android:layout_height="match_parent"
             android:clickable="false"
             android:focusable="false">
-            
+
             <!-- 悬浮菜单按钮 -->
             <ImageButton
                 android:id="@+id/game_drawer_button"
@@ -43,7 +49,23 @@
                 android:tint="?attr/textPrimary"
                 android:contentDescription="游戏菜单"
                 android:visibility="gone" />
-        
+
+            <!-- 编辑模式设置按钮（MD3 风格 FAB） -->
+            <ImageView
+                android:id="@+id/game_editor_settings_button"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_gravity="top|center_horizontal"
+                android:layout_marginTop="1dp"
+                android:padding="10dp"
+                android:src="@drawable/ic_settings"
+                android:background="@drawable/bg_fab_md3"
+                android:clickable="true"
+                android:focusable="true"
+                android:elevation="30dp"
+                android:contentDescription="编辑设置"
+                android:visibility="gone" />
+
         </FrameLayout>
         
     </RelativeLayout>

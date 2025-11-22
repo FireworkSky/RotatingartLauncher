@@ -1,70 +1,63 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.drawerlayout.widget.DrawerLayout
+<FrameLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/drawer_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fitsSystemWindows="false">
+    android:clipChildren="false"
+    android:clipToPadding="false">
 
-    <!-- 主编辑区域 -->
-    <androidx.constraintlayout.widget.ConstraintLayout
+    <!-- 编辑器容器（底层） -->
+    <FrameLayout
+        android:id="@+id/editor_container"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:background="#1E1E1E"
+        android:clipChildren="false"
+        android:clipToPadding="false" />
 
-        <!-- 顶部抽屉拉按钮 -->
+    <!-- 顶部操作栏（浮动在编辑器上方） -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|center_horizontal"
+        android:layout_marginTop="1dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:elevation="6dp">
+
+        <!-- 模式切换按钮 -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/mode_toggle_button"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:text="键盘模式"
+            android:textSize="13sp"
+            android:textColor="?attr/textPrimary"
+            style="@style/Widget.Material3.Button.TonalButton"
+            android:drawableStart="@drawable/ic_keyboard"
+            android:drawableTint="?attr/textPrimary"
+            android:drawablePadding="6dp"
+            android:paddingStart="12dp"
+            android:paddingEnd="16dp"
+            android:minWidth="0dp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:layout_marginEnd="8dp"
+            android:contentDescription="切换控制模式" />
+
+        <!-- 设置按钮 -->
         <ImageView
             android:id="@+id/drawer_button"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:padding="12dp"
-            android:src="@drawable/ic_arrow_down"
-            android:background="@drawable/bg_drawer_button"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:padding="10dp"
+            android:src="@drawable/ic_settings"
+            android:background="@drawable/bg_fab_md3"
             android:clickable="true"
             android:focusable="true"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            android:contentDescription="菜单" />
-
-        <!-- 编辑器容器 -->
-        <FrameLayout
-            android:id="@+id/editor_container"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:background="#1E1E1E" />
-
-    </androidx.constraintlayout.widget.ConstraintLayout>
-
-    <!-- 右侧抽屉菜单 -->
-    <LinearLayout
-        android:id="@+id/navigation_view"
-        android:layout_width="240dp"
-        android:layout_height="match_parent"
-        android:layout_gravity="end"
-        android:background="?attr/backgroundSecondary"
-        android:orientation="vertical"
-        android:fitsSystemWindows="false">
-
-        <!-- 菜单标题 -->
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="?attr/actionBarSize"
-            android:text="控制编辑器"
-            android:textColor="?attr/textPrimary"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            android:gravity="center"
-            android:background="?attr/backgroundCard" />
-
-        <!-- 菜单列表 -->
-        <ListView
-            android:id="@+id/menu_list"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:divider="@android:color/darker_gray"
-            android:dividerHeight="1dp" />
+            android:contentDescription="设置" />
 
     </LinearLayout>
 
-</androidx.drawerlayout.widget.DrawerLayout>
+</FrameLayout>

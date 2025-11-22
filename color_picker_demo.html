@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>颜色选择器 - 设计预览</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto', 'Noto Sans SC', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .dialog-container {
+            background: white;
+            border-radius: 24px;
+            padding: 24px;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #1C1B1F;
+        }
+
+        .preview-box {
+            text-align: center;
+        }
+
+        .color-preview {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: #4CAF50;
+            margin: 0 auto;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .hex-preview {
+            margin-top: 4px;
+            font-size: 12px;
+            color: #49454F;
+            font-family: 'Courier New', monospace;
+        }
+
+        .color-picker {
+            width: 100%;
+            height: 360px;
+            background: linear-gradient(to bottom, transparent, black),
+                        linear-gradient(to right, white, red);
+            border-radius: 12px;
+            margin-bottom: 20px;
+            position: relative;
+            box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.1);
+        }
+
+        .picker-layout {
+            display: flex;
+            gap: 16px;
+            height: 100%;
+        }
+
+        .color-area {
+            flex: 1;
+            background: linear-gradient(to bottom, transparent, black),
+                        linear-gradient(to right, white, #FF0000);
+            border-radius: 12px;
+            position: relative;
+        }
+
+        .hue-bar {
+            width: 40px;
+            background: linear-gradient(to bottom,
+                #FF0000 0%,
+                #FFFF00 17%,
+                #00FF00 33%,
+                #00FFFF 50%,
+                #0000FF 67%,
+                #FF00FF 83%,
+                #FF0000 100%);
+            border-radius: 12px;
+        }
+
+        .alpha-bar-container {
+            width: 100%;
+            height: 40px;
+            margin-top: 16px;
+            margin-bottom: 20px;
+        }
+
+        .alpha-bar {
+            width: 100%;
+            height: 40px;
+            background:
+                linear-gradient(to right, transparent, #4CAF50),
+                repeating-conic-gradient(#CCCCCC 0% 25%, white 0% 50%) 50% / 20px 20px;
+            border-radius: 12px;
+            box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.1);
+        }
+
+        .cursor {
+            position: absolute;
+            width: 24px;
+            height: 24px;
+            border: 3px solid white;
+            border-radius: 50%;
+            box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3), 0 2px 8px rgba(0, 0, 0, 0.3);
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+        }
+
+        .input-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .input-label {
+            font-weight: bold;
+            font-size: 14px;
+            color: #1C1B1F;
+            margin-right: 12px;
+            min-width: 45px;
+        }
+
+        .input-group {
+            flex: 1;
+            text-align: center;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 11px;
+            color: #49454F;
+            margin-bottom: 2px;
+        }
+
+        .input-group input {
+            width: 100%;
+            height: 40px;
+            border: 1px solid #CAC4D0;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 14px;
+            font-family: inherit;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #4CAF50;
+        }
+
+        .hex-input {
+            flex: 1;
+            height: 44px;
+            border: 1px solid #CAC4D0;
+            border-radius: 8px;
+            padding: 0 12px;
+            font-size: 14px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .hex-input:focus {
+            outline: none;
+            border-color: #4CAF50;
+        }
+
+        .preset-section {
+            margin-bottom: 20px;
+        }
+
+        .preset-label {
+            font-size: 12px;
+            color: #49454F;
+            margin-bottom: 8px;
+        }
+
+        .preset-colors {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .preset-color {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: transform 0.2s;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .preset-color:hover {
+            transform: scale(1.1);
+        }
+
+        .preset-color:nth-child(1) { background: #4CAF50; }
+        .preset-color:nth-child(2) { background: #2196F3; }
+        .preset-color:nth-child(3) { background: #9C27B0; }
+        .preset-color:nth-child(4) { background: #FF9800; }
+        .preset-color:nth-child(5) { background: #F44336; }
+
+        .buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+        }
+
+        .btn {
+            padding: 10px 24px;
+            border: none;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-cancel {
+            background: transparent;
+            color: #1C1B1F;
+        }
+
+        .btn-cancel:hover {
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        .btn-confirm {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .btn-confirm:hover {
+            background: #45a049;
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+        }
+
+        .description {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px;
+            border-radius: 16px;
+            margin-top: 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .description h3 {
+            color: #1C1B1F;
+            margin-bottom: 12px;
+            font-size: 16px;
+        }
+
+        .description ul {
+            list-style: none;
+            color: #49454F;
+            font-size: 14px;
+            line-height: 1.8;
+        }
+
+        .description li:before {
+            content: "✓ ";
+            color: #4CAF50;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div style="max-width: 900px; width: 100%;">
+        <div class="dialog-container">
+            <!-- 标题和预览 -->
+            <div class="header">
+                <div class="title">选择主题颜色</div>
+                <div class="preview-box">
+                    <div class="color-preview" id="preview"></div>
+                    <div class="hex-preview" id="hexPreview">#4CAF50</div>
+                </div>
+            </div>
+
+            <!-- 颜色选择器 -->
+            <div class="color-picker">
+                <div class="picker-layout">
+                    <div class="color-area">
+                        <div class="cursor" style="top: 0%; left: 100%;"></div>
+                    </div>
+                    <div class="hue-bar">
+                        <div class="cursor" style="top: 33%; left: 50%; width: 52px; height: 12px; border-radius: 6px;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 透明度条 -->
+            <div class="alpha-bar-container">
+                <div class="alpha-bar">
+                    <div class="cursor" style="top: 50%; left: 100%; width: 12px; height: 52px; border-radius: 6px;"></div>
+                </div>
+            </div>
+
+            <!-- RGB 和 Alpha 输入 -->
+            <div class="input-row">
+                <div class="input-label">RGB:</div>
+                <div class="input-group">
+                    <label>R</label>
+                    <input type="number" value="76" min="0" max="255">
+                </div>
+                <div class="input-group">
+                    <label>G</label>
+                    <input type="number" value="175" min="0" max="255">
+                </div>
+                <div class="input-group">
+                    <label>B</label>
+                    <input type="number" value="80" min="0" max="255">
+                </div>
+                <div class="input-group">
+                    <label>A</label>
+                    <input type="number" value="255" min="0" max="255">
+                </div>
+            </div>
+
+            <!-- HEX 输入 -->
+            <div class="input-row" style="margin-bottom: 16px;">
+                <div class="input-label">HEX:</div>
+                <input type="text" class="hex-input" value="#FF4CAF50" placeholder="#AARRGGBB">
+            </div>
+
+            <!-- 预设颜色 -->
+            <div class="preset-section">
+                <div class="preset-label">预设颜色</div>
+                <div class="preset-colors">
+                    <div class="preset-color"></div>
+                    <div class="preset-color"></div>
+                    <div class="preset-color"></div>
+                    <div class="preset-color"></div>
+                    <div class="preset-color"></div>
+                </div>
+            </div>
+
+            <!-- 按钮 -->
+            <div class="buttons">
+                <button class="btn btn-cancel">取消</button>
+                <button class="btn btn-confirm">确定</button>
+            </div>
+        </div>
+
+        <!-- 功能说明 -->
+        <div class="description">
+            <h3>🎨 颜色选择器功能说明</h3>
+            <ul>
+                <li><strong>中间区域：</strong>通过拖动选择颜色的饱和度和明度</li>
+                <li><strong>右侧条：</strong>垂直彩虹条，选择色调（Hue）</li>
+                <li><strong>底部条：</strong>水平透明度条，调整颜色的透明度</li>
+                <li><strong>RGBA 输入：</strong>直接输入 0-255 的数值精确调整</li>
+                <li><strong>HEX 输入：</strong>支持 #RRGGBB 和 #AARRGGBB 格式</li>
+                <li><strong>预设颜色：</strong>快速选择常用的 5 种颜色</li>
+                <li><strong>实时预览：</strong>右上角圆圈和 HEX 值实时显示当前颜色</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>

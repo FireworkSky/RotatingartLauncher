@@ -138,14 +138,93 @@
                     android:gravity="end" />
             </LinearLayout>
 
-            <!-- 尺寸 -->
+            <!-- 宽度 -->
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="尺寸"
+                android:text="宽度"
                 android:textColor="?attr/textSecondary"
                 android:textSize="12sp"
                 android:layout_marginTop="16dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginTop="4dp">
+
+                <SeekBar
+                    android:id="@+id/seekbar_width"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:max="100" />
+
+                <TextView
+                    android:id="@+id/tv_width_value"
+                    android:layout_width="60dp"
+                    android:layout_height="wrap_content"
+                    android:text="0%"
+                    android:textColor="?attr/textPrimary"
+                    android:textSize="14sp"
+                    android:layout_marginStart="12dp"
+                    android:gravity="end" />
+            </LinearLayout>
+
+            <!-- 高度 -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="高度"
+                android:textColor="?attr/textSecondary"
+                android:textSize="12sp"
+                android:layout_marginTop="12dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginTop="4dp">
+
+                <SeekBar
+                    android:id="@+id/seekbar_height"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:max="100" />
+
+                <TextView
+                    android:id="@+id/tv_height_value"
+                    android:layout_width="60dp"
+                    android:layout_height="wrap_content"
+                    android:text="0%"
+                    android:textColor="?attr/textPrimary"
+                    android:textSize="14sp"
+                    android:layout_marginStart="12dp"
+                    android:gravity="end" />
+            </LinearLayout>
+
+            <!-- 保持宽高比 -->
+            <CheckBox
+                android:id="@+id/checkbox_keep_aspect_ratio"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="保持宽高比"
+                android:textColor="?attr/textPrimary"
+                android:textSize="14sp"
+                android:layout_marginTop="8dp"
+                android:checked="false" />
+
+            <!-- 尺寸（等比例调整） -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="尺寸（等比例）"
+                android:textColor="?attr/textSecondary"
+                android:textSize="12sp"
+                android:layout_marginTop="12dp" />
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -230,69 +309,19 @@
                     android:checked="true" />
             </LinearLayout>
 
-            <!-- 摇杆模式（仅摇杆显示） -->
+            <!-- 按钮模式（仅按钮显示） -->
             <TextView
-                android:id="@+id/tv_joystick_mode_label"
+                android:id="@+id/tv_button_mode_label"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="摇杆模式"
+                android:text="按钮模式"
                 android:textColor="?attr/textSecondary"
                 android:textSize="12sp"
                 android:layout_marginTop="16dp"
                 android:visibility="gone" />
 
             <android.widget.RadioGroup
-                android:id="@+id/rg_joystick_mode"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:visibility="gone"
-                android:orientation="vertical">
-
-                <RadioButton
-                    android:id="@+id/rb_keyboard_mode"
-                    android:layout_width="match_parent"
-                    android:layout_height="48dp"
-                    android:text="🎮 键盘模式（映射WASD等按键）"
-                    android:textColor="?attr/textPrimary"
-                    android:textSize="14sp"
-                    android:paddingStart="12dp"
-                    android:paddingEnd="12dp" />
-
-                <RadioButton
-                    android:id="@+id/rb_mouse_mode"
-                    android:layout_width="match_parent"
-                    android:layout_height="48dp"
-                    android:text="🎯 鼠标模式（控制瞄准方向）"
-                    android:textColor="?attr/textPrimary"
-                    android:textSize="14sp"
-                    android:paddingStart="12dp"
-                    android:paddingEnd="12dp" />
-
-                <RadioButton
-                    android:id="@+id/rb_sdl_controller_mode"
-                    android:layout_width="match_parent"
-                    android:layout_height="48dp"
-                    android:text="🎮 Xbox手柄模式（模拟真实摇杆）"
-                    android:textColor="?attr/textPrimary"
-                    android:textSize="14sp"
-                    android:paddingStart="12dp"
-                    android:paddingEnd="12dp" />
-            </android.widget.RadioGroup>
-
-            <!-- Xbox手柄摇杆选择（仅SDL控制器模式显示） -->
-            <TextView
-                android:id="@+id/tv_sdl_stick_label"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Xbox摇杆选择"
-                android:textColor="?attr/textSecondary"
-                android:textSize="12sp"
-                android:layout_marginTop="16dp"
-                android:visibility="gone" />
-
-            <android.widget.RadioGroup
-                android:id="@+id/rg_sdl_stick"
+                android:id="@+id/rg_button_mode"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
@@ -300,53 +329,27 @@
                 android:orientation="horizontal">
 
                 <RadioButton
-                    android:id="@+id/rb_left_stick"
+                    android:id="@+id/rb_keyboard_button_mode"
                     android:layout_width="0dp"
                     android:layout_height="48dp"
                     android:layout_weight="1"
-                    android:text="🕹️ 左摇杆"
+                    android:text="⌨️ 键盘/鼠标"
                     android:textColor="?attr/textPrimary"
                     android:textSize="14sp"
                     android:paddingStart="12dp"
                     android:paddingEnd="12dp" />
 
                 <RadioButton
-                    android:id="@+id/rb_right_stick"
+                    android:id="@+id/rb_gamepad_button_mode"
                     android:layout_width="0dp"
                     android:layout_height="48dp"
                     android:layout_weight="1"
-                    android:text="🕹️ 右摇杆"
+                    android:text="🎮 手柄按键"
                     android:textColor="?attr/textPrimary"
                     android:textSize="14sp"
                     android:paddingStart="12dp"
                     android:paddingEnd="12dp" />
             </android.widget.RadioGroup>
-
-            <!-- 摇杆按键映射（仅键盘模式显示） -->
-            <TextView
-                android:id="@+id/tv_joystick_keys_label"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="方向键映射"
-                android:textColor="?attr/textSecondary"
-                android:textSize="12sp"
-                android:layout_marginTop="16dp"
-                android:visibility="gone" />
-
-            <Button
-                android:id="@+id/btn_edit_joystick_keys"
-                android:layout_width="match_parent"
-                android:layout_height="48dp"
-                android:text="编辑摇杆映射 (上/右/下/左)"
-                android:textColor="?attr/textPrimary"
-                android:textSize="14sp"
-                android:textAlignment="textStart"
-                android:paddingStart="16dp"
-                android:paddingEnd="16dp"
-                android:backgroundTint="?attr/backgroundCard"
-                android:layout_marginTop="4dp"
-                android:visibility="gone"
-                android:drawableEnd="@android:drawable/arrow_down_float" />
 
             <!-- 按键映射（仅按钮显示） -->
             <TextView
@@ -373,6 +376,172 @@
                 android:layout_marginTop="4dp"
                 android:visibility="gone"
                 android:drawableEnd="@android:drawable/arrow_down_float" />
+
+            <!-- 切换按钮模式（仅按钮显示） -->
+            <TextView
+                android:id="@+id/tv_toggle_mode_label"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="按钮行为"
+                android:textColor="?attr/textSecondary"
+                android:textSize="12sp"
+                android:layout_marginTop="16dp"
+                android:visibility="gone" />
+
+            <CheckBox
+                android:id="@+id/checkbox_toggle"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:text="切换模式（按一次开启，再按一次关闭）"
+                android:textColor="?attr/textPrimary"
+                android:textSize="14sp"
+                android:layout_marginTop="4dp"
+                android:visibility="gone" />
+
+            <!-- 颜色自定义 -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="颜色设置"
+                android:textColor="?attr/textSecondary"
+                android:textSize="12sp"
+                android:layout_marginTop="16dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="8dp">
+
+                <Button
+                    android:id="@+id/btn_bg_color"
+                    android:layout_width="0dp"
+                    android:layout_height="48dp"
+                    android:layout_weight="1"
+                    android:text="背景色"
+                    android:textColor="?attr/textPrimary"
+                    android:textSize="14sp"
+                    android:layout_marginEnd="8dp" />
+
+                <Button
+                    android:id="@+id/btn_stroke_color"
+                    android:layout_width="0dp"
+                    android:layout_height="48dp"
+                    android:layout_weight="1"
+                    android:text="边框色"
+                    android:textColor="?attr/textPrimary"
+                    android:textSize="14sp" />
+            </LinearLayout>
+
+            <!-- 边框样式 -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="边框设置"
+                android:textColor="?attr/textSecondary"
+                android:textSize="12sp"
+                android:layout_marginTop="16dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="8dp">
+
+                <TextView
+                    android:layout_width="80dp"
+                    android:layout_height="wrap_content"
+                    android:text="边框宽度"
+                    android:textColor="?attr/textPrimary"
+                    android:textSize="14sp"
+                    android:gravity="center_vertical" />
+
+                <SeekBar
+                    android:id="@+id/seekbar_stroke_width"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:max="20"
+                    android:progress="2" />
+
+                <TextView
+                    android:id="@+id/tv_stroke_width_value"
+                    android:layout_width="50dp"
+                    android:layout_height="wrap_content"
+                    android:text="2"
+                    android:textColor="?attr/textPrimary"
+                    android:textSize="14sp"
+                    android:gravity="end|center_vertical" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="8dp">
+
+                <TextView
+                    android:layout_width="80dp"
+                    android:layout_height="wrap_content"
+                    android:text="圆角半径"
+                    android:textColor="?attr/textPrimary"
+                    android:textSize="14sp"
+                    android:gravity="center_vertical" />
+
+                <SeekBar
+                    android:id="@+id/seekbar_corner_radius"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:max="50"
+                    android:progress="8" />
+
+                <TextView
+                    android:id="@+id/tv_corner_radius_value"
+                    android:layout_width="50dp"
+                    android:layout_height="wrap_content"
+                    android:text="8"
+                    android:textColor="?attr/textPrimary"
+                    android:textSize="14sp"
+                    android:gravity="end|center_vertical" />
+            </LinearLayout>
+
+            <!-- 控件操作 -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="控件操作"
+                android:textColor="?attr/textSecondary"
+                android:textSize="12sp"
+                android:layout_marginTop="16dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="8dp">
+
+                <Button
+                    android:id="@+id/btn_duplicate"
+                    android:layout_width="0dp"
+                    android:layout_height="48dp"
+                    android:layout_weight="1"
+                    android:text="复制控件"
+                    android:textColor="?attr/textPrimary"
+                    android:textSize="14sp"
+                    android:layout_marginEnd="8dp"
+                    android:backgroundTint="?attr/colorPrimary" />
+
+                <Button
+                    android:id="@+id/btn_delete"
+                    android:layout_width="0dp"
+                    android:layout_height="48dp"
+                    android:layout_weight="1"
+                    android:text="删除控件"
+                    android:textColor="#FFFFFF"
+                    android:textSize="14sp"
+                    android:backgroundTint="#F44336" />
+            </LinearLayout>
 
         </LinearLayout>
     </ScrollView>

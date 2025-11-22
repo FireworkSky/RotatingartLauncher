@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--  Pickr风格的现代化MD3颜色选择器 -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@drawable/ralib_bg_dialog_rounded"
+    android:padding="0dp"
+    android:elevation="24dp"
+    android:clipToPadding="false">
+
+    <!-- 内容区域 -->
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="16dp">
+
+        <!-- 关闭按钮（右上角） -->
+        <ImageButton
+            android:id="@+id/btnClose"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentTop="true"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@android:drawable/ic_menu_close_clear_cancel"
+            android:contentDescription="关闭" />
+
+        <!-- 左右分栏容器 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_below="@id/btnClose"
+            android:layout_marginTop="8dp">
+
+            <!-- 左侧控制栏 -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:layout_marginEnd="12dp">
+
+                <!-- 颜色预览块 -->
+                <View
+                    android:id="@+id/colorPreview"
+                    android:layout_width="match_parent"
+                    android:layout_height="80dp"
+                    android:background="#4CAF50"
+                    android:layout_marginBottom="12dp" />
+
+                <!-- HEX输入框 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_marginBottom="10dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="十六进制"
+                        android:textColor="?attr/textSecondary"
+                        android:textSize="11sp"
+                        android:layout_marginBottom="4dp" />
+
+                    <EditText
+                        android:id="@+id/etHex"
+                        android:layout_width="match_parent"
+                        android:layout_height="36dp"
+                        android:background="@drawable/ralib_bg_rounded_transparent"
+                        android:gravity="center_vertical"
+                        android:hint="#AARRGGBB"
+                        android:inputType="text"
+                        android:maxLength="9"
+                        android:textColor="?attr/textPrimary"
+                        android:textColorHint="?attr/textHint"
+                        android:textSize="13sp"
+                        android:fontFamily="monospace"
+                        android:paddingHorizontal="10dp" />
+                </LinearLayout>
+
+                <!-- RGB 输入框 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_marginBottom="10dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="RGB"
+                        android:textColor="?attr/textSecondary"
+                        android:textSize="11sp"
+                        android:layout_marginBottom="4dp" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+
+                        <EditText android:id="@+id/etRed" android:layout_width="0dp" android:layout_height="36dp" android:layout_weight="1" android:layout_marginEnd="4dp" android:background="@drawable/ralib_bg_rounded_transparent" android:gravity="center" android:hint="R" android:inputType="number" android:maxLength="3" android:textColor="?attr/textPrimary" android:textColorHint="?attr/textHint" android:textSize="12sp" />
+                        <EditText android:id="@+id/etGreen" android:layout_width="0dp" android:layout_height="36dp" android:layout_weight="1" android:layout_marginEnd="4dp" android:background="@drawable/ralib_bg_rounded_transparent" android:gravity="center" android:hint="G" android:inputType="number" android:maxLength="3" android:textColor="?attr/textPrimary" android:textColorHint="?attr/textHint" android:textSize="12sp" />
+                        <EditText android:id="@+id/etBlue" android:layout_width="0dp" android:layout_height="36dp" android:layout_weight="1" android:background="@drawable/ralib_bg_rounded_transparent" android:gravity="center" android:hint="B" android:inputType="number" android:maxLength="3" android:textColor="?attr/textPrimary" android:textColorHint="?attr/textHint" android:textSize="12sp" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <!-- 透明度滑动条 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_marginBottom="12dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical">
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="透明度"
+                            android:textColor="?attr/textSecondary"
+                            android:textSize="11sp" />
+
+                        <TextView
+                            android:id="@+id/tvAlphaValue"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="100%"
+                            android:textColor="?attr/textPrimary"
+                            android:textSize="11sp"
+                            android:fontFamily="monospace" />
+                    </LinearLayout>
+
+                    <SeekBar
+                        android:id="@+id/alphaSeekBar"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:max="255"
+                        android:progress="255"
+                        android:layout_marginTop="4dp" />
+                </LinearLayout>
+
+                <!-- 预设颜色 -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="基本颜色"
+                    android:textColor="?attr/textSecondary"
+                    android:textSize="11sp"
+                    android:layout_marginBottom="6dp" />
+
+                <GridLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:columnCount="6"
+                    android:rowCount="3"
+                    android:alignmentMode="alignBounds">
+
+                    <View android:id="@+id/presetColor1" android:layout_width="0dp" android:layout_height="24dp" android:layout_columnWeight="1" android:layout_margin="2dp" android:background="@drawable/ralib_bg_circle" android:clickable="true" android:focusable="true" android:foreground="?attr/selectableItemBackgroundBorderless" />
+                    <View android:id="@+id/presetColor2" android:layout_width="0dp" android:layout_height="24dp" android:layout_columnWeight="1" android:layout_margin="2dp" android:background="@drawable/ralib_bg_circle" android:clickable="true" android:focusable="true" android:foreground="?attr/selectableItemBackgroundBorderless" />
+                    <View android:id="@+id/presetColor3" android:layout_width="0dp" android:layout_height="24dp" android:layout_columnWeight="1" android:layout_margin="2dp" android:background="@drawable/ralib_bg_circle" android:clickable="true" android:focusable="true" android:foreground="?attr/selectableItemBackgroundBorderless" />
+                    <View android:id="@+id/presetColor4" android:layout_width="0dp" android:layout_height="24dp" android:layout_columnWeight="1" android:layout_margin="2dp" android:background="@drawable/ralib_bg_circle" android:clickable="true" android:focusable="true" android:foreground="?attr/selectableItemBackgroundBorderless" />
+                    <View android:id="@+id/presetColor5" android:layout_width="0dp" android:layout_height="24dp" android:layout_columnWeight="1" android:layout_margin="2dp" android:background="@drawable/ralib_bg_circle" android:clickable="true" android:focusable="true" android:foreground="?attr/selectableItemBackgroundBorderless" />
+                    <View android:id="@+id/presetColor6" android:layout_width="0dp" android:layout_height="24dp" android:layout_columnWeight="1" android:layout_margin="2dp" android:background="@drawable/ralib_bg_circle" android:clickable="true" android:focusable="true" android:foreground="?attr/selectableItemBackgroundBorderless" />
+                    <View android:id="@+id/presetColor7" android:layout_width="0dp" android:layout_height="24dp" android:layout_columnWeight="1" android:layout_margin="2dp" android:background="@drawable/ralib_bg_circle" android:clickable="true" android:focusable="true" android:foreground="?attr/selectableItemBackgroundBorderless" />
+                    <View android:id="@+id/presetColor8" android:layout_width="0dp" android:layout_height="24dp" android:layout_columnWeight="1" android:layout_margin="2dp" android:background="@drawable/ralib_bg_circle" android:clickable="true" android:focusable="true" android:foreground="?attr/selectableItemBackgroundBorderless" />
+                    <View android:id="@+id/presetColor9" android:layout_width="0dp" android:layout_height="24dp" android:layout_columnWeight="1" android:layout_margin="2dp" android:background="@drawable/ralib_bg_circle" android:clickable="true" android:focusable="true" android:foreground="?attr/selectableItemBackgroundBorderless" />
+                    <View android:id="@+id/presetColor10" android:layout_width="0dp" android:layout_height="24dp" android:layout_columnWeight="1" android:layout_margin="2dp" android:background="@drawable/ralib_bg_circle" android:clickable="true" android:focusable="true" android:foreground="?attr/selectableItemBackgroundBorderless" />
+                    <View android:id="@+id/presetColor11" android:layout_width="0dp" android:layout_height="24dp" android:layout_columnWeight="1" android:layout_margin="2dp" android:background="@drawable/ralib_bg_circle" android:clickable="true" android:focusable="true" android:foreground="?attr/selectableItemBackgroundBorderless" />
+                    <View android:id="@+id/presetColor12" android:layout_width="0dp" android:layout_height="24dp" android:layout_columnWeight="1" android:layout_margin="2dp" android:background="@drawable/ralib_bg_circle" android:clickable="true" android:focusable="true" android:foreground="?attr/selectableItemBackgroundBorderless" />
+                    <View android:id="@+id/presetColor13" android:layout_width="0dp" android:layout_height="24dp" android:layout_columnWeight="1" android:layout_margin="2dp" android:background="@drawable/ralib_bg_circle" android:clickable="true" android:focusable="true" android:foreground="?attr/selectableItemBackgroundBorderless" />
+                    <View android:id="@+id/presetColor14" android:layout_width="0dp" android:layout_height="24dp" android:layout_columnWeight="1" android:layout_margin="2dp" android:background="@drawable/ralib_bg_circle" android:clickable="true" android:focusable="true" android:foreground="?attr/selectableItemBackgroundBorderless" />
+                </GridLayout>
+            </LinearLayout>
+
+            <!-- 右侧颜色选择器 -->
+            <com.app.ralib.ui.ColorPickerView
+                android:id="@+id/colorPicker"
+                android:layout_width="0dp"
+                android:layout_height="380dp"
+                android:layout_weight="1.2" />
+        </LinearLayout>
+
+        <!-- 底部按钮 -->
+        <LinearLayout
+            android:id="@+id/buttonContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="end"
+            android:layout_below="@id/btnClose"
+            android:layout_marginTop="400dp">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnCancel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="取消"
+                android:textColor="?attr/textPrimary"
+                style="@style/Widget.Material3.Button.TextButton"
+                android:layout_marginEnd="8dp"
+                android:minWidth="80dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnConfirm"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="确定"
+                style="@style/Widget.Material3.Button"
+                android:minWidth="80dp" />
+        </LinearLayout>
+    </RelativeLayout>
+
+</LinearLayout>

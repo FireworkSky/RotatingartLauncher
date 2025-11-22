@@ -246,7 +246,8 @@ public class RendererConfig {
         switch (rendererId) {
             case RENDERER_GL4ES:
                 envMap.put("RALCORE_RENDERER", "opengles2");
-                envMap.put("LIBGL_ES", "2");
+                // NG-GL4ES defaults to ES3 backend (DEFAULT_ES=3) for better compatibility
+                envMap.put("LIBGL_ES", "3");
                 envMap.put("LIBGL_MIPMAP", "3");
                 envMap.put("LIBGL_NORMALIZE", "1");
                 envMap.put("LIBGL_NOINTOVLHACK", "1");

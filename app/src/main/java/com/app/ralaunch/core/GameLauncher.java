@@ -474,6 +474,11 @@ public class GameLauncher {
                 AppLogger.info(TAG, "No patches to configure for DOTNET_STARTUP_HOOKS");
             }
 
+            // 应用 CoreCLR 配置（GC 和 JIT 设置）
+            AppLogger.info(TAG, "");
+            AppLogger.info(TAG, "Applying CoreCLR configuration...");
+            com.app.ralaunch.utils.CoreCLRConfig.applyConfig(context);
+
             // 设置 COREHOST_TRACE（根据详细日志设置）
             com.app.ralaunch.utils.SettingsManager settingsManager = com.app.ralaunch.utils.SettingsManager.getInstance(context);
             boolean enableVerboseLogging = settingsManager.isVerboseLogging();

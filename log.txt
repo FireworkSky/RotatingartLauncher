@@ -1,0 +1,788 @@
+2025-11-21 18:14:03.148  3266-3266  MIUIInput               com.app.ralaunch                     I  [MotionEvent] ViewRootImpl windowName 'com.app.ralaunch/com.app.ralaunch.activity.MainActivity', { action=ACTION_DOWN, id[0]=0, pointerCount=1, eventTime=55199179, downTime=55199179, phoneEventTime=18:14:03.143 } moveCount:0
+2025-11-21 18:14:03.148  3266-3266  VRI[MainActivity]       com.app.ralaunch                     D  getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+2025-11-21 18:14:03.225  3266-3266  MIUIInput               com.app.ralaunch                     I  [MotionEvent] ViewRootImpl windowName 'com.app.ralaunch/com.app.ralaunch.activity.MainActivity', { action=ACTION_UP, id[0]=0, pointerCount=1, eventTime=55199259, downTime=55199179, phoneEventTime=18:14:03.224 } moveCount:0
+2025-11-21 18:14:03.334  3266-3266  MIUIInput               com.app.ralaunch                     I  [MotionEvent] ViewRootImpl windowName 'com.app.ralaunch/com.app.ralaunch.activity.MainActivity', { action=ACTION_DOWN, id[0]=0, pointerCount=1, eventTime=55199368, downTime=55199368, phoneEventTime=18:14:03.332 } moveCount:0
+2025-11-21 18:14:03.334  3266-3266  VRI[MainActivity]       com.app.ralaunch                     D  getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+2025-11-21 18:14:03.350  3266-3266  HWUI                    com.app.ralaunch                     W  Image decoding logging dropped!
+2025-11-21 18:14:03.426  3266-3266  MIUIInput               com.app.ralaunch                     I  [MotionEvent] ViewRootImpl windowName 'com.app.ralaunch/com.app.ralaunch.activity.MainActivity', { action=ACTION_UP, id[0]=0, pointerCount=1, eventTime=55199460, downTime=55199368, phoneEventTime=18:14:03.425 } moveCount:0
+2025-11-21 18:14:03.549  3266-3266  HWUI                    com.app.ralaunch                     W  Image decoding logging dropped!
+2025-11-21 18:14:04.060  3266-3266  RenderThread            com.app.ralaunch                     W  type=1400 audit(0.0:903332): avc:  denied  { getattr } for  path="/sys/module/metis/parameters/minor_window_app" dev="sysfs" ino=77850 scontext=u:r:untrusted_app:s0:c37,c261,c512,c768 tcontext=u:object_r:sysfs_migt:s0 tclass=file permissive=0 app=com.app.ralaunch
+2025-11-21 18:14:04.166  3266-3266  MIUIInput               com.app.ralaunch                     I  [MotionEvent] ViewRootImpl windowName 'com.app.ralaunch/com.app.ralaunch.activity.MainActivity', { action=ACTION_DOWN, id[0]=0, pointerCount=1, eventTime=55200200, downTime=55200200, phoneEventTime=18:14:04.164 } moveCount:0
+2025-11-21 18:14:04.167  3266-3266  VRI[MainActivity]       com.app.ralaunch                     D  getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+2025-11-21 18:14:04.288  3266-3266  MIUIInput               com.app.ralaunch                     I  [MotionEvent] ViewRootImpl windowName 'com.app.ralaunch/com.app.ralaunch.activity.MainActivity', { action=ACTION_UP, id[0]=0, pointerCount=1, eventTime=55200322, downTime=55200200, phoneEventTime=18:14:04.286 } moveCount:0
+2025-11-21 18:14:04.536  3266-3266  MainActivity            com.app.ralaunch                     I  Launching game: tModLoader
+2025-11-21 18:14:04.537  3266-3266  MainActivity            com.app.ralaunch                     I  Assembly path: /storage/emulated/0/Android/data/com.app.ralaunch/files/games/tModLoader (7)_v1.4.4.9 v4_1763537905363/GoG Games/ModLoader/tModLoader.dll
+2025-11-21 18:14:04.537  3266-3266  PatchManager            com.app.ralaunch                     D  External patches directory already initialized with 5 patch(es)
+2025-11-21 18:14:04.538  3266-3266  PatchManager            com.app.ralaunch                     D  Loaded patch from external: FPS Optimizer v1.0.0 at /storage/emulated/0/Android/data/com.app.ralaunch/files/patches/FPSOptimizer
+2025-11-21 18:14:04.538  3266-3266  PatchManager            com.app.ralaunch                     D    Entry point: none
+2025-11-21 18:14:04.539  3266-3266  PatchManager            com.app.ralaunch                     D  Loaded patch from external: Performance Profiler v1.0.0 at /storage/emulated/0/Android/data/com.app.ralaunch/files/patches/performance_profiler
+2025-11-21 18:14:04.539  3266-3266  PatchManager            com.app.ralaunch                     D    Entry point: none
+2025-11-21 18:14:04.539  3266-3266  PatchManager            com.app.ralaunch                     D  Loaded patch from external: tModLoader Android 修复补丁 v1.0.0 at /storage/emulated/0/Android/data/com.app.ralaunch/files/patches/tml_android_fix
+2025-11-21 18:14:04.539  3266-3266  PatchManager            com.app.ralaunch                     D    Entry point: TModLoaderPatch.Patcher.Initialize
+2025-11-21 18:14:04.539  3266-3266  PatchManager            com.app.ralaunch                     D  Loaded patch from external: tModLoader 控制台UI v1.0.0 at /storage/emulated/0/Android/data/com.app.ralaunch/files/patches/tml_console
+2025-11-21 18:14:04.539  3266-3266  PatchManager            com.app.ralaunch                     D    Entry point: none
+2025-11-21 18:14:04.539  3266-3266  PatchManager            com.app.ralaunch                     D  Loaded patch from external: tModLoader 服务器模式 v1.0.0 at /storage/emulated/0/Android/data/com.app.ralaunch/files/patches/tml_server_mode
+2025-11-21 18:14:04.539  3266-3266  PatchManager            com.app.ralaunch                     D    Entry point: none
+2025-11-21 18:14:04.539  3266-3266  PatchManager            com.app.ralaunch                     D  Successfully loaded 5 patches total
+2025-11-21 18:14:04.540  3266-3266  PatchManager            com.app.ralaunch                     D  Loaded 11 patch configs
+2025-11-21 18:14:04.540  3266-3266  MainActivity            com.app.ralaunch                     I  Enabled patches for this game:
+2025-11-21 18:14:04.540  3266-3266  MainActivity            com.app.ralaunch                     I    - tModLoader Android 
+2025-11-21 18:14:04.561  3266-13317 ContentCatcher          com.app.ralaunch                     I  SettingTrigger : unregister status observer com.app.ralaunch.activity.MainActivity
+2025-11-21 18:14:04.569  3266-13317 ContentCatcher          com.app.ralaunch                     I  SettingTrigger : unregisterUIAgentListener com.app.ralaunch.activity.MainActivity, uid:11317
+2025-11-21 18:14:04.573  2830-6852  TransitionChain         system_server                        E  Mismatch between current collecting (TransitionRecord{7e12061 id=2439 type=OPEN flags=0x0 overrideAnimOptions={t=CUSTOM enterResId=17432576 changeResId=0 exitResId=17432577 mUserId=0} c=[
+                                                                                                       ChangeInfo{76b9612 container=DefaultTaskDisplayArea@29268275 flags=0x0}
+                                                                                                       ChangeInfo{47491e3 container=Task{86f25bd #266 type=standard A=11317:com.app.ralaunch} flags=0x0}
+                                                                                                       ChangeInfo{2a777e0 container=Display{#0 state=ON size=2400x1080 ROTATION_90} flags=0x0}
+                                                                                                       ChangeInfo{469015e container=ActivityRecord{231010086 u0 com.app.ralaunch/.activity.MainActivity t266} flags=0x0}
+                                                                                                       ChangeInfo{f147a99 container=ActivityRecord{247367558 u0 com.app.ralaunch/.activity.GameActivity t266} flags=0x0}
+                                                                                                    ]
+                                                                                                    }) and chain (TransitionRecord{7e12061 id=2439 type=OPEN flags=0x0 overrideAnimOptions={t=CUSTOM enterResId=17432576 changeResId=0 exitResId=17432577 mUserId=0} c=[
+                                                                                                       ChangeInfo{76b9612 container=DefaultTaskDisplayArea@29268275 flags=0x0}
+                                                                                                       ChangeInfo{47491e3 container=Task{86f25bd #266 type=standard A=11317:com.app.ralaunch} flags=0x0}
+                                                                                                       ChangeInfo{2a777e0 container=Display{#0 state=ON size=2400x1080 ROTATION_90} flags=0x0}
+                                                                                                       ChangeInfo{469015e container=ActivityRecord{231010086 u0 com.app.ralaunch/.activity.MainActivity t266} flags=0x0}
+                                                                                                       ChangeInfo{f147a99 container=ActivityRecord{247367558 u0 com.app.ralaunch/.activity.GameActivity t266} flags=0x0}
+                                                                                                    ]
+                                                                                                    })
+2025-11-21 18:14:04.575  3266-3266  RendererLoader          com.app.ralaunch                     I  ================================================
+2025-11-21 18:14:04.575  3266-3266  RendererLoader          com.app.ralaunch                     I    Renderer Loader (Environment Variable Mode)
+2025-11-21 18:14:04.576  3266-3266  RendererLoader          com.app.ralaunch                     I    Renderer ID: gl4es
+2025-11-21 18:14:04.576  3266-3266  RendererLoader          com.app.ralaunch                     I  ================================================
+2025-11-21 18:14:04.576  3266-3266  RendererLoader          com.app.ralaunch                     I  Renderer: Holy GL4ES
+2025-11-21 18:14:04.576  3266-3266  RendererLoader          com.app.ralaunch                     I  Description: OpenGL 2.1  OpenGL ES 2.0
+2025-11-21 18:14:04.576  3266-3266  RendererConfig          com.app.ralaunch                     I  ========== Checking Compatible Renderers ==========
+2025-11-21 18:14:04.576  3266-3266  RendererConfig          com.app.ralaunch                     I  Native library directory: /data/app/~~xZmBAeWYARqTgnjV8R9TXg==/com.app.ralaunch-q7tiZT26Sl4yp5G5v8K-Cw==/lib/arm64
+2025-11-21 18:14:04.576  3266-3266  RendererConfig          com.app.ralaunch                     I  Android API Level: 36
+2025-11-21 18:14:04.576  3266-3266  RendererConfig          com.app.ralaunch                     I  --- Checking renderer: native ---
+2025-11-21 18:14:04.576  3266-3266  RendererConfig          com.app.ralaunch                     I    Display Name: Native OpenGL ES
+2025-11-21 18:14:04.576  3266-3266  RendererConfig          com.app.ralaunch                     I    Min API: 0
+2025-11-21 18:14:04.577  3266-3266  RendererConfig          com.app.ralaunch                     I    EGL Library: (system default)
+2025-11-21 18:14:04.577  3266-3266  RendererConfig          com.app.ralaunch                     I     COMPATIBLE: native added to list
+2025-11-21 18:14:04.577  3266-3266  RendererConfig          com.app.ralaunch                     I  --- Checking renderer: gl4es ---
+2025-11-21 18:14:04.577  3266-3266  RendererConfig          com.app.ralaunch                     I    Display Name: Holy GL4ES
+2025-11-21 18:14:04.577  3266-3266  RendererConfig          com.app.ralaunch                     I    Min API: 0
+2025-11-21 18:14:04.577  3266-3266  RendererConfig          com.app.ralaunch                     I    EGL Library: libgl4es.so
+2025-11-21 18:14:04.577  3266-3266  RendererConfig          com.app.ralaunch                     I    EGL Path: /data/app/~~xZmBAeWYARqTgnjV8R9TXg==/com.app.ralaunch-q7tiZT26Sl4yp5G5v8K-Cw==/lib/arm64/libgl4es.so
+2025-11-21 18:14:04.577  3266-3266  RendererConfig          com.app.ralaunch                     I    EGL Exists: true
+2025-11-21 18:14:04.577  3266-3266  RendererConfig          com.app.ralaunch                     I     COMPATIBLE: gl4es added to list
+2025-11-21 18:14:04.577  3266-3266  RendererConfig          com.app.ralaunch                     I  --- Checking renderer: angle ---
+2025-11-21 18:14:04.577  3266-3266  RendererConfig          com.app.ralaunch                     I    Display Name: ANGLE (Vulkan Backend)
+2025-11-21 18:14:04.577  3266-3266  RendererConfig          com.app.ralaunch                     I    Min API: 24
+2025-11-21 18:14:04.577  3266-3266  RendererConfig          com.app.ralaunch                     I    EGL Library: libEGL_angle.so
+2025-11-21 18:14:04.577  3266-3266  RendererConfig          com.app.ralaunch                     I    EGL Path: /data/app/~~xZmBAeWYARqTgnjV8R9TXg==/com.app.ralaunch-q7tiZT26Sl4yp5G5v8K-Cw==/lib/arm64/libEGL_angle.so
+2025-11-21 18:14:04.577  3266-3266  RendererConfig          com.app.ralaunch                     I    EGL Exists: true
+2025-11-21 18:14:04.577  3266-3266  RendererConfig          com.app.ralaunch                     I    GLES Library: libGLESv2_angle.so
+2025-11-21 18:14:04.577  3266-3266  RendererConfig          com.app.ralaunch                     I    GLES Path: /data/app/~~xZmBAeWYARqTgnjV8R9TXg==/com.app.ralaunch-q7tiZT26Sl4yp5G5v8K-Cw==/lib/arm64/libGLESv2_angle.so
+2025-11-21 18:14:04.577  3266-3266  RendererConfig          com.app.ralaunch                     I    GLES Exists: true
+2025-11-21 18:14:04.577  3266-3266  RendererConfig          com.app.ralaunch                     I     COMPATIBLE: angle added to list
+2025-11-21 18:14:04.577  3266-3266  RendererConfig          com.app.ralaunch                     I  --- Checking renderer: zink ---
+2025-11-21 18:14:04.577  3266-3266  RendererConfig          com.app.ralaunch                     I    Display Name: Zink (Mesa)
+2025-11-21 18:14:04.577  3266-3266  RendererConfig          com.app.ralaunch                     I    Min API: 24
+2025-11-21 18:14:04.577  3266-3266  RendererConfig          com.app.ralaunch                     I    EGL Library: libOSMesa.so
+2025-11-21 18:14:04.577  3266-3266  RendererConfig          com.app.ralaunch                     I    EGL Path: /data/app/~~xZmBAeWYARqTgnjV8R9TXg==/com.app.ralaunch-q7tiZT26Sl4yp5G5v8K-Cw==/lib/arm64/libOSMesa.so
+2025-11-21 18:14:04.577  3266-3266  RendererConfig          com.app.ralaunch                     I    EGL Exists: true
+2025-11-21 18:14:04.577  3266-3266  RendererConfig          com.app.ralaunch                     I     COMPATIBLE: zink added to list
+2025-11-21 18:14:04.578  3266-3266  RendererConfig          com.app.ralaunch                     I  --- Checking renderer: virgl ---
+2025-11-21 18:14:04.578  3266-3266  RendererConfig          com.app.ralaunch                     I    Display Name: VirGL Renderer
+2025-11-21 18:14:04.578  3266-3266  RendererConfig          com.app.ralaunch                     I    Min API: 24
+2025-11-21 18:14:04.578  3266-3266  RendererConfig          com.app.ralaunch                     I    EGL Library: libOSMesa.so
+2025-11-21 18:14:04.578  3266-3266  RendererConfig          com.app.ralaunch                     I    EGL Path: /data/app/~~xZmBAeWYARqTgnjV8R9TXg==/com.app.ralaunch-q7tiZT26Sl4yp5G5v8K-Cw==/lib/arm64/libOSMesa.so
+2025-11-21 18:14:04.578  3266-3266  RendererConfig          com.app.ralaunch                     I    EGL Exists: true
+2025-11-21 18:14:04.578  3266-3266  RendererConfig          com.app.ralaunch                     I     COMPATIBLE: virgl added to list
+2025-11-21 18:14:04.578  3266-3266  RendererConfig          com.app.ralaunch                     I  --- Checking renderer: freedreno ---
+2025-11-21 18:14:04.578  3266-3266  RendererConfig          com.app.ralaunch                     I    Display Name: Freedreno (Adreno)
+2025-11-21 18:14:04.578  3266-3266  RendererConfig          com.app.ralaunch                     I    Min API: 24
+2025-11-21 18:14:04.578  3266-3266  RendererConfig          com.app.ralaunch                     I    EGL Library: libOSMesa.so
+2025-11-21 18:14:04.578  3266-3266  RendererConfig          com.app.ralaunch                     I    EGL Path: /data/app/~~xZmBAeWYARqTgnjV8R9TXg==/com.app.ralaunch-q7tiZT26Sl4yp5G5v8K-Cw==/lib/arm64/libOSMesa.so
+2025-11-21 18:14:04.578  3266-3266  RendererConfig          com.app.ralaunch                     I    EGL Exists: true
+2025-11-21 18:14:04.578  3266-3266  RendererConfig          com.app.ralaunch                     I     COMPATIBLE: freedreno added to list
+2025-11-21 18:14:04.578  3266-3266  RendererConfig          com.app.ralaunch                     I  ========== Summary ==========
+2025-11-21 18:14:04.578  3266-3266  RendererConfig          com.app.ralaunch                     I  Total compatible renderers: 6
+2025-11-21 18:14:04.578  3266-3266  RendererConfig          com.app.ralaunch                     I    - native (Native OpenGL ES)
+2025-11-21 18:14:04.578  3266-3266  RendererConfig          com.app.ralaunch                     I    - gl4es (Holy GL4ES)
+2025-11-21 18:14:04.578  3266-3266  RendererConfig          com.app.ralaunch                     I    - angle (ANGLE (Vulkan Backend))
+2025-11-21 18:14:04.578  3266-3266  RendererConfig          com.app.ralaunch                     I    - zink (Zink (Mesa))
+2025-11-21 18:14:04.578  3266-3266  RendererConfig          com.app.ralaunch                     I    - virgl (VirGL Renderer)
+2025-11-21 18:14:04.578  3266-3266  RendererConfig          com.app.ralaunch                     I    - freedreno (Freedreno (Adreno))
+2025-11-21 18:14:04.578  3266-3266  RendererConfig          com.app.ralaunch                     I  ================================
+2025-11-21 18:14:04.579  3266-3266  RendererLoader          com.app.ralaunch                     I  Setting environment variables:
+2025-11-21 18:14:04.579  3266-3266  RendererLoader          com.app.ralaunch                     I    LIBGL_NOINTOVLHACK = 1
+2025-11-21 18:14:04.579  3266-3266  RendererLoader          com.app.ralaunch                     I    LIBGL_NOERROR = 1
+2025-11-21 18:14:04.579  3266-3266  RendererLoader          com.app.ralaunch                     I    RALCORE_RENDERER = opengles2
+2025-11-21 18:14:04.579  3266-3266  RendererLoader          com.app.ralaunch                     I    LIBGL_MIPMAP = 3
+2025-11-21 18:14:04.579  3266-3266  RendererLoader          com.app.ralaunch                     I    LIBGL_ES = 2
+2025-11-21 18:14:04.579  3266-3266  RendererLoader          com.app.ralaunch                     I    LIBGL_NORMALIZE = 1
+2025-11-21 18:14:04.580  3266-3266  RendererLoader          com.app.ralaunch                     I  EGL Library Path: /data/app/~~xZmBAeWYARqTgnjV8R9TXg==/com.app.ralaunch-q7tiZT26Sl4yp5G5v8K-Cw==/lib/arm64/libgl4es.so
+2025-11-21 18:14:04.580  3266-3266  RendererLoader          com.app.ralaunch                     I   FNA3D_OPENGL_LIBRARY = /data/app/~~xZmBAeWYARqTgnjV8R9TXg==/com.app.ralaunch-q7tiZT26Sl4yp5G5v8K-Cw==/lib/arm64/libgl4es.so
+2025-11-21 18:14:04.580  3266-3266  RendererLoader          com.app.ralaunch                     I  Renderer library will be loaded by native code (SDL_Android_LoadEGL)
+2025-11-21 18:14:04.580  3266-3266  RendererLoader          com.app.ralaunch                     I   Renderer configuration completed
+2025-11-21 18:14:04.580  3266-3266  RendererLoader          com.app.ralaunch                     I  ================================================
+2025-11-21 18:14:04.580  3266-3266  RuntimePreference       com.app.ralaunch                     I  ========================================
+2025-11-21 18:14:04.580  3266-3266  RuntimePreference       com.app.ralaunch                     I  渲染器环境变量已应用 (RALCORE Backend)
+2025-11-21 18:14:04.580  3266-3266  RuntimePreference       com.app.ralaunch                     I    渲染器偏好: gl4es
+2025-11-21 18:14:04.580  3266-3266  RuntimePreference       com.app.ralaunch                     I    渲染器 ID: gl4es
+2025-11-21 18:14:04.580  3266-3266  RuntimePreference       com.app.ralaunch                     I    当前渲染器: opengles2
+2025-11-21 18:14:04.580  3266-3266  RuntimePreference       com.app.ralaunch                     I  ========================================
+2025-11-21 18:14:04.580  3266-3266  RuntimePreference       com.app.ralaunch                     I  FNA3D_OPENGL_DRIVER = gl4es
+2025-11-21 18:14:04.581  3266-3266  RuntimePreference       com.app.ralaunch                     I  FNA3D configured for OpenGL ES 3.0 (renderer: gl4es)
+2025-11-21 18:14:04.581  3266-3266  GameActivity            com.app.ralaunch                     I  Renderer environment applied before native library load
+2025-11-21 18:14:04.589  3266-3266  nativeloader            com.app.ralaunch                     D  Load /data/app/~~xZmBAeWYARqTgnjV8R9TXg==/com.app.ralaunch-q7tiZT26Sl4yp5G5v8K-Cw==/lib/arm64/libSDL2.so using class loader ns clns-10 (caller=/data/app/~~xZmBAeWYARqTgnjV8R9TXg==/com.app.ralaunch-q7tiZT26Sl4yp5G5v8K-Cw==/base.apk!classes14.dex): ok
+2025-11-21 18:14:04.592  3266-3266  A64_HOOK                com.app.ralaunch                     I  insns pool initialized.
+2025-11-21 18:14:04.592  3266-3266  nativeloader            com.app.ralaunch                     D  Load /data/app/~~xZmBAeWYARqTgnjV8R9TXg==/com.app.ralaunch-q7tiZT26Sl4yp5G5v8K-Cw==/lib/arm64/libmain.so using class loader ns clns-10 (caller=/data/app/~~xZmBAeWYARqTgnjV8R9TXg==/com.app.ralaunch-q7tiZT26Sl4yp5G5v8K-Cw==/base.apk!classes14.dex): ok
+2025-11-21 18:14:04.592  3266-3266  GameLauncher            com.app.ralaunch                     I  JNI_OnLoad called
+2025-11-21 18:14:04.592  3266-3266  RALaunch/Logger         com.app.ralaunch                     I  JVM initialized for error dialogs
+2025-11-21 18:14:04.592  3266-3266  SDL                     com.app.ralaunch                     V  nativeSetupJNI()
+2025-11-21 18:14:04.592  3266-3266  SDL                     com.app.ralaunch                     V  AUDIO nativeSetupJNI()
+2025-11-21 18:14:04.592  3266-3266  SDL                     com.app.ralaunch                     V  CONTROLLER nativeSetupJNI()
+2025-11-21 18:14:04.593  3266-13317 ViewContentFactory      com.app.ralaunch                     D  initViewContentFetcherClass
+2025-11-21 18:14:04.593  3266-13317 ContentCatcher          com.app.ralaunch                     I  ViewContentFetcher : ViewContentFetcher
+2025-11-21 18:14:04.594  3266-13317 ViewContentFactory      com.app.ralaunch                     D  createInterceptor took 0ms
+2025-11-21 18:14:04.594  3266-3266  AudioSystem             com.app.ralaunch                     D  onNewService: media.audio_policy service obtained 0xb400007bf60ca9e0
+2025-11-21 18:14:04.595  3266-3266  AudioSystem             com.app.ralaunch                     D  getService: checking for service media.audio_policy: 0xb400007bf60ca9e0
+2025-11-21 18:14:04.597  3266-13317 ContentCatcherManager   com.app.ralaunch                     E  failed to get ContentCatcherService.
+2025-11-21 18:14:04.598  3266-13317 ContentCatcherManager   com.app.ralaunch                     E  failed to get ContentCatcherService.
+2025-11-21 18:14:04.610  3266-3266  DecorView               com.app.ralaunch                     D  updateFreeformOutlineFromActivity, inFreeform=false,inFreeformWindowMode=false
+2025-11-21 18:14:04.611  3266-3266  GameActivity            com.app.ralaunch                     I  ================================================
+2025-11-21 18:14:04.611  3266-3266  GameActivity            com.app.ralaunch                     I  GameActivity.onCreate() started
+2025-11-21 18:14:04.611  3266-3266  GameActivity            com.app.ralaunch                     I  ================================================
+2025-11-21 18:14:04.612  3266-3266  GameActivity            com.app.ralaunch                     I  Screen orientation set to landscape
+2025-11-21 18:14:04.612  3266-3266  GameActivity            com.app.ralaunch                     I  Fullscreen mode enabled
+2025-11-21 18:14:04.612  3266-3266  GameActivity            com.app.ralaunch                     I  Window IME flags configured
+2025-11-21 18:14:04.612  3266-3266  GameActivity            com.app.ralaunch                     I  Initializing virtual controls...
+2025-11-21 18:14:04.621  3266-3266  GameActivity            com.app.ralaunch                     I  Virtual controls initialized successfully
+2025-11-21 18:14:04.623  3266-3266  ScrollerOp...ionManager com.app.ralaunch                     D  registerConfigChangedListener
+2025-11-21 18:14:04.623  3266-3266  ScrollerOp...ionManager com.app.ralaunch                     D  registerConfigChangedListener
+2025-11-21 18:14:04.624  3266-3266  HWUI                    com.app.ralaunch                     D  ImageDecoder_nDecodeBitmap: width = 31, height = 23, encodedFormat = 4
+2025-11-21 18:14:04.624  3266-3266  HWUI                    com.app.ralaunch                     W  Image decoding logging dropped!
+2025-11-21 18:14:04.630  3266-3266  AbsListViewStubImpl     com.app.ralaunch                     I  com.app.ralaunch, version: 1.0, Enable Prefetch: false
+2025-11-21 18:14:04.632  3266-3266  GameActivity            com.app.ralaunch                     I  Game menu setup successfully
+2025-11-21 18:14:04.632  3266-3266  GameActivity            com.app.ralaunch                     I  Normal game launch mode
+2025-11-21 18:14:04.633  3266-3266  GameActivity            com.app.ralaunch                     I  ================================================
+2025-11-21 18:14:04.633  3266-3266  GameActivity            com.app.ralaunch                     I  Starting game: tModLoader
+2025-11-21 18:14:04.633  3266-3266  GameActivity            com.app.ralaunch                     I  Assembly: /storage/emulated/0/Android/data/com.app.ralaunch/files/games/tModLoader (7)_v1.4.4.9 v4_1763537905363/GoG Games/ModLoader/tModLoader.dll
+2025-11-21 18:14:04.633  3266-3266  GameActivity            com.app.ralaunch                     I  ================================================
+2025-11-21 18:14:04.635  3266-3266  PatchManager            com.app.ralaunch                     D  External patches directory already initialized with 5 patch(es)
+2025-11-21 18:14:04.635  3266-3266  PatchManager            com.app.ralaunch                     D  Loaded patch from external: FPS Optimizer v1.0.0 at /storage/emulated/0/Android/data/com.app.ralaunch/files/patches/FPSOptimizer
+2025-11-21 18:14:04.635  3266-3266  PatchManager            com.app.ralaunch                     D    Entry point: none
+2025-11-21 18:14:04.635  3266-3266  PatchManager            com.app.ralaunch                     D  Loaded patch from external: Performance Profiler v1.0.0 at /storage/emulated/0/Android/data/com.app.ralaunch/files/patches/performance_profiler
+2025-11-21 18:14:04.635  3266-3266  PatchManager            com.app.ralaunch                     D    Entry point: none
+2025-11-21 18:14:04.636  3266-3266  PatchManager            com.app.ralaunch                     D  Loaded patch from external: tModLoader Android 修复补丁 v1.0.0 at /storage/emulated/0/Android/data/com.app.ralaunch/files/patches/tml_android_fix
+2025-11-21 18:14:04.636  3266-3266  PatchManager            com.app.ralaunch                     D    Entry point: TModLoaderPatch.Patcher.Initialize
+2025-11-21 18:14:04.636  3266-3266  PatchManager            com.app.ralaunch                     D  Loaded patch from external: tModLoader 控制台UI v1.0.0 at /storage/emulated/0/Android/data/com.app.ralaunch/files/patches/tml_console
+2025-11-21 18:14:04.636  3266-3266  PatchManager            com.app.ralaunch                     D    Entry point: none
+2025-11-21 18:14:04.636  3266-3266  PatchManager            com.app.ralaunch                     D  Loaded patch from external: tModLoader 服务器模式 v1.0.0 at /storage/emulated/0/Android/data/com.app.ralaunch/files/patches/tml_server_mode
+2025-11-21 18:14:04.636  3266-3266  PatchManager            com.app.ralaunch                     D    Entry point: none
+2025-11-21 18:14:04.636  3266-3266  PatchManager            com.app.ralaunch                     D  Successfully loaded 5 patches total
+2025-11-21 18:14:04.637  3266-3266  PatchManager            com.app.ralaunch                     D  Loaded 11 patch configs
+2025-11-21 18:14:04.637  3266-3266  GameActivity            com.app.ralaunch                     I  Enabled patches: 1
+2025-11-21 18:14:04.637  3266-3266  GameActivity            com.app.ralaunch                     I    - tModLoader Android 
+2025-11-21 18:14:04.637  3266-3266  GameActivity            com.app.ralaunch                     I      Entry: TModLoaderPatch.Patcher.Initialize
+2025-11-21 18:14:04.637  3266-3266  GameLauncher            com.app.ralaunch                     I  Using native renderer (system EGL)
+2025-11-21 18:14:04.638  3266-3266  nativeloader            com.app.ralaunch                     D  Load /data/app/~~xZmBAeWYARqTgnjV8R9TXg==/com.app.ralaunch-q7tiZT26Sl4yp5G5v8K-Cw==/lib/arm64/libnetcorehost.so using class loader ns clns-10 (caller=/data/app/~~xZmBAeWYARqTgnjV8R9TXg==/com.app.ralaunch-q7tiZT26Sl4yp5G5v8K-Cw==/base.apk!classes17.dex): ok
+2025-11-21 18:14:04.638  3266-3266  GameLauncher            com.app.ralaunch                     I  Native libraries loaded successfully
+2025-11-21 18:14:04.638  3266-3266  GameLauncher            com.app.ralaunch                     I  ================================================
+2025-11-21 18:14:04.638  3266-3266  GameLauncher            com.app.ralaunch                     I  Preparing to launch assembly directly
+2025-11-21 18:14:04.638  3266-3266  GameLauncher            com.app.ralaunch                     I  ================================================
+2025-11-21 18:14:04.638  3266-3266  GameLauncher            com.app.ralaunch                     I  Assembly path: /storage/emulated/0/Android/data/com.app.ralaunch/files/games/tModLoader (7)_v1.4.4.9 v4_1763537905363/GoG Games/ModLoader/tModLoader.dll
+2025-11-21 18:14:04.638  3266-3266  GameLauncher            com.app.ralaunch                     I  Application directory: /storage/emulated/0/Android/data/com.app.ralaunch/files/games/tModLoader (7)_v1.4.4.9 v4_1763537905363/GoG Games/ModLoader
+2025-11-21 18:14:04.638  3266-3266  GameLauncher            com.app.ralaunch                     I  Main assembly: tModLoader.dll
+2025-11-21 18:14:04.638  3266-3266  GameLauncher            com.app.ralaunch                     I  
+2025-11-21 18:14:04.638  3266-3266  GameLauncher            com.app.ralaunch                     I  Step 1/3: Applying patch files
+2025-11-21 18:14:04.638  3266-3266  GameLauncher            com.app.ralaunch                     I  Enabled custom patches: 1
+2025-11-21 18:14:04.638  3266-3266  GameLauncher            com.app.ralaunch                     I    - tModLoader Android 
+2025-11-21 18:14:04.639  3266-3266  AssemblyPatcher         com.app.ralaunch                     I    : 3, : 3
+2025-11-21 18:14:04.639  3266-3266  AssemblyPatcher         com.app.ralaunch                     I  
+2025-11-21 18:14:04.639  3266-3266  AssemblyPatcher         com.app.ralaunch                     I   
+2025-11-21 18:14:04.639  3266-3266  AssemblyPatcher         com.app.ralaunch                     I  
+2025-11-21 18:14:04.639  3266-3266  AssemblyPatcher         com.app.ralaunch                     I    : /storage/emulated/0/Android/data/com.app.ralaunch/files/games/tModLoader (7)_v1.4.4.9 v4_1763537905363/GoG Games/ModLoader
+2025-11-21 18:14:04.676  5271-6896  ActivityManagerWrapper  com.miui.home                        E  getRecentTasksForceIncludingTaskIdIfValid: getRecentTasks: size=6
+                                                                                                     mainTaskId=266   userId=0   windowMode=1   baseIntent=Intent { act=android.intent.action.MAIN flag=268435456 cmp=ComponentInfo{com.app.ralaunch/com.app.ralaunch.activity.MainActivity} }
+                                                                                                     mainTaskId=217   userId=0   windowMode=1   baseIntent=Intent { act=android.intent.action.MAIN flag=270532608 cmp=ComponentInfo{com.ss.android.ugc.aweme/com.ss.android.ugc.aweme.splash.SplashActivity} }
+                                                                                                     mainTaskId=213   userId=0   windowMode=1   baseIntent=Intent { act=android.intent.action.MAIN flag=270532608 cmp=ComponentInfo{com.tencent.mobileqq/com.tencent.mobileqq.activity.SplashActivity} }
+                                                                                                     mainTaskId=212   userId=0   windowMode=1   baseIntent=Intent { act=android.intent.action.MAIN flag=270532608 cmp=ComponentInfo{com.tencent.mm/com.tencent.mm.ui.LauncherUI} }
+                                                                                                     mainTaskId=238   userId=0   windowMode=1   baseIntent=Intent { act=android.intent.action.MAIN flag=270532608 cmp=ComponentInfo{tv.danmaku.bili/tv.danmaku.bili.MainActivityV2} }
+                                                                                                     mainTaskId=214   userId=0   windowMode=1   baseIntent=Intent { act=android.intent.action.MAIN flag=270532608 cmp=ComponentInfo{com.android.settings/com.android.settings.MainSettings} }
+2025-11-21 18:14:04.705  3266-3266  AssemblyPatcher         com.app.ralaunch                     I   1 :
+2025-11-21 18:14:04.705  3266-3266  AssemblyPatcher         com.app.ralaunch                     I    : /storage/emulated/0/Android/data/com.app.ralaunch/files/patches
+2025-11-21 18:14:04.705  3266-3266  AssemblyPatcher         com.app.ralaunch                     I    - tModLoader Android  (TModLoaderPatch.dll)
+2025-11-21 18:14:04.705  3266-3266  AssemblyPatcher         com.app.ralaunch                     W       : TModLoaderPatch.dll - patches/TModLoaderPatch.dll
+2025-11-21 18:14:04.705  3266-3266  AssemblyPatcher         com.app.ralaunch                     I   10 :
+2025-11-21 18:14:04.705  3266-3266  AssemblyPatcher         com.app.ralaunch                     I     - [MonoMod] MonoMod.Core.dll
+2025-11-21 18:14:04.706  3266-3266  AssemblyPatcher         com.app.ralaunch                     I     - [MonoMod] MonoMod.RuntimeDetour.dll
+2025-11-21 18:14:04.706  3266-3266  AssemblyPatcher         com.app.ralaunch                     I     - [MonoMod] Mono.Cecil.Pdb.dll
+2025-11-21 18:14:04.706  3266-3266  AssemblyPatcher         com.app.ralaunch                     I     - [MonoMod] Mono.Cecil.Mdb.dll
+2025-11-21 18:14:04.706  3266-3266  AssemblyPatcher         com.app.ralaunch                     I     - [MonoMod] Mono.Cecil.Rocks.dll
+2025-11-21 18:14:04.706  3266-3266  AssemblyPatcher         com.app.ralaunch                     I     - [MonoMod] 0Harmony.dll
+2025-11-21 18:14:04.706  3266-3266  AssemblyPatcher         com.app.ralaunch                     I     - [MonoMod] Mono.Cecil.dll
+2025-11-21 18:14:04.706  3266-3266  AssemblyPatcher         com.app.ralaunch                     I     - [MonoMod] MonoMod.Iced.dll
+2025-11-21 18:14:04.706  3266-3266  AssemblyPatcher         com.app.ralaunch                     I     - [MonoMod] MonoMod.Backports.dll
+2025-11-21 18:14:04.706  3266-3266  AssemblyPatcher         com.app.ralaunch                     I     - [MonoMod] MonoMod.Utils.dll
+2025-11-21 18:14:04.800  3266-3266  AssemblyPatcher         com.app.ralaunch                     I     193 
+2025-11-21 18:14:04.800  3266-3266  AssemblyPatcher         com.app.ralaunch                     I   : MonoMod.RuntimeDetour.dll
+2025-11-21 18:14:04.801  3266-3266  AssemblyPatcher         com.app.ralaunch                     I   : MonoMod.Backports.dll
+2025-11-21 18:14:04.801  3266-3266  AssemblyPatcher         com.app.ralaunch                     I   : Mono.Cecil.dll
+2025-11-21 18:14:04.801  3266-3266  AssemblyPatcher         com.app.ralaunch                     I   : Mono.Cecil.Rocks.dll
+2025-11-21 18:14:04.802  3266-3266  AssemblyPatcher         com.app.ralaunch                     I   : Mono.Cecil.Pdb.dll
+2025-11-21 18:14:04.802  3266-3266  AssemblyPatcher         com.app.ralaunch                     I   : Mono.Cecil.Mdb.dll
+2025-11-21 18:14:04.803  3266-3266  AssemblyPatcher         com.app.ralaunch                     I   : MonoMod.Iced.dll
+2025-11-21 18:14:04.804  3266-3266  AssemblyPatcher         com.app.ralaunch                     I   : MonoMod.Core.dll
+2025-11-21 18:14:04.804  3266-3266  AssemblyPatcher         com.app.ralaunch                     I   : MonoMod.Utils.dll
+2025-11-21 18:14:04.805  3266-3266  AssemblyPatcher         com.app.ralaunch                     I   : 0Harmony.dll
+2025-11-21 18:14:04.807  3266-3266  AssemblyPatcher         com.app.ralaunch                     I  
+2025-11-21 18:14:04.807  3266-3266  AssemblyPatcher         com.app.ralaunch                     I    10 
+2025-11-21 18:14:04.807  3266-3266  AssemblyPatcher         com.app.ralaunch                     I  
+2025-11-21 18:14:04.807  3266-3266  AssemblyPatcher         com.app.ralaunch                     I  : 3
+2025-11-21 18:14:04.807  3266-3266  GameLauncher            com.app.ralaunch                     I  
+2025-11-21 18:14:04.807  3266-3266  GameLauncher            com.app.ralaunch                     I  Step 2/3: Executing patch entry points (SKIPPED - v2)
+2025-11-21 18:14:04.807  3266-3266  GameLauncher            com.app.ralaunch                     I    Reason: .NET runtime hostfxr limitation
+2025-11-21 18:14:04.807  3266-3266  GameLauncher            com.app.ralaunch                     I    Details: Cannot call initialize_for_runtime_config then initialize_for_dotnet_command_line
+2025-11-21 18:14:04.807  3266-3266  GameLauncher            com.app.ralaunch                     I    Status: Patches will be loaded after game runtime is initialized
+2025-11-21 18:14:04.807  3266-3266  GameLauncher            com.app.ralaunch                     I  No patch entry points to execute
+2025-11-21 18:14:04.807  3266-3266  GameLauncher            com.app.ralaunch                     I  
+2025-11-21 18:14:04.807  3266-3266  GameLauncher            com.app.ralaunch                     I  Step 3/3: Configuring game runtime
+2025-11-21 18:14:04.807  3266-3266  RuntimePreference       com.app.ralaunch                     D  Dotnet root path: /data/user/0/com.app.ralaunch/files/dotnet
+2025-11-21 18:14:04.808  3266-3266  GameLauncher            com.app.ralaunch                     I  .NET path: /data/user/0/com.app.ralaunch/files/dotnet
+2025-11-21 18:14:04.808  3266-3266  GameLauncher            com.app.ralaunch                     I  Selected version: 10.0.0
+2025-11-21 18:14:04.808  3266-3266  GameLauncher            com.app.ralaunch                     I  Framework major: 10
+2025-11-21 18:14:04.808  3266-3266  GameLauncher            com.app.ralaunch                     I  ================================================
+2025-11-21 18:14:04.808  3266-3266  GameLauncher            com.app.ralaunch                     I  Loading .NET Native libraries...
+2025-11-21 18:14:04.808  3266-3266  DotNetNativeLibLoader   com.app.ralaunch                     I  ========================================
+2025-11-21 18:14:04.808  3266-3266  DotNetNativeLibLoader   com.app.ralaunch                     I  开始加载 .NET Native 库...
+2025-11-21 18:14:04.808  3266-3266  DotNetNativeLibLoader   com.app.ralaunch                     I  Runtime 路径: /data/user/0/com.app.ralaunch/files/dotnet/shared/Microsoft.NETCore.App/10.0.0
+2025-11-21 18:14:04.808  3266-3266  DotNetNativeLibLoader   com.app.ralaunch                     I  ========================================
+2025-11-21 18:14:04.809  3266-3266  DotNetNativeLibLoader   com.app.ralaunch                     I  正在加载: libSystem.Native.so
+2025-11-21 18:14:04.809  3266-3266  System                  com.app.ralaunch                     W  Attempt to load writable file: /data/user/0/com.app.ralaunch/files/dotnet/shared/Microsoft.NETCore.App/10.0.0/libSystem.Native.so. This will throw on a future Android version
+2025-11-21 18:14:04.809  3266-3266  nativeloader            com.app.ralaunch                     D  Load /data/user/0/com.app.ralaunch/files/dotnet/shared/Microsoft.NETCore.App/10.0.0/libSystem.Native.so using class loader ns clns-10 (caller=/data/app/~~xZmBAeWYARqTgnjV8R9TXg==/com.app.ralaunch-q7tiZT26Sl4yp5G5v8K-Cw==/base.apk!classes11.dex): ok
+2025-11-21 18:14:04.809  3266-3266  DotNetNativeLibLoader   com.app.ralaunch                     I    ✓ libSystem.Native.so 加载成功
+2025-11-21 18:14:04.810  3266-3266  DotNetNativeLibLoader   com.app.ralaunch                     I  正在加载: libSystem.Globalization.Native.so
+2025-11-21 18:14:04.810  3266-3266  System                  com.app.ralaunch                     W  Attempt to load writable file: /data/user/0/com.app.ralaunch/files/dotnet/shared/Microsoft.NETCore.App/10.0.0/libSystem.Globalization.Native.so. This will throw on a future Android version
+2025-11-21 18:14:04.810  3266-3266  nativeloader            com.app.ralaunch                     D  Load /data/user/0/com.app.ralaunch/files/dotnet/shared/Microsoft.NETCore.App/10.0.0/libSystem.Globalization.Native.so using class loader ns clns-10 (caller=/data/app/~~xZmBAeWYARqTgnjV8R9TXg==/com.app.ralaunch-q7tiZT26Sl4yp5G5v8K-Cw==/base.apk!classes11.dex): ok
+2025-11-21 18:14:04.810  3266-3266  DotNetNativeLibLoader   com.app.ralaunch                     I    ✓ libSystem.Globalization.Native.so 加载成功
+2025-11-21 18:14:04.810  3266-3266  DotNetNativeLibLoader   com.app.ralaunch                     I  正在加载: libSystem.IO.Compression.Native.so
+2025-11-21 18:14:04.810  3266-3266  System                  com.app.ralaunch                     W  Attempt to load writable file: /data/user/0/com.app.ralaunch/files/dotnet/shared/Microsoft.NETCore.App/10.0.0/libSystem.IO.Compression.Native.so. This will throw on a future Android version
+2025-11-21 18:14:04.810  3266-3266  nativeloader            com.app.ralaunch                     D  Load /data/user/0/com.app.ralaunch/files/dotnet/shared/Microsoft.NETCore.App/10.0.0/libSystem.IO.Compression.Native.so using class loader ns clns-10 (caller=/data/app/~~xZmBAeWYARqTgnjV8R9TXg==/com.app.ralaunch-q7tiZT26Sl4yp5G5v8K-Cw==/base.apk!classes11.dex): ok
+2025-11-21 18:14:04.810  3266-3266  DotNetNativeLibLoader   com.app.ralaunch                     I    ✓ libSystem.IO.Compression.Native.so 加载成功
+2025-11-21 18:14:04.810  3266-3266  DotNetNativeLibLoader   com.app.ralaunch                     I  正在加载: libSystem.Security.Cryptography.Native.Android.so
+2025-11-21 18:14:04.810  3266-3266  System                  com.app.ralaunch                     W  Attempt to load writable file: /data/user/0/com.app.ralaunch/files/dotnet/shared/Microsoft.NETCore.App/10.0.0/libSystem.Security.Cryptography.Native.Android.so. This will throw on a future Android version
+2025-11-21 18:14:04.811  3266-3266  nativeloader            com.app.ralaunch                     D  Load /data/user/0/com.app.ralaunch/files/dotnet/shared/Microsoft.NETCore.App/10.0.0/libSystem.Security.Cryptography.Native.Android.so using class loader ns clns-10 (caller=/data/app/~~xZmBAeWYARqTgnjV8R9TXg==/com.app.ralaunch-q7tiZT26Sl4yp5G5v8K-Cw==/base.apk!classes11.dex): ok
+2025-11-21 18:14:04.811  3266-3266  DOTNET                  com.app.ralaunch                     D  AndroidCryptoNative_InitLibraryOnLoad: jint AndroidCryptoNative_InitLibraryOnLoad(JavaVM *, void *) in /__w/1/s/src/runtime/src/native/libs/System.Security.Cryptography.Native.Android/pal_jni.c
+2025-11-21 18:14:04.811  3266-3266  DOTNET                  com.app.ralaunch                     D  GetOptionalClassGRef: optional class com/android/org/conscrypt/OpenSSLEngineImpl was not found
+2025-11-21 18:14:04.812  3266-3266  DotNetNativeLibLoader   com.app.ralaunch                     I    ✓ libSystem.Security.Cryptography.Native.Android.so 加载成功
+2025-11-21 18:14:04.812  3266-3266  DotNetNativeLibLoader   com.app.ralaunch                     I  ========================================
+2025-11-21 18:14:04.812  3266-3266  DotNetNativeLibLoader   com.app.ralaunch                     I  ✅ .NET Native 库加载完成
+2025-11-21 18:14:04.812  3266-3266  DotNetNativeLibLoader   com.app.ralaunch                     I  ========================================
+2025-11-21 18:14:04.812  3266-3266  GameLauncher            com.app.ralaunch                     I  
+2025-11-21 18:14:04.812  3266-3266  GameLauncher            com.app.ralaunch                     I  Configuring DOTNET_STARTUP_HOOKS patches...
+2025-11-21 18:14:04.813  3266-3266  PatchManager            com.app.ralaunch                     D  External patches directory already initialized with 5 patch(es)
+2025-11-21 18:14:04.813  3266-3266  PatchManager            com.app.ralaunch                     D  Loaded patch from external: FPS Optimizer v1.0.0 at /storage/emulated/0/Android/data/com.app.ralaunch/files/patches/FPSOptimizer
+2025-11-21 18:14:04.813  3266-3266  PatchManager            com.app.ralaunch                     D    Entry point: none
+2025-11-21 18:14:04.813  3266-3266  PatchManager            com.app.ralaunch                     D  Loaded patch from external: Performance Profiler v1.0.0 at /storage/emulated/0/Android/data/com.app.ralaunch/files/patches/performance_profiler
+2025-11-21 18:14:04.813  3266-3266  PatchManager            com.app.ralaunch                     D    Entry point: none
+2025-11-21 18:14:04.814  3266-3266  PatchManager            com.app.ralaunch                     D  Loaded patch from external: tModLoader Android 修复补丁 v1.0.0 at /storage/emulated/0/Android/data/com.app.ralaunch/files/patches/tml_android_fix
+2025-11-21 18:14:04.814  3266-3266  PatchManager            com.app.ralaunch                     D    Entry point: TModLoaderPatch.Patcher.Initialize
+2025-11-21 18:14:04.814  3266-3266  PatchManager            com.app.ralaunch                     D  Loaded patch from external: tModLoader 控制台UI v1.0.0 at /storage/emulated/0/Android/data/com.app.ralaunch/files/patches/tml_console
+2025-11-21 18:14:04.814  3266-3266  PatchManager            com.app.ralaunch                     D    Entry point: none
+2025-11-21 18:14:04.814  3266-3266  PatchManager            com.app.ralaunch                     D  Loaded patch from external: tModLoader 服务器模式 v1.0.0 at /storage/emulated/0/Android/data/com.app.ralaunch/files/patches/tml_server_mode
+2025-11-21 18:14:04.814  3266-3266  PatchManager            com.app.ralaunch                     D    Entry point: none
+2025-11-21 18:14:04.814  3266-3266  PatchManager            com.app.ralaunch                     D  Successfully loaded 5 patches total
+2025-11-21 18:14:04.814  3266-3266  PatchManager            com.app.ralaunch                     D  Loaded 11 patch configs
+2025-11-21 18:14:04.815  3266-3266  PatchManager            com.app.ralaunch                     D  Using patch: /storage/emulated/0/Android/data/com.app.ralaunch/files/patches/tml_android_fix/TModLoaderPatch.dll
+2025-11-21 18:14:04.820  3266-3266  GameLauncher            com.app.ralaunch                     I    Copied: 0Harmony.dll from patches root directory
+2025-11-21 18:14:04.821  3266-3266  GameLauncher            com.app.ralaunch                     I    Added StartupHook: tModLoader Android 
+2025-11-21 18:14:04.821  3266-3266  GameLauncher            com.app.ralaunch                     I    Path: /storage/emulated/0/Android/data/com.app.ralaunch/files/patches/tml_android_fix/TModLoaderPatch.dll
+2025-11-21 18:14:04.821  3266-3266  NetCoreHost             com.app.ralaunch                     I   StartupHooks DLL: /storage/emulated/0/Android/data/com.app.ralaunch/files/patches/tml_android_fix/TModLoaderPatch.dll
+2025-11-21 18:14:04.821  3266-3266  GameLauncher            com.app.ralaunch                     I  DOTNET_STARTUP_HOOKS configured with 1 patch(es)
+2025-11-21 18:14:04.821  3266-3266  GameLauncher            com.app.ralaunch                     I  
+2025-11-21 18:14:04.821  3266-3266  GameLauncher            com.app.ralaunch                     I  Applying CoreCLR configuration...
+2025-11-21 18:14:04.821  3266-3266  CoreCLRConfig           com.app.ralaunch                     I  ========================================
+2025-11-21 18:14:04.821  3266-3266  CoreCLRConfig           com.app.ralaunch                     I   CoreCLR 
+2025-11-21 18:14:04.821  3266-3266  CoreCLRConfig           com.app.ralaunch                     I  ========================================
+2025-11-21 18:14:04.821  3266-3266  NetCoreHost             com.app.ralaunch                     I    DOTNET_gcServer = 0
+2025-11-21 18:14:04.821  3266-3266  CoreCLRConfig           com.app.ralaunch                     I    Server GC: 
+2025-11-21 18:14:04.821  3266-3266  NetCoreHost             com.app.ralaunch                     I    DOTNET_gcConcurrent = 1
+2025-11-21 18:14:04.821  3266-3266  CoreCLRConfig           com.app.ralaunch                     I    Concurrent GC: 
+2025-11-21 18:14:04.821  3266-3266  CoreCLRConfig           com.app.ralaunch                     I    GC Heap Count: 
+2025-11-21 18:14:04.821  3266-3266  NetCoreHost             com.app.ralaunch                     I    DOTNET_GCRetainVM = 0
+2025-11-21 18:14:04.821  3266-3266  CoreCLRConfig           com.app.ralaunch                     I    Retain VM: 
+2025-11-21 18:14:04.821  3266-3266  NetCoreHost             com.app.ralaunch                     I    DOTNET_TieredCompilation = 1
+2025-11-21 18:14:04.821  3266-3266  CoreCLRConfig           com.app.ralaunch                     I    Tiered Compilation: 
+2025-11-21 18:14:04.821  3266-3266  NetCoreHost             com.app.ralaunch                     I    DOTNET_TC_QuickJit = 1
+2025-11-21 18:14:04.821  3266-3266  CoreCLRConfig           com.app.ralaunch                     I    Quick JIT: 
+2025-11-21 18:14:04.821  3266-3266  NetCoreHost             com.app.ralaunch                     I    DOTNET_JitOptimizeType = 0
+2025-11-21 18:14:04.821  3266-3266  CoreCLRConfig           com.app.ralaunch                     I    JIT Optimize Type: blended ()
+2025-11-21 18:14:04.822  3266-3266  CoreCLRConfig           com.app.ralaunch                     I  ========================================
+2025-11-21 18:14:04.822  3266-3266  CoreCLRConfig           com.app.ralaunch                     I  CoreCLR 
+2025-11-21 18:14:04.822  3266-3266  CoreCLRConfig           com.app.ralaunch                     I  ========================================
+2025-11-21 18:14:04.822  3266-3266  NetCoreHost             com.app.ralaunch                     I  COREHOST_TRACE : 
+2025-11-21 18:14:04.822  3266-3266  GameLauncher            com.app.ralaunch                     I  COREHOST_TRACE: 
+2025-11-21 18:14:04.822  3266-3266  NetCoreHost             com.app.ralaunch                     I  ========================================
+2025-11-21 18:14:04.822  3266-3266  NetCoreHost             com.app.ralaunch                     I   
+2025-11-21 18:14:04.822  3266-3266  NetCoreHost             com.app.ralaunch                     I  ========================================
+2025-11-21 18:14:04.822  3266-3266  NetCoreHost             com.app.ralaunch                     I    : /storage/emulated/0/Android/data/com.app.ralaunch/files/games/tModLoader (7)_v1.4.4.9 v4_1763537905363/GoG Games/ModLoader
+2025-11-21 18:14:04.822  3266-3266  NetCoreHost             com.app.ralaunch                     I    : tModLoader.dll
+2025-11-21 18:14:04.822  3266-3266  NetCoreHost             com.app.ralaunch                     I    : /storage/emulated/0/Android/data/com.app.ralaunch/files/games/tModLoader (7)_v1.4.4.9 v4_1763537905363/GoG Games/ModLoader/tModLoader.dll
+2025-11-21 18:14:04.822  3266-3266  NetCoreHost             com.app.ralaunch                     I    .NET: /data/user/0/com.app.ralaunch/files/dotnet
+2025-11-21 18:14:04.822  3266-3266  NetCoreHost             com.app.ralaunch                     I    : 10.x ()
+2025-11-21 18:14:04.822  3266-3266  NetCoreHost             com.app.ralaunch                     I  ========================================
+2025-11-21 18:14:04.822  3266-3266  NetCoreHost             com.app.ralaunch                     I  DOTNET_ROOT : /data/user/0/com.app.ralaunch/files/dotnet
+2025-11-21 18:14:04.822  3266-3266  NetCoreHost             com.app.ralaunch                     I   : framework_major=10
+2025-11-21 18:14:04.822  3266-3266  NetCoreHost             com.app.ralaunch                     I  :  net10.x
+2025-11-21 18:14:04.822  3266-3266  NetCoreHost             com.app.ralaunch                     I     LatestMajor: 
+2025-11-21 18:14:04.822  3266-3266  GameLauncher            com.app.ralaunch                     I  Launch parameters set successfully
+2025-11-21 18:14:04.822  3266-3266  GameActivity            com.app.ralaunch                     I  Launch parameters set successfully
+2025-11-21 18:14:04.822  3266-3266  GameActivity            com.app.ralaunch                     I  Back pressed handler ready (using onBackPressed override)
+2025-11-21 18:14:04.824  3266-3266  Activity                com.app.ralaunch                     D  Activity = ActivityInfo{ee74001 com.app.ralaunch.activity.GameActivity}, Resume onConfigurationChanged = {1.0 460mcc11mnc [zh_CN] ldltr sw411dp w914dp h411dp 420dpi nrml long hdr widecg land finger qwerty/v/v dpad/v winConfig={ mBounds=Rect(0, 0 - 2400, 1080) mAppBounds=Rect(0, 0 - 2400, 1080) mMaxBounds=Rect(0, 0 - 2400, 1080) mDisplayRotation=ROTATION_90 mWindowingMode=fullscreen mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_90 mInSplitScreen=false letterBoxed=false foScaled=false isSpecificEmbedded=false} s.3 fontWeightAdjustment=0/d/0 themeChanged=0 themeChangedFlags=0 display=0 extraData = Bundle[{}] screenType=0/0}
+2025-11-21 18:14:04.826  3266-3266  SecurityManager         com.app.ralaunch                     D  checkAccessControl flag0
+2025-11-21 18:14:04.826  3266-13317 ContentCatcher          com.app.ralaunch                     I  SettingTrigger : register screen QA status observer com.app.ralaunch.activity.GameActivity
+2025-11-21 18:14:04.828  3266-3266  ViewRootImpl            com.app.ralaunch                     I  com.app.ralaunch/com.app.ralaunch.activity.GameActivity use first frame acceleration
+2025-11-21 18:14:04.828  3266-3266  InsetsController        com.app.ralaunch                     D  Setting requestedVisibleTypes to -16 (was -9)
+2025-11-21 18:14:04.829  3266-13317 ContentCatcher          com.app.ralaunch                     I  SettingTrigger : register global collect status observer com.app.ralaunch.activity.GameActivity
+2025-11-21 18:14:04.830  3266-13317 ContentCatcher          com.app.ralaunch                     I  SettingTrigger : registerUIAgentListener com.app.ralaunch.activity.GameActivity, uid:11317
+2025-11-21 18:14:04.833  3266-3266  Choreographer           com.app.ralaunch                     I  first vsync insert message into MessageQueue Head
+2025-11-21 18:14:04.835  3266-3266  ComputilityLevel        com.app.ralaunch                     I  getComputilityLevel(): 5
+2025-11-21 18:14:04.846  3266-3266  libc                    com.app.ralaunch                     W  Access denied finding property "vendor.display.enable_optimal_refresh_rate"
+2025-11-21 18:14:04.847  3266-3266  libc                    com.app.ralaunch                     W  Access denied finding property "vendor.display.enable_optimal_refresh_rate"
+2025-11-21 18:14:04.848  2830-6275  TransitionChain         system_server                        E  Mismatch between current collecting (TransitionRecord{7e12061 id=2439 type=OPEN flags=0x0 overrideAnimOptions={t=CUSTOM enterResId=17432576 changeResId=0 exitResId=17432577 mUserId=0} c=[
+                                                                                                       ChangeInfo{76b9612 container=DefaultTaskDisplayArea@29268275 flags=0x0}
+                                                                                                       ChangeInfo{47491e3 container=Task{86f25bd #266 type=standard A=11317:com.app.ralaunch} flags=0x0}
+                                                                                                       ChangeInfo{2a777e0 container=Display{#0 state=ON size=2400x1080 ROTATION_90} flags=0x0}
+                                                                                                       ChangeInfo{469015e container=ActivityRecord{231010086 u0 com.app.ralaunch/.activity.MainActivity t266} flags=0x0}
+                                                                                                       ChangeInfo{f147a99 container=ActivityRecord{247367558 u0 com.app.ralaunch/.activity.GameActivity t266} flags=0x0}
+                                                                                                    ]
+                                                                                                    }) and chain (TransitionRecord{7e12061 id=2439 type=OPEN flags=0x0 overrideAnimOptions={t=CUSTOM enterResId=17432576 changeResId=0 exitResId=17432577 mUserId=0} c=[
+                                                                                                       ChangeInfo{76b9612 container=DefaultTaskDisplayArea@29268275 flags=0x0}
+                                                                                                       ChangeInfo{47491e3 container=Task{86f25bd #266 type=standard A=11317:com.app.ralaunch} flags=0x0}
+                                                                                                       ChangeInfo{2a777e0 container=Display{#0 state=ON size=2400x1080 ROTATION_90} flags=0x0}
+                                                                                                       ChangeInfo{469015e container=ActivityRecord{231010086 u0 com.app.ralaunch/.activity.MainActivity t266} flags=0x0}
+                                                                                                       ChangeInfo{f147a99 container=ActivityRecord{247367558 u0 com.app.ralaunch/.activity.GameActivity t266} flags=0x0}
+                                                                                                    ]
+                                                                                                    })
+2025-11-21 18:14:04.853  3266-3266  VRI[GameActivity]       com.app.ralaunch                     D  vri.reportNextDraw 0 Rect(0, 0 - 2400, 1080) android.view.ViewRootImpl.performTraversals:5477 android.view.ViewRootImpl.doTraversal:4036 android.view.ViewRootImpl$TraversalRunnable.run:12396 android.view.Choreographer$CallbackRecord.run:2022 android.view.Choreographer$CallbackRecord.run:2031 
+2025-11-21 18:14:04.853  3266-3266  SurfaceView             com.app.ralaunch                     D  UPDATE null, mIsCastMode = false
+2025-11-21 18:14:04.854  3266-3266  libc                    com.app.ralaunch                     W  Access denied finding property "vendor.display.enable_optimal_refresh_rate"
+2025-11-21 18:14:04.857  3266-3266  libc                    com.app.ralaunch                     W  Access denied finding property "vendor.display.enable_optimal_refresh_rate"
+2025-11-21 18:14:04.858  3266-13245 BLASTBufferQueue        com.app.ralaunch                     D  onGameOptimizeParameter: new GameOptimizeInfo game: no valid app, VsyncBuffergame: no valid app, mOptimizeEnable: 0, mSuperTouchEnable: 0,mVsyncBufferEnable: 0,mPendingBufferEnable 0,mNeedDynamicDropBuffer: 0, mNeedFirstFrameDropBuffer: 0
+2025-11-21 18:14:04.867  3266-13546 SDL                     com.app.ralaunch                     V  nativeRunMain()
+2025-11-21 18:14:04.867  3266-3266  VRI[GameActivity]       com.app.ralaunch                     D  vri.Setup new sync=wmsSync-VRI[GameActivity]#5
+2025-11-21 18:14:04.867  3266-13546 GameLauncher            com.app.ralaunch                     I  ================================================
+2025-11-21 18:14:04.867  3266-13546 GameLauncher            com.app.ralaunch                     I  SDL_main started (using netcorehost API)
+2025-11-21 18:14:04.867  3266-13546 GameLauncher            com.app.ralaunch                     I  ================================================
+2025-11-21 18:14:04.867  3266-13546 NetCoreHost             com.app.ralaunch                     I  ========================================
+2025-11-21 18:14:04.867  3266-13546 NetCoreHost             com.app.ralaunch                     I    .NET 
+2025-11-21 18:14:04.867  3266-3266  SurfaceView             com.app.ralaunch                     D  UPDATE Surface(name=a86db3d SurfaceView[com.app.ralaunch/com.app.ralaunch.activity.GameActivity]#45345)/@0x98aee39, mIsProjectionMode = false
+2025-11-21 18:14:04.868  3266-13546 NetCoreHost             com.app.ralaunch                     I  ========================================
+2025-11-21 18:14:04.868  3266-13546 NetCoreHost             com.app.ralaunch                     I    : /storage/emulated/0/Android/data/com.app.ralaunch/files/games/tModLoader (7)_v1.4.4.9 v4_1763537905363/GoG Games/ModLoader/tModLoader.dll
+2025-11-21 18:14:04.868  3266-13546 NetCoreHost             com.app.ralaunch                     I    .NET: /data/user/0/com.app.ralaunch/files/dotnet
+2025-11-21 18:14:04.868  3266-13546 NetCoreHost             com.app.ralaunch                     I    : /storage/emulated/0/Android/data/com.app.ralaunch/files/games/tModLoader (7)_v1.4.4.9 v4_1763537905363/GoG Games/ModLoader
+2025-11-21 18:14:04.868  3266-13546 NetCoreHost             com.app.ralaunch                     I  ==========================================
+2025-11-21 18:14:04.868  3266-13546 NetCoreHost             com.app.ralaunch                     I  COREHOST_TRACE enabled, log file: /sdcard/Android/data/com.app.ralaunch/files/corehost_trace.log
+2025-11-21 18:14:04.868  3266-13546 NetCoreHost             com.app.ralaunch                     I  Initializing JNI Bridge...
+2025-11-21 18:14:04.868  3266-13546 NetCoreHost             com.app.ralaunch                     I  JNI Bridge initialized, JavaVM: 0xb400007a4606baa0, JNIEnv: 0xb400007bc60cb270
+2025-11-21 18:14:04.868  3266-13546 NetCoreHost             com.app.ralaunch                     I  COREHOST_TRACE 
+2025-11-21 18:14:04.868  3266-13546 NetCoreHost             com.app.ralaunch                     I   DOTNET_STARTUP_HOOKS=/storage/emulated/0/Android/data/com.app.ralaunch/files/patches/tml_android_fix/TModLoaderPatch.dll
+2025-11-21 18:14:04.868  3266-13546 NetCoreHost             com.app.ralaunch                     I  StartupHook  Main() 
+2025-11-21 18:14:04.868  3266-13546 NetCoreHost             com.app.ralaunch                     I   hostfxr...
+2025-11-21 18:14:04.869  3266-13546 NetCoreHost             com.app.ralaunch                     I  find_dotnet_exe: starting, path=/data/user/0/com.app.ralaunch/files/dotnet/host/fxr/10.0.0/libhostfxr.so
+2025-11-21 18:14:04.869  3266-13546 NetCoreHost             com.app.ralaunch                     I  find_dotnet_exe: converted to string
+2025-11-21 18:14:04.869  3266-13546 NetCoreHost             com.app.ralaunch                     I  find_dotnet_exe: checking dirname=10.0.0
+2025-11-21 18:14:04.869  3266-13546 NetCoreHost             com.app.ralaunch                     I  find_dotnet_exe: checking dirname=fxr
+2025-11-21 18:14:04.869  3266-13546 NetCoreHost             com.app.ralaunch                     I  find_dotnet_exe: checking dirname=host
+2025-11-21 18:14:04.869  3266-13546 NetCoreHost             com.app.ralaunch                     I  find_dotnet_exe: checking dirname=dotnet
+2025-11-21 18:14:04.869  3266-13546 NetCoreHost             com.app.ralaunch                     I  find_dotnet_exe: found dotnet root=/data/user/0/com.app.ralaunch/files/dotnet
+2025-11-21 18:14:04.869  3266-13546 NetCoreHost             com.app.ralaunch                     I  find_dotnet_exe: found apphost at /data/user/0/com.app.ralaunch/files/dotnet/apphost
+2025-11-21 18:14:04.869  3266-13546 NetCoreHost             com.app.ralaunch                     I  find_dotnet_exe: completed, result=/data/user/0/com.app.ralaunch/files/dotnet/apphost
+2025-11-21 18:14:04.869  3266-13546 NetCoreHost             com.app.ralaunch                     I  Hostfxr constructor: find_dotnet_exe completed
+2025-11-21 18:14:04.869  3266-13546 NetCoreHost             com.app.ralaunch                     I  Hostfxr constructor: calling load_functions...
+2025-11-21 18:14:04.869  3266-13546 NetCoreHost             com.app.ralaunch                     I  load_functions: getting hostfxr_initialize_for_runtime_config...
+2025-11-21 18:14:04.869  3266-13546 NetCoreHost             com.app.ralaunch                     I  load_functions: getting hostfxr_initialize_for_dotnet_command_line...
+2025-11-21 18:14:04.869  3266-13546 NetCoreHost             com.app.ralaunch                     I  load_functions: getting hostfxr_get_runtime_delegate...
+2025-11-21 18:14:04.869  3266-13546 NetCoreHost             com.app.ralaunch                     I  load_functions: getting hostfxr_run_app...
+2025-11-21 18:14:04.869  3266-13546 NetCoreHost             com.app.ralaunch                     I  load_functions: getting hostfxr_close...
+2025-11-21 18:14:04.869  3266-13546 NetCoreHost             com.app.ralaunch                     I  load_functions: validating functions...
+2025-11-21 18:14:04.869  3266-13546 NetCoreHost             com.app.ralaunch                     I  load_functions: all functions loaded successfully
+2025-11-21 18:14:04.869  3266-13546 NetCoreHost             com.app.ralaunch                     I  Hostfxr constructor: load_functions completed
+2025-11-21 18:14:04.869  3266-13546 NetCoreHost             com.app.ralaunch                     I  hostfxr 
+2025-11-21 18:14:04.869  3266-13546 NetCoreHost             com.app.ralaunch                     I   .NET ...
+2025-11-21 18:14:04.880  3266-3266  VRI[GameActivity]       com.app.ralaunch                     D  vri.reportDrawFinished 0 0 Rect(0, 0 - 2400, 1080)
+2025-11-21 18:14:04.883  3266-3266  InsetsController        com.app.ralaunch                     D  Setting requestedVisibleTypes to -9 (was -16)
+2025-11-21 18:14:04.886  2830-2879  WindowManager           system_server                        E   source = ActivityRecord{231010086 u0 com.app.ralaunch/.activity.MainActivity t266} excludeMiuiNavBar = false excludeMiuiStatusBar = false excludeIme = false excludeNavBar = true miuiNavSurfaceControl = null miuiStatusSurfaceControl = null
+2025-11-21 18:14:04.908  3266-13373 InsetsController        com.app.ralaunch                     D  default animation onReady types: 3 controller=android.view.InsetsAnimationControlImpl@4e8e1d7
+2025-11-21 18:14:04.908  3266-13373 ViewRootImplStubImpl    com.app.ralaunch                     D  requestedTypes: 3
+2025-11-21 18:14:04.929  3266-13546 NetCoreHost             com.app.ralaunch                     I  .NET 
+2025-11-21 18:14:04.934  3266-13546 NetCoreHost             com.app.ralaunch                     I  ...
+2025-11-21 18:14:04.937  3266-3266  HandWritingStubImpl     com.app.ralaunch                     I  refreshLastKeyboardType: 1
+2025-11-21 18:14:04.937  3266-3266  HandWritingStubImpl     com.app.ralaunch                     I  getCurrentKeyboardType: 1
+2025-11-21 18:14:04.941  3266-13307 om.app.ralaunch         com.app.ralaunch                     E  FrameInsert open fail: No such file or directory
+2025-11-21 18:14:04.941  3266-3266  InsetsController        com.app.ralaunch                     D  hide(ime(), fromIme=false)
+2025-11-21 18:14:04.941  3266-3266  ImeTracker              com.app.ralaunch                     I  com.app.ralaunch:7423ad3b: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+2025-11-21 18:14:04.945  3266-3266  InsetsController        com.app.ralaunch                     D  Setting requestedVisibleTypes to -16 (was -9)
+2025-11-21 18:14:04.945  3266-3266  InsetsController        com.app.ralaunch                     D  cancelAnimation of types:3 animType:0 host:com.app.ralaunch/com.app.ralaunch.activity.GameActivity invokeCallback=true
+2025-11-21 18:14:04.948  3266-13373 InsetsController        com.app.ralaunch                     D  onAnimationFinish showOnFinish: true
+2025-11-21 18:14:04.948  3266-13373 InsetsController        com.app.ralaunch                     D  default animation onReady types: 3 controller=android.view.InsetsAnimationControlImpl@a6d4eeb
+2025-11-21 18:14:04.948  3266-13373 ViewRootImplStubImpl    com.app.ralaunch                     D  requestedTypes: 7
+2025-11-21 18:14:04.973  3266-13546 NetCoreHost             com.app.ralaunch                     I  ========================================
+2025-11-21 18:14:04.973  3266-13546 NetCoreHost             com.app.ralaunch                     I  ...
+2025-11-21 18:14:04.973  3266-13546 NetCoreHost             com.app.ralaunch                     I  ========================================
+2025-11-21 18:14:05.007  3266-13546 DOTNET                  com.app.ralaunch                     I  [StartupHook] DOTNET_STARTUP_HOOKS executing...
+2025-11-21 18:14:05.008  3266-13546 DOTNET                  com.app.ralaunch                     I  ========================================
+2025-11-21 18:14:05.008  3266-13546 DOTNET                  com.app.ralaunch                     I  [TModLoaderPatch] Initializing Android/ARM64 fix patch...
+2025-11-21 18:14:05.008  3266-13546 DOTNET                  com.app.ralaunch                     I  ========================================
+2025-11-21 18:14:05.014  2830-4965  HyperSentinel           system_server                        E  ->pid:3266,processName:"com.app.ralaunch",Rss Memory Size Change 219752kb -> 286484kb
+2025-11-21 18:14:05.016  3266-13546 DOTNET                  com.app.ralaunch                     I  [StartupHook] Loading shared dependency: 0Harmony from /storage/emulated/0/Android/data/com.app.ralaunch/files/patches/0Harmony.dll
+2025-11-21 18:14:05.019  3266-13546 DOTNET                  com.app.ralaunch                     I  Patch Assembly: TModLoaderPatch
+2025-11-21 18:14:05.021  3266-13546 DOTNET                  com.app.ralaunch                     I  Version: 1.0.0.0
+2025-11-21 18:14:05.021  3266-13546 DOTNET                  com.app.ralaunch                     I  Location: /storage/emulated/0/Android/data/com.app.ralaunch/files/patches/tml_android_fix/TModLoaderPatch.dll
+2025-11-21 18:14:05.021  3266-13546 DOTNET                  com.app.ralaunch                     I  .NET Version: 10.0.0
+2025-11-21 18:14:05.021  3266-13546 DOTNET                  com.app.ralaunch                     I  Harmony Version: 2.3.3.0
+2025-11-21 18:14:05.024  3266-13546 DOTNET                  com.app.ralaunch                     I  [TModLoaderPatch] tModLoader assembly already loaded, patching directly...
+2025-11-21 18:14:05.025  3266-13546 DOTNET                  com.app.ralaunch                     I  [TModLoaderPatch] Applying patches and mitigations...
+2025-11-21 18:14:05.026  3266-13546 DOTNET                  com.app.ralaunch                     I  [TModLoaderPatch] [WARN] IsSteamUnsupported not found in InstallVerifier class. It is normal when lower version of tModLoader is loaded
+2025-11-21 18:14:05.028  3266-13546 DOTNET                  com.app.ralaunch                     I  [TModLoaderPatch] InstallVerifier class mitigations applied successfully!
+2025-11-21 18:14:05.268  3266-3266  SDLThread               com.app.ralaunch                     W  type=1400 audit(0.0:903419): avc:  granted  { execute } for  path="/data/data/com.app.ralaunch/files/dotnet/shared/Microsoft.NETCore.App/10.0.0/System.Reflection.Emit.dll" dev="dm-57" ino=2966656 scontext=u:r:untrusted_app:s0:c37,c261,c512,c768 tcontext=u:object_r:app_data_file:s0:c37,c261,c512,c768 tclass=file app=com.app.ralaunch
+2025-11-21 18:14:05.268  3266-3266  SDLThread               com.app.ralaunch                     W  type=1400 audit(0.0:903420): avc:  granted  { execute } for  path="/data/data/com.app.ralaunch/files/dotnet/shared/Microsoft.NETCore.App/10.0.0/System.Reflection.Emit.dll" dev="dm-57" ino=2966656 scontext=u:r:untrusted_app:s0:c37,c261,c512,c768 tcontext=u:object_r:app_data_file:s0:c37,c261,c512,c768 tclass=file app=com.app.ralaunch
+2025-11-21 18:14:05.317  3266-13373 InsetsAnimationCtrlImpl com.app.ralaunch                     D  notifyFinished shown: false, currentAlpha: 1.000000, currentInsets: Insets{left=0, top=0, right=0, bottom=0}
+2025-11-21 18:14:05.318  3266-3266  InsetsController        com.app.ralaunch                     D  cancelAnimation of types:3 animType:1 host:com.app.ralaunch/com.app.ralaunch.activity.GameActivity invokeCallback=false
+2025-11-21 18:14:05.318  3266-3266  InsetsController        com.app.ralaunch                     D  notifyFinished. shown: false runner=android.view.InsetsAnimationThreadControlRunner@5008806
+2025-11-21 18:14:05.319  3266-13373 InsetsAnimationCtrlImpl com.app.ralaunch                     D  Animation finished abruptly.
+2025-11-21 18:14:05.319  3266-13373 InsetsController        com.app.ralaunch                     D  onAnimationFinish showOnFinish: false
+2025-11-21 18:14:05.418  3266-3266  VRI[MainActivity]       com.app.ralaunch                     D  visibilityChanged oldVisibility=true newVisibility=false
+2025-11-21 18:14:05.432  3266-3266  om.app.ralaunch         com.app.ralaunch                     W  Binder 0xb400007b860994c0 destroyed after setInheritRt before being parceled.
+2025-11-21 18:14:05.462  3266-13554 ProfileInstaller        com.app.ralaunch                     D  Installing profile for com.app.ralaunch
+2025-11-21 18:14:05.502  3266-13546 DOTNET                  com.app.ralaunch                     I  [TModLoaderPatch] LoggingHooks patch applied successfully!
+2025-11-21 18:14:05.508  3266-13546 DOTNET                  com.app.ralaunch                     I  [TModLoaderPatch] TMLContentManager.TryFixFileCasings modifying IL...
+2025-11-21 18:14:05.518  3266-13546 DOTNET                  com.app.ralaunch                     I  [TModLoaderPatch] TMLContentManager.TryFixFileCasings modified IL!
+2025-11-21 18:14:05.542  3266-13546 DOTNET                  com.app.ralaunch                     I  [TModLoaderPatch] TMLContentManager patch applied successfully!
+2025-11-21 18:14:05.542  3266-13546 DOTNET                  com.app.ralaunch                     I  [TModLoaderPatch] All patches applied successfully!
+2025-11-21 18:14:05.542  3266-13546 DOTNET                  com.app.ralaunch                     I  [TModLoaderPatch] tModLoader assembly already loaded, patched!
+2025-11-21 18:14:05.542  3266-13546 DOTNET                  com.app.ralaunch                     I  [TModLoaderPatch] Patch initialized successfully
+2025-11-21 18:14:05.542  3266-13546 DOTNET                  com.app.ralaunch                     I  ========================================
+2025-11-21 18:14:05.542  3266-13546 DOTNET                  com.app.ralaunch                     I  [StartupHook] Patcher.Initialize returned: 0
+2025-11-21 18:14:05.748  3266-13546 DOTNET                  com.app.ralaunch                     I  [18:14:05.737] [Main Thread/INFO] [tML]: Starting tModLoader client 1.4.4.9+2025.09.3.1|2025.09|stable|Stable|69edb4bbe91502f1a6d76fbbdb1fea2b406ae87c|5250668658850276702 built 2025/11/9 13:47
+2025-11-21 18:14:05.749  3266-13546 app_process64           com.app.ralaunch                     D  tML: [18:14:05.737] [Main Thread/INFO] [tML]: Starting tModLoader client 1.4.4.9+2025.09.3.1|2025.09|stable|Stable|69edb4bbe91502f1a6d76fbbdb1fea2b406ae87c|5250668658850276702 built 2025/11/9 13:47
+2025-11-21 18:14:05.751  3266-13546 DOTNET                  com.app.ralaunch                     I  [18:14:05.751] [Main Thread/INFO] [tML]: Log date: 2025/11/21
+2025-11-21 18:14:05.751  3266-13546 app_process64           com.app.ralaunch                     D  tML: [18:14:05.751] [Main Thread/INFO] [tML]: Log date: 2025/11/21
+2025-11-21 18:14:05.752  3266-13546 DOTNET                  com.app.ralaunch                     I  [18:14:05.751] [Main Thread/INFO] [tML]: Running on Linux (v36.0.0.0) Arm64 NetCore 10.0.0
+2025-11-21 18:14:05.752  3266-13546 app_process64           com.app.ralaunch                     D  tML: [18:14:05.751] [Main Thread/INFO] [tML]: Running on Linux (v36.0.0.0) Arm64 NetCore 10.0.0
+2025-11-21 18:14:05.756  3266-13546 DOTNET                  com.app.ralaunch                     I  [18:14:05.756] [Main Thread/INFO] [tML]: CPU: 5 processors. RAM: 14.8 GB
+2025-11-21 18:14:05.756  3266-13546 app_process64           com.app.ralaunch                     D  tML: [18:14:05.756] [Main Thread/INFO] [tML]: CPU: 5 processors. RAM: 14.8 GB
+2025-11-21 18:14:05.756  3266-13546 DOTNET                  com.app.ralaunch                     I  [18:14:05.756] [Main Thread/INFO] [tML]: FrameworkDescription: .NET 10.0.0-dev
+2025-11-21 18:14:05.756  3266-13546 app_process64           com.app.ralaunch                     D  tML: [18:14:05.756] [Main Thread/INFO] [tML]: FrameworkDescription: .NET 10.0.0-dev
+2025-11-21 18:14:05.756  3266-13546 DOTNET                  com.app.ralaunch                     I  [18:14:05.756] [Main Thread/INFO] [tML]: Executable: /storage/emulated/0/Android/data/com.app.ralaunch/files/games/tModLoader (7)_v1.4.4.9 v4_1763537905363/GoG Games/ModLoader/tModLoader.dll
+2025-11-21 18:14:05.756  3266-13546 app_process64           com.app.ralaunch                     D  tML: [18:14:05.756] [Main Thread/INFO] [tML]: Executable: /storage/emulated/0/Android/data/com.app.ralaunch/files/games/tModLoader (7)_v1.4.4.9 v4_1763537905363/GoG Games/ModLoader/tModLoader.dll
+2025-11-21 18:14:05.756  3266-13546 DOTNET                  com.app.ralaunch                     I  [18:14:05.756] [Main Thread/INFO] [tML]: Working Directory: /storage/emulated/0/Android/data/com.app.ralaunch/files/games/tModLoader (7)_v1.4.4.9 v4_1763537905363/GoG Games/ModLoader
+2025-11-21 18:14:05.756  3266-13546 app_process64           com.app.ralaunch                     D  tML: [18:14:05.756] [Main Thread/INFO] [tML]: Working Directory: /storage/emulated/0/Android/data/com.app.ralaunch/files/games/tModLoader (7)_v1.4.4.9 v4_1763537905363/GoG Games/ModLoader
+2025-11-21 18:14:05.761  3266-13546 DOTNET                  com.app.ralaunch                     I  [TModLoaderPatch] LoggingHooks.Init method is now a no-op.
+2025-11-21 18:14:05.962  3266-13546 DOTNET                  com.app.ralaunch                     I  [18:14:05.962] [Main Thread/INFO] [tML]: Attempt to Port from "/storage/emulated/0/Android/data/com.app.ralaunch/files/games/tModLoader (7)_v1.4.4.9 v4_1763537905363/GoG Games/ModLoader/Terraria/tModLoader" to "/storage/emulated/0/Android/data/com.app.ralaunch/files/games/tModLoader (7)_v1.4.4.9 v4_1763537905363/GoG Games/ModLoader/Terraria/tModLoader-1.4.3" aborted, "2025.9.3.1" is a newer version.
+2025-11-21 18:14:05.962  3266-13546 app_process64           com.app.ralaunch                     D  tML: [18:14:05.962] [Main Thread/INFO] [tML]: Attempt to Port from "/storage/emulated/0/Android/data/com.app.ralaunch/files/games/tModLoader (7)_v1.4.4.9 v4_1763537905363/GoG Games/ModLoader/Terraria/tModLoader" to "/storage/emulated/0/Android/data/com.app.ralaunch/files/games/tModLoader (7)_v1.4.4.9 v4_1763537905363/GoG Games/ModLoader/Terraria/tModLoader-1.4.3" aborted, "2025.9.3.1" is a newer version.
+2025-11-21 18:14:05.962  3266-13546 DOTNET                  com.app.ralaunch                     I  [18:14:05.962] [Main Thread/INFO] [tML]: Saves Are Located At: /storage/emulated/0/Android/data/com.app.ralaunch/files/games/tModLoader (7)_v1.4.4.9 v4_1763537905363/GoG Games/ModLoader/Terraria/tModLoader
+2025-11-21 18:14:05.962  3266-13546 app_process64           com.app.ralaunch                     D  tML: [18:14:05.962] [Main Thread/INFO] [tML]: Saves Are Located At: /storage/emulated/0/Android/data/com.app.ralaunch/files/games/tModLoader (7)_v1.4.4.9 v4_1763537905363/GoG Games/ModLoader/Terraria/tModLoader
+2025-11-21 18:14:05.966  3266-13546 SDL_Renderer            com.app.ralaunch                     I  ================================================================
+2025-11-21 18:14:05.966  3266-13546 SDL_Renderer            com.app.ralaunch                     I    SDL Dynamic Renderer Loading
+2025-11-21 18:14:05.966  3266-13546 SDL_Renderer            com.app.ralaunch                     I    Requested: gl4es
+2025-11-21 18:14:05.967  3266-13546 SDL_Renderer            com.app.ralaunch                     I    Environment: RALCORE_RENDERER/RALCORE_EGL -> gl4es
+2025-11-21 18:14:05.967  3266-13546 SDL_Renderer            com.app.ralaunch                     I  ================================================================
+2025-11-21 18:14:05.967  3266-13546 SDL_Renderer            com.app.ralaunch                     I    Selected: gl4es
+2025-11-21 18:14:05.967  3266-13546 SDL_Renderer            com.app.ralaunch                     I    EGL Library: libgl4es.so
+2025-11-21 18:14:05.967  3266-13546 SDL_Renderer            com.app.ralaunch                     I    Loading with dlopen(RTLD_NOW | RTLD_GLOBAL)...
+2025-11-21 18:14:05.980  3266-13546 libEGL                  com.app.ralaunch                     E  call to OpenGL ES API with no current context (logged once per thread)
+2025-11-21 18:14:05.982  3266-13546 SDL_Renderer            com.app.ralaunch                     I    ✓ dlopen success, handle = 0xd86ff289c36f347d
+2025-11-21 18:14:05.982  3266-13546 SDL_Renderer            com.app.ralaunch                     I    ✓ LD_PRELOAD = libgl4es.so
+2025-11-21 18:14:05.982  3266-13546 SDL_Renderer            com.app.ralaunch                     I    ✓ SDL_VIDEO_GL_DRIVER = libgl4es.so
+2025-11-21 18:14:05.982  3266-13546 SDL_Renderer            com.app.ralaunch                     I    ✓ FNA3D_OPENGL_DRIVER = gl4es
+2025-11-21 18:14:05.982  3266-13546 SDL_Renderer            com.app.ralaunch                     I    ✓ gl4es environment configured
+2025-11-21 18:14:05.982  3266-13546 SDL_Renderer            com.app.ralaunch                     I  ✅ Renderer 'gl4es' loaded successfully
+2025-11-21 18:14:05.982  3266-13546 SDL_Renderer            com.app.ralaunch                     I  ================================================================
+2025-11-21 18:14:05.982  3266-13546 SDL_Renderer            com.app.ralaunch                     I  Setting up GL functions for renderer: gl4es
+2025-11-21 18:14:05.982  3266-13546 SDL_Renderer            com.app.ralaunch                     I  ✓ GL functions configured
+2025-11-21 18:14:06.003  3266-13546 DOTNET                  com.app.ralaunch                     I  [18:14:06.003] [Main Thread/INFO] [tML]: Display DPI: Diagonal DPI is 420. Vertical DPI is 394.56296. Horizontal DPI is 394.70477
+2025-11-21 18:14:06.004  3266-13546 app_process64           com.app.ralaunch                     D  tML: [18:14:06.003] [Main Thread/INFO] [tML]: Display DPI: Diagonal DPI is 420. Vertical DPI is 394.56296. Horizontal DPI is 394.70477
+2025-11-21 18:14:06.004  3266-13546 DOTNET                  com.app.ralaunch                     I  [18:14:06.004] [Main Thread/INFO] [tML]: High DPI Display detected: setting FNA to highdpi mode
+2025-11-21 18:14:06.004  3266-13546 app_process64           com.app.ralaunch                     D  tML: [18:14:06.004] [Main Thread/INFO] [tML]: High DPI Display detected: setting FNA to highdpi mode
+2025-11-21 18:14:06.006  3266-13546 DOTNET                  com.app.ralaunch                     I  [18:14:06.006] [Main Thread/DEBUG] [FNA]: Querying linked library versions...
+2025-11-21 18:14:06.007  3266-13546 app_process64           com.app.ralaunch                     D  FNA: [18:14:06.006] [Main Thread/DEBUG] [FNA]: Querying linked library versions...
+2025-11-21 18:14:06.008  3266-13546 DOTNET                  com.app.ralaunch                     I  [18:14:06.008] [Main Thread/DEBUG] [FNA]: SDL v2.30.1
+2025-11-21 18:14:06.008  3266-13546 app_process64           com.app.ralaunch                     D  FNA: [18:14:06.008] [Main Thread/DEBUG] [FNA]: SDL v2.30.1
+2025-11-21 18:14:06.009  3266-13546 DOTNET                  com.app.ralaunch                     I  [18:14:06.009] [Main Thread/DEBUG] [FNA]: FNA3D v25.11.0
+2025-11-21 18:14:06.009  3266-13546 app_process64           com.app.ralaunch                     D  FNA: [18:14:06.009] [Main Thread/DEBUG] [FNA]: FNA3D v25.11.0
+2025-11-21 18:14:06.010  3266-13546 DOTNET                  com.app.ralaunch                     I  [18:14:06.010] [Main Thread/DEBUG] [FNA]: FAudio v25.11.0
+2025-11-21 18:14:06.011  3266-13546 app_process64           com.app.ralaunch                     D  FNA: [18:14:06.010] [Main Thread/DEBUG] [FNA]: FAudio v25.11.0
+2025-11-21 18:14:06.427  2830-4965  HyperSentinel           system_server                        E  ->pid:3266,processName:"com.app.ralaunch",Rss Memory Size Change 286484kb -> 358156kb
+2025-11-21 18:14:06.616  3266-3266  com.app.ralaunch        com.app.ralaunch                     W  type=1400 audit(0.0:903496): avc:  granted  { execute } for  comm=4D61696E20546872656164 path="/data/data/com.app.ralaunch/files/dotnet/shared/Microsoft.NETCore.App/10.0.0/System.Net.Sockets.dll" dev="dm-57" ino=3034347 scontext=u:r:untrusted_app:s0:c37,c261,c512,c768 tcontext=u:object_r:app_data_file:s0:c37,c261,c512,c768 tclass=file app=com.app.ralaunch
+2025-11-21 18:14:06.616  3266-3266  com.app.ralaunch        com.app.ralaunch                     W  type=1400 audit(0.0:903497): avc:  granted  { execute } for  comm=4D61696E20546872656164 path="/data/data/com.app.ralaunch/files/dotnet/shared/Microsoft.NETCore.App/10.0.0/System.Net.Sockets.dll" dev="dm-57" ino=3034347 scontext=u:r:untrusted_app:s0:c37,c261,c512,c768 tcontext=u:object_r:app_data_file:s0:c37,c261,c512,c768 tclass=file app=com.app.ralaunch
+2025-11-21 18:14:06.616  3266-3266  com.app.ralaunch        com.app.ralaunch                     W  type=1400 audit(0.0:903498): avc:  granted  { execute } for  comm=4D61696E20546872656164 path="/data/data/com.app.ralaunch/files/dotnet/shared/Microsoft.NETCore.App/10.0.0/System.Net.Sockets.dll" dev="dm-57" ino=3034347 scontext=u:r:untrusted_app:s0:c37,c261,c512,c768 tcontext=u:object_r:app_data_file:s0:c37,c261,c512,c768 tclass=file app=com.app.ralaunch
+2025-11-21 18:14:06.624  3266-3266  com.app.ralaunch        com.app.ralaunch                     W  type=1400 audit(0.0:903499): avc:  granted  { execute } for  comm=4D61696E20546872656164 path="/data/data/com.app.ralaunch/files/dotnet/shared/Microsoft.NETCore.App/10.0.0/System.Diagnostics.DiagnosticSource.dll" dev="dm-57" ino=2314780 scontext=u:r:untrusted_app:s0:c37,c261,c512,c768 tcontext=u:object_r:app_data_file:s0:c37,c261,c512,c768 tclass=file app=com.app.ralaunch
+2025-11-21 18:14:06.624  3266-3266  com.app.ralaunch        com.app.ralaunch                     W  type=1400 audit(0.0:903500): avc:  granted  { execute } for  comm=4D61696E20546872656164 path="/data/data/com.app.ralaunch/files/dotnet/shared/Microsoft.NETCore.App/10.0.0/System.Diagnostics.DiagnosticSource.dll" dev="dm-57" ino=2314780 scontext=u:r:untrusted_app:s0:c37,c261,c512,c768 tcontext=u:object_r:app_data_file:s0:c37,c261,c512,c768 tclass=file app=com.app.ralaunch
+2025-11-21 18:14:06.865  3266-13546 DOTNET                  com.app.ralaunch                     I  [18:14:06.865] [Main Thread/INFO] [tML]: Distribution Platform: GoG. Detection method: Terraria_v1.4.4.9.exe found, no steam files or directories nearby.
+2025-11-21 18:14:06.865  3266-13546 app_process64           com.app.ralaunch                     D  tML: [18:14:06.865] [Main Thread/INFO] [tML]: Distribution Platform: GoG. Detection method: Terraria_v1.4.4.9.exe found, no steam files or directories nearby.
+2025-11-21 18:14:07.070  3266-13546 DOTNET                  com.app.ralaunch                     I  [18:14:07.070] [Main Thread/INFO] [FNA]: SDL.SDL_Init(SDL.SDL_INIT_VIDEO)...
+2025-11-21 18:14:07.070  3266-13546 app_process64           com.app.ralaunch                     D  FNA: [18:14:07.070] [Main Thread/INFO] [FNA]: SDL.SDL_Init(SDL.SDL_INIT_VIDEO)...
+2025-11-21 18:14:07.070  3266-13546 SDL_Renderer            com.app.ralaunch                     I  ================================================================
+2025-11-21 18:14:07.070  3266-13546 SDL_Renderer            com.app.ralaunch                     I    SDL Dynamic Renderer Loading
+2025-11-21 18:14:07.070  3266-13546 SDL_Renderer            com.app.ralaunch                     I    Requested: gl4es
+2025-11-21 18:14:07.070  3266-13546 SDL_Renderer            com.app.ralaunch                     I    Environment: RALCORE_RENDERER/RALCORE_EGL -> gl4es
+2025-11-21 18:14:07.070  3266-13546 SDL_Renderer            com.app.ralaunch                     I  ================================================================
+2025-11-21 18:14:07.070  3266-13546 SDL_Renderer            com.app.ralaunch                     I    Selected: gl4es
+2025-11-21 18:14:07.070  3266-13546 SDL_Renderer            com.app.ralaunch                     I    EGL Library: libgl4es.so
+2025-11-21 18:14:07.070  3266-13546 SDL_Renderer            com.app.ralaunch                     I    Loading with dlopen(RTLD_NOW | RTLD_GLOBAL)...
+2025-11-21 18:14:07.071  3266-13546 SDL_Renderer            com.app.ralaunch                     I    ✓ dlopen success, handle = 0xd86ff289c36f347d
+2025-11-21 18:14:07.071  3266-13546 SDL_Renderer            com.app.ralaunch                     I    ✓ LD_PRELOAD = libgl4es.so
+2025-11-21 18:14:07.071  3266-13546 SDL_Renderer            com.app.ralaunch                     I    ✓ SDL_VIDEO_GL_DRIVER = libgl4es.so
+2025-11-21 18:14:07.071  3266-13546 SDL_Renderer            com.app.ralaunch                     I    ✓ FNA3D_OPENGL_DRIVER = gl4es
+2025-11-21 18:14:07.071  3266-13546 SDL_Renderer            com.app.ralaunch                     I    ✓ gl4es environment configured
+2025-11-21 18:14:07.071  3266-13546 SDL_Renderer            com.app.ralaunch                     I  ✅ Renderer 'gl4es' loaded successfully
+2025-11-21 18:14:07.071  3266-13546 SDL_Renderer            com.app.ralaunch                     I  ================================================================
+2025-11-21 18:14:07.071  3266-13546 SDL_Renderer            com.app.ralaunch                     I  Setting up GL functions for renderer: gl4es
+2025-11-21 18:14:07.071  3266-13546 SDL_Renderer            com.app.ralaunch                     I  ✓ GL functions configured
+2025-11-21 18:14:07.071  3266-13546 DOTNET                  com.app.ralaunch                     I  [18:14:07.071] [Main Thread/INFO] [FNA]: Success
+2025-11-21 18:14:07.071  3266-13546 app_process64           com.app.ralaunch                     D  FNA: [18:14:07.071] [Main Thread/INFO] [FNA]: Success
+2025-11-21 18:14:07.071  3266-13546 DOTNET                  com.app.ralaunch                     I  [18:14:07.071] [Main Thread/INFO] [FNA]: SDL.SDL_InitSubSystem(SDL.SDL_INIT_GAMECONTROLLER)...
+2025-11-21 18:14:07.071  3266-13546 app_process64           com.app.ralaunch                     D  FNA: [18:14:07.071] [Main Thread/INFO] [FNA]: SDL.SDL_InitSubSystem(SDL.SDL_INIT_GAMECONTROLLER)...
+2025-11-21 18:14:07.072  3266-13546 CompatChangeReporter    com.app.ralaunch                     D  Compat change id reported: 312399441; UID 11317; state: ENABLED
+2025-11-21 18:14:07.077  3266-13546 hidapi                  com.app.ralaunch                     E  hid_init threw an exception: com.app.ralaunch: One of RECEIVER_EXPORTED or RECEIVER_NOT_EXPORTED should be specified when a receiver isn't being registered exclusively for system broadcasts
+2025-11-21 18:14:07.080  3266-13546 DOTNET                  com.app.ralaunch                     I  [18:14:07.080] [Main Thread/INFO] [FNA]: Success
+2025-11-21 18:14:07.080  3266-13546 app_process64           com.app.ralaunch                     D  FNA: [18:14:07.080] [Main Thread/INFO] [FNA]: Success
+2025-11-21 18:14:07.088  3266-13546 DOTNET                  com.app.ralaunch                     I  [18:14:07.088] [Main Thread/INFO] [FNA]: Controller 0: Xbox 360 Controller, GUID: 5e048e02, Mapping: 0500506d5e0400008e020000ff7f3f00,Xbox 360 Controller,a:b0,b:b1,back:b4,dpdown:b12,dpleft:b13,dpright:b14,dpup:b11,guide:b5,leftshoulder:b9,leftstick:b7,lefttrigger:a4,leftx:a0,lefty:a1,rightshoulder:b10,rightstick:b8,righttrigger:a5,rightx:a2,righty:a3,start:b6,x:b2,y:b3,platform:Android
+2025-11-21 18:14:07.088  3266-13546 app_process64           com.app.ralaunch                     D  FNA: [18:14:07.088] [Main Thread/INFO] [FNA]: Controller 0: Xbox 360 Controller, GUID: 5e048e02, Mapping: 0500506d5e0400008e020000ff7f3f00,Xbox 360 Controller,a:b0,b:b1,back:b4,dpdown:b12,dpleft:b13,dpright:b14,dpup:b11,guide:b5,leftshoulder:b9,leftstick:b7,lefttrigger:a4,leftx:a0,lefty:a1,rightshoulder:b10,rightstick:b8,righttrigger:a5,rightx:a2,righty:a3,start:b6,x:b2,y:b3,platform:Android
+2025-11-21 18:14:07.088  3266-13546 DOTNET                  com.app.ralaunch                     I  [18:14:07.088] [Main Thread/INFO] [FNA]: Controller 1: Keyboard, GUID: d1180200, Mapping: 0500bcdbd11800000200000051780000,*,a:b0,b:b4,start:b6,dpup:b11,dpdown:b12,dpleft:b13,dpright:b14,crc:dbbc,platform:Android
+2025-11-21 18:14:07.088  3266-13546 app_process64           com.app.ralaunch                     D  FNA: [18:14:07.088] [Main Thread/INFO] [FNA]: Controller 1: Keyboard, GUID: d1180200, Mapping: 0500bcdbd11800000200000051780000,*,a:b0,b:b4,start:b6,dpup:b11,dpdown:b12,dpleft:b13,dpright:b14,crc:dbbc,platform:Android
+2025-11-21 18:14:07.090  3266-13546 SDL/APP                 com.app.ralaunch                     I  FNA3D: Desktop OpenGL renderer detected (gl4es), forcing OpenGL 2.1 Compatibility Profile
+2025-11-21 18:14:07.090  3266-13546 Android_GLES            com.app.ralaunch                     I  Android_GLES_LoadLibrary called, path=(null)
+2025-11-21 18:14:07.090  3266-13546 Android_GLES            com.app.ralaunch                     I  current_renderer = gl4es, egl_lib_path = libgl4es.so
+2025-11-21 18:14:07.090  3266-13546 Android_GLES            com.app.ralaunch                     I  Renderer 'gl4es' already preloaded, passing library path to SDL_EGL_LoadLibrary
+2025-11-21 18:14:07.092  3266-13546 SDL_Window              com.app.ralaunch                     I  🪟 Android_CreateWindow called, window=0xb400007bc60f0fb0
+2025-11-21 18:14:07.092  3266-13546 SDL_Window              com.app.ralaunch                     I  Setting orientation...
+2025-11-21 18:14:07.095  3266-13546 SDL_Window              com.app.ralaunch                     I  Adjusting window size from 800x480 to 2400x1080
+2025-11-21 18:14:07.098  3266-13546 SDL_Window              com.app.ralaunch                     I  Allocating window data...
+2025-11-21 18:14:07.098  3266-13546 SDL_Window              com.app.ralaunch                     I  Getting native window...
+2025-11-21 18:14:07.098  3266-13546 SDL_Window              com.app.ralaunch                     I  ✅ Native window obtained: 0xb400007a761244b0
+2025-11-21 18:14:07.098  3266-13546 SDL_Window              com.app.ralaunch                     I  SDL_VIDEO_OPENGL_EGL is defined, creating EGL surface...
+2025-11-21 18:14:07.098  3266-13546 SDL_Window              com.app.ralaunch                     E  ❌ Failed to create EGL surface!
+2025-11-21 18:14:07.098  3266-13546 SDL_Window              com.app.ralaunch                     I  Android_CreateWindow returning -1
+2025-11-21 18:14:07.106  3266-13546 DOTNET                  com.app.ralaunch                     I  [18:14:07.106] [Main Thread/WARN] [tML]: Silently Caught Exception: 
+                                                                                                    Microsoft.Xna.Framework.Graphics.NoSuitableGraphicsDeviceException: Couldn't find matching EGL config (call to eglChooseConfig failed, reporting an error of EGL_BAD_ATTRIBUTE)
+2025-11-21 18:14:07.107  3266-13546 DOTNET                  com.app.ralaunch                     I     at Microsoft.Xna.Framework.Game..ctor(Boolean headlessMode) in D:\a\tModLoader\tModLoader\FNA\src\Game.cs:line 274
+                                                                                                       at Terraria.Main..ctor() in D:\a\tModLoader\tModLoader\src\tModLoader\Terraria\Main.cs:line 5685
+2025-11-21 18:14:07.107  3266-13546 DOTNET                  com.app.ralaunch                     I     at Terraria.Program.RunGame() in D:\a\tModLoader\tModLoader\src\tModLoader\Terraria\Program.cs:line 257
+                                                                                                       at Terraria.Program.LaunchGame_(Boolean isServer) in D:\a\tModLoader\tModLoader\src\tModLoader\Terraria\Program.cs:line 240
+2025-11-21 18:14:07.107  3266-13546 DOTNET                  com.app.ralaunch                     I     at Terraria.Program.LaunchGame(String[] args, Boolean monoArgs) in D:\a\tModLoader\tModLoader\src\tModLoader\Terraria\Program.cs:line 213
+                                                                                                       at Terraria.MonoLaunch.Main_End(String[] args) in D:\a\tModLoader\tModLoader\src\tModLoader\Terraria\MonoLaunch.cs:line 79
+2025-11-21 18:14:07.107  3266-13546 DOTNET                  com.app.ralaunch                     I     at Terraria.MonoLaunch.<>c__DisplayClass1_0.<Main>b__1() in D:\a\tModLoader\tModLoader\src\tModLoader\Terraria\MonoLaunch.cs:line 65
+                                                                                                       at Terraria.MonoLaunch.Main(String[] args) in D:\a\tModLoader\tModLoader\src\tModLoader\Terraria\MonoLaunch.cs:line 72
+2025-11-21 18:14:07.107  3266-13546 app_process64           com.app.ralaunch                     D  tML: [18:14:07.106] [Main Thread/WARN] [tML]: Silently Caught Exception: 
+                                                                                                    Microsoft.Xna.Framework.Graphics.NoSuitableGraphicsDeviceException: Couldn't find matching EGL config (call to eglChooseConfig failed, reporting an error of EGL_BAD_ATTRIBUTE)
+                                                                                                       at Microsoft.Xna.Framework.Game..ctor(Boolean headlessMode) in D:\a\tModLoader\tModLoader\FNA\src\Game.cs:line 274
+                                                                                                       at Terraria.Main..ctor() in D:\a\tModLoader\tModLoader\src\tModLoader\Terraria\Main.cs:line 5685
+                                                                                                       at Terraria.Program.RunGame() in D:\a\tModLoader\tModLoader\src\tModLoader\Terraria\Program.cs:line 257
+                                                                                                       at Terraria.Program.LaunchGame_(Boolean isServer) in D:\a\tModLoader\tModLoader\src\tModLoader\Terraria\Program.cs:line 240
+                                                                                                       at Terraria.Program.LaunchGame(String[] args, Boolean monoArgs) in D:\a\tModLoader\tModLoader\src\tModLoader\Terraria\Program.cs:line 213
+                                                                                                       at Terraria.MonoLaunch.Main_End(String[] args) in D:\a\tModLoader\tModLoader\src\tModLoader\Terraria\MonoLaunch.cs:line 79
+                                                                                                       at Terraria.MonoLaunch.<>c__DisplayClass1_0.<Main>b
+2025-11-21 18:14:07.110  3266-13546 DOTNET                  com.app.ralaunch                     I  [18:14:07.110] [Main Thread/FATAL] [tML]: Main engine crash
+                                                                                                    
+                                                                                                    SDL Error: Couldn't find matching EGL config (call to eglChooseConfig failed, reporting an error of EGL_BAD_ATTRIBUTE)
+2025-11-21 18:14:07.110  3266-13546 DOTNET                  com.app.ralaunch                     I  Microsoft.Xna.Framework.Graphics.NoSuitableGraphicsDeviceException: Couldn't find matching EGL config (call to eglChooseConfig failed, reporting an error of EGL_BAD_ATTRIBUTE)
+                                                                                                       at Microsoft.Xna.Framework.SDL2_FNAPlatform.CreateWindow() in D:\a\tModLoader\tModLoader\FNA\src\FNAPlatform\SDL2_FNAPlatform.cs:line 500
+2025-11-21 18:14:07.110  3266-13546 DOTNET                  com.app.ralaunch                     I     at Microsoft.Xna.Framework.Game..ctor(Boolean headlessMode) in D:\a\tModLoader\tModLoader\FNA\src\Game.cs:line 274
+                                                                                                       at Terraria.Main..ctor() in D:\a\tModLoader\tModLoader\src\tModLoader\Terraria\Main.cs:line 5685
+2025-11-21 18:14:07.110  3266-13546 DOTNET                  com.app.ralaunch                     I     at Terraria.Program.RunGame() in D:\a\tModLoader\tModLoader\src\tModLoader\Terraria\Program.cs:line 257
+2025-11-21 18:14:07.110  3266-13546 app_process64           com.app.ralaunch                     D  tML: [18:14:07.110] [Main Thread/FATAL] [tML]: Main engine crash
+                                                                                                    
+                                                                                                    SDL Error: Couldn't find matching EGL config (call to eglChooseConfig failed, reporting an error of EGL_BAD_ATTRIBUTE)
+                                                                                                    
+                                                                                                    Microsoft.Xna.Framework.Graphics.NoSuitableGraphicsDeviceException: Couldn't find matching EGL config (call to eglChooseConfig failed, reporting an error of EGL_BAD_ATTRIBUTE)
+                                                                                                       at Microsoft.Xna.Framework.SDL2_FNAPlatform.CreateWindow() in D:\a\tModLoader\tModLoader\FNA\src\FNAPlatform\SDL2_FNAPlatform.cs:line 500
+                                                                                                       at Microsoft.Xna.Framework.Game..ctor(Boolean headlessMode) in D:\a\tModLoader\tModLoader\FNA\src\Game.cs:line 274
+                                                                                                       at Terraria.Main..ctor() in D:\a\tModLoader\tModLoader\src\tModLoader\Terraria\Main.cs:line 5685
+                                                                                                       at Terraria.Program.RunGame() in D:\a\tModLoader\tModLoader\src\tModLoader\Terraria\Program.cs:line 257
+2025-11-21 18:14:07.118  3266-13546 DOTNET                  com.app.ralaunch                     I  [18:14:07.118] [Main Thread/WARN] [tML]: Silently Caught Exception: 
+                                                                                                    System.PlatformNotSupportedException: Operation is not supported on this platform.
+                                                                                                       at System.Console.set_ForegroundColor(ConsoleColor value)
+2025-11-21 18:14:07.118  3266-13546 DOTNET                  com.app.ralaunch                     I     at Terraria.ModLoader.Engine.ErrorReporting.MessageBoxShow(String message, Boolean fatal) in D:\a\tModLoader\tModLoader\src\tModLoader\Terraria\ModLoader\Engine\ErrorReporting.cs:line 28
+2025-11-21 18:14:07.118  3266-13546 DOTNET                  com.app.ralaunch                     I     at Terraria.ModLoader.Engine.ErrorReporting.FatalExit(String message) in D:\a\tModLoader\tModLoader\src\tModLoader\Terraria\ModLoader\Engine\ErrorReporting.cs:line 43
+                                                                                                       at Terraria.ModLoader.Engine.ErrorReporting.FatalExit(String message, Exception e) in D:\a\tModLoader\tModLoader\src\tModLoader\Terraria\ModLoader\Engine\ErrorReporting.cs:line 91
+2025-11-21 18:14:07.118  3266-13546 DOTNET                  com.app.ralaunch                     I     at Terraria.Program.RunGame() in D:\a\tModLoader\tModLoader\src\tModLoader\Terraria\Program.cs:line 257
+                                                                                                       at Terraria.Program.LaunchGame_(Boolean isServer) in D:\a\tModLoader\tModLoader\src\tModLoader\Terraria\Program.cs:line 240
+2025-11-21 18:14:07.118  3266-13546 DOTNET                  com.app.ralaunch                     I     at Terraria.Program.LaunchGame(String[] args, Boolean monoArgs) in D:\a\tModLoader\tModLoader\src\tModLoader\Terraria\Program.cs:line 213
+                                                                                                       at Terraria.MonoLaunch.Main_End(String[] args) in D:\a\tModLoader\tModLoader\src\tModLoader\Terraria\MonoLaunch.cs:line 79
+2025-11-21 18:14:07.118  3266-13546 DOTNET                  com.app.ralaunch                     I     at Terraria.MonoLaunch.<>c__DisplayClass1_0.<Main>b__1() in D:\a\tModLoader\tModLoader\src\tModLoader\Terraria\MonoLaunch.cs:line 65
+                                                                                                       at Terraria.MonoLaunch.Main(String[] args) in D:\a\tModLoader\tModLoader\src\tModLoader\Terraria\MonoLaunch.cs:line 72
+2025-11-21 18:14:07.118  3266-13546 app_process64           com.app.ralaunch                     D  tML: [18:14:07.118] [Main Thread/WARN] [tML]: Silently Caught Exception: 
+                                                                                                    System.PlatformNotSupportedException: Operation is not supported on this platform.
+                                                                                                       at System.Console.set_ForegroundColor(ConsoleColor value)
+                                                                                                       at Terraria.ModLoader.Engine.ErrorReporting.MessageBoxShow(String message, Boolean fatal) in D:\a\tModLoader\tModLoader\src\tModLoader\Terraria\ModLoader\Engine\ErrorReporting.cs:line 28
+                                                                                                       at Terraria.ModLoader.Engine.ErrorReporting.FatalExit(String message) in D:\a\tModLoader\tModLoader\src\tModLoader\Terraria\ModLoader\Engine\ErrorReporting.cs:line 43
+                                                                                                       at Terraria.ModLoader.Engine.ErrorReporting.FatalExit(String message, Exception e) in D:\a\tModLoader\tModLoader\src\tModLoader\Terraria\ModLoader\Engine\ErrorReporting.cs:line 91
+                                                                                                       at Terraria.Program.RunGame() in D:\a\tModLoader\tModLoader\src\tModLoader\Terraria\Program.cs:line 257
+                                                                                                       at Terraria.Program.LaunchGame_(Boolean isServer) in D:\a\tModLoader\tModLoader\src\tModLoader\Terraria\Program.cs:line 240
+                                                                                                       at Terraria.Program.Launc
+--------- beginning of crash
+2025-11-21 18:14:07.154  3266-13333 libc                    com.app.ralaunch                     A  FORTIFY: pthread_mutex_lock called on a destroyed mutex (0x7cd420eac8)
+2025-11-21 18:14:07.154  3266-13333 Fishnet                 com.app.ralaunch                     E  Received signal SIGABRT, code SI_QUEUE
+2025-11-21 18:14:07.154  3266-13334 libc                    com.app.ralaunch                     A  FORTIFY: pthread_mutex_lock called on a destroyed mutex (0x7cd420eac8)
+2025-11-21 18:14:07.154  3266-13334 DOTNET                  com.app.ralaunch                     A  Aborting process.
+---------------------------- PROCESS ENDED (3266) for package com.app.ralaunch ----------------------------
+2025-11-21 18:14:07.194  2830-4557  InputDispatcher         system_server                        E  channel 'e78904b com.app.ralaunch/com.app.ralaunch.activity.GameActivity' ~ Channel is unrecoverably broken and will be disposed!
+2025-11-21 18:14:07.223  5121-5121  Zygote                  usap64                               E  process_name_ptr:5121 com.app.ralaunch
+2025-11-21 18:14:07.224  5121-5121  Zygote                  usap64                               E  SetMemoryProtected process_name_ptr:5121 com.app.ralaunch
+---------------------------- PROCESS STARTED (5121) for package com.app.ralaunch ----------------------------
+2025-11-21 18:14:07.266  5121-13581 MiuiDownscaleImpl       com.app.ralaunch                     D  set override inverted scale : 1.0
+2025-11-21 18:14:07.278  5121-5121  ActivityThread          com.app.ralaunch                     D  setEmbeddedParam packageName=com.app.ralaunch processName=com.app.ralaunch isEmbedded=false isIsolated=false
+2025-11-21 18:14:07.283  5121-5121  nativeloader            com.app.ralaunch                     D  Configuring clns-10 for other apk /data/app/~~xZmBAeWYARqTgnjV8R9TXg==/com.app.ralaunch-q7tiZT26Sl4yp5G5v8K-Cw==/base.apk. target_sdk_version=35, uses_libraries=, library_path=/data/app/~~xZmBAeWYARqTgnjV8R9TXg==/com.app.ralaunch-q7tiZT26Sl4yp5G5v8K-Cw==/lib/arm64:/data/app/~~xZmBAeWYARqTgnjV8R9TXg==/com.app.ralaunch-q7tiZT26Sl4yp5G5v8K-Cw==/base.apk!/lib/arm64-v8a, permitted_path=/data:/mnt/expand:/data/user/0/com.app.ralaunch
+2025-11-21 18:14:07.284  5121-5121  CompatChangeReporter    com.app.ralaunch                     D  Compat change id reported: 202956589; UID 11317; state: ENABLED
+2025-11-21 18:14:07.287  5121-5121  om.app.ralaunch         com.app.ralaunch                     I  AssetManager2(0xb400007b26073778) locale list changing from [] to [zh-CN]
+2025-11-21 18:14:07.291  5121-5121  HWUI                    com.app.ralaunch                     D  [HWUI] Flag vulkan_enhance_pipeline_cache enabled
+2025-11-21 18:14:07.291  5121-5121  HWUI                    com.app.ralaunch                     D  [HWUI] EnhanceVkPipelineCache is disabled
+2025-11-21 18:14:07.291  5121-5121  GraphicsEnvironment     com.app.ralaunch                     V  Currently set values for:
+2025-11-21 18:14:07.292  5121-5121  GraphicsEnvironment     com.app.ralaunch                     V    angle_gl_driver_selection_pkgs=[]
+2025-11-21 18:14:07.292  5121-5121  GraphicsEnvironment     com.app.ralaunch                     V    angle_gl_driver_selection_values=[]
+2025-11-21 18:14:07.292  5121-5121  GraphicsEnvironment     com.app.ralaunch                     V  com.app.ralaunch is not listed in per-application setting
+2025-11-21 18:14:07.292  5121-5121  GraphicsEnvironment     com.app.ralaunch                     V  ANGLE allowlist from config: 
+2025-11-21 18:14:07.292  5121-5121  GraphicsEnvironment     com.app.ralaunch                     V  com.app.ralaunch is not listed in ANGLE allowlist or settings, returning default
+2025-11-21 18:14:07.292  5121-5121  GraphicsEnvironment     com.app.ralaunch                     V  Updatable production driver is not supported on the device.
+2025-11-21 18:14:07.297  5121-13581 AppScoutStateMachine    com.app.ralaunch                     D  5121-ScoutStateMachinecreated
+2025-11-21 18:14:07.302  5121-13585 MiuiMonitorThread       com.app.ralaunch                     D  Shared singleton Thread for stability monitor start
+2025-11-21 18:14:07.309  5121-13585 Perf                    com.app.ralaunch                     I  Connecting to perf service.
+2025-11-21 18:14:07.309  5121-5121  ResMonitorStub          com.app.ralaunch                     D  The current process type is: third_party_app, process name is: com.app.ralaunch
+2025-11-21 18:14:07.310  5121-5121  MiuiAppAda...ubsControl com.app.ralaunch                     I  Feature Flag of ThirdAppOpt is turned off
+2025-11-21 18:14:07.315  5121-13585 ActivityThread          com.app.ralaunch                     I  TrafficStats init done
+2025-11-21 18:14:07.315  5121-5121  CompatChangeReporter    com.app.ralaunch                     D  Compat change id reported: 279646685; UID 11317; state: ENABLED
+2025-11-21 18:14:07.315  5121-13602 ashmem                  com.app.ralaunch                     E  Pinning is deprecated since Android Q. Please use trim or other methods.
+2025-11-21 18:14:07.317  5121-13585 ForceDarkHelperStubImpl com.app.ralaunch                     I  initialize for com.app.ralaunch , ForceDarkOrigin
+2025-11-21 18:14:07.317  5121-13585 nativeloader            com.app.ralaunch                     D  Load libforcedarkimpl.so using system ns (caller=/system_ext/framework/miui-framework.jar): ok
+2025-11-21 18:14:07.317  5121-13585 HWUI                    com.app.ralaunch                     D  JNI_OnLoad success
+2025-11-21 18:14:07.317  5121-13585 MiuiForceDarkConfig     com.app.ralaunch                     I  setConfig density:2.625000, mainRule:0, secondaryRule:0, tertiaryRule:0
+2025-11-21 18:14:07.320  5121-13585 ActivityThread          com.app.ralaunch                     I  Miui Feature Init done
+2025-11-21 18:14:07.323  5121-5121  nativeloader            com.app.ralaunch                     D  Load /data/app/~~xZmBAeWYARqTgnjV8R9TXg==/com.app.ralaunch-q7tiZT26Sl4yp5G5v8K-Cw==/lib/arm64/libcom.kyant.fishnet.so using class loader ns clns-10 (caller=/data/app/~~xZmBAeWYARqTgnjV8R9TXg==/com.app.ralaunch-q7tiZT26Sl4yp5G5v8K-Cw==/base.apk): ok
+2025-11-21 18:14:07.335  5121-5121  libc                    com.app.ralaunch                     W  Access denied finding property "vendor.boostfwk.frameprefetcher"
+2025-11-21 18:14:07.336  5121-5121  UnionPowerNotifier      com.app.ralaunch                     D  check_union_power_ioctl -1
+2025-11-21 18:14:07.337  5121-5121  FramePredict            com.app.ralaunch                     D  FramePredict init: false
+2025-11-21 18:14:07.347  5121-5121  HWUI                    com.app.ralaunch                     D  [HWUI] Flag vulkan_enhance_pipeline_cache enabled
+2025-11-21 18:14:07.347  5121-5121  HWUI                    com.app.ralaunch                     D  [HWUI] EnhanceVkPipelineCache is disabled
+2025-11-21 18:14:07.347  5121-5121  om.app.ralaunch         com.app.ralaunch                     D  blurUtils, initBackgroundBlurMinInterval processName(com.app.ralaunch), inWhiteLists(0)
+2025-11-21 18:14:07.348  5121-13585 ActivityThread          com.app.ralaunch                     I  HardwareRenderer preload  done
+2025-11-21 18:14:07.359  5121-5121  om.app.ralaunch         com.app.ralaunch                     I  AssetManager2(0xb400007b2606f5d8) locale list changing from [] to [zh-CN]
+2025-11-21 18:14:07.366  5121-5121  AppCompatDelegate       com.app.ralaunch                     D  Checking for metadata for AppLocalesMetadataHolderService : Service not found
+2025-11-21 18:14:07.366  5121-13631 DisplayManager          com.app.ralaunch                     I  Choreographer implicitly registered for the refresh rate.
+2025-11-21 18:14:07.373  5121-5121  om.app.ralaunch         com.app.ralaunch                     I  AssetManager2(0xb400007b2606fc18) locale list changing from [] to [zh-CN]
+2025-11-21 18:14:07.374  5121-13631 libc                    com.app.ralaunch                     W  Access denied finding property "vendor.migl.debug"
+2025-11-21 18:14:07.374  5121-13631 libMiGL                 com.app.ralaunch                     I  EnableDR: 0
+2025-11-21 18:14:07.374  5121-13631 libMiGL                 com.app.ralaunch                     D  mDFIInterval: -1
+2025-11-21 18:14:07.374  5121-13631 AdrenoGLES-0            com.app.ralaunch                     I  QUALCOMM build                   : 331d135022, I2ffb9e077a
+                                                                                                    Build Date                       : 07/11/25
+                                                                                                    OpenGL ES Shader Compiler Version: E031.41.03.62
+                                                                                                    Local Branch                     : 
+                                                                                                    Remote Branch                    : refs/tags/AU_LINUX_ANDROID_LA.VENDOR.13.2.0.11.00.00.856.062
+                                                                                                    Remote Branch                    : NONE
+                                                                                                    Reconstruct Branch               : NOTHING
+2025-11-21 18:14:07.374  5121-13631 AdrenoGLES-0            com.app.ralaunch                     I  Build Config                     : S P 14.1.4 AArch64
+2025-11-21 18:14:07.374  5121-13631 AdrenoGLES-0            com.app.ralaunch                     I  Driver Path                      : /vendor/lib64/egl/libGLESv2_adreno.so
+2025-11-21 18:14:07.374  5121-13631 AdrenoGLES-0            com.app.ralaunch                     I  Driver Version                   : 0676.74
+2025-11-21 18:14:07.395  5121-13631 AdrenoGLES-0            com.app.ralaunch                     I  PFP: 0x01740181, ME: 0x00000000
+2025-11-21 18:14:07.405  2830-4965  HyperSentinel           system_server                        E  ->pid:5121,processName:"com.app.ralaunch",Rss Memory Size Change 120324kb -> 157228kb
+2025-11-21 18:14:07.419  5121-13631 AdrenoUtils             com.app.ralaunch                     I  <ReadGpuID:407>: Reading chip ID through GSL
+2025-11-21 18:14:07.423  5121-13631 libEGL                  com.app.ralaunch                     I  shader cache num entries: 86
+2025-11-21 18:14:07.424  5121-13631 HWUI                    com.app.ralaunch                     D  [HWUI] Flag vulkan_enhance_pipeline_cache enabled
+2025-11-21 18:14:07.424  5121-13631 HWUI                    com.app.ralaunch                     D  [HWUI] EnhanceVkPipelineCache is disabled
+2025-11-21 18:14:07.424  5121-13631 SKIA                    com.app.ralaunch                     D  [Skia] Flag vulkan_enhance_pipeline_cache enabled
+2025-11-21 18:14:07.424  5121-13631 SKIA                    com.app.ralaunch                     D  [Skia] EnhanceVkPipelineCache is false
+2025-11-21 18:14:07.424  5121-13631 HWUI                    com.app.ralaunch                     D  MiShaderPrecompile handle com.app.ralaunch, isSksl: 0, isAppInPreCacheList: 0, isGpuVersionChanged: 0, isSkslChanged: 0
+2025-11-21 18:14:07.438  5121-5121  CompatChangeReporter    com.app.ralaunch                     D  Compat change id reported: 309578419; UID 11317; state: ENABLED
+2025-11-21 18:14:07.440  5121-5121  DesktopModeFlags        com.app.ralaunch                     D  Toggle override initialized to: OVERRIDE_UNSET
+2025-11-21 18:14:07.447  5121-5121  DecorView               com.app.ralaunch                     D  updateFreeformOutlineFromActivity, inFreeform=false,inFreeformWindowMode=false
+2025-11-21 18:14:07.451  5121-5121  om.app.ralaunch         com.app.ralaunch                     I  hiddenapi: Accessing hidden method Landroid/view/ViewGroup;->makeOptionalFitsSystemWindows()V (runtime_flags=0, domain=platform, api=unsupported) from Landroidx/appcompat/widget/ViewUtils; (domain=app) using reflection: allowed
+2025-11-21 18:14:07.456  5121-5121  CompatChangeReporter    com.app.ralaunch                     D  Compat change id reported: 63938206; UID 11317; state: ENABLED
+2025-11-21 18:14:07.481  5121-13661 om.app.ralaunch         com.app.ralaunch                     I  AssetManager2(0xb400007b26079b78) locale list changing from [] to [zh-CN]
+2025-11-21 18:14:07.499  5121-5121  ScrollerOp...ionManager com.app.ralaunch                     D  registerConfigChangedListener
+2025-11-21 18:14:07.499  5121-5121  libc                    com.app.ralaunch                     W  Access denied finding property "ro.vendor.mi_sf.new_dynamic_refresh_rate"
+2025-11-21 18:14:07.499  5121-5121  SplineOverScroller      com.app.ralaunch                     D  dynamic params is false
+2025-11-21 18:14:07.503  5121-5121  ScrollerOp...ionManager com.app.ralaunch                     D  registerConfigChangedListener
+2025-11-21 18:14:07.506  5121-13661 nativeloader            com.app.ralaunch                     D  Configuring clns-11 for other apk /system_ext/app/miuisystem/miuisystem.apk. target_sdk_version=35, uses_libraries=ALL, library_path=/product/app/ContentCatcherOS3/lib/arm64:/product/app/ContentCatcherOS3/ContentCatcherOS3.apk!/lib/arm64-v8a:/system_ext/priv-app/RtMiCloudSDK/RtMiCloudSDK.apk!/lib/arm64-v8a:/system_ext/app/miuisystem/miuisystem.apk!/lib/arm64-v8a, permitted_path=/data:/mnt/expand
+2025-11-21 18:14:07.506  5121-13661 nativeloader            com.app.ralaunch                     D  Extending system_exposed_libraries: libbinauralrenderer_wrapper.qti.so:libhoaeffects.qti.so:libmisys_jni.xiaomi.so:libpag.hyperos.so:libffavc.hyperos.so:libxiaomi_modemdumpsdx55_jni.modem.so:libxiaomi_modemdump_jni.modem.so:libmodemsmartengine_jni.modem.so:libupdateprof.qti.so:libthermalclient.qti.so:libdiag_system.qti.so:libqape.qti.so:libqesdk_ndk_platform.qti.so:liblistenjni.qti.so:libautoui_image.xiaomi.so
+2025-11-21 18:14:07.517  5121-13661 nativeloader            com.app.ralaunch                     D  Configuring clns-12 for other apk /system_ext/priv-app/RtMiCloudSDK/RtMiCloudSDK.apk. target_sdk_version=35, uses_libraries=ALL, library_path=/product/app/ContentCatcherOS3/lib/arm64:/product/app/ContentCatcherOS3/ContentCatcherOS3.apk!/lib/arm64-v8a:/system_ext/priv-app/RtMiCloudSDK/RtMiCloudSDK.apk!/lib/arm64-v8a:/system_ext/app/miuisystem/miuisystem.apk!/lib/arm64-v8a, permitted_path=/data:/mnt/expand
+2025-11-21 18:14:07.517  5121-13661 nativeloader            com.app.ralaunch                     D  Extending system_exposed_libraries: libbinauralrenderer_wrapper.qti.so:libhoaeffects.qti.so:libmisys_jni.xiaomi.so:libpag.hyperos.so:libffavc.hyperos.so:libxiaomi_modemdumpsdx55_jni.modem.so:libxiaomi_modemdump_jni.modem.so:libmodemsmartengine_jni.modem.so:libupdateprof.qti.so:libthermalclient.qti.so:libdiag_system.qti.so:libqape.qti.so:libqesdk_ndk_platform.qti.so:liblistenjni.qti.so:libautoui_image.xiaomi.so
+2025-11-21 18:14:07.523  5121-13661 ApplicationLoaders      com.app.ralaunch                     D  Returning zygote-cached class loader: /system/framework/org.apache.http.legacy.jar
+2025-11-21 18:14:07.523  5121-13661 ApplicationLoaders      com.app.ralaunch                     D  Returning zygote-cached class loader: /system_ext/framework/androidx.window.extensions.jar
+2025-11-21 18:14:07.523  5121-13661 ApplicationLoaders      com.app.ralaunch                     D  Returning zygote-cached class loader: /system_ext/framework/androidx.window.sidecar.jar
+2025-11-21 18:14:07.531  5121-5121  HWUI                    com.app.ralaunch                     D  ImageDecoder_nDecodeBitmap: width = 81, height = 81, encodedFormat = 4
+2025-11-21 18:14:07.532  5121-5121  HWUI                    com.app.ralaunch                     W  Image decoding logging dropped!
+2025-11-21 18:14:07.532  5121-5121  HWUI                    com.app.ralaunch                     D  ImageDecoder_nDecodeBitmap: width = 81, height = 81, encodedFormat = 4
+2025-11-21 18:14:07.532  5121-5121  HWUI                    com.app.ralaunch                     W  Image decoding logging dropped!
+2025-11-21 18:14:07.534  5121-5121  HWUI                    com.app.ralaunch                     D  ImageDecoder_nDecodeBitmap: width = 71, height = 48, encodedFormat = 4
+2025-11-21 18:14:07.534  5121-5121  HWUI                    com.app.ralaunch                     W  Image decoding logging dropped!
+2025-11-21 18:14:07.545  5121-13661 nativeloader            com.app.ralaunch                     D  InitLlndkLibrariesProduct: libEGL.so:libGLESv1_CM.so:libGLESv2.so:libGLESv3.so:libRS.so:libandroid_net.so:libapexsupport.so:libavf.so:libbinder_ndk.so:libc.so:libcgrouprc.so:libclang_rt.asan-aarch64-android.so:libclang_rt.asan-arm-android.so:libclang_rt.hwasan-aarch64-android.so:libcom.android.tethering.connectivity_native.so:libdl.so:libft2.so:liblog.so:libm.so:libmediandk.so:libnativewindow.so:libneuralnetworks.so:libselinux.so:libsync.so:libvendorsupport.so:libvndksupport.so:libvulkan.so
+2025-11-21 18:14:07.545  5121-13661 nativeloader            com.app.ralaunch                     D  Configuring product-clns-13 for unbundled product apk /product/app/ContentCatcherOS3/ContentCatcherOS3.apk. target_sdk_version=35, uses_libraries=, library_path=/product/app/ContentCatcherOS3/lib/arm64:/product/app/ContentCatcherOS3/ContentCatcherOS3.apk!/lib/arm64-v8a:/system_ext/priv-app/RtMiCloudSDK/RtMiCloudSDK.apk!/lib/arm64-v8a:/system_ext/app/miuisystem/miuisystem.apk!/lib/arm64-v8a:/product/lib64:/system/product/lib64, permitted_path=/data:/mnt/expand:/product/lib64:/system/product/lib64
+2025-11-21 18:14:07.546  5121-13661 nativeloader            com.app.ralaunch                     D  InitVndkspLibrariesProduct: VNDK is deprecated with product
+2025-11-21 18:14:07.551  5121-13661 ViewContentFactory      com.app.ralaunch                     D  initViewContentFetcherClass
+2025-11-21 18:14:07.551  5121-13661 ViewContentFactory      com.app.ralaunch                     D  getInterceptorPackageInfo
+2025-11-21 18:14:07.551  5121-13661 ViewContentFactory      com.app.ralaunch                     D  getInitialApplication took 1ms
+2025-11-21 18:14:07.551  5121-13661 ViewContentFactory      com.app.ralaunch                     D  packageInfo.packageName: com.miui.contentcatcher
+2025-11-21 18:14:07.552  5121-13661 ViewContentFactory      com.app.ralaunch                     D  initViewContentFetcherClass took 1ms
+2025-11-21 18:14:07.552  5121-13661 ContentCatcher          com.app.ralaunch                     I  ViewContentFetcher : ViewContentFetcher
+2025-11-21 18:14:07.552  5121-13661 ViewContentFactory      com.app.ralaunch                     D  createInterceptor took 1ms
+2025-11-21 18:14:07.553  5121-13661 ContentCatcherManager   com.app.ralaunch                     E  failed to get ContentCatcherService.
+2025-11-21 18:14:07.553  5121-13661 ContentCatcherManager   com.app.ralaunch                     E  failed to get ContentCatcherService.
+2025-11-21 18:14:07.563  5121-5121  NativeTurboSchedManager com.app.ralaunch                     I  Load libmiui_runtime
+2025-11-21 18:14:07.564  5121-5121  TurboSchedMonitor       com.app.ralaunch                     E  failed to find setSchedAffinity method com.app.ralaunch
+2025-11-21 18:14:07.565  5121-5121  TurboSchedMonitor       com.app.ralaunch                     E  failed to find setSchedAffinity method com.app.ralaunch
+2025-11-21 18:14:07.578  5121-5121  Activity                com.app.ralaunch                     D  Activity = ActivityInfo{e91fee8 com.app.ralaunch.activity.MainActivity}, Resume onConfigurationChanged = {1.0 460mcc11mnc [zh_CN] ldltr sw411dp w914dp h411dp 420dpi nrml long hdr widecg land finger qwerty/v/v dpad/v winConfig={ mBounds=Rect(0, 0 - 2400, 1080) mAppBounds=Rect(0, 0 - 2400, 1080) mMaxBounds=Rect(0, 0 - 2400, 1080) mDisplayRotation=ROTATION_90 mWindowingMode=fullscreen mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_90 mInSplitScreen=false letterBoxed=false foScaled=false isSpecificEmbedded=false} s.4 fontWeightAdjustment=0/d/0 themeChanged=0 themeChangedFlags=0 display=0 extraData = Bundle[{}] screenType=0/0}
+2025-11-21 18:14:07.582  5121-5121  SecurityManager         com.app.ralaunch                     D  checkAccessControl flag0
+2025-11-21 18:14:07.584  5121-5121  CompatChangeReporter    com.app.ralaunch                     D  Compat change id reported: 352594277; UID 11317; state: ENABLED
+2025-11-21 18:14:07.592  5121-13661 ContentCatcher          com.app.ralaunch                     I  SettingTrigger : register screen QA status observer com.app.ralaunch.activity.MainActivity
+2025-11-21 18:14:07.593  5121-5121  CompatChangeReporter    com.app.ralaunch                     D  Compat change id reported: 349153669; UID 11317; state: ENABLED
+2025-11-21 18:14:07.594  5121-5121  FramePredict            com.app.ralaunch                     D  init success
+2025-11-21 18:14:07.595  5121-5121  om.app.ralaunch         com.app.ralaunch                     D  MiuiProcessManagerServiceStub setSchedFifo
+2025-11-21 18:14:07.595  5121-5121  MiuiProcessManagerImpl  com.app.ralaunch                     I  setSchedFifo pid:5121, mode:3
+2025-11-21 18:14:07.596  5121-13691 FramePredict            com.app.ralaunch                     E  registerContentObserver fail
+2025-11-21 18:14:07.598  5121-13661 ContentCatcher          com.app.ralaunch                     I  SettingTrigger : register global collect status observer com.app.ralaunch.activity.MainActivity
+2025-11-21 18:14:07.599  5121-13661 ContentCatcher          com.app.ralaunch                     I  SettingTrigger : registerUIAgentListener com.app.ralaunch.activity.MainActivity, uid:11317
+2025-11-21 18:14:07.599  5121-5121  FirstFrameSpeedUp       com.app.ralaunch                     D  bls: [com.xcj.hm.kangfuyixue]
+2025-11-21 18:14:07.599  5121-5121  ViewRootImpl            com.app.ralaunch                     I  com.app.ralaunch/com.app.ralaunch.activity.MainActivity use first frame acceleration
+2025-11-21 18:14:07.599  5121-5121  InsetsController        com.app.ralaunch                     D  Setting requestedVisibleTypes to -14 (was -9)
+2025-11-21 18:14:07.601  5121-5121  MiuiMultiWindowUtils    com.app.ralaunch                     D  freeform resolution args raw data:{  "wide_default":{    "freeform_args": {        "vertical_portrait":{"aspect_ratio":0.626, "original_ratio":0.5643,"original_scale":0.74,"top_margin":0.168,"left_margin":0.484},        "horizontal_portrait":{"aspect_ratio":0.626, "original_ratio":0.5643,"original_scale":0.74,"top_margin":0.1222,"left_margin":0.59745},        "vertical_landscape":{"aspect_ratio":1.6, "original_ratio":0.6992,"original_scale":0.604,"top_margin":0.2596,"left_margin":0.2624},        "horizontal_landscape":{"aspect_ratio":1.6, "original_ratio":0.6992,"original_scale":0.604,"top_margin":0.213,"left_margin":0.3758}    },    "mini_freeform_args":{        "vertical_portrait":{"original_ratio":0.147},        "horizontal_portrait":{"original_ratio":0.147},        "vertical_landscape":{"original_ratio":0.165},        "horizontal_landscape":{"original_ratio":0.165}    }  },  "narrow_default": {    "freeform_args": {        "vertical_portrait":{"aspect_ratio":0.626, "original_ratio":1,"original_scale":0.74,"top_margin":0.0753,"left_margin":-1},        "horizontal_portrait":{"aspect_ratio":0.626, "original_ratio":1,"original_scale":0.5756,"top_margin":-1,"left_margin":0.0753},        "vertical_landscape":{"aspect_ratio":1.6, "original_ratio":1,"original_scale":0.587,"top_margin":0.0753,"left_margin":-1},        "horizontal_landscape":{"aspect_ratio":1.6, "original_ratio":1,"original_scale":0.587,"top_margin":-1,"left_margin":0.0753}    },    "mini_freeform_args":{        "vertical_portrait":{"original_ratio":0.26},        "horizontal_portrait":{"original_ratio":0.26},        "vertical_landscape":{"original_ratio":0.293},        "horizontal_landscape":{"original_ratio":0.293}    }  },  "regular_default": {    "freeform_args": {      "vertical_portrait":{"aspect_ratio":0.625, "original_ratio":1,"original_scale":0.7,"top_margin":0.109,"left_margin":-1},      "horizontal_portrait":{"aspect_ratio":0.6667, "original_ratio":1,"original_scale":0.6102,"top_margin":-1,"left_margin":0.026},      "vertical_landscape":{"aspect_ratio":1.6, "original_ratio":1,"original_scale":0.5899,"top_margin":0.109,"left_margin":-1},      "horizontal_landscape":{"aspect_ratio":1.6, "original_ratio":1,"original_scale":0.5899,"top_margin":-1,"left_margin":0.026}    },    "mini_freeform_args":{      "vertical_portrait":{"original_ratio":0.25},      "horizontal_portrait":{"original_ratio":0.25},      "vertical_landscape":{"original_ratio":0.25},      "horizontal_landscape":{"original_ratio":0.25}    }  },  "pad_default": {    "freeform_args": {      "vertical_portrait":{"aspect_ratio":0.5625, "original_ratio":0.375,"original_scale":0.835,"top_margin":0.049,"left_margin":0.2775},      "horizontal_portrait":{"aspect_ratio":0.5625, "original_ratio":0.375,"original_scale":0.835,"top_margin":-1,"left_margin":0.6525},      "vertical_landscape":{"aspect_ratio":-1, "original_ratio":1,"original_scale":0.468,"top_margin":0.049,"left_margin":-1},      "horizontal_landscape":{"aspect_ratio":-1, "original_ratio":1,"original_scale":0.468,"top_margin":-1,"left_margin":0.4976}    },    "mini_freeform_args":{      "vertical_portrait":{"original_ratio":0.144},      "horizontal_portrait":{"original_ratio":0.144},      "vertical_landscape":{"original_ratio":0.2},      "horizontal_landscape":{"original_ratio":0.2}    }  }}
+2025-11-21 18:14:07.604  5121-5121  MiuiMultiWindowUtils    com.app.ralaunch                     D  initFreeFormResolutionArgs failed, device is vermeer
+2025-11-21 18:14:07.611  5121-5121  ComputilityLevel        com.app.ralaunch                     I  getComputilityLevel(): 5
+2025-11-21 18:14:07.640  5121-5121  HWUI                    com.app.ralaunch                     W  Image decoding logging dropped!
+2025-11-21 18:14:07.659  5121-5121  libc                    com.app.ralaunch                     W  Access denied finding property "vendor.display.enable_optimal_refresh_rate"
+2025-11-21 18:14:07.652  5121-5121  om.app.ralaunch         com.app.ralaunch                     W  type=1400 audit(0.0:903546): avc:  denied  { read } for  name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=505 scontext=u:r:untrusted_app:s0:c37,c261,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.app.ralaunch
+2025-11-21 18:14:07.656  5121-5121  om.app.ralaunch         com.app.ralaunch                     W  type=1400 audit(0.0:903547): avc:  denied  { read } for  name="u:object_r:vendor_display_prop:s0" dev="tmpfs" ino=505 scontext=u:r:untrusted_app:s0:c37,c261,c512,c768 tcontext=u:object_r:vendor_display_prop:s0 tclass=file permissive=0 app=com.app.ralaunch
+2025-11-21 18:14:07.660  5121-5121  libc                    com.app.ralaunch                     W  Access denied finding property "vendor.display.enable_optimal_refresh_rate"
+2025-11-21 18:14:07.666  5121-13631 om.app.ralaunch         com.app.ralaunch                     I  Support FEAS product miproduct_vermeer: 
+2025-11-21 18:14:07.673  5121-5121  VRI[MainActivity]       com.app.ralaunch                     D  vri.reportNextDraw 0 Rect(0, 0 - 2400, 1080) android.view.ViewRootImpl.performTraversals:5477 android.view.ViewRootImpl.doTraversal:4036 android.view.ViewRootImpl$TraversalRunnable.run:12396 android.view.Choreographer$CallbackRecord.run:2022 android.view.Choreographer$CallbackRecord.run:2031 
+2025-11-21 18:14:07.673  5121-5121  VRI[MainActivity]       com.app.ralaunch                     D  vri.Setup new sync=wmsSync-VRI[MainActivity]#0
+2025-11-21 18:14:07.701  5121-5121  VRI[MainActivity]       com.app.ralaunch                     D  vri.reportDrawFinished 0 0 Rect(0, 0 - 2400, 1080)
+2025-11-21 18:14:07.702  5121-5121  Choreographer           com.app.ralaunch                     I  first vsync insert message into MessageQueue Head
+2025-11-21 18:14:07.708  5121-13631 HWUI                    com.app.ralaunch                     D  [HWUI] Flag vulkan_enhance_pipeline_cache enabled
+2025-11-21 18:14:07.708  5121-13631 HWUI                    com.app.ralaunch                     D  [HWUI] EnhanceVkPipelineCache is disabled
+2025-11-21 18:14:07.710  5121-13746 InsetsController        com.app.ralaunch                     D  default animation onReady types: 1 controller=android.view.InsetsAnimationControlImpl@71045fd
+2025-11-21 18:14:07.710  5121-13746 ViewRootImplStubImpl    com.app.ralaunch                     D  requestedTypes: 1
+2025-11-21 18:14:07.711  5121-5121  VRI[MainActivity]       com.app.ralaunch                     D  vri.reportNextDraw 0 Rect(0, 0 - 2400, 1080) android.view.ViewRootImpl.handleResized:3166 android.view.ViewRootImpl.-$$Nest$mhandleResized:0 android.view.ViewRootImpl$W.resized:13603 android.app.servertransaction.WindowStateResizeItem.execute:93 android.app.servertransaction.WindowStateTransactionItem.execute:62 
+2025-11-21 18:14:07.712  5121-5121  VRI[MainActivity]       com.app.ralaunch                     D  vri.Setup new sync=wmsSync-VRI[MainActivity]#2
+2025-11-21 18:14:07.715  5121-5121  VRI[MainActivity]       com.app.ralaunch                     D  vri.reportDrawFinished 0 0 Rect(0, 0 - 2400, 1080)
+2025-11-21 18:14:07.725  2830-4965  HyperSentinel           system_server                        E  ->pid:5121,processName:"com.app.ralaunch",Rss Memory Size Change 157228kb -> 205032kb
+2025-11-21 18:14:07.731  5121-5121  HandWritingStubImpl     com.app.ralaunch                     I  refreshLastKeyboardType: 1
+2025-11-21 18:14:07.732  5121-5121  HandWritingStubImpl     com.app.ralaunch                     I  getCurrentKeyboardType: 1
+2025-11-21 18:14:07.737  5121-5121  InsetsController        com.app.ralaunch                     D  hide(ime(), fromIme=false)
+2025-11-21 18:14:07.737  5121-5121  ImeTracker              com.app.ralaunch                     I  com.app.ralaunch:2f32d156: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+2025-11-21 18:14:07.738  5121-5121  HandWritingStubImpl     com.app.ralaunch                     I  getCurrentKeyboardType: 1
+2025-11-21 18:14:07.741  5121-5121  InsetsController        com.app.ralaunch                     D  Setting requestedVisibleTypes to -16 (was -14)
+2025-11-21 18:14:07.741  5121-13746 InsetsController        com.app.ralaunch                     D  default animation onReady types: 2 controller=android.view.InsetsAnimationControlImpl@19737b5
+2025-11-21 18:14:07.741  5121-13746 ViewRootImplStubImpl    com.app.ralaunch                     D  requestedTypes: 2
+2025-11-21 18:14:07.743  5121-5121  VRI[MainActivity]       com.app.ralaunch                     D  getMiuiFreeformStackInfo mTmpFrames.miuiFreeFormStackInfo: null
+2025-11-21 18:14:08.075  5121-13746 InsetsAnimationCtrlImpl com.app.ralaunch                     D  notifyFinished shown: false, currentAlpha: 1.000000, currentInsets: Insets{left=0, top=0, right=0, bottom=0}
+2025-11-21 18:14:08.075  5121-13746 InsetsAnimationCtrlImpl com.app.ralaunch                     D  Animation finished abruptly.
+2025-11-21 18:14:08.075  5121-13746 InsetsController        com.app.ralaunch                     D  onAnimationFinish showOnFinish: false
+2025-11-21 18:14:08.075  5121-5121  InsetsController        com.app.ralaunch                     D  cancelAnimation of types:1 animType:1 host:com.app.ralaunch/com.app.ralaunch.activity.MainActivity invokeCallback=false
+2025-11-21 18:14:08.075  5121-5121  InsetsController        com.app.ralaunch                     D  notifyFinished. shown: false runner=android.view.InsetsAnimationThreadControlRunner@af6f98f
+2025-11-21 18:14:08.078  5121-13746 InteractionJankMonitor  com.app.ralaunch                     W  Initializing without READ_DEVICE_CONFIG permission. enabled=false, interval=1, missedFrameThreshold=3, frameTimeThreshold=64, package=com.app.ralaunch
+2025-11-21 18:14:08.108  5121-13746 InsetsAnimationCtrlImpl com.app.ralaunch                     D  notifyFinished shown: false, currentAlpha: 1.000000, currentInsets: Insets{left=0, top=0, right=0, bottom=0}
+2025-11-21 18:14:08.108  5121-5121  InsetsController        com.app.ralaunch                     D  cancelAnimation of types:2 animType:1 host:com.app.ralaunch/com.app.ralaunch.activity.MainActivity invokeCallback=false
+2025-11-21 18:14:08.108  5121-5121  InsetsController        com.app.ralaunch                     D  notifyFinished. shown: false runner=android.view.InsetsAnimationThreadControlRunner@71a8676
+2025-11-21 18:14:08.108  5121-13746 InsetsAnimationCtrlImpl com.app.ralaunch                     D  Animation finished abruptly.
+2025-11-21 18:14:08.108  5121-13746 InsetsController        com.app.ralaunch                     D  onAnimationFinish showOnFinish: false
+2025-11-21 18:14:08.296  5121-13572 om.app.ralaunch         com.app.ralaunch                     I  Compiler allocated 6363KB to compile void android.view.ViewRootImpl.performTraversals()
+2025-11-21 18:14:09.568  5121-13583 om.app.ralaunch         com.app.ralaunch                     I  ProcessProfilingInfo new_methods=0 is saved saved_to_disk=0
+2025-11-21 18:14:12.798  5121-13858 ProfileInstaller        com.app.ralaunch                     D  Installing profile for com.app.ralaunch
+2025-11-21 18:14:14.579  5121-13583 om.app.ralaunch         com.app.ralaunch                     I  ProcessProfilingInfo new_methods=2 is saved saved_to_disk=1
+2025-11-21 18:14:17.339  5121-13583 om.app.ralaunch         com.app.ralaunch                     I  ProcessProfilingInfo new_methods=0 is saved saved_to_disk=0
+2025-11-21 18:14:41.849  5121-13574 om.app.ralaunch         com.app.ralaunch                     I  This is non sticky GC, maxfree is 33554432 minfree is 8388608
+2025-11-21 18:14:41.844  5121-5121  FinalizerDaemon         com.app.ralaunch                     W  type=1400 audit(0.0:903619): avc:  denied  { getopt } for  path="/dev/socket/usap_pool_primary" scontext=u:r:untrusted_app:s0:c37,c261,c512,c768 tcontext=u:r:zygote:s0 tclass=unix_stream_socket permissive=0 app=com.app.ralaunch

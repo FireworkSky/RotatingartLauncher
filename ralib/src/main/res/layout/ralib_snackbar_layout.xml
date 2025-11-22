@@ -1,21 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- 简洁的 Snackbar 布局 - 跟随系统主题 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
-    android:padding="12dp"
+    android:padding="16dp"
     android:gravity="center_vertical">
-
-    <!-- 图标 -->
-    <TextView
-        android:id="@+id/snackbar_icon"
-        android:layout_width="24dp"
-        android:layout_height="24dp"
-        android:layout_marginEnd="12dp"
-        android:textSize="18sp"
-        android:gravity="center"
-        android:textColor="@color/snackbar_info_text" />
 
     <!-- 消息文本 -->
     <TextView
@@ -26,14 +16,14 @@
         android:textSize="14sp"
         android:maxLines="2"
         android:ellipsize="end"
-        android:textColor="@color/snackbar_info_text" />
+        android:textColor="?attr/textPrimary" />
 
     <!-- 操作按钮（可选） -->
     <Button
         android:id="@+id/snackbar_action"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
+        android:layout_marginStart="12dp"
         android:minWidth="0dp"
         android:minHeight="0dp"
         android:paddingStart="12dp"

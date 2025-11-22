@@ -55,6 +55,10 @@ public class ControlLayoutFragment extends Fragment implements ControlLayoutAdap
     private ExtendedFloatingActionButton fabAddLayout;
     private LinearLayout emptyState;
     private Toolbar toolbar;
+    private com.google.android.material.button.MaterialButton modeToggleButton;
+
+    // 当前控制模式：false=键盘/鼠标, true=手柄
+    private boolean isGamepadMode = false;
 
     private OnControlLayoutBackListener backListener;
 
@@ -85,6 +89,7 @@ public class ControlLayoutFragment extends Fragment implements ControlLayoutAdap
         recyclerView = view.findViewById(R.id.recyclerView);
         fabAddLayout = view.findViewById(R.id.fabAddLayout);
         emptyState = view.findViewById(R.id.emptyState);
+        modeToggleButton = view.findViewById(R.id.mode_toggle_button);
 
         toolbar.setNavigationOnClickListener(v -> {
             if (backListener != null) {
@@ -93,6 +98,10 @@ public class ControlLayoutFragment extends Fragment implements ControlLayoutAdap
         });
 
         fabAddLayout.setOnClickListener(v -> showAddLayoutDialog());
+
+        // 模式切换按钮
+        modeToggleButton.setOnClickListener(v -> toggleControlMode());
+        updateModeToggleButton();
 
         updateEmptyState();
     }
@@ -107,6 +116,20 @@ public class ControlLayoutFragment extends Fragment implements ControlLayoutAdap
     private void showAddLayoutDialog() {
         View dialogView = LayoutInflater.from(getContext()).inflate(R.layout.dialog_new_layout, null);
         EditText editText = dialogView.findViewById(R.id.layout_name_edit);
+
+        // 根据当前模式设置默认名称
+        String defaultName = isGamepadMode ? "手柄布局" : "键盘布局";
+
+        // 如果名称已存在，添加数字后缀
+        String finalName = defaultName;
+        int counter = 1;
+        while (layoutExists(finalName)) {
+            counter++;
+            finalName = defaultName + " " + counter;
+        }
+
+        editText.setText(finalName);
+        editText.selectAll();
 
         new MaterialAlertDialogBuilder(requireContext())
                 .setTitle("新建控制布局")
@@ -285,5 +308,31 @@ public class ControlLayoutFragment extends Fragment implements ControlLayoutAdap
             }
         }
         return false;
+    }
+
+    /**
+     * 更新模式切换按钮显示
+     */
+    private void updateModeToggleButton() {
+        if (modeToggleButton == null) return;
+
+        if (isGamepadMode) {
+            modeToggleButton.setText("手柄模式");
+            modeToggleButton.setIconResource(R.drawable.ic_gamepad);
+        } else {
+            modeToggleButton.setText("键盘模式");
+            modeToggleButton.setIconResource(R.drawable.ic_keyboard);
+        }
+    }
+
+    /**
+     * 切换控制模式（键盘/鼠标 <-> 手柄）
+     */
+    private void toggleControlMode() {
+        isGamepadMode = !isGamepadMode;
+        updateModeToggleButton();
+
+        String mode = isGamepadMode ? "手柄" : "键盘";
+        Toast.makeText(getContext(), "已切换为" + mode + "模式", Toast.LENGTH_SHORT).show();
     }
 }

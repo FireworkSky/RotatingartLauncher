@@ -65,11 +65,14 @@ public class VirtualJoystick extends View implements ControlView {
         super(context);
         mData = data;
         mInputBridge = bridge;
-        
+
+        // 设置透明背景，确保只显示绘制的圆形
+        setBackgroundColor(android.graphics.Color.TRANSPARENT);
+
         // 禁用裁剪，让方向指示线可以完整显示
         setClipToOutline(false);
         setClipBounds(null);
-        
+
         initPaints();
     }
     
@@ -92,8 +95,19 @@ public class VirtualJoystick extends View implements ControlView {
     }
     
     @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+
+        // 强制保持正方形（取最小边）
+        int size = Math.min(getMeasuredWidth(), getMeasuredHeight());
+        setMeasuredDimension(size, size);
+    }
+
+    @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         super.onSizeChanged(w, h, oldw, oldh);
+
+        // 由于已经强制为正方形，w 和 h 应该相等
         mCenterX = w / 2f;
         mCenterY = h / 2f;
         mRadius = Math.min(w, h) / 2f;
@@ -168,18 +182,40 @@ public class VirtualJoystick extends View implements ControlView {
     
     @Override
     public boolean onTouchEvent(MotionEvent event) {
+        float touchX = event.getX();
+        float touchY = event.getY();
+
         switch (event.getActionMasked()) {
             case MotionEvent.ACTION_DOWN:
-            case MotionEvent.ACTION_MOVE:
-                handleMove(event.getX(), event.getY());
+                // 检查触摸点是否在圆形区域内
+                float dx = touchX - mCenterX;
+                float dy = touchY - mCenterY;
+                float distance = (float) Math.sqrt(dx * dx + dy * dy);
+
+                // 只响应圆形区域内的触摸
+                if (distance > mRadius) {
+                    return false;
+                }
+
+                handleMove(touchX, touchY);
                 mIsTouching = true;
                 return true;
-                
+
+            case MotionEvent.ACTION_MOVE:
+                if (mIsTouching) {
+                    handleMove(touchX, touchY);
+                    return true;
+                }
+                return false;
+
             case MotionEvent.ACTION_UP:
             case MotionEvent.ACTION_CANCEL:
-                handleRelease();
-                mIsTouching = false;
-                return true;
+                if (mIsTouching) {
+                    handleRelease();
+                    mIsTouching = false;
+                    return true;
+                }
+                return false;
         }
         return super.onTouchEvent(event);
     }

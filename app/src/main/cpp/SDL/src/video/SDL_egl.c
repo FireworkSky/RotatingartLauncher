@@ -973,6 +973,38 @@ SDL_GLContext SDL_EGL_CreateContext(_THIS, EGLSurface egl_surface)
 #endif
 
     /* Set the context version and other attributes. */
+#ifdef __ANDROID__
+    /* Special handling for gl4es/zink on Android:
+     * - They need EGL_OPENGL_ES_API but provide desktop OpenGL API
+     * - Don't set desktop GL profile mask (compatibility/core) when using ES API
+     * - NG-GL4ES defaults to GLES 3.x backend (DEFAULT_ES=3)
+     * - gl4es: use GLES 3.0, zink: use GLES 3.0+ */
+    const char *fna3d_driver_attr = SDL_getenv("FNA3D_OPENGL_DRIVER");
+    int is_gl4es_zink = (fna3d_driver_attr &&
+                         (SDL_strcasecmp(fna3d_driver_attr, "gl4es") == 0 ||
+                          SDL_strcasecmp(fna3d_driver_attr, "zink") == 0));
+
+    if (is_gl4es_zink) {
+        /* gl4es/zink: Use simple GLES context attributes
+         * NG-GL4ES defaults to GLES 3.x backend, so use GLES 3.0 for best compatibility */
+        int gles_version = 3;  /* gl4es uses GLES 3.0 (DEFAULT_ES=3), zink uses 3.0+ */
+
+        /* Check LIBGL_ES env var to override gl4es backend version */
+        if (SDL_strcasecmp(fna3d_driver_attr, "gl4es") == 0) {
+            const char *libgl_es = SDL_getenv("LIBGL_ES");
+            if (libgl_es && SDL_strcmp(libgl_es, "2") == 0) {
+                gles_version = 2;
+                SDL_Log("SDL_EGL: LIBGL_ES=2 detected, using GLES 2.0 backend for gl4es");
+            }
+        }
+
+        attribs[attr++] = EGL_CONTEXT_CLIENT_VERSION;
+        attribs[attr++] = gles_version;
+
+        SDL_Log("SDL_EGL: Creating GLES %d context for %s (ignoring desktop GL profile)",
+                gles_version, fna3d_driver_attr);
+    } else
+#endif
     if ((major_version < 3 || (minor_version == 0 && profile_es)) &&
         _this->gl_config.flags == 0 &&
         (profile_mask == 0 || profile_es)) {
@@ -1028,12 +1060,51 @@ SDL_GLContext SDL_EGL_CreateContext(_THIS, EGLSurface egl_surface)
     attribs[attr++] = EGL_NONE;
 
     /* Bind the API */
+#ifdef __ANDROID__
+    /* On Android, even gl4es/zink (which provide desktop OpenGL API) need to use
+     * EGL_OPENGL_ES_API because Android's EGL doesn't support EGL_OPENGL_API.
+     * gl4es/zink translate desktop OpenGL calls to OpenGL ES at runtime. */
+    const char *fna3d_driver = SDL_getenv("FNA3D_OPENGL_DRIVER");
+    int force_es_api = 0;
+
+    if (fna3d_driver &&
+        (SDL_strcasecmp(fna3d_driver, "gl4es") == 0 ||
+         SDL_strcasecmp(fna3d_driver, "zink") == 0)) {
+        force_es_api = 1;
+        SDL_Log("SDL_EGL: Android with %s detected, forcing EGL_OPENGL_ES_API (even for desktop GL profile)", fna3d_driver);
+    }
+
+    if (profile_es || force_es_api) {
+        _this->egl_data->apitype = EGL_OPENGL_ES_API;
+    } else {
+        _this->egl_data->apitype = EGL_OPENGL_API;
+    }
+
+    SDL_Log("SDL_EGL: Attempting to bind API: %s (profile_mask=%d, major=%d, minor=%d, force_es_api=%d)",
+            _this->egl_data->apitype == EGL_OPENGL_ES_API ? "EGL_OPENGL_ES_API" : "EGL_OPENGL_API",
+            _this->gl_config.profile_mask,
+            _this->gl_config.major_version,
+            _this->gl_config.minor_version,
+            force_es_api);
+#else
     if (profile_es) {
         _this->egl_data->apitype = EGL_OPENGL_ES_API;
     } else {
         _this->egl_data->apitype = EGL_OPENGL_API;
     }
-    _this->egl_data->eglBindAPI(_this->egl_data->apitype);
+#endif
+
+    if (_this->egl_data->eglBindAPI(_this->egl_data->apitype) == EGL_FALSE) {
+        EGLint error = _this->egl_data->eglGetError();
+#ifdef __ANDROID__
+        SDL_Log("SDL_EGL: eglBindAPI failed with error 0x%x", error);
+        if (!profile_es && !force_es_api) {
+            SDL_Log("SDL_EGL: Desktop OpenGL API not supported on Android");
+        }
+#endif
+        SDL_EGL_SetError("Could not bind EGL API", "eglBindAPI");
+        return NULL;
+    }
 
     egl_context = _this->egl_data->eglCreateContext(_this->egl_data->egl_display,
                                                     _this->egl_data->egl_config,

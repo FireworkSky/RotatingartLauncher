@@ -559,3 +559,22 @@ cleanup:
 
     return result;
 }
+
+/**
+ * @brief JNI 函数：设置环境变量（用于 CoreCLR 配置）
+ */
+extern "C" JNIEXPORT void JNICALL
+Java_com_app_ralaunch_utils_CoreCLRConfig_nativeSetEnv(
+        JNIEnv *env, jclass clazz, jstring key, jstring value) {
+
+    const char *key_str = env->GetStringUTFChars(key, nullptr);
+    const char *value_str = env->GetStringUTFChars(value, nullptr);
+
+    // 设置环境变量
+    setenv(key_str, value_str, 1);
+
+    LOGI(LOG_TAG, "  %s = %s", key_str, value_str);
+
+    env->ReleaseStringUTFChars(key, key_str);
+    env->ReleaseStringUTFChars(value, value_str);
+}

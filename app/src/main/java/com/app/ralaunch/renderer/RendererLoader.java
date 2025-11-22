@@ -84,19 +84,10 @@ public class RendererLoader {
                     Os.setenv("FNA3D_OPENGL_LIBRARY", eglLibPath, true);
                     AppLogger.info(TAG, "✓ FNA3D_OPENGL_LIBRARY = " + eglLibPath);
 
-                    // 去掉 "lib" 前缀和 ".so" 后缀,用于 System.loadLibrary
-                    String libName = renderer.eglLibrary;
-                    if (libName.startsWith("lib")) {
-                        libName = libName.substring(3);
-                    }
-                    if (libName.endsWith(".so")) {
-                        libName = libName.substring(0, libName.length() - 3);
-                    }
-
-                    // 预加载库到内存
-                    AppLogger.info(TAG, "Preloading renderer library: " + libName);
-                    System.loadLibrary(libName);
-                    AppLogger.info(TAG, "✓ Renderer library preloaded successfully");
+                    // NOTE: Java 层不预加载渲染器库，让 C 层的 SDL_Android_LoadEGL 负责加载
+                    // 原因：C 层需要使用 RTLD_GLOBAL 标志加载 ANGLE 以使符号全局可见
+                    // Java 的 System.loadLibrary 使用 RTLD_LOCAL，导致 dlsym 无法找到 GL 函数
+                    AppLogger.info(TAG, "Renderer library will be loaded by native code (SDL_Android_LoadEGL)");
 
                 } catch (UnsatisfiedLinkError e) {
                     AppLogger.error(TAG, "Failed to preload renderer library: " + e.getMessage());

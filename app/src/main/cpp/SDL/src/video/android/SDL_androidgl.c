@@ -80,6 +80,33 @@ int Android_GLES_SwapWindow(_THIS, SDL_Window *window)
 int Android_GLES_LoadLibrary(_THIS, const char *path)
 {
     const char* custom_egl_path = NULL;
+    const char* current_renderer = NULL;
+    const char* egl_lib_path = NULL;
+
+    __android_log_print(ANDROID_LOG_INFO, "Android_GLES", "Android_GLES_LoadLibrary called, path=%s", path ? path : "(null)");
+
+    /* 检查是否已经通过 Android_LoadRenderer() 预加载了渲染器
+     * 如果已预加载，需要传递库路径让 SDL_EGL_LoadLibrary 使用该库
+     */
+    #ifdef SDL_VIDEO_DRIVER_ANDROID
+    extern const char* Android_GetCurrentRenderer(void);
+    extern const char* Android_GetCurrentRendererLibPath(void);
+
+    current_renderer = Android_GetCurrentRenderer();
+    egl_lib_path = Android_GetCurrentRendererLibPath();
+
+    __android_log_print(ANDROID_LOG_INFO, "Android_GLES", "current_renderer = %s, egl_lib_path = %s",
+                        current_renderer ? current_renderer : "(null)",
+                        egl_lib_path ? egl_lib_path : "(null)");
+
+    if (current_renderer && SDL_strcmp(current_renderer, "native") != 0 && SDL_strcmp(current_renderer, "none") != 0) {
+        __android_log_print(ANDROID_LOG_INFO, "Android_GLES",
+                    "Renderer '%s' already preloaded, passing library path to SDL_EGL_LoadLibrary",
+                    current_renderer);
+        /* 传递库路径让 SDL_EGL_LoadLibrary 使用预加载的库 */
+        return SDL_EGL_LoadLibrary(_this, egl_lib_path, (NativeDisplayType)0, 0);
+    }
+    #endif
 
     /* 检查是否通过 FNA3D_OPENGL_LIBRARY 环境变量指定了自定义 EGL 库
      * 这个方法参考了 PojavLauncher 的实现,使用环境变量指定库路径绕过 Android 链接器命名空间限制

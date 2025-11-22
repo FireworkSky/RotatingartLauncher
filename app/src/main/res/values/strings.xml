@@ -50,6 +50,9 @@
     <string name="theme_system">跟随系统</string>
     <string name="theme_dark">深色主题</string>
     <string name="theme_light">浅色主题</string>
+    <string name="theme_color">主题颜色</string>
+    <string name="theme_color_desc">自定义应用主题颜色</string>
+    <string name="theme_color_changed">主题颜色已更改，重启应用后生效</string>
     <string name="language_settings">语言设置</string>
     <string name="language_system">跟随系统</string>
     <string name="language_english">English</string>
@@ -125,7 +128,7 @@
     <string name="settings_control">控制设置</string>
     <string name="settings_game">游戏设置</string>
     <string name="settings_launcher">启动器设置</string>
-    <string name="settings_developer">实验性设置</string>
+    <string name="settings_developer">高级设置</string>
 
     <!-- 设置项 -->
     <string name="settings_theme_desc_auto">根据系统设置自动切换</string>
@@ -187,4 +190,53 @@
     <string name="patch_list_title">补丁列表</string>
     <string name="no_game_selected">请先选择游戏</string>
     <string name="no_patches_for_game">此游戏没有可用的补丁</string>
+
+    <!-- CoreCLR 运行时配置 -->
+    <string name="coreclr_settings">CoreCLR 运行时配置</string>
+    <string name="coreclr_gc_settings">垃圾回收 (GC) 设置</string>
+    <string name="coreclr_jit_settings">即时编译 (JIT) 设置</string>
+
+    <!-- CoreCLR GC 设置 -->
+    <string name="coreclr_server_gc">Server GC</string>
+    <string name="coreclr_server_gc_desc">启用服务器垃圾回收（多核优化，更高吞吐量，更高内存占用）</string>
+    <string name="coreclr_server_gc_on">启用</string>
+    <string name="coreclr_server_gc_off">禁用（推荐移动端）</string>
+
+    <string name="coreclr_concurrent_gc">Concurrent GC</string>
+    <string name="coreclr_concurrent_gc_desc">启用并发垃圾回收（减少暂停时间，推荐）</string>
+    <string name="coreclr_concurrent_gc_on">启用（推荐）</string>
+    <string name="coreclr_concurrent_gc_off">禁用</string>
+
+    <string name="coreclr_gc_heap_count">GC Heap 数量</string>
+    <string name="coreclr_gc_heap_count_desc">垃圾回收堆的数量（仅 Server GC 有效）</string>
+    <string name="coreclr_gc_heap_count_auto">自动检测</string>
+    <string name="coreclr_gc_heap_count_1">1 个堆</string>
+    <string name="coreclr_gc_heap_count_2">2 个堆</string>
+    <string name="coreclr_gc_heap_count_4">4 个堆</string>
+
+    <string name="coreclr_retain_vm">Retain VM</string>
+    <string name="coreclr_retain_vm_desc">保留虚拟内存段（减少内存分配开销，增加内存占用）</string>
+    <string name="coreclr_retain_vm_on">启用</string>
+    <string name="coreclr_retain_vm_off">禁用（推荐）</string>
+
+    <!-- CoreCLR JIT 设置 -->
+    <string name="coreclr_tiered_compilation">Tiered Compilation</string>
+    <string name="coreclr_tiered_compilation_desc">启用分层编译（加快启动速度，推荐）</string>
+    <string name="coreclr_tiered_compilation_on">启用（推荐）</string>
+    <string name="coreclr_tiered_compilation_off">禁用</string>
+
+    <string name="coreclr_quick_jit">Quick JIT</string>
+    <string name="coreclr_quick_jit_desc">启用快速 JIT（Tier 0，更快的初始编译）</string>
+    <string name="coreclr_quick_jit_on">启用（推荐）</string>
+    <string name="coreclr_quick_jit_off">禁用</string>
+
+    <string name="coreclr_jit_optimize_type">JIT 优化类型</string>
+    <string name="coreclr_jit_optimize_type_desc">即时编译的优化策略</string>
+    <string name="coreclr_jit_optimize_blended">混合（推荐）</string>
+    <string name="coreclr_jit_optimize_size">体积优先</string>
+    <string name="coreclr_jit_optimize_speed">速度优先</string>
+
+    <!-- CoreCLR 设置提示 -->
+    <string name="coreclr_settings_warning">修改这些设置可能影响游戏性能和稳定性</string>
+    <string name="coreclr_settings_restart">设置将在下次启动游戏时生效</string>
 </resources>

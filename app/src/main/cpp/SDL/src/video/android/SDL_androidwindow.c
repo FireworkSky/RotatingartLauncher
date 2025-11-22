@@ -92,29 +92,18 @@ int Android_CreateWindow(_THIS, SDL_Window *window)
     __android_log_print(ANDROID_LOG_INFO, "SDL_Window", "✅ Native window obtained: %p", data->native_window);
 
     /* Do not create EGLSurface for Vulkan window since it will then make the window
-       incompatible with vkCreateAndroidSurfaceKHR 
-       Also skip EGL surface creation if using gl4es or zink renderer */
+       incompatible with vkCreateAndroidSurfaceKHR */
 #ifdef SDL_VIDEO_OPENGL_EGL
-    const char* gl_driver = SDL_getenv("FNA3D_OPENGL_DRIVER");
-    SDL_bool use_gl4es = (gl_driver && SDL_strcasecmp(gl_driver, "gl4es") == 0);
-    SDL_bool use_zink = (gl_driver && SDL_strcasecmp(gl_driver, "zink") == 0);
-    
-    if (use_gl4es) {
-        __android_log_print(ANDROID_LOG_INFO, "SDL_Window", "Using gl4es renderer, skipping EGL surface (gl4es manages it)");
-    } else if (use_zink) {
-        __android_log_print(ANDROID_LOG_INFO, "SDL_Window", "Using Zink renderer, skipping EGL surface (Zink AGL manages it)");
-    } else {
-        __android_log_print(ANDROID_LOG_INFO, "SDL_Window", "SDL_VIDEO_OPENGL_EGL is defined, creating EGL surface...");
-        if (window->flags & SDL_WINDOW_OPENGL) {
-            data->egl_surface = SDL_EGL_CreateSurface(_this, (NativeWindowType)data->native_window);
+    __android_log_print(ANDROID_LOG_INFO, "SDL_Window", "SDL_VIDEO_OPENGL_EGL is defined, creating EGL surface...");
+    if (window->flags & SDL_WINDOW_OPENGL) {
+        data->egl_surface = SDL_EGL_CreateSurface(_this, (NativeWindowType)data->native_window);
 
-            if (data->egl_surface == EGL_NO_SURFACE) {
-                __android_log_print(ANDROID_LOG_ERROR, "SDL_Window", "❌ Failed to create EGL surface!");
-                ANativeWindow_release(data->native_window);
-                SDL_free(data);
-                retval = -1;
-                goto endfunction;
-            }
+        if (data->egl_surface == EGL_NO_SURFACE) {
+            __android_log_print(ANDROID_LOG_ERROR, "SDL_Window", "❌ Failed to create EGL surface!");
+            ANativeWindow_release(data->native_window);
+            SDL_free(data);
+            retval = -1;
+            goto endfunction;
         }
     }
 #else

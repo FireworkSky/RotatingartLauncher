@@ -26,168 +26,397 @@
 #include "SDL_androidvideo.h"
 #include "SDL_androidwindow.h"
 #include "SDL_androidgl.h"
+#include "../SDL_egl_c.h"
 #include "../SDL_sysvideo.h"
 
 #include <android/log.h>
-#include <android/native_window.h>
 #include <stdlib.h>
 #include <dlfcn.h>
-#include <EGL/egl.h>
 
-#define LOG_TAG "SDL_GL4ES_EGL"
+#define LOG_TAG "SDL_GL4ES"
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
+#define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, LOG_TAG, __VA_ARGS__)
 
-/* ===== EGL Function Pointers =====
- * 动态加载EGL函数，支持多种EGL实现（系统原生、gl4es等）
+/* EGL 类型定义 (避免静态链接 EGL 库，使用 GL4ES_ 前缀避免冲突) */
+typedef void* GL4ES_EGLDisplay;
+typedef void* GL4ES_EGLSurface;
+typedef void* GL4ES_EGLContext;
+typedef void* GL4ES_EGLConfig;
+typedef void* GL4ES_NativeWindowType;
+typedef unsigned int GL4ES_EGLBoolean;
+typedef int GL4ES_EGLint;
+
+#define GL4ES_EGL_NO_DISPLAY ((GL4ES_EGLDisplay)0)
+#define GL4ES_EGL_NO_SURFACE ((GL4ES_EGLSurface)0)
+#define GL4ES_EGL_NO_CONTEXT ((GL4ES_EGLContext)0)
+#define GL4ES_EGL_DEFAULT_DISPLAY ((GL4ES_NativeWindowType)0)
+#define EGL_FALSE 0
+#define EGL_TRUE 1
+
+/* EGL 配置属性 */
+#define EGL_SURFACE_TYPE 0x3033
+#define EGL_WINDOW_BIT 0x0004
+#define EGL_RENDERABLE_TYPE 0x3040
+#define EGL_OPENGL_ES2_BIT 0x0004
+#define EGL_RED_SIZE 0x3024
+#define EGL_GREEN_SIZE 0x3023
+#define EGL_BLUE_SIZE 0x3022
+#define EGL_ALPHA_SIZE 0x3021
+#define EGL_DEPTH_SIZE 0x3025
+#define EGL_STENCIL_SIZE 0x3026
+#define EGL_NONE 0x3038
+#define EGL_CONTEXT_CLIENT_VERSION 0x3098
+#define EGL_WIDTH 0x3057
+#define EGL_HEIGHT 0x3056
+
+/* EGL 函数类型定义 */
+typedef GL4ES_EGLDisplay (*eglGetDisplay_t)(GL4ES_NativeWindowType);
+typedef GL4ES_EGLBoolean (*eglInitialize_t)(GL4ES_EGLDisplay, GL4ES_EGLint*, GL4ES_EGLint*);
+typedef GL4ES_EGLBoolean (*eglChooseConfig_t)(GL4ES_EGLDisplay, const GL4ES_EGLint*, GL4ES_EGLConfig*, GL4ES_EGLint, GL4ES_EGLint*);
+typedef GL4ES_EGLSurface (*eglCreateWindowSurface_t)(GL4ES_EGLDisplay, GL4ES_EGLConfig, GL4ES_NativeWindowType, const GL4ES_EGLint*);
+typedef GL4ES_EGLContext (*eglCreateContext_t)(GL4ES_EGLDisplay, GL4ES_EGLConfig, GL4ES_EGLContext, const GL4ES_EGLint*);
+typedef GL4ES_EGLBoolean (*eglMakeCurrent_t)(GL4ES_EGLDisplay, GL4ES_EGLSurface, GL4ES_EGLSurface, GL4ES_EGLContext);
+typedef GL4ES_EGLBoolean (*eglSwapBuffers_t)(GL4ES_EGLDisplay, GL4ES_EGLSurface);
+typedef GL4ES_EGLBoolean (*eglDestroyContext_t)(GL4ES_EGLDisplay, GL4ES_EGLContext);
+typedef GL4ES_EGLBoolean (*eglDestroySurface_t)(GL4ES_EGLDisplay, GL4ES_EGLSurface);
+typedef GL4ES_EGLBoolean (*eglTerminate_t)(GL4ES_EGLDisplay);
+typedef GL4ES_EGLBoolean (*eglQuerySurface_t)(GL4ES_EGLDisplay, GL4ES_EGLSurface, GL4ES_EGLint, GL4ES_EGLint*);
+typedef GL4ES_EGLBoolean (*eglSwapInterval_t)(GL4ES_EGLDisplay, GL4ES_EGLint);
+typedef GL4ES_EGLint(*eglGetError_t)(void);
+typedef void* (*eglGetProcAddress_t)(const char*);
+
+/* EGL 函数指针 (动态加载) */
+static void* g_egl_handle = NULL;
+static eglGetDisplay_t p_eglGetDisplay = NULL;
+static eglInitialize_t p_eglInitialize = NULL;
+static eglChooseConfig_t p_eglChooseConfig = NULL;
+static eglCreateWindowSurface_t p_eglCreateWindowSurface = NULL;
+static eglCreateContext_t p_eglCreateContext = NULL;
+static eglMakeCurrent_t p_eglMakeCurrent = NULL;
+static eglSwapBuffers_t p_eglSwapBuffers = NULL;
+static eglDestroyContext_t p_eglDestroyContext = NULL;
+static eglDestroySurface_t p_eglDestroySurface = NULL;
+static eglTerminate_t p_eglTerminate = NULL;
+static eglQuerySurface_t p_eglQuerySurface = NULL;
+static eglSwapInterval_t p_eglSwapInterval = NULL;
+static eglGetError_t p_eglGetError = NULL;
+static eglGetProcAddress_t p_eglGetProcAddress = NULL;
+
+/*
+ * gl4es 标准接口函数类型 (来自 gl4esinit.h)
+ * - set_getprocaddress: 设置 EGL GetProcAddress 回调
+ * - set_getmainfbsize: 设置获取帧缓冲区大小的回调
+ * - gl4es_GetProcAddress: 获取被 gl4es 包装过的 GL 函数
  */
-static EGLBoolean (*eglMakeCurrent_p)(EGLDisplay dpy, EGLSurface draw, EGLSurface read, EGLContext ctx) = NULL;
-static EGLBoolean (*eglDestroyContext_p)(EGLDisplay dpy, EGLContext ctx) = NULL;
-static EGLBoolean (*eglDestroySurface_p)(EGLDisplay dpy, EGLSurface surface) = NULL;
-static EGLBoolean (*eglTerminate_p)(EGLDisplay dpy) = NULL;
-static EGLBoolean (*eglReleaseThread_p)(void) = NULL;
-static EGLContext (*eglGetCurrentContext_p)(void) = NULL;
-static EGLDisplay (*eglGetDisplay_p)(NativeDisplayType display) = NULL;
-static EGLBoolean (*eglInitialize_p)(EGLDisplay dpy, EGLint *major, EGLint *minor) = NULL;
-static EGLBoolean (*eglChooseConfig_p)(EGLDisplay dpy, const EGLint *attrib_list, EGLConfig *configs, EGLint config_size, EGLint *num_config) = NULL;
-static EGLBoolean (*eglGetConfigAttrib_p)(EGLDisplay dpy, EGLConfig config, EGLint attribute, EGLint *value) = NULL;
-static EGLBoolean (*eglBindAPI_p)(EGLenum api) = NULL;
-static EGLSurface (*eglCreatePbufferSurface_p)(EGLDisplay dpy, EGLConfig config, const EGLint *attrib_list) = NULL;
-static EGLSurface (*eglCreateWindowSurface_p)(EGLDisplay dpy, EGLConfig config, NativeWindowType window, const EGLint *attrib_list) = NULL;
-static EGLBoolean (*eglSwapBuffers_p)(EGLDisplay dpy, EGLSurface draw) = NULL;
-static EGLint (*eglGetError_p)(void) = NULL;
-static EGLContext (*eglCreateContext_p)(EGLDisplay dpy, EGLConfig config, EGLContext share_list, const EGLint *attrib_list) = NULL;
-static EGLBoolean (*eglSwapInterval_p)(EGLDisplay dpy, EGLint interval) = NULL;
-static EGLSurface (*eglGetCurrentSurface_p)(EGLint readdraw) = NULL;
-static EGLBoolean (*eglQuerySurface_p)(EGLDisplay display, EGLSurface surface, EGLint attribute, EGLint *value) = NULL;
-static __eglMustCastToProperFunctionPointerType (*eglGetProcAddress_p)(const char *procname) = NULL;
+typedef void (*set_getprocaddress_t)(void *(*new_proc_address)(const char *));
+typedef void (*set_getmainfbsize_t)(void (*new_getMainFBSize)(int* width, int* height));
+typedef void* (*gl4es_GetProcAddress_t)(const char *name);
 
-/* ===== EGL Context Management =====
- * 存储EGL上下文、显示和配置信息
- */
-typedef struct {
-    EGLContext context;
-    EGLSurface surface;
-    EGLConfig config;
-    EGLint format;
-    ANativeWindow* native_window;
-} SDL_EGLContext;
+/* gl4es 库句柄和函数指针 */
+static void* g_gl4es_handle = NULL;
+static set_getprocaddress_t p_set_getprocaddress = NULL;
+static set_getmainfbsize_t p_set_getmainfbsize = NULL;
+static gl4es_GetProcAddress_t p_gl4es_GetProcAddress = NULL;
+static int g_gl4es_initialized = 0;
 
-static EGLDisplay g_egl_display = EGL_NO_DISPLAY;
-static SDL_EGLContext* g_current_context = NULL;
-static void* g_egl_library = NULL;
+/* EGL context 状态 */
+static GL4ES_EGLDisplay g_egl_display = NULL;
+static GL4ES_EGLContext g_egl_context = NULL;
+static GL4ES_EGLSurface g_egl_surface = NULL;
+static GL4ES_EGLConfig g_egl_config = NULL;
+static SDL_Window* g_current_window = NULL;
 
-/* ===== EGL Loader =====
- * 动态加载EGL库和函数指针
- * 支持从环境变量 FNA3D_OPENGL_LIBRARY 指定EGL库路径
- */
+/* 当前窗口尺寸 (用于 gl4es 回调) */
+static int g_window_width = 0;
+static int g_window_height = 0;
+
+/* 动态加载 EGL 库 */
 static int load_egl_library(void)
 {
-    const char* egl_lib_path = getenv("FNA3D_OPENGL_LIBRARY");
-    if (!egl_lib_path || egl_lib_path[0] == '\0') {
-        egl_lib_path = "libEGL.so";
+    if (g_egl_handle != NULL) {
+        return 0; /* Already loaded */
     }
 
-    LOGI("Loading EGL library: %s", egl_lib_path);
-    g_egl_library = dlopen(egl_lib_path, RTLD_LOCAL | RTLD_LAZY);
+    LOGI("🔵 Loading libEGL.so dynamically...");
 
-    if (!g_egl_library) {
-        LOGE("Failed to load EGL library: %s", dlerror());
+    g_egl_handle = dlopen("libEGL.so", RTLD_NOW | RTLD_GLOBAL);
+    if (!g_egl_handle) {
+        LOGE("❌ Failed to load libEGL.so: %s", dlerror());
         return -1;
     }
 
-    /* 加载eglGetProcAddress，其他函数通过它获取 */
-    eglGetProcAddress_p = dlsym(g_egl_library, "eglGetProcAddress");
-    if (!eglGetProcAddress_p) {
-        LOGE("Failed to load eglGetProcAddress: %s", dlerror());
-        dlclose(g_egl_library);
-        g_egl_library = NULL;
+    LOGI("✅ libEGL.so loaded at %p", g_egl_handle);
+
+    /* 加载 EGL 函数 */
+    #define LOAD_EGL(name) p_##name = (name##_t)dlsym(g_egl_handle, #name); \
+        if (!p_##name) LOGE("   Warning: " #name " not found");
+
+    LOAD_EGL(eglGetDisplay);
+    LOAD_EGL(eglInitialize);
+    LOAD_EGL(eglChooseConfig);
+    LOAD_EGL(eglCreateWindowSurface);
+    LOAD_EGL(eglCreateContext);
+    LOAD_EGL(eglMakeCurrent);
+    LOAD_EGL(eglSwapBuffers);
+    LOAD_EGL(eglDestroyContext);
+    LOAD_EGL(eglDestroySurface);
+    LOAD_EGL(eglTerminate);
+    LOAD_EGL(eglQuerySurface);
+    LOAD_EGL(eglSwapInterval);
+    LOAD_EGL(eglGetError);
+    LOAD_EGL(eglGetProcAddress);
+
+    #undef LOAD_EGL
+
+    if (!p_eglGetDisplay || !p_eglInitialize || !p_eglCreateContext || !p_eglMakeCurrent) {
+        LOGE("❌ Failed to load required EGL functions");
+        dlclose(g_egl_handle);
+        g_egl_handle = NULL;
         return -1;
     }
 
-    /* 通过eglGetProcAddress加载所有EGL函数 */
-    #define LOAD_EGL_FUNC(name) \
-        name##_p = (void*)eglGetProcAddress_p(#name); \
-        if (!name##_p) { \
-            LOGE("Failed to load " #name); \
-            dlclose(g_egl_library); \
-            g_egl_library = NULL; \
-            return -1; \
+    LOGI("✅ All EGL functions loaded successfully");
+    return 0;
+}
+
+/* gl4es 回调：获取帧缓冲区大小 */
+static void gl4es_getMainFBSize(int* width, int* height)
+{
+    if (width) *width = g_window_width;
+    if (height) *height = g_window_height;
+    LOGD("gl4es_getMainFBSize: %dx%d", g_window_width, g_window_height);
+}
+
+/* gl4es 回调：获取 EGL 函数地址 */
+static void* gl4es_eglGetProcAddress(const char* name)
+{
+    void* proc = NULL;
+
+    if (p_eglGetProcAddress) {
+        proc = p_eglGetProcAddress(name);
+    }
+
+    if (!proc) {
+        /* 尝试从 libGLESv2.so 获取 */
+        static void* gles_handle = NULL;
+        if (!gles_handle) {
+            gles_handle = dlopen("libGLESv2.so", RTLD_NOW | RTLD_GLOBAL);
         }
+        if (gles_handle) {
+            proc = dlsym(gles_handle, name);
+        }
+    }
+    return proc;
+}
 
-    LOAD_EGL_FUNC(eglBindAPI)
-    LOAD_EGL_FUNC(eglChooseConfig)
-    LOAD_EGL_FUNC(eglCreateContext)
-    LOAD_EGL_FUNC(eglCreatePbufferSurface)
-    LOAD_EGL_FUNC(eglCreateWindowSurface)
-    LOAD_EGL_FUNC(eglDestroyContext)
-    LOAD_EGL_FUNC(eglDestroySurface)
-    LOAD_EGL_FUNC(eglGetConfigAttrib)
-    LOAD_EGL_FUNC(eglGetCurrentContext)
-    LOAD_EGL_FUNC(eglGetDisplay)
-    LOAD_EGL_FUNC(eglGetError)
-    LOAD_EGL_FUNC(eglInitialize)
-    LOAD_EGL_FUNC(eglMakeCurrent)
-    LOAD_EGL_FUNC(eglSwapBuffers)
-    LOAD_EGL_FUNC(eglReleaseThread)
-    LOAD_EGL_FUNC(eglSwapInterval)
-    LOAD_EGL_FUNC(eglTerminate)
-    LOAD_EGL_FUNC(eglGetCurrentSurface)
-    LOAD_EGL_FUNC(eglQuerySurface)
+/* 动态加载 gl4es 库并获取函数指针 */
+static int load_gl4es_library(void)
+{
+    if (g_gl4es_handle != NULL) {
+        return 0; /* Already loaded */
+    }
 
-    #undef LOAD_EGL_FUNC
+    LOGI("🔵 Loading libgl4es.so dynamically...");
 
-    LOGI("✅ EGL library loaded successfully");
+    g_gl4es_handle = dlopen("libgl4es.so", RTLD_NOW | RTLD_GLOBAL);
+    if (!g_gl4es_handle) {
+        LOGE("❌ Failed to load libgl4es.so: %s", dlerror());
+        return -1;
+    }
+
+    LOGI("✅ libgl4es.so loaded at %p", g_gl4es_handle);
+
+    /* 加载标准 gl4es 接口函数 */
+    p_set_getprocaddress = (set_getprocaddress_t)dlsym(g_gl4es_handle, "set_getprocaddress");
+    p_set_getmainfbsize = (set_getmainfbsize_t)dlsym(g_gl4es_handle, "set_getmainfbsize");
+    p_gl4es_GetProcAddress = (gl4es_GetProcAddress_t)dlsym(g_gl4es_handle, "gl4es_GetProcAddress");
+
+    if (!p_gl4es_GetProcAddress) {
+        LOGE("❌ Failed to load gl4es_GetProcAddress");
+        dlclose(g_gl4es_handle);
+        g_gl4es_handle = NULL;
+        return -1;
+    }
+
+    LOGI("✅ gl4es functions loaded:");
+    LOGI("   set_getprocaddress: %p", (void*)p_set_getprocaddress);
+    LOGI("   set_getmainfbsize: %p", (void*)p_set_getmainfbsize);
+    LOGI("   gl4es_GetProcAddress: %p", (void*)p_gl4es_GetProcAddress);
+
+    return 0;
+}
+
+/* 初始化 gl4es */
+static int initialize_gl4es(int width, int height)
+{
+    if (g_gl4es_initialized) {
+        return 0;
+    }
+
+    LOGI("🎯 Initializing gl4es with size %dx%d", width, height);
+
+    g_window_width = width;
+    g_window_height = height;
+
+    /* 设置 gl4es 回调 */
+    if (p_set_getprocaddress) {
+        LOGI("   Setting GetProcAddress callback");
+        p_set_getprocaddress(gl4es_eglGetProcAddress);
+    }
+
+    if (p_set_getmainfbsize) {
+        LOGI("   Setting GetMainFBSize callback");
+        p_set_getmainfbsize(gl4es_getMainFBSize);
+    }
+
+    g_gl4es_initialized = 1;
+    LOGI("✅ gl4es initialized successfully");
+
+    return 0;
+}
+
+/* 创建 EGL context */
+static int create_egl_context(SDL_VideoDevice* _this, SDL_Window* window)
+{
+    SDL_WindowData* data = (SDL_WindowData*)window->driverdata;
+    if (!data || !data->native_window) {
+        LOGE("❌ No native window");
+        return -1;
+    }
+
+    /* 先加载 EGL 库 */
+    if (load_egl_library() != 0) {
+        LOGE("❌ Failed to load EGL library");
+        return -1;
+    }
+
+    LOGI("🔵 Creating EGL context for gl4es...");
+
+    /* 获取 EGL display */
+    g_egl_display = p_eglGetDisplay(GL4ES_EGL_DEFAULT_DISPLAY);
+    if (g_egl_display == GL4ES_EGL_NO_DISPLAY) {
+        LOGE("❌ eglGetDisplay failed");
+        return -1;
+    }
+
+    /* 初始化 EGL */
+    GL4ES_EGLint major, minor;
+    if (!p_eglInitialize(g_egl_display, &major, &minor)) {
+        LOGE("❌ eglInitialize failed");
+        return -1;
+    }
+    LOGI("   EGL version: %d.%d", major, minor);
+
+    /* 选择 EGL 配置 - 请求 OpenGL ES 2.0 或 3.0 */
+    GL4ES_EGLint config_attribs[] = {
+        EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
+        EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
+        EGL_RED_SIZE, 8,
+        EGL_GREEN_SIZE, 8,
+        EGL_BLUE_SIZE, 8,
+        EGL_ALPHA_SIZE, 8,
+        EGL_DEPTH_SIZE, _this->gl_config.depth_size > 0 ? _this->gl_config.depth_size : 24,
+        EGL_STENCIL_SIZE, _this->gl_config.stencil_size > 0 ? _this->gl_config.stencil_size : 8,
+        EGL_NONE
+    };
+
+    GL4ES_EGLint num_configs;
+    if (!p_eglChooseConfig(g_egl_display, config_attribs, &g_egl_config, 1, &num_configs) || num_configs == 0) {
+        LOGE("❌ eglChooseConfig failed");
+        return -1;
+    }
+    LOGI("   Found %d EGL configs", num_configs);
+
+    /* 创建 EGL surface */
+    g_egl_surface = p_eglCreateWindowSurface(g_egl_display, g_egl_config, (GL4ES_NativeWindowType)data->native_window, NULL);
+    if (g_egl_surface == GL4ES_EGL_NO_SURFACE) {
+        LOGE("❌ eglCreateWindowSurface failed: 0x%x", p_eglGetError ? p_eglGetError() : 0);
+        return -1;
+    }
+    LOGI("   EGL surface created");
+
+    /* 创建 OpenGL ES 2.0 context (gl4es 需要 ES2) */
+    GL4ES_EGLint context_attribs[] = {
+        EGL_CONTEXT_CLIENT_VERSION, 2,
+        EGL_NONE
+    };
+
+    g_egl_context = p_eglCreateContext(g_egl_display, g_egl_config, GL4ES_EGL_NO_CONTEXT, context_attribs);
+    if (g_egl_context == GL4ES_EGL_NO_CONTEXT) {
+        LOGE("❌ eglCreateContext failed: 0x%x", p_eglGetError ? p_eglGetError() : 0);
+        p_eglDestroySurface(g_egl_display, g_egl_surface);
+        g_egl_surface = GL4ES_EGL_NO_SURFACE;
+        return -1;
+    }
+    LOGI("   EGL context created");
+
+    /* Make context current */
+    if (!p_eglMakeCurrent(g_egl_display, g_egl_surface, g_egl_surface, g_egl_context)) {
+        LOGE("❌ eglMakeCurrent failed: 0x%x", p_eglGetError ? p_eglGetError() : 0);
+        p_eglDestroyContext(g_egl_display, g_egl_context);
+        p_eglDestroySurface(g_egl_display, g_egl_surface);
+        g_egl_context = GL4ES_EGL_NO_CONTEXT;
+        g_egl_surface = GL4ES_EGL_NO_SURFACE;
+        return -1;
+    }
+
+    LOGI("✅ EGL context is current");
+
+    /* 获取窗口尺寸 */
+    GL4ES_EGLint width = 0, height = 0;
+    if (p_eglQuerySurface) {
+        p_eglQuerySurface(g_egl_display, g_egl_surface, EGL_WIDTH, &width);
+        p_eglQuerySurface(g_egl_display, g_egl_surface, EGL_HEIGHT, &height);
+    }
+    LOGI("   Surface size: %dx%d", width, height);
+
+    g_window_width = width;
+    g_window_height = height;
+
     return 0;
 }
 
 int
 Android_GL4ES_LoadLibrary(_THIS, const char* path)
 {
-    LOGI("🔵 Android_GL4ES_LoadLibrary called (EGL backend)");
-    LOGI("   path=%s, _this=%p", path ? path : "(null)", _this);
+    LOGI("🔵 Android_GL4ES_LoadLibrary called");
+    LOGI("   path=%s, _this=%p", path ? path : "(null)", (void*)_this);
 
-    /* 加载EGL函数 */
-    if (load_egl_library() < 0) {
-        SDL_SetError("Failed to load EGL library");
+    if (load_gl4es_library() != 0) {
+        SDL_SetError("Failed to load gl4es library");
         return -1;
     }
 
-    /* 初始化EGL Display */
-    g_egl_display = eglGetDisplay_p(EGL_DEFAULT_DISPLAY);
-    if (g_egl_display == EGL_NO_DISPLAY) {
-        LOGE("eglGetDisplay(EGL_DEFAULT_DISPLAY) returned EGL_NO_DISPLAY");
-        SDL_SetError("eglGetDisplay failed");
-        return -1;
-    }
-
-    if (eglInitialize_p(g_egl_display, NULL, NULL) != EGL_TRUE) {
-        LOGE("eglInitialize() failed: 0x%04x", eglGetError_p());
-        SDL_SetError("eglInitialize failed");
-        return -1;
-    }
-
-    LOGI("✅ EGL initialized successfully (display=%p)", g_egl_display);
+    LOGI("✅ Android_GL4ES_LoadLibrary returning 0 (success)");
     return 0;
 }
 
 void*
 Android_GL4ES_GetProcAddress(_THIS, const char* proc)
 {
-    if (!proc) {
-        LOGE("GetProcAddress: proc is NULL");
+    void* func = NULL;
+
+    if (!p_gl4es_GetProcAddress) {
+        LOGE("❌ gl4es not loaded, cannot get proc address for '%s'", proc);
         return NULL;
     }
 
-    void* func = NULL;
-    if (eglGetProcAddress_p) {
-        func = (void*)eglGetProcAddress_p(proc);
-    }
+    /* 通过 gl4es 获取函数，gl4es 会返回包装过的 GL 函数 */
+    func = p_gl4es_GetProcAddress(proc);
 
-    if (!func) {
-        /* OpenGL 扩展函数返回 NULL 是正常的（不是所有驱动都支持所有扩展）
-         * 不要设置 SDL_SetError，这样游戏可以正确处理扩展不可用的情况 */
-        LOGI("GetProcAddress: '%s' not found (extension may not be available)", proc);
+    if (func) {
+        LOGD("   ✅ gl4es: '%s' -> %p", proc, func);
+    } else {
+        /* 如果 gl4es 没有，尝试从 EGL 获取 */
+        if (p_eglGetProcAddress) {
+            func = p_eglGetProcAddress(proc);
+        }
+        if (func) {
+            LOGD("   ✅ EGL: '%s' -> %p", proc, func);
+        } else {
+            LOGD("   ❌ Not found: '%s'", proc);
+        }
     }
 
     return func;
@@ -198,41 +427,27 @@ Android_GL4ES_UnloadLibrary(_THIS)
 {
     LOGI("Android_GL4ES_UnloadLibrary called");
 
-    if (g_egl_display != EGL_NO_DISPLAY) {
-        if (eglTerminate_p) {
-            eglTerminate_p(g_egl_display);
+    /* 清理 EGL */
+    if (g_egl_display != GL4ES_EGL_NO_DISPLAY && p_eglMakeCurrent) {
+        p_eglMakeCurrent(g_egl_display, GL4ES_EGL_NO_SURFACE, GL4ES_EGL_NO_SURFACE, GL4ES_EGL_NO_CONTEXT);
+        if (g_egl_context != GL4ES_EGL_NO_CONTEXT && p_eglDestroyContext) {
+            p_eglDestroyContext(g_egl_display, g_egl_context);
+            g_egl_context = GL4ES_EGL_NO_CONTEXT;
         }
-        g_egl_display = EGL_NO_DISPLAY;
+        if (g_egl_surface != GL4ES_EGL_NO_SURFACE && p_eglDestroySurface) {
+            p_eglDestroySurface(g_egl_display, g_egl_surface);
+            g_egl_surface = GL4ES_EGL_NO_SURFACE;
+        }
+        if (p_eglTerminate) {
+            p_eglTerminate(g_egl_display);
+        }
+        g_egl_display = GL4ES_EGL_NO_DISPLAY;
     }
 
-    if (g_egl_library) {
-        dlclose(g_egl_library);
-        g_egl_library = NULL;
-    }
+    g_gl4es_initialized = 0;
+    g_current_window = NULL;
 
-    /* 清空所有函数指针 */
-    eglMakeCurrent_p = NULL;
-    eglDestroyContext_p = NULL;
-    eglDestroySurface_p = NULL;
-    eglTerminate_p = NULL;
-    eglReleaseThread_p = NULL;
-    eglGetCurrentContext_p = NULL;
-    eglGetDisplay_p = NULL;
-    eglInitialize_p = NULL;
-    eglChooseConfig_p = NULL;
-    eglGetConfigAttrib_p = NULL;
-    eglBindAPI_p = NULL;
-    eglCreatePbufferSurface_p = NULL;
-    eglCreateWindowSurface_p = NULL;
-    eglSwapBuffers_p = NULL;
-    eglGetError_p = NULL;
-    eglCreateContext_p = NULL;
-    eglSwapInterval_p = NULL;
-    eglGetCurrentSurface_p = NULL;
-    eglQuerySurface_p = NULL;
-    eglGetProcAddress_p = NULL;
-
-    LOGI("✅ EGL library unloaded");
+    LOGI("✅ gl4es unloaded");
 }
 
 SDL_GLContext
@@ -240,176 +455,65 @@ Android_GL4ES_CreateContext(_THIS, SDL_Window* window)
 {
     LOGI("🎯 Android_GL4ES_CreateContext called for window '%s'", window ? window->title : "NULL");
 
-    SDL_WindowData* data = (SDL_WindowData*)window->driverdata;
-    if (!data || !data->native_window) {
-        LOGE("Window has no driver data or native window");
-        SDL_SetError("Window has no native window");
+    if (!window) {
+        SDL_SetError("Window is NULL");
         return NULL;
     }
 
-    /* 分配EGL上下文结构 */
-    SDL_EGLContext* egl_ctx = (SDL_EGLContext*)SDL_calloc(1, sizeof(SDL_EGLContext));
-    if (!egl_ctx) {
-        SDL_SetError("Out of memory");
+    /* 创建 EGL context */
+    if (create_egl_context(_this, window) != 0) {
+        SDL_SetError("Failed to create EGL context for gl4es");
         return NULL;
     }
 
-    /* EGL配置属性 */
-    const EGLint egl_attribs[] = {
-        EGL_BLUE_SIZE, 8,
-        EGL_GREEN_SIZE, 8,
-        EGL_RED_SIZE, 8,
-        EGL_ALPHA_SIZE, 8,
-        EGL_DEPTH_SIZE, _this->gl_config.depth_size,
-        EGL_STENCIL_SIZE, _this->gl_config.stencil_size,
-        EGL_SURFACE_TYPE, EGL_WINDOW_BIT | EGL_PBUFFER_BIT,
-        EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
-        EGL_NONE
-    };
-
-    EGLint num_configs = 0;
-    if (eglChooseConfig_p(g_egl_display, egl_attribs, NULL, 0, &num_configs) != EGL_TRUE) {
-        LOGE("eglChooseConfig failed: 0x%04x", eglGetError_p());
-        SDL_free(egl_ctx);
-        SDL_SetError("eglChooseConfig failed");
+    /* 初始化 gl4es */
+    if (initialize_gl4es(g_window_width, g_window_height) != 0) {
+        SDL_SetError("Failed to initialize gl4es");
         return NULL;
     }
 
-    if (num_configs == 0) {
-        LOGE("No matching EGL config found");
-        SDL_free(egl_ctx);
-        SDL_SetError("No matching EGL config");
-        return NULL;
-    }
+    g_current_window = window;
 
-    /* 选择第一个匹配的配置 */
-    eglChooseConfig_p(g_egl_display, egl_attribs, &egl_ctx->config, 1, &num_configs);
-    eglGetConfigAttrib_p(g_egl_display, egl_ctx->config, EGL_NATIVE_VISUAL_ID, &egl_ctx->format);
-
-    /* 检查环境变量决定绑定OpenGL ES还是Desktop OpenGL */
-    const char* renderer = getenv("FNA3D_OPENGL_DRIVER");
-    EGLBoolean bind_result;
-
-    if (renderer && strncmp(renderer, "desktop", 7) == 0) {
-        LOGI("Binding to Desktop OpenGL API");
-        bind_result = eglBindAPI_p(EGL_OPENGL_API);
-    } else {
-        LOGI("Binding to OpenGL ES API");
-        bind_result = eglBindAPI_p(EGL_OPENGL_ES_API);
-    }
-
-    if (!bind_result) {
-        LOGE("eglBindAPI failed: 0x%04x", eglGetError_p());
-    }
-
-    /* 从环境变量获取OpenGL ES版本 */
-    const char* libgl_es_str = getenv("LIBGL_ES");
-    int libgl_es = 2; /* 默认ES 2.0 */
-    if (libgl_es_str) {
-        libgl_es = atoi(libgl_es_str);
-        if (libgl_es < 1 || libgl_es > 3) {
-            libgl_es = 2;
-        }
-    }
-    LOGI("Creating OpenGL ES %d context", libgl_es);
-
-    const EGLint context_attribs[] = {
-        EGL_CONTEXT_CLIENT_VERSION, libgl_es,
-        EGL_NONE
-    };
-
-    egl_ctx->context = eglCreateContext_p(g_egl_display, egl_ctx->config,
-                                          EGL_NO_CONTEXT, context_attribs);
-
-    if (egl_ctx->context == EGL_NO_CONTEXT) {
-        LOGE("eglCreateContext failed: 0x%04x", eglGetError_p());
-        SDL_free(egl_ctx);
-        SDL_SetError("eglCreateContext failed");
-        return NULL;
-    }
-
-    /* 创建窗口表面 */
-    ANativeWindow_acquire(data->native_window);
-    ANativeWindow_setBuffersGeometry(data->native_window, 0, 0, egl_ctx->format);
-
-    egl_ctx->surface = eglCreateWindowSurface_p(g_egl_display, egl_ctx->config,
-                                                 data->native_window, NULL);
-    if (egl_ctx->surface == EGL_NO_SURFACE) {
-        LOGE("eglCreateWindowSurface failed: 0x%04x", eglGetError_p());
-        eglDestroyContext_p(g_egl_display, egl_ctx->context);
-        ANativeWindow_release(data->native_window);
-        SDL_free(egl_ctx);
-        SDL_SetError("eglCreateWindowSurface failed");
-        return NULL;
-    }
-
-    egl_ctx->native_window = data->native_window;
-
-    /* 激活上下文 */
-    if (eglMakeCurrent_p(g_egl_display, egl_ctx->surface, egl_ctx->surface,
-                         egl_ctx->context) != EGL_TRUE) {
-        LOGE("eglMakeCurrent failed: 0x%04x", eglGetError_p());
-        eglDestroySurface_p(g_egl_display, egl_ctx->surface);
-        eglDestroyContext_p(g_egl_display, egl_ctx->context);
-        ANativeWindow_release(data->native_window);
-        SDL_free(egl_ctx);
-        SDL_SetError("eglMakeCurrent failed");
-        return NULL;
-    }
-
-    g_current_context = egl_ctx;
-
-    LOGI("✅ EGL context created successfully (context=%p, surface=%p)",
-         egl_ctx->context, egl_ctx->surface);
-
-    return (SDL_GLContext)egl_ctx;
+    /* 返回 EGL context 作为 SDL_GLContext */
+    LOGI("✅ gl4es context created successfully");
+    return (SDL_GLContext)g_egl_context;
 }
 
 int
 Android_GL4ES_MakeCurrent(_THIS, SDL_Window* window, SDL_GLContext context)
 {
-    SDL_EGLContext* egl_ctx = (SDL_EGLContext*)context;
-
     if (!window || !context) {
-        /* 解绑当前上下文 */
-        if (eglMakeCurrent_p(g_egl_display, EGL_NO_SURFACE, EGL_NO_SURFACE,
-                             EGL_NO_CONTEXT) == EGL_TRUE) {
-            g_current_context = NULL;
-            LOGI("Unbound current context");
-            return 0;
-        } else {
-            LOGE("Failed to unbind context: 0x%04x", eglGetError_p());
-            return -1;
+        /* Unbind context */
+        if (g_egl_display != GL4ES_EGL_NO_DISPLAY && p_eglMakeCurrent) {
+            p_eglMakeCurrent(g_egl_display, GL4ES_EGL_NO_SURFACE, GL4ES_EGL_NO_SURFACE, GL4ES_EGL_NO_CONTEXT);
         }
+        return 0;
     }
 
-    if (eglMakeCurrent_p(g_egl_display, egl_ctx->surface, egl_ctx->surface,
-                         egl_ctx->context) == EGL_TRUE) {
-        g_current_context = egl_ctx;
-        return 0;
-    } else {
-        LOGE("eglMakeCurrent failed: 0x%04x", eglGetError_p());
-        SDL_SetError("eglMakeCurrent failed");
+    if (g_egl_display == GL4ES_EGL_NO_DISPLAY || g_egl_surface == GL4ES_EGL_NO_SURFACE) {
+        LOGE("❌ EGL not initialized");
         return -1;
     }
+
+    if (!p_eglMakeCurrent || !p_eglMakeCurrent(g_egl_display, g_egl_surface, g_egl_surface, (GL4ES_EGLContext)context)) {
+        LOGE("❌ eglMakeCurrent failed: 0x%x", p_eglGetError ? p_eglGetError() : 0);
+        return -1;
+    }
+
+    g_current_window = window;
+    return 0;
 }
 
 int
 Android_GL4ES_SwapWindow(_THIS, SDL_Window* window)
 {
-    if (!g_current_context || !g_current_context->surface) {
-        LOGE("No current EGL context or surface");
+    if (g_egl_display == GL4ES_EGL_NO_DISPLAY || g_egl_surface == GL4ES_EGL_NO_SURFACE) {
+        LOGE("❌ Cannot swap: EGL not initialized");
         return -1;
     }
 
-    if (eglSwapBuffers_p(g_egl_display, g_current_context->surface) != EGL_TRUE) {
-        EGLint error = eglGetError_p();
-        if (error == EGL_BAD_SURFACE) {
-            LOGE("eglSwapBuffers: Bad surface, recreating...");
-            /* 表面可能已失效，尝试重新创建 */
-            /* 这里可以添加表面重新创建逻辑 */
-        }
-        LOGE("eglSwapBuffers failed: 0x%04x", error);
+    if (!p_eglSwapBuffers || !p_eglSwapBuffers(g_egl_display, g_egl_surface)) {
+        LOGE("❌ eglSwapBuffers failed: 0x%x", p_eglGetError ? p_eglGetError() : 0);
         return -1;
     }
 
@@ -419,60 +523,38 @@ Android_GL4ES_SwapWindow(_THIS, SDL_Window* window)
 void
 Android_GL4ES_DeleteContext(_THIS, SDL_GLContext context)
 {
-    SDL_EGLContext* egl_ctx = (SDL_EGLContext*)context;
+    LOGI("Android_GL4ES_DeleteContext called with context=%p", context);
 
-    if (!egl_ctx) {
-        LOGI("DeleteContext: context is NULL");
-        return;
+    if (g_egl_display != GL4ES_EGL_NO_DISPLAY && p_eglMakeCurrent) {
+        p_eglMakeCurrent(g_egl_display, GL4ES_EGL_NO_SURFACE, GL4ES_EGL_NO_SURFACE, GL4ES_EGL_NO_CONTEXT);
+
+        if (context && (GL4ES_EGLContext)context == g_egl_context && p_eglDestroyContext) {
+            p_eglDestroyContext(g_egl_display, g_egl_context);
+            g_egl_context = GL4ES_EGL_NO_CONTEXT;
+        }
+
+        if (g_egl_surface != GL4ES_EGL_NO_SURFACE && p_eglDestroySurface) {
+            p_eglDestroySurface(g_egl_display, g_egl_surface);
+            g_egl_surface = GL4ES_EGL_NO_SURFACE;
+        }
     }
 
-    LOGI("Deleting EGL context %p", egl_ctx);
+    g_current_window = NULL;
+    g_gl4es_initialized = 0;
 
-    /* 如果是当前上下文，先解绑 */
-    if (g_current_context == egl_ctx) {
-        eglMakeCurrent_p(g_egl_display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
-        g_current_context = NULL;
-    }
-
-    /* 销毁表面 */
-    if (egl_ctx->surface != EGL_NO_SURFACE) {
-        eglDestroySurface_p(g_egl_display, egl_ctx->surface);
-    }
-
-    /* 销毁上下文 */
-    if (egl_ctx->context != EGL_NO_CONTEXT) {
-        eglDestroyContext_p(g_egl_display, egl_ctx->context);
-    }
-
-    /* 释放Native Window */
-    if (egl_ctx->native_window) {
-        ANativeWindow_release(egl_ctx->native_window);
-    }
-
-    SDL_free(egl_ctx);
-    LOGI("✅ EGL context deleted");
+    LOGI("✅ gl4es context deleted");
 }
 
 void
 Android_GL4ES_GetDrawableSize(_THIS, SDL_Window* window, int* w, int* h)
 {
-    if (!g_current_context || !g_current_context->surface) {
-        /* 没有当前上下文，返回窗口大小 */
-        if (w) *w = window->w;
-        if (h) *h = window->h;
-        return;
-    }
-
-    /* 从EGL Surface查询实际尺寸（最可靠的方式） */
-    EGLint surface_width = 0, surface_height = 0;
-    if (eglQuerySurface_p(g_egl_display, g_current_context->surface,
-                          EGL_WIDTH, &surface_width) == EGL_TRUE &&
-        eglQuerySurface_p(g_egl_display, g_current_context->surface,
-                          EGL_HEIGHT, &surface_height) == EGL_TRUE) {
-        if (w) *w = surface_width;
-        if (h) *h = surface_height;
-    } else {
-        /* 查询失败，回退到窗口大小 */
+    if (g_egl_display != GL4ES_EGL_NO_DISPLAY && g_egl_surface != GL4ES_EGL_NO_SURFACE && p_eglQuerySurface) {
+        GL4ES_EGLint width = 0, height = 0;
+        p_eglQuerySurface(g_egl_display, g_egl_surface, EGL_WIDTH, &width);
+        p_eglQuerySurface(g_egl_display, g_egl_surface, EGL_HEIGHT, &height);
+        if (w) *w = width;
+        if (h) *h = height;
+    } else if (window) {
         if (w) *w = window->w;
         if (h) *h = window->h;
     }
@@ -481,29 +563,22 @@ Android_GL4ES_GetDrawableSize(_THIS, SDL_Window* window, int* w, int* h)
 int
 Android_GL4ES_SetSwapInterval(_THIS, int interval)
 {
-    LOGI("SetSwapInterval: %d", interval);
+    LOGI("Android_GL4ES_SetSwapInterval: %d", interval);
 
-    /* 检查是否强制VSync（环境变量） */
-    const char* force_vsync = getenv("FORCE_VSYNC");
-    if (force_vsync && strcmp(force_vsync, "true") == 0) {
-        interval = 1;
-        LOGI("FORCE_VSYNC enabled, using interval=1");
+    if (g_egl_display != GL4ES_EGL_NO_DISPLAY && p_eglSwapInterval) {
+        if (p_eglSwapInterval(g_egl_display, interval)) {
+            return 0;
+        }
     }
 
-    if (eglSwapInterval_p(g_egl_display, interval) == EGL_TRUE) {
-        return 0;
-    } else {
-        LOGE("eglSwapInterval failed: 0x%04x", eglGetError_p());
-        return -1;
-    }
+    return -1;
 }
 
 int
 Android_GL4ES_GetSwapInterval(_THIS)
 {
-    /* EGL没有标准的查询SwapInterval API，返回默认值 */
+    /* EGL doesn't provide a way to query swap interval, return default */
     return 1;
 }
 
 #endif /* SDL_VIDEO_DRIVER_ANDROID && SDL_VIDEO_OPENGL && SDL_VIDEO_OPENGL_GL4ES */
-

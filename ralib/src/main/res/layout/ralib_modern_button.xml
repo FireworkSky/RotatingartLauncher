@@ -9,8 +9,8 @@
         android:id="@+id/buttonContainer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:cardCornerRadius="16dp"
-        app:cardElevation="8dp"
+        app:cardCornerRadius="12dp"
+        app:cardElevation="3dp"
         app:cardBackgroundColor="#4CAF50"
         android:clickable="true"
         android:focusable="true"
@@ -21,18 +21,19 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center"
-            android:paddingStart="24dp"
-            android:paddingEnd="24dp"
-            android:paddingTop="18dp"
-            android:paddingBottom="18dp">
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:paddingTop="10dp"
+            android:paddingBottom="10dp"
+            android:minHeight="42dp">
 
             <ImageView
                 android:id="@+id/buttonIcon"
-                android:layout_width="28dp"
-                android:layout_height="28dp"
+                android:layout_width="22dp"
+                android:layout_height="22dp"
                 android:tint="#FFFFFF"
                 android:visibility="gone"
-                android:layout_marginEnd="12dp" />
+                android:layout_marginEnd="8dp" />
 
             <TextView
                 android:id="@+id/buttonText"
@@ -40,8 +41,10 @@
                 android:layout_height="wrap_content"
                 android:text="按钮"
                 android:textColor="#FFFFFF"
-                android:textSize="18sp"
-                android:textStyle="bold" />
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:maxLines="1"
+                android:ellipsize="end" />
 
         </LinearLayout>
 

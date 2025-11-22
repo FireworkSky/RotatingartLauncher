@@ -4,7 +4,6 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
@@ -205,7 +204,32 @@ public class SettingsFragment extends Fragment {
                 dialog.show(getParentFragmentManager(), "theme_dialog");
             });
         }
-        
+
+        // 主题颜色设置
+        MaterialCardView themeColorCard = rootView.findViewById(R.id.themeColorCard);
+        View colorPreview = rootView.findViewById(R.id.colorPreview);
+
+        if (themeColorCard != null && colorPreview != null) {
+            // 更新颜色预览
+            int currentColor = settingsManager.getThemeColor();
+            colorPreview.setBackgroundColor(currentColor);
+
+            themeColorCard.setOnClickListener(v -> {
+                com.app.ralib.dialog.ColorPickerDialog dialog =
+                    com.app.ralib.dialog.ColorPickerDialog.newInstance(currentColor);
+
+                dialog.setOnColorSelectedListener(color -> {
+                    // 用户点击确定后保存新颜色
+                    settingsManager.setThemeColor(color);
+
+                    // 更新预览显示
+                    colorPreview.setBackgroundColor(color);
+                });
+
+                dialog.show(getParentFragmentManager(), "color_picker_dialog");
+            });
+        }
+
         // 语言设置
         MaterialCardView languageCard = rootView.findViewById(R.id.languageCard);
         TextView tvLanguageValue = rootView.findViewById(R.id.tvLanguageValue);
@@ -446,52 +470,134 @@ public class SettingsFragment extends Fragment {
         // 获取设置管理器
         SettingsManager settingsManager = SettingsManager.getInstance(requireContext());
 
-        // 找到卡片和显示文本
+        // 详细日志设置
         MaterialCardView verboseLoggingCard = rootView.findViewById(R.id.verboseLoggingCard);
         TextView tvVerboseLoggingValue = rootView.findViewById(R.id.tvVerboseLoggingValue);
-        Button btn_enter_debug_page = rootView.findViewById(R.id.btn_enter_debug_page);
 
-        if (verboseLoggingCard == null) {
-            return;
+        if (verboseLoggingCard != null && tvVerboseLoggingValue != null) {
+            updateVerboseLoggingDisplay(settingsManager, tvVerboseLoggingValue);
+
+            verboseLoggingCard.setOnClickListener(v -> {
+                List<OptionSelectorDialog.Option> options = Arrays.asList(
+                    new OptionSelectorDialog.Option("true",
+                        getString(R.string.verbose_logging_on),
+                        getString(R.string.verbose_logging_desc_on)),
+                    new OptionSelectorDialog.Option("false",
+                        getString(R.string.verbose_logging_off),
+                        getString(R.string.verbose_logging_desc_off))
+                );
+
+                new OptionSelectorDialog()
+                    .setTitle(getString(R.string.verbose_logging))
+                    .setIcon(R.drawable.ic_bug)
+                    .setOptions(options)
+                    .setCurrentValue(String.valueOf(settingsManager.isVerboseLogging()))
+                    .setOnOptionSelectedListener(value -> {
+                        boolean enabled = Boolean.parseBoolean(value);
+                        settingsManager.setVerboseLogging(enabled);
+                        updateVerboseLoggingDisplay(settingsManager, tvVerboseLoggingValue);
+
+                        String message = enabled ?
+                                getString(R.string.verbose_logging_enabled) :
+                                getString(R.string.verbose_logging_disabled);
+                        Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
+                    })
+                    .show(getParentFragmentManager(), "verbose_logging");
+            });
         }
 
-        // 更新显示值
-        updateVerboseLoggingDisplay(settingsManager, tvVerboseLoggingValue);
-        
-        // 设置详细日志点击事件
-        verboseLoggingCard.setOnClickListener(v -> {
-            List<OptionSelectorDialog.Option> options = Arrays.asList(
-                new OptionSelectorDialog.Option("true",
-                    getString(R.string.verbose_logging_on),
-                    getString(R.string.verbose_logging_desc_on)),
-                new OptionSelectorDialog.Option("false",
-                    getString(R.string.verbose_logging_off),
-                    getString(R.string.verbose_logging_desc_off))
-            );
+        // ========== CoreCLR 运行时配置 ==========
 
-            new OptionSelectorDialog()
-                .setTitle(getString(R.string.verbose_logging))
-                .setIcon(R.drawable.ic_bug)
-                .setOptions(options)
-                .setCurrentValue(String.valueOf(settingsManager.isVerboseLogging()))
-                .setOnOptionSelectedListener(value -> {
-                    boolean enabled = Boolean.parseBoolean(value);
-                    settingsManager.setVerboseLogging(enabled);
-                    updateVerboseLoggingDisplay(settingsManager, tvVerboseLoggingValue);
+        // Server GC
+        MaterialCardView serverGCCard = rootView.findViewById(R.id.serverGCCard);
+        TextView tvServerGCValue = rootView.findViewById(R.id.tvServerGCValue);
+        if (serverGCCard != null && tvServerGCValue != null) {
+            updateServerGCDisplay(settingsManager, tvServerGCValue);
 
-                    String message = enabled ?
-                            getString(R.string.verbose_logging_enabled) :
-                            getString(R.string.verbose_logging_disabled);
-                    Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
-                })
-                .show(getParentFragmentManager(), "verbose_logging");
-        });
-        
-        // 进入调试页面按钮
-        if (btn_enter_debug_page != null) {
-            btn_enter_debug_page.setOnClickListener(v -> {
-                // 打开调试Activity
-                startActivity(new android.content.Intent(requireContext(), com.app.ralaunch.activity.DebugActivity.class));
+            serverGCCard.setOnClickListener(v -> {
+                List<OptionSelectorDialog.Option> options = Arrays.asList(
+                    new OptionSelectorDialog.Option("true",
+                        getString(R.string.coreclr_server_gc_on),
+                        getString(R.string.coreclr_server_gc_desc)),
+                    new OptionSelectorDialog.Option("false",
+                        getString(R.string.coreclr_server_gc_off),
+                        getString(R.string.coreclr_server_gc_desc))
+                );
+
+                new OptionSelectorDialog()
+                    .setTitle(getString(R.string.coreclr_server_gc))
+                    .setIcon(R.drawable.ic_settings)
+                    .setOptions(options)
+                    .setCurrentValue(String.valueOf(settingsManager.isServerGC()))
+                    .setOnOptionSelectedListener(value -> {
+                        boolean enabled = Boolean.parseBoolean(value);
+                        settingsManager.setServerGC(enabled);
+                        updateServerGCDisplay(settingsManager, tvServerGCValue);
+                        Toast.makeText(requireContext(), R.string.coreclr_settings_restart, Toast.LENGTH_SHORT).show();
+                    })
+                    .show(getParentFragmentManager(), "server_gc");
+            });
+        }
+
+        // Concurrent GC
+        MaterialCardView concurrentGCCard = rootView.findViewById(R.id.concurrentGCCard);
+        TextView tvConcurrentGCValue = rootView.findViewById(R.id.tvConcurrentGCValue);
+        if (concurrentGCCard != null && tvConcurrentGCValue != null) {
+            updateConcurrentGCDisplay(settingsManager, tvConcurrentGCValue);
+
+            concurrentGCCard.setOnClickListener(v -> {
+                List<OptionSelectorDialog.Option> options = Arrays.asList(
+                    new OptionSelectorDialog.Option("true",
+                        getString(R.string.coreclr_concurrent_gc_on),
+                        getString(R.string.coreclr_concurrent_gc_desc)),
+                    new OptionSelectorDialog.Option("false",
+                        getString(R.string.coreclr_concurrent_gc_off),
+                        getString(R.string.coreclr_concurrent_gc_desc))
+                );
+
+                new OptionSelectorDialog()
+                    .setTitle(getString(R.string.coreclr_concurrent_gc))
+                    .setIcon(R.drawable.ic_settings)
+                    .setOptions(options)
+                    .setCurrentValue(String.valueOf(settingsManager.isConcurrentGC()))
+                    .setOnOptionSelectedListener(value -> {
+                        boolean enabled = Boolean.parseBoolean(value);
+                        settingsManager.setConcurrentGC(enabled);
+                        updateConcurrentGCDisplay(settingsManager, tvConcurrentGCValue);
+                        Toast.makeText(requireContext(), R.string.coreclr_settings_restart, Toast.LENGTH_SHORT).show();
+                    })
+                    .show(getParentFragmentManager(), "concurrent_gc");
+            });
+        }
+
+        // Tiered Compilation
+        MaterialCardView tieredCompilationCard = rootView.findViewById(R.id.tieredCompilationCard);
+        TextView tvTieredCompilationValue = rootView.findViewById(R.id.tvTieredCompilationValue);
+        if (tieredCompilationCard != null && tvTieredCompilationValue != null) {
+            updateTieredCompilationDisplay(settingsManager, tvTieredCompilationValue);
+
+            tieredCompilationCard.setOnClickListener(v -> {
+                List<OptionSelectorDialog.Option> options = Arrays.asList(
+                    new OptionSelectorDialog.Option("true",
+                        getString(R.string.coreclr_tiered_compilation_on),
+                        getString(R.string.coreclr_tiered_compilation_desc)),
+                    new OptionSelectorDialog.Option("false",
+                        getString(R.string.coreclr_tiered_compilation_off),
+                        getString(R.string.coreclr_tiered_compilation_desc))
+                );
+
+                new OptionSelectorDialog()
+                    .setTitle(getString(R.string.coreclr_tiered_compilation))
+                    .setIcon(R.drawable.ic_settings)
+                    .setOptions(options)
+                    .setCurrentValue(String.valueOf(settingsManager.isTieredCompilation()))
+                    .setOnOptionSelectedListener(value -> {
+                        boolean enabled = Boolean.parseBoolean(value);
+                        settingsManager.setTieredCompilation(enabled);
+                        updateTieredCompilationDisplay(settingsManager, tvTieredCompilationValue);
+                        Toast.makeText(requireContext(), R.string.coreclr_settings_restart, Toast.LENGTH_SHORT).show();
+                    })
+                    .show(getParentFragmentManager(), "tiered_compilation");
             });
         }
     }
@@ -557,5 +663,24 @@ public class SettingsFragment extends Fragment {
 
         textView.setText(display);
     }
-    
+
+    // CoreCLR 设置显示更新方法
+    private void updateServerGCDisplay(SettingsManager settingsManager, TextView textView) {
+        textView.setText(settingsManager.isServerGC() ?
+            getString(R.string.coreclr_server_gc_on) :
+            getString(R.string.coreclr_server_gc_off));
+    }
+
+    private void updateConcurrentGCDisplay(SettingsManager settingsManager, TextView textView) {
+        textView.setText(settingsManager.isConcurrentGC() ?
+            getString(R.string.coreclr_concurrent_gc_on) :
+            getString(R.string.coreclr_concurrent_gc_off));
+    }
+
+    private void updateTieredCompilationDisplay(SettingsManager settingsManager, TextView textView) {
+        textView.setText(settingsManager.isTieredCompilation() ?
+            getString(R.string.coreclr_tiered_compilation_on) :
+            getString(R.string.coreclr_tiered_compilation_off));
+    }
+
 }

@@ -50,6 +50,9 @@
     <string name="theme_system">Follow System</string>
     <string name="theme_dark">Dark Theme</string>
     <string name="theme_light">Light Theme</string>
+    <string name="theme_color">Theme Color</string>
+    <string name="theme_color_desc">Customize app theme color</string>
+    <string name="theme_color_changed">Theme color changed, restart app to apply</string>
     <string name="language_settings">Language Settings</string>
     <string name="language_system">Follow System</string>
     <string name="language_english">English</string>
@@ -125,7 +128,7 @@
     <string name="settings_control">Controls</string>
     <string name="settings_game">Game</string>
     <string name="settings_launcher">Launcher</string>
-    <string name="settings_developer">Experimental</string>
+    <string name="settings_developer">Advanced Settings</string>
 
     <!-- Settings Items -->
     <string name="settings_theme_desc_auto">Follow system settings</string>

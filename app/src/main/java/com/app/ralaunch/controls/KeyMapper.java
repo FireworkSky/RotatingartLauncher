@@ -191,4 +191,29 @@ public class KeyMapper {
         keys.put("Ctrl (智能光标)", ControlData.SDL_SCANCODE_LCTRL);
         return keys;
     }
+
+    /**
+     * 获取Xbox手柄按钮映射（用于手柄模式按钮选择）
+     */
+    public static Map<String, Integer> getXboxButtons() {
+        Map<String, Integer> keys = new LinkedHashMap<>();
+        keys.put("🎮 A (跳跃)", ControlData.XBOX_BUTTON_A);
+        keys.put("🎮 B (返回)", ControlData.XBOX_BUTTON_B);
+        keys.put("🎮 X (攻击)", ControlData.XBOX_BUTTON_X);
+        keys.put("🎮 Y (使用)", ControlData.XBOX_BUTTON_Y);
+        keys.put("🎮 LB (左肩)", ControlData.XBOX_BUTTON_LB);
+        keys.put("🎮 RB (右肩)", ControlData.XBOX_BUTTON_RB);
+        keys.put("🎮 LT (左扳机)", ControlData.XBOX_TRIGGER_LEFT);
+        keys.put("🎮 RT (右扳机)", ControlData.XBOX_TRIGGER_RIGHT);
+        keys.put("🎮 Back", ControlData.XBOX_BUTTON_BACK);
+        keys.put("🎮 Start", ControlData.XBOX_BUTTON_START);
+        keys.put("🎮 Guide", ControlData.XBOX_BUTTON_GUIDE);
+        keys.put("🎮 L3 (左摇杆按下)", ControlData.XBOX_BUTTON_LEFT_STICK);
+        keys.put("🎮 R3 (右摇杆按下)", ControlData.XBOX_BUTTON_RIGHT_STICK);
+        keys.put("🎮 D-Pad ↑", ControlData.XBOX_BUTTON_DPAD_UP);
+        keys.put("🎮 D-Pad ↓", ControlData.XBOX_BUTTON_DPAD_DOWN);
+        keys.put("🎮 D-Pad ←", ControlData.XBOX_BUTTON_DPAD_LEFT);
+        keys.put("🎮 D-Pad →", ControlData.XBOX_BUTTON_DPAD_RIGHT);
+        return keys;
+    }
 }
