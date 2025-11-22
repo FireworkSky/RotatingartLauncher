@@ -22,7 +22,7 @@
             android:paddingHorizontal="16dp"
             android:paddingBottom="32dp">
 
-            <!-- 主题设置卡片 -->
+            <!-- 主题设置卡片 - Material 3 Filled -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/themeCard"
                 android:layout_width="match_parent"
@@ -35,7 +35,8 @@
                 app:cardCornerRadius="16dp"
                 app:cardElevation="0dp"
                 app:strokeWidth="0dp"
-                app:cardBackgroundColor="@color/background_card">
+                app:cardBackgroundColor="@color/background_card"
+                style="@style/Widget.Material3.CardView.Filled">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -90,7 +91,7 @@
 
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- 主题颜色设置卡片 -->
+            <!-- 主题颜色设置卡片 - Material 3 Filled -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/themeColorCard"
                 android:layout_width="match_parent"
@@ -102,7 +103,8 @@
                 app:cardCornerRadius="16dp"
                 app:cardElevation="0dp"
                 app:strokeWidth="0dp"
-                app:cardBackgroundColor="@color/background_card">
+                app:cardBackgroundColor="@color/background_card"
+                style="@style/Widget.Material3.CardView.Filled">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -154,7 +156,7 @@
 
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- 语言设置卡片 -->
+            <!-- 语言设置卡片 - Material 3 Filled -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/languageCard"
                 android:layout_width="match_parent"
@@ -166,7 +168,8 @@
                 app:cardCornerRadius="16dp"
                 app:cardElevation="0dp"
                 app:strokeWidth="0dp"
-                app:cardBackgroundColor="@color/background_card">
+                app:cardBackgroundColor="@color/background_card"
+                style="@style/Widget.Material3.CardView.Filled">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -222,7 +225,7 @@
             </com.google.android.material.card.MaterialCardView>
 
 
-            <!-- 应用信息卡片 -->
+            <!-- 应用信息卡片 - Material 3 Filled -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -230,7 +233,8 @@
                 app:cardCornerRadius="16dp"
                 app:cardElevation="0dp"
                 app:strokeWidth="0dp"
-                app:cardBackgroundColor="@color/background_card">
+                app:cardBackgroundColor="@color/background_card"
+                style="@style/Widget.Material3.CardView.Filled">
 
                 <LinearLayout
                     android:layout_width="match_parent"

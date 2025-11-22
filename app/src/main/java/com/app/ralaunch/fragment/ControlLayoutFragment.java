@@ -55,10 +55,7 @@ public class ControlLayoutFragment extends Fragment implements ControlLayoutAdap
     private ExtendedFloatingActionButton fabAddLayout;
     private LinearLayout emptyState;
     private Toolbar toolbar;
-    private com.google.android.material.button.MaterialButton modeToggleButton;
-
-    // 当前控制模式：false=键盘/鼠标, true=手柄
-    private boolean isGamepadMode = false;
+    private com.google.android.material.button.MaterialButton btnImportPreset;
 
     private OnControlLayoutBackListener backListener;
 
@@ -89,7 +86,7 @@ public class ControlLayoutFragment extends Fragment implements ControlLayoutAdap
         recyclerView = view.findViewById(R.id.recyclerView);
         fabAddLayout = view.findViewById(R.id.fabAddLayout);
         emptyState = view.findViewById(R.id.emptyState);
-        modeToggleButton = view.findViewById(R.id.mode_toggle_button);
+        btnImportPreset = view.findViewById(R.id.btn_import_preset);
 
         toolbar.setNavigationOnClickListener(v -> {
             if (backListener != null) {
@@ -99,9 +96,8 @@ public class ControlLayoutFragment extends Fragment implements ControlLayoutAdap
 
         fabAddLayout.setOnClickListener(v -> showAddLayoutDialog());
 
-        // 模式切换按钮
-        modeToggleButton.setOnClickListener(v -> toggleControlMode());
-        updateModeToggleButton();
+        // 导入预设配置按钮
+        btnImportPreset.setOnClickListener(v -> showImportPresetDialog());
 
         updateEmptyState();
     }
@@ -117,8 +113,8 @@ public class ControlLayoutFragment extends Fragment implements ControlLayoutAdap
         View dialogView = LayoutInflater.from(getContext()).inflate(R.layout.dialog_new_layout, null);
         EditText editText = dialogView.findViewById(R.id.layout_name_edit);
 
-        // 根据当前模式设置默认名称
-        String defaultName = isGamepadMode ? "手柄布局" : "键盘布局";
+        // 设置默认名称
+        String defaultName = "新建布局";
 
         // 如果名称已存在，添加数字后缀
         String finalName = defaultName;
@@ -164,8 +160,9 @@ public class ControlLayoutFragment extends Fragment implements ControlLayoutAdap
     }
 
     private void openLayoutEditor(ControlLayout layout) {
-        // 使用新的编辑器Activity
+        // 使用新的编辑器Activity，传递布局名称
         Intent intent = new Intent(getActivity(), com.app.ralaunch.controls.editor.ControlEditorActivity.class);
+        intent.putExtra("layout_name", layout.getName());
         startActivityForResult(intent, REQUEST_CODE_EDIT_LAYOUT);
     }
 
@@ -311,28 +308,145 @@ public class ControlLayoutFragment extends Fragment implements ControlLayoutAdap
     }
 
     /**
-     * 更新模式切换按钮显示
+     * 显示导入预设配置对话框
      */
-    private void updateModeToggleButton() {
-        if (modeToggleButton == null) return;
+    private void showImportPresetDialog() {
+        String[] presetNames = {"键盘模式布局", "手柄模式布局"};
+        String[] presetFiles = {"default_layout.json", "gamepad_layout.json"};
 
-        if (isGamepadMode) {
-            modeToggleButton.setText("手柄模式");
-            modeToggleButton.setIconResource(R.drawable.ic_gamepad);
-        } else {
-            modeToggleButton.setText("键盘模式");
-            modeToggleButton.setIconResource(R.drawable.ic_keyboard);
+        new MaterialAlertDialogBuilder(requireContext())
+                .setTitle("选择预设配置")
+                .setItems(presetNames, (dialog, which) -> {
+                    importPresetLayout(presetFiles[which], presetNames[which]);
+                })
+                .setNegativeButton("取消", null)
+                .show();
+    }
+
+    /**
+     * 导入预设配置文件
+     */
+    private void importPresetLayout(String fileName, String presetName) {
+        try {
+            // 从 assets 读取配置文件
+            java.io.InputStream is = requireContext().getAssets().open("controls/" + fileName);
+            byte[] buffer = new byte[is.available()];
+            is.read(buffer);
+            is.close();
+            String json = new String(buffer, "UTF-8");
+
+            // 解析 JSON 配置
+            Gson gson = new Gson();
+            ControlConfig config = gson.fromJson(json, ControlConfig.class);
+
+            // 生成唯一的布局名称
+            String layoutName = presetName;
+            int counter = 1;
+            while (layoutExists(layoutName)) {
+                counter++;
+                layoutName = presetName + " " + counter;
+            }
+
+            // 创建新布局并添加控件
+            ControlLayout newLayout = new ControlLayout(layoutName);
+            if (config.controls != null) {
+                for (ControlConfig.Control control : config.controls) {
+                    ControlElement element = convertToControlElement(control);
+                    newLayout.addElement(element);
+                }
+            }
+
+            // 保存布局
+            layoutManager.addLayout(newLayout);
+            layouts = layoutManager.getLayouts();
+            adapter.updateLayouts(layouts);
+            updateEmptyState();
+
+            Toast.makeText(getContext(), "已导入预设配置：" + layoutName, Toast.LENGTH_SHORT).show();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            Toast.makeText(getContext(), "导入失败：" + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
     }
 
     /**
-     * 切换控制模式（键盘/鼠标 <-> 手柄）
+     * 将 ControlConfig.Control 转换为 ControlElement
      */
-    private void toggleControlMode() {
-        isGamepadMode = !isGamepadMode;
-        updateModeToggleButton();
+    private ControlElement convertToControlElement(ControlConfig.Control control) {
+        ControlElement.ElementType type;
+        switch (control.type) {
+            case 0:
+                type = ControlElement.ElementType.BUTTON;
+                break;
+            case 1:
+                type = ControlElement.ElementType.JOYSTICK;
+                break;
+            case 2:
+                type = ControlElement.ElementType.CROSS_KEY;
+                break;
+            default:
+                type = ControlElement.ElementType.BUTTON;
+        }
 
-        String mode = isGamepadMode ? "手柄" : "键盘";
-        Toast.makeText(getContext(), "已切换为" + mode + "模式", Toast.LENGTH_SHORT).show();
+        ControlElement element = new ControlElement(
+                control.name != null ? control.name : "控件",
+                type,
+                control.name != null ? control.name : "控件"
+        );
+
+        // 设置位置和大小
+        element.setX(control.x / 2160f); // 假设屏幕宽度为 2160
+        element.setY(control.y / 1080f); // 假设屏幕高度为 1080
+        element.setWidth(control.width);
+        element.setHeight(control.height);
+
+        // 设置按键码（如果是按钮）
+        if (type == ControlElement.ElementType.BUTTON && control.keycode != 0) {
+            element.setKeyCode(control.keycode);
+        }
+
+        // 设置摇杆相关属性
+        if (type == ControlElement.ElementType.JOYSTICK) {
+            if (control.joystickKeys != null && control.joystickKeys.length == 4) {
+                // 键盘模拟摇杆
+                element.setKeyCode(control.joystickKeys[0]); // 上
+            } else if (control.joystickMode != 0) {
+                // 手柄摇杆模式
+                element.setKeyCode(control.xboxUseRightStick ? -301 : -300); // 特殊标记右摇杆或左摇杆
+            }
+        }
+
+        return element;
+    }
+
+    /**
+     * 控制配置类（用于解析 JSON）
+     */
+    private static class ControlConfig {
+        String name;
+        int version;
+        Control[] controls;
+
+        static class Control {
+            String name;
+            int type;
+            int x;
+            int y;
+            int width;
+            int height;
+            int keycode;
+            float opacity;
+            int bgColor;
+            int strokeColor;
+            int strokeWidth;
+            int cornerRadius;
+            boolean isToggle;
+            boolean visible;
+            int[] joystickKeys;
+            int joystickMode;
+            boolean xboxUseRightStick;
+            int buttonMode;
+        }
     }
 }

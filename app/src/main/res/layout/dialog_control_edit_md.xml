@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@drawable/bg_dialog_rounded">
+
+    <!-- 标题栏 -->
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="64dp"
+        android:paddingHorizontal="20dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:text="编辑控件"
+            android:textColor="#1C1B1F"
+            android:textSize="22sp"
+            android:textStyle="bold" />
+
+        <ImageView
+            android:id="@+id/btn_close"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:src="@android:drawable/ic_menu_close_clear_cancel"
+            android:tint="#1C1B1F"
+            android:padding="12dp"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:clickable="true"
+            android:contentDescription="关闭" />
+    </RelativeLayout>
+
+    <!-- 主内容区：左侧分类+右侧内容 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="horizontal">
+
+        <!-- 左侧分类列表 -->
+        <LinearLayout
+            android:id="@+id/category_list"
+            android:layout_width="120dp"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:background="@android:color/white"
+            android:paddingVertical="8dp"
+            android:paddingHorizontal="8dp">
+
+            <!-- 基本信息 -->
+            <TextView
+                android:id="@+id/category_basic"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:gravity="center"
+                android:text="基本信息"
+                android:textSize="14sp"
+                android:textColor="#6750A4"
+                android:textStyle="bold"
+                android:background="@drawable/bg_category_selected"
+                android:clickable="true" />
+
+            <!-- 位置大小 -->
+            <TextView
+                android:id="@+id/category_position"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:gravity="center"
+                android:text="位置大小"
+                android:textSize="14sp"
+                android:textColor="#49454F"
+                android:background="?android:attr/selectableItemBackground"
+                android:clickable="true"
+                android:layout_marginTop="4dp" />
+
+            <!-- 外观样式 -->
+            <TextView
+                android:id="@+id/category_appearance"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:gravity="center"
+                android:text="外观样式"
+                android:textSize="14sp"
+                android:textColor="#49454F"
+                android:background="?android:attr/selectableItemBackground"
+                android:clickable="true"
+                android:layout_marginTop="4dp" />
+
+            <!-- 键值设置 -->
+            <TextView
+                android:id="@+id/category_keymap"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:gravity="center"
+                android:text="键值设置"
+                android:textSize="14sp"
+                android:textColor="#49454F"
+                android:background="?android:attr/selectableItemBackground"
+                android:clickable="true"
+                android:layout_marginTop="4dp" />
+
+        </LinearLayout>
+
+        <!-- 分隔线 -->
+        <View
+            android:layout_width="1dp"
+            android:layout_height="match_parent"
+            android:background="#E0E0E0" />
+
+        <!-- 右侧内容容器 -->
+        <FrameLayout
+            android:id="@+id/content_container"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1" />
+
+    </LinearLayout>
+
+    <!-- 底部操作按钮 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="16dp"
+        android:background="@android:color/white">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_delete"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:text="删除"
+            android:textColor="#FFFFFF"
+            android:backgroundTint="#F44336"
+            android:layout_marginEnd="8dp"
+            app:cornerRadius="12dp"
+            style="@style/Widget.Material3.Button" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_save"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:text="保存"
+            android:textColor="#FFFFFF"
+            android:backgroundTint="#6750A4"
+            app:cornerRadius="12dp"
+            style="@style/Widget.Material3.Button" />
+    </LinearLayout>
+
+</LinearLayout>

@@ -66,14 +66,6 @@ public class SettingsFragment extends Fragment {
         contentLauncher = view.findViewById(R.id.contentLauncher);
         contentDeveloper = view.findViewById(R.id.contentDeveloper);
 
-        // 返回按钮
-        View buttonBack = view.findViewById(R.id.buttonBack);
-        buttonBack.setOnClickListener(v -> {
-            if (backListener != null) {
-                backListener.onSettingsBack();
-            }
-        });
-
         // 设置分类列表 - 手动添加 item
         settingsCategoryListView = view.findViewById(R.id.settingsCategoryListView);
         
@@ -112,25 +104,38 @@ public class SettingsFragment extends Fragment {
             
             // 设置点击事件
             itemView.setOnClickListener(v -> {
-                // 更新所有 item 的背景色
+                // 更新所有 item 的背景色 - 使用Material 3主题色
                 for (int j = 0; j < categoriesLinearLayout.getChildCount(); j++) {
                     View child = categoriesLinearLayout.getChildAt(j);
-                    child.setBackgroundColor(j == position ?
-                        getResources().getColor(android.R.color.holo_green_dark, null) :
-                        getResources().getColor(android.R.color.transparent, null));
+                    if (child instanceof com.google.android.material.card.MaterialCardView) {
+                        com.google.android.material.card.MaterialCardView cardView =
+                            (com.google.android.material.card.MaterialCardView) child;
+                        if (j == position) {
+                            // 选中状态 - 使用主题色带透明度
+                            cardView.setCardBackgroundColor(
+                                getResources().getColor(R.color.accent_primary_light, null));
+                        } else {
+                            // 未选中状态 - 透明
+                            cardView.setCardBackgroundColor(
+                                getResources().getColor(android.R.color.transparent, null));
+                        }
+                    }
                 }
-                
+
                 // 切换内容面板
                 switchToCategory(position);
             });
-            
+
             categoriesLinearLayout.addView(itemView);
         }
-        
+
         // 默认选中第一项
         if (categoriesLinearLayout.getChildCount() > 0) {
-            categoriesLinearLayout.getChildAt(0).setBackgroundColor(
-                getResources().getColor(android.R.color.holo_green_dark, null));
+            View firstChild = categoriesLinearLayout.getChildAt(0);
+            if (firstChild instanceof com.google.android.material.card.MaterialCardView) {
+                ((com.google.android.material.card.MaterialCardView) firstChild).setCardBackgroundColor(
+                    getResources().getColor(R.color.accent_primary_light, null));
+            }
             switchToCategory(0);
         }
         

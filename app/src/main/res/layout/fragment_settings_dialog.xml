@@ -1,41 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.material.card.MaterialCardView
+<!-- Material 3 标准圆角对话框 - 无阴影 -->
+<FrameLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    app:cardCornerRadius="24dp"
-    app:cardElevation="8dp"
-    app:cardBackgroundColor="?attr/backgroundPrimary">
+    android:background="@drawable/bg_settings_dialog"
+    android:clipToOutline="true">
 
-    <androidx.constraintlayout.widget.ConstraintLayout
+    <!-- 设置内容容器 -->
+    <FrameLayout
+        android:id="@+id/settingsContainer"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent" />
 
-        <!-- 关闭按钮 -->
-        <ImageButton
-            android:id="@+id/buttonClose"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:layout_margin="16dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:src="@drawable/ic_arrow_back"
-            android:contentDescription="关闭"
-            app:tint="?attr/textPrimary"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-
-        <!-- 设置内容容器 -->
-        <FrameLayout
-            android:id="@+id/settingsContainer"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent" />
-
-    </androidx.constraintlayout.widget.ConstraintLayout>
-
-</com.google.android.material.card.MaterialCardView>
+</FrameLayout>
 

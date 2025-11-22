@@ -6,7 +6,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
-import android.widget.ImageButton;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -55,18 +54,12 @@ public class SettingsDialogFragment extends DialogFragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        
-        // 关闭按钮
-        ImageButton closeButton = view.findViewById(R.id.buttonClose);
-        if (closeButton != null) {
-            closeButton.setOnClickListener(v -> dismiss());
-        }
 
         // 加载设置 Fragment
         if (savedInstanceState == null) {
             SettingsFragment settingsFragment = new SettingsFragment();
             settingsFragment.setOnSettingsBackListener(() -> dismiss());
-            
+
             getChildFragmentManager().beginTransaction()
                     .replace(R.id.settingsContainer, settingsFragment)
                     .commit();

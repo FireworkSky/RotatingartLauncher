@@ -32,16 +32,16 @@
                 app:navigationIconTint="@color/text_primary"
                 style="@style/Widget.Material3.Toolbar" />
 
-            <!-- 模式切换按钮 -->
+            <!-- 导入预设配置按钮 -->
             <com.google.android.material.button.MaterialButton
-                android:id="@+id/mode_toggle_button"
+                android:id="@+id/btn_import_preset"
                 android:layout_width="wrap_content"
                 android:layout_height="36dp"
-                android:text="键盘模式"
+                android:text="导入预设"
                 android:textSize="13sp"
                 android:textColor="?attr/textPrimary"
                 style="@style/Widget.Material3.Button.TonalButton"
-                android:drawableStart="@drawable/ic_keyboard"
+                android:drawableStart="@drawable/ic_download"
                 android:drawableTint="?attr/textPrimary"
                 android:drawablePadding="6dp"
                 android:paddingStart="12dp"
@@ -50,7 +50,7 @@
                 android:insetTop="0dp"
                 android:insetBottom="0dp"
                 android:layout_marginEnd="12dp"
-                android:contentDescription="切换控制模式" />
+                android:contentDescription="导入预设配置文件" />
 
         </LinearLayout>
 

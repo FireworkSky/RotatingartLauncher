@@ -65,6 +65,7 @@
     
     <!-- 强调色（紫色系 - 参考 FNALaunch） -->
     <color name="accent_primary">#BB86FC</color>
+    <color name="accent_primary_light">#30BB86FC</color>
     <color name="accent_secondary">#9965F4</color>
     <color name="accent_green">#4CAF50</color>
     

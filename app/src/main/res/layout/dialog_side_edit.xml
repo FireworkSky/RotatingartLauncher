@@ -309,48 +309,6 @@
                     android:checked="true" />
             </LinearLayout>
 
-            <!-- 按钮模式（仅按钮显示） -->
-            <TextView
-                android:id="@+id/tv_button_mode_label"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="按钮模式"
-                android:textColor="?attr/textSecondary"
-                android:textSize="12sp"
-                android:layout_marginTop="16dp"
-                android:visibility="gone" />
-
-            <android.widget.RadioGroup
-                android:id="@+id/rg_button_mode"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:visibility="gone"
-                android:orientation="horizontal">
-
-                <RadioButton
-                    android:id="@+id/rb_keyboard_button_mode"
-                    android:layout_width="0dp"
-                    android:layout_height="48dp"
-                    android:layout_weight="1"
-                    android:text="⌨️ 键盘/鼠标"
-                    android:textColor="?attr/textPrimary"
-                    android:textSize="14sp"
-                    android:paddingStart="12dp"
-                    android:paddingEnd="12dp" />
-
-                <RadioButton
-                    android:id="@+id/rb_gamepad_button_mode"
-                    android:layout_width="0dp"
-                    android:layout_height="48dp"
-                    android:layout_weight="1"
-                    android:text="🎮 手柄按键"
-                    android:textColor="?attr/textPrimary"
-                    android:textSize="14sp"
-                    android:paddingStart="12dp"
-                    android:paddingEnd="12dp" />
-            </android.widget.RadioGroup>
-
             <!-- 按键映射（仅按钮显示） -->
             <TextView
                 android:id="@+id/tv_keymap_label"

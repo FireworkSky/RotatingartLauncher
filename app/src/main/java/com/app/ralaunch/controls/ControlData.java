@@ -26,7 +26,9 @@ public class ControlData {
     public static final int SDL_SCANCODE_ESCAPE = 41;
     public static final int SDL_SCANCODE_RETURN = 40;
     public static final int SDL_SCANCODE_LSHIFT = 225;
+    public static final int SDL_SCANCODE_RSHIFT = 229;
     public static final int SDL_SCANCODE_LCTRL = 224;
+    public static final int SDL_SCANCODE_RCTRL = 228;
     
     // 鼠标按键常量
     public static final int MOUSE_LEFT = -1;
@@ -135,8 +137,8 @@ public class ControlData {
         this.height = 80;
         this.keycode = SDL_SCANCODE_UNKNOWN;
         this.opacity = 0.7f;
-        this.bgColor = 0x80000000; // 半透明黑色
-        this.strokeColor = 0xFFFFFFFF; // 白色边框
+        this.bgColor = 0xFFFFFFFF; // 白色背景
+        this.strokeColor = 0xFF888888; // 灰色边框
         this.strokeWidth = 2;
         this.cornerRadius = 8;
         this.isToggle = false;

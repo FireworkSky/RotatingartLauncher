@@ -24,9 +24,8 @@ public class ControlEditorActivity extends AppCompatActivity {
     private FrameLayout mEditorContainer;
     private ControlLayout mPreviewLayout;
     private GridOverlayView mGridOverlay;
-    private SideEditDialog mSideDialog;
+    private ControlEditDialogMD mEditDialog;
     private EditorSettingsDialog mSettingsDialog;
-    private com.google.android.material.button.MaterialButton mModeToggleButton;
 
     private ControlConfig mCurrentConfig;
     private SDLInputBridge mDummyBridge;
@@ -34,8 +33,9 @@ public class ControlEditorActivity extends AppCompatActivity {
     private int mScreenWidth;
     private int mScreenHeight;
 
-    // 当前控制模式：false=键盘/鼠标, true=手柄
-    private boolean mIsGamepadMode = false;
+    // 布局管理
+    private com.app.ralaunch.utils.ControlLayoutManager mLayoutManager;
+    private String mCurrentLayoutName;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,25 +58,30 @@ public class ControlEditorActivity extends AppCompatActivity {
         }
 
         setContentView(R.layout.activity_control_editor);
-        
+
         // 获取屏幕尺寸
         mMetrics = getResources().getDisplayMetrics();
         mScreenWidth = mMetrics.widthPixels;
         mScreenHeight = mMetrics.heightPixels;
-        
+
+        // 初始化布局管理器
+        mLayoutManager = new com.app.ralaunch.utils.ControlLayoutManager(this);
+
+        // 获取要编辑的布局名称
+        mCurrentLayoutName = getIntent().getStringExtra("layout_name");
+        if (mCurrentLayoutName == null) {
+            // 如果没有传入布局名称，使用当前默认布局
+            mCurrentLayoutName = mLayoutManager.getCurrentLayoutName();
+        }
+
         initUI();
-        
+
         // 延迟加载布局
-        mEditorContainer.post(() -> loadOrCreateLayout());
+        mEditorContainer.post(() -> loadLayoutFromManager());
     }
     
     private void initUI() {
         mEditorContainer = findViewById(R.id.editor_container);
-
-        // 模式切换按钮
-        mModeToggleButton = findViewById(R.id.mode_toggle_button);
-        mModeToggleButton.setOnClickListener(v -> toggleControlMode());
-        updateModeToggleButton();
 
         // 设置按钮点击显示 MD3 设置弹窗
         findViewById(R.id.drawer_button).setOnClickListener(v -> {
@@ -85,20 +90,54 @@ public class ControlEditorActivity extends AppCompatActivity {
             }
         });
 
-        // 创建侧边编辑对话框
-        mSideDialog = new SideEditDialog(this, mEditorContainer, mScreenWidth, mScreenHeight);
+        // 初始化对话框
+        setupDialogs();
+    }
 
-        // 设置删除和复制监听器
-        mSideDialog.setOnControlDeletedListener(control -> {
-            if (mCurrentConfig != null && mCurrentConfig.controls != null) {
-                mCurrentConfig.controls.remove(control);
-                displayLayout();
+    /**
+     * 初始化或重新初始化对话框
+     * 由于 displayLayout() 会清除所有视图，需要重新创建对话框
+     */
+    private void setupDialogs() {
+        // 创建MD风格编辑对话框
+        mEditDialog = new ControlEditDialogMD(this, mScreenWidth, mScreenHeight);
+
+        // 设置更新监听器
+        mEditDialog.setOnControlUpdatedListener(control -> {
+            // 实时更新视图
+            if (mPreviewLayout != null) {
+                for (int i = 0; i < mPreviewLayout.getChildCount(); i++) {
+                    View child = mPreviewLayout.getChildAt(i);
+                    if (child instanceof ControlView) {
+                        ControlView controlView = (ControlView) child;
+                        if (controlView.getData() == control) {
+                            // 更新布局参数
+                            ViewGroup.LayoutParams layoutParams = child.getLayoutParams();
+                            if (layoutParams instanceof FrameLayout.LayoutParams) {
+                                FrameLayout.LayoutParams frameParams = (FrameLayout.LayoutParams) layoutParams;
+                                frameParams.width = (int) control.width;
+                                frameParams.height = (int) control.height;
+                                frameParams.leftMargin = (int) control.x;
+                                frameParams.topMargin = (int) control.y;
+                                child.setLayoutParams(frameParams);
+                            }
+                            // 更新视觉属性
+                            child.setAlpha(control.opacity);
+                            child.setVisibility(control.visible ? View.VISIBLE : View.INVISIBLE);
+                            // 刷新控件绘制
+                            controlView.updateData(control);
+                            child.invalidate();
+                            break;
+                        }
+                    }
+                }
             }
         });
 
-        mSideDialog.setOnControlDuplicatedListener(newControl -> {
+        // 设置删除监听器
+        mEditDialog.setOnControlDeletedListener(control -> {
             if (mCurrentConfig != null && mCurrentConfig.controls != null) {
-                mCurrentConfig.controls.add(newControl);
+                mCurrentConfig.controls.remove(control);
                 displayLayout();
             }
         });
@@ -144,6 +183,160 @@ public class ControlEditorActivity extends AppCompatActivity {
         });
     }
     
+    /**
+     * 从 ControlLayoutManager 加载布局
+     */
+    private void loadLayoutFromManager() {
+        // 根据布局名称查找布局
+        com.app.ralaunch.model.ControlLayout layout = null;
+        for (com.app.ralaunch.model.ControlLayout l : mLayoutManager.getLayouts()) {
+            if (l.getName().equals(mCurrentLayoutName)) {
+                layout = l;
+                break;
+            }
+        }
+
+        if (layout == null || layout.getElements().isEmpty()) {
+            // 如果布局为空或不存在，加载默认布局
+            loadDefaultLayout();
+        } else {
+            // 转换 ControlElement 列表为 ControlData 列表
+            mCurrentConfig = new ControlConfig();
+            mCurrentConfig.name = layout.getName();
+            mCurrentConfig.controls = new java.util.ArrayList<>();
+
+            for (com.app.ralaunch.model.ControlElement element : layout.getElements()) {
+                ControlData control = convertElementToData(element);
+                if (control != null) {
+                    mCurrentConfig.controls.add(control);
+                }
+            }
+        }
+
+        displayLayout();
+    }
+
+    /**
+     * 将 ControlElement 转换为 ControlData
+     */
+    private ControlData convertElementToData(com.app.ralaunch.model.ControlElement element) {
+        ControlData data = new ControlData();
+
+        // 基本属性
+        data.name = element.getName();
+        data.x = element.getX() * mScreenWidth;  // 相对坐标转绝对坐标
+        data.y = element.getY() * mScreenHeight;
+        data.width = element.getWidth();
+        data.height = element.getHeight();
+        data.opacity = element.getOpacity();
+        data.visible = true;
+
+        // 根据类型设置
+        switch (element.getType()) {
+            case BUTTON:
+                data.type = ControlData.TYPE_BUTTON;
+                data.keycode = element.getKeyCode();
+                data.isToggle = element.isToggle();
+
+                // 判断按钮模式（根据keycode范围）
+                if (data.keycode <= -200 && data.keycode >= -221) {
+                    data.buttonMode = ControlData.BUTTON_MODE_GAMEPAD;
+                } else {
+                    data.buttonMode = ControlData.BUTTON_MODE_KEYBOARD;
+                }
+                break;
+
+            case JOYSTICK:
+                data.type = ControlData.TYPE_JOYSTICK;
+                int keyCode = element.getKeyCode();
+
+                // 根据keycode判断摇杆模式
+                if (keyCode == -300) {
+                    // 左摇杆（SDL控制器模式）
+                    data.joystickMode = ControlData.JOYSTICK_MODE_SDL_CONTROLLER;
+                    data.xboxUseRightStick = false;
+                } else if (keyCode == -301) {
+                    // 右摇杆（SDL控制器模式）
+                    data.joystickMode = ControlData.JOYSTICK_MODE_SDL_CONTROLLER;
+                    data.xboxUseRightStick = true;
+                } else {
+                    // 键盘模式
+                    data.joystickMode = ControlData.JOYSTICK_MODE_KEYBOARD;
+                    data.joystickKeys = new int[]{
+                        ControlData.SDL_SCANCODE_W,
+                        ControlData.SDL_SCANCODE_D,
+                        ControlData.SDL_SCANCODE_S,
+                        ControlData.SDL_SCANCODE_A
+                    };
+                }
+                break;
+
+            case CROSS_KEY:
+                // 十字键暂时不支持，跳过
+                return null;
+
+            default:
+                return null;
+        }
+
+        // 外观属性
+        data.bgColor = element.getBackgroundColor();
+        data.strokeColor = element.getBorderColor();
+        data.strokeWidth = element.getBorderWidth();
+        data.cornerRadius = element.getCornerRadius();
+
+        return data;
+    }
+
+    /**
+     * 将 ControlData 转换为 ControlElement
+     */
+    private com.app.ralaunch.model.ControlElement convertDataToElement(ControlData data) {
+        com.app.ralaunch.model.ControlElement.ElementType type;
+
+        if (data.type == ControlData.TYPE_BUTTON) {
+            type = com.app.ralaunch.model.ControlElement.ElementType.BUTTON;
+        } else if (data.type == ControlData.TYPE_JOYSTICK) {
+            type = com.app.ralaunch.model.ControlElement.ElementType.JOYSTICK;
+        } else {
+            type = com.app.ralaunch.model.ControlElement.ElementType.BUTTON;
+        }
+
+        com.app.ralaunch.model.ControlElement element = new com.app.ralaunch.model.ControlElement(
+            data.name != null ? data.name : "控件",
+            type,
+            data.name != null ? data.name : "控件"
+        );
+
+        // 位置和大小（绝对坐标转相对坐标）
+        element.setX(data.x / mScreenWidth);
+        element.setY(data.y / mScreenHeight);
+        element.setWidth(data.width);
+        element.setHeight(data.height);
+        element.setOpacity(data.opacity);
+
+        // 按键设置
+        if (type == com.app.ralaunch.model.ControlElement.ElementType.BUTTON) {
+            element.setKeyCode(data.keycode);
+            element.setToggle(data.isToggle);
+        } else if (type == com.app.ralaunch.model.ControlElement.ElementType.JOYSTICK) {
+            // 摇杆模式转换
+            if (data.joystickMode == ControlData.JOYSTICK_MODE_SDL_CONTROLLER) {
+                element.setKeyCode(data.xboxUseRightStick ? -301 : -300);
+            } else {
+                element.setKeyCode(data.joystickKeys != null && data.joystickKeys.length > 0 ? data.joystickKeys[0] : 0);
+            }
+        }
+
+        // 外观属性
+        element.setBackgroundColor(data.bgColor);
+        element.setBorderColor(data.strokeColor);
+        element.setBorderWidth(data.strokeWidth);
+        element.setCornerRadius(data.cornerRadius);
+
+        return element;
+    }
+
     private void loadOrCreateLayout() {
         File customFile = new File(getFilesDir(), "custom_layout.json");
         
@@ -216,8 +409,8 @@ public class ControlEditorActivity extends AppCompatActivity {
         // 为每个控件设置交互
         setupControlInteractions();
 
-        // 重新创建侧边对话框（因为父布局已更改）
-        mSideDialog = new SideEditDialog(this, mEditorContainer, mScreenWidth, mScreenHeight);
+        // 重新创建对话框（因为 removeAllViews 清除了它们的视图）
+        setupDialogs();
 
     }
 
@@ -315,8 +508,8 @@ public class ControlEditorActivity extends AppCompatActivity {
 
                 case MotionEvent.ACTION_UP:
                     if (!isDragging[0]) {
-                        // 点击事件 - 显示侧边对话框
-                        mSideDialog.show(data);
+                        // 点击事件 - 显示MD风格编辑对话框
+                        mEditDialog.show(data);
                     }
                     return true;
             }
@@ -355,9 +548,20 @@ public class ControlEditorActivity extends AppCompatActivity {
 
     private void saveLayout() {
         try {
-            File file = new File(getFilesDir(), "custom_layout.json");
-            String json = new com.google.gson.Gson().toJson(mCurrentConfig);
-            java.nio.file.Files.write(file.toPath(), json.getBytes());
+            // 创建或更新布局
+            com.app.ralaunch.model.ControlLayout layout = new com.app.ralaunch.model.ControlLayout(mCurrentLayoutName);
+
+            // 转换所有控件为 ControlElement
+            for (ControlData data : mCurrentConfig.controls) {
+                com.app.ralaunch.model.ControlElement element = convertDataToElement(data);
+                if (element != null) {
+                    layout.addElement(element);
+                }
+            }
+
+            // 保存到 ControlLayoutManager
+            mLayoutManager.saveLayout(layout);
+
             Toast.makeText(this, "布局已保存", Toast.LENGTH_SHORT).show();
         } catch (Exception e) {
             Log.e(TAG, "Failed to save layout", e);
@@ -366,8 +570,31 @@ public class ControlEditorActivity extends AppCompatActivity {
     }
     
     private void loadLayout() {
+        // 显示选择对话框
+        String[] options = {"键盘模式布局", "手柄模式布局"};
+        new AlertDialog.Builder(this)
+            .setTitle("选择布局")
+            .setItems(options, (dialog, which) -> {
+                String layoutFile = which == 0 ? "default_layout.json" : "gamepad_layout.json";
+                try {
+                    InputStream is = getAssets().open("controls/" + layoutFile);
+                    byte[] buffer = new byte[is.available()];
+                    is.read(buffer);
+                    is.close();
+                    String json = new String(buffer, "UTF-8");
+                    mCurrentConfig = new com.google.gson.Gson().fromJson(json, ControlConfig.class);
 
-        Toast.makeText(this, "加载功能待实现", Toast.LENGTH_SHORT).show();
+                    // 重新显示布局
+                    displayLayout();
+
+                    Toast.makeText(this, "已加载" + options[which], Toast.LENGTH_SHORT).show();
+                } catch (Exception e) {
+                    Log.e(TAG, "Failed to load layout: " + layoutFile, e);
+                    Toast.makeText(this, "加载失败", Toast.LENGTH_SHORT).show();
+                }
+            })
+            .setNegativeButton("取消", null)
+            .show();
     }
     
     private void resetToDefault() {
@@ -383,55 +610,6 @@ public class ControlEditorActivity extends AppCompatActivity {
             .show();
     }
 
-    /**
-     * 更新模式切换按钮显示
-     */
-    private void updateModeToggleButton() {
-        if (mModeToggleButton == null) return;
-
-        if (mIsGamepadMode) {
-            mModeToggleButton.setText("手柄模式");
-            mModeToggleButton.setIconResource(R.drawable.ic_gamepad);
-        } else {
-            mModeToggleButton.setText("键盘模式");
-            mModeToggleButton.setIconResource(R.drawable.ic_keyboard);
-        }
-    }
-
-    /**
-     * 切换控制模式（键盘/鼠标 <-> 手柄）
-     */
-    private void toggleControlMode() {
-        if (mIsGamepadMode) {
-            // 当前是手柄模式，切换到键盘模式
-            new AlertDialog.Builder(this)
-                .setTitle("切换为键盘模式")
-                .setMessage("将加载默认键盘布局，当前布局将被替换。是否继续？")
-                .setPositiveButton("确定", (dialog, which) -> {
-                    loadDefaultKeyboardLayout();
-                    mIsGamepadMode = false;
-                    updateModeToggleButton();
-                    displayLayout();
-                    Toast.makeText(this, "已切换为键盘模式", Toast.LENGTH_SHORT).show();
-                })
-                .setNegativeButton("取消", null)
-                .show();
-        } else {
-            // 当前是键盘模式，切换到手柄模式
-            new AlertDialog.Builder(this)
-                .setTitle("切换为手柄模式")
-                .setMessage("将加载默认手柄布局，当前布局将被替换。是否继续？")
-                .setPositiveButton("确定", (dialog, which) -> {
-                    loadDefaultGamepadLayout();
-                    mIsGamepadMode = true;
-                    updateModeToggleButton();
-                    displayLayout();
-                    Toast.makeText(this, "已切换为手柄模式", Toast.LENGTH_SHORT).show();
-                })
-                .setNegativeButton("取消", null)
-                .show();
-        }
-    }
 
     /**
      * 显示摇杆模式批量设置对话框
@@ -533,47 +711,6 @@ public class ControlEditorActivity extends AppCompatActivity {
             .show(getSupportFragmentManager(), "joystick_mode_selector");
     }
 
-    /**
-     * 加载默认键盘布局
-     */
-    private void loadDefaultKeyboardLayout() {
-        mCurrentConfig = new ControlConfig();
-        mCurrentConfig.name = "默认键盘布局";
-        mCurrentConfig.controls = new java.util.ArrayList<>();
-
-        // 添加移动摇杆（键盘模式）
-        ControlData moveJoystick = ControlData.createDefaultJoystick();
-        moveJoystick.y = mScreenHeight - moveJoystick.height - 50;
-        moveJoystick.joystickMode = ControlData.JOYSTICK_MODE_KEYBOARD;
-        mCurrentConfig.controls.add(moveJoystick);
-
-        // 添加跳跃按钮
-        ControlData jumpButton = ControlData.createDefaultJumpButton();
-        jumpButton.x = mScreenWidth - jumpButton.width - 200;
-        jumpButton.y = mScreenHeight - jumpButton.height - 100;
-        mCurrentConfig.controls.add(jumpButton);
-
-        // 添加攻击按钮
-        ControlData attackButton = ControlData.createDefaultAttackButton();
-        attackButton.x = mScreenWidth - attackButton.width - 50;
-        attackButton.y = mScreenHeight - attackButton.height - 200;
-        mCurrentConfig.controls.add(attackButton);
-    }
-
-    /**
-     * 加载默认手柄布局
-     */
-    private void loadDefaultGamepadLayout() {
-        mCurrentConfig = new ControlConfig();
-        mCurrentConfig.name = "默认手柄布局";
-        mCurrentConfig.controls = new java.util.ArrayList<>();
-
-        // 使用 ControlData 提供的完整手柄布局
-        ControlData[] gamepadControls = ControlData.createDefaultGamepadLayout();
-        for (ControlData control : gamepadControls) {
-            mCurrentConfig.controls.add(control);
-        }
-    }
     
     @Override
     public void onBackPressed() {
@@ -584,8 +721,8 @@ public class ControlEditorActivity extends AppCompatActivity {
         }
 
         // 再检查控件编辑弹窗
-        if (mSideDialog != null && mSideDialog.isDisplaying()) {
-            mSideDialog.hide();
+        if (mEditDialog != null && mEditDialog.isShowing()) {
+            mEditDialog.dismiss();
             return;
         }
 

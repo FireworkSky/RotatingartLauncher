@@ -17,47 +17,18 @@
         android:clipToPadding="false" />
 
     <!-- 顶部操作栏（浮动在编辑器上方） -->
-    <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+    <ImageView
+        android:id="@+id/drawer_button"
+        android:layout_width="36dp"
+        android:layout_height="36dp"
         android:layout_gravity="top|center_horizontal"
         android:layout_marginTop="1dp"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:elevation="6dp">
-
-        <!-- 模式切换按钮 -->
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/mode_toggle_button"
-            android:layout_width="wrap_content"
-            android:layout_height="36dp"
-            android:text="键盘模式"
-            android:textSize="13sp"
-            android:textColor="?attr/textPrimary"
-            style="@style/Widget.Material3.Button.TonalButton"
-            android:drawableStart="@drawable/ic_keyboard"
-            android:drawableTint="?attr/textPrimary"
-            android:drawablePadding="6dp"
-            android:paddingStart="12dp"
-            android:paddingEnd="16dp"
-            android:minWidth="0dp"
-            android:insetTop="0dp"
-            android:insetBottom="0dp"
-            android:layout_marginEnd="8dp"
-            android:contentDescription="切换控制模式" />
-
-        <!-- 设置按钮 -->
-        <ImageView
-            android:id="@+id/drawer_button"
-            android:layout_width="36dp"
-            android:layout_height="36dp"
-            android:padding="10dp"
-            android:src="@drawable/ic_settings"
-            android:background="@drawable/bg_fab_md3"
-            android:clickable="true"
-            android:focusable="true"
-            android:contentDescription="设置" />
-
-    </LinearLayout>
+        android:padding="10dp"
+        android:src="@drawable/ic_settings"
+        android:background="@drawable/bg_fab_md3"
+        android:clickable="true"
+        android:focusable="true"
+        android:elevation="6dp"
+        android:contentDescription="设置" />
 
 </FrameLayout>

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 键盘按键样式 -->
+    <style name="KeyboardKey">
+        <item name="android:layout_height">28dp</item>
+        <item name="android:layout_marginStart">1dp</item>
+        <item name="android:layout_marginEnd">1dp</item>
+        <item name="android:textSize">10sp</item>
+        <item name="android:textColor">#2B2B2B</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:paddingStart">1dp</item>
+        <item name="android:paddingEnd">1dp</item>
+        <item name="android:paddingTop">2dp</item>
+        <item name="android:paddingBottom">2dp</item>
+        <item name="android:background">@drawable/bg_key_button</item>
+        <item name="android:minWidth">0dp</item>
+        <item name="android:minHeight">0dp</item>
+        <item name="android:insetTop">0dp</item>
+        <item name="android:insetBottom">0dp</item>
+    </style>
+
+    <!-- 手柄按键样式 -->
+    <style name="GamepadKey">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">44dp</item>
+        <item name="android:layout_columnWeight">1</item>
+        <item name="android:layout_margin">3dp</item>
+        <item name="android:textSize">11sp</item>
+        <item name="android:textColor">#1C1B1F</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:paddingStart">2dp</item>
+        <item name="android:paddingEnd">2dp</item>
+        <item name="android:paddingTop">4dp</item>
+        <item name="android:paddingBottom">4dp</item>
+        <item name="android:background">@drawable/bg_key_button</item>
+        <item name="android:insetTop">0dp</item>
+        <item name="android:insetBottom">0dp</item>
+    </style>
+</resources>

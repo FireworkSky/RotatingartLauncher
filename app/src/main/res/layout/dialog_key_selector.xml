@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@android:color/white"
+    android:padding="24dp">
+
+    <!-- 标题 -->
+    <TextView
+        android:id="@+id/tv_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="选择按键"
+        android:textSize="24sp"
+        android:textColor="#1C1B1F"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:layout_marginBottom="16dp" />
+
+    <!-- 内容容器 - 不滚动 -->
+    <LinearLayout
+        android:id="@+id/content_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center_horizontal" />
+
+    <!-- 取消按钮 -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btn_cancel"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:text="取消"
+        android:textSize="16sp"
+        android:textColor="#6750A4"
+        android:backgroundTint="@android:color/transparent"
+        android:layout_marginTop="16dp"
+        style="@style/Widget.Material3.Button.TextButton" />
+
+</LinearLayout>

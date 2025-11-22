@@ -35,40 +35,56 @@
                 android:textStyle="bold"
                 android:letterSpacing="0.02" />
 
-            <!-- 在顶部工具栏的 ImageButton 部分添加 -->
-            <ImageButton
+            <!-- 控制布局按钮 - Material 3图标按钮 -->
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/controlLayoutButton"
                 android:layout_width="48dp"
                 android:layout_height="48dp"
                 android:layout_marginEnd="12dp"
-                android:background="@drawable/bg_rounded_transparent"
-                android:backgroundTint="?attr/backgroundCard"
                 android:contentDescription="控制布局"
-                android:src="@drawable/ic_controller"
-                app:tint="?attr/textPrimary" />
-            <!-- 设置按钮 -->
-            <ImageButton
+                android:insetLeft="0dp"
+                android:insetTop="0dp"
+                android:insetRight="0dp"
+                android:insetBottom="0dp"
+                app:icon="@drawable/ic_controller"
+                app:iconGravity="textStart"
+                app:iconPadding="0dp"
+                app:iconTint="?attr/textPrimary"
+                style="@style/Widget.Material3.Button.IconButton.Filled.Tonal" />
+
+            <!-- 设置按钮 - Material 3图标按钮 -->
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/settingsButton"
                 android:layout_width="48dp"
                 android:layout_height="48dp"
                 android:layout_marginEnd="12dp"
-                android:background="@drawable/bg_rounded_transparent"
-                android:backgroundTint="?attr/backgroundCard"
                 android:contentDescription="设置"
-                android:src="@drawable/ic_settings"
-                app:tint="?attr/textPrimary" />
+                android:insetLeft="0dp"
+                android:insetTop="0dp"
+                android:insetRight="0dp"
+                android:insetBottom="0dp"
+                app:icon="@drawable/ic_settings"
+                app:iconGravity="textStart"
+                app:iconPadding="0dp"
+                app:iconTint="?attr/textPrimary"
+                style="@style/Widget.Material3.Button.IconButton.Filled.Tonal" />
 
-            <!-- 刷新按钮 -->
-            <ImageButton
+            <!-- 刷新按钮 - Material 3图标按钮 -->
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/refreshButton"
                 android:layout_width="48dp"
                 android:layout_height="48dp"
                 android:layout_marginEnd="12dp"
-                android:background="@drawable/bg_rounded_transparent"
-                android:backgroundTint="?attr/backgroundCard"
                 android:contentDescription="刷新"
-                android:src="@drawable/ic_refresh"
-                app:tint="?attr/textPrimary" />
+                android:insetLeft="0dp"
+                android:insetTop="0dp"
+                android:insetRight="0dp"
+                android:insetBottom="0dp"
+                app:icon="@drawable/ic_refresh"
+                app:iconGravity="textStart"
+                app:iconPadding="0dp"
+                app:iconTint="?attr/textPrimary"
+                style="@style/Widget.Material3.Button.IconButton.Filled.Tonal" />
 
             <!-- 视图切换按钮 (使用 ralib 组件) -->
             <com.app.ralib.ui.ViewSwitcherButton
@@ -82,16 +98,21 @@
                 app:primaryLabel=""
                 app:secondaryLabel="" />
 
-            <!-- 添加游戏按钮 -->
-            <ImageButton
+            <!-- 添加游戏按钮 - Material 3图标按钮 -->
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/addGameButton"
                 android:layout_width="48dp"
                 android:layout_height="48dp"
-                android:background="@drawable/bg_rounded_transparent"
-                android:backgroundTint="?attr/backgroundCard"
                 android:contentDescription="添加预设游戏"
-                android:src="@drawable/ic_add"
-                app:tint="?attr/textPrimary" />
+                android:insetLeft="0dp"
+                android:insetTop="0dp"
+                android:insetRight="0dp"
+                android:insetBottom="0dp"
+                app:icon="@drawable/ic_add"
+                app:iconGravity="textStart"
+                app:iconPadding="0dp"
+                app:iconTint="?attr/textPrimary"
+                style="@style/Widget.Material3.Button.IconButton.Filled.Tonal" />
 
         </LinearLayout>
 
@@ -111,13 +132,14 @@
                 android:orientation="vertical"
                 android:paddingEnd="8dp">
 
-                <!-- 游戏列表卡片 -->
-                <androidx.cardview.widget.CardView
+                <!-- 游戏列表卡片 - Material 3 -->
+                <com.google.android.material.card.MaterialCardView
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     app:cardCornerRadius="16dp"
                     app:cardElevation="4dp"
-                    app:cardBackgroundColor="?attr/backgroundCard">
+                    app:cardBackgroundColor="?attr/backgroundCard"
+                    style="@style/Widget.Material3.CardView.Elevated">
 
                     <!-- 游戏RecyclerView -->
                     <androidx.recyclerview.widget.RecyclerView
@@ -139,7 +161,7 @@
                         android:layout_height="match_parent"
                         android:visibility="gone" />
 
-                </androidx.cardview.widget.CardView>
+                </com.google.android.material.card.MaterialCardView>
 
             </LinearLayout>
 
@@ -160,15 +182,16 @@
                         android:layout_height="match_parent"
                         android:orientation="vertical">
 
-                        <!-- 空状态提示卡片 -->
-                        <androidx.cardview.widget.CardView
+                        <!-- 空状态提示卡片 - Material 3 -->
+                        <com.google.android.material.card.MaterialCardView
                             android:id="@+id/emptySelectionText"
                             android:layout_width="match_parent"
                             android:layout_height="match_parent"
                             app:cardCornerRadius="16dp"
                             app:cardElevation="2dp"
                             app:cardBackgroundColor="?attr/backgroundCard"
-                            android:visibility="visible">
+                            android:visibility="visible"
+                            style="@style/Widget.Material3.CardView.Elevated">
 
                             <LinearLayout
                                 android:layout_width="match_parent"
@@ -204,10 +227,10 @@
 
                             </LinearLayout>
 
-                        </androidx.cardview.widget.CardView>
+                        </com.google.android.material.card.MaterialCardView>
 
-                        <!-- 选中的游戏信息卡片 -->
-                        <androidx.cardview.widget.CardView
+                        <!-- 选中的游戏信息卡片 - Material 3 -->
+                        <com.google.android.material.card.MaterialCardView
                             android:id="@+id/selectedGameInfo"
                             android:layout_width="match_parent"
                             android:layout_height="0dp"
@@ -215,7 +238,8 @@
                             app:cardCornerRadius="16dp"
                             app:cardElevation="4dp"
                             app:cardBackgroundColor="?attr/backgroundCard"
-                            android:visibility="gone">
+                            android:visibility="gone"
+                            style="@style/Widget.Material3.CardView.Elevated">
 
                             <LinearLayout
                                 android:layout_width="match_parent"
@@ -294,19 +318,17 @@
                                         android:textSize="14sp"
                                         android:textStyle="bold" />
 
-                                    <androidx.appcompat.widget.SwitchCompat
+                                    <com.google.android.material.materialswitch.MaterialSwitch
                                         android:id="@+id/modLoaderSwitch"
                                         android:layout_width="wrap_content"
                                         android:layout_height="wrap_content"
-                                        android:checked="true"
-                                        app:thumbTint="#FFFFFF"
-                                        app:trackTint="#666666" />
+                                        android:checked="true" />
 
                                 </LinearLayout>
 
                             </LinearLayout>
 
-                        </androidx.cardview.widget.CardView>
+                        </com.google.android.material.card.MaterialCardView>
 
                         <!-- 运行时版本选择 - 缩小版 -->
                         <com.google.android.material.card.MaterialCardView

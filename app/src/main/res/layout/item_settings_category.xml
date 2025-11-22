@@ -1,33 +1,49 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
+<!-- Material 3风格的设置分类项 -->
+<com.google.android.material.card.MaterialCardView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="58dp"
-    android:orientation="vertical"
-    android:gravity="center"
-    android:background="?attr/selectableItemBackground"
+    android:layout_height="wrap_content"
+    android:layout_marginHorizontal="6dp"
+    android:layout_marginVertical="3dp"
     android:clickable="true"
     android:focusable="true"
-    android:paddingVertical="3dp">
+    app:cardCornerRadius="12dp"
+    app:cardElevation="0dp"
+    app:strokeWidth="0dp"
+    app:cardBackgroundColor="@android:color/transparent"
+    app:rippleColor="?attr/colorPrimary"
+    style="@style/Widget.Material3.CardView.Filled">
 
-    <ImageView
-        android:id="@+id/icon"
-        android:layout_width="28dp"
-        android:layout_height="28dp"
-        android:src="@drawable/ic_settings"
-        android:contentDescription="Settings category icon"
-        app:tint="?attr/textPrimary" />
-
-    <TextView
-        android:id="@+id/category_name"
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Settings"
-        android:textColor="?attr/textSecondary"
-        android:textSize="9sp"
-        android:layout_marginTop="3dp"
-        android:maxLines="1"
-        android:ellipsize="end" />
+        android:orientation="vertical"
+        android:gravity="center"
+        android:paddingVertical="10dp"
+        android:paddingHorizontal="4dp">
 
-</LinearLayout>
+        <ImageView
+            android:id="@+id/icon"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/ic_settings"
+            android:contentDescription="Settings category icon"
+            app:tint="?attr/textPrimary" />
+
+        <TextView
+            android:id="@+id/category_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Settings"
+            android:textColor="?attr/textSecondary"
+            android:textSize="9sp"
+            android:layout_marginTop="4dp"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:gravity="center" />
+
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>

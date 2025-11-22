@@ -120,20 +120,4 @@
 
     </FrameLayout>
 
-    <!-- 右上角关闭按钮 - 增加边距避免误触 -->
-    <ImageButton
-        android:id="@+id/buttonBack"
-        android:layout_width="53dp"
-        android:layout_height="53dp"
-        android:layout_marginTop="-10dp"
-        android:layout_marginEnd="-10dp"
-        android:background="?attr/selectableItemBackgroundBorderless"
-        android:contentDescription="关闭"
-        android:elevation="16dp"
-        android:padding="8dp"
-        android:src="@drawable/ic_close"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:tint="?attr/textPrimary" />
-
 </androidx.constraintlayout.widget.ConstraintLayout>

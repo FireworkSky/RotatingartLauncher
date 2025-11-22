@@ -11,8 +11,9 @@ import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
-import android.widget.ImageButton;
 import android.widget.ImageView;
+import com.google.android.material.button.MaterialButton;
+import com.google.android.material.materialswitch.MaterialSwitch;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -76,13 +77,13 @@ public class MainActivity extends AppCompatActivity implements
     private CardView emptySelectionText;
     private LinearLayout mainLayout;
     private LinearLayout modLoaderSwitchContainer;
-    private androidx.appcompat.widget.SwitchCompat modLoaderSwitch;
+    private MaterialSwitch modLoaderSwitch;
     private View runtimeSelectContainer;
     private View btnRuntimeSelector;
     private TextView tvCurrentRuntime;
-    private ImageButton settingsButton;
-    private ImageButton addGameButton;
-    private ImageButton refreshButton;
+    private MaterialButton settingsButton;
+    private MaterialButton addGameButton;
+    private MaterialButton refreshButton;
     private com.app.ralib.ui.ViewSwitcherButton viewSwitchButton;
     private View fileBrowserContainer;
     private com.app.ralib.ui.GameFileBrowser gameFileBrowser;
@@ -319,7 +320,7 @@ public class MainActivity extends AppCompatActivity implements
         // ModLoader 开关监听已移除 - 现在直接启动选中的程序集
 
         // 控制布局按钮
-        ImageButton controlLayoutButton = findViewById(R.id.controlLayoutButton);
+        MaterialButton controlLayoutButton = findViewById(R.id.controlLayoutButton);
         controlLayoutButton.setOnClickListener(v -> {
             YoYo.with(Techniques.BounceIn)
                     .duration(700)
