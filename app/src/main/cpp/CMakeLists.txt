@@ -15,6 +15,21 @@ set(THEORAFILE_SOURCE_DIR ${CMAKE_SOURCE_DIR}/Theorafile)
 # angle: 预编译的 libEGL_angle.so/libGLESv2_angle.so 放在 jniLibs 目录
 # native: 使用系统原生 EGL/GLES
 
+
+# 添加 gl4es 子项目
+set(ANDROID ON CACHE BOOL "Targeting an Android device" FORCE)
+set(USE_ANDROID_LOG ON CACHE BOOL "Use Android log instead of stdio" FORCE)
+set(EGL_WRAPPER ON CACHE BOOL "Build EGL wrapper" FORCE)
+set(NOX11 ON CACHE BOOL "Not using X11" FORCE)
+set(STATICLIB OFF CACHE BOOL "Build shared library" FORCE)
+set(GL4ES_SOURCE_DIR ${CMAKE_SOURCE_DIR}/gl4es)
+
+# 找到 Android log 库供 gl4es 使用
+find_library(log-lib log)
+
+add_subdirectory(${GL4ES_SOURCE_DIR})
+
+
 # 配置SDL：同时支持原生GLES和gl4es两种渲染器
 set(SDL_VIDEO_OPENGL ON CACHE BOOL "Enable OpenGL support (for gl4es)" FORCE)
 set(SDL_VIDEO_OPENGL_ES ON CACHE BOOL "Enable OpenGL ES (native renderer)" FORCE)
@@ -117,6 +132,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
 
 # 安装共享库到APK的lib目录
 # 包括：libmain.so, SDL2, FAudio, FNA3D, netcorehost, mojoshader, theorafile
-# gl4es/angle 预编译库放在 jniLibs 目录，会自动打包
+# gl4es: GL_gl4es 和 EGL_gl4es 也会被打包到 APK
 install(TARGETS ${CMAKE_PROJECT_NAME} SDL2 FAudio-shared FNA3D netcorehost DESTINATION ${CMAKE_INSTALL_LIBDIR})
 install(TARGETS mojoshader theorafile DESTINATION ${CMAKE_INSTALL_LIBDIR})
+install(TARGETS GL_gl4es EGL_gl4es DESTINATION ${CMAKE_INSTALL_LIBDIR})

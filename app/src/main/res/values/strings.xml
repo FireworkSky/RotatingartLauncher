@@ -144,7 +144,7 @@
     <string name="renderer_auto_desc">自动选择最佳渲染器</string>
     <string name="renderer_native">Native OpenGL ES</string>
     <string name="renderer_native_desc">系统原生 EGL/OpenGL ES（最佳兼容性）</string>
-    <string name="renderer_gl4es">Holy GL4ES</string>
+    <string name="renderer_gl4es">GL4ES</string>
     <string name="renderer_gl4es_desc">OpenGL 2.1 翻译到 OpenGL ES 2.0（兼容性最强）</string>
     <string name="renderer_angle">ANGLE (Vulkan)</string>
     <string name="renderer_angle_desc">OpenGL ES over Vulkan（Google官方，需要 Android 7.0+）</string>

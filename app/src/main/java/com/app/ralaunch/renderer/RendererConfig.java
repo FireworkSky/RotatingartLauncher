@@ -29,7 +29,7 @@ public class RendererConfig {
 
     // 渲染器 ID
     public static final String RENDERER_NATIVE_GLES = "native";           // 系统原生 EGL/GLES
-    public static final String RENDERER_GL4ES = "gl4es";                  // Holy GL4ES
+    public static final String RENDERER_GL4ES = "gl4es";                  // GL4ES
     public static final String RENDERER_ANGLE = "angle";                  // ANGLE
     public static final String RENDERER_ZINK = "zink";                    // Zink (Mesa)
     public static final String RENDERER_VIRGL = "virgl";                  // VirGL
@@ -81,8 +81,8 @@ public class RendererConfig {
             RENDERER_GL4ES,
             "Holy GL4ES",
             "OpenGL 2.1 翻译到 OpenGL ES 2.0（兼容性最强）",
-            "libgl4es.so",  // gl4es 提供了 EGL 实现
-            "libgl4es.so",  // gl4es 同时提供 GL 实现
+            "libEGL_gl4es.so",
+            "libGL_gl4es.so",
             true,
             0
         ),
