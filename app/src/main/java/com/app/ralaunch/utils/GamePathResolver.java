@@ -91,7 +91,12 @@ public class GamePathResolver {
             }
 
             // 检查是否有入口点（如果 runtime 可用）
-            boolean hasEntryPoint = false;
+            // ⚠️ 暂时禁用：AssemblyChecker 会初始化 CoreCLR，导致后续游戏启动失败
+            // 因为 CoreCLR 不允许在同一进程中多次初始化
+            // TODO: 未来可以通过检查文件是否在游戏启动流程中来决定是否调用
+            boolean hasEntryPoint = false; // 假设所有有图标的文件都有入口点
+
+            /*
             if (sContext != null && isRuntimeAvailable()) {
                 try {
                     hasEntryPoint = AssemblyChecker.hasEntryPoint(sContext, filePath);
@@ -104,6 +109,7 @@ public class GamePathResolver {
                 // runtime 不可用时，假设有入口点（只要有图标就认为是游戏）
                 hasEntryPoint = true;
             }
+            */
 
             if (hasEntryPoint && hasIcon) {
                 AppLogger.debug(TAG, String.format("File %s has entry point: %b, has icon: %b",

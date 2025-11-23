@@ -86,6 +86,23 @@
                 app:iconTint="?attr/textPrimary"
                 style="@style/Widget.Material3.Button.IconButton.Filled.Tonal" />
 
+            <!-- GOG 客户端按钮 - Material 3图标按钮 -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/gogButton"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_marginEnd="12dp"
+                android:contentDescription="GOG 游戏库"
+                android:insetLeft="0dp"
+                android:insetTop="0dp"
+                android:insetRight="0dp"
+                android:insetBottom="0dp"
+                app:icon="@drawable/ic_gog"
+                app:iconGravity="textStart"
+                app:iconPadding="0dp"
+                app:iconTint="?attr/textPrimary"
+                style="@style/Widget.Material3.Button.IconButton.Filled.Tonal" />
+
             <!-- 视图切换按钮 (使用 ralib 组件) -->
             <com.app.ralib.ui.ViewSwitcherButton
                 android:id="@+id/viewSwitchButton"

@@ -14,8 +14,8 @@ import java.util.Map;
 /**
  * 渲染器配置类 - 基于 FoldCraftLauncher/PojavLauncher 环境变量方案
  *
- * 核心原理：
- * 1. 通过环境变量控制渲染器选择（POJAV_RENDERER）
+ * 核心原理�?
+ * 1. 通过环境变量控制渲染器选择（POJAV_RENDERER�?
  * 2. 库文件通过 LD_LIBRARY_PATH 自动可见
  * 3. 所有渲染器都提供标准的 EGL/OpenGL 接口
  * 4. SDL/FNA3D 读取环境变量并使用相应渲染器
@@ -27,19 +27,21 @@ import java.util.Map;
 public class RendererConfig {
     private static final String TAG = "RendererConfig";
 
-    // 渲染器 ID
+    // 渲染�?ID
     public static final String RENDERER_NATIVE_GLES = "native";           // 系统原生 EGL/GLES
     public static final String RENDERER_GL4ES = "gl4es";                  // GL4ES
+    public static final String RENDERER_MOBILEGLUES = "mobileglues";      // MobileGlues
     public static final String RENDERER_ANGLE = "angle";                  // ANGLE
     public static final String RENDERER_ZINK = "zink";                    // Zink (Mesa)
+    public static final String RENDERER_ZINK_25 = "zink25";               // Zink (Mesa 25)
     public static final String RENDERER_VIRGL = "virgl";                  // VirGL
     public static final String RENDERER_FREEDRENO = "freedreno";          // Freedreno
 
-    // 默认渲染器
+    // 默认渲染�?
     public static final String DEFAULT_RENDERER = RENDERER_NATIVE_GLES;
 
     /**
-     * 渲染器信息
+     * 渲染器信�?
      */
     public static class RendererInfo {
         public final String id;
@@ -48,7 +50,7 @@ public class RendererConfig {
         public final String eglLibrary;      // EGL 库文件名 (null = 系统默认)
         public final String glesLibrary;     // GLES 库文件名 (null = 系统默认)
         public final boolean needsPreload;   // 是否需要通过 LD_PRELOAD 加载
-        public final int minAndroidVersion;  // 最低 Android 版本
+        public final int minAndroidVersion;  // 最�?Android 版本
 
         public RendererInfo(String id, String displayName, String description,
                           String eglLibrary, String glesLibrary,
@@ -65,7 +67,7 @@ public class RendererConfig {
 
     // 所有可用渲染器
     private static final RendererInfo[] ALL_RENDERERS = {
-        // 系统原生渲染器（默认）
+        // 系统原生渲染器（默认�?
         new RendererInfo(
             RENDERER_NATIVE_GLES,
             "Native OpenGL ES",
@@ -76,18 +78,29 @@ public class RendererConfig {
             0
         ),
 
-        // gl4es 渲染器
+        // gl4es 渲染�?
         new RendererInfo(
             RENDERER_GL4ES,
             "Holy GL4ES",
-            "OpenGL 2.1 翻译到 OpenGL ES 2.0（兼容性最强）",
+            "OpenGL 2.1 翻译�?OpenGL ES 2.0（兼容性最强）",
             "libEGL_gl4es.so",
             "libGL_gl4es.so",
             true,
             0
         ),
 
-        // ANGLE 渲染器
+        // MobileGlues 渲染�?
+        new RendererInfo(
+            RENDERER_MOBILEGLUES,
+            "MobileGlues",
+            "OpenGL 4.6 翻译�?OpenGL ES 3.2（现代化翻译层）",
+            "libmobileglues.so",
+            "libmobileglues.so",
+            true,
+            0
+        ),
+
+        // ANGLE 渲染�?
         new RendererInfo(
             RENDERER_ANGLE,
             "ANGLE (Vulkan Backend)",
@@ -95,10 +108,10 @@ public class RendererConfig {
             "libEGL_angle.so",
             "libGLESv2_angle.so",
             true,
-            Build.VERSION_CODES.N  // Vulkan 需要 Android 7.0+
+            Build.VERSION_CODES.N  // Vulkan 需�?Android 7.0+
         ),
 
-        // Zink 渲染器
+        // Zink 渲染�?
         new RendererInfo(
             RENDERER_ZINK,
             "Zink (Mesa)",
@@ -109,7 +122,18 @@ public class RendererConfig {
             Build.VERSION_CODES.N
         ),
 
-        // VirGL 渲染器
+        // Zink Mesa 25 渲染�?
+        new RendererInfo(
+            RENDERER_ZINK_25,
+            "Zink (Mesa 25)",
+            "OpenGL 4.6 over Vulkan (Mesa 25 - 最新特性支�?",
+            "libOSMesa_25.so",
+            "libOSMesa_25.so",
+            true,
+            Build.VERSION_CODES.Q  // Mesa 25 需�?Android 10+
+        ),
+
+        // VirGL 渲染�?
         new RendererInfo(
             RENDERER_VIRGL,
             "VirGL Renderer",
@@ -120,7 +144,7 @@ public class RendererConfig {
             Build.VERSION_CODES.N
         ),
 
-        // Freedreno 渲染器
+        // Freedreno 渲染�?
         new RendererInfo(
             RENDERER_FREEDRENO,
             "Freedreno (Adreno)",
@@ -133,7 +157,7 @@ public class RendererConfig {
     };
 
     /**
-     * 获取所有兼容的渲染器
+     * 获取所有兼容的渲染�?
      */
     public static List<RendererInfo> getCompatibleRenderers(Context context) {
         List<RendererInfo> compatible = new ArrayList<>();
@@ -148,9 +172,9 @@ public class RendererConfig {
             AppLogger.info(TAG, "  Display Name: " + renderer.displayName);
             AppLogger.info(TAG, "  Min API: " + renderer.minAndroidVersion);
 
-            // 检查 Android 版本
+            // 检�?Android 版本
             if (Build.VERSION.SDK_INT < renderer.minAndroidVersion) {
-                AppLogger.info(TAG, "  ✗ SKIP: requires Android API " + renderer.minAndroidVersion +
+                AppLogger.info(TAG, "  �?SKIP: requires Android API " + renderer.minAndroidVersion +
                               " (current: " + Build.VERSION.SDK_INT + ")");
                 continue;
             }
@@ -164,7 +188,7 @@ public class RendererConfig {
                 AppLogger.info(TAG, "  EGL Exists: " + eglLib.exists());
 
                 if (!eglLib.exists()) {
-                    AppLogger.info(TAG, "  ✗ SKIP: " + renderer.eglLibrary + " not found");
+                    AppLogger.info(TAG, "  �?SKIP: " + renderer.eglLibrary + " not found");
                     hasLibraries = false;
                 }
             } else {
@@ -179,14 +203,14 @@ public class RendererConfig {
                 AppLogger.info(TAG, "  GLES Exists: " + glesLib.exists());
 
                 if (!glesLib.exists()) {
-                    AppLogger.info(TAG, "  ✗ SKIP: " + renderer.glesLibrary + " not found");
+                    AppLogger.info(TAG, "  �?SKIP: " + renderer.glesLibrary + " not found");
                     hasLibraries = false;
                 }
             }
 
             if (hasLibraries) {
                 compatible.add(renderer);
-                AppLogger.info(TAG, "  ✓✓✓ COMPATIBLE: " + renderer.id + " added to list");
+                AppLogger.info(TAG, "  ✓✓�?COMPATIBLE: " + renderer.id + " added to list");
             }
         }
 
@@ -201,7 +225,7 @@ public class RendererConfig {
     }
 
     /**
-     * 根据 ID 获取渲染器信息
+     * 根据 ID 获取渲染器信�?
      */
     public static RendererInfo getRendererById(String id) {
         for (RendererInfo renderer : ALL_RENDERERS) {
@@ -226,7 +250,7 @@ public class RendererConfig {
     }
 
     /**
-     * 获取渲染器库的完整路径
+     * 获取渲染器库的完整路�?
      */
     public static String getRendererLibraryPath(Context context, String libraryName) {
         if (libraryName == null) {
@@ -238,7 +262,7 @@ public class RendererConfig {
     }
 
     /**
-     * 获取渲染器环境变量配置 (基于 FoldCraftLauncher 实现，使用 RALCORE 前缀)
+     * 获取渲染器环境变量配�?(基于 FoldCraftLauncher 实现，使�?RALCORE 前缀)
      */
     public static Map<String, String> getRendererEnv(Context context, String rendererId) {
         Map<String, String> envMap = new HashMap<>();
@@ -252,6 +276,14 @@ public class RendererConfig {
                 envMap.put("LIBGL_NORMALIZE", "1");
                 envMap.put("LIBGL_NOINTOVLHACK", "1");
                 envMap.put("LIBGL_NOERROR", "1");
+                break;
+
+            case RENDERER_MOBILEGLUES:
+                envMap.put("RALCORE_RENDERER", "mobileglues");
+                // MobileGlues 使用 SPIRV-Cross 进行 shader 翻译
+                envMap.put("MOBILEGLUES_GLES_VERSION", "2.0");
+                // 启用调试日志（可选）
+                // envMap.put("MOBILEGLUES_DEBUG", "1");
                 break;
 
             case RENDERER_ANGLE:
@@ -269,6 +301,25 @@ public class RendererConfig {
                 envMap.put("force_glsl_extensions_warn", "true");
                 envMap.put("allow_higher_compat_version", "true");
                 envMap.put("allow_glsl_extension_directive_midshader", "true");
+                break;
+
+            case RENDERER_ZINK_25:
+                envMap.put("RALCORE_RENDERER", "vulkan_zink");
+                envMap.put("GALLIUM_DRIVER", "zink");
+                envMap.put("MESA_LOADER_DRIVER_OVERRIDE", "zink");
+                envMap.put("MESA_GL_VERSION_OVERRIDE", "4.6");
+                envMap.put("MESA_GLSL_VERSION_OVERRIDE", "460");
+                envMap.put("MESA_GLSL_CACHE_DIR", context.getCacheDir().getAbsolutePath());
+                // Mesa 25 特性启�?
+                envMap.put("ZINK_DESCRIPTORS", "auto");
+                envMap.put("ZINK_DEBUG", "nir");
+                envMap.put("force_glsl_extensions_warn", "true");
+                envMap.put("allow_higher_compat_version", "true");
+                envMap.put("allow_glsl_extension_directive_midshader", "true");
+                // 启用更多 Mesa 25 新特�?
+                envMap.put("MESA_EXTENSION_MAX_YEAR", "2025");
+                // 修复 OSMesa EGL 配置问题 - 跳过 EGL_RENDERABLE_TYPE
+                envMap.put("SDL_EGL_SKIP_RENDERABLE_TYPE", "1");
                 break;
 
             case RENDERER_VIRGL:
@@ -293,7 +344,7 @@ public class RendererConfig {
 
             case RENDERER_NATIVE_GLES:
             default:
-                // Native 渲染器不需要额外环境变量
+                // Native 渲染器不需要额外环境变�?
                 break;
         }
 

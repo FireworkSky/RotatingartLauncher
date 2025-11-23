@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!-- 允许所有明文流量（用于开发和调试） -->
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <!-- 信任系统证书 -->
+            <certificates src="system" />
+            <!-- 信任用户添加的证书 -->
+            <certificates src="user" />
+        </trust-anchors>
+    </base-config>
+
+    <!-- GOG 域名特别配置 -->
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">gog.com</domain>
+        <domain includeSubdomains="true">auth.gog.com</domain>
+        <domain includeSubdomains="true">login.gog.com</domain>
+        <domain includeSubdomains="true">embed.gog.com</domain>
+        <domain includeSubdomains="true">cdn.gog.com</domain>
+        <domain includeSubdomains="true">content-system.gog.com</domain>
+        <domain includeSubdomains="true">api.gog.com</domain>
+        <trust-anchors>
+            <certificates src="system" />
+            <certificates src="user" />
+        </trust-anchors>
+    </domain-config>
+</network-security-config>

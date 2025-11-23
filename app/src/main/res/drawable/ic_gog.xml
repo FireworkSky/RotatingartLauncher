@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- GOG.com 图标 - 简洁版本 -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <!-- 深紫色背景圆形 -->
+    <path
+        android:fillColor="#8B5CF6"
+        android:pathData="M12,2 C6.48,2 2,6.48 2,12 C2,17.52 6.48,22 12,22 C17.52,22 22,17.52 22,12 C22,6.48 17.52,2 12,2 Z"/>
+
+    <!-- GOG 白色文字 -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M7,9 C7,8.45 7.45,8 8,8 L10,8 C10.55,8 11,8.45 11,9 L11,11 C11,11.55 10.55,12 10,12 L9,12 L9,13 L10,13 L10,14 L8,14 C7.45,14 7,13.55 7,13 L7,9 Z M9,9 L9,11 L10,11 L10,9 L9,9 Z"/>
+
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M12,9 C12,8.45 12.45,8 13,8 L15,8 C15.55,8 16,8.45 16,9 L16,13 C16,13.55 15.55,14 15,14 L13,14 C12.45,14 12,13.55 12,13 L12,9 Z M14,9 L14,13 L15,13 L15,9 L14,9 Z"/>
+
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M8,16 C7.45,16 7,15.55 7,15 C7,14.45 7.45,14 8,14 C8.55,14 9,14.45 9,15 C9,15.55 8.55,16 8,16 Z"/>
+
+</vector>

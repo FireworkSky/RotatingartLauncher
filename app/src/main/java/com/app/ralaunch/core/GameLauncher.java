@@ -387,6 +387,19 @@ public class GameLauncher {
             AppLogger.info(TAG, "Framework major: " + frameworkMajor);
             AppLogger.info(TAG, "================================================");
 
+            // ⚠️ 重要：清理之前的 .NET 运行时状态
+            // 如果 AssemblyChecker 之前被调用，它可能已经初始化了 CoreCLR
+            // 我们需要清理它，避免与游戏启动时的初始化冲突
+            AppLogger.info(TAG, "");
+            AppLogger.info(TAG, "Cleaning up previous .NET runtime state...");
+            try {
+                com.app.ralaunch.netcore.NetCoreManager.cleanup();
+                com.app.ralaunch.utils.NetCoreHostHelper.cleanup();
+                AppLogger.info(TAG, "Runtime cleanup completed");
+            } catch (Exception e) {
+                AppLogger.warn(TAG, "Runtime cleanup failed (this is OK if not previously initialized): " + e.getMessage());
+            }
+
             // 加载所有必需的 .NET Native 库
             // 包括：System.Native (socket等), Cryptography (TLS/SSL), 等等
             AppLogger.info(TAG, "Loading .NET Native libraries...");

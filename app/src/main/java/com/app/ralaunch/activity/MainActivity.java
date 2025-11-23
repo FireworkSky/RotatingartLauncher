@@ -84,6 +84,7 @@ public class MainActivity extends AppCompatActivity implements
     private MaterialButton settingsButton;
     private MaterialButton addGameButton;
     private MaterialButton refreshButton;
+    private MaterialButton gogButton;
     private com.app.ralib.ui.ViewSwitcherButton viewSwitchButton;
     private View fileBrowserContainer;
     private com.app.ralib.ui.GameFileBrowser gameFileBrowser;
@@ -288,6 +289,15 @@ public class MainActivity extends AppCompatActivity implements
             refreshGameList();
         });
 
+        // GOG 客户端按钮
+        gogButton = findViewById(R.id.gogButton);
+        gogButton.setOnClickListener(v -> {
+            YoYo.with(Techniques.BounceIn)
+                    .duration(700)
+                    .playOn(gogButton);
+            showGogClientFragment();
+        });
+
         // 视图切换按钮 (ralib 组件)
         viewSwitchButton = findViewById(R.id.viewSwitchButton);
         if (viewSwitchButton != null) {
@@ -447,6 +457,16 @@ public class MainActivity extends AppCompatActivity implements
             return "长期支持版本 (LTS)";
         }
         return "稳定版本";
+    }
+
+    private void showGogClientFragment() {
+        mainLayout.setVisibility(View.GONE);
+        View fragmentContainer = findViewById(R.id.fragmentContainer);
+        fragmentContainer.setVisibility(View.VISIBLE);
+
+        com.app.ralaunch.gog.GogClientFragment gogFragment = new com.app.ralaunch.gog.GogClientFragment();
+
+        pageManager.showPage(gogFragment, "gog_client");
     }
 
     private void showControlLayoutFragment() {

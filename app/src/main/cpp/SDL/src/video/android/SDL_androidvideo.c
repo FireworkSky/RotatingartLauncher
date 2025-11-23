@@ -34,9 +34,7 @@
 
 #include "SDL_androidvideo.h"
 #include "SDL_androidgl.h"
-#ifdef SDL_VIDEO_OPENGL_GL4ES
-#include "SDL_androidgl4es.h"
-#endif
+
 #include "SDL_androidclipboard.h"
 #include "SDL_androidevents.h"
 #include "SDL_androidkeyboard.h"

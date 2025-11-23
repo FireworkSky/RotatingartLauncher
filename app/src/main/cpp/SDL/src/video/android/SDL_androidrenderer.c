@@ -19,9 +19,7 @@
 
 #include "SDL_androidrenderer.h"
 #include "SDL_androidgl.h"
-#ifdef SDL_VIDEO_OPENGL_GL4ES
-#include "SDL_androidgl4es.h"
-#endif
+
 #include "../SDL_egl_c.h"
 
 #include <dlfcn.h>
@@ -50,6 +48,14 @@ static const SDL_RendererBackend RENDERER_BACKENDS[] = {
         .need_preload = SDL_TRUE
     },
 
+    /* MobileGlues (OpenGL 4.6 翻译到 GLES 3.2) */
+    {
+        .name = "mobileglues",
+        .egl_library = "libmobileglues.so",
+        .gles_library = "libmobileglues.so",
+        .need_preload = SDL_TRUE
+    },
+
     /* ANGLE (OpenGL ES over Vulkan) */
     {
         .name = "angle",
@@ -61,8 +67,8 @@ static const SDL_RendererBackend RENDERER_BACKENDS[] = {
     /* Zink (OpenGL over Vulkan via OSMesa) */
     {
         .name = "zink",
-        .egl_library = "libOSMesa.so",
-        .gles_library = "libOSMesa.so",
+        .egl_library = "libOSMesa_25.so",
+        .gles_library = "libOSMesa_25.so",
         .need_preload = SDL_TRUE
     },
 
@@ -105,6 +111,8 @@ static const char* GetRendererFromEnv(void)
         /* 映射 RALCORE_RENDERER 值到渲染器名称 */
         if (SDL_strcmp(ralcore_renderer, "opengles2") == 0) {
             return "gl4es";
+        } else if (SDL_strcmp(ralcore_renderer, "mobileglues") == 0) {
+            return "mobileglues";
         } else if (SDL_strcmp(ralcore_renderer, "vulkan_zink") == 0) {
             return "zink";
         } else if (SDL_strcmp(ralcore_renderer, "gallium_virgl") == 0) {
@@ -238,23 +246,7 @@ SDL_bool Android_SetupGLFunctions(SDL_VideoDevice *device)
     renderer_name = current_renderer ? current_renderer->name : "native";
     LOGI("Setting up GL functions for renderer: %s", renderer_name);
 
-//#ifdef SDL_VIDEO_OPENGL_GL4ES
-//    /* gl4es 使用专用的 AGL 接口函数 */
-//    if (SDL_strcasecmp(renderer_name, "gl4es") == 0) {
-//        LOGI("🎨 Using gl4es renderer (OpenGL 2.1 via AGL interface)");
-//        device->GL_LoadLibrary = Android_GL4ES_LoadLibrary;
-//        device->GL_GetProcAddress = Android_GL4ES_GetProcAddress;
-//        device->GL_UnloadLibrary = Android_GL4ES_UnloadLibrary;
-//        device->GL_CreateContext = Android_GL4ES_CreateContext;
-//        device->GL_MakeCurrent = Android_GL4ES_MakeCurrent;
-//        device->GL_SetSwapInterval = Android_GL4ES_SetSwapInterval;
-//        device->GL_GetSwapInterval = Android_GL4ES_GetSwapInterval;
-//        device->GL_SwapWindow = Android_GL4ES_SwapWindow;
-//        device->GL_DeleteContext = Android_GL4ES_DeleteContext;
-//        LOGI("✓ gl4es GL functions configured");
-//        return SDL_TRUE;
-//    }
-//#endif
+
 
     /* 其他渲染器使用标准 EGL 接口 */
     LOGI("🎨 Using standard EGL interface");

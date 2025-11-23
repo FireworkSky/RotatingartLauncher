@@ -6,14 +6,8 @@ set(SDL_SOURCE_DIR ${CMAKE_SOURCE_DIR}/SDL)
 set(FNA3D_SOURCE_DIR ${CMAKE_SOURCE_DIR}/FNA3D)
 set(FAUDIO_SOURCE_DIR ${CMAKE_SOURCE_DIR}/FAudio)
 set(THEORAFILE_SOURCE_DIR ${CMAKE_SOURCE_DIR}/Theorafile)
-#set(LGOG_SOURCE_DIR ${CMAKE_SOURCE_DIR}/lgogdownloader)
-# 移除 rustcorehost，现在直接使用 CoreCLR API
 
 
-# ===== 双渲染器系统 =====
-# gl4es: 预编译的 libgl4es.so 放在 jniLibs 目录，运行时动态加载
-# angle: 预编译的 libEGL_angle.so/libGLESv2_angle.so 放在 jniLibs 目录
-# native: 使用系统原生 EGL/GLES
 
 
 # 添加 gl4es 子项目
@@ -82,10 +76,6 @@ add_subdirectory(${FNA3D_SOURCE_DIR})
 # 恢复设置
 set(CMAKE_SKIP_INSTALL_RULES OFF)
 set(CMAKE_INSTALL_PREFIX ${_OLD_CMAKE_INSTALL_PREFIX})
-
-
-
-
 # 添加你的主程序源码
 add_library(${CMAKE_PROJECT_NAME} SHARED
         sdl_entry.c
@@ -118,7 +108,7 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
         netcorehost # .NET Core Hosting库
         c++_shared
         ${CXX_SHARED_LIB}
-       # lgogdownloader
+        # lgogdownloader
 )
 
 # 包含 SDL、FNA3D 和 netcorehost 头文件
@@ -130,9 +120,6 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
         ${LGOG_SOURCE_DIR}/include
 )
 
-# 安装共享库到APK的lib目录
-# 包括：libmain.so, SDL2, FAudio, FNA3D, netcorehost, mojoshader, theorafile
-# gl4es: GL_gl4es 和 EGL_gl4es 也会被打包到 APK
 install(TARGETS ${CMAKE_PROJECT_NAME} SDL2 FAudio-shared FNA3D netcorehost DESTINATION ${CMAKE_INSTALL_LIBDIR})
 install(TARGETS mojoshader theorafile DESTINATION ${CMAKE_INSTALL_LIBDIR})
 install(TARGETS GL_gl4es EGL_gl4es DESTINATION ${CMAKE_INSTALL_LIBDIR})

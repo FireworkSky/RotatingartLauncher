@@ -88,4 +88,16 @@
         <item name="strokeColor">?attr/colorOutline</item>
     </style>
 
+    <!-- ShapeableImageView 圆形样式 -->
+    <style name="CircleImageView" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">50%</item>
+    </style>
+
+    <!-- ShapeableImageView 圆角样式 16dp -->
+    <style name="RoundedImageView16" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">16dp</item>
+    </style>
+
 </resources>

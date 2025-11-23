@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- GOG 头部渐变背景 - 紫色调 -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <gradient
+        android:type="linear"
+        android:angle="135"
+        android:startColor="#7B1FA2"
+        android:centerColor="#9C27B0"
+        android:endColor="#BA68C8" />
+</shape>

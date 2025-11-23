@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- GOG 游戏列表项 - 现代化 MD3 设计 -->
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/gameCard"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginHorizontal="4dp"
+    android:layout_marginVertical="6dp"
+    android:clickable="true"
+    android:focusable="true"
+    app:cardCornerRadius="20dp"
+    app:cardElevation="0dp"
+    app:strokeWidth="0dp"
+    app:rippleColor="?attr/colorPrimary"
+    style="@style/Widget.Material3.CardView.Filled">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="12dp"
+        android:gravity="center_vertical">
+
+        <!-- 游戏封面 -->
+        <com.google.android.material.imageview.ShapeableImageView
+            android:id="@+id/gameImage"
+            android:layout_width="72dp"
+            android:layout_height="72dp"
+            android:background="?attr/colorSurfaceVariant"
+            android:scaleType="centerCrop"
+            app:shapeAppearanceOverlay="@style/RoundedImageView16"
+            tools:src="@drawable/ic_games" />
+
+        <!-- 游戏信息 -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:layout_marginStart="14dp"
+            android:layout_marginEnd="8dp">
+
+            <TextView
+                android:id="@+id/gameTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="游戏标题"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                android:textColor="?attr/textPrimary"
+                android:maxLines="2"
+                android:ellipsize="end"
+                android:lineSpacingExtra="2dp"
+                tools:text="The Witcher 3: Wild Hunt" />
+
+            <!-- 状态标签行 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginTop="6dp">
+
+                <!-- 平台图标 -->
+                <ImageView
+                    android:id="@+id/platformIcon"
+                    android:layout_width="14dp"
+                    android:layout_height="14dp"
+                    android:src="@drawable/ic_windows"
+                    app:tint="?attr/textSecondary" />
+
+                <!-- 状态文本 -->
+                <TextView
+                    android:id="@+id/gameStatus"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="可下载"
+                    android:textSize="12sp"
+                    android:textColor="?attr/textSecondary"
+                    android:layout_marginStart="6dp"
+                    tools:text="Windows • 可下载" />
+
+            </LinearLayout>
+
+            <!-- 下载进度条 (默认隐藏) -->
+            <LinearLayout
+                android:id="@+id/downloadProgressContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginTop="8dp"
+                android:visibility="gone">
+
+                <com.google.android.material.progressindicator.LinearProgressIndicator
+                    android:id="@+id/downloadProgress"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:trackCornerRadius="4dp"
+                    app:trackThickness="6dp"
+                    android:progress="0"
+                    android:max="100" />
+
+                <TextView
+                    android:id="@+id/downloadProgressText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="0%"
+                    android:textSize="11sp"
+                    android:textColor="?attr/colorPrimary"
+                    android:layout_marginTop="2dp"
+                    tools:text="45% • 2.3 GB / 5.1 GB" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <!-- 操作按钮区域 -->
+        <FrameLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+
+            <!-- 下载/安装按钮 -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnDownload"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:insetLeft="0dp"
+                android:insetTop="0dp"
+                android:insetRight="0dp"
+                android:insetBottom="0dp"
+                app:icon="@drawable/ic_download"
+                app:iconGravity="textStart"
+                app:iconPadding="0dp"
+                app:iconSize="20dp"
+                app:cornerRadius="14dp"
+                style="@style/Widget.Material3.Button.TonalButton" />
+
+            <!-- 更多选项按钮 -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnMore"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:insetLeft="0dp"
+                android:insetTop="0dp"
+                android:insetRight="0dp"
+                android:insetBottom="0dp"
+                android:visibility="gone"
+                app:icon="@drawable/ic_more_vert"
+                app:iconGravity="textStart"
+                app:iconPadding="0dp"
+                app:iconSize="20dp"
+                app:cornerRadius="14dp"
+                style="@style/Widget.Material3.Button.TextButton" />
+
+        </FrameLayout>
+
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>
