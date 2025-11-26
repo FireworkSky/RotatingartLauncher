@@ -73,7 +73,9 @@ public class SettingsFragment extends BaseFragment {
 
         // 设置分类列表 - 手动添加 item
         settingsCategoryListView = view.findViewById(R.id.settingsCategoryListView);
-        
+
+        // TODO: 这一整个何意味，意味何
+
         // 找到 ListView 的父容器
         ViewGroup listViewParent = (ViewGroup) settingsCategoryListView.getParent();
         int listViewIndex = listViewParent.indexOfChild(settingsCategoryListView);
@@ -81,6 +83,16 @@ public class SettingsFragment extends BaseFragment {
         // 移除 ListView
         listViewParent.removeView(settingsCategoryListView);
         
+        // 创建 ScrollView 来包裹分类列表
+        androidx.core.widget.NestedScrollView scrollView = new androidx.core.widget.NestedScrollView(requireContext());
+        LinearLayout.LayoutParams scrollParams = new LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            0
+        );
+        scrollParams.weight = 1;
+        scrollView.setLayoutParams(scrollParams);
+        scrollView.setFillViewport(false);
+
         // 创建新的容器来替代 ListView
         LinearLayout categoriesLinearLayout = new LinearLayout(requireContext());
         categoriesLinearLayout.setOrientation(LinearLayout.VERTICAL);
@@ -89,9 +101,12 @@ public class SettingsFragment extends BaseFragment {
             ViewGroup.LayoutParams.WRAP_CONTENT
         ));
         
-        // 添加到原位置
-        listViewParent.addView(categoriesLinearLayout, listViewIndex);
-        
+        // 将 LinearLayout 添加到 ScrollView
+        scrollView.addView(categoriesLinearLayout);
+
+        // 添加 ScrollView 到原位置
+        listViewParent.addView(scrollView, listViewIndex);
+
         // 手动创建分类按钮
         List<Map<String, Object>> categories = getCategories();
         for (int i = 0; i < categories.size(); i++) {

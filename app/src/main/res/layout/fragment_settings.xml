@@ -36,21 +36,18 @@
             android:maxLines="2" />
 
         <!-- 设置分类列表 -->
+        <!-- 会被 SettingFragment 替换为 ScrollView 和 LinearLayout -->
         <ListView
             android:id="@+id/settingsCategoryListView"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="0dp"
+            android:layout_weight="1"
             android:divider="@android:color/transparent"
             android:dividerHeight="0dp"
             android:paddingTop="0dp"
             android:paddingBottom="8dp"
             android:scrollbars="none"
             android:choiceMode="singleChoice" />
-
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1" />
 
     </LinearLayout>
 
