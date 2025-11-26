@@ -16,25 +16,25 @@
         android:clipChildren="false"
         android:clipToPadding="false" />
 
-    <!-- 顶部操作栏（MD3风格悬浮控件，可拖动） -->
+    <!-- 顶部操作栏（MD3风格悬浮控件，可拖动，更透明、更小） -->
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/drawer_button"
-        android:layout_width="56dp"
-        android:layout_height="56dp"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
         android:layout_gravity="top|center_horizontal"
         android:layout_marginTop="16dp"
-        app:cardCornerRadius="28dp"
-        app:cardElevation="8dp"
-        app:cardBackgroundColor="#CCF3EDF7"
+        app:cardCornerRadius="24dp"
+        app:cardElevation="4dp"
+        app:cardBackgroundColor="#66F3EDF7"
         app:strokeWidth="0dp"
-        android:alpha="0.85"
+        android:alpha="0.6"
         android:clickable="true"
         android:focusable="true"
         android:contentDescription="设置">
         
         <ImageView
-            android:layout_width="24dp"
-            android:layout_height="24dp"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
             android:layout_gravity="center"
             android:src="@drawable/ic_settings"
             app:tint="?attr/colorPrimary" />

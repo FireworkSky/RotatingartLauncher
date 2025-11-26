@@ -36,53 +36,53 @@
             android:clickable="false"
             android:focusable="false">
 
-            <!-- 可拖动的 MD3 风格悬浮菜单按钮（半透明，与外部编辑器一致） -->
+            <!-- 可拖动的 MD3 风格悬浮菜单按钮（更透明、更小，减少遮挡） -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/game_drawer_button"
-                android:layout_width="56dp"
-                android:layout_height="56dp"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
                 android:layout_gravity="top|center_horizontal"
                 android:layout_marginTop="16dp"
-                app:cardCornerRadius="28dp"
-                app:cardElevation="8dp"
-                app:cardBackgroundColor="#CCF3EDF7"
+                app:cardCornerRadius="24dp"
+                app:cardElevation="4dp"
+                app:cardBackgroundColor="#66F3EDF7"
                 app:strokeWidth="0dp"
-                android:alpha="0.85"
+                android:alpha="0.6"
                 android:clickable="true"
                 android:focusable="true"
                 android:contentDescription="设置"
                 android:visibility="gone">
                 
                 <ImageView
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
                     android:layout_gravity="center"
                     android:src="@drawable/ic_settings"
                     app:tint="?attr/colorPrimary" />
                     
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- 可拖动的 MD3 风格悬浮编辑器设置按钮（半透明） -->
+            <!-- 可拖动的 MD3 风格悬浮编辑器设置按钮（更透明、更小，减少遮挡） -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/game_editor_settings_button"
-                android:layout_width="56dp"
-                android:layout_height="56dp"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
                 android:layout_gravity="top|end"
                 android:layout_marginTop="16dp"
                 android:layout_marginEnd="16dp"
-                app:cardCornerRadius="28dp"
-                app:cardElevation="8dp"
-                app:cardBackgroundColor="#CCF3EDF7"
+                app:cardCornerRadius="24dp"
+                app:cardElevation="4dp"
+                app:cardBackgroundColor="#66F3EDF7"
                 app:strokeWidth="0dp"
-                android:alpha="0.85"
+                android:alpha="0.6"
                 android:clickable="true"
                 android:focusable="true"
                 android:contentDescription="编辑设置"
                 android:visibility="gone">
                 
                 <ImageView
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
                     android:layout_gravity="center"
                     android:src="@drawable/ic_settings"
                     app:tint="?attr/colorOnPrimaryContainer" />
