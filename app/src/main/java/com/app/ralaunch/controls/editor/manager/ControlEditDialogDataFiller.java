@@ -55,6 +55,17 @@ public class ControlEditDialogDataFiller {
         
         // 更新基本信息选项的可见性
         ControlEditDialogVisibilityManager.updateBasicInfoOptionsVisibility(view, refs.getCurrentData());
+        
+        // 摇杆左右选择开关（仅摇杆类型且为SDL控制器模式时显示）
+        SwitchCompat switchJoystickStickSelect = view.findViewById(R.id.switch_joystick_stick_select);
+        TextView tvJoystickStickSelect = view.findViewById(R.id.tv_joystick_stick_select);
+        if (switchJoystickStickSelect != null && refs.getCurrentData().type == ControlData.TYPE_JOYSTICK) {
+            switchJoystickStickSelect.setChecked(refs.getCurrentData().xboxUseRightStick);
+            // 更新显示文本
+            if (tvJoystickStickSelect != null) {
+                tvJoystickStickSelect.setText(refs.getCurrentData().xboxUseRightStick ? "右摇杆" : "左摇杆");
+            }
+        }
     }
     
     /**

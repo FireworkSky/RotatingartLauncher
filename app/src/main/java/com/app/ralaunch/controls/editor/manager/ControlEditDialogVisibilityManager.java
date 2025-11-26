@@ -101,6 +101,14 @@ public class ControlEditDialogVisibilityManager {
             boolean isText = (data.type == ControlData.TYPE_TEXT);
             itemTextContent.setVisibility(isText ? View.VISIBLE : View.GONE);
         }
+        
+        // 摇杆左右选择：仅摇杆类型且为SDL控制器模式时显示
+        View itemJoystickStickSelect = view.findViewById(R.id.item_joystick_stick_select);
+        if (itemJoystickStickSelect != null) {
+            boolean isJoystick = (data.type == ControlData.TYPE_JOYSTICK);
+            boolean isSDLControllerMode = (data.joystickMode == ControlData.JOYSTICK_MODE_SDL_CONTROLLER);
+            itemJoystickStickSelect.setVisibility((isJoystick && isSDLControllerMode) ? View.VISIBLE : View.GONE);
+        }
     }
     
     /**

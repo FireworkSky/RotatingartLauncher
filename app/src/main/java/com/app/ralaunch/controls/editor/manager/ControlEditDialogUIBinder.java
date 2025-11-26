@@ -105,6 +105,22 @@ public class ControlEditDialogUIBinder {
                 public void afterTextChanged(android.text.Editable s) {}
             });
         }
+        
+        // 摇杆左右选择开关（仅摇杆类型且为SDL控制器模式时显示）
+        SwitchCompat switchJoystickStickSelect = view.findViewById(R.id.switch_joystick_stick_select);
+        TextView tvJoystickStickSelect = view.findViewById(R.id.tv_joystick_stick_select);
+        if (switchJoystickStickSelect != null) {
+            switchJoystickStickSelect.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                if (refs.getCurrentData() != null && refs.getCurrentData().type == ControlData.TYPE_JOYSTICK) {
+                    refs.getCurrentData().xboxUseRightStick = isChecked;
+                    // 更新显示文本
+                    if (tvJoystickStickSelect != null) {
+                        tvJoystickStickSelect.setText(isChecked ? "右摇杆" : "左摇杆");
+                    }
+                    refs.notifyUpdate();
+                }
+            });
+        }
     }
     
     /**
