@@ -5,7 +5,7 @@
     android:layout_height="56dp"
     android:gravity="center"
     android:textSize="14sp"
-    android:textColor="#49454F"
+    android:textColor="?attr/textSecondary"
     android:background="?android:attr/selectableItemBackground"
     android:clickable="true"
     android:paddingHorizontal="8dp" />

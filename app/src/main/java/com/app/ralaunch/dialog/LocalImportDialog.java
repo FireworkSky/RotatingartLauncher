@@ -105,8 +105,20 @@ public class LocalImportDialog extends DialogFragment {
     }
 
     private void setupUI(View view) {
-        // 初始化控件
-        view.findViewById(R.id.closeButton).setOnClickListener(v -> dismiss());
+        // 初始化控件 - closeButton 在 include 布局中，需要通过 include 的 id 访问
+        View dialogHeader = view.findViewById(R.id.dialogHeader);
+        if (dialogHeader != null) {
+            View closeButton = dialogHeader.findViewById(R.id.closeButton);
+            if (closeButton != null) {
+                closeButton.setOnClickListener(v -> dismiss());
+            }
+        } else {
+            // 如果找不到 include，尝试直接查找（向后兼容）
+            View closeButton = view.findViewById(R.id.closeButton);
+            if (closeButton != null) {
+                closeButton.setOnClickListener(v -> dismiss());
+            }
+        }
 
         gameFileCard = view.findViewById(R.id.gameFileCard);
         modLoaderCard = view.findViewById(R.id.modLoaderCard);
@@ -120,35 +132,59 @@ public class LocalImportDialog extends DialogFragment {
         View.OnClickListener gameFileClickListener = v -> {
             if (fileSelectionListener != null) {
                 // 隐藏Dialog以显示文件浏览器
-                if (getDialog() != null) {
-                    getDialog().hide();
+                Dialog dialog = getDialog();
+                if (dialog != null && dialog.isShowing()) {
+                    try {
+                        dialog.hide();
+                    } catch (Exception e) {
+                        AppLogger.error(TAG, "Error hiding dialog: " + e.getMessage());
+                    }
                 }
                 fileSelectionListener.onSelectGameFile(this);
             }
         };
-        gameFileCard.setOnClickListener(gameFileClickListener);
-        selectGameFileButton.setOnClickListener(gameFileClickListener);
+        if (gameFileCard != null) {
+            gameFileCard.setOnClickListener(gameFileClickListener);
+        }
+        if (selectGameFileButton != null) {
+            selectGameFileButton.setOnClickListener(gameFileClickListener);
+        }
 
         // ModLoader文件选择
         View.OnClickListener modLoaderClickListener = v -> {
             if (fileSelectionListener != null) {
                 // 隐藏Dialog以显示文件浏览器
-                if (getDialog() != null) {
-                    getDialog().hide();
+                Dialog dialog = getDialog();
+                if (dialog != null && dialog.isShowing()) {
+                    try {
+                        dialog.hide();
+                    } catch (Exception e) {
+                        AppLogger.error(TAG, "Error hiding dialog: " + e.getMessage());
+                    }
                 }
                 fileSelectionListener.onSelectModLoaderFile(this);
             }
         };
-        modLoaderCard.setOnClickListener(modLoaderClickListener);
-        selectModLoaderButton.setOnClickListener(modLoaderClickListener);
+        if (modLoaderCard != null) {
+            modLoaderCard.setOnClickListener(modLoaderClickListener);
+        }
+        if (selectModLoaderButton != null) {
+            selectModLoaderButton.setOnClickListener(modLoaderClickListener);
+        }
 
         // 开始导入
-        startImportButton.setOnClickListener(v -> {
-            if (importStartListener != null) {
-                importStartListener.onImportStart(gameFilePath, modLoaderFilePath, gameName, gameVersion);
-            }
-            dismiss();
-        });
+        if (startImportButton != null) {
+            startImportButton.setOnClickListener(v -> {
+                if (importStartListener != null) {
+                    importStartListener.onImportStart(gameFilePath, modLoaderFilePath, gameName, gameVersion);
+                }
+                try {
+                    dismiss();
+                } catch (Exception e) {
+                    AppLogger.error(TAG, "Error dismissing dialog: " + e.getMessage());
+                }
+            });
+        }
 
         updateImportButtonState();
     }
@@ -210,10 +246,14 @@ public class LocalImportDialog extends DialogFragment {
     @Override
     public void onStart() {
         super.onStart();
-        Dialog dialog = getDialog();
-        if (dialog != null && dialog.getWindow() != null) {
-            int width = (int) (getResources().getDisplayMetrics().widthPixels * 0.9);
-            dialog.getWindow().setLayout(width, ViewGroup.LayoutParams.WRAP_CONTENT);
+        try {
+            Dialog dialog = getDialog();
+            if (dialog != null && dialog.getWindow() != null) {
+                int width = (int) (getResources().getDisplayMetrics().widthPixels * 0.9);
+                dialog.getWindow().setLayout(width, ViewGroup.LayoutParams.WRAP_CONTENT);
+            }
+        } catch (Exception e) {
+            AppLogger.error(TAG, "Error in onStart: " + e.getMessage());
         }
     }
 
@@ -229,8 +269,21 @@ public class LocalImportDialog extends DialogFragment {
      * 重新显示Dialog（在文件选择后）
      */
     public void showDialog() {
-        if (getDialog() != null && !getDialog().isShowing()) {
-            getDialog().show();
+        try {
+            Dialog dialog = getDialog();
+            if (dialog != null && !dialog.isShowing()) {
+                dialog.show();
+            }
+        } catch (Exception e) {
+            AppLogger.error(TAG, "Error showing dialog: " + e.getMessage());
+            // 如果显示失败，尝试重新创建对话框
+            if (getFragmentManager() != null) {
+                try {
+                    show(getFragmentManager(), "local_import_dialog");
+                } catch (Exception ex) {
+                    AppLogger.error(TAG, "Error recreating dialog: " + ex.getMessage());
+                }
+            }
         }
     }
 }

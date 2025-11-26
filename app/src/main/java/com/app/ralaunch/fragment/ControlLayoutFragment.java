@@ -47,6 +47,7 @@ public class ControlLayoutFragment extends Fragment implements ControlLayoutAdap
 
     private static final int REQUEST_CODE_EDIT_LAYOUT = 1001;
     private static final int REQUEST_CODE_EXPORT_LAYOUT = 1002;
+    private static final int REQUEST_CODE_IMPORT_LAYOUT = 1003;
 
     private ControlLayoutManager layoutManager;
     private List<ControlLayout> layouts;
@@ -55,9 +56,11 @@ public class ControlLayoutFragment extends Fragment implements ControlLayoutAdap
     private ExtendedFloatingActionButton fabAddLayout;
     private LinearLayout emptyState;
     private Toolbar toolbar;
-    private com.google.android.material.button.MaterialButton btnImportPreset;
+    private com.google.android.material.button.MaterialButton btnLayoutSettings;
+    private ControlLayoutSettingsDialog mSettingsDialog;
 
     private OnControlLayoutBackListener backListener;
+    private ControlLayout mExportingLayout; // 保存要导出的布局
 
     public interface OnControlLayoutBackListener {
         void onControlLayoutBack();
@@ -86,7 +89,7 @@ public class ControlLayoutFragment extends Fragment implements ControlLayoutAdap
         recyclerView = view.findViewById(R.id.recyclerView);
         fabAddLayout = view.findViewById(R.id.fabAddLayout);
         emptyState = view.findViewById(R.id.emptyState);
-        btnImportPreset = view.findViewById(R.id.btn_import_preset);
+        btnLayoutSettings = view.findViewById(R.id.btn_layout_settings);
 
         toolbar.setNavigationOnClickListener(v -> {
             if (backListener != null) {
@@ -96,8 +99,30 @@ public class ControlLayoutFragment extends Fragment implements ControlLayoutAdap
 
         fabAddLayout.setOnClickListener(v -> showAddLayoutDialog());
 
-        // 导入预设配置按钮
-        btnImportPreset.setOnClickListener(v -> showImportPresetDialog());
+        // 初始化布局设置侧边弹窗
+        android.util.DisplayMetrics metrics = getResources().getDisplayMetrics();
+        int screenWidth = metrics.widthPixels;
+        // 使用 CoordinatorLayout 作为父容器（fragment_control_layout 的根布局）
+        ViewGroup rootView = (ViewGroup) view;
+        mSettingsDialog = new ControlLayoutSettingsDialog(requireContext(), rootView, screenWidth);
+        mSettingsDialog.setOnMenuItemClickListener(new ControlLayoutSettingsDialog.OnMenuItemClickListener() {
+            @Override
+            public void onImportLayout() {
+                importLayoutFromFile();
+            }
+
+            @Override
+            public void onImportPreset() {
+                showImportPresetDialog();
+            }
+        });
+
+        // 布局设置按钮
+        btnLayoutSettings.setOnClickListener(v -> {
+            if (mSettingsDialog != null) {
+                mSettingsDialog.show();
+            }
+        });
 
         updateEmptyState();
     }
@@ -177,6 +202,60 @@ public class ControlLayoutFragment extends Fragment implements ControlLayoutAdap
                     backListener.onControlLayoutBack();
                 }
             }
+        } else if (requestCode == REQUEST_CODE_EXPORT_LAYOUT && resultCode == android.app.Activity.RESULT_OK) {
+            // 处理导出布局
+            if (data != null && data.getData() != null && mExportingLayout != null) {
+                exportLayoutToFile(data.getData(), mExportingLayout);
+                mExportingLayout = null; // 清除引用
+            }
+        } else if (requestCode == REQUEST_CODE_IMPORT_LAYOUT && resultCode == android.app.Activity.RESULT_OK) {
+            // 处理导入布局
+            if (data != null && data.getData() != null) {
+                importLayoutFromUri(data.getData());
+            }
+        }
+    }
+    
+    /**
+     * 将布局导出到文件
+     */
+    private void exportLayoutToFile(Uri uri, ControlLayout layout) {
+        try {
+            // 获取屏幕尺寸用于坐标转换
+            android.util.DisplayMetrics metrics = getResources().getDisplayMetrics();
+            int screenWidth = metrics.widthPixels;
+            int screenHeight = metrics.heightPixels;
+            
+            // 将 ControlLayout 转换为 ControlConfig
+            com.app.ralaunch.controls.ControlConfig config = new com.app.ralaunch.controls.ControlConfig();
+            config.name = layout.getName();
+            config.version = 1;
+            config.controls = new java.util.ArrayList<>();
+            
+            // 将 ControlElement 转换为 ControlData
+            for (ControlElement element : layout.getElements()) {
+                com.app.ralaunch.controls.ControlData data = 
+                    com.app.ralaunch.controls.ControlDataConverter.elementToData(element, screenWidth, screenHeight);
+                if (data != null) {
+                    config.controls.add(data);
+                }
+            }
+            
+            // 将 ControlConfig 转换为 JSON
+            String json = config.toJson();
+            
+            // 写入文件
+            OutputStream outputStream = requireContext().getContentResolver().openOutputStream(uri);
+            if (outputStream != null) {
+                outputStream.write(json.getBytes("UTF-8"));
+                outputStream.close();
+                Toast.makeText(getContext(), "布局已导出", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(getContext(), "导出失败: 无法写入文件", Toast.LENGTH_SHORT).show();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            Toast.makeText(getContext(), "导出失败: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
     }
     
@@ -272,6 +351,9 @@ public class ControlLayoutFragment extends Fragment implements ControlLayoutAdap
     @Override
     public void onLayoutExport(ControlLayout layout) {
         try {
+            // 保存要导出的布局
+            mExportingLayout = layout;
+            
             Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
             intent.addCategory(Intent.CATEGORY_OPENABLE);
             intent.setType("application/json");
@@ -284,11 +366,20 @@ public class ControlLayoutFragment extends Fragment implements ControlLayoutAdap
 
     @Override
     public void onLayoutDelete(ControlLayout layout) {
+        String layoutName = layout.getName();
+        
+        // 检查是否是默认布局，给出警告但允许删除
+        boolean isDefaultLayout = "键盘模式".equals(layoutName) || "手柄模式".equals(layoutName);
+        String message = isDefaultLayout 
+            ? "确定要删除默认布局 \"" + layoutName + "\" 吗？\n删除后需要手动创建新布局才能使用。"
+            : "确定要删除布局 \"" + layoutName + "\" 吗？";
+        
         new MaterialAlertDialogBuilder(requireContext())
                 .setTitle("删除布局")
-                .setMessage("确定要删除布局 \"" + layout.getName() + "\" 吗？")
+                .setMessage(message)
                 .setPositiveButton("删除", (dialog, which) -> {
-                    layoutManager.removeLayout(layout.getName());
+                    layoutManager.removeLayout(layoutName);
+                    // 重新加载布局列表
                     layouts = layoutManager.getLayouts();
                     adapter.updateLayouts(layouts);
                     updateEmptyState();
@@ -305,6 +396,84 @@ public class ControlLayoutFragment extends Fragment implements ControlLayoutAdap
             }
         }
         return false;
+    }
+
+    /**
+     * 导入布局（从文件选择器）
+     */
+    private void importLayoutFromFile() {
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.setType("application/json");
+        intent.putExtra(Intent.EXTRA_MIME_TYPES, new String[]{"application/json", "text/json"});
+        startActivityForResult(intent, REQUEST_CODE_IMPORT_LAYOUT);
+    }
+
+    /**
+     * 从URI导入布局
+     */
+    private void importLayoutFromUri(Uri uri) {
+        try {
+            // 读取文件内容
+            java.io.InputStream inputStream = requireContext().getContentResolver().openInputStream(uri);
+            if (inputStream == null) {
+                Toast.makeText(getContext(), "无法读取文件", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.InputStreamReader(inputStream));
+            StringBuilder jsonBuilder = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                jsonBuilder.append(line).append("\n");
+            }
+            reader.close();
+            inputStream.close();
+
+            String json = jsonBuilder.toString();
+
+            // 解析 JSON 配置（使用统一的 loadFromJson 方法，确保正确处理空字符串）
+            com.app.ralaunch.controls.ControlConfig config = com.app.ralaunch.controls.ControlConfig.loadFromJson(json);
+
+            if (config == null || config.controls == null || config.controls.isEmpty()) {
+                Toast.makeText(getContext(), "布局文件格式不正确或为空", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            // 生成唯一的布局名称
+            String layoutName = config.name != null ? config.name : "导入的布局";
+            int counter = 1;
+            while (layoutExists(layoutName)) {
+                counter++;
+                layoutName = (config.name != null ? config.name : "导入的布局") + " " + counter;
+            }
+
+            // 获取屏幕尺寸用于坐标转换
+            android.util.DisplayMetrics metrics = getResources().getDisplayMetrics();
+            int screenWidth = metrics.widthPixels;
+            int screenHeight = metrics.heightPixels;
+
+            // 创建新布局并添加控件
+            ControlLayout newLayout = new ControlLayout(layoutName);
+            for (com.app.ralaunch.controls.ControlData data : config.controls) {
+                ControlElement element = com.app.ralaunch.controls.ControlDataConverter.dataToElement(data, screenWidth, screenHeight);
+                if (element != null) {
+                    newLayout.addElement(element);
+                }
+            }
+
+            // 保存布局
+            layoutManager.addLayout(newLayout);
+            layouts = layoutManager.getLayouts();
+            adapter.updateLayouts(layouts);
+            updateEmptyState();
+
+            Toast.makeText(getContext(), "已导入布局：" + layoutName, Toast.LENGTH_SHORT).show();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            Toast.makeText(getContext(), "导入失败：" + e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
     }
 
     /**
@@ -335,9 +504,14 @@ public class ControlLayoutFragment extends Fragment implements ControlLayoutAdap
             is.close();
             String json = new String(buffer, "UTF-8");
 
-            // 解析 JSON 配置
+            // 解析 JSON 配置 - 统一使用 ControlConfig
             Gson gson = new Gson();
-            ControlConfig config = gson.fromJson(json, ControlConfig.class);
+            com.app.ralaunch.controls.ControlConfig config = gson.fromJson(json, com.app.ralaunch.controls.ControlConfig.class);
+
+            if (config == null || config.controls == null || config.controls.isEmpty()) {
+                Toast.makeText(getContext(), "预设配置文件格式不正确或为空", Toast.LENGTH_SHORT).show();
+                return;
+            }
 
             // 生成唯一的布局名称
             String layoutName = presetName;
@@ -347,11 +521,16 @@ public class ControlLayoutFragment extends Fragment implements ControlLayoutAdap
                 layoutName = presetName + " " + counter;
             }
 
-            // 创建新布局并添加控件
+            // 获取屏幕尺寸用于坐标转换
+            android.util.DisplayMetrics metrics = getResources().getDisplayMetrics();
+            int screenWidth = metrics.widthPixels;
+            int screenHeight = metrics.heightPixels;
+
+            // 创建新布局并添加控件 - 统一使用 ControlDataConverter
             ControlLayout newLayout = new ControlLayout(layoutName);
-            if (config.controls != null) {
-                for (ControlConfig.Control control : config.controls) {
-                    ControlElement element = convertToControlElement(control);
+            for (com.app.ralaunch.controls.ControlData data : config.controls) {
+                ControlElement element = com.app.ralaunch.controls.ControlDataConverter.dataToElement(data, screenWidth, screenHeight);
+                if (element != null) {
                     newLayout.addElement(element);
                 }
             }
@@ -367,86 +546,6 @@ public class ControlLayoutFragment extends Fragment implements ControlLayoutAdap
         } catch (Exception e) {
             e.printStackTrace();
             Toast.makeText(getContext(), "导入失败：" + e.getMessage(), Toast.LENGTH_SHORT).show();
-        }
-    }
-
-    /**
-     * 将 ControlConfig.Control 转换为 ControlElement
-     */
-    private ControlElement convertToControlElement(ControlConfig.Control control) {
-        ControlElement.ElementType type;
-        switch (control.type) {
-            case 0:
-                type = ControlElement.ElementType.BUTTON;
-                break;
-            case 1:
-                type = ControlElement.ElementType.JOYSTICK;
-                break;
-            case 2:
-                type = ControlElement.ElementType.CROSS_KEY;
-                break;
-            default:
-                type = ControlElement.ElementType.BUTTON;
-        }
-
-        ControlElement element = new ControlElement(
-                control.name != null ? control.name : "控件",
-                type,
-                control.name != null ? control.name : "控件"
-        );
-
-        // 设置位置和大小
-        element.setX(control.x / 2160f); // 假设屏幕宽度为 2160
-        element.setY(control.y / 1080f); // 假设屏幕高度为 1080
-        element.setWidth(control.width);
-        element.setHeight(control.height);
-
-        // 设置按键码（如果是按钮）
-        if (type == ControlElement.ElementType.BUTTON && control.keycode != 0) {
-            element.setKeyCode(control.keycode);
-        }
-
-        // 设置摇杆相关属性
-        if (type == ControlElement.ElementType.JOYSTICK) {
-            if (control.joystickKeys != null && control.joystickKeys.length == 4) {
-                // 键盘模拟摇杆
-                element.setKeyCode(control.joystickKeys[0]); // 上
-            } else if (control.joystickMode != 0) {
-                // 手柄摇杆模式
-                element.setKeyCode(control.xboxUseRightStick ? -301 : -300); // 特殊标记右摇杆或左摇杆
-            }
-        }
-
-        return element;
-    }
-
-    /**
-     * 控制配置类（用于解析 JSON）
-     */
-    private static class ControlConfig {
-        String name;
-        int version;
-        Control[] controls;
-
-        static class Control {
-            String name;
-            int type;
-            int x;
-            int y;
-            int width;
-            int height;
-            int keycode;
-            float opacity;
-            int bgColor;
-            int strokeColor;
-            int strokeWidth;
-            int cornerRadius;
-            boolean isToggle;
-            boolean visible;
-            int[] joystickKeys;
-            int joystickMode;
-            boolean xboxUseRightStick;
-            int buttonMode;
         }
     }
 }

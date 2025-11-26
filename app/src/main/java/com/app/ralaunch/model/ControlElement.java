@@ -25,7 +25,7 @@ public class ControlElement {
         TOUCHPAD,        // 触摸板（模拟鼠标）
         MOUSE_AREA,      // 鼠标区域
         MACRO_BUTTON,    // 宏按钮
-        GROUP            // 元素组
+        TEXT             // 文本控件
     }
 
     public enum Visibility {
@@ -48,6 +48,7 @@ public class ControlElement {
     private float height;
     private float rotation;      // 旋转角度
     private float cornerRadius;  // 圆角半径
+    private int shape;           // 控件形状 0=矩形, 1=圆形
 
     // 键位绑定
     private int keyCode;
@@ -60,6 +61,7 @@ public class ControlElement {
     private boolean swipeClick;
     private boolean repeatEnabled; // 连按
     private int repeatDelay;      // 连按延迟ms
+    private int buttonMode;       // 按钮模式 0=键盘/鼠标模式, 1=手柄模式
 
     // 外观设置
     private int backgroundColor;
@@ -69,6 +71,8 @@ public class ControlElement {
     private float borderWidth;
     private float opacity;
     private float textSize;
+    private float stickOpacity;   // 摇杆头透明度（仅摇杆类型）
+    private float stickKnobSize;  // 摇杆圆心大小比例 (0.0-1.0)，默认0.4
 
     // 显示设置
     private Visibility visibility;
@@ -95,18 +99,22 @@ public class ControlElement {
         this.width = 80;
         this.height = 80;
         this.rotation = 0;
-        this.cornerRadius = 10;
+        this.cornerRadius = 2; // 矩形只有一点点圆角
+        this.shape = 0; // 默认矩形 (0=矩形, 1=圆形)
 
-        this.backgroundColor = Color.argb(128, 100, 100, 100);
-        this.pressedColor = Color.argb(180, 150, 150, 150);
-        this.borderColor = Color.WHITE;
+        this.backgroundColor = Color.argb(180, 128, 128, 128); // 灰色背景（更清晰可见）
+        this.pressedColor = Color.argb(220, 160, 160, 160);
+        this.borderColor = Color.TRANSPARENT; // 默认无边框
         this.textColor = Color.WHITE;
-        this.borderWidth = 2.0f;
+        this.borderWidth = 0.0f; // 默认无边框宽度
         this.opacity = 0.7f;
         this.textSize = 16f;
+        this.stickOpacity = 0.7f; // 默认摇杆头透明度
+        this.stickKnobSize = 0.4f; // 默认摇杆圆心大小（40%半径）
 
         this.visibility = Visibility.ALWAYS;
         this.repeatDelay = 100;
+        this.buttonMode = 0; // 默认键盘/鼠标模式
 
         // 摇杆默认值
         this.deadzone = 0.1f;
@@ -117,13 +125,37 @@ public class ControlElement {
     // 从 JSON 创建
     public static ControlElement fromJSON(JSONObject json) throws JSONException {
         String id = json.getString("id");
-        ElementType type = ElementType.valueOf(json.getString("type"));
+        String typeString = json.getString("type");
+        ElementType type;
+        try {
+            type = ElementType.valueOf(typeString);
+        } catch (IllegalArgumentException e) {
+            // 兼容旧数据：如果类型是 "GROUP"（已移除的组合手柄），转换为 TEXT
+            if ("GROUP".equals(typeString)) {
+                type = ElementType.TEXT;
+            } else {
+                // 其他未知类型，默认为 BUTTON
+                type = ElementType.BUTTON;
+            }
+        }
         String name = json.getString("name");
 
         ControlElement element = new ControlElement(id, type, name);
 
         // 基本属性
-        if (json.has("displayText")) element.displayText = json.getString("displayText");
+        if (json.has("displayText")) {
+            // 确保 displayText 正确加载（即使是空字符串）
+            // 注意：即使值为空字符串，也要正确设置，不要使用默认值
+            String displayTextValue = json.getString("displayText");
+            element.displayText = displayTextValue != null ? displayTextValue : "";
+        } else {
+            // 如果没有 displayText 字段，对于文本控件使用空字符串，其他控件使用 name
+            if (type == ElementType.TEXT) {
+                element.displayText = ""; // 文本控件允许空文本
+            } else {
+                element.displayText = name; // 其他控件使用 name 作为默认值
+            }
+        }
         if (json.has("iconPath")) element.iconPath = json.getString("iconPath");
 
         // 位置和大小
@@ -133,6 +165,12 @@ public class ControlElement {
         if (json.has("height")) element.height = (float) json.getDouble("height");
         if (json.has("rotation")) element.rotation = (float) json.getDouble("rotation");
         if (json.has("cornerRadius")) element.cornerRadius = (float) json.getDouble("cornerRadius");
+        // shape 字段：如果存在则读取，否则使用默认值 0（矩形）
+        if (json.has("shape")) {
+            element.shape = json.getInt("shape");
+        } else {
+            element.shape = 0; // 默认矩形
+        }
 
         // 键位绑定
         if (json.has("keyCode")) element.keyCode = json.getInt("keyCode");
@@ -145,6 +183,7 @@ public class ControlElement {
         if (json.has("swipeClick")) element.swipeClick = json.getBoolean("swipeClick");
         if (json.has("repeatEnabled")) element.repeatEnabled = json.getBoolean("repeatEnabled");
         if (json.has("repeatDelay")) element.repeatDelay = json.getInt("repeatDelay");
+        if (json.has("buttonMode")) element.buttonMode = json.getInt("buttonMode");
 
         // 外观设置
         if (json.has("backgroundColor")) element.backgroundColor = json.getInt("backgroundColor");
@@ -154,6 +193,8 @@ public class ControlElement {
         if (json.has("borderWidth")) element.borderWidth = (float) json.getDouble("borderWidth");
         if (json.has("opacity")) element.opacity = (float) json.getDouble("opacity");
         if (json.has("textSize")) element.textSize = (float) json.getDouble("textSize");
+        if (json.has("stickOpacity")) element.stickOpacity = (float) json.getDouble("stickOpacity");
+        if (json.has("stickKnobSize")) element.stickKnobSize = (float) json.getDouble("stickKnobSize");
 
         // 显示设置
         if (json.has("visibility")) element.visibility = Visibility.valueOf(json.getString("visibility"));
@@ -180,7 +221,8 @@ public class ControlElement {
         json.put("id", id);
         json.put("type", type.name());
         json.put("name", name);
-        json.put("displayText", displayText);
+        // 确保 displayText 始终保存（即使是空字符串或 null）
+        json.put("displayText", displayText != null ? displayText : "");
         if (iconPath != null) json.put("iconPath", iconPath);
 
         // 位置和大小
@@ -190,6 +232,7 @@ public class ControlElement {
         json.put("height", height);
         json.put("rotation", rotation);
         json.put("cornerRadius", cornerRadius);
+        json.put("shape", shape);
 
         // 键位绑定
         json.put("keyCode", keyCode);
@@ -202,6 +245,7 @@ public class ControlElement {
         json.put("swipeClick", swipeClick);
         json.put("repeatEnabled", repeatEnabled);
         json.put("repeatDelay", repeatDelay);
+        json.put("buttonMode", buttonMode);
 
         // 外观设置
         json.put("backgroundColor", backgroundColor);
@@ -211,6 +255,8 @@ public class ControlElement {
         json.put("borderWidth", borderWidth);
         json.put("opacity", opacity);
         json.put("textSize", textSize);
+        json.put("stickOpacity", stickOpacity);
+        json.put("stickKnobSize", stickKnobSize);
 
         // 显示设置
         json.put("visibility", visibility.name());
@@ -273,6 +319,9 @@ public class ControlElement {
 
     public float getCornerRadius() { return cornerRadius; }
     public void setCornerRadius(float cornerRadius) { this.cornerRadius = cornerRadius; }
+    
+    public int getShape() { return shape; }
+    public void setShape(int shape) { this.shape = shape; }
 
     public int getKeyCode() { return keyCode; }
     public void setKeyCode(int keyCode) { this.keyCode = keyCode; }
@@ -297,6 +346,9 @@ public class ControlElement {
 
     public int getRepeatDelay() { return repeatDelay; }
     public void setRepeatDelay(int repeatDelay) { this.repeatDelay = repeatDelay; }
+    
+    public int getButtonMode() { return buttonMode; }
+    public void setButtonMode(int buttonMode) { this.buttonMode = buttonMode; }
 
     public int getBackgroundColor() { return backgroundColor; }
     public void setBackgroundColor(int backgroundColor) { this.backgroundColor = backgroundColor; }
@@ -315,6 +367,13 @@ public class ControlElement {
 
     public float getOpacity() { return opacity; }
     public void setOpacity(float opacity) { this.opacity = opacity; }
+    
+    public float getStickOpacity() { return stickOpacity; }
+    public void setStickOpacity(float stickOpacity) { this.stickOpacity = stickOpacity; }
+    
+    public float getStickKnobSize() { return stickKnobSize; }
+    public void setStickKnobSize(float stickKnobSize) { this.stickKnobSize = stickKnobSize; }
+    
 
     public float getTextSize() { return textSize; }
     public void setTextSize(float textSize) { this.textSize = textSize; }

@@ -7,7 +7,6 @@ import android.os.Looper;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.FragmentActivity;
 
-import com.app.ralib.dialog.ErrorDialog;
 
 import java.lang.ref.WeakReference;
 
@@ -15,7 +14,7 @@ import java.lang.ref.WeakReference;
  * 全局错误处理器
  * 特性：
  * - 捕捉未处理的异常
- * - 自动显示错误弹窗
+ * - 记录错误日志
  * - 支持自定义错误处理逻辑
  * - 线程安全
  */
@@ -166,54 +165,28 @@ public class ErrorHandler {
     }
 
     /**
-     * 显示错误对话框
+     * 显示错误对话框（已移除，仅记录日志）
      */
     private void showErrorDialog(String title, Throwable throwable, boolean isFatal) {
-        mainHandler.post(() -> {
-            FragmentActivity activity = getActivity();
-            if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
-                return;
-            }
-
-            ErrorDialog dialog = isFatal
-                ? ErrorDialog.createFatal(title, throwable)
-                : ErrorDialog.create(title, throwable);
-
-            // 致命错误添加退出按钮
-            if (isFatal) {
-                dialog.setCustomAction("退出应用", () -> {
+        // 错误弹窗已移除，仅记录日志
+        // 致命错误直接退出应用
+        if (isFatal) {
+            mainHandler.post(() -> {
+                FragmentActivity activity = getActivity();
+                if (activity != null && !activity.isFinishing() && !activity.isDestroyed()) {
                     activity.finishAffinity();
                     System.exit(1);
-                });
-            }
-
-            try {
-                dialog.show(activity.getSupportFragmentManager(), "ErrorDialog");
-            } catch (Exception e) {
-                // 如果无法显示对话框，至少记录日志
-                logError("Failed to show error dialog", e, false);
-            }
-        });
+                }
+            });
+        }
     }
 
     /**
-     * 显示警告对话框
+     * 显示警告对话框（已移除，仅记录日志）
      */
     private void showWarningDialog(String title, String message) {
-        mainHandler.post(() -> {
-            FragmentActivity activity = getActivity();
-            if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
-                return;
-            }
-
-            ErrorDialog dialog = ErrorDialog.createWarning(title, message);
-
-            try {
-                dialog.show(activity.getSupportFragmentManager(), "WarningDialog");
-            } catch (Exception e) {
-                logError("Failed to show warning dialog", e, false);
-            }
-        });
+        // 警告弹窗已移除，仅记录日志
+        logError(title, new RuntimeException(message), false);
     }
 
     /**
@@ -251,34 +224,22 @@ public class ErrorHandler {
     }
 
     /**
-     * Show native error dialog implementation
+     * Show native error dialog implementation（已移除，仅记录日志）
      */
     private void showNativeErrorDialog(String title, String message, boolean isFatal) {
-        mainHandler.post(() -> {
-            FragmentActivity activity = getActivity();
-            if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
-                return;
-            }
-
-            ErrorDialog dialog = isFatal
-                ? ErrorDialog.createFatal(title, new RuntimeException(message))
-                : ErrorDialog.create(title, new RuntimeException(message));
-
-            // 致命错误添加退出按钮
-            if (isFatal) {
-                dialog.setCustomAction("退出应用", () -> {
+        // 错误弹窗已移除，仅记录日志
+        logError(title, new RuntimeException(message), isFatal);
+        
+        // 致命错误直接退出应用
+        if (isFatal) {
+            mainHandler.post(() -> {
+                FragmentActivity activity = getActivity();
+                if (activity != null && !activity.isFinishing() && !activity.isDestroyed()) {
                     activity.finishAffinity();
                     System.exit(1);
-                });
-            }
-
-            try {
-                dialog.show(activity.getSupportFragmentManager(), "NativeErrorDialog");
-            } catch (Exception e) {
-                // 记录异常
-                logError("Failed to show native error dialog", e, false);
-            }
-        });
+                }
+            });
+        }
     }
 
     /**

@@ -36,51 +36,80 @@
             android:clickable="false"
             android:focusable="false">
 
-            <!-- 悬浮菜单按钮 -->
-            <ImageButton
+            <!-- 可拖动的 MD3 风格悬浮菜单按钮（半透明） -->
+            <com.google.android.material.card.MaterialCardView
                 android:id="@+id/game_drawer_button"
-                android:layout_width="48dp"
-                android:layout_height="24dp"
-                android:layout_gravity="center_horizontal|top"
-                android:padding="4dp"
-                android:elevation="15dp"
-                android:src="@android:drawable/arrow_down_float"
-                android:background="@android:color/transparent"
-                android:tint="?attr/textPrimary"
-                android:contentDescription="游戏菜单"
-                android:visibility="gone" />
-
-            <!-- 编辑模式设置按钮（MD3 风格 FAB） -->
-            <ImageView
-                android:id="@+id/game_editor_settings_button"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:layout_gravity="top|center_horizontal"
-                android:layout_marginTop="1dp"
-                android:padding="10dp"
-                android:src="@drawable/ic_settings"
-                android:background="@drawable/bg_fab_md3"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:layout_gravity="top|start"
+                android:layout_marginTop="16dp"
+                android:layout_marginStart="16dp"
+                app:cardCornerRadius="28dp"
+                app:cardElevation="8dp"
+                app:cardBackgroundColor="#CCF3EDF7"
+                app:strokeWidth="0dp"
+                android:alpha="0.85"
                 android:clickable="true"
                 android:focusable="true"
-                android:elevation="30dp"
+                android:contentDescription="游戏菜单"
+                android:visibility="gone">
+                
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_more_vert"
+                    app:tint="?attr/colorOnPrimaryContainer" />
+                    
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- 可拖动的 MD3 风格悬浮编辑器设置按钮（半透明） -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/game_editor_settings_button"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:layout_gravity="top|end"
+                android:layout_marginTop="16dp"
+                android:layout_marginEnd="16dp"
+                app:cardCornerRadius="28dp"
+                app:cardElevation="8dp"
+                app:cardBackgroundColor="#CCF3EDF7"
+                app:strokeWidth="0dp"
+                android:alpha="0.85"
+                android:clickable="true"
+                android:focusable="true"
                 android:contentDescription="编辑设置"
-                android:visibility="gone" />
+                android:visibility="gone">
+                
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_settings"
+                    app:tint="?attr/colorOnPrimaryContainer" />
+                    
+            </com.google.android.material.card.MaterialCardView>
 
         </FrameLayout>
         
     </RelativeLayout>
 
-    <!-- 右侧抽屉菜单 -->
+    <!-- 右侧抽屉菜单（MD3 风格，半透明） -->
     <ListView
         android:id="@+id/game_navigation_view"
-        android:layout_width="240dp"
+        android:layout_width="280dp"
         android:layout_height="match_parent"
         android:layout_gravity="end"
-        android:background="#2D2D30"
-        android:divider="@android:color/darker_gray"
-        android:dividerHeight="1dp"
+        android:background="#E6FFFFFF"
+        android:alpha="0.90"
+        android:divider="@null"
+        android:dividerHeight="0dp"
         android:fitsSystemWindows="false"
-        android:padding="0dp" />
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp"
+        android:paddingStart="0dp"
+        android:paddingEnd="0dp"
+        android:clipToPadding="false" />
 
 </androidx.drawerlayout.widget.DrawerLayout>
 

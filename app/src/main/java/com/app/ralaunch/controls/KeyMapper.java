@@ -16,31 +16,31 @@ public class KeyMapper {
         Map<String, Integer> keys = new LinkedHashMap<>();
         
         // 特殊功能
-        keys.put("⌨️ 键盘", ControlData.SPECIAL_KEYBOARD);
+        keys.put("键盘", ControlData.SPECIAL_KEYBOARD);
         
         // 鼠标按键
-        keys.put("🖱️ 鼠标左键", ControlData.MOUSE_LEFT);
-        keys.put("🖱️ 鼠标右键", ControlData.MOUSE_RIGHT);
-        keys.put("🖱️ 鼠标中键", ControlData.MOUSE_MIDDLE);
+        keys.put("鼠标左键", ControlData.MOUSE_LEFT);
+        keys.put("鼠标右键", ControlData.MOUSE_RIGHT);
+        keys.put("鼠标中键", ControlData.MOUSE_MIDDLE);
 
-        // Xbox控制器按钮
-        keys.put("🎮 Xbox A", ControlData.XBOX_BUTTON_A);
-        keys.put("🎮 Xbox B", ControlData.XBOX_BUTTON_B);
-        keys.put("🎮 Xbox X", ControlData.XBOX_BUTTON_X);
-        keys.put("🎮 Xbox Y", ControlData.XBOX_BUTTON_Y);
-        keys.put("🎮 Xbox LB (左肩)", ControlData.XBOX_BUTTON_LB);
-        keys.put("🎮 Xbox RB (右肩)", ControlData.XBOX_BUTTON_RB);
-        keys.put("🎮 Xbox LT (左扳机)", ControlData.XBOX_TRIGGER_LEFT);
-        keys.put("🎮 Xbox RT (右扳机)", ControlData.XBOX_TRIGGER_RIGHT);
-        keys.put("🎮 Xbox Back", ControlData.XBOX_BUTTON_BACK);
-        keys.put("🎮 Xbox Start", ControlData.XBOX_BUTTON_START);
-        keys.put("🎮 Xbox Guide", ControlData.XBOX_BUTTON_GUIDE);
-        keys.put("🎮 Xbox L3 (左摇杆)", ControlData.XBOX_BUTTON_LEFT_STICK);
-        keys.put("🎮 Xbox R3 (右摇杆)", ControlData.XBOX_BUTTON_RIGHT_STICK);
-        keys.put("🎮 Xbox D-Pad ↑", ControlData.XBOX_BUTTON_DPAD_UP);
-        keys.put("🎮 Xbox D-Pad ↓", ControlData.XBOX_BUTTON_DPAD_DOWN);
-        keys.put("🎮 Xbox D-Pad ←", ControlData.XBOX_BUTTON_DPAD_LEFT);
-        keys.put("🎮 Xbox D-Pad →", ControlData.XBOX_BUTTON_DPAD_RIGHT);
+        // 手柄按钮
+        keys.put("A", ControlData.XBOX_BUTTON_A);
+        keys.put("B", ControlData.XBOX_BUTTON_B);
+        keys.put("X", ControlData.XBOX_BUTTON_X);
+        keys.put("Y", ControlData.XBOX_BUTTON_Y);
+        keys.put("LB", ControlData.XBOX_BUTTON_LB);
+        keys.put("RB", ControlData.XBOX_BUTTON_RB);
+        keys.put("LT", ControlData.XBOX_TRIGGER_LEFT);
+        keys.put("RT", ControlData.XBOX_TRIGGER_RIGHT);
+        keys.put("Back", ControlData.XBOX_BUTTON_BACK);
+        keys.put("Start", ControlData.XBOX_BUTTON_START);
+        keys.put("Guide", ControlData.XBOX_BUTTON_GUIDE);
+        keys.put("L3", ControlData.XBOX_BUTTON_LEFT_STICK);
+        keys.put("R3", ControlData.XBOX_BUTTON_RIGHT_STICK);
+        keys.put("D-Pad ↑", ControlData.XBOX_BUTTON_DPAD_UP);
+        keys.put("D-Pad ↓", ControlData.XBOX_BUTTON_DPAD_DOWN);
+        keys.put("D-Pad ←", ControlData.XBOX_BUTTON_DPAD_LEFT);
+        keys.put("D-Pad →", ControlData.XBOX_BUTTON_DPAD_RIGHT);
 
         // 常用键盘按键
         keys.put("空格", ControlData.SDL_SCANCODE_SPACE);
@@ -168,6 +168,39 @@ public class KeyMapper {
      * 根据按键码获取按键名称
      */
     public static String getKeyName(int keycode) {
+        // 先检查手柄按钮（负数范围 -200 到 -221）
+        if (keycode <= -200 && keycode >= -221) {
+            // 手柄按钮映射
+            switch (keycode) {
+                case ControlData.XBOX_BUTTON_A: return "A";
+                case ControlData.XBOX_BUTTON_B: return "B";
+                case ControlData.XBOX_BUTTON_X: return "X";
+                case ControlData.XBOX_BUTTON_Y: return "Y";
+                case ControlData.XBOX_BUTTON_BACK: return "Back";
+                case ControlData.XBOX_BUTTON_GUIDE: return "Guide";
+                case ControlData.XBOX_BUTTON_START: return "Start";
+                case ControlData.XBOX_BUTTON_LEFT_STICK: return "L3";
+                case ControlData.XBOX_BUTTON_RIGHT_STICK: return "R3";
+                case ControlData.XBOX_BUTTON_LB: return "LB";
+                case ControlData.XBOX_BUTTON_RB: return "RB";
+                case ControlData.XBOX_TRIGGER_LEFT: return "LT";
+                case ControlData.XBOX_TRIGGER_RIGHT: return "RT";
+                case ControlData.XBOX_BUTTON_DPAD_UP: return "D-Pad ↑";
+                case ControlData.XBOX_BUTTON_DPAD_DOWN: return "D-Pad ↓";
+                case ControlData.XBOX_BUTTON_DPAD_LEFT: return "D-Pad ←";
+                case ControlData.XBOX_BUTTON_DPAD_RIGHT: return "D-Pad →";
+            }
+        }
+        
+        // 检查鼠标按键
+        if (keycode == ControlData.MOUSE_LEFT) return "鼠标左键";
+        if (keycode == ControlData.MOUSE_RIGHT) return "鼠标右键";
+        if (keycode == ControlData.MOUSE_MIDDLE) return "鼠标中键";
+        
+        // 检查特殊功能键
+        if (keycode == ControlData.SPECIAL_KEYBOARD) return "键盘";
+        
+        // 其他按键从映射表中查找
         for (Map.Entry<String, Integer> entry : getAllKeys().entrySet()) {
             if (entry.getValue() == keycode) {
                 return entry.getKey();
@@ -181,39 +214,39 @@ public class KeyMapper {
      */
     public static Map<String, Integer> getGameKeys() {
         Map<String, Integer> keys = new LinkedHashMap<>();
-        keys.put("鼠标左键 (攻击)", ControlData.MOUSE_LEFT);
-        keys.put("鼠标右键 (使用)", ControlData.MOUSE_RIGHT);
-        keys.put("空格 (跳跃)", ControlData.SDL_SCANCODE_SPACE);
-        keys.put("E (钩爪)", ControlData.SDL_SCANCODE_E);
-        keys.put("H (药水)", ControlData.SDL_SCANCODE_H);
-        keys.put("ESC (菜单)", ControlData.SDL_SCANCODE_ESCAPE);
-        keys.put("Shift (冲刺)", ControlData.SDL_SCANCODE_LSHIFT);
-        keys.put("Ctrl (智能光标)", ControlData.SDL_SCANCODE_LCTRL);
+        keys.put("鼠标左键", ControlData.MOUSE_LEFT);
+        keys.put("鼠标右键", ControlData.MOUSE_RIGHT);
+        keys.put("空格", ControlData.SDL_SCANCODE_SPACE);
+        keys.put("E", ControlData.SDL_SCANCODE_E);
+        keys.put("H", ControlData.SDL_SCANCODE_H);
+        keys.put("ESC", ControlData.SDL_SCANCODE_ESCAPE);
+        keys.put("Shift", ControlData.SDL_SCANCODE_LSHIFT);
+        keys.put("Ctrl", ControlData.SDL_SCANCODE_LCTRL);
         return keys;
     }
 
     /**
-     * 获取Xbox手柄按钮映射（用于手柄模式按钮选择）
+     * 获取手柄按钮映射（用于手柄模式按钮选择）
      */
     public static Map<String, Integer> getXboxButtons() {
         Map<String, Integer> keys = new LinkedHashMap<>();
-        keys.put("🎮 A (跳跃)", ControlData.XBOX_BUTTON_A);
-        keys.put("🎮 B (返回)", ControlData.XBOX_BUTTON_B);
-        keys.put("🎮 X (攻击)", ControlData.XBOX_BUTTON_X);
-        keys.put("🎮 Y (使用)", ControlData.XBOX_BUTTON_Y);
-        keys.put("🎮 LB (左肩)", ControlData.XBOX_BUTTON_LB);
-        keys.put("🎮 RB (右肩)", ControlData.XBOX_BUTTON_RB);
-        keys.put("🎮 LT (左扳机)", ControlData.XBOX_TRIGGER_LEFT);
-        keys.put("🎮 RT (右扳机)", ControlData.XBOX_TRIGGER_RIGHT);
-        keys.put("🎮 Back", ControlData.XBOX_BUTTON_BACK);
-        keys.put("🎮 Start", ControlData.XBOX_BUTTON_START);
-        keys.put("🎮 Guide", ControlData.XBOX_BUTTON_GUIDE);
-        keys.put("🎮 L3 (左摇杆按下)", ControlData.XBOX_BUTTON_LEFT_STICK);
-        keys.put("🎮 R3 (右摇杆按下)", ControlData.XBOX_BUTTON_RIGHT_STICK);
-        keys.put("🎮 D-Pad ↑", ControlData.XBOX_BUTTON_DPAD_UP);
-        keys.put("🎮 D-Pad ↓", ControlData.XBOX_BUTTON_DPAD_DOWN);
-        keys.put("🎮 D-Pad ←", ControlData.XBOX_BUTTON_DPAD_LEFT);
-        keys.put("🎮 D-Pad →", ControlData.XBOX_BUTTON_DPAD_RIGHT);
+        keys.put("A", ControlData.XBOX_BUTTON_A);
+        keys.put("B", ControlData.XBOX_BUTTON_B);
+        keys.put("X", ControlData.XBOX_BUTTON_X);
+        keys.put("Y", ControlData.XBOX_BUTTON_Y);
+        keys.put("LB", ControlData.XBOX_BUTTON_LB);
+        keys.put("RB", ControlData.XBOX_BUTTON_RB);
+        keys.put("LT", ControlData.XBOX_TRIGGER_LEFT);
+        keys.put("RT", ControlData.XBOX_TRIGGER_RIGHT);
+        keys.put("Back", ControlData.XBOX_BUTTON_BACK);
+        keys.put("Start", ControlData.XBOX_BUTTON_START);
+        keys.put("Guide", ControlData.XBOX_BUTTON_GUIDE);
+        keys.put("L3", ControlData.XBOX_BUTTON_LEFT_STICK);
+        keys.put("R3", ControlData.XBOX_BUTTON_RIGHT_STICK);
+        keys.put("D-Pad ↑", ControlData.XBOX_BUTTON_DPAD_UP);
+        keys.put("D-Pad ↓", ControlData.XBOX_BUTTON_DPAD_DOWN);
+        keys.put("D-Pad ←", ControlData.XBOX_BUTTON_DPAD_LEFT);
+        keys.put("D-Pad →", ControlData.XBOX_BUTTON_DPAD_RIGHT);
         return keys;
     }
 }

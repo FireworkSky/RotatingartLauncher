@@ -6,7 +6,7 @@
     android:layout_width="380dp"
     android:layout_height="match_parent"
     android:layout_gravity="end"
-    android:background="#2D2D30"
+    android:background="?attr/colorSurface"
     android:elevation="16dp"
     android:visibility="gone">
 
@@ -48,7 +48,7 @@
         <View
             android:layout_width="match_parent"
             android:layout_height="1dp"
-            android:background="#444444"
+            android:background="?attr/dividerColor"
             android:layout_marginBottom="16dp" />
 
         <!-- 显示的文本 -->
@@ -64,12 +64,12 @@
             android:id="@+id/et_name"
             android:layout_width="match_parent"
             android:layout_height="48dp"
-            android:background="#3C3C3C"
+            android:background="?attr/colorSurfaceVariant"
             android:textColor="?attr/textPrimary"
             android:textSize="14sp"
             android:padding="12dp"
             android:hint="Input"
-            android:textColorHint="#666666"
+                android:textColorHint="?attr/textHint"
             android:layout_marginTop="4dp"
             android:importantForAutofill="no"
             android:inputType="text" />
@@ -103,7 +103,7 @@
                 android:layout_width="70dp"
                 android:layout_height="wrap_content"
                 android:text="10.0%"
-                android:textColor="#4FC3F7"
+                android:textColor="?attr/colorPrimary"
                 android:textSize="14sp"
                 android:gravity="end"
                 android:layout_marginStart="12dp" />
@@ -139,7 +139,7 @@
                 android:layout_width="70dp"
                 android:layout_height="wrap_content"
                 android:text="80.0%"
-                android:textColor="#4FC3F7"
+                android:textColor="?attr/colorPrimary"
                 android:textSize="14sp"
                 android:gravity="end"
                 android:layout_marginStart="12dp" />
@@ -175,7 +175,7 @@
                 android:layout_width="70dp"
                 android:layout_height="wrap_content"
                 android:text="45.0%"
-                android:textColor="#4FC3F7"
+                android:textColor="?attr/colorPrimary"
                 android:textSize="14sp"
                 android:gravity="end"
                 android:layout_marginStart="12dp" />
@@ -211,7 +211,7 @@
                 android:layout_width="70dp"
                 android:layout_height="wrap_content"
                 android:text="70%"
-                android:textColor="#4FC3F7"
+                android:textColor="?attr/colorPrimary"
                 android:textSize="14sp"
                 android:gravity="end"
                 android:layout_marginStart="12dp" />
@@ -225,7 +225,7 @@
             android:orientation="horizontal"
             android:gravity="center_vertical"
             android:layout_marginTop="16dp"
-            android:background="#3C3C3C"
+            android:background="?attr/colorSurfaceVariant"
             android:padding="12dp">
 
             <TextView
@@ -248,7 +248,7 @@
         <View
             android:layout_width="match_parent"
             android:layout_height="1dp"
-            android:background="#444444"
+            android:background="?attr/dividerColor"
             android:layout_marginTop="24dp"
             android:layout_marginBottom="16dp" />
 
@@ -276,7 +276,7 @@
                 android:text="复制控件"
                 android:textColor="?attr/textPrimary"
                 android:textSize="14sp"
-                android:background="#2196F3"
+                android:background="?attr/colorPrimary"
                 android:layout_marginBottom="8dp" />
 
             <Button
@@ -286,7 +286,7 @@
                 android:text="删除控件"
                 android:textColor="?attr/textPrimary"
                 android:textSize="14sp"
-                android:background="#FF5252" />
+                android:background="?attr/colorError" />
 
         </LinearLayout>
 

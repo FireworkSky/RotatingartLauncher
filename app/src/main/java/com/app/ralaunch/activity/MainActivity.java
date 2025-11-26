@@ -131,6 +131,9 @@ public class MainActivity extends AppCompatActivity implements
         // 应用背景设置
         themeManager.applyBackgroundFromSettings();
 
+        // 初始化视频背景
+        updateVideoBackground();
+
         // 先初始化基本 UI 控件（管理器需要这些控件）
         mainLayout = findViewById(R.id.mainLayout);
 
@@ -424,6 +427,16 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     private void showControlLayoutFragment() {
+        // 确保文件浏览器模式已关闭，避免残影
+        if (fileBrowserManager != null && fileBrowserManager.isFileBrowserMode()) {
+            fileBrowserManager.showGameListMode();
+        }
+        
+        // 确保主布局显示
+        if (uiManager != null) {
+            uiManager.showMainLayout();
+        }
+        
         if (fragmentNavigator != null) {
             ControlLayoutFragment controlFragment = new ControlLayoutFragment();
             controlFragment.setOnControlLayoutBackListener(this::hideControlLayoutFragment);
@@ -583,14 +596,101 @@ public class MainActivity extends AppCompatActivity implements
 
     @Override
     protected void onResume() {
-        super.onResume();
+        // 注意：MIUI 等定制系统在配置变化时可能会抛出 ClassCastException
+        // 这是系统框架层面的问题，不影响应用功能
+        try {
+            super.onResume();
+        } catch (Exception e) {
+            AppLogger.error("MainActivity", "onResume 系统错误: " + e.getMessage());
+        }
+        
         // 更新ErrorHandler的Activity引用
-        ErrorHandler.setCurrentActivity(this);
+        try {
+            ErrorHandler.setCurrentActivity(this);
+        } catch (Exception e) {
+            AppLogger.error("MainActivity", "设置 ErrorHandler 失败: " + e.getMessage());
+        }
+        
+        // 延迟恢复视频背景播放，确保 Activity 完全恢复
+        new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
+            if (isFinishing() || isDestroyed()) {
+                return;
+            }
+            try {
+                com.app.ralaunch.view.VideoBackgroundView videoBackgroundView = findViewById(R.id.videoBackgroundView);
+                if (videoBackgroundView != null && videoBackgroundView.getVisibility() == View.VISIBLE) {
+                    videoBackgroundView.start();
+                }
+            } catch (Exception e) {
+                AppLogger.error("MainActivity", "恢复视频背景失败: " + e.getMessage());
+            }
+        }, 200);
+    }
+
+    @Override
+    protected void onPause() {
+        // 先暂停视频背景播放
+        try {
+            com.app.ralaunch.view.VideoBackgroundView videoBackgroundView = findViewById(R.id.videoBackgroundView);
+            if (videoBackgroundView != null && videoBackgroundView.getVisibility() == View.VISIBLE) {
+                videoBackgroundView.pause();
+            }
+        } catch (Exception e) {
+            AppLogger.error("MainActivity", "暂停视频背景失败: " + e.getMessage());
+        }
+        
+        super.onPause();
+    }
+    
+    /**
+     * 获取主题管理器
+     */
+    public ThemeManager getThemeManager() {
+        return themeManager;
+    }
+
+    /**
+     * 更新视频背景
+     */
+    public void updateVideoBackground() {
+        try {
+            com.app.ralaunch.view.VideoBackgroundView videoBackgroundView = findViewById(R.id.videoBackgroundView);
+            if (videoBackgroundView == null) {
+                return;
+            }
+
+            com.app.ralaunch.data.SettingsManager settingsManager = com.app.ralaunch.data.SettingsManager.getInstance(this);
+            
+            if (themeManager.isVideoBackground()) {
+                String videoPath = themeManager.getVideoBackgroundPath();
+                if (videoPath != null && !videoPath.isEmpty()) {
+                    videoBackgroundView.setVisibility(View.VISIBLE);
+                    videoBackgroundView.setVideoPath(videoPath);
+                    videoBackgroundView.setOpacity(100); // 背景始终完全不透明
+                    videoBackgroundView.start();
+                } else {
+                    videoBackgroundView.setVisibility(View.GONE);
+                    videoBackgroundView.release();
+                }
+            } else {
+                videoBackgroundView.setVisibility(View.GONE);
+                videoBackgroundView.release();
+            }
+        } catch (Exception e) {
+            AppLogger.error("MainActivity", "更新视频背景失败: " + e.getMessage());
+        }
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        
+        // 释放视频背景资源
+        com.app.ralaunch.view.VideoBackgroundView videoBackgroundView = findViewById(R.id.videoBackgroundView);
+        if (videoBackgroundView != null) {
+            videoBackgroundView.release();
+        }
+        
         // 在应用退出时保存游戏列表
         // gameDataManager.updateGameList(gameList);
 

@@ -21,6 +21,7 @@ import android.widget.ArrayAdapter;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.view.ViewGroup.MarginLayoutParams;
 import android.widget.ListView;
 import android.os.Bundle;
 import android.util.Log;
@@ -67,8 +68,8 @@ public class GameActivity extends SDLActivity {
     private SDLInputBridge mInputBridge;
     private DrawerLayout mDrawerLayout;
     private ListView mGameMenu;
-    private ImageButton mDrawerButton;
-    private ImageView mEditorSettingsButton; // 编辑模式设置按钮
+    private View mDrawerButton; // 改为 View，因为现在是 MaterialCardView
+    private View mEditorSettingsButton; // 改为 View，因为现在是 MaterialCardView
     private FrameLayout mContentFrame; // 内容框架
     
     // 统一管理器
@@ -93,6 +94,27 @@ public class GameActivity extends SDLActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        // 应用主题设置（必须在 super.onCreate 之前）
+        // GameActivity 继承自 SDLActivity，不是 AppCompatActivity，所以直接应用主题
+        com.app.ralaunch.data.SettingsManager settingsManager = 
+            com.app.ralaunch.data.SettingsManager.getInstance(this);
+        int themeMode = settingsManager.getThemeMode();
+        
+        switch (themeMode) {
+            case 0: // 跟随系统
+                androidx.appcompat.app.AppCompatDelegate.setDefaultNightMode(
+                    androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM);
+                break;
+            case 1: // 深色模式
+                androidx.appcompat.app.AppCompatDelegate.setDefaultNightMode(
+                    androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_YES);
+                break;
+            case 2: // 浅色模式
+                androidx.appcompat.app.AppCompatDelegate.setDefaultNightMode(
+                    androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_NO);
+                break;
+        }
+        
         super.onCreate(savedInstanceState);
 
         mainActivity = this;
@@ -455,8 +477,8 @@ public class GameActivity extends SDLActivity {
             // 锁定抽屉，只能通过按钮打开
             mDrawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
 
-            // 设置菜单按钮点击事件
-            mDrawerButton.setOnClickListener(v -> {
+            // 设置可拖动的悬浮按钮
+            setupDraggableButton(mDrawerButton, () -> {
                 if (mDrawerLayout != null && mGameMenu != null) {
                     mDrawerLayout.openDrawer(mGameMenu);
                 }
@@ -467,7 +489,7 @@ public class GameActivity extends SDLActivity {
 
             // 初始化编辑模式设置按钮
             mEditorSettingsButton = drawerView.findViewById(R.id.game_editor_settings_button);
-            mEditorSettingsButton.setOnClickListener(v -> {
+            setupDraggableButton(mEditorSettingsButton, () -> {
                 if (mControlEditorManager != null) {
                     mControlEditorManager.showEditorSettingsDialog();
                 }
@@ -519,6 +541,87 @@ public class GameActivity extends SDLActivity {
         
         mControlEditorManager = new GameControlEditorManager(
             this, mControlLayout, mContentFrame, mEditorSettingsButton, mDrawerButton);
+    }
+    
+    /**
+     * 设置可拖动的悬浮按钮
+     */
+    private void setupDraggableButton(View button, Runnable onClickAction) {
+        if (button == null) return;
+        
+        // 点击事件
+        button.setOnClickListener(v -> {
+            if (onClickAction != null) {
+                onClickAction.run();
+            }
+        });
+        
+        // 拖动功能
+        button.setOnTouchListener(new View.OnTouchListener() {
+            private float mLastX;
+            private float mLastY;
+            private boolean mIsDragging = false;
+            private static final float DRAG_THRESHOLD = 10f; // 拖动阈值（像素）
+            
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                switch (event.getAction()) {
+                    case MotionEvent.ACTION_DOWN:
+                        mLastX = event.getRawX();
+                        mLastY = event.getRawY();
+                        mIsDragging = false;
+                        return false; // 允许点击事件继续
+                        
+                    case MotionEvent.ACTION_MOVE:
+                        float deltaX = event.getRawX() - mLastX;
+                        float deltaY = event.getRawY() - mLastY;
+                        float distance = (float) Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+                        
+                        // 如果移动距离超过阈值，开始拖动
+                        if (distance > DRAG_THRESHOLD) {
+                            if (!mIsDragging) {
+                                mIsDragging = true;
+                                v.getParent().requestDisallowInterceptTouchEvent(true);
+                            }
+                            
+                            // 更新按钮位置
+                            MarginLayoutParams params = (MarginLayoutParams) v.getLayoutParams();
+                            float newX = params.leftMargin + deltaX;
+                            float newY = params.topMargin + deltaY;
+                            
+                            // 限制在屏幕范围内
+                            android.util.DisplayMetrics metrics = getResources().getDisplayMetrics();
+                            int maxX = metrics.widthPixels - v.getWidth();
+                            int maxY = metrics.heightPixels - v.getHeight();
+                            newX = Math.max(0, Math.min(newX, maxX));
+                            newY = Math.max(0, Math.min(newY, maxY));
+                            
+                            params.leftMargin = (int) newX;
+                            params.topMargin = (int) newY;
+                            v.setLayoutParams(params);
+                            
+                            mLastX = event.getRawX();
+                            mLastY = event.getRawY();
+                            return true;
+                        }
+                        return false;
+                        
+                    case MotionEvent.ACTION_UP:
+                    case MotionEvent.ACTION_CANCEL:
+                        if (mIsDragging) {
+                            mIsDragging = false;
+                            v.getParent().requestDisallowInterceptTouchEvent(false);
+                            return true;
+                        }
+                        // 如果没有拖动，触发点击事件
+                        if (onClickAction != null) {
+                            onClickAction.run();
+                        }
+                        return false;
+                }
+                return false;
+            }
+        });
     }
     
     /**

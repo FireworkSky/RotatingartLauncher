@@ -21,6 +21,26 @@ public class RaLaunchApplication extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
+        
+        // 在应用启动时应用主题设置，确保所有Activity都使用正确的主题
+        com.app.ralaunch.data.SettingsManager settingsManager = 
+            com.app.ralaunch.data.SettingsManager.getInstance(this);
+        int themeMode = settingsManager.getThemeMode();
+        
+        switch (themeMode) {
+            case 0: // 跟随系统
+                androidx.appcompat.app.AppCompatDelegate.setDefaultNightMode(
+                    androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM);
+                break;
+            case 1: // 深色模式
+                androidx.appcompat.app.AppCompatDelegate.setDefaultNightMode(
+                    androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_YES);
+                break;
+            case 2: // 浅色模式
+                androidx.appcompat.app.AppCompatDelegate.setDefaultNightMode(
+                    androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_NO);
+                break;
+        }
         appContext = getApplicationContext();
 
         // 初始化 Fishnet 崩溃捕捉

@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime.InteropServices;
 using HarmonyLib;
+using static System.Net.WebRequestMethods;
 
 namespace TModLoaderPatch;
 
@@ -132,10 +133,147 @@ public static class Patcher
         InstallVerifierBugMitigation(assembly);
         LoggingHooksHarmonyPatch(assembly);
         TMLContentManagerPatch(assembly);
-        
+        FullScreenPatch(assembly);
+
         Console.WriteLine("[TModLoaderPatch] All patches applied successfully!");
     }
 
+    /// <summary>
+    /// 全屏补丁 - 使用 Harmony Prefix 在 Game.Run 方法执行前设置全屏
+    /// </summary>
+    public static void FullScreenPatch(Assembly assembly)
+    {
+        try
+        {
+            var loadedAssemblies = AppDomain.CurrentDomain.GetAssemblies();
+            var FNAAssembly = loadedAssemblies.FirstOrDefault(a => a.GetName().Name == "FNA");
+
+            if (FNAAssembly == null)
+            {
+                Console.WriteLine("[TModLoaderPatch] [WARN] FNA assembly not found.");
+                return;
+            }
+
+            // 从 FNA 程序集中获取 Game 类型（FNA 使用 Microsoft.Xna.Framework 命名空间）
+            Type? gameType = FNAAssembly.GetType("Microsoft.Xna.Framework.Game");
+
+            if (gameType == null)
+            {
+                Console.WriteLine("[TModLoaderPatch] Microsoft.Xna.Framework.Game class not found in FNA assembly.");
+                return;
+            }
+
+            // Harmony instance lazy loading
+            Harmony harmony = _harmony!;
+
+            // 获取原始 Run 方法
+            MethodInfo? original = AccessTools.Method(gameType, "Run");
+
+            if (original == null)
+            {
+                Console.WriteLine("[TModLoaderPatch] Game.Run method not found.");
+                return;
+            }
+
+            // 创建一个前置钩子
+            HarmonyMethod prefix = new HarmonyMethod(typeof(Patcher), nameof(IsFullScreenPatch));
+
+            // 应用 Patch
+            harmony.Patch(original, prefix: prefix);
+
+            Console.WriteLine("[TModLoaderPatch] Run Prefix applied!");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[TModLoaderPatch] Error applying FullScreen patch: {ex.Message}");
+            Console.WriteLine($"[TModLoaderPatch] Stack: {ex.StackTrace}");
+        }
+    }
+
+    /// <summary>
+    /// Prefix 补丁 - 在 Game.Run 方法执行前设置全屏
+    /// </summary>
+    public static void IsFullScreenPatch()
+    {
+        try
+        {
+            // 获取 Terraria.Main 类型
+            var loadedAssemblies = AppDomain.CurrentDomain.GetAssemblies();
+            var tModLoaderAssembly = loadedAssemblies.FirstOrDefault(a => a.GetName().Name == "tModLoader");
+            
+            if (tModLoaderAssembly == null)
+            {
+                Console.WriteLine("[TModLoaderPatch] [WARN] tModLoader assembly not found, cannot apply fullscreen settings.");
+                return;
+            }
+
+            Type? mainType = tModLoaderAssembly.GetType("Terraria.Main");
+
+            if (mainType == null)
+            {
+                Console.WriteLine("[TModLoaderPatch] [WARN] Terraria.Main class not found.");
+                return;
+            }
+
+            // 获取 screenMaximized 静态字段
+            var screenMaximizedField = mainType.GetField("screenMaximized", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
+            if (screenMaximizedField != null)
+            {
+                screenMaximizedField.SetValue(null, true);
+                Console.WriteLine("[TModLoaderPatch] Terraria.Main.screenMaximized set to true");
+            }
+            else
+            {
+                Console.WriteLine("[TModLoaderPatch] [WARN] screenMaximized field not found.");
+            }
+
+            // 获取 graphics 静态字段
+            var graphicsField = mainType.GetField("graphics", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
+            if (graphicsField == null)
+            {
+                Console.WriteLine("[TModLoaderPatch] [WARN] graphics field not found.");
+                return;
+            }
+
+            object? graphicsManager = graphicsField.GetValue(null);
+            if (graphicsManager == null)
+            {
+                Console.WriteLine("[TModLoaderPatch] [WARN] graphics field is null.");
+                return;
+            }
+
+            Type graphicsType = graphicsManager.GetType();
+            Console.WriteLine($"[TModLoaderPatch] Graphics type: {graphicsType.FullName}");
+
+            // 尝试获取 IsFullScreen 属性
+            var isFullScreenProperty = graphicsType.GetProperty("IsFullScreen", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            if (isFullScreenProperty != null)
+            {
+                isFullScreenProperty.SetValue(graphicsManager, true);
+                Console.WriteLine("[TModLoaderPatch] Terraria.Main.graphics.IsFullScreen set to true");
+            }
+            else
+            {
+                // 如果属性不存在，尝试作为字段
+                var isFullScreenField = graphicsType.GetField("IsFullScreen", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                if (isFullScreenField != null)
+                {
+                    isFullScreenField.SetValue(graphicsManager, true);
+                    Console.WriteLine("[TModLoaderPatch] Terraria.Main.graphics.IsFullScreen (field) set to true");
+                }
+                else
+                {
+                    Console.WriteLine("[TModLoaderPatch] [WARN] IsFullScreen property/field not found in GraphicsDeviceManager.");
+                    Console.WriteLine($"[TModLoaderPatch] Available properties: {string.Join(", ", graphicsType.GetProperties(BindingFlags.Instance | BindingFlags.Public).Select(p => p.Name))}");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[TModLoaderPatch] Error in IsFullScreenPatch: {ex.Message}");
+            Console.WriteLine($"[TModLoaderPatch] Stack: {ex.StackTrace}");
+        }
+    }
     public static void LoggingHooksHarmonyPatch(Assembly assembly)
     {
         // Get the type for LoggingHooks from the external assembly

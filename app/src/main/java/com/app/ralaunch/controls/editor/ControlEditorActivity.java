@@ -16,6 +16,7 @@ import com.app.ralaunch.R;
 import com.app.ralaunch.controls.*;
 import com.app.ralaunch.controls.ControlDataConverter;
 import com.app.ralaunch.controls.editor.ControlEditorOperations;
+import com.app.ralaunch.controls.editor.manager.ControlDataSyncManager;
 
 import java.io.File;
 import java.io.InputStream;
@@ -27,7 +28,8 @@ public class ControlEditorActivity extends AppCompatActivity {
     private ControlLayout mPreviewLayout;
     private GridOverlayView mGridOverlay;
     private ControlEditDialogMD mEditDialog;
-    private EditorSettingsDialog mSettingsDialog;
+    private UnifiedEditorSettingsDialog mSettingsDialog;
+    private ControlView mSelectedControl = null; // 当前选中的控件
 
     private ControlConfig mCurrentConfig;
     private SDLInputBridge mDummyBridge;
@@ -41,6 +43,11 @@ public class ControlEditorActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        // 应用主题设置（必须在 super.onCreate 之前）
+        com.app.ralaunch.manager.ThemeManager themeManager = 
+            new com.app.ralaunch.manager.ThemeManager(this);
+        themeManager.applyThemeFromSettings();
+        
         super.onCreate(savedInstanceState);
 
         // 设置全屏沉浸模式并隐藏刘海屏
@@ -85,8 +92,9 @@ public class ControlEditorActivity extends AppCompatActivity {
     private void initUI() {
         mEditorContainer = findViewById(R.id.editor_container);
 
-        // 设置按钮点击显示 MD3 设置弹窗
-        findViewById(R.id.drawer_button).setOnClickListener(v -> {
+        // 设置按钮点击显示 MD3 设置弹窗，并支持拖动
+        View drawerButton = findViewById(R.id.drawer_button);
+        setupDraggableButton(drawerButton, () -> {
             if (mSettingsDialog != null) {
                 mSettingsDialog.show();
             }
@@ -94,6 +102,85 @@ public class ControlEditorActivity extends AppCompatActivity {
 
         // 初始化对话框
         setupDialogs();
+    }
+    
+    /**
+     * 设置可拖动的按钮
+     */
+    private void setupDraggableButton(View button, Runnable onClickAction) {
+        if (button == null) return;
+        
+        // 点击事件
+        button.setOnClickListener(v -> {
+            if (onClickAction != null) {
+                onClickAction.run();
+            }
+        });
+        
+        // 拖动功能
+        button.setOnTouchListener(new View.OnTouchListener() {
+            private float mLastX;
+            private float mLastY;
+            private float mInitialX;
+            private float mInitialY;
+            private boolean mIsDragging = false;
+            private static final float DRAG_THRESHOLD = 10f; // 拖动阈值（像素）
+            
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                switch (event.getAction()) {
+                    case MotionEvent.ACTION_DOWN:
+                        mLastX = event.getRawX();
+                        mLastY = event.getRawY();
+                        mInitialX = v.getX();
+                        mInitialY = v.getY();
+                        mIsDragging = false;
+                        return false; // 允许点击事件继续
+                        
+                    case MotionEvent.ACTION_MOVE:
+                        float deltaX = event.getRawX() - mLastX;
+                        float deltaY = event.getRawY() - mLastY;
+                        float distance = (float) Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+                        
+                        // 如果移动距离超过阈值，开始拖动
+                        if (distance > DRAG_THRESHOLD) {
+                            if (!mIsDragging) {
+                                mIsDragging = true;
+                                v.getParent().requestDisallowInterceptTouchEvent(true);
+                            }
+                            
+                            // 更新按钮位置（使用 setX/setY，适用于 FrameLayout）
+                            float newX = v.getX() + deltaX;
+                            float newY = v.getY() + deltaY;
+                            
+                            // 限制在屏幕范围内
+                            DisplayMetrics metrics = getResources().getDisplayMetrics();
+                            int maxX = metrics.widthPixels - v.getWidth();
+                            int maxY = metrics.heightPixels - v.getHeight();
+                            newX = Math.max(0, Math.min(newX, maxX));
+                            newY = Math.max(0, Math.min(newY, maxY));
+                            
+                            v.setX(newX);
+                            v.setY(newY);
+                            
+                            mLastX = event.getRawX();
+                            mLastY = event.getRawY();
+                            return true;
+                        }
+                        return false;
+                        
+                    case MotionEvent.ACTION_UP:
+                    case MotionEvent.ACTION_CANCEL:
+                        if (mIsDragging) {
+                            mIsDragging = false;
+                            v.getParent().requestDisallowInterceptTouchEvent(false);
+                            return true;
+                        }
+                        return false;
+                }
+                return false;
+            }
+        });
     }
 
     /**
@@ -104,49 +191,51 @@ public class ControlEditorActivity extends AppCompatActivity {
         // 创建MD风格编辑对话框
         mEditDialog = new ControlEditDialogMD(this, mScreenWidth, mScreenHeight);
 
-        // 设置更新监听器
+        // 设置更新监听器 - 使用统一的数据同步管理器
         mEditDialog.setOnControlUpdatedListener(control -> {
-            // 实时更新视图
-            if (mPreviewLayout != null) {
-                for (int i = 0; i < mPreviewLayout.getChildCount(); i++) {
-                    View child = mPreviewLayout.getChildAt(i);
-                    if (child instanceof ControlView) {
-                        ControlView controlView = (ControlView) child;
-                        if (controlView.getData() == control) {
-                            // 更新布局参数
-                            ViewGroup.LayoutParams layoutParams = child.getLayoutParams();
-                            if (layoutParams instanceof FrameLayout.LayoutParams) {
-                                FrameLayout.LayoutParams frameParams = (FrameLayout.LayoutParams) layoutParams;
-                                frameParams.width = (int) control.width;
-                                frameParams.height = (int) control.height;
-                                frameParams.leftMargin = (int) control.x;
-                                frameParams.topMargin = (int) control.y;
-                                child.setLayoutParams(frameParams);
-                            }
-                            // 更新视觉属性
-                            child.setAlpha(control.opacity);
-                            child.setVisibility(control.visible ? View.VISIBLE : View.INVISIBLE);
-                            // 刷新控件绘制
-                            controlView.updateData(control);
-                            child.invalidate();
-                            break;
-                        }
-                    }
-                }
-            }
+            // 使用统一的数据同步管理器更新视图
+            ControlDataSyncManager.syncControlDataToView(mPreviewLayout, control);
+        });
+        
+        // 对话框关闭时清除选中状态
+        mEditDialog.setOnDismissListener(dialog -> {
+            clearSelectedControlState();
         });
 
         // 设置删除监听器
         mEditDialog.setOnControlDeletedListener(control -> {
             if (mCurrentConfig != null && mCurrentConfig.controls != null) {
-                mCurrentConfig.controls.remove(control);
+                // 使用引用比较删除（因为 ControlData 没有实现 equals）
+                // 遍历列表找到相同的引用并删除
+                boolean removed = false;
+                for (int i = mCurrentConfig.controls.size() - 1; i >= 0; i--) {
+                    if (mCurrentConfig.controls.get(i) == control) {
+                        mCurrentConfig.controls.remove(i);
+                        removed = true;
+                        break;
+                    }
+                }
+                if (!removed) {
+                    // 如果引用比较失败，尝试使用 remove(Object)（虽然可能失败）
+                    mCurrentConfig.controls.remove(control);
+                }
+                displayLayout();
+                // 删除后立即保存布局，确保导出时使用最新数据
+                saveLayout();
+            }
+        });
+
+        // 设置复制监听器
+        mEditDialog.setOnControlCopiedListener(control -> {
+            if (mCurrentConfig != null && mCurrentConfig.controls != null) {
+                mCurrentConfig.controls.add(control);
                 displayLayout();
             }
         });
 
         // 创建 MD3 设置弹窗
-        mSettingsDialog = new EditorSettingsDialog(this, mEditorContainer, mScreenWidth);
-        mSettingsDialog.setOnMenuItemClickListener(new EditorSettingsDialog.OnMenuItemClickListener() {
+        mSettingsDialog = new UnifiedEditorSettingsDialog(this, mEditorContainer, mScreenWidth, UnifiedEditorSettingsDialog.DialogMode.EDITOR);
+        mSettingsDialog.setOnMenuItemClickListener(new UnifiedEditorSettingsDialog.OnMenuItemClickListener() {
             @Override
             public void onAddButton() {
                 addButton();
@@ -155,6 +244,11 @@ public class ControlEditorActivity extends AppCompatActivity {
             @Override
             public void onAddJoystick() {
                 addJoystick();
+            }
+
+            @Override
+            public void onAddText() {
+                // 文本功能已移除
             }
 
             @Override
@@ -178,7 +272,7 @@ public class ControlEditorActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onSaveAndExit() {
+            public void onLastAction() {
                 saveLayout();
                 finish();
             }
@@ -262,6 +356,9 @@ public class ControlEditorActivity extends AppCompatActivity {
     }
     
     private void displayLayout() {
+        // 清除选中状态
+        clearSelectedControlState();
+        
         // 清除现有视图
         mEditorContainer.removeAllViews();
 
@@ -323,6 +420,28 @@ public class ControlEditorActivity extends AppCompatActivity {
                 ControlView controlView = (ControlView) child;
                 setupControlViewInteraction(controlView);
             }
+        }
+    }
+    
+    /**
+     * 清除之前选中控件的按下状态
+     */
+    private void clearSelectedControlState() {
+        if (mSelectedControl != null) {
+            if (mSelectedControl instanceof VirtualButton) {
+                ((VirtualButton) mSelectedControl).setPressedState(false);
+            }
+            mSelectedControl = null;
+        }
+    }
+    
+    /**
+     * 设置当前选中的控件
+     */
+    private void setSelectedControl(ControlView controlView) {
+        mSelectedControl = controlView;
+        if (controlView instanceof VirtualButton) {
+            ((VirtualButton) controlView).setPressedState(true);
         }
     }
     
@@ -389,6 +508,12 @@ public class ControlEditorActivity extends AppCompatActivity {
 
                 case MotionEvent.ACTION_UP:
                     if (!isDragging[0]) {
+                        // 清除之前选中控件的按下状态
+                        clearSelectedControlState();
+                        
+                        // 设置当前控件为选中状态
+                        setSelectedControl(controlView);
+                        
                         // 点击事件 - 显示MD风格编辑对话框
                         mEditDialog.show(data);
                     }

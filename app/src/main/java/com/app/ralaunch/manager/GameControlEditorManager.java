@@ -5,14 +5,16 @@ import android.content.Context;
 import android.util.DisplayMetrics;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
 import android.widget.Toast;
 
 import com.app.ralaunch.R;
 import com.app.ralaunch.controls.ControlConfig;
 import com.app.ralaunch.controls.ControlData;
 import com.app.ralaunch.controls.ControlLayout;
-import com.app.ralaunch.controls.editor.GameEditorSettingsDialog;
-import com.app.ralaunch.controls.editor.SideEditDialog;
+import com.app.ralaunch.controls.ControlView;
+import com.app.ralaunch.controls.editor.UnifiedEditorSettingsDialog;
+import com.app.ralaunch.controls.editor.ControlEditDialogMD;
 import com.app.ralaunch.controls.editor.ControlEditorOperations;
 import com.app.ralaunch.utils.AppLogger;
 
@@ -41,8 +43,8 @@ public class GameControlEditorManager {
     private boolean mIsInEditor = false;
     private boolean mHasUnsavedChanges = false;
     
-    private SideEditDialog mSideEditDialog;
-    private GameEditorSettingsDialog mEditorSettingsDialog;
+    private ControlEditDialogMD mControlEditDialog;
+    private UnifiedEditorSettingsDialog mEditorSettingsDialog;
     
     private OnEditorStateChangedListener mStateListener;
     
@@ -82,12 +84,12 @@ public class GameControlEditorManager {
         mControlLayout.setModifiable(true);
         
         // 初始化编辑对话框
-        initSideEditDialog();
-        
+        initControlEditDialog();
+
         // 设置控件点击监听器
         mControlLayout.setEditControlListener(data -> {
-            if (mSideEditDialog != null) {
-                mSideEditDialog.show(data);
+            if (mControlEditDialog != null) {
+                mControlEditDialog.show(data);
             }
         });
         
@@ -170,39 +172,55 @@ public class GameControlEditorManager {
     }
     
     /**
-     * 初始化侧边编辑对话框
+     * 初始化控件编辑对话框
      */
-    private void initSideEditDialog() {
-        if (mSideEditDialog != null) return;
-        
+    private void initControlEditDialog() {
+        if (mControlEditDialog != null) return;
+
         DisplayMetrics metrics = mContext.getResources().getDisplayMetrics();
-        ViewGroup controlParent = (ViewGroup) mControlLayout.getParent();
-        if (controlParent == null) {
-            controlParent = mContentFrame;
-        }
-        
-        mSideEditDialog = new SideEditDialog(mContext, controlParent,
+
+        mControlEditDialog = new ControlEditDialogMD(mContext,
             metrics.widthPixels, metrics.heightPixels);
-        
+
+        // 设置实时更新监听器
+        mControlEditDialog.setOnControlUpdatedListener(control -> {
+            if (mControlLayout != null) {
+                // 实时更新视图（避免重新加载整个布局）
+                for (int i = 0; i < mControlLayout.getChildCount(); i++) {
+                    View child = mControlLayout.getChildAt(i);
+                    if (child instanceof ControlView) {
+                        ControlView controlView = (ControlView) child;
+                        if (controlView.getData() == control) {
+                            // 更新布局参数
+                            ViewGroup.LayoutParams layoutParams = child.getLayoutParams();
+                            if (layoutParams instanceof FrameLayout.LayoutParams) {
+                                FrameLayout.LayoutParams frameParams = (FrameLayout.LayoutParams) layoutParams;
+                                frameParams.width = (int) control.width;
+                                frameParams.height = (int) control.height;
+                                frameParams.leftMargin = (int) control.x;
+                                frameParams.topMargin = (int) control.y;
+                                child.setLayoutParams(frameParams);
+                            }
+                            // 更新视觉属性
+                            child.setAlpha(control.opacity);
+                            child.setVisibility(control.visible ? View.VISIBLE : View.INVISIBLE);
+                            // 刷新控件绘制
+                            controlView.updateData(control);
+                            child.invalidate();
+                            break;
+                        }
+                    }
+                }
+                mHasUnsavedChanges = true;
+            }
+        });
+
         // 设置删除监听器
-        mSideEditDialog.setOnControlDeletedListener(control -> {
+        mControlEditDialog.setOnControlDeletedListener(control -> {
             if (mControlLayout != null) {
                 ControlConfig config = mControlLayout.getConfig();
                 if (config != null && config.controls != null) {
                     config.controls.remove(control);
-                    mControlLayout.loadLayout(config);
-                    disableClippingRecursive(mControlLayout);
-                    mHasUnsavedChanges = true;
-                }
-            }
-        });
-        
-        // 设置复制监听器
-        mSideEditDialog.setOnControlDuplicatedListener(newControl -> {
-            if (mControlLayout != null) {
-                ControlConfig config = mControlLayout.getConfig();
-                if (config != null && config.controls != null) {
-                    config.controls.add(newControl);
                     mControlLayout.loadLayout(config);
                     disableClippingRecursive(mControlLayout);
                     mHasUnsavedChanges = true;
@@ -216,44 +234,49 @@ public class GameControlEditorManager {
      */
     private void initEditorSettingsDialog() {
         if (mEditorSettingsDialog != null) return;
-        
+
         DisplayMetrics metrics = mContext.getResources().getDisplayMetrics();
-        mEditorSettingsDialog = new GameEditorSettingsDialog(
-            mContext, mContentFrame, metrics.widthPixels);
-        
-        mEditorSettingsDialog.setOnMenuItemClickListener(new GameEditorSettingsDialog.OnMenuItemClickListener() {
+        mEditorSettingsDialog = new UnifiedEditorSettingsDialog(
+            mContext, mContentFrame, metrics.widthPixels, UnifiedEditorSettingsDialog.DialogMode.GAME);
+
+        mEditorSettingsDialog.setOnMenuItemClickListener(new UnifiedEditorSettingsDialog.OnMenuItemClickListener() {
             @Override
             public void onAddButton() {
                 addButton();
             }
-            
+
             @Override
             public void onAddJoystick() {
                 addJoystick();
             }
-            
+
+            @Override
+            public void onAddText() {
+                addText();
+            }
+
             @Override
             public void onJoystickModeSettings() {
                 showJoystickModeDialog();
             }
-            
+
             @Override
             public void onSaveLayout() {
                 saveControlLayout();
             }
-            
+
             @Override
             public void onLoadLayout() {
                 loadControlLayout();
             }
-            
+
             @Override
             public void onResetDefault() {
                 resetToDefaultLayout();
             }
-            
+
             @Override
-            public void onExitEditor() {
+            public void onLastAction() {
                 exitEditMode();
             }
         });
@@ -306,6 +329,31 @@ public class GameControlEditorManager {
             disableClippingRecursive(mControlLayout);
             mHasUnsavedChanges = true;
             Toast.makeText(mContext, "已添加摇杆", Toast.LENGTH_SHORT).show();
+        }
+    }
+    
+    /**
+     * 添加文本控件
+     */
+    public void addText() {
+        if (mControlLayout == null) return;
+        
+        ControlConfig config = mControlLayout.getConfig();
+        if (config == null) {
+            config = new ControlConfig();
+            config.controls = new java.util.ArrayList<>();
+            mControlLayout.loadLayout(config);
+        }
+        
+        DisplayMetrics metrics = mContext.getResources().getDisplayMetrics();
+        ControlData text = ControlEditorOperations.addText(config, 
+            metrics.widthPixels, metrics.heightPixels);
+        
+        if (text != null) {
+            mControlLayout.loadLayout(config);
+            disableClippingRecursive(mControlLayout);
+            mHasUnsavedChanges = true;
+            Toast.makeText(mContext, "已添加文本", Toast.LENGTH_SHORT).show();
         }
     }
     

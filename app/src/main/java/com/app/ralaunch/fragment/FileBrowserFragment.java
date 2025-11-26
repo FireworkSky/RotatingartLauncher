@@ -16,6 +16,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.app.ralaunch.R;
 import com.app.ralaunch.activity.MainActivity;
+import com.app.ralaunch.fragment.FragmentHelper;
 import com.app.ralaunch.adapter.FileBrowserAdapter;
 import com.app.ralaunch.model.FileItem;
 
@@ -36,7 +37,7 @@ import java.util.List;
  * 
  * 支持选择 .zip 等游戏压缩包文件
  */
-public class FileBrowserFragment extends Fragment implements FileBrowserAdapter.OnFileClickListener {
+public class FileBrowserFragment extends BaseFragment implements FileBrowserAdapter.OnFileClickListener {
 
     // 模式常量
     public static final int MODE_SELECT_FILE = 0;  // 选择文件模式（默认）
@@ -103,7 +104,7 @@ public class FileBrowserFragment extends Fragment implements FileBrowserAdapter.
         this.fileSelectedListener = listener;
     }
     
-    public void setOnFileSelectedListener(OnAssemblySelectedListener listener) {
+    public void setOnAssemblySelectedListener(OnAssemblySelectedListener listener) {
         this.assemblySelectedListener = listener;
     }
 
@@ -227,8 +228,8 @@ public class FileBrowserFragment extends Fragment implements FileBrowserAdapter.
      * 检查权限并加载文件
      */
     private void checkPermissionsAndLoadFiles() {
-        if (getActivity() instanceof MainActivity) {
-            MainActivity activity = (MainActivity) getActivity();
+        MainActivity activity = FragmentHelper.getMainActivity(this);
+        if (activity != null) {
 
             if (activity.hasRequiredPermissions()) {
                 // 已有权限，加载文件
@@ -511,9 +512,7 @@ public class FileBrowserFragment extends Fragment implements FileBrowserAdapter.
                 filterFiles(searchInput.getText().toString());
                 
                 String sortName = sortMode == 0 ? "名称" : sortMode == 1 ? "大小" : "时间";
-                if (getActivity() instanceof MainActivity) {
-                    ((MainActivity) getActivity()).showToast("已按" + sortName + "排序");
-                }
+                showToast("已按" + sortName + "排序");
             })
             .show(getParentFragmentManager(), "sort_options");
     }

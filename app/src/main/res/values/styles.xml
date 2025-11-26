@@ -17,6 +17,16 @@
         <item name="android:windowAnimationStyle">@style/DialogAnimation</item>
     </style>
 
+    <!-- 控件编辑对话框样式 - Material 3 -->
+    <style name="ControlEditDialogStyle" parent="Theme.Material3.DayNight.Dialog">
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowIsFloating">true</item>
+        <item name="android:backgroundDimEnabled">true</item>
+        <item name="android:backgroundDimAmount">0.6</item>
+        <item name="android:windowAnimationStyle">@style/DialogAnimation</item>
+        <!-- 不使用硬编码颜色，直接继承父主题的颜色 -->
+    </style>
+
     <!-- 对话框动画样式 -->
     <style name="DialogAnimation">
         <item name="android:windowEnterAnimation">@anim/dialog_enter</item>
@@ -38,13 +48,21 @@
         <item name="android:backgroundDimAmount">0.7</item>
         <item name="android:windowAnimationStyle">@style/DialogAnimation</item>
 
-        <!-- 继承主题颜色属性 -->
-        <item name="backgroundPrimary">?attr/backgroundPrimary</item>
-        <item name="backgroundSecondary">?attr/backgroundSecondary</item>
-        <item name="backgroundCard">?attr/backgroundCard</item>
-        <item name="textPrimary">?attr/textPrimary</item>
-        <item name="textSecondary">?attr/textSecondary</item>
-        <item name="colorOutline">?attr/colorOutline</item>
+        <!-- 继承主题颜色属性 - 直接映射到Material3标准属性，避免属性解析失败 -->
+        <item name="backgroundPrimary">?android:attr/colorBackground</item>
+        <item name="backgroundSecondary">?attr/colorSurfaceVariant</item>
+        <item name="backgroundCard">?attr/colorSurface</item>
+        <item name="textPrimary">?attr/colorOnSurface</item>
+        <item name="textSecondary">?attr/colorOnSurfaceVariant</item>
+        <item name="colorOutline">@color/md_theme_light_outline</item>
+        <item name="colorOutlineVariant">@color/md_theme_light_outlineVariant</item>
+        <item name="colorPrimary">@color/md_theme_light_primary</item>
+        <item name="colorSecondary">@color/md_theme_light_secondary</item>
+        <item name="colorTertiaryContainer">@color/md_theme_light_tertiaryContainer</item>
+        <item name="colorOnTertiaryContainer">@color/md_theme_light_onTertiaryContainer</item>
+        <item name="colorSurface">@color/md_theme_light_surface</item>
+        <item name="colorOnSurface">@color/md_theme_light_onSurface</item>
+        <item name="colorOnSurfaceVariant">@color/md_theme_light_onSurfaceVariant</item>
     </style>
 
     <!-- Widget 命名空间基础样式 -->

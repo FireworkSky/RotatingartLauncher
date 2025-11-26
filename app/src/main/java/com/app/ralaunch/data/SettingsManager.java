@@ -40,9 +40,11 @@ public class SettingsManager {
         public static final String THEME_MODE = "theme_mode";
         public static final String APP_LANGUAGE = "app_language";
         public static final String THEME_COLOR = "theme_color";
-        public static final String BACKGROUND_TYPE = "background_type"; // "default", "color", "image"
+        public static final String BACKGROUND_TYPE = "background_type"; // "default", "color", "image", "video"
         public static final String BACKGROUND_COLOR = "background_color"; // 颜色值（int）
         public static final String BACKGROUND_IMAGE_PATH = "background_image_path"; // 图片路径
+        public static final String BACKGROUND_VIDEO_PATH = "background_video_path"; // 视频路径
+        public static final String BACKGROUND_OPACITY = "background_opacity"; // 背景透明度 (0-100)
 
         // 运行时设置
         public static final String DOTNET_FRAMEWORK = "dotnet_framework";
@@ -71,6 +73,8 @@ public class SettingsManager {
         public static final String BACKGROUND_TYPE = "default"; // 默认背景
         public static final int BACKGROUND_COLOR = 0xFFFFFFFF; // 默认白色
         public static final String BACKGROUND_IMAGE_PATH = ""; // 默认无图片
+        public static final String BACKGROUND_VIDEO_PATH = ""; // 默认无视频
+        public static final int BACKGROUND_OPACITY = 100; // 默认完全不透明
         public static final String DOTNET_FRAMEWORK = "auto";
         public static final String RUNTIME_ARCHITECTURE = "auto";
         public static final boolean VERBOSE_LOGGING = false;
@@ -244,6 +248,22 @@ public class SettingsManager {
 
     public void setBackgroundImagePath(String path) {
         putString(Keys.BACKGROUND_IMAGE_PATH, path);
+    }
+
+    public String getBackgroundVideoPath() {
+        return getString(Keys.BACKGROUND_VIDEO_PATH, Defaults.BACKGROUND_VIDEO_PATH);
+    }
+
+    public void setBackgroundVideoPath(String path) {
+        putString(Keys.BACKGROUND_VIDEO_PATH, path);
+    }
+
+    public int getBackgroundOpacity() {
+        return getInt(Keys.BACKGROUND_OPACITY, Defaults.BACKGROUND_OPACITY);
+    }
+
+    public void setBackgroundOpacity(int opacity) {
+        putInt(Keys.BACKGROUND_OPACITY, opacity);
     }
 
     // 运行时设置

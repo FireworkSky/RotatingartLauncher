@@ -32,25 +32,20 @@
                 app:navigationIconTint="?attr/textPrimary"
                 style="@style/Widget.Material3.Toolbar" />
 
-            <!-- 导入预设配置按钮 -->
+            <!-- 布局设置按钮 -->
             <com.google.android.material.button.MaterialButton
-                android:id="@+id/btn_import_preset"
+                android:id="@+id/btn_layout_settings"
                 android:layout_width="wrap_content"
                 android:layout_height="36dp"
-                android:text="导入预设"
-                android:textSize="13sp"
-                android:textColor="?attr/textPrimary"
+                android:text=""
                 style="@style/Widget.Material3.Button.TonalButton"
-                android:drawableStart="@drawable/ic_download"
-                android:drawableTint="?attr/textPrimary"
-                android:drawablePadding="6dp"
-                android:paddingStart="12dp"
-                android:paddingEnd="16dp"
+                app:icon="@drawable/ic_settings"
+                app:iconGravity="textStart"
                 android:minWidth="0dp"
                 android:insetTop="0dp"
                 android:insetBottom="0dp"
                 android:layout_marginEnd="12dp"
-                android:contentDescription="导入预设配置文件" />
+                android:contentDescription="布局设置" />
 
         </LinearLayout>
 

@@ -6,7 +6,6 @@ import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
-import android.graphics.drawable.GradientDrawable;
 import androidx.appcompat.app.AppCompatActivity;
 import com.app.ralaunch.data.SettingsManager;
 import com.app.ralaunch.utils.AppLogger;
@@ -15,7 +14,7 @@ import java.io.File;
 
 /**
  * 主题管理器
- * 负责管理主题应用
+ * 负责管理主题应用（主题模式、背景设置等）
  */
 public class ThemeManager {
     private final AppCompatActivity activity;
@@ -123,10 +122,25 @@ public class ThemeManager {
                 break;
         }
 
-        // 应用背景到窗口
-        if (background != null && activity.getWindow() != null) {
+        // 应用背景到窗口（视频背景需要单独处理，这里不处理）
+        // 背景始终完全不透明，只在启动器显示
+        if (background != null && activity.getWindow() != null && !"video".equals(type)) {
             activity.getWindow().setBackgroundDrawable(background);
         }
+    }
+    
+    /**
+     * 检查是否使用视频背景
+     */
+    public boolean isVideoBackground() {
+        return "video".equals(settingsManager.getBackgroundType());
+    }
+    
+    /**
+     * 获取视频背景路径
+     */
+    public String getVideoBackgroundPath() {
+        return settingsManager.getBackgroundVideoPath();
     }
 
     /**

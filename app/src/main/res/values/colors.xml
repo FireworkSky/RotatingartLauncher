@@ -36,9 +36,9 @@
     <color name="md_theme_light_surfaceVariant">#F5F5F5</color>
     <color name="md_theme_light_onSurfaceVariant">#49454F</color>
 
-    <!-- 轮廓线 (Outline) -->
-    <color name="md_theme_light_outline">#A4B4D8</color>
-    <color name="md_theme_light_outlineVariant">#CAC4D0</color>
+    <!-- 轮廓线 (Outline) - 增强对比度 -->
+    <color name="md_theme_light_outline">#79747E</color>
+    <color name="md_theme_light_outlineVariant">#E0E0E0</color>
 
     <!-- 浅色主题颜色（向后兼容） -->
     <!-- 背景色 -->

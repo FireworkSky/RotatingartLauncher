@@ -5,7 +5,9 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.graphics.Path;
 import android.graphics.RectF;
+import android.graphics.drawable.Drawable;
 import android.os.Handler;
 import android.os.Looper;
 import android.text.TextPaint;
@@ -39,6 +41,23 @@ public class VirtualButton extends View implements ControlView {
     private boolean mIsPressed = false;
     private boolean mIsToggled = false;
     
+    /**
+     * 设置按下状态（用于编辑模式的选择反馈）
+     */
+    public void setPressedState(boolean pressed) {
+        if (mIsPressed != pressed) {
+            mIsPressed = pressed;
+            invalidate(); // 刷新绘制
+        }
+    }
+    
+    /**
+     * 获取按下状态
+     */
+    public boolean isPressedState() {
+        return mIsPressed;
+    }
+    
     public VirtualButton(Context context, ControlData data, ControlInputBridge bridge) {
         super(context);
         mData = data;
@@ -48,22 +67,50 @@ public class VirtualButton extends View implements ControlView {
     }
     
     private void initPaints() {
-        mBackgroundPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        mBackgroundPaint.setColor(mData.bgColor);
-        mBackgroundPaint.setStyle(Paint.Style.FILL);
-        mBackgroundPaint.setAlpha((int) (mData.opacity * 255));
-        
-        mStrokePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        mStrokePaint.setColor(mData.strokeColor);
-        mStrokePaint.setStyle(Paint.Style.STROKE);
-        mStrokePaint.setStrokeWidth(dpToPx(mData.strokeWidth));
-        mStrokePaint.setAlpha((int) (mData.opacity * 255));
-        
-        mTextPaint = new TextPaint(Paint.ANTI_ALIAS_FLAG);
-        mTextPaint.setColor(0xFFFFFFFF);
-        mTextPaint.setTextSize(dpToPx(16));
-        mTextPaint.setTextAlign(Paint.Align.CENTER);
-        mTextPaint.setAlpha((int) (mData.opacity * 255));
+       
+       
+        if (mData.buttonMode == ControlData.BUTTON_MODE_GAMEPAD) {
+         
+            int normalColor = 0x7D7D7D7D; // 半透明灰色
+            int pressedColor = 0xFF7D7D7D; // 不透明灰色（按下）
+            int textColor = 0x7DFFFFFF; // 半透明白色（文字）
+            int backgroundColor = 0x327D7D7D; // 很淡的灰色（背景）
+            
+            mBackgroundPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+            mBackgroundPaint.setColor(normalColor);
+            mBackgroundPaint.setStyle(Paint.Style.FILL);
+            mBackgroundPaint.setAlpha((int) (mData.opacity * 255));
+            
+          
+            mStrokePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+            mStrokePaint.setColor(0x00000000); // 透明
+            mStrokePaint.setStyle(Paint.Style.STROKE);
+            mStrokePaint.setStrokeWidth(0);
+            
+            mTextPaint = new TextPaint(Paint.ANTI_ALIAS_FLAG);
+            mTextPaint.setColor(textColor);
+            mTextPaint.setTypeface(android.graphics.Typeface.DEFAULT_BOLD); // 粗体
+            mTextPaint.setTextAlign(Paint.Align.CENTER);
+            mTextPaint.setAlpha((int) (mData.opacity * 255));
+        } else {
+            // 键盘模式保持原有逻辑
+            mBackgroundPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+            mBackgroundPaint.setColor(mData.bgColor);
+            mBackgroundPaint.setStyle(Paint.Style.FILL);
+            mBackgroundPaint.setAlpha((int) (mData.opacity * 255));
+            
+            mStrokePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+            mStrokePaint.setColor(mData.strokeColor);
+            mStrokePaint.setStyle(Paint.Style.STROKE);
+            mStrokePaint.setStrokeWidth(dpToPx(mData.strokeWidth));
+            mStrokePaint.setAlpha((int) (mData.opacity * 255));
+            
+            mTextPaint = new TextPaint(Paint.ANTI_ALIAS_FLAG);
+            mTextPaint.setColor(0xFFFFFFFF);
+            mTextPaint.setTextSize(dpToPx(16));
+            mTextPaint.setTextAlign(Paint.Align.CENTER);
+            mTextPaint.setAlpha((int) (mData.opacity * 255));
+        }
     }
     
     @Override
@@ -76,44 +123,171 @@ public class VirtualButton extends View implements ControlView {
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
         
-        // 根据状态调整颜色
-        int alpha = mBackgroundPaint.getAlpha();
-        if (mIsPressed || mIsToggled) {
-            mBackgroundPaint.setAlpha(Math.min(255, (int) (alpha * 1.5f)));
-        } else {
-            mBackgroundPaint.setAlpha((int) (mData.opacity * 255));
+        // 应用旋转（只旋转绘制内容，不改变控件形状和边界）
+        float centerX = getWidth() / 2f;
+        float centerY = getHeight() / 2f;
+        if (mData.rotation != 0) {
+            canvas.save();
+            canvas.rotate(mData.rotation, centerX, centerY);
         }
         
-        // 绘制背景（圆角矩形）
-        float cornerRadius = dpToPx(mData.cornerRadius);
-        canvas.drawRoundRect(mRectF, cornerRadius, cornerRadius, mBackgroundPaint);
-        canvas.drawRoundRect(mRectF, cornerRadius, cornerRadius, mStrokePaint);
+        // 根据形状类型绘制背景
+        int shape = mData.shape;
+        float centerXDraw = mRectF.centerX();
+        float centerYDraw = mRectF.centerY();
+        float radius = Math.min(mRectF.width(), mRectF.height()) / 2f;
+        
+      
+        if (shape == ControlData.SHAPE_CIRCLE && mData.buttonMode == ControlData.BUTTON_MODE_GAMEPAD) {
+          
+            float margin = 0.15f; // DEFAULT_MARGIN
+            float outerRadius = radius * (1.0f - margin); // 85% 半径（外圈）
+            float innerRadius = radius * (1.0f - 2 * margin); // 70% 半径（内圈）
+            
+            // 绘制外圈（背景）
+            Paint backgroundPaint = new Paint(mBackgroundPaint);
+            backgroundPaint.setColor(0x327D7D7D); // backgroundColor
+            backgroundPaint.setAlpha((int) (mData.opacity * 255));
+            canvas.drawCircle(centerXDraw, centerYDraw, outerRadius, backgroundPaint);
+            
+            // 绘制内圈（前景，按下时使用 pressedColor）
+            Paint foregroundPaint = new Paint(mBackgroundPaint);
+            if (mIsPressed || mIsToggled) {
+                foregroundPaint.setColor(0xFF7D7D7D); // pressedColor
+            } else {
+                foregroundPaint.setColor(0x7D7D7D7D); // normalColor
+            }
+            foregroundPaint.setAlpha((int) (mData.opacity * 255));
+            canvas.drawCircle(centerXDraw, centerYDraw, innerRadius, foregroundPaint);
+        } else if (shape == ControlData.SHAPE_CIRCLE) {
+            // 普通圆形（键盘模式）
+            // 根据状态调整颜色
+            int alpha = mBackgroundPaint.getAlpha();
+            if (mIsPressed || mIsToggled) {
+                mBackgroundPaint.setAlpha(Math.min(255, (int) (alpha * 1.5f)));
+            } else {
+                mBackgroundPaint.setAlpha((int) (mData.opacity * 255));
+            }
+            canvas.drawCircle(centerXDraw, centerYDraw, radius, mBackgroundPaint);
+            canvas.drawCircle(centerXDraw, centerYDraw, radius, mStrokePaint);
+        } else if (shape == ControlData.SHAPE_DOUBLE_CIRCLE) {
+           
+            float margin = 0.15f; // 边距比例
+            float outerRadius = radius * (1.0f - margin);
+            float innerRadius = radius * (1.0f - 2 * margin);
+            
+            // 绘制外圈（背景）
+            canvas.drawCircle(centerXDraw, centerYDraw, outerRadius, mBackgroundPaint);
+            canvas.drawCircle(centerXDraw, centerYDraw, outerRadius, mStrokePaint);
+            
+            // 绘制内圈（前景，根据按下状态调整颜色）
+            Paint innerPaint = new Paint(mBackgroundPaint);
+            if (mIsPressed || mIsToggled) {
+                innerPaint.setAlpha(Math.min(255, (int) (mData.opacity * 255 * 1.3f)));
+            }
+            canvas.drawCircle(centerXDraw, centerYDraw, innerRadius, innerPaint);
+            
+            // 内圈边框
+            if (mStrokePaint.getColor() != 0) {
+                Paint innerStrokePaint = new Paint(mStrokePaint);
+                innerStrokePaint.setStrokeWidth(mStrokePaint.getStrokeWidth() * 0.7f);
+                canvas.drawCircle(centerXDraw, centerYDraw, innerRadius, innerStrokePaint);
+            }
+        } else if (shape == ControlData.SHAPE_CROSS) {
+            // 绘制十字键（矩形十字）
+            float armWidth = Math.min(mRectF.width(), mRectF.height()) * 0.3f; // 十字臂宽度
+            float armLength = Math.min(mRectF.width(), mRectF.height()) * 0.4f; // 十字臂长度
+            
+            // 绘制垂直臂
+            android.graphics.RectF verticalArm = new android.graphics.RectF(
+                centerXDraw - armWidth / 2,
+                centerYDraw - armLength,
+                centerXDraw + armWidth / 2,
+                centerYDraw + armLength
+            );
+            canvas.drawRoundRect(verticalArm, armWidth / 4, armWidth / 4, mBackgroundPaint);
+            
+            // 绘制水平臂
+            android.graphics.RectF horizontalArm = new android.graphics.RectF(
+                centerXDraw - armLength,
+                centerYDraw - armWidth / 2,
+                centerXDraw + armLength,
+                centerYDraw + armWidth / 2
+            );
+            canvas.drawRoundRect(horizontalArm, armWidth / 4, armWidth / 4, mBackgroundPaint);
+            
+            // 绘制边框
+            canvas.drawRoundRect(verticalArm, armWidth / 4, armWidth / 4, mStrokePaint);
+            canvas.drawRoundRect(horizontalArm, armWidth / 4, armWidth / 4, mStrokePaint);
+        } else if (shape == ControlData.SHAPE_ARROW_CROSS) {
+          
+            float size = Math.min(mRectF.width(), mRectF.height());
+            float arrowSize = size * 0.4f;
+            
+            // 绘制4个方向的箭头
+            for (int i = 0; i < 4; i++) {
+                float angle = (float) (i * Math.PI / 2.0);
+                canvas.save();
+                canvas.translate(centerXDraw, centerYDraw);
+                canvas.rotate((float) Math.toDegrees(angle));
+                
+                Path arrowPath = buildArrowPath(arrowSize);
+                canvas.drawPath(arrowPath, mBackgroundPaint);
+                canvas.drawPath(arrowPath, mStrokePaint);
+                
+                canvas.restore();
+            }
+        } else if (shape == ControlData.SHAPE_BACKGROUND_CIRCLE) {
+            // 绘制背景圈（仅背景，无内容）
+            canvas.drawCircle(centerXDraw, centerYDraw, radius, mBackgroundPaint);
+            canvas.drawCircle(centerXDraw, centerYDraw, radius, mStrokePaint);
+            // 恢复旋转
+            if (mData.rotation != 0) {
+                canvas.restore();
+            }
+            // 背景圈不绘制内容，直接返回
+            return;
+        } else {
+            // 绘制矩形（圆角矩形）
+            float cornerRadius = dpToPx(mData.cornerRadius);
+            canvas.drawRoundRect(mRectF, cornerRadius, cornerRadius, mBackgroundPaint);
+            canvas.drawRoundRect(mRectF, cornerRadius, cornerRadius, mStrokePaint);
+        }
         
         // 绘制文字（名称 + 按键）
         String keyName = KeyMapper.getKeyName(mData.keycode);
         String displayText = mData.name;
         
-//        // 如果按键不是"未知"，则在名称下方显示按键
-//        if (!keyName.startsWith("未知")) {
-//            // 绘制名称（上半部分）
-//            float nameY = getHeight() / 2f - dpToPx(4);
-//            canvas.drawText(displayText, getWidth() / 2f, nameY, mTextPaint);
-//
-//            // 绘制按键（下半部分，较小字体）
-//            TextPaint keyPaint = new TextPaint(mTextPaint);
-//            keyPaint.setTextSize(dpToPx(12));
-//            keyPaint.setAlpha((int) (mData.opacity * 200)); // 稍微透明一点
-//            float keyY = getHeight() / 2f + dpToPx(12);
-//            canvas.drawText(keyName, getWidth() / 2f, keyY, keyPaint);
-//        } else {
-//            // 只显示名称（居中）
-//            float textY = getHeight() / 2f - ((mTextPaint.descent() + mTextPaint.ascent()) / 2);
-//            canvas.drawText(displayText, getWidth() / 2f, textY, mTextPaint);
-//        }
+        // RadialGamePad 风格：自动计算文字大小以适应区域
+        if (mData.buttonMode == ControlData.BUTTON_MODE_GAMEPAD && displayText != null && !displayText.isEmpty()) {
+            // 计算文字宽高比
+            mTextPaint.setTextSize(20f); // 临时设置用于测量
+            android.graphics.Rect textBounds = new android.graphics.Rect();
+            mTextPaint.getTextBounds(displayText, 0, displayText.length(), textBounds);
+            float textAspectRatio = textBounds.width() / (float) Math.max(textBounds.height(), 1);
+            
+            // 自动计算文字大小：minOf(height / 2, width / textAspectRatio)
+            float textSize = Math.min(
+                getHeight() / 2f,
+                getWidth() / Math.max(textAspectRatio, 1f)
+            );
+            mTextPaint.setTextSize(textSize);
+        } else {
+            // 键盘模式保持原有大小
+            if (mData.buttonMode != ControlData.BUTTON_MODE_GAMEPAD) {
+                mTextPaint.setTextSize(dpToPx(16));
+            }
+        }
+        
         // 只显示名称（居中）
         // 显示真实按键会挡视野
         float textY = getHeight() / 2f - ((mTextPaint.descent() + mTextPaint.ascent()) / 2);
         canvas.drawText(displayText, getWidth() / 2f, textY, mTextPaint);
+        
+        // 恢复旋转
+        if (mData.rotation != 0) {
+            canvas.restore();
+        }
     }
     
     @Override
@@ -428,5 +602,43 @@ public class VirtualButton extends View implements ControlView {
                 Log.e(TAG, "Failed to show IME", e);
             }
         }
+    }
+    
+    /**
+    
+     * @param size 箭头大小
+     * @return 箭头路径
+     */
+    private Path buildArrowPath(float size) {
+        Path path = new Path();
+        
+       
+        float xStart = size * 0.05f;
+        float xEnd = size * 0.15f;
+        float xMid = size * 0.33f;
+        float ySpacing = size * 0.20f;
+        
+        float xLeft = xStart;
+        float xMidPoint = xMid;
+        float xRight = size - xEnd;
+        float xRightControl = size;
+        float yTop = ySpacing;
+        float yMid = size / 2f;
+        float yBottom = size - ySpacing;
+        
+        // 构建箭头路径（向上指向）
+        path.moveTo(xLeft, yMid);
+        path.lineTo(xMidPoint, yTop);
+        path.lineTo(xRight, yTop);
+        path.quadTo(xRightControl, yMid, xRight, yBottom);
+        path.lineTo(xMidPoint, yBottom);
+        path.close();
+        
+        // 平移路径使其居中
+        android.graphics.Matrix matrix = new android.graphics.Matrix();
+        matrix.postTranslate(-size / 2f, -size / 2f);
+        path.transform(matrix);
+        
+        return path;
     }
 }

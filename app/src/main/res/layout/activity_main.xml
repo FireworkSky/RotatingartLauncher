@@ -5,6 +5,13 @@
     android:layout_height="match_parent"
     android:background="?android:attr/colorBackground">
 
+    <!-- 视频背景视图 -->
+    <com.app.ralaunch.view.VideoBackgroundView
+        android:id="@+id/videoBackgroundView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone" />
+
     <!-- 主界面布局 -->
     <LinearLayout
         android:id="@+id/mainLayout"
@@ -57,12 +64,12 @@
                 app:icon="@drawable/ic_refresh"
                 style="@style/Widget.App.Button.ToolbarIcon" />
 
-            <!-- GOG 客户端按钮 - Material 3图标按钮 -->
+            <!-- 下载按钮 - Material 3图标按钮 -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/gogButton"
                 android:layout_marginEnd="12dp"
-                android:contentDescription="GOG 游戏库"
-                app:icon="@drawable/ic_gog"
+                android:contentDescription="下载"
+                app:icon="@drawable/ic_download"
                 style="@style/Widget.App.Button.ToolbarIcon" />
 
             <!-- 视图切换按钮 (使用 ralib 组件) -->

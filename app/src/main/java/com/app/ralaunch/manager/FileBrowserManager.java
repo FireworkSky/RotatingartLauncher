@@ -74,13 +74,18 @@ public class FileBrowserManager {
     public void showGameListMode() {
         isFileBrowserMode = false;
         
-        AnimationHelper.animateFadeOut(fileBrowserContainer, () -> {
+        // 立即隐藏文件浏览器容器，避免残影
+        if (fileBrowserContainer != null) {
             fileBrowserContainer.setVisibility(View.GONE);
+            fileBrowserContainer.setAlpha(0f);
             ViewTransitionManager.clearContainer((ViewGroup) fileBrowserContainer);
-            
+        }
+        
+        // 显示游戏列表
+        if (gameRecyclerView != null) {
             gameRecyclerView.setVisibility(View.VISIBLE);
-            AnimationHelper.animateFadeIn(gameRecyclerView);
-        });
+            gameRecyclerView.setAlpha(1f);
+        }
     }
     
     /**

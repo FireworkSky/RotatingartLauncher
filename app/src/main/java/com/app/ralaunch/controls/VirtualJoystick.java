@@ -77,21 +77,29 @@ public class VirtualJoystick extends View implements ControlView {
     }
     
     private void initPaints() {
+        // RadialGamePad 风格的颜色系统
+        // 背景圆：使用不透明的颜色值，通过 setAlpha 控制透明度，避免颜色值本身的透明度影响
         mBackgroundPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        mBackgroundPaint.setColor(mData.bgColor);
+        mBackgroundPaint.setColor(0xFF7D7D7D); // 不透明的灰色（RGB: 125, 125, 125）
         mBackgroundPaint.setStyle(Paint.Style.FILL);
+        // 背景透明度只使用 opacity，不受 stickOpacity 影响
+        // 直接使用用户设置的 opacity，让变化更明显
         mBackgroundPaint.setAlpha((int) (mData.opacity * 255));
         
+        // 摇杆圆心：使用不透明的颜色值，通过 setAlpha 控制透明度
         mStickPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        mStickPaint.setColor(0xFFCCCCCC);
+        mStickPaint.setColor(0xFF7D7D7D); // 不透明的灰色（RGB: 125, 125, 125）
         mStickPaint.setStyle(Paint.Style.FILL);
-        mStickPaint.setAlpha((int) (mData.opacity * 255));
+        // 摇杆圆心透明度只使用 stickOpacity，如果没有设置则使用默认值 1.0（完全不透明），不受 opacity 影响
+        // 直接使用用户设置的 stickOpacity，让变化更明显（0.0-1.0 全范围）
+        float stickKnobAlpha = mData.stickOpacity != 0 ? mData.stickOpacity : 1.0f;
+        mStickPaint.setAlpha((int) (stickKnobAlpha * 255));
         
+        // 描边默认透明（RadialGamePad 风格）
         mStrokePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        mStrokePaint.setColor(mData.strokeColor);
+        mStrokePaint.setColor(0x00000000); // 透明
         mStrokePaint.setStyle(Paint.Style.STROKE);
-        mStrokePaint.setStrokeWidth(dpToPx(mData.strokeWidth));
-        mStrokePaint.setAlpha((int) (mData.opacity * 255));
+        mStrokePaint.setStrokeWidth(0);
     }
     
     @Override
@@ -111,7 +119,11 @@ public class VirtualJoystick extends View implements ControlView {
         mCenterX = w / 2f;
         mCenterY = h / 2f;
         mRadius = Math.min(w, h) / 2f;
-        mStickRadius = mRadius * 0.4f;
+        
+        // RadialGamePad 风格：摇杆圆心是半径的 50%（0.5f * radius）
+        // 如果配置了 stickKnobSize，则使用配置值，否则使用 RadialGamePad 默认值 0.5
+        float knobSizeRatio = (mData.stickKnobSize != 0) ? mData.stickKnobSize : 0.5f;
+        mStickRadius = mRadius * knobSizeRatio;
         resetStick();
     }
     
@@ -119,48 +131,37 @@ public class VirtualJoystick extends View implements ControlView {
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
         
-        // 绘制背景圆
-        canvas.drawCircle(mCenterX, mCenterY, mRadius, mBackgroundPaint);
-        canvas.drawCircle(mCenterX, mCenterY, mRadius, mStrokePaint);
+        float centerX = getWidth() / 2f;
+        float centerY = getHeight() / 2f;
         
-        // 绘制死区指示圆（半透明）
-        Paint deadzonePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        deadzonePaint.setColor(0x30FFFFFF);
-        deadzonePaint.setStyle(Paint.Style.FILL);
-        canvas.drawCircle(mCenterX, mCenterY, mRadius * DEADZONE_PERCENT, deadzonePaint);
-        
-        // 绘制8方向指示线（仅在触摸时显示）
-        if (mIsTouching && mCurrentDirection != DIR_NONE) {
-            Paint directionPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-            directionPaint.setColor(0x80FFFFFF);
-            directionPaint.setStrokeWidth(dpToPx(2));
-            directionPaint.setStyle(Paint.Style.STROKE);
-            
-            // 绘制当前方向的指示线
-            float lineLength = mRadius * 0.7f;
-            float angle = getAngleForDirection(mCurrentDirection);
-            if (angle >= 0) {
-                float endX = mCenterX + (float) Math.cos(Math.toRadians(angle)) * lineLength;
-                float endY = mCenterY - (float) Math.sin(Math.toRadians(angle)) * lineLength;
-                canvas.drawLine(mCenterX, mCenterY, endX, endY, directionPaint);
-            }
+        // 应用旋转
+        if (mData.rotation != 0) {
+            canvas.save();
+            canvas.rotate(mData.rotation, centerX, centerY);
         }
-
-        // 去除摇杆阴影效果，简化绘制
-//        // 绘制摇杆（带阴影效果）
-//        Paint shadowPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-//        shadowPaint.setColor(0x40000000);
-//        shadowPaint.setStyle(Paint.Style.FILL);
-//        canvas.drawCircle(mStickX + dpToPx(2), mStickY + dpToPx(2), mStickRadius, shadowPaint);
         
+        // RadialGamePad 风格：背景圆使用 75% 半径（STICK_BACKGROUND_SIZE = 0.75f）
+        float backgroundRadius = mRadius * 0.75f;
+        // 背景透明度只使用 opacity，不受 stickOpacity 影响
+        // 直接使用用户设置的 opacity，让变化更明显
+        mBackgroundPaint.setAlpha((int) (mData.opacity * 255));
+        canvas.drawCircle(mCenterX, mCenterY, backgroundRadius, mBackgroundPaint);
+        
+        // 更新摇杆圆心透明度（如果数据已更新）
+        // 摇杆圆心透明度只使用 stickOpacity，如果没有设置则使用默认值 1.0（完全不透明），不受 opacity 影响
+        // 直接使用用户设置的 stickOpacity，让变化更明显（0.0-1.0 全范围）
+        float stickKnobAlpha = mData.stickOpacity != 0 ? mData.stickOpacity : 1.0f;
+        mStickPaint.setAlpha((int) (stickKnobAlpha * 255));
+        
+        // 绘制摇杆圆心（前景圆，根据触摸位置移动）
+        // RadialGamePad 风格：摇杆圆心是背景半径的 50%（0.5f * radius）
+        // 但我们已经根据 mStickRadius 计算了，这里直接使用
         canvas.drawCircle(mStickX, mStickY, mStickRadius, mStickPaint);
-        canvas.drawCircle(mStickX, mStickY, mStickRadius, mStrokePaint);
         
-        // 绘制摇杆中心点
-        Paint centerPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        centerPaint.setColor(0xFFFFFFFF);
-        centerPaint.setStyle(Paint.Style.FILL);
-        canvas.drawCircle(mStickX, mStickY, mStickRadius * 0.2f, centerPaint);
+        // 恢复旋转
+        if (mData.rotation != 0) {
+            canvas.restore();
+        }
     }
     
     /**
@@ -477,6 +478,11 @@ public class VirtualJoystick extends View implements ControlView {
     public void updateData(ControlData data) {
         mData = data;
         initPaints();
+        // 重新计算摇杆圆心大小（因为 stickKnobSize 可能已改变）
+        if (mRadius > 0) {
+            float knobSizeRatio = (mData.stickKnobSize != 0) ? mData.stickKnobSize : 0.5f;
+            mStickRadius = mRadius * knobSizeRatio;
+        }
         invalidate();
     }
 

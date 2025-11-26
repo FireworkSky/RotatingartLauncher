@@ -1,40 +1,63 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 简洁的 Snackbar 布局 - 跟随系统主题 -->
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<!-- Material Design 3 Snackbar 布局 -->
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="horizontal"
-    android:padding="16dp"
-    android:gravity="center_vertical">
+    app:cardCornerRadius="4dp"
+    app:cardElevation="6dp"
+    app:cardBackgroundColor="?attr/colorSurface"
+    app:strokeWidth="0dp"
+    app:cardMaxElevation="6dp">
 
-    <!-- 消息文本 -->
-    <TextView
-        android:id="@+id/snackbar_message"
-        android:layout_width="0dp"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:textSize="14sp"
-        android:maxLines="2"
-        android:ellipsize="end"
-        android:textColor="?attr/textPrimary" />
+        android:orientation="horizontal"
+        android:padding="16dp"
+        android:gravity="center_vertical"
+        android:minHeight="48dp">
 
-    <!-- 操作按钮（可选） -->
-    <Button
-        android:id="@+id/snackbar_action"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="12dp"
-        android:minWidth="0dp"
-        android:minHeight="0dp"
-        android:paddingStart="12dp"
-        android:paddingEnd="12dp"
-        android:paddingTop="6dp"
-        android:paddingBottom="6dp"
-        android:textSize="14sp"
-        android:textAllCaps="false"
-        android:background="?attr/selectableItemBackgroundBorderless"
-        android:textColor="@color/accent_primary"
-        android:visibility="gone"
-        style="?attr/borderlessButtonStyle" />
+        <!-- 图标（可选） -->
+        <ImageView
+            android:id="@+id/snackbar_icon"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_marginEnd="12dp"
+            android:visibility="gone"
+            app:tint="?attr/colorOnSurface" />
 
-</LinearLayout>
+        <!-- 消息文本 -->
+        <TextView
+            android:id="@+id/snackbar_message"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textSize="14sp"
+            android:lineSpacingMultiplier="1.2"
+            android:maxLines="3"
+            android:ellipsize="end"
+            android:textColor="?attr/colorOnSurface"
+            android:textAppearance="?attr/textAppearanceBodyMedium" />
+
+        <!-- 操作按钮（可选） -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/snackbar_action"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:minWidth="0dp"
+            android:minHeight="0dp"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:textSize="14sp"
+            android:textAllCaps="false"
+            android:visibility="gone"
+            style="@style/Widget.Material3.Button.TextButton"
+            app:backgroundTint="@android:color/transparent"
+            app:rippleColor="?attr/colorPrimary" />
+
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>

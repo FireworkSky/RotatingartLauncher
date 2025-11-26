@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 通用游戏客户端图标 - 与主页工具栏相同风格 -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24"
+    android:tint="#FFFFFF">
+    <!-- 游戏库/客户端图标 - 简洁风格 -->
+    <path
+        android:fillColor="@android:color/white"
+        android:pathData="M20,4H4C2.9,4 2,4.9 2,6V18C2,19.1 2.9,20 4,20H20C21.1,20 22,19.1 22,18V6C22,4.9 21.1,4 20,4M20,18H4V8H20V18M20,6H4V6H20M6,16H18V14H6V16M6,12H18V10H6V12Z"/>
+</vector>

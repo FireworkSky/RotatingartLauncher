@@ -39,9 +39,6 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="12dp"
-                android:clickable="true"
-                android:focusable="true"
-                android:foreground="?attr/selectableItemBackground"
                 app:cardCornerRadius="16dp"
                 app:cardElevation="0dp"
                 app:strokeWidth="0dp"
@@ -85,15 +82,11 @@
 
                         </LinearLayout>
 
-                        <TextView
-                            android:id="@+id/tvServerGCValue"
+                        <com.google.android.material.materialswitch.MaterialSwitch
+                            android:id="@+id/switchServerGC"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="16dp"
-                            android:text="@string/coreclr_server_gc_off"
-                            android:textColor="?attr/colorPrimary"
-                            android:textSize="14sp"
-                            android:textStyle="bold" />
+                            android:layout_marginStart="16dp" />
 
                     </LinearLayout>
                 </LinearLayout>
@@ -105,9 +98,6 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="12dp"
-                android:clickable="true"
-                android:focusable="true"
-                android:foreground="?attr/selectableItemBackground"
                 app:cardCornerRadius="16dp"
                 app:cardElevation="0dp"
                 app:strokeWidth="0dp"
@@ -151,15 +141,11 @@
 
                         </LinearLayout>
 
-                        <TextView
-                            android:id="@+id/tvConcurrentGCValue"
+                        <com.google.android.material.materialswitch.MaterialSwitch
+                            android:id="@+id/switchConcurrentGC"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="16dp"
-                            android:text="@string/coreclr_concurrent_gc_on"
-                            android:textColor="?attr/colorPrimary"
-                            android:textSize="14sp"
-                            android:textStyle="bold" />
+                            android:layout_marginStart="16dp" />
 
                     </LinearLayout>
                 </LinearLayout>
@@ -171,9 +157,6 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="12dp"
-                android:clickable="true"
-                android:focusable="true"
-                android:foreground="?attr/selectableItemBackground"
                 app:cardCornerRadius="16dp"
                 app:cardElevation="0dp"
                 app:strokeWidth="0dp"
@@ -217,15 +200,11 @@
 
                         </LinearLayout>
 
-                        <TextView
-                            android:id="@+id/tvTieredCompilationValue"
+                        <com.google.android.material.materialswitch.MaterialSwitch
+                            android:id="@+id/switchTieredCompilation"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="16dp"
-                            android:text="@string/coreclr_tiered_compilation_on"
-                            android:textColor="?attr/colorPrimary"
-                            android:textSize="14sp"
-                            android:textStyle="bold" />
+                            android:layout_marginStart="16dp" />
 
                     </LinearLayout>
                 </LinearLayout>
@@ -248,9 +227,6 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="12dp"
-                android:clickable="true"
-                android:focusable="true"
-                android:foreground="?attr/selectableItemBackground"
                 app:cardCornerRadius="16dp"
                 app:cardElevation="0dp"
                 app:strokeWidth="0dp"
@@ -296,15 +272,11 @@
 
                     </LinearLayout>
 
-                    <TextView
-                        android:id="@+id/tvVerboseLoggingValue"
+                    <com.google.android.material.materialswitch.MaterialSwitch
+                        android:id="@+id/switchVerboseLogging"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="16dp"
-                        android:text="@string/verbose_logging_off"
-                        android:textColor="?attr/colorPrimary"
-                        android:textSize="14sp"
-                        android:textStyle="bold" />
+                        android:layout_marginStart="16dp" />
 
                 </LinearLayout>
 

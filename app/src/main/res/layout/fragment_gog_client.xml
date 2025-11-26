@@ -442,7 +442,7 @@
         android:id="@+id/loadingLayout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="#99000000"
+        android:background="@color/semi_transparent_dark"
         android:visibility="gone"
         android:clickable="true"
         android:focusable="true"

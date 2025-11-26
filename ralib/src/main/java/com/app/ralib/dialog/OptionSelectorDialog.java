@@ -306,13 +306,40 @@ public class OptionSelectorDialog extends DialogFragment {
                 
                 // 选中状态：使用主色调背景，未选中：使用表面变体
                 if (isSelected) {
-                    // 选中：使用主色调容器背景（浅紫色）
-                    cardOption.setCardBackgroundColor(0xFFF3EDF7); // primaryContainer
-                    tvOptionLabel.setTextColor(0xFF4A148C); // onPrimaryContainer
+                    // 选中：使用主色调容器背景
+                    // 使用主题属性获取颜色
+                    android.util.TypedValue typedValue = new android.util.TypedValue();
+                    android.content.res.Resources.Theme theme = cardOption.getContext().getTheme();
+                    
+                    // 获取 primaryContainer 颜色（Material Design 3 属性）
+                    if (theme.resolveAttribute(com.google.android.material.R.attr.colorPrimaryContainer, typedValue, true)) {
+                        int primaryContainerColor = typedValue.data;
+                        cardOption.setCardBackgroundColor(primaryContainerColor);
+                    }
+                    
+                    // 获取 onPrimaryContainer 颜色
+                    typedValue = new android.util.TypedValue();
+                    if (theme.resolveAttribute(com.google.android.material.R.attr.colorOnPrimaryContainer, typedValue, true)) {
+                        int onPrimaryContainerColor = typedValue.data;
+                        tvOptionLabel.setTextColor(onPrimaryContainerColor);
+                    }
                 } else {
-                    // 未选中：使用表面变体背景（浅灰色）
-                    cardOption.setCardBackgroundColor(0xFFF5F5F5); // surfaceVariant
-                    tvOptionLabel.setTextColor(0xFF1C1B1F); // onSurface
+                    // 未选中：使用表面变体背景（已在布局中设置，这里需要重置）
+                    android.util.TypedValue typedValue = new android.util.TypedValue();
+                    android.content.res.Resources.Theme theme = cardOption.getContext().getTheme();
+                    
+                    // 获取 surfaceVariant 颜色
+                    if (theme.resolveAttribute(com.google.android.material.R.attr.colorSurfaceVariant, typedValue, true)) {
+                        int surfaceVariantColor = typedValue.data;
+                        cardOption.setCardBackgroundColor(surfaceVariantColor);
+                    }
+                    
+                    // 获取 onSurface 颜色
+                    typedValue = new android.util.TypedValue();
+                    if (theme.resolveAttribute(com.google.android.material.R.attr.colorOnSurface, typedValue, true)) {
+                        int onSurfaceColor = typedValue.data;
+                        tvOptionLabel.setTextColor(onSurfaceColor);
+                    }
                 }
 
                 // 点击事件

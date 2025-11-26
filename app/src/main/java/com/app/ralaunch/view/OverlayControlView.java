@@ -209,9 +209,10 @@ public class OverlayControlView extends View {
             knobY = rect.centerY() + deltaY;
         }
 
-        // 绘制内圈（摇杆）
+        // 绘制内圈（摇杆头）- 使用摇杆头透明度
         joystickPaint.setColor(element.getPressedColor());
-        joystickPaint.setAlpha(alpha);
+        float stickAlpha = element.getStickOpacity() != 0 ? element.getStickOpacity() : element.getOpacity();
+        joystickPaint.setAlpha((int) (stickAlpha * 255));
         canvas.drawCircle(knobX, knobY, radius / 2, joystickPaint);
     }
 

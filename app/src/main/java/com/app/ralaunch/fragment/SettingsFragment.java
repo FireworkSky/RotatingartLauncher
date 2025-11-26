@@ -6,22 +6,20 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.ListView;
-import android.widget.SimpleAdapter;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.fragment.app.Fragment;
 
 import com.app.ralaunch.R;
-import com.app.ralib.dialog.OptionSelectorDialog;
 import com.app.ralaunch.data.SettingsManager;
-import com.app.ralaunch.dialog.PatchManagementDialog;
-import com.app.ralaunch.utils.RuntimePreference;
-import com.app.ralaunch.utils.LocaleManager;
+import com.app.ralaunch.settings.SettingsModule;
+import com.app.ralaunch.settings.AppearanceSettingsModule;
+import com.app.ralaunch.settings.ControlsSettingsModule;
+import com.app.ralaunch.settings.GameSettingsModule;
+import com.app.ralaunch.settings.DeveloperSettingsModule;
 import com.google.android.material.card.MaterialCardView;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,7 +27,7 @@ import java.util.Map;
 /**
  * 设置Fragment - 使用简单的 View 切换
  */
-public class SettingsFragment extends Fragment {
+public class SettingsFragment extends BaseFragment {
 
     private static final String TAG = "SettingsFragment";
 
@@ -42,6 +40,12 @@ public class SettingsFragment extends Fragment {
     private View contentGame;
     private View contentLauncher;
     private View contentDeveloper;
+    
+    // 设置模块
+    private SettingsModule appearanceModule;
+    private SettingsModule controlsModule;
+    private SettingsModule gameModule;
+    private SettingsModule developerModule;
 
     public interface OnSettingsBackListener {
         void onSettingsBack();
@@ -54,6 +58,7 @@ public class SettingsFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_settings, container, false);
+        
         setupUI(view);
         return view;
     }
@@ -139,321 +144,17 @@ public class SettingsFragment extends Fragment {
             switchToCategory(0);
         }
         
-        // 初始化所有设置
-        setupAppearanceSettings(view);
-        setupGameSettings(view);
-        setupDeveloperSettings(view);
-    }
-    
-    /**
-     * 设置外观设置面板
-     */
-    private void setupAppearanceSettings(View rootView) {
-        SettingsManager settingsManager = SettingsManager.getInstance(requireContext());
+        // 初始化所有设置模块
+        appearanceModule = new AppearanceSettingsModule();
+        controlsModule = new ControlsSettingsModule();
+        gameModule = new GameSettingsModule();
+        developerModule = new DeveloperSettingsModule();
         
-        // 主题设置
-        MaterialCardView themeCard = rootView.findViewById(R.id.themeCard);
-        TextView tvThemeValue = rootView.findViewById(R.id.tvThemeValue);
-        
-        if (themeCard != null && tvThemeValue != null) {
-            updateThemeDisplay(settingsManager, tvThemeValue);
-            
-            themeCard.setOnClickListener(v -> {
-                List<OptionSelectorDialog.Option> options = Arrays.asList(
-                    new OptionSelectorDialog.Option("0",
-                        getString(R.string.theme_system),
-                        getString(R.string.settings_theme_desc_auto)),
-                    new OptionSelectorDialog.Option("1",
-                        getString(R.string.theme_dark),
-                        getString(R.string.settings_theme_desc_dark)),
-                    new OptionSelectorDialog.Option("2",
-                        getString(R.string.theme_light),
-                        getString(R.string.settings_theme_desc_light))
-                );
-
-                OptionSelectorDialog dialog = new OptionSelectorDialog()
-                    .setTitle(getString(R.string.theme_settings))
-                    .setIcon(R.drawable.ic_settings)
-                    .setOptions(options)
-                    .setCurrentValue(String.valueOf(settingsManager.getThemeMode()))
-                    .setAutoCloseOnSelect(true)  // 启用自动关闭
-                    .setOnOptionSelectedListener(value -> {
-                        int themeMode = Integer.parseInt(value);
-                        int oldThemeMode = settingsManager.getThemeMode();
-
-                        // 如果主题有变化，刷新Activity
-                        if (themeMode != oldThemeMode) {
-                            settingsManager.setThemeMode(themeMode);
-
-                            // 延迟刷新Activity，等待对话框关闭动画完成
-                            new android.os.Handler().postDelayed(() -> {
-                                if (isAdded() && getActivity() != null) {
-                                    // 确保所有对话框都已关闭
-                                    androidx.fragment.app.FragmentManager fm = getParentFragmentManager();
-                                    for (androidx.fragment.app.Fragment fragment : fm.getFragments()) {
-                                        if (fragment instanceof androidx.fragment.app.DialogFragment) {
-                                            ((androidx.fragment.app.DialogFragment) fragment).dismissAllowingStateLoss();
-                                        }
-                                    }
-
-                                    // 再延迟一点点，确保对话框完全移除
-                                    new android.os.Handler().postDelayed(() -> {
-                                        if (isAdded() && getActivity() != null) {
-                                            requireActivity().recreate();
-                                        }
-                                    }, 50);
-                                }
-                            }, 300);
-                        }
-                    });
-                dialog.show(getParentFragmentManager(), "theme_dialog");
-            });
-        }
-
-        // 主题颜色设置
-        MaterialCardView themeColorCard = rootView.findViewById(R.id.themeColorCard);
-        View colorPreview = rootView.findViewById(R.id.colorPreview);
-        TextView tvHexValue = rootView.findViewById(R.id.tvHexValue);
-        TextView tvRgbValue = rootView.findViewById(R.id.tvRgbValue);
-
-        if (themeColorCard != null && colorPreview != null) {
-            // 更新颜色预览和文本
-            int currentColor = settingsManager.getThemeColor();
-            updateColorPreview(colorPreview, currentColor);
-            updateColorValueText(tvHexValue, tvRgbValue, currentColor);
-
-            // 颜色预览点击打开完整颜色选择器
-            colorPreview.setOnClickListener(v -> {
-                com.app.ralib.dialog.ColorPickerDialog dialog =
-                    com.app.ralib.dialog.ColorPickerDialog.newInstance(currentColor);
-
-                // 设置颜色变化监听器，实时更新预览和文本
-                dialog.setOnColorChangedListener(color -> {
-                    updateColorPreview(colorPreview, color);
-                    updateColorValueText(tvHexValue, tvRgbValue, color);
-                });
-
-                dialog.setOnColorSelectedListener(color -> {
-                    // 用户点击确定后保存新颜色
-                    int oldColor = settingsManager.getThemeColor();
-                    settingsManager.setThemeColor(color);
-                    
-                    // 更新预览显示和文本
-                    updateColorPreview(colorPreview, color);
-                    updateColorValueText(tvHexValue, tvRgbValue, color);
-                    
-                    // 如果颜色有变化，刷新Activity以应用新主题颜色
-                    if (color != oldColor) {
-                        // 延迟刷新Activity，等待对话框关闭动画完成
-                        new android.os.Handler().postDelayed(() -> {
-                            if (isAdded() && getActivity() != null) {
-                                // 确保所有对话框都已关闭
-                                androidx.fragment.app.FragmentManager fm = getParentFragmentManager();
-                                for (androidx.fragment.app.Fragment fragment : fm.getFragments()) {
-                                    if (fragment instanceof androidx.fragment.app.DialogFragment) {
-                                        ((androidx.fragment.app.DialogFragment) fragment).dismissAllowingStateLoss();
-                                    }
-                                }
-                                
-                                // 再延迟一点点，确保对话框完全移除
-                                new android.os.Handler().postDelayed(() -> {
-                                    if (isAdded() && getActivity() != null) {
-                                        requireActivity().recreate();
-                                    }
-                                }, 50);
-                            }
-                        }, 300);
-                    }
-                });
-
-                dialog.show(getParentFragmentManager(), "color_picker_dialog");
-            });
-        }
-
-        // 语言设置
-        MaterialCardView languageCard = rootView.findViewById(R.id.languageCard);
-        TextView tvLanguageValue = rootView.findViewById(R.id.tvLanguageValue);
-
-        if (languageCard != null && tvLanguageValue != null) {
-            updateLanguageDisplay(tvLanguageValue);
-
-            languageCard.setOnClickListener(v -> {
-                List<OptionSelectorDialog.Option> options = Arrays.asList(
-                    new OptionSelectorDialog.Option(LocaleManager.LANGUAGE_AUTO,
-                        getString(R.string.language_system),
-                        getString(R.string.settings_language_desc_auto)),
-                    new OptionSelectorDialog.Option(LocaleManager.LANGUAGE_EN,
-                        getString(R.string.language_english),
-                        getString(R.string.settings_language_desc_en)),
-                    new OptionSelectorDialog.Option(LocaleManager.LANGUAGE_ZH,
-                        getString(R.string.language_chinese),
-                        getString(R.string.settings_language_desc_zh))
-                );
-
-                String currentLanguage = LocaleManager.getLanguage(requireContext());
-
-                OptionSelectorDialog dialog = new OptionSelectorDialog()
-                    .setTitle(getString(R.string.language_settings))
-                    .setIcon(R.drawable.ic_language)
-                    .setOptions(options)
-                    .setCurrentValue(currentLanguage)
-                    .setAutoCloseOnSelect(false)  // 禁用自动关闭，手动控制
-                    .setOnOptionSelectedListener(value -> {
-                        String oldLanguage = LocaleManager.getLanguage(requireContext());
-
-                        // 强制关闭所有对话框（防止recreate后被恢复）
-                        androidx.fragment.app.FragmentManager fm = getParentFragmentManager();
-                        for (androidx.fragment.app.Fragment fragment : fm.getFragments()) {
-                            if (fragment instanceof androidx.fragment.app.DialogFragment) {
-                                ((androidx.fragment.app.DialogFragment) fragment).dismissAllowingStateLoss();
-                            }
-                        }
-
-                        // 如果语言有变化，刷新Activity
-                        if (!value.equals(oldLanguage)) {
-                            LocaleManager.setLanguage(requireContext(), value);
-
-                            // 延迟刷新Activity，确保对话框完全关闭
-                            new android.os.Handler().postDelayed(() -> {
-                                if (isAdded() && getActivity() != null) {
-                                    requireActivity().recreate();
-                                }
-                            }, 100);
-                        }
-                    });
-                dialog.show(getParentFragmentManager(), "language_dialog");
-            });
-        }
-
-        // 背景设置
-        MaterialCardView backgroundCard = rootView.findViewById(R.id.backgroundCard);
-        TextView tvBackgroundValue = rootView.findViewById(R.id.tvBackgroundValue);
-
-        if (backgroundCard != null && tvBackgroundValue != null) {
-            updateBackgroundDisplay(settingsManager, tvBackgroundValue);
-
-            backgroundCard.setOnClickListener(v -> {
-                com.app.ralib.dialog.BackgroundPickerDialog dialog =
-                    com.app.ralib.dialog.BackgroundPickerDialog.newInstance(
-                        settingsManager.getBackgroundType(),
-                        settingsManager.getBackgroundColor(),
-                        settingsManager.getBackgroundImagePath()
-                    );
-
-                dialog.setOnBackgroundSelectedListener((type, color, imagePath) -> {
-                    String oldType = settingsManager.getBackgroundType();
-                    int oldColor = settingsManager.getBackgroundColor();
-                    String oldImagePath = settingsManager.getBackgroundImagePath();
-
-                    settingsManager.setBackgroundType(type);
-                    settingsManager.setBackgroundColor(color);
-                    settingsManager.setBackgroundImagePath(imagePath);
-
-                    updateBackgroundDisplay(settingsManager, tvBackgroundValue);
-
-                    // 如果背景有变化，刷新Activity以应用新背景
-                    if (!type.equals(oldType) || color != oldColor || 
-                        (imagePath != null && !imagePath.equals(oldImagePath))) {
-                        // 延迟刷新Activity，等待对话框关闭动画完成
-                        new android.os.Handler().postDelayed(() -> {
-                            if (isAdded() && getActivity() != null) {
-                                // 确保所有对话框都已关闭
-                                androidx.fragment.app.FragmentManager fm = getParentFragmentManager();
-                                for (androidx.fragment.app.Fragment fragment : fm.getFragments()) {
-                                    if (fragment instanceof androidx.fragment.app.DialogFragment) {
-                                        ((androidx.fragment.app.DialogFragment) fragment).dismissAllowingStateLoss();
-                                    }
-                                }
-                                
-                                // 再延迟一点点，确保对话框完全移除
-                                new android.os.Handler().postDelayed(() -> {
-                                    if (isAdded() && getActivity() != null) {
-                                        requireActivity().recreate();
-                                    }
-                                }, 50);
-                            }
-                        }, 300);
-                    }
-                });
-
-                dialog.show(getParentFragmentManager(), "background_picker_dialog");
-            });
-        }
-        
-    }
-
-    /**
-     * 设置游戏设置面板
-     */
-    private void setupGameSettings(View rootView) {
-        SettingsManager settingsManager = SettingsManager.getInstance(requireContext());
-
-        // 渲染器设置
-        MaterialCardView rendererCard = rootView.findViewById(R.id.rendererCard);
-        TextView tvRendererValue = rootView.findViewById(R.id.tvRendererValue);
-
-        if (rendererCard != null && tvRendererValue != null) {
-            updateRendererDisplay(settingsManager, tvRendererValue);
-
-            rendererCard.setOnClickListener(v -> {
-                // 导入 RendererConfig 获取可用渲染器
-                List<com.app.ralaunch.renderer.RendererConfig.RendererInfo> compatibleRenderers =
-                    com.app.ralaunch.renderer.RendererConfig.getCompatibleRenderers(requireContext());
-
-                List<OptionSelectorDialog.Option> options = new ArrayList<>();
-
-                // 添加"自动选择"选项
-                options.add(new OptionSelectorDialog.Option(
-                    RuntimePreference.RENDERER_AUTO,
-                    getString(R.string.renderer_auto),
-                    getString(R.string.renderer_auto_desc)
-                ));
-
-                // 根据兼容的渲染器动态添加选项
-                for (com.app.ralaunch.renderer.RendererConfig.RendererInfo renderer : compatibleRenderers) {
-                    String stringId = "renderer_" + renderer.id;
-                    String descId = "renderer_" + renderer.id + "_desc";
-
-                    int nameResId = getResources().getIdentifier(stringId, "string", requireContext().getPackageName());
-                    int descResId = getResources().getIdentifier(descId, "string", requireContext().getPackageName());
-
-                    if (nameResId != 0 && descResId != 0) {
-                        options.add(new OptionSelectorDialog.Option(
-                            renderer.id,
-                            getString(nameResId),
-                            getString(descResId)
-                        ));
-                    } else {
-                        // 回退到使用 displayName 和 description
-                        options.add(new OptionSelectorDialog.Option(
-                            renderer.id,
-                            renderer.displayName,
-                            renderer.description
-                        ));
-                    }
-                }
-
-                new OptionSelectorDialog()
-                    .setTitle(getString(R.string.renderer_title))
-                    .setIcon(R.drawable.ic_game)
-                    .setOptions(options)
-                    .setCurrentValue(RuntimePreference.normalizeRendererValue(settingsManager.getFnaRenderer()))
-                    .setOnOptionSelectedListener(value -> {
-                        settingsManager.setFnaRenderer(RuntimePreference.normalizeRendererValue(value));
-                        updateRendererDisplay(settingsManager, tvRendererValue);
-                        Toast.makeText(requireContext(), getString(R.string.renderer_changed), Toast.LENGTH_SHORT).show();
-                    })
-                    .show(getParentFragmentManager(), "renderer");
-            });
-        }
-
-        // 补丁管理
-        MaterialCardView patchManagementCard = rootView.findViewById(R.id.patchManagementCard);
-        if (patchManagementCard != null) {
-            patchManagementCard.setOnClickListener(v -> {
-                new PatchManagementDialog(requireContext()).show();
-            });
-        }
+        // 设置各个模块
+        appearanceModule.setup(this, view);
+        controlsModule.setup(this, view);
+        gameModule.setup(this, view);
+        developerModule.setup(this, view);
     }
 
     /**
@@ -558,274 +259,8 @@ public class SettingsFragment extends Fragment {
         return list;
     }
     
-    /**
-     * 设置开发者设置面板
-     */
-    private void setupDeveloperSettings(View rootView) {
-        // 获取设置管理器
-        SettingsManager settingsManager = SettingsManager.getInstance(requireContext());
-
-        // 详细日志设置
-        MaterialCardView verboseLoggingCard = rootView.findViewById(R.id.verboseLoggingCard);
-        TextView tvVerboseLoggingValue = rootView.findViewById(R.id.tvVerboseLoggingValue);
-
-        if (verboseLoggingCard != null && tvVerboseLoggingValue != null) {
-            updateVerboseLoggingDisplay(settingsManager, tvVerboseLoggingValue);
-
-            verboseLoggingCard.setOnClickListener(v -> {
-                List<OptionSelectorDialog.Option> options = Arrays.asList(
-                    new OptionSelectorDialog.Option("true",
-                        getString(R.string.verbose_logging_on),
-                        getString(R.string.verbose_logging_desc_on)),
-                    new OptionSelectorDialog.Option("false",
-                        getString(R.string.verbose_logging_off),
-                        getString(R.string.verbose_logging_desc_off))
-                );
-
-                new OptionSelectorDialog()
-                    .setTitle(getString(R.string.verbose_logging))
-                    .setIcon(R.drawable.ic_bug)
-                    .setOptions(options)
-                    .setCurrentValue(String.valueOf(settingsManager.isVerboseLogging()))
-                    .setOnOptionSelectedListener(value -> {
-                        boolean enabled = Boolean.parseBoolean(value);
-                        settingsManager.setVerboseLogging(enabled);
-                        updateVerboseLoggingDisplay(settingsManager, tvVerboseLoggingValue);
-
-                        String message = enabled ?
-                                getString(R.string.verbose_logging_enabled) :
-                                getString(R.string.verbose_logging_disabled);
-                        Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
-                    })
-                    .show(getParentFragmentManager(), "verbose_logging");
-            });
-        }
-
-        // ========== CoreCLR 运行时配置 ==========
-
-        // Server GC
-        MaterialCardView serverGCCard = rootView.findViewById(R.id.serverGCCard);
-        TextView tvServerGCValue = rootView.findViewById(R.id.tvServerGCValue);
-        if (serverGCCard != null && tvServerGCValue != null) {
-            updateServerGCDisplay(settingsManager, tvServerGCValue);
-
-            serverGCCard.setOnClickListener(v -> {
-                List<OptionSelectorDialog.Option> options = Arrays.asList(
-                    new OptionSelectorDialog.Option("true",
-                        getString(R.string.coreclr_server_gc_on),
-                        getString(R.string.coreclr_server_gc_desc)),
-                    new OptionSelectorDialog.Option("false",
-                        getString(R.string.coreclr_server_gc_off),
-                        getString(R.string.coreclr_server_gc_desc))
-                );
-
-                new OptionSelectorDialog()
-                    .setTitle(getString(R.string.coreclr_server_gc))
-                    .setIcon(R.drawable.ic_settings)
-                    .setOptions(options)
-                    .setCurrentValue(String.valueOf(settingsManager.isServerGC()))
-                    .setOnOptionSelectedListener(value -> {
-                        boolean enabled = Boolean.parseBoolean(value);
-                        settingsManager.setServerGC(enabled);
-                        updateServerGCDisplay(settingsManager, tvServerGCValue);
-                        Toast.makeText(requireContext(), R.string.coreclr_settings_restart, Toast.LENGTH_SHORT).show();
-                    })
-                    .show(getParentFragmentManager(), "server_gc");
-            });
-        }
-
-        // Concurrent GC
-        MaterialCardView concurrentGCCard = rootView.findViewById(R.id.concurrentGCCard);
-        TextView tvConcurrentGCValue = rootView.findViewById(R.id.tvConcurrentGCValue);
-        if (concurrentGCCard != null && tvConcurrentGCValue != null) {
-            updateConcurrentGCDisplay(settingsManager, tvConcurrentGCValue);
-
-            concurrentGCCard.setOnClickListener(v -> {
-                List<OptionSelectorDialog.Option> options = Arrays.asList(
-                    new OptionSelectorDialog.Option("true",
-                        getString(R.string.coreclr_concurrent_gc_on),
-                        getString(R.string.coreclr_concurrent_gc_desc)),
-                    new OptionSelectorDialog.Option("false",
-                        getString(R.string.coreclr_concurrent_gc_off),
-                        getString(R.string.coreclr_concurrent_gc_desc))
-                );
-
-                new OptionSelectorDialog()
-                    .setTitle(getString(R.string.coreclr_concurrent_gc))
-                    .setIcon(R.drawable.ic_settings)
-                    .setOptions(options)
-                    .setCurrentValue(String.valueOf(settingsManager.isConcurrentGC()))
-                    .setOnOptionSelectedListener(value -> {
-                        boolean enabled = Boolean.parseBoolean(value);
-                        settingsManager.setConcurrentGC(enabled);
-                        updateConcurrentGCDisplay(settingsManager, tvConcurrentGCValue);
-                        Toast.makeText(requireContext(), R.string.coreclr_settings_restart, Toast.LENGTH_SHORT).show();
-                    })
-                    .show(getParentFragmentManager(), "concurrent_gc");
-            });
-        }
-
-        // Tiered Compilation
-        MaterialCardView tieredCompilationCard = rootView.findViewById(R.id.tieredCompilationCard);
-        TextView tvTieredCompilationValue = rootView.findViewById(R.id.tvTieredCompilationValue);
-        if (tieredCompilationCard != null && tvTieredCompilationValue != null) {
-            updateTieredCompilationDisplay(settingsManager, tvTieredCompilationValue);
-
-            tieredCompilationCard.setOnClickListener(v -> {
-                List<OptionSelectorDialog.Option> options = Arrays.asList(
-                    new OptionSelectorDialog.Option("true",
-                        getString(R.string.coreclr_tiered_compilation_on),
-                        getString(R.string.coreclr_tiered_compilation_desc)),
-                    new OptionSelectorDialog.Option("false",
-                        getString(R.string.coreclr_tiered_compilation_off),
-                        getString(R.string.coreclr_tiered_compilation_desc))
-                );
-
-                new OptionSelectorDialog()
-                    .setTitle(getString(R.string.coreclr_tiered_compilation))
-                    .setIcon(R.drawable.ic_settings)
-                    .setOptions(options)
-                    .setCurrentValue(String.valueOf(settingsManager.isTieredCompilation()))
-                    .setOnOptionSelectedListener(value -> {
-                        boolean enabled = Boolean.parseBoolean(value);
-                        settingsManager.setTieredCompilation(enabled);
-                        updateTieredCompilationDisplay(settingsManager, tvTieredCompilationValue);
-                        Toast.makeText(requireContext(), R.string.coreclr_settings_restart, Toast.LENGTH_SHORT).show();
-                    })
-                    .show(getParentFragmentManager(), "tiered_compilation");
-            });
-        }
-    }
-
-    private void updateVerboseLoggingDisplay(SettingsManager settingsManager, TextView textView) {
-        textView.setText(settingsManager.isVerboseLogging() ?
-            getString(R.string.verbose_logging_on) :
-            getString(R.string.verbose_logging_off));
-    }
-
-    private void updateThemeDisplay(SettingsManager settingsManager, TextView textView) {
-        int theme = settingsManager.getThemeMode();
-        String display;
-        switch (theme) {
-            case 0:
-                display = getString(R.string.theme_system);
-                break;
-            case 1:
-                display = getString(R.string.theme_dark);
-                break;
-            case 2:
-                display = getString(R.string.theme_light);
-                break;
-            default:
-                display = getString(R.string.theme_system);
-                break;
-        }
-        textView.setText(display);
-    }
-    
-    private void updateLanguageDisplay(TextView textView) {
-        String language = LocaleManager.getLanguage(requireContext());
-        String displayName = LocaleManager.getLanguageDisplayName(language);
-        textView.setText(displayName);
-    }
-
-    private void updateBackgroundDisplay(SettingsManager settingsManager, TextView textView) {
-        String type = settingsManager.getBackgroundType();
-        String display;
-        switch (type) {
-            case "default":
-                display = getString(R.string.background_default);
-                break;
-            case "color":
-                display = getString(R.string.background_color);
-                break;
-            case "image":
-                display = getString(R.string.background_image);
-                break;
-            default:
-                display = getString(R.string.background_default);
-                break;
-        }
-        textView.setText(display);
-    }
-    
-    private void updateRendererDisplay(SettingsManager settingsManager, TextView textView) {
-        String renderer = RuntimePreference.normalizeRendererValue(settingsManager.getFnaRenderer());
-        String display;
-
-        // 自动选择
-        if (RuntimePreference.RENDERER_AUTO.equals(renderer)) {
-            display = getString(R.string.renderer_auto);
-        } else {
-            // 尝试从字符串资源获取
-            String stringId = "renderer_" + renderer;
-            int resId = getResources().getIdentifier(stringId, "string", requireContext().getPackageName());
-
-            if (resId != 0) {
-                display = getString(resId);
-            } else {
-                // 如果找不到字符串资源，使用渲染器 displayName
-                com.app.ralaunch.renderer.RendererConfig.RendererInfo rendererInfo =
-                    com.app.ralaunch.renderer.RendererConfig.getRendererById(renderer);
-                if (rendererInfo != null) {
-                    display = rendererInfo.displayName;
-                } else {
-                    // 最后回退：直接显示 ID
-                    display = renderer;
-                }
-            }
-        }
-
-        textView.setText(display);
-    }
-
-    // CoreCLR 设置显示更新方法
-    private void updateServerGCDisplay(SettingsManager settingsManager, TextView textView) {
-        textView.setText(settingsManager.isServerGC() ?
-            getString(R.string.coreclr_server_gc_on) :
-            getString(R.string.coreclr_server_gc_off));
-    }
-
-    private void updateConcurrentGCDisplay(SettingsManager settingsManager, TextView textView) {
-        textView.setText(settingsManager.isConcurrentGC() ?
-            getString(R.string.coreclr_concurrent_gc_on) :
-            getString(R.string.coreclr_concurrent_gc_off));
-    }
-
-    private void updateTieredCompilationDisplay(SettingsManager settingsManager, TextView textView) {
-        textView.setText(settingsManager.isTieredCompilation() ?
-            getString(R.string.coreclr_tiered_compilation_on) :
-            getString(R.string.coreclr_tiered_compilation_off));
-    }
 
 
-    /**
-     * 更新颜色预览
-     */
-    private void updateColorPreview(View colorPreview, int color) {
-        if (colorPreview != null) {
-            android.graphics.drawable.GradientDrawable drawable = new android.graphics.drawable.GradientDrawable();
-            drawable.setShape(android.graphics.drawable.GradientDrawable.OVAL);
-            drawable.setColor(color);
-            colorPreview.setBackground(drawable);
-        }
-    }
 
-    /**
-     * 更新颜色值文本（HEX和RGB）
-     */
-    private void updateColorValueText(TextView tvHex, TextView tvRgb, int color) {
-        if (tvHex != null) {
-            // 移除透明度，只显示RGB
-            int rgbColor = color & 0x00FFFFFF;
-            tvHex.setText(String.format("#%06X", rgbColor));
-        }
-        if (tvRgb != null) {
-            int r = android.graphics.Color.red(color);
-            int g = android.graphics.Color.green(color);
-            int b = android.graphics.Color.blue(color);
-            tvRgb.setText(String.format("%d, %d, %d", r, g, b));
-        }
-    }
 
 }

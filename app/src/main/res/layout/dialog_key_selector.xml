@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:background="@android:color/white"
+    android:background="?attr/colorSurface"
     android:padding="24dp">
 
     <!-- 标题 -->
@@ -14,7 +14,7 @@
         android:layout_height="wrap_content"
         android:text="选择按键"
         android:textSize="24sp"
-        android:textColor="#1C1B1F"
+        android:textColor="?attr/textPrimary"
         android:textStyle="bold"
         android:gravity="center"
         android:layout_marginBottom="16dp" />
@@ -34,7 +34,7 @@
         android:layout_height="48dp"
         android:text="取消"
         android:textSize="16sp"
-        android:textColor="#6750A4"
+        android:textColor="?attr/colorPrimary"
         android:backgroundTint="@android:color/transparent"
         android:layout_marginTop="16dp"
         style="@style/Widget.Material3.Button.TextButton" />

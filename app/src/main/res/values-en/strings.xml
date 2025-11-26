@@ -42,7 +42,7 @@
     <string name="import_extracting">Extracting game files...</string>
     <string name="import_complete">Import Complete</string>
     <string name="import_error">Import failed: %s</string>
-    <string name="import_storage_insufficient">Insufficient storage!\nRequired: %.1f GB\nAvailable: %.1f GB\n\nPlease free up space and try again</string>
+    <string name="import_storage_insufficient">Insufficient storage!\nRequired: %1$.1f GB\nAvailable: %2$.1f GB\n\nPlease free up space and try again</string>
 
     <!-- Settings -->
     <string name="settings">Settings</string>
@@ -166,8 +166,6 @@
     <string name="verbose_logging_desc_off">Output basic info only</string>
     <string name="verbose_logging_enabled">Verbose logging enabled, restart app to apply</string>
     <string name="verbose_logging_disabled">Verbose logging disabled</string>
-
-    <string name="enter_debug_page">Enter Debug Page</string>
 
     <!-- Patch Management -->
     <string name="patch_management">Patch Management</string>

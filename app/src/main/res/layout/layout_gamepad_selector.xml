@@ -3,181 +3,221 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:padding="12dp">
+    android:gravity="center"
+    android:paddingStart="16dp"
+    android:paddingEnd="16dp"
+    android:paddingTop="8dp"
+    android:paddingBottom="8dp">
 
-    <!-- 主按钮 -->
-    <TextView
+    <!-- 第一行：主按钮 ABXY -->
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="主按钮"
-        android:textSize="14sp"
-        android:textColor="#49454F"
-        android:textStyle="bold"
-        android:layout_marginTop="8dp"
-        android:layout_marginBottom="8dp" />
+        android:gravity="center">
 
-    <GridLayout
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:layout_marginBottom="3dp">
+
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/gamepad_y"
+                style="@style/GamepadKey"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:text="Y"
+                android:layout_marginEnd="4dp" />
+
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/gamepad_x"
+                style="@style/GamepadKey"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:text="X"
+                android:layout_marginEnd="4dp" />
+
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/gamepad_b"
+                style="@style/GamepadKey"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:text="B"
+                android:layout_marginEnd="4dp" />
+
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/gamepad_a"
+                style="@style/GamepadKey"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:text="A" />
+
+        </LinearLayout>
+    </FrameLayout>
+
+    <!-- 第二行：肩键和扳机 -->
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:columnCount="4">
+        android:gravity="center">
 
-        <androidx.appcompat.widget.AppCompatButton
-            android:id="@+id/gamepad_a"
-            style="@style/GamepadKey"
-            android:text="A" />
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:layout_marginBottom="3dp">
 
-        <androidx.appcompat.widget.AppCompatButton
-            android:id="@+id/gamepad_b"
-            style="@style/GamepadKey"
-            android:text="B" />
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/gamepad_lb"
+                style="@style/GamepadKey"
+                android:layout_width="50dp"
+                android:layout_height="28dp"
+                android:text="LB"
+                android:layout_marginEnd="4dp" />
 
-        <androidx.appcompat.widget.AppCompatButton
-            android:id="@+id/gamepad_x"
-            style="@style/GamepadKey"
-            android:text="X" />
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/gamepad_rb"
+                style="@style/GamepadKey"
+                android:layout_width="50dp"
+                android:layout_height="28dp"
+                android:text="RB"
+                android:layout_marginEnd="4dp" />
 
-        <androidx.appcompat.widget.AppCompatButton
-            android:id="@+id/gamepad_y"
-            style="@style/GamepadKey"
-            android:text="Y" />
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/gamepad_lt"
+                style="@style/GamepadKey"
+                android:layout_width="50dp"
+                android:layout_height="28dp"
+                android:text="LT"
+                android:layout_marginEnd="4dp" />
 
-    </GridLayout>
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/gamepad_rt"
+                style="@style/GamepadKey"
+                android:layout_width="50dp"
+                android:layout_height="28dp"
+                android:text="RT" />
 
-    <!-- 肩键/扳机 -->
-    <TextView
+        </LinearLayout>
+    </FrameLayout>
+
+    <!-- 第三行：摇杆 -->
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="肩键/扳机"
-        android:textSize="14sp"
-        android:textColor="#49454F"
-        android:textStyle="bold"
-        android:layout_marginTop="16dp"
-        android:layout_marginBottom="8dp" />
+        android:gravity="center">
 
-    <GridLayout
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:layout_marginBottom="3dp">
+
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/gamepad_l3"
+                style="@style/GamepadKey"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:text="L3"
+                android:layout_marginEnd="8dp" />
+
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/gamepad_r3"
+                style="@style/GamepadKey"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:text="R3" />
+
+        </LinearLayout>
+    </FrameLayout>
+
+    <!-- 第四行：十字键 -->
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:columnCount="2">
+        android:gravity="center">
 
-        <androidx.appcompat.widget.AppCompatButton
-            android:id="@+id/gamepad_lb"
-            style="@style/GamepadKey"
-            android:text="LB" />
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:layout_marginBottom="3dp">
 
-        <androidx.appcompat.widget.AppCompatButton
-            android:id="@+id/gamepad_rb"
-            style="@style/GamepadKey"
-            android:text="RB" />
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/gamepad_dpad_up"
+                style="@style/GamepadKey"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:text="↑"
+                android:layout_marginEnd="4dp" />
 
-        <androidx.appcompat.widget.AppCompatButton
-            android:id="@+id/gamepad_lt"
-            style="@style/GamepadKey"
-            android:text="LT" />
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/gamepad_dpad_left"
+                style="@style/GamepadKey"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:text="←"
+                android:layout_marginEnd="4dp" />
 
-        <androidx.appcompat.widget.AppCompatButton
-            android:id="@+id/gamepad_rt"
-            style="@style/GamepadKey"
-            android:text="RT" />
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/gamepad_dpad_right"
+                style="@style/GamepadKey"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:text="→"
+                android:layout_marginEnd="4dp" />
 
-    </GridLayout>
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/gamepad_dpad_down"
+                style="@style/GamepadKey"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:text="↓" />
 
-    <!-- 摇杆 -->
-    <TextView
+        </LinearLayout>
+    </FrameLayout>
+
+    <!-- 第五行：系统按键 -->
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="摇杆"
-        android:textSize="14sp"
-        android:textColor="#49454F"
-        android:textStyle="bold"
-        android:layout_marginTop="16dp"
-        android:layout_marginBottom="8dp" />
+        android:gravity="center">
 
-    <GridLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:columnCount="2">
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:layout_marginBottom="3dp">
 
-        <androidx.appcompat.widget.AppCompatButton
-            android:id="@+id/gamepad_l3"
-            style="@style/GamepadKey"
-            android:text="L3" />
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/gamepad_start"
+                style="@style/GamepadKey"
+                android:layout_width="60dp"
+                android:layout_height="32dp"
+                android:text="Start"
+                android:layout_marginEnd="4dp" />
 
-        <androidx.appcompat.widget.AppCompatButton
-            android:id="@+id/gamepad_r3"
-            style="@style/GamepadKey"
-            android:text="R3" />
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/gamepad_back"
+                style="@style/GamepadKey"
+                android:layout_width="60dp"
+                android:layout_height="32dp"
+                android:text="Back"
+                android:layout_marginEnd="4dp" />
 
-    </GridLayout>
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/gamepad_guide"
+                style="@style/GamepadKey"
+                android:layout_width="60dp"
+                android:layout_height="32dp"
+                android:text="Guide" />
 
-    <!-- 十字键 -->
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="十字键"
-        android:textSize="14sp"
-        android:textColor="#49454F"
-        android:textStyle="bold"
-        android:layout_marginTop="16dp"
-        android:layout_marginBottom="8dp" />
-
-    <GridLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:columnCount="2">
-
-        <androidx.appcompat.widget.AppCompatButton
-            android:id="@+id/gamepad_dpad_up"
-            style="@style/GamepadKey"
-            android:text="D-Pad ↑" />
-
-        <androidx.appcompat.widget.AppCompatButton
-            android:id="@+id/gamepad_dpad_down"
-            style="@style/GamepadKey"
-            android:text="D-Pad ↓" />
-
-        <androidx.appcompat.widget.AppCompatButton
-            android:id="@+id/gamepad_dpad_left"
-            style="@style/GamepadKey"
-            android:text="D-Pad ←" />
-
-        <androidx.appcompat.widget.AppCompatButton
-            android:id="@+id/gamepad_dpad_right"
-            style="@style/GamepadKey"
-            android:text="D-Pad →" />
-
-    </GridLayout>
-
-    <!-- 系统 -->
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="系统"
-        android:textSize="14sp"
-        android:textColor="#49454F"
-        android:textStyle="bold"
-        android:layout_marginTop="16dp"
-        android:layout_marginBottom="8dp" />
-
-    <GridLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:columnCount="3">
-
-        <androidx.appcompat.widget.AppCompatButton
-            android:id="@+id/gamepad_start"
-            style="@style/GamepadKey"
-            android:text="Start" />
-
-        <androidx.appcompat.widget.AppCompatButton
-            android:id="@+id/gamepad_back"
-            style="@style/GamepadKey"
-            android:text="Back" />
-
-        <androidx.appcompat.widget.AppCompatButton
-            android:id="@+id/gamepad_guide"
-            style="@style/GamepadKey"
-            android:text="Guide" />
-
-    </GridLayout>
+        </LinearLayout>
+    </FrameLayout>
 
 </LinearLayout>

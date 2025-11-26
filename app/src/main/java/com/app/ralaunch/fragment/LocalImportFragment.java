@@ -13,6 +13,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import com.app.ralaunch.R;
+import com.app.ralaunch.fragment.FragmentHelper;
 import com.app.ralaunch.activity.MainActivity;
 import com.app.ralaunch.model.GameItem;
 import com.app.ralaunch.utils.AppLogger;
@@ -44,7 +45,7 @@ import java.util.HashMap;
  *
  * 使用 GameExtractor 执行实际的解压和导入操作
  */
-public class LocalImportFragment extends Fragment {
+public class LocalImportFragment extends BaseFragment {
 
     private static final String TAG = "LocalImportFragment";
 
@@ -155,35 +156,31 @@ public class LocalImportFragment extends Fragment {
             File file = new File(gameFilePath);
             
             // 确保UI更新在主线程执行
-            if (getActivity() != null && isAdded()) {
-                getActivity().runOnUiThread(() -> {
+            runOnUiThread(() -> {
+                if (isFragmentValid()) {
                     gameFileText.setText("已选择: " + file.getName());
                     updateImportButtonState();
-                });
-            }
+                }
+            });
             
             // 在后台线程解析游戏信息
             new Thread(() -> {
                 var gdzf = GogShFileExtractor.GameDataZipFile.parseFromGogShFile(Paths.get(filePath));
-                if (getActivity() != null && isAdded()) {
-                    getActivity().runOnUiThread(() -> {
+                runOnUiThread(() -> {
+                    if (isFragmentValid()) {
                         if (gdzf != null) {
                             gameName = gdzf.id;
                             gameVersion = gdzf.version;
                             gameIconPath = null; // TODO: 从 gdzf 提取图标路径
-                            if (getActivity() != null) {
-                                ((MainActivity) getActivity()).showToast("检测到游戏: " + gameName + " " + gameVersion);
-                            }
+                            showToast("检测到游戏: " + gameName + " " + gameVersion);
                             AppLogger.debug(TAG, "Game data zip file: " + gdzf);
                             AppLogger.debug(TAG, "Icon path: " + gameIconPath);
                         } else {
                             gameName = "未知游戏";
-                            if (getActivity() != null) {
-                                ((MainActivity) getActivity()).showToast("无法读取游戏信息，使用默认名称");
-                            }
+                            showToast("无法读取游戏信息，使用默认名称");
                         }
-                    });
-                }
+                    }
+                });
             }).start();
         });
     }
@@ -204,12 +201,12 @@ public class LocalImportFragment extends Fragment {
             }
 
             // 确保UI更新在主线程执行
-            if (getActivity() != null && isAdded()) {
-                getActivity().runOnUiThread(() -> {
+            runOnUiThread(() -> {
+                if (isFragmentValid()) {
                     modLoaderFileText.setText("已选择: " + fileName);
                     updateImportButtonState();
-                });
-            }
+                }
+            });
         });
     }
 
@@ -218,17 +215,14 @@ public class LocalImportFragment extends Fragment {
     private interface FileChosen { void onChosen(String path); }
 
     private void openFileBrowser(String type, String[] exts, FileChosen cb) {
-        FileBrowserFragment f = new FileBrowserFragment();
-        f.setFileType(type, exts);
-        f.setOnFileSelectedListener((filePath, fileType) -> {
-            cb.onChosen(filePath);
-            requireActivity().getSupportFragmentManager().popBackStack();
-        });
-        f.setOnBackListener(() -> requireActivity().getSupportFragmentManager().popBackStack());
-        requireActivity().getSupportFragmentManager().beginTransaction()
-                .replace(R.id.fragmentContainer, f)
-                .addToBackStack("file_browser")
-                .commit();
+        // 使用统一的文件浏览器工具
+        FragmentHelper.openFileBrowser(
+            this,
+            type,
+            exts,
+            (filePath, fileType) -> cb.onChosen(filePath),
+            null
+        );
     }
 
     private void updateImportButtonState() {
@@ -246,7 +240,7 @@ public class LocalImportFragment extends Fragment {
 
     private void startImport() {
         if (gameFilePath == null) {
-            ((MainActivity) getActivity()).showToast("请先选择游戏文件");
+            showToast("请先选择游戏文件");
             return;
         }
 
@@ -272,8 +266,8 @@ public class LocalImportFragment extends Fragment {
 
             new Thread(() -> {
                 var gdzf = GogShFileExtractor.GameDataZipFile.parseFromGogShFile(Paths.get(gameFilePath));
-                if (getActivity() != null && isAdded()) {
-                    getActivity().runOnUiThread(() -> {
+                runOnUiThread(() -> {
+                    if (isFragmentValid()) {
                         if (gdzf != null) {
                             gameName = gdzf.id;
                             gameVersion = gdzf.version;
@@ -286,12 +280,10 @@ public class LocalImportFragment extends Fragment {
                         } else {
                             modernProgressBar.setStatusText("无法读取游戏信息");
                             startImportButton.setEnabled(true);
-                            if (getActivity() != null) {
-                                ((MainActivity) getActivity()).showToast("无法读取游戏信息，导入失败");
-                            }
+                            showToast("无法读取游戏信息，导入失败");
                         }
-                    });
-                }
+                    }
+                });
             }).start();
             return;
         }

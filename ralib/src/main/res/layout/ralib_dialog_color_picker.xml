@@ -5,8 +5,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="16dp"
-    app:cardCornerRadius="24dp"
+    android:layout_margin="12dp"
+    app:cardCornerRadius="20dp"
     app:cardElevation="8dp"
     app:cardBackgroundColor="?attr/colorSurface"
     style="@style/Widget.Material3.CardView.Elevated">
@@ -14,8 +14,13 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="20dp">
+        android:padding="8dp">
 
         <!-- 标题栏 -->
         <LinearLayout
@@ -23,7 +28,7 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center_vertical"
-            android:layout_marginBottom="16dp">
+            android:layout_marginBottom="6dp">
 
             <TextView
                 android:layout_width="0dp"
@@ -31,13 +36,13 @@
                 android:layout_weight="1"
                 android:text="选择主题颜色"
                 android:textColor="?attr/colorOnSurface"
-                android:textSize="20sp"
+                android:textSize="16sp"
                 android:textStyle="bold" />
 
             <ImageButton
                 android:id="@+id/btnClose"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:src="@android:drawable/ic_menu_close_clear_cancel"
                 android:contentDescription="关闭"
@@ -49,7 +54,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:layout_marginBottom="16dp">
+            android:layout_marginBottom="6dp">
 
             <!-- 左侧：颜色显示和输入区域 -->
             <LinearLayout
@@ -57,7 +62,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="0.8"
                 android:orientation="vertical"
-                android:layout_marginEnd="16dp">
+                android:layout_marginEnd="8dp">
 
                 <!-- 颜色预览区域 - MD3风格：当前颜色 -> 选中颜色 -->
                 <LinearLayout
@@ -65,13 +70,13 @@
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
                     android:gravity="center_vertical"
-                    android:layout_marginBottom="16dp"
-                    android:padding="12dp"
+                    android:layout_marginBottom="4dp"
+                    android:padding="6dp"
                     android:background="?attr/colorSurfaceVariant"
                     android:backgroundTint="?attr/colorSurfaceVariant"
-                    app:cornerRadius="16dp">
+                    app:cornerRadius="12dp">
 
-                    <!-- 当前颜色预览块（实时变化） -->
+                    <!-- 当前颜色预览块（保存的颜色） -->
                     <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -83,27 +88,27 @@
                             android:layout_height="wrap_content"
                             android:text="当前"
                             android:textColor="?attr/colorOnSurfaceVariant"
-                            android:textSize="11sp"
-                            android:layout_marginBottom="4dp" />
+                            android:textSize="10sp"
+                            android:layout_marginBottom="2dp" />
 
                         <com.google.android.material.card.MaterialCardView
-                            android:id="@+id/colorPreview"
-                            android:layout_width="56dp"
-                            android:layout_height="56dp"
-                            app:cardCornerRadius="12dp"
+                            android:id="@+id/selectedColorBlock"
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            app:cardCornerRadius="8dp"
                             app:cardElevation="2dp"
                             app:cardBackgroundColor="#9C7AE8" />
                     </LinearLayout>
 
                     <!-- 箭头指向 -->
                     <ImageView
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
                         android:src="@drawable/ralib_ic_arrow_right"
-                        android:layout_marginStart="16dp"
-                        android:layout_marginEnd="16dp" />
+                        android:layout_marginStart="8dp"
+                        android:layout_marginEnd="8dp" />
 
-                    <!-- 选中颜色块（确定后的颜色） -->
+                    <!-- 选中颜色块（正在选择的颜色） -->
                     <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -115,18 +120,16 @@
                             android:layout_height="wrap_content"
                             android:text="选中"
                             android:textColor="?attr/colorOnSurfaceVariant"
-                            android:textSize="11sp"
-                            android:layout_marginBottom="4dp" />
+                            android:textSize="10sp"
+                            android:layout_marginBottom="2dp" />
 
                         <com.google.android.material.card.MaterialCardView
-                            android:id="@+id/selectedColorBlock"
-                            android:layout_width="72dp"
-                            android:layout_height="72dp"
-                            app:cardCornerRadius="16dp"
-                            app:cardElevation="4dp"
-                            app:cardBackgroundColor="#9C7AE8"
-                            app:strokeWidth="2dp"
-                            app:strokeColor="?attr/colorPrimary" />
+                            android:id="@+id/colorPreview"
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            app:cardCornerRadius="8dp"
+                            app:cardElevation="2dp"
+                            app:cardBackgroundColor="#9C7AE8" />
                     </LinearLayout>
                 </LinearLayout>
 
@@ -134,12 +137,12 @@
                 <com.google.android.material.textfield.TextInputLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="12dp"
+                    android:layout_marginBottom="4dp"
                     app:boxBackgroundMode="outline"
-                    app:boxCornerRadiusTopStart="12dp"
-                    app:boxCornerRadiusTopEnd="12dp"
-                    app:boxCornerRadiusBottomStart="12dp"
-                    app:boxCornerRadiusBottomEnd="12dp"
+                    app:boxCornerRadiusTopStart="10dp"
+                    app:boxCornerRadiusTopEnd="10dp"
+                    app:boxCornerRadiusBottomStart="10dp"
+                    app:boxCornerRadiusBottomEnd="10dp"
                     app:hintEnabled="true"
                     android:hint="十六进制"
                     style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
@@ -156,7 +159,7 @@
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:text="#9C7AE8"
-                            android:textSize="13sp"
+                            android:textSize="12sp"
                             android:fontFamily="monospace"
                             android:inputType="none"
                             android:focusable="false"
@@ -165,8 +168,8 @@
 
                         <ImageButton
                             android:id="@+id/btnCopyHex"
-                            android:layout_width="40dp"
-                            android:layout_height="40dp"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
                             android:background="?attr/selectableItemBackgroundBorderless"
                             android:src="@drawable/ic_content_copy"
                             android:contentDescription="复制"
@@ -178,12 +181,12 @@
                 <com.google.android.material.textfield.TextInputLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="8dp"
+                    android:layout_marginBottom="4dp"
                     app:boxBackgroundMode="outline"
-                    app:boxCornerRadiusTopStart="12dp"
-                    app:boxCornerRadiusTopEnd="12dp"
-                    app:boxCornerRadiusBottomStart="12dp"
-                    app:boxCornerRadiusBottomEnd="12dp"
+                    app:boxCornerRadiusTopStart="10dp"
+                    app:boxCornerRadiusTopEnd="10dp"
+                    app:boxCornerRadiusBottomStart="10dp"
+                    app:boxCornerRadiusBottomEnd="10dp"
                     app:hintEnabled="true"
                     android:hint="RGB"
                     style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
@@ -200,7 +203,7 @@
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:text="156, 122, 232"
-                            android:textSize="13sp"
+                            android:textSize="12sp"
                             android:fontFamily="monospace"
                             android:inputType="none"
                             android:focusable="false"
@@ -209,8 +212,8 @@
 
                         <ImageButton
                             android:id="@+id/btnCopyRgb"
-                            android:layout_width="40dp"
-                            android:layout_height="40dp"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
                             android:background="?attr/selectableItemBackgroundBorderless"
                             android:src="@drawable/ic_content_copy"
                             android:contentDescription="复制"
@@ -224,38 +227,49 @@
             <com.app.ralib.ui.ColorPickerView
                 android:id="@+id/colorPicker"
                 android:layout_width="0dp"
-                android:layout_height="400dp"
-                android:layout_weight="1.2" />
+                android:layout_height="100dp"
+                android:layout_weight="1.2"
+                android:minHeight="80dp" />
         </LinearLayout>
 
-        <!-- 底部按钮 - 确保可见 -->
+        <!-- 底部按钮区域 - MD3 风格 -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="end"
-            android:layout_marginTop="16dp"
-            android:paddingTop="8dp">
+            android:layout_marginTop="4dp"
+            android:paddingTop="2dp"
+            android:paddingBottom="2dp">
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnCancel"
                 android:layout_width="wrap_content"
-                android:layout_height="48dp"
+                android:layout_height="wrap_content"
                 android:text="取消"
-                android:minWidth="120dp"
-                android:textSize="14sp"
+                android:textSize="13sp"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:minHeight="36dp"
+                android:minWidth="0dp"
+                android:visibility="visible"
                 style="@style/Widget.Material3.Button.TextButton" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnConfirm"
                 android:layout_width="wrap_content"
-                android:layout_height="48dp"
+                android:layout_height="wrap_content"
                 android:text="确定"
-                android:minWidth="120dp"
-                android:textSize="14sp"
-                android:layout_marginStart="12dp"
+                android:textSize="13sp"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:minHeight="36dp"
+                android:minWidth="0dp"
+                android:layout_marginStart="6dp"
+                android:visibility="visible"
                 style="@style/Widget.Material3.Button" />
         </LinearLayout>
+    </LinearLayout>
     </LinearLayout>
 
 </com.google.android.material.card.MaterialCardView>

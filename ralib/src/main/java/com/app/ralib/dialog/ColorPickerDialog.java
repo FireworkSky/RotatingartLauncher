@@ -29,7 +29,7 @@ public class ColorPickerDialog extends DialogFragment {
     private android.view.View selectedColorBlock;
     private TextView tvHexDisplay, tvRgbDisplay;
     private android.widget.ImageButton btnCopyHex, btnCopyRgb;
-    private Button btnConfirm, btnCancel;
+    private com.google.android.material.button.MaterialButton btnConfirm, btnCancel;
 
     private int currentColor = 0xFF9C7AE8; // 当前选择的颜色（实时变化）
     private int selectedColor = 0xFF9C7AE8; // 已选中的颜色（确定后的颜色）
@@ -82,6 +82,9 @@ public class ColorPickerDialog extends DialogFragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        // 启用硬件加速，确保 Material Design 的触摸反馈和点击事件正常工作
+        view.setLayerType(View.LAYER_TYPE_HARDWARE, null);
+
         // 初始化视图
         colorPicker = view.findViewById(R.id.colorPicker);
         colorPreview = view.findViewById(R.id.colorPreview);
@@ -90,8 +93,15 @@ public class ColorPickerDialog extends DialogFragment {
         tvRgbDisplay = view.findViewById(R.id.tvRgbDisplay);
         btnConfirm = view.findViewById(R.id.btnConfirm);
         btnCancel = view.findViewById(R.id.btnCancel);
-
         android.widget.ImageButton btnClose = view.findViewById(R.id.btnClose);
+        
+        // 确保按钮可见
+        if (btnConfirm != null) {
+            btnConfirm.setVisibility(View.VISIBLE);
+        }
+        if (btnCancel != null) {
+            btnCancel.setVisibility(View.VISIBLE);
+        }
 
         // 先设置监听器，再设置颜色，确保颜色变化时能正确回调
         colorPicker.setOnColorChangedListener(color -> {
@@ -99,7 +109,7 @@ public class ColorPickerDialog extends DialogFragment {
             int rgbColor = (color & 0x00FFFFFF) | 0xFF000000;
             // 强制更新，即使颜色值相同也要更新（因为色相可能改变了）
             currentColor = rgbColor;
-            updateColorPreview(currentColor);
+            updateColorPreview(currentColor); // 更新"选中"颜色块（正在选择的颜色）
             updateInputsFromColor(currentColor);
             
             // 通知外部监听器颜色已变化
@@ -109,10 +119,11 @@ public class ColorPickerDialog extends DialogFragment {
         });
 
         // 设置初始颜色
-        selectedColor = initialColor; // 初始时选中颜色等于初始颜色
+        selectedColor = initialColor; // 保存的颜色（当前颜色）
+        currentColor = initialColor; // 正在选择的颜色（选中颜色）
         colorPicker.setColor(currentColor);
-        updateColorPreview(currentColor); // 更新当前颜色预览
-        updateSelectedColorBlock(selectedColor); // 更新选中颜色块
+        updateColorPreview(currentColor); // 更新"选中"颜色块（正在选择的颜色）
+        updateSelectedColorBlock(selectedColor); // 更新"当前"颜色块（保存的颜色）
         updateInputsFromColor(currentColor);
 
 
@@ -136,10 +147,11 @@ public class ColorPickerDialog extends DialogFragment {
 
         // 确定按钮 - 保存并关闭
         if (btnConfirm != null) {
+            btnConfirm.setVisibility(View.VISIBLE);
             btnConfirm.setOnClickListener(v -> {
-                // 更新选中颜色为当前颜色
+                // 更新保存的颜色为当前选择的颜色
                 selectedColor = currentColor;
-                updateSelectedColorBlock(selectedColor);
+                updateSelectedColorBlock(selectedColor); // 更新"当前"颜色块（保存的颜色）
                 
                 if (listener != null) {
                     listener.onColorSelected(currentColor);
@@ -150,6 +162,7 @@ public class ColorPickerDialog extends DialogFragment {
 
         // 取消按钮 - 恢复初始颜色并关闭
         if (btnCancel != null) {
+            btnCancel.setVisibility(View.VISIBLE);
             btnCancel.setOnClickListener(v -> {
                 // 恢复初始颜色（如果颜色改变了）
                 if (currentColor != initialColor && colorChangedListener != null) {
@@ -174,16 +187,49 @@ public class ColorPickerDialog extends DialogFragment {
     public void onStart() {
         super.onStart();
         if (getDialog() != null && getDialog().getWindow() != null) {
-            // 获取屏幕宽度
+            // 获取屏幕尺寸
             android.util.DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
-            int dialogWidth = (int) (displayMetrics.widthPixels * 0.9f); // 90% 屏幕宽度
+            int screenWidth = displayMetrics.widthPixels;
+            int screenHeight = displayMetrics.heightPixels;
+            
+            // 横屏模式下使用更小的宽度和高度
+            boolean isLandscape = screenWidth > screenHeight;
+            
+            int dialogWidth = isLandscape ? 
+                (int) (screenWidth * 0.85f) : // 横屏：85% 屏幕宽度
+                (int) (screenWidth * 0.9f);    // 竖屏：90% 屏幕宽度
             int maxWidth = (int) (480 * displayMetrics.density); // 最大宽度480dp
             dialogWidth = Math.min(dialogWidth, maxWidth);
-
+            
+            // 使用 WRAP_CONTENT 让内容自适应
             getDialog().getWindow().setLayout(
                 dialogWidth,
                 ViewGroup.LayoutParams.WRAP_CONTENT
             );
+            
+            // 获取根视图并测量实际内容高度
+            View rootView = getView();
+            if (rootView != null) {
+                // 强制布局测量
+                rootView.measure(
+                    View.MeasureSpec.makeMeasureSpec(dialogWidth, View.MeasureSpec.EXACTLY),
+                    View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
+                );
+                
+                int measuredHeight = rootView.getMeasuredHeight();
+                int maxHeight = isLandscape ?
+                    (int) (screenHeight * 0.7f) : // 横屏：70% 屏幕高度
+                    (int) (screenHeight * 0.75f);   // 竖屏：75% 屏幕高度
+                
+                // 如果内容高度超过最大高度，使用最大高度；否则使用实际高度
+                int finalHeight = Math.min(measuredHeight, maxHeight);
+                
+                // 设置弹窗高度
+                getDialog().getWindow().setLayout(
+                    dialogWidth,
+                    finalHeight
+                );
+            }
 
             // 使用透明背景让布局的圆角可见
             getDialog().getWindow().setBackgroundDrawableResource(android.R.color.transparent);
@@ -220,7 +266,7 @@ public class ColorPickerDialog extends DialogFragment {
     }
 
     private void updateColorPreview(int color) {
-        // 更新当前颜色预览（小预览块，实时变化）
+        // 更新"选中"颜色块（正在选择的颜色，实时变化）
         int opaqueColor = color | 0xFF000000;
         if (colorPreview != null) {
             if (colorPreview instanceof com.google.android.material.card.MaterialCardView) {
@@ -232,7 +278,7 @@ public class ColorPickerDialog extends DialogFragment {
     }
     
     private void updateSelectedColorBlock(int color) {
-        // 更新选中颜色块（大预览块，只在确定时更新）
+        // 更新"当前"颜色块（保存的颜色，只在确定时更新）
         int opaqueColor = color | 0xFF000000;
         if (selectedColorBlock != null) {
             if (selectedColorBlock instanceof com.google.android.material.card.MaterialCardView) {

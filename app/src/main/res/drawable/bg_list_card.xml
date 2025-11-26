@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- 统一的列表卡片背景 - 16dp 圆角，带边框 -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
     android:shape="rectangle">
-    <solid android:color="#FFFFFF" />
+    <solid android:color="?attr/backgroundCard" />
     <corners android:radius="16dp" />
-    <stroke android:width="1dp" android:color="#E0E0E0" />
+    <stroke android:width="1dp" android:color="?attr/dividerColor" />
 </shape>

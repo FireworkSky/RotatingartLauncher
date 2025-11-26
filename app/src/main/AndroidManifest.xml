@@ -30,9 +30,6 @@
         android:usesCleartextTraffic="true"
         android:networkSecurityConfig="@xml/network_security_config"
         tools:targetApi="31">
-        <activity
-            android:name=".activity.DebugActivity"
-            android:exported="false" />
         <!-- 主活动 -->
         <activity
             android:name=".activity.MainActivity"
@@ -52,8 +49,8 @@
             android:configChanges="orientation|keyboardHidden|screenSize|screenLayout|smallestScreenSize|uiMode"
             android:screenOrientation="landscape"
             android:theme="@style/FullScreenTheme"
-            android:hardwareAccelerated="false">
-            <!-- 禁用硬件加速以避免与游戏 OpenGL 上下文冲突 -->
+            android:hardwareAccelerated="true">
+            <!-- 启用硬件加速以支持 RippleDrawable 等 Material 组件动画 -->
             <!-- 强制 SDL 使用横屏方向 -->
             <meta-data android:name="SDL_ORIENTATION" android:value="Landscape" />
             <meta-data android:name="SDL_HINT_ORIENTATIONS" android:value="LandscapeLeft LandscapeRight" />

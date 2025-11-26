@@ -75,6 +75,35 @@ public class ControlEditorOperations {
     }
     
     /**
+     * 添加文本控件到配置
+     * 
+     * @param config 控件配置
+     * @param screenWidth 屏幕宽度
+     * @param screenHeight 屏幕高度
+     * @return 新创建的文本控件数据
+     */
+    public static ControlData addText(ControlConfig config, int screenWidth, int screenHeight) {
+        if (config == null || config.controls == null) {
+            return null;
+        }
+        
+        ControlData text = new ControlData("文本", ControlData.TYPE_TEXT);
+        text.x = screenWidth / 2f;
+        text.y = screenHeight / 2f;
+        text.width = 150;
+        text.height = 150;
+        text.opacity = 0.7f;
+        text.bgColor = 0xFF808080; // 灰色背景（更清晰可见）
+        text.visible = true;
+        text.shape = ControlData.SHAPE_RECTANGLE; // 默认方形
+        text.displayText = "文本"; // 默认文本
+        text.keycode = ControlData.SDL_SCANCODE_UNKNOWN; // 文本控件不支持按键映射
+        
+        config.controls.add(text);
+        return text;
+    }
+    
+    /**
      * 显示摇杆模式批量设置对话框
      * 
      * @param context 上下文

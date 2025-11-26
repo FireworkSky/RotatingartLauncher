@@ -2,10 +2,14 @@ package com.app.ralaunch.manager;
 
 import android.app.AlertDialog;
 import android.content.Context;
+import android.view.LayoutInflater;
 import android.view.View;
-import android.widget.ArrayAdapter;
+import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.BaseAdapter;
+import android.widget.ImageView;
 import android.widget.ListView;
-import android.widget.Toast;
+import android.widget.TextView;
 
 import androidx.drawerlayout.widget.DrawerLayout;
 
@@ -28,9 +32,22 @@ public class GameMenuManager {
     private Context mContext;
     private DrawerLayout mDrawerLayout;
     private ListView mGameMenu;
-    private ArrayAdapter<String> mGameMenuAdapter;
+    private GameMenuAdapter mGameMenuAdapter;
     
     private OnMenuItemClickListener mMenuItemListener;
+    
+    // 菜单项数据
+    private static class MenuItem {
+        int iconRes;
+        String text;
+        
+        MenuItem(int iconRes, String text) {
+            this.iconRes = iconRes;
+            this.text = text;
+        }
+    }
+    
+    private MenuItem[] mMenuItems;
     
     /**
      * 菜单项点击监听器
@@ -46,6 +63,15 @@ public class GameMenuManager {
         mContext = context;
         mDrawerLayout = drawerLayout;
         mGameMenu = gameMenu;
+        
+        // 初始化菜单项
+        String[] menuTexts = context.getResources().getStringArray(R.array.game_menu_items);
+        mMenuItems = new MenuItem[]{
+            new MenuItem(R.drawable.ic_controller, menuTexts[0]), // 切换控制显示
+            new MenuItem(R.drawable.ic_edit, menuTexts[1]), // 编辑控制布局
+            new MenuItem(R.drawable.ic_settings, menuTexts[2]), // 快速设置
+            new MenuItem(R.drawable.ic_close, menuTexts[3]) // 退出游戏
+        };
     }
     
     /**
@@ -60,22 +86,64 @@ public class GameMenuManager {
      */
     public void setupMenu() {
         try {
-            // 设置菜单项
-            String[] menuItems = mContext.getResources().getStringArray(R.array.game_menu_items);
-            mGameMenuAdapter = new ArrayAdapter<>(mContext, android.R.layout.simple_list_item_1, menuItems);
+            // 设置菜单项适配器
+            mGameMenuAdapter = new GameMenuAdapter();
             mGameMenu.setAdapter(mGameMenuAdapter);
             
-            // 设置菜单项点击事件
-            mGameMenu.setOnItemClickListener((parent, view, position, id) -> {
+            // 移除默认分隔线，使用卡片样式
+            mGameMenu.setDivider(null);
+            mGameMenu.setDividerHeight(0);
+            
+            // 注意：点击事件现在在适配器的 getView 方法中直接设置，不在这里设置
+            // 这样可以避免 MaterialCardView 拦截点击事件的问题
+            
+            AppLogger.info(TAG, "Game menu setup successfully");
+        } catch (Exception e) {
+            AppLogger.error(TAG, "Failed to setup game menu", e);
+        }
+    }
+    
+    /**
+     * MD3 风格菜单适配器
+     */
+    private class GameMenuAdapter extends BaseAdapter {
+        @Override
+        public int getCount() {
+            return mMenuItems != null ? mMenuItems.length : 0;
+        }
+        
+        @Override
+        public Object getItem(int position) {
+            return mMenuItems != null ? mMenuItems[position] : null;
+        }
+        
+        @Override
+        public long getItemId(int position) {
+            return position;
+        }
+        
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+            if (convertView == null) {
+                convertView = LayoutInflater.from(mContext).inflate(R.layout.item_game_menu, parent, false);
+            }
+            
+            MenuItem item = mMenuItems[position];
+            ImageView iconView = convertView.findViewById(R.id.iv_menu_icon);
+            TextView textView = convertView.findViewById(R.id.tv_menu_text);
+            
+            iconView.setImageResource(item.iconRes);
+            textView.setText(item.text);
+            
+            // 直接在根 View 上设置点击监听器，确保点击事件被正确处理
+            convertView.setOnClickListener(v -> {
                 handleMenuClick(position);
                 if (mDrawerLayout != null) {
                     mDrawerLayout.closeDrawers();
                 }
             });
             
-            AppLogger.info(TAG, "Game menu setup successfully");
-        } catch (Exception e) {
-            AppLogger.error(TAG, "Failed to setup game menu", e);
+            return convertView;
         }
     }
     
@@ -143,10 +211,15 @@ public class GameMenuManager {
     }
     
     /**
-     * 显示快速设置（TODO: 实现快速设置对话框）
+     * 显示快速设置
      */
     public void showQuickSettings() {
-        Toast.makeText(mContext, "快速设置功能开发中...", Toast.LENGTH_SHORT).show();
+        // 创建简单的 AlertDialog
+        AlertDialog.Builder builder = new AlertDialog.Builder(mContext);
+        builder.setTitle(R.string.game_menu_quick_settings);
+        builder.setMessage("游戏设置功能开发中...");
+        builder.setPositiveButton(android.R.string.ok, null);
+        builder.show();
     }
 }
 

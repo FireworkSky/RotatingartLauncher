@@ -50,6 +50,9 @@ public class KeySelectorDialog extends Dialog {
         View view = LayoutInflater.from(getContext()).inflate(R.layout.dialog_key_selector, null);
         setContentView(view);
 
+        // 启用硬件加速，确保 Material Design 的触摸反馈和点击事件正常工作
+        view.setLayerType(View.LAYER_TYPE_HARDWARE, null);
+
         // 创建圆角背景
         GradientDrawable background = new GradientDrawable();
         background.setColor(Color.WHITE);
