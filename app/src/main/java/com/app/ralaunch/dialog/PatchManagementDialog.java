@@ -85,12 +85,12 @@ public class PatchManagementDialog {
 
         dialog.show();
 
-        // 设置对话框窗口大小为屏幕的85%宽度和85%高度
+        // 设置对话框窗口大小为屏幕的95%宽度和95%高度
         if (dialog.getWindow() != null) {
             android.view.WindowManager.LayoutParams params = dialog.getWindow().getAttributes();
             android.util.DisplayMetrics displayMetrics = context.getResources().getDisplayMetrics();
-            params.width = (int) (displayMetrics.widthPixels * 0.85);
-            params.height = (int) (displayMetrics.heightPixels * 0.85);
+            params.width = (int) (displayMetrics.widthPixels * 0.95);
+            params.height = (int) (displayMetrics.heightPixels * 0.95);
             dialog.getWindow().setAttributes(params);
         }
     }
