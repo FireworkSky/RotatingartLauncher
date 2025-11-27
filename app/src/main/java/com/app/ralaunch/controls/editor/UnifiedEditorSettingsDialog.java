@@ -36,6 +36,8 @@ public class UnifiedEditorSettingsDialog {
     // UI元素
     private TextView mTvDialogTitle;
     private View mItemToggleEditMode;
+    private ImageView mIvToggleEditModeIcon;
+    private TextView mTvToggleEditModeText;
     private View mItemAddButton;
     private View mItemAddJoystick;
     private View mItemAddText;
@@ -295,6 +297,8 @@ public class UnifiedEditorSettingsDialog {
         // 绑定UI元素
         mTvDialogTitle = mDialogLayout.findViewById(R.id.tv_dialog_title);
         mItemToggleEditMode = mDialogLayout.findViewById(R.id.item_toggle_edit_mode);
+        mIvToggleEditModeIcon = mItemToggleEditMode.findViewById(R.id.iv_toggle_edit_mode_icon);
+        mTvToggleEditModeText = mItemToggleEditMode.findViewById(R.id.tv_toggle_edit_mode_text);
         mItemAddButton = mDialogLayout.findViewById(R.id.item_add_button);
         mItemAddJoystick = mDialogLayout.findViewById(R.id.item_add_joystick);
         mItemAddText = mDialogLayout.findViewById(R.id.item_add_text);
@@ -347,8 +351,10 @@ public class UnifiedEditorSettingsDialog {
             if (mItemToggleEditMode != null) {
                 mItemToggleEditMode.setOnClickListener(v -> {
                     mIsEditModeEnabled = !mIsEditModeEnabled;
-                    updateEditModeVisibility();
+                    updateEditModeUI();
                     mListener.onToggleEditMode();
+                    // 在游戏模式下，切换编辑模式后不关闭对话框，保持显示状态
+                    // 在编辑器模式下也保持显示，方便继续操作
                 });
             }
 
@@ -390,11 +396,28 @@ public class UnifiedEditorSettingsDialog {
     }
 
     /**
-     * 更新编辑模式可见性
+     * 更新编辑模式UI（包括按钮文本、图标和添加控件区域的可见性）
      */
-    private void updateEditModeVisibility() {
+    private void updateEditModeUI() {
+        // 更新添加控件区域的可见性
         if (mAddControlsSection != null) {
             mAddControlsSection.setVisibility(mIsEditModeEnabled ? View.VISIBLE : View.GONE);
+        }
+
+        // 更新"切换编辑模式"按钮的文本和图标
+        if (mTvToggleEditModeText != null && mIvToggleEditModeIcon != null) {
+            if (mIsEditModeEnabled) {
+                // 已进入编辑模式，显示"退出编辑模式"
+                mTvToggleEditModeText.setText("退出编辑模式");
+                mIvToggleEditModeIcon.setImageResource(R.drawable.ic_close);
+                mIvToggleEditModeIcon.setColorFilter(android.graphics.Color.parseColor("#F44336")); // 红色
+            } else {
+                // 未进入编辑模式，显示"进入编辑模式"
+                mTvToggleEditModeText.setText("进入编辑模式");
+                mIvToggleEditModeIcon.setImageResource(R.drawable.ic_edit);
+                // 恢复默认颜色
+                mIvToggleEditModeIcon.setColorFilter(null);
+            }
         }
     }
 
@@ -404,7 +427,7 @@ public class UnifiedEditorSettingsDialog {
     public void setEditModeEnabled(boolean enabled) {
         mIsEditModeEnabled = enabled;
         if (mDialogLayout != null) {
-            updateEditModeVisibility();
+            updateEditModeUI();
         }
     }
 }

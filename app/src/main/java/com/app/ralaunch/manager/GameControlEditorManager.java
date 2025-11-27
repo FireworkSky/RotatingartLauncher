@@ -288,8 +288,12 @@ public class GameControlEditorManager {
 
             @Override
             public void onToggleEditMode() {
-                // 切换编辑模式：进入编辑模式
-                enterEditMode();
+                // 切换编辑模式：根据当前状态进入或退出
+                if (mIsInEditor) {
+                    exitEditMode();
+                } else {
+                    enterEditMode();
+                }
             }
         });
     }
@@ -404,19 +408,15 @@ public class GameControlEditorManager {
     
     /**
      * 显示编辑器设置对话框
-     * 如果还没有进入编辑模式，先进入编辑模式
+     * 不自动进入编辑模式，用户需要在弹窗中手动点击"进入编辑模式"
      */
     public void showEditorSettingsDialog() {
-        // 如果还没有进入编辑模式，先进入编辑模式
-        if (!mIsInEditor) {
-            enterEditMode();
-        }
-        
         // 初始化编辑器设置对话框（如果还没有初始化）
         initEditorSettingsDialog();
-        
-        // 显示对话框
+
+        // 同步编辑模式状态到对话框
         if (mEditorSettingsDialog != null) {
+            mEditorSettingsDialog.setEditModeEnabled(mIsInEditor);
             mEditorSettingsDialog.show();
         }
     }
