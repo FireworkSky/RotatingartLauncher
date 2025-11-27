@@ -19,6 +19,7 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import java.lang.ref.WeakReference;
 
+import com.app.ralaunch.RaLaunchApplication;
 import com.app.ralaunch.activity.GameActivity;
 
 /**
@@ -295,10 +296,12 @@ public class VirtualButton extends View implements ControlView {
         switch (event.getActionMasked()) {
             case MotionEvent.ACTION_DOWN:
                 handlePress();
+                triggerVibration(true);
                 return true;
                 
             case MotionEvent.ACTION_UP:
             case MotionEvent.ACTION_CANCEL:
+                triggerVibration(false);
                 handleRelease();
                 return true;
         }
@@ -640,5 +643,15 @@ public class VirtualButton extends View implements ControlView {
         path.transform(matrix);
         
         return path;
+    }
+
+    private static void triggerVibration(boolean isPress) {
+        if (isPress) {
+            RaLaunchApplication.getVibrationManager().vibrateOneShot(50, 30);
+        }
+        else {
+            // 释放时不振动
+//            RaLaunchApplication.getVibrationManager().vibrateOneShot(50, 30);
+        }
     }
 }

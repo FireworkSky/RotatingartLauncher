@@ -9,6 +9,8 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 
+import com.app.ralaunch.RaLaunchApplication;
+
 /**
  * 虚拟摇杆View
  * 支持8方向移动，触摸拖拽控制
@@ -200,6 +202,7 @@ public class VirtualJoystick extends View implements ControlView {
 
                 handleMove(touchX, touchY);
                 mIsTouching = true;
+                triggerVibration(true);
                 return true;
 
             case MotionEvent.ACTION_MOVE:
@@ -214,6 +217,7 @@ public class VirtualJoystick extends View implements ControlView {
                 if (mIsTouching) {
                     handleRelease();
                     mIsTouching = false;
+                    triggerVibration(false);
                     return true;
                 }
                 return false;
@@ -504,6 +508,16 @@ public class VirtualJoystick extends View implements ControlView {
 
     private float dpToPx(float dp) {
         return dp * getResources().getDisplayMetrics().density;
+    }
+
+    private static void triggerVibration(boolean isPress) {
+        if (isPress) {
+            RaLaunchApplication.getVibrationManager().vibrateOneShot(50, 30);
+        }
+        else {
+            // 释放时不振动
+//            RaLaunchApplication.getVibrationManager().vibrateOneShot(50, 30);
+        }
     }
 }
 

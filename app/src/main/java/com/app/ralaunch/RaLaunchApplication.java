@@ -6,6 +6,7 @@ import android.content.res.Configuration;
 import android.util.Log;
 
 import com.app.ralaunch.data.GameDataManager;
+import com.app.ralaunch.manager.VibrationManager;
 import com.app.ralaunch.utils.GamePathResolver;
 import com.app.ralaunch.utils.LocaleManager;
 import com.app.ralib.patch.PatchManager;
@@ -23,6 +24,7 @@ public class RaLaunchApplication extends Application {
     private static Context appContext;
     private static GameDataManager gameDataManager;
     private static PatchManager patchManager;
+    private static VibrationManager vibrationManager;
 
     @Override
     public void onCreate() {
@@ -69,6 +71,8 @@ public class RaLaunchApplication extends Application {
             Log.e(TAG, "Failed to initialize PatchManager", e);
         }
 
+        vibrationManager = new VibrationManager(appContext);
+
         // 初始化 GamePathResolver
         GamePathResolver.initialize(appContext);
     }
@@ -111,5 +115,14 @@ public class RaLaunchApplication extends Application {
      */
     public static PatchManager getPatchManager() {
         return patchManager;
+    }
+
+    /**
+     * 获取全局 VibrationManager 实例
+     *
+     * @return VibrationManager 实例
+     */
+    public static VibrationManager getVibrationManager() {
+        return vibrationManager;
     }
 }

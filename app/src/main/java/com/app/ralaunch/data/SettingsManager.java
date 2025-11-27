@@ -50,6 +50,9 @@ public class SettingsManager {
         public static final String DOTNET_FRAMEWORK = "dotnet_framework";
         public static final String RUNTIME_ARCHITECTURE = "runtime_architecture";
 
+        // 控制设置
+        public static final String CONTROLS_VIBRATION_ENABLED = "controls_vibration_enabled";
+
         // 开发者设置
         public static final String VERBOSE_LOGGING = "verbose_logging";
         // FNA设置
@@ -79,6 +82,9 @@ public class SettingsManager {
         public static final String RUNTIME_ARCHITECTURE = "auto";
         public static final boolean VERBOSE_LOGGING = false;
         public static final String FNA_RENDERER = "auto";
+
+        // 控制设置
+        public static final boolean CONTROLS_VIBRATION_ENABLED = true; // 默认开启振动反馈
 
         // CoreCLR 默认值
         public static final boolean CORECLR_SERVER_GC = false; // 移动端默认关闭 Server GC
@@ -281,6 +287,15 @@ public class SettingsManager {
     
     public void setRuntimeArchitecture(String architecture) {
         putString(Keys.RUNTIME_ARCHITECTURE, architecture);
+    }
+
+    // 控制设置
+    public boolean getVibrationEnabled() {
+        return getBoolean(Keys.CONTROLS_VIBRATION_ENABLED, Defaults.CONTROLS_VIBRATION_ENABLED);
+    }
+
+    public void setVibrationEnabled(boolean enabled) {
+        putBoolean(Keys.CONTROLS_VIBRATION_ENABLED, enabled);
     }
     
     // 开发者设置

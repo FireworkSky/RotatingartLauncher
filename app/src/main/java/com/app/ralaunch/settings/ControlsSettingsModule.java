@@ -28,11 +28,11 @@ public class ControlsSettingsModule implements SettingsModule {
     private void setupVibrationSettings() {
         MaterialSwitch switchVibration = rootView.findViewById(R.id.switchVibration);
         if (switchVibration != null) {
-            boolean vibrationEnabled = true; // 默认开启
+            boolean vibrationEnabled = settingsManager.getVibrationEnabled();
             switchVibration.setChecked(vibrationEnabled);
             switchVibration.setOnCheckedChangeListener((buttonView, isChecked) -> {
-                // 保存震动反馈设置
-                // settingsManager.setVibrationEnabled(isChecked);
+                // 保存振动反馈设置
+                 settingsManager.setVibrationEnabled(isChecked);
             });
         }
     }

@@ -90,7 +90,7 @@
 
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- 震动反馈卡片 -->
+            <!-- 振动反馈卡片 -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/vibrationCard"
                 android:layout_width="match_parent"
@@ -126,7 +126,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="震动反馈"
+                            android:text="振动反馈"
                             android:textColor="?attr/textPrimary"
                             android:textSize="15sp"
                             android:textStyle="bold" />
@@ -134,7 +134,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="按键时提供震动反馈"
+                            android:text="按键时提供振动反馈"
                             android:textColor="?attr/textSecondary"
                             android:textSize="12sp"
                             android:layout_marginTop="2dp" />
