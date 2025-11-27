@@ -337,6 +337,9 @@ public class MainActivity extends AppCompatActivity implements
             uiManager.showLaunchGameButton();
         });
         gameListManager.setOnGameDeleteListener(this);
+
+        // 初始化游戏导入管理器
+        gameImportManager.setOnImportCompleteListener(this::onImportComplete);
         
         // 初始化 UI 管理器
         settingsButton = findViewById(R.id.settingsButton);
