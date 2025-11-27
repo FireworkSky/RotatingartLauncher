@@ -76,6 +76,8 @@ add_subdirectory(${FNA3D_SOURCE_DIR})
 # 恢复设置
 set(CMAKE_SKIP_INSTALL_RULES OFF)
 set(CMAKE_INSTALL_PREFIX ${_OLD_CMAKE_INSTALL_PREFIX})
+# 设置 C++ 版本
+set(CMAKE_CXX_STANDARD 20)
 # 添加你的主程序源码
 add_library(${CMAKE_PROJECT_NAME} SHARED
         sdl_entry.c

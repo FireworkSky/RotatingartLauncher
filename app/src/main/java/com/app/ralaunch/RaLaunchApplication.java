@@ -3,6 +3,8 @@ package com.app.ralaunch;
 import android.app.Application;
 import android.content.Context;
 import android.content.res.Configuration;
+import android.system.ErrnoException;
+import android.system.Os;
 import android.util.Log;
 
 import com.app.ralaunch.data.GameDataManager;
@@ -75,6 +77,13 @@ public class RaLaunchApplication extends Application {
 
         // 初始化 GamePathResolver
         GamePathResolver.initialize(appContext);
+
+        // 设置环境变量
+        try {
+            Os.setenv("PACKAGE_NAME", appContext.getPackageName(), true);
+        } catch (ErrnoException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override

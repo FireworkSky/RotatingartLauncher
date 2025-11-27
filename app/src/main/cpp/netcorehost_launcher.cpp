@@ -29,12 +29,14 @@ JavaVM* Bridge_GetJavaVM();
 
 #include <jni.h>
 #include <android/log.h>
-#include <stdlib.h>
-#include <string.h>
+#include <cstdlib>
+#include <cstring>
+#include <format>
 #include <unistd.h>
 #include <sys/stat.h>
 #include <dlfcn.h>
 #include <string>
+#include <cassert>
 #include "app_logger.h"
 
 #define LOG_TAG "NetCoreHost"
@@ -65,6 +67,12 @@ static void str_free(char*& str) {
         free(str);
         str = nullptr;
     }
+}
+
+static std::string get_package_name() {
+    const char *package_name_cstr = getenv("PACKAGE_NAME"); // RaLaunchApplication.java 中设置了
+    assert(package_name_cstr != nullptr);
+    return {package_name_cstr};
 }
 
 /**
@@ -135,8 +143,10 @@ int netcorehost_set_params(
     setenv("COMPlus_DebugWriteToStdErr", "1", 1);
 
     // 6. 启用详细日志（用于调试）
-    setenv("COREHOST_TRACE", "1", 1);
-    setenv("COREHOST_TRACEFILE", "/sdcard/Android/data/com.app.ralaunch/files/corehost_trace.log", 1);
+    if (g_enable_corehost_trace) {
+        setenv("COREHOST_TRACE", "1", 1);
+        setenv("COREHOST_TRACEFILE", std::format("/sdcard/Android/data/{}/files/corehost_trace.log", get_package_name()).c_str(), 1);
+    }
 
     // 7. 设置保存目录
     setenv("XDG_DATA_HOME", std::string(app_dir).c_str(), 1);
@@ -181,8 +191,6 @@ int netcorehost_launch() {
     // 注意：libhostpolicy.so 已通过源码修改支持向下兼容
 
     LOGI(LOG_TAG, "==========================================");
-    setenv("COREHOST_TRACEFILE", "/sdcard/Android/data/com.app.ralaunch/files/corehost_trace.log", 1);
-    LOGI(LOG_TAG, "COREHOST_TRACE enabled, log file: /sdcard/Android/data/com.app.ralaunch/files/corehost_trace.log");
     // 初始化 JNI Bridge（在运行 .NET 程序集前）
     // 重要：.NET 加密库需要 JNI 环境来调用 Android KeyStore API
     LOGI(LOG_TAG, "Initializing JNI Bridge...");
@@ -210,9 +218,12 @@ int netcorehost_launch() {
             LOGI(LOG_TAG, "COREHOST_TRACE redirect initialized");
 
             // 启用 COREHOST_TRACE 以便捕获所有 .NET runtime 的 trace 输出
+            setenv("COREHOST_TRACEFILE", std::format("/sdcard/Android/data/{}/files/corehost_trace.log", get_package_name()).c_str(), 1);
+            LOGI(LOG_TAG, std::format("COREHOST_TRACE enabled, log file: /sdcard/Android/data/{}/files/corehost_trace.log", get_package_name()).c_str());
             setenv("COREHOST_TRACE", "1", 1);
             LOGI(LOG_TAG, "COREHOST_TRACE enabled");
         } else {
+            unsetenv("COREHOST_TRACE");
             LOGI(LOG_TAG, "COREHOST_TRACE disabled (verbose logging off)");
         }
 
@@ -458,8 +469,10 @@ Java_com_app_ralaunch_core_GameLauncher_netcorehostCallMethod(
         LOGI(LOG_TAG, "Initializing runtime context...");
 
         // 设置 Core Host 跟踪日志
-        setenv("COREHOST_TRACEFILE", "/sdcard/Android/data/com.app.ralaunch/files/patches/corehost_trace.log", 1);
-        LOGI(LOG_TAG, "Set COREHOST_TRACEFILE environment variable");
+        if (g_enable_corehost_trace) {
+            setenv("COREHOST_TRACEFILE", std::format("/sdcard/Android/data/{}/files/corehost_trace.log", get_package_name()).c_str(), 1);
+            LOGI(LOG_TAG, "Set COREHOST_TRACEFILE environment variable");
+        }
 
         auto assembly_path_pdc = netcorehost::PdCString::from_str(assembly_path.c_str());
 
