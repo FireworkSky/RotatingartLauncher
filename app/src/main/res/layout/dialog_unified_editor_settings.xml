@@ -30,9 +30,9 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="编辑器设置"
+            android:text="游戏设置"
             android:textColor="?attr/colorOnSurface"
-            android:textSize="24sp"
+            android:textSize="16sp"
             android:textStyle="bold" />
 
         <ImageButton
@@ -86,7 +86,7 @@
 
             </LinearLayout>
 
-            <!-- 控件操作区（默认隐藏） -->
+            <!-- 控件操作区（默认隐藏，进入编辑模式后显示） -->
             <LinearLayout
                 android:id="@+id/section_add_controls"
                 android:layout_width="match_parent"
@@ -190,8 +190,6 @@
 
             </LinearLayout>
 
-            </LinearLayout>
-
             <!-- 分隔线 -->
             <View
                 android:layout_width="match_parent"
@@ -199,101 +197,6 @@
                 android:background="?attr/dividerColor"
                 android:layout_marginTop="16dp"
                 android:layout_marginBottom="16dp" />
-
-            <!-- 布局管理区 -->
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="布局管理"
-                android:textColor="?attr/colorPrimary"
-                android:textSize="14sp"
-                android:textStyle="bold"
-                android:layout_marginBottom="8dp" />
-
-            <!-- 保存布局 -->
-            <LinearLayout
-                android:id="@+id/item_save_layout"
-                android:layout_width="match_parent"
-                android:layout_height="56dp"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:paddingStart="16dp"
-                android:paddingEnd="16dp"
-                android:background="?attr/selectableItemBackground"
-                android:clickable="true"
-                android:focusable="true">
-
-                <ImageView
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:src="@drawable/ic_save"
-                    android:tint="?attr/textPrimary" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="16dp"
-                    android:text="保存布局"
-                    android:textColor="?attr/textPrimary"
-                    android:textSize="16sp" />
-
-            </LinearLayout>
-
-            <!-- 加载布局 -->
-            <LinearLayout
-                android:id="@+id/item_load_layout"
-                android:layout_width="match_parent"
-                android:layout_height="56dp"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:paddingStart="16dp"
-                android:paddingEnd="16dp"
-                android:background="?attr/selectableItemBackground"
-                android:clickable="true"
-                android:focusable="true">
-
-                <ImageView
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:src="@drawable/ic_folder"
-                    android:tint="?attr/textPrimary" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="16dp"
-                    android:text="加载布局"
-                    android:textColor="?attr/textPrimary"
-                    android:textSize="16sp" />
-
-            </LinearLayout>
-
-            <!-- 重置为默认 -->
-            <LinearLayout
-                android:id="@+id/item_reset_default"
-                android:layout_width="match_parent"
-                android:layout_height="56dp"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:paddingStart="16dp"
-                android:paddingEnd="16dp"
-                android:background="?attr/selectableItemBackground"
-                android:clickable="true"
-                android:focusable="true">
-
-                <ImageView
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:src="@drawable/ic_refresh"
-                    android:tint="?attr/textPrimary" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="16dp"
-                    android:text="重置为默认"
-                    android:textColor="?attr/textPrimary"
-                    android:textSize="16sp" />
 
             </LinearLayout>
 
@@ -305,9 +208,9 @@
                 android:layout_marginTop="16dp"
                 android:layout_marginBottom="16dp" />
 
-            <!-- 最后一项（可配置：保存并退出/退出编辑） -->
+            <!-- 隐藏鼠标光标 -->
             <LinearLayout
-                android:id="@+id/item_last_action"
+                android:id="@+id/item_hide_cursor"
                 android:layout_width="match_parent"
                 android:layout_height="56dp"
                 android:orientation="horizontal"
@@ -319,21 +222,27 @@
                 android:focusable="true">
 
                 <ImageView
-                    android:id="@+id/iv_last_action_icon"
                     android:layout_width="24dp"
                     android:layout_height="24dp"
-                    android:src="@drawable/ic_check"
-                    android:tint="#4CAF50" />
+                    android:src="@drawable/ic_info_outline"
+                    android:tint="?attr/textPrimary" />
 
                 <TextView
-                    android:id="@+id/tv_last_action_text"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="16dp"
+                    android:text="隐藏鼠标光标"
+                    android:textColor="?attr/textPrimary"
+                    android:textSize="16sp" />
+
+                <androidx.appcompat.widget.SwitchCompat
+                    android:id="@+id/switch_hide_cursor"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="16dp"
-                    android:text="保存并退出"
-                    android:textColor="?attr/colorTertiary"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
+                    app:thumbTint="?attr/colorPrimary"
+                    app:trackTint="?attr/colorOutlineVariant" />
 
             </LinearLayout>
 

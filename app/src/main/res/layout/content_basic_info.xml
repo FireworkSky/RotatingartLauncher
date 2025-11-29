@@ -445,4 +445,70 @@
 
     </com.google.android.material.card.MaterialCardView>
 
+    <!-- 触摸穿透卡片 -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/item_pass_through"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="12dp"
+        android:clickable="true"
+        android:focusable="true"
+        android:foreground="?attr/selectableItemBackground"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="0dp"
+        app:strokeWidth="0dp"
+        app:cardBackgroundColor="?attr/colorSurface"
+        style="@style/Widget.App.CardView.Standard">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingHorizontal="20dp"
+            android:paddingVertical="16dp">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/ic_info_outline"
+                app:tint="?attr/textPrimary"
+                android:layout_marginEnd="16dp" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="触摸穿透"
+                    android:textColor="?attr/textPrimary"
+                    android:textSize="15sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="开启后触摸此控件也会触发游戏点击"
+                    android:textColor="?attr/textSecondary"
+                    android:textSize="12sp"
+                    android:layout_marginTop="2dp" />
+
+            </LinearLayout>
+
+            <androidx.appcompat.widget.SwitchCompat
+                android:id="@+id/switch_pass_through"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                app:thumbTint="?attr/colorPrimary"
+                app:trackTint="?attr/colorOutlineVariant" />
+
+        </LinearLayout>
+
+    </com.google.android.material.card.MaterialCardView>
+
 </LinearLayout>

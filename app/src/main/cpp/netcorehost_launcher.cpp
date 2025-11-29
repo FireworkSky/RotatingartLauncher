@@ -162,7 +162,15 @@ int netcorehost_set_params(
 
 
     // 输入
-    setenv("SDL_TOUCH_MOUSE_EVENTS", "1", 1);
+    setenv("SDL_TOUCH_MOUSE_EVENTS", "0 ", 1);
+
+    // 隐藏鼠标光标（如果Java层已设置，这里会覆盖；如果未设置，这里保持默认）
+    // 注意：实际值由Java层在loadLibraries时设置
+    const char* hideCursor = getenv("RALCORE_HIDE_CURSOR");
+    if (hideCursor == nullptr) {
+        // 如果未设置，默认不隐藏
+        unsetenv("RALCORE_HIDE_CURSOR");
+    }
 
     return 0;
 }

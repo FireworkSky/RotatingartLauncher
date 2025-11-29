@@ -121,8 +121,10 @@ public class ControlEditorActivity extends AppCompatActivity {
         button.setOnTouchListener(new View.OnTouchListener() {
             private float mLastX;
             private float mLastY;
-            private float mInitialX;
-            private float mInitialY;
+            private float mInitialTouchX;
+            private float mInitialTouchY;
+            private float mInitialButtonX;
+            private float mInitialButtonY;
             private boolean mIsDragging = false;
             private static final float DRAG_THRESHOLD = 10f; // 拖动阈值（像素）
             
@@ -132,8 +134,15 @@ public class ControlEditorActivity extends AppCompatActivity {
                     case MotionEvent.ACTION_DOWN:
                         mLastX = event.getRawX();
                         mLastY = event.getRawY();
-                        mInitialX = v.getX();
-                        mInitialY = v.getY();
+                        mInitialTouchX = event.getRawX();
+                        mInitialTouchY = event.getRawY();
+                        
+                        // 获取按钮的初始屏幕位置
+                        int[] location = new int[2];
+                        v.getLocationOnScreen(location);
+                        mInitialButtonX = location[0];
+                        mInitialButtonY = location[1];
+                        
                         mIsDragging = false;
                         return false; // 允许点击事件继续
                         
@@ -149,19 +158,34 @@ public class ControlEditorActivity extends AppCompatActivity {
                                 v.getParent().requestDisallowInterceptTouchEvent(true);
                             }
                             
-                            // 更新按钮位置（使用 setX/setY，适用于 FrameLayout）
-                            float newX = v.getX() + deltaX;
-                            float newY = v.getY() + deltaY;
+                            // 计算按钮的新屏幕位置
+                            float newScreenX = mInitialButtonX + (event.getRawX() - mInitialTouchX);
+                            float newScreenY = mInitialButtonY + (event.getRawY() - mInitialTouchY);
                             
-                            // 限制在屏幕范围内
+                            // 限制在屏幕范围内（允许拖动到最左边x=0）
                             DisplayMetrics metrics = getResources().getDisplayMetrics();
                             int maxX = metrics.widthPixels - v.getWidth();
                             int maxY = metrics.heightPixels - v.getHeight();
-                            newX = Math.max(0, Math.min(newX, maxX));
-                            newY = Math.max(0, Math.min(newY, maxY));
+                            newScreenX = Math.max(0, Math.min(newScreenX, maxX));
+                            newScreenY = Math.max(0, Math.min(newScreenY, maxY));
                             
-                            v.setX(newX);
-                            v.setY(newY);
+                            // 将屏幕坐标转换为相对于父容器的坐标
+                            int[] parentLocation = new int[2];
+                            ((View) v.getParent()).getLocationOnScreen(parentLocation);
+                            float newX = newScreenX - parentLocation[0];
+                            float newY = newScreenY - parentLocation[1];
+                            
+                            // 更新位置（优先使用setX/setY，如果父容器是FrameLayout）
+                            if (v.getParent() instanceof android.widget.FrameLayout) {
+                                v.setX(newX);
+                                v.setY(newY);
+                            } else {
+                                // 使用MarginLayoutParams
+                                ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) v.getLayoutParams();
+                                params.leftMargin = (int) newX;
+                                params.topMargin = (int) newY;
+                                v.setLayoutParams(params);
+                            }
                             
                             mLastX = event.getRawX();
                             mLastY = event.getRawY();
@@ -252,29 +276,13 @@ public class ControlEditorActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onSaveLayout() {
-                saveLayout();
-            }
-
-            @Override
-            public void onLoadLayout() {
-                loadLayout();
-            }
-
-            @Override
-            public void onResetDefault() {
-                resetToDefault();
-            }
-
-            @Override
-            public void onLastAction() {
-                saveLayout();
-                finish();
-            }
-
-            @Override
             public void onToggleEditMode() {
                 // 外部编辑器始终处于编辑模式，无需切换
+            }
+
+            @Override
+            public void onHideCursorChanged(boolean hide) {
+                // 隐藏鼠标光标设置变化
             }
         });
     }

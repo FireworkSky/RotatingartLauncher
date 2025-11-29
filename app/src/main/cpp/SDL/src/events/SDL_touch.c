@@ -23,6 +23,8 @@
 /* General touch handling code for SDL */
 
 #include "SDL_events.h"
+#include "SDL_hints.h"
+#include "SDL_timer.h"
 #include "SDL_events_c.h"
 #include "../video/SDL_sysvideo.h"
 
@@ -37,6 +39,54 @@ static SDL_Touch **SDL_touchDevices = NULL;
 static SDL_bool finger_touching = SDL_FALSE;
 static SDL_FingerID track_fingerid;
 static SDL_TouchID track_touchid;
+
+/* Multi-touch support for mouse emulation (RALCore extension)
+ * 
+ * When SDL_TOUCH_MOUSE_MULTITOUCH=1:
+ * - Each finger independently sends mouse button events
+ * - SDL_mouse.c's state check is bypassed to allow duplicate button events
+ * - The most recently touched finger controls mouse cursor movement
+ */
+#define MAX_TRACKED_FINGERS 10
+static int multitouch_finger_count = 0;
+static SDL_FingerID multitouch_fingers[MAX_TRACKED_FINGERS];
+static float multitouch_finger_x[MAX_TRACKED_FINGERS];
+static float multitouch_finger_y[MAX_TRACKED_FINGERS];
+static SDL_bool multitouch_enabled = SDL_FALSE;
+static SDL_FingerID multitouch_active_finger = 0;
+
+static int SDL_FindMultitouchFinger(SDL_FingerID fingerid) {
+    for (int i = 0; i < multitouch_finger_count; i++) {
+        if (multitouch_fingers[i] == fingerid) return i;
+    }
+    return -1;
+}
+
+static void SDL_AddMultitouchFinger(SDL_FingerID fingerid, float x, float y) {
+    if (multitouch_finger_count >= MAX_TRACKED_FINGERS) return;
+    multitouch_fingers[multitouch_finger_count] = fingerid;
+    multitouch_finger_x[multitouch_finger_count] = x;
+    multitouch_finger_y[multitouch_finger_count] = y;
+    multitouch_finger_count++;
+}
+
+static void SDL_RemoveMultitouchFinger(SDL_FingerID fingerid) {
+    int idx = SDL_FindMultitouchFinger(fingerid);
+    if (idx < 0) return;
+    for (int i = idx; i < multitouch_finger_count - 1; i++) {
+        multitouch_fingers[i] = multitouch_fingers[i + 1];
+        multitouch_finger_x[i] = multitouch_finger_x[i + 1];
+        multitouch_finger_y[i] = multitouch_finger_y[i + 1];
+    }
+    multitouch_finger_count--;
+}
+
+static void SDL_UpdateMultitouchFinger(SDL_FingerID fingerid, float x, float y) {
+    int idx = SDL_FindMultitouchFinger(fingerid);
+    if (idx < 0) return;
+    multitouch_finger_x[idx] = x;
+    multitouch_finger_y[idx] = y;
+}
 #endif
 
 /* Public functions */
@@ -248,6 +298,12 @@ int SDL_SendTouch(SDL_TouchID id, SDL_FingerID fingerid, SDL_Window *window,
     mouse = SDL_GetMouse();
 
 #if SYNTHESIZE_TOUCH_TO_MOUSE
+    /* Check for multitouch mode: SDL_TOUCH_MOUSE_MULTITOUCH=1 enables multi-finger gestures */
+    {
+        const char* multitouch_hint = SDL_GetHint("SDL_TOUCH_MOUSE_MULTITOUCH");
+        multitouch_enabled = (multitouch_hint && SDL_strcmp(multitouch_hint, "1") == 0);
+    }
+    
     /* SDL_HINT_TOUCH_MOUSE_EVENTS: controlling whether touch events should generate synthetic mouse events */
     /* SDL_HINT_VITA_TOUCH_MOUSE_DEVICE: controlling which touchpad should generate synthetic mouse events, PSVita-only */
     {
@@ -259,40 +315,97 @@ int SDL_SendTouch(SDL_TouchID id, SDL_FingerID fingerid, SDL_Window *window,
             /* FIXME: maybe we should only restrict to a few SDL_TouchDeviceType */
             if (id != SDL_MOUSE_TOUCHID) {
                 if (window) {
-                    if (down) {
-                        if (finger_touching == SDL_FALSE) {
+                    if (multitouch_enabled) {
+                        /* Multi-touch mode: each finger sends independent mouse events
+                         * SDL_mouse.c will skip state checking when multitouch is enabled
+                         */
+                        if (down) {
                             int pos_x = (int)(x * (float)window->w);
                             int pos_y = (int)(y * (float)window->h);
-                            if (pos_x < 0) {
-                                pos_x = 0;
-                            }
-                            if (pos_x > window->w - 1) {
-                                pos_x = window->w - 1;
-                            }
-                            if (pos_y < 0) {
-                                pos_y = 0;
-                            }
-                            if (pos_y > window->h - 1) {
-                                pos_y = window->h - 1;
-                            }
+                            if (pos_x < 0) pos_x = 0;
+                            if (pos_x > window->w - 1) pos_x = window->w - 1;
+                            if (pos_y < 0) pos_y = 0;
+                            if (pos_y > window->h - 1) pos_y = window->h - 1;
+                            
+                            SDL_AddMultitouchFinger(fingerid, x, y);
+                            
+                            /* This finger becomes the active one (controls mouse movement) */
+                            multitouch_active_finger = fingerid;
+                            finger_touching = SDL_TRUE;
+                            track_touchid = id;
+                            track_fingerid = fingerid;
+                            
+                            /* Send mouse move and button press - state check bypassed in SDL_mouse.c */
                             SDL_SendMouseMotion(window, SDL_TOUCH_MOUSEID, 0, pos_x, pos_y);
                             SDL_SendMouseButton(window, SDL_TOUCH_MOUSEID, SDL_PRESSED, SDL_BUTTON_LEFT);
+                        } else {
+                            /* Finger up */
+                            int finger_idx = SDL_FindMultitouchFinger(fingerid);
+                            SDL_bool is_active = (fingerid == multitouch_active_finger);
+                            
+                            /* Send release at this finger's position */
+                            if (finger_idx >= 0) {
+                                int pos_x = (int)(multitouch_finger_x[finger_idx] * (float)window->w);
+                                int pos_y = (int)(multitouch_finger_y[finger_idx] * (float)window->h);
+                                if (pos_x < 0) pos_x = 0;
+                                if (pos_x > window->w - 1) pos_x = window->w - 1;
+                                if (pos_y < 0) pos_y = 0;
+                                if (pos_y > window->h - 1) pos_y = window->h - 1;
+                                SDL_SendMouseMotion(window, SDL_TOUCH_MOUSEID, 0, pos_x, pos_y);
+                                SDL_SendMouseButton(window, SDL_TOUCH_MOUSEID, SDL_RELEASED, SDL_BUTTON_LEFT);
+                            }
+                            
+                            SDL_RemoveMultitouchFinger(fingerid);
+                            
+                            if (is_active && multitouch_finger_count > 0) {
+                                /* Transfer active finger */
+                                multitouch_active_finger = multitouch_fingers[0];
+                                track_fingerid = multitouch_fingers[0];
+                            } else if (multitouch_finger_count == 0) {
+                                finger_touching = SDL_FALSE;
+                            }
                         }
                     } else {
-                        if (finger_touching == SDL_TRUE && track_touchid == id && track_fingerid == fingerid) {
-                            SDL_SendMouseButton(window, SDL_TOUCH_MOUSEID, SDL_RELEASED, SDL_BUTTON_LEFT);
+                        /* Original single-touch behavior */
+                        if (down) {
+                            if (finger_touching == SDL_FALSE) {
+                                int pos_x = (int)(x * (float)window->w);
+                                int pos_y = (int)(y * (float)window->h);
+                                if (pos_x < 0) {
+                                    pos_x = 0;
+                                }
+                                if (pos_x > window->w - 1) {
+                                    pos_x = window->w - 1;
+                                }
+                                if (pos_y < 0) {
+                                    pos_y = 0;
+                                }
+                                if (pos_y > window->h - 1) {
+                                    pos_y = window->h - 1;
+                                }
+                                SDL_SendMouseMotion(window, SDL_TOUCH_MOUSEID, 0, pos_x, pos_y);
+                                SDL_SendMouseButton(window, SDL_TOUCH_MOUSEID, SDL_PRESSED, SDL_BUTTON_LEFT);
+                            }
+                        } else {
+                            if (finger_touching == SDL_TRUE && track_touchid == id && track_fingerid == fingerid) {
+                                SDL_SendMouseButton(window, SDL_TOUCH_MOUSEID, SDL_RELEASED, SDL_BUTTON_LEFT);
+                            }
                         }
                     }
                 }
-                if (down) {
-                    if (finger_touching == SDL_FALSE) {
-                        finger_touching = SDL_TRUE;
-                        track_touchid = id;
-                        track_fingerid = fingerid;
-                    }
-                } else {
-                    if (finger_touching == SDL_TRUE && track_touchid == id && track_fingerid == fingerid) {
-                        finger_touching = SDL_FALSE;
+                
+                /* Track single finger state (for non-multitouch mode) */
+                if (!multitouch_enabled) {
+                    if (down) {
+                        if (finger_touching == SDL_FALSE) {
+                            finger_touching = SDL_TRUE;
+                            track_touchid = id;
+                            track_fingerid = fingerid;
+                        }
+                    } else {
+                        if (finger_touching == SDL_TRUE && track_touchid == id && track_fingerid == fingerid) {
+                            finger_touching = SDL_FALSE;
+                        }
                     }
                 }
             }
@@ -382,22 +495,39 @@ int SDL_SendTouchMotion(SDL_TouchID id, SDL_FingerID fingerid, SDL_Window *windo
         if (mouse->touch_mouse_events) {
             if (id != SDL_MOUSE_TOUCHID) {
                 if (window) {
-                    if (finger_touching == SDL_TRUE && track_touchid == id && track_fingerid == fingerid) {
-                        int pos_x = (int)(x * (float)window->w);
-                        int pos_y = (int)(y * (float)window->h);
-                        if (pos_x < 0) {
-                            pos_x = 0;
+                    if (multitouch_enabled) {
+                        /* Multi-touch mode: update finger position */
+                        SDL_UpdateMultitouchFinger(fingerid, x, y);
+                        
+                        /* Only active finger controls cursor movement */
+                        if (fingerid == multitouch_active_finger && finger_touching == SDL_TRUE) {
+                            int pos_x = (int)(x * (float)window->w);
+                            int pos_y = (int)(y * (float)window->h);
+                            if (pos_x < 0) pos_x = 0;
+                            if (pos_x > window->w - 1) pos_x = window->w - 1;
+                            if (pos_y < 0) pos_y = 0;
+                            if (pos_y > window->h - 1) pos_y = window->h - 1;
+                            SDL_SendMouseMotion(window, SDL_TOUCH_MOUSEID, 0, pos_x, pos_y);
                         }
-                        if (pos_x > window->w - 1) {
-                            pos_x = window->w - 1;
+                    } else {
+                        /* Original single-touch behavior */
+                        if (finger_touching == SDL_TRUE && track_touchid == id && track_fingerid == fingerid) {
+                            int pos_x = (int)(x * (float)window->w);
+                            int pos_y = (int)(y * (float)window->h);
+                            if (pos_x < 0) {
+                                pos_x = 0;
+                            }
+                            if (pos_x > window->w - 1) {
+                                pos_x = window->w - 1;
+                            }
+                            if (pos_y < 0) {
+                                pos_y = 0;
+                            }
+                            if (pos_y > window->h - 1) {
+                                pos_y = window->h - 1;
+                            }
+                            SDL_SendMouseMotion(window, SDL_TOUCH_MOUSEID, 0, pos_x, pos_y);
                         }
-                        if (pos_y < 0) {
-                            pos_y = 0;
-                        }
-                        if (pos_y > window->h - 1) {
-                            pos_y = window->h - 1;
-                        }
-                        SDL_SendMouseMotion(window, SDL_TOUCH_MOUSEID, 0, pos_x, pos_y);
                     }
                 }
             }

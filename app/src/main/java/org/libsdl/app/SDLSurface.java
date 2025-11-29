@@ -28,6 +28,34 @@ import android.view.WindowManager;
 public class SDLSurface extends SurfaceView implements SurfaceHolder.Callback,
     View.OnKeyListener, View.OnTouchListener, SensorEventListener  {
 
+    private static final String TAG = "SDLSurface";
+    
+    // Touch bridge native methods for sharing touch data with C#
+    private static native void nativeSetTouchData(int count, float[] x, float[] y, int screenWidth, int screenHeight);
+    private static native void nativeClearTouchData();
+    
+    // Touch bridge availability flag (lazy init)
+    private static Boolean sTouchBridgeAvailable = null;
+    
+    private static boolean isTouchBridgeAvailable() {
+        if (sTouchBridgeAvailable == null) {
+            try {
+                // Test if the native method is available
+                nativeClearTouchData();
+                sTouchBridgeAvailable = true;
+                Log.i(TAG, "Touch bridge native methods available");
+            } catch (UnsatisfiedLinkError e) {
+                Log.w(TAG, "Touch bridge native methods not available: " + e.getMessage());
+                sTouchBridgeAvailable = false;
+            }
+        }
+        return sTouchBridgeAvailable;
+    }
+    
+    // Touch data arrays for JNI
+    private float[] mTouchX = new float[10];
+    private float[] mTouchY = new float[10];
+
     // Sensors
     protected SensorManager mSensorManager;
     protected Display mDisplay;
@@ -197,6 +225,9 @@ public class SDLSurface extends SurfaceView implements SurfaceHolder.Callback,
         int pointerFingerId;
         int i = -1;
         float x,y,p;
+        
+        // Update touch bridge data for C# access
+        updateTouchBridge(event);
 
         /*
          * Prevent id to be -1, since it's used in SDL internal for synthetic events
@@ -291,6 +322,52 @@ public class SDLSurface extends SurfaceView implements SurfaceHolder.Callback,
 
         return true;
    }
+   
+    // Update touch bridge data for C# access
+    private void updateTouchBridge(MotionEvent event) {
+        if (!isTouchBridgeAvailable()) {
+            return;
+        }
+        
+        try {
+            int action = event.getActionMasked();
+            
+            if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) {
+                // All fingers released
+                nativeClearTouchData();
+                Log.d(TAG, "Touch bridge: cleared");
+                return;
+            }
+            
+            int pointerCount = event.getPointerCount();
+            int actionIndex = event.getActionIndex();
+            
+            // For POINTER_UP, exclude the finger being lifted
+            boolean isPointerUp = (action == MotionEvent.ACTION_POINTER_UP);
+            
+            int validCount = 0;
+            for (int i = 0; i < pointerCount && validCount < 10; i++) {
+                // Skip the finger being lifted
+                if (isPointerUp && i == actionIndex) {
+                    continue;
+                }
+                
+                // Store normalized coordinates (0-1)
+                mTouchX[validCount] = event.getX(i) / mWidth;
+                mTouchY[validCount] = event.getY(i) / mHeight;
+                validCount++;
+            }
+            
+            nativeSetTouchData(validCount, mTouchX, mTouchY, (int)mWidth, (int)mHeight);
+            
+            if (validCount > 0) {
+                Log.d(TAG, "Touch bridge: count=" + validCount + 
+                    " p0=(" + (int)(mTouchX[0] * mWidth) + "," + (int)(mTouchY[0] * mHeight) + ")");
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Touch bridge error: " + e.getMessage());
+        }
+    }
 
     // Sensor events
     public void enableSensor(int sensortype, boolean enabled) {

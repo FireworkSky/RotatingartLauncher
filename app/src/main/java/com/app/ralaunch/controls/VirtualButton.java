@@ -41,6 +41,7 @@ public class VirtualButton extends View implements ControlView {
     // 按钮状态
     private boolean mIsPressed = false;
     private boolean mIsToggled = false;
+    private int mActivePointerId = -1; // 跟踪的触摸点 ID
     
     /**
      * 设置按下状态（用于编辑模式的选择反馈）
@@ -293,17 +294,44 @@ public class VirtualButton extends View implements ControlView {
     
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        switch (event.getActionMasked()) {
+        int action = event.getActionMasked();
+        int pointerId = event.getPointerId(event.getActionIndex());
+        
+        switch (action) {
             case MotionEvent.ACTION_DOWN:
+            case MotionEvent.ACTION_POINTER_DOWN:
+                // 如果已经在跟踪一个触摸点，忽略新的
+                if (mActivePointerId != -1) {
+                    return false;
+                }
+                
+                // 记录触摸点
+                mActivePointerId = pointerId;
+                // 如果不穿透，标记这个触摸点被占用（不传递给游戏）
+                if (!mData.passThrough) {
+                    TouchPointerTracker.consumePointer(pointerId);
+                }
+                
                 handlePress();
                 triggerVibration(true);
                 return true;
                 
             case MotionEvent.ACTION_UP:
             case MotionEvent.ACTION_CANCEL:
-                triggerVibration(false);
-                handleRelease();
-                return true;
+            case MotionEvent.ACTION_POINTER_UP:
+                // 检查是否是我们跟踪的触摸点
+                if (pointerId == mActivePointerId) {
+                    // 释放触摸点标记（如果之前标记了）
+                    if (!mData.passThrough) {
+                        TouchPointerTracker.releasePointer(mActivePointerId);
+                    }
+                    mActivePointerId = -1;
+                    
+                    triggerVibration(false);
+                    handleRelease();
+                    return true;
+                }
+                return false;
         }
         return super.onTouchEvent(event);
     }

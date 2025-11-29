@@ -782,7 +782,17 @@ static int SDL_PrivateSendMouseButton(SDL_Window *window, SDL_MouseID mouseID, U
         SDL_UpdateMouseFocus(window, mouse->x, mouse->y, buttonstate, SDL_TRUE);
     }
 
-    if (buttonstate == source->buttonstate) {
+    /* RALCore: For multi-touch mouse emulation, skip state check when SDL_TOUCH_MOUSE_MULTITOUCH=1
+     * This allows multiple simultaneous touch points to each generate mouse events */
+    SDL_bool skip_state_check = SDL_FALSE;
+    if (mouseID == SDL_TOUCH_MOUSEID) {
+        const char* multitouch_hint = SDL_GetHint("SDL_TOUCH_MOUSE_MULTITOUCH");
+        if (multitouch_hint && SDL_strcmp(multitouch_hint, "1") == 0) {
+            skip_state_check = SDL_TRUE;
+        }
+    }
+
+    if (!skip_state_check && buttonstate == source->buttonstate) {
         /* Ignore this event, no state change */
         return 0;
     }

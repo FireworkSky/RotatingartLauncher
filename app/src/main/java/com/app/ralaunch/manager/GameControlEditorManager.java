@@ -267,26 +267,6 @@ public class GameControlEditorManager {
             }
 
             @Override
-            public void onSaveLayout() {
-                saveControlLayout();
-            }
-
-            @Override
-            public void onLoadLayout() {
-                loadControlLayout();
-            }
-
-            @Override
-            public void onResetDefault() {
-                resetToDefaultLayout();
-            }
-
-            @Override
-            public void onLastAction() {
-                exitEditMode();
-            }
-
-            @Override
             public void onToggleEditMode() {
                 // 切换编辑模式：根据当前状态进入或退出
                 if (mIsInEditor) {
@@ -294,6 +274,12 @@ public class GameControlEditorManager {
                 } else {
                     enterEditMode();
                 }
+            }
+
+            @Override
+            public void onHideCursorChanged(boolean hide) {
+                // 隐藏鼠标光标设置变化，通过环境变量传递给游戏
+                // 这个设置会在游戏启动时读取
             }
         });
     }

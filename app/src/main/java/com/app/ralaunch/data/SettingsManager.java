@@ -52,6 +52,8 @@ public class SettingsManager {
 
         // 控制设置
         public static final String CONTROLS_VIBRATION_ENABLED = "controls_vibration_enabled";
+        public static final String TOUCH_MULTITOUCH_ENABLED = "touch_multitouch_enabled"; // 多点触控模拟鼠标
+        public static final String HIDE_CURSOR_ENABLED = "hide_cursor_enabled"; // 隐藏鼠标光标
 
         // 开发者设置
         public static final String VERBOSE_LOGGING = "verbose_logging";
@@ -93,6 +95,8 @@ public class SettingsManager {
 
         // 控制设置
         public static final boolean CONTROLS_VIBRATION_ENABLED = true; // 默认开启振动反馈
+        public static final boolean TOUCH_MULTITOUCH_ENABLED = true; // 默认开启多点触控
+        public static final boolean HIDE_CURSOR_ENABLED = false; // 默认不隐藏鼠标光标
 
         // CoreCLR 默认值
         public static final boolean CORECLR_SERVER_GC = false; // 移动端默认关闭 Server GC
@@ -306,6 +310,21 @@ public class SettingsManager {
         putBoolean(Keys.CONTROLS_VIBRATION_ENABLED, enabled);
     }
     
+    /**
+     * 是否启用多点触控鼠标模拟
+     * 启用后：
+     * - 每个触摸点独立发送鼠标按下/释放事件
+     * - 最新触摸的手指控制鼠标移动
+     * - 支持同时多指点击不同屏幕位置
+     */
+    public boolean isTouchMultitouchEnabled() {
+        return getBoolean(Keys.TOUCH_MULTITOUCH_ENABLED, Defaults.TOUCH_MULTITOUCH_ENABLED);
+    }
+    
+    public void setTouchMultitouchEnabled(boolean enabled) {
+        putBoolean(Keys.TOUCH_MULTITOUCH_ENABLED, enabled);
+    }
+    
     // 开发者设置
     public boolean isVerboseLogging() {
         return getBoolean(Keys.VERBOSE_LOGGING, Defaults.VERBOSE_LOGGING);
@@ -397,6 +416,20 @@ public class SettingsManager {
 
     public void setJitOptimizeType(int type) {
         putInt(Keys.CORECLR_JIT_OPTIMIZE_TYPE, type);
+    }
+
+    /**
+     * 是否隐藏鼠标光标
+     */
+    public boolean isHideCursorEnabled() {
+        return getBoolean(Keys.HIDE_CURSOR_ENABLED, Defaults.HIDE_CURSOR_ENABLED);
+    }
+
+    /**
+     * 设置是否隐藏鼠标光标
+     */
+    public void setHideCursorEnabled(boolean enabled) {
+        putBoolean(Keys.HIDE_CURSOR_ENABLED, enabled);
     }
 
     /**

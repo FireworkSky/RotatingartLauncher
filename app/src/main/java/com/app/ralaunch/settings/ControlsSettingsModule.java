@@ -23,6 +23,7 @@ public class ControlsSettingsModule implements SettingsModule {
         this.settingsManager = SettingsManager.getInstance(fragment.requireContext());
         
         setupVibrationSettings();
+        setupMultitouchSettings();
     }
     
     private void setupVibrationSettings() {
@@ -33,6 +34,18 @@ public class ControlsSettingsModule implements SettingsModule {
             switchVibration.setOnCheckedChangeListener((buttonView, isChecked) -> {
                 // 保存振动反馈设置
                  settingsManager.setVibrationEnabled(isChecked);
+            });
+        }
+    }
+    
+    private void setupMultitouchSettings() {
+        MaterialSwitch switchMultitouch = rootView.findViewById(R.id.switchMultitouch);
+        if (switchMultitouch != null) {
+            boolean multitouchEnabled = settingsManager.isTouchMultitouchEnabled();
+            switchMultitouch.setChecked(multitouchEnabled);
+            switchMultitouch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                // 保存多点触控设置
+                settingsManager.setTouchMultitouchEnabled(isChecked);
             });
         }
     }

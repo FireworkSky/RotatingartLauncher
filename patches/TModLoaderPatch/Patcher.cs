@@ -134,6 +134,7 @@ public static class Patcher
         LoggingHooksHarmonyPatch(assembly);
         TMLContentManagerPatch(assembly);
         FullScreenPatch(assembly);
+        HideCursorPatch(assembly);
 
         Console.WriteLine("[TModLoaderPatch] All patches applied successfully!");
     }
@@ -407,5 +408,177 @@ public static class Patcher
         IsSteamUnsupported?.SetValue(null, false);
         
         Console.WriteLine("[TModLoaderPatch] InstallVerifier class mitigations applied successfully!");
+    }
+
+    /// <summary>
+    /// 隐藏鼠标光标补丁 - 根据环境变量或设置隐藏鼠标光标
+    /// 参考 PojavLauncher：PojavLauncher 使用 LWJGL，通过 glfwSetInputMode 处理光标状态
+    /// 对于 FNA/XNA 游戏，直接设置 Game.IsMouseVisible = false
+    /// </summary>
+    public static void HideCursorPatch(Assembly assembly)
+    {
+        try
+        {
+            // 检查环境变量
+            string? hideCursorEnv = Environment.GetEnvironmentVariable("RALCORE_HIDE_CURSOR");
+            bool shouldHide = hideCursorEnv == "1" || hideCursorEnv == "true";
+
+            if (!shouldHide)
+            {
+                Console.WriteLine("[TModLoaderPatch] Hide cursor not enabled (RALCORE_HIDE_CURSOR not set)");
+                return;
+            }
+
+            Console.WriteLine("[TModLoaderPatch] Hide cursor enabled, applying patch...");
+
+            // 获取 FNA 程序集
+            var loadedAssemblies = AppDomain.CurrentDomain.GetAssemblies();
+            var FNAAssembly = loadedAssemblies.FirstOrDefault(a => a.GetName().Name == "FNA");
+
+            if (FNAAssembly == null)
+            {
+                Console.WriteLine("[TModLoaderPatch] [WARN] FNA assembly not found for hide cursor patch.");
+                return;
+            }
+
+            // 从 FNA 程序集中获取 Game 类型
+            Type? gameType = FNAAssembly.GetType("Microsoft.Xna.Framework.Game");
+
+            if (gameType == null)
+            {
+                Console.WriteLine("[TModLoaderPatch] Microsoft.Xna.Framework.Game class not found in FNA assembly.");
+                return;
+            }
+
+            // 获取 IsMouseVisible 属性
+            var isMouseVisibleProperty = gameType.GetProperty("IsMouseVisible", BindingFlags.Instance | BindingFlags.Public);
+
+            if (isMouseVisibleProperty == null)
+            {
+                Console.WriteLine("[TModLoaderPatch] [WARN] Game.IsMouseVisible property not found.");
+                return;
+            }
+
+            // 获取 Terraria.Main 类型
+            Type? mainType = assembly.GetType("Terraria.Main");
+
+            if (mainType == null)
+            {
+                Console.WriteLine("[TModLoaderPatch] [WARN] Terraria.Main class not found.");
+                return;
+            }
+
+            // 获取 game 静态字段
+            var gameField = mainType.GetField("game", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
+
+            if (gameField == null)
+            {
+                Console.WriteLine("[TModLoaderPatch] [WARN] Terraria.Main.game field not found.");
+                return;
+            }
+
+            // 方法1：尝试在 Main.Initialize 后设置
+            MethodInfo? initializeMethod = mainType.GetMethod("Initialize", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
+            if (initializeMethod != null)
+            {
+                Harmony harmony = _harmony!;
+                HarmonyMethod postfix = new HarmonyMethod(typeof(Patcher), nameof(HideCursorPatch_Postfix));
+                harmony.Patch(initializeMethod, postfix: postfix);
+                Console.WriteLine("[TModLoaderPatch] Hide cursor patch applied to Main.Initialize!");
+            }
+            
+            // 方法2：尝试在 Main.LoadContent 后设置（作为备用）
+            MethodInfo? loadContentMethod = mainType.GetMethod("LoadContent", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
+            if (loadContentMethod != null)
+            {
+                Harmony harmony = _harmony!;
+                HarmonyMethod postfix = new HarmonyMethod(typeof(Patcher), nameof(HideCursorPatch_Postfix));
+                harmony.Patch(loadContentMethod, postfix: postfix);
+                Console.WriteLine("[TModLoaderPatch] Hide cursor patch applied to Main.LoadContent!");
+            }
+
+            // 方法3：尝试在 Main.DoUpdate 中持续设置（确保即使游戏重新设置也能保持隐藏）
+            MethodInfo? doUpdateMethod = mainType.GetMethod("DoUpdate", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
+            if (doUpdateMethod != null)
+            {
+                Harmony harmony = _harmony!;
+                HarmonyMethod prefix = new HarmonyMethod(typeof(Patcher), nameof(HideCursorPatch_DoUpdatePrefix));
+                harmony.Patch(doUpdateMethod, prefix: prefix);
+                Console.WriteLine("[TModLoaderPatch] Hide cursor patch applied to Main.DoUpdate!");
+            }
+
+            Console.WriteLine("[TModLoaderPatch] Hide cursor patch applied successfully!");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[TModLoaderPatch] Error applying hide cursor patch: {ex.Message}");
+            Console.WriteLine($"[TModLoaderPatch] Stack: {ex.StackTrace}");
+        }
+    }
+
+    /// <summary>
+    /// Postfix 补丁 - 在 Main.Initialize 或 LoadContent 后隐藏鼠标光标
+    /// </summary>
+    public static void HideCursorPatch_Postfix()
+    {
+        SetMouseVisible(false);
+    }
+
+    /// <summary>
+    /// Prefix 补丁 - 在 Main.DoUpdate 中持续确保鼠标光标隐藏
+    /// </summary>
+    public static void HideCursorPatch_DoUpdatePrefix()
+    {
+        SetMouseVisible(false);
+    }
+
+    /// <summary>
+    /// 设置鼠标光标可见性的辅助方法
+    /// </summary>
+    private static void SetMouseVisible(bool visible)
+    {
+        try
+        {
+            var loadedAssemblies = AppDomain.CurrentDomain.GetAssemblies();
+            var tModLoaderAssembly = loadedAssemblies.FirstOrDefault(a => a.GetName().Name == "tModLoader");
+            var FNAAssembly = loadedAssemblies.FirstOrDefault(a => a.GetName().Name == "FNA");
+
+            if (tModLoaderAssembly == null || FNAAssembly == null)
+            {
+                return;
+            }
+
+            Type? mainType = tModLoaderAssembly.GetType("Terraria.Main");
+            Type? gameType = FNAAssembly.GetType("Microsoft.Xna.Framework.Game");
+
+            if (mainType == null || gameType == null)
+            {
+                return;
+            }
+
+            var gameField = mainType.GetField("game", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
+            var isMouseVisibleProperty = gameType.GetProperty("IsMouseVisible", BindingFlags.Instance | BindingFlags.Public);
+
+            if (gameField != null && isMouseVisibleProperty != null)
+            {
+                object? gameInstance = gameField.GetValue(null);
+                if (gameInstance != null)
+                {
+                    bool currentValue = (bool)(isMouseVisibleProperty.GetValue(gameInstance) ?? true);
+                    if (currentValue != !visible) // 如果需要隐藏但当前可见，或需要显示但当前隐藏
+                    {
+                        isMouseVisibleProperty.SetValue(gameInstance, !visible);
+                        if (!visible)
+                        {
+                            Console.WriteLine("[TModLoaderPatch] Game.IsMouseVisible set to false");
+                        }
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            // 静默失败，避免日志刷屏
+        }
     }
 }

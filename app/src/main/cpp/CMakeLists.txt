@@ -103,6 +103,7 @@ add_library(${CMAKE_PROJECT_NAME} SHARED
         vulkan_turnip_loader.c
         driver_helper/nsbypass.c
         utils/loader_dlopen.c
+        touch_bridge.c
 )
 
 # 链接库

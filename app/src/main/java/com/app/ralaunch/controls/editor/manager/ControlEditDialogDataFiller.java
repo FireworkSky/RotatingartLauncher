@@ -72,6 +72,12 @@ public class ControlEditDialogDataFiller {
                 tvJoystickStickSelect.setText(refs.getCurrentData().xboxUseRightStick ? "右摇杆" : "左摇杆");
             }
         }
+        
+        // 触摸穿透开关
+        SwitchCompat switchPassThrough = view.findViewById(R.id.switch_pass_through);
+        if (switchPassThrough != null) {
+            switchPassThrough.setChecked(refs.getCurrentData().passThrough);
+        }
     }
     
     /**

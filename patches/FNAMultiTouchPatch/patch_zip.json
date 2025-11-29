@@ -1,0 +1,14 @@
+{
+  "id": "com.app.ralaunch.tmodloader.multitouch",
+  "name": "触屏多点触控补丁",
+  "description": "为 tModLoader/Terraria 添加触屏多点触控支持。直接触屏模式：SDL_TOUCH_MOUSE_EVENTS=0；多点鼠标模式：SDL_TOUCH_MOUSE_MULTITOUCH=1",
+  "version": "2.0.0",
+  "author": "RA Launcher Team",
+  "target_games": [
+    "tModLoader",
+    "Terraria"
+  ],
+  "entry_assembly_file": "FNAMultiTouchPatch.dll",
+  "priority": 100
+}
+

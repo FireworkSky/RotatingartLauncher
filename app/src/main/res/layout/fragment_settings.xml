@@ -36,18 +36,50 @@
             android:maxLines="2" />
 
         <!-- 设置分类列表 -->
-        <!-- 会被 SettingFragment 替换为 ScrollView 和 LinearLayout -->
-        <ListView
-            android:id="@+id/settingsCategoryListView"
+        <androidx.core.widget.NestedScrollView
+            android:id="@+id/settingsCategoryScrollView"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
-            android:divider="@android:color/transparent"
-            android:dividerHeight="0dp"
-            android:paddingTop="0dp"
-            android:paddingBottom="8dp"
-            android:scrollbars="none"
-            android:choiceMode="singleChoice" />
+            android:fillViewport="false"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:id="@+id/settingsCategoryLinearLayout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingTop="0dp"
+                android:paddingBottom="8dp">
+
+                <!-- 外观设置 -->
+                <include
+                    layout="@layout/item_settings_category"
+                    android:id="@+id/categoryAppearance" />
+
+                <!-- 控制设置 -->
+                <include
+                    layout="@layout/item_settings_category"
+                    android:id="@+id/categoryControls" />
+
+                <!-- 游戏设置 -->
+                <include
+                    layout="@layout/item_settings_category"
+                    android:id="@+id/categoryGame" />
+
+                <!-- 启动器设置 -->
+                <include
+                    layout="@layout/item_settings_category"
+                    android:id="@+id/categoryLauncher" />
+
+                <!-- 实验性设置 -->
+                <include
+                    layout="@layout/item_settings_category"
+                    android:id="@+id/categoryDeveloper" />
+
+            </LinearLayout>
+
+        </androidx.core.widget.NestedScrollView>
 
     </LinearLayout>
 

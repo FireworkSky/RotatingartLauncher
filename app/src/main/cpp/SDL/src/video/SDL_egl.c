@@ -249,34 +249,33 @@ void *SDL_EGL_GetProcAddress(_THIS, const char *proc)
         const Uint32 eglver = (((Uint32)_this->egl_data->egl_version_major) << 16) | ((Uint32)_this->egl_data->egl_version_minor);
         const SDL_bool is_egl_15_or_later = eglver >= ((((Uint32)1) << 16) | 5);
 
-        /* For OSMesa, try OSMesaGetProcAddress first (if available)
+        /* For OSMesa, try OSMesaGetProcAddress first (if available and context is ready)
          * This ensures we get zink's glGetString instead of system EGL's
-         * Note: OSMesaGetProcAddress can be called before context creation,
-         * but the returned function pointers will only work after context is made current
+         * IMPORTANT: Only use OSMesaGetProcAddress after OSMesa context is created and made current
+         * Otherwise, the returned function pointers may not work correctly
          */
 #ifdef __ANDROID__
         const char *fna3d_gl_lib = SDL_getenv("FNA3D_OPENGL_LIBRARY");
         SDL_bool is_osmesa = (fna3d_gl_lib && SDL_strcasestr(fna3d_gl_lib, "osmesa"));
         if (is_osmesa && _this->egl_data->opengl_dll_handle) {
-            /* Try to get OSMesaGetProcAddress from the OSMesa library
-             * This can be called even before context creation
+            /* Check if OSMesa context is already initialized
+             * We can check this by trying to get OSMesaGetCurrentContext
+             * If it returns non-NULL, the context is ready
              */
-            void* (*OSMesaGetProcAddress)(const char*) = (void* (*)(const char*))
-                SDL_LoadFunction(_this->egl_data->opengl_dll_handle, "OSMesaGetProcAddress");
-            if (OSMesaGetProcAddress) {
-                retval = OSMesaGetProcAddress(proc);
-                if (retval) {
-                    /* Check if context is ready for logging purposes */
-                    void* (*OSMesaGetCurrentContext)(void) = (void* (*)(void))
-                        SDL_LoadFunction(_this->egl_data->opengl_dll_handle, "OSMesaGetCurrentContext");
-                    if (OSMesaGetCurrentContext && OSMesaGetCurrentContext() != NULL) {
+            void* (*OSMesaGetCurrentContext)(void) = (void* (*)(void))
+                SDL_LoadFunction(_this->egl_data->opengl_dll_handle, "OSMesaGetCurrentContext");
+            if (OSMesaGetCurrentContext && OSMesaGetCurrentContext() != NULL) {
+                /* OSMesa context is ready, use OSMesaGetProcAddress */
+                void* (*OSMesaGetProcAddress)(const char*) = (void* (*)(const char*))
+                    SDL_LoadFunction(_this->egl_data->opengl_dll_handle, "OSMesaGetProcAddress");
+                if (OSMesaGetProcAddress) {
+                    retval = OSMesaGetProcAddress(proc);
+                    if (retval) {
                         SDL_Log("SDL_EGL: Using OSMesaGetProcAddress for %s (context ready)", proc);
-                    } else {
-                        SDL_Log("SDL_EGL: Using OSMesaGetProcAddress for %s (context not ready yet, will work after context creation)", proc);
                     }
                 }
             }
-            /* If OSMesaGetProcAddress failed, fall through to EGL methods */
+            /* If OSMesa context is not ready yet, fall through to EGL methods */
         }
 #endif
 
@@ -807,36 +806,34 @@ static int SDL_EGL_PrivateChooseConfig(_THIS, SDL_bool set_config_caveat_none)
         attribs[i++] = EGL_PBUFFER_BIT;
     }
 
-//   /* Skip EGL_RENDERABLE_TYPE for OSMesa/Zink compatibility (similar to gl4es fix)
-//    * Set SDL_EGL_SKIP_RENDERABLE_TYPE=1 to skip this attribute */
-//   const char* skip_renderable_type = SDL_getenv("SDL_EGL_SKIP_RENDERABLE_TYPE");
-//   if (!skip_renderable_type || SDL_strcmp(skip_renderable_type, "1") != 0) {
-//       attribs[i++] = EGL_RENDERABLE_TYPE;
-//       if (_this->gl_config.profile_mask == SDL_GL_CONTEXT_PROFILE_ES) {
-//ifdef EGL_KHR_create_context
-//           if (_this->gl_config.major_version >= 3 &&
-//               SDL_EGL_HasExtension(_this, SDL_EGL_DISPLAY_EXTENSION, "EGL_KHR_create_context")) {
-//               attribs[i++] = EGL_OPENGL_ES3_BIT_KHR;
-//           } else
-//endif
-//           if (_this->gl_config.major_version >= 2) {
-//               attribs[i++] = EGL_OPENGL_ES2_BIT;
-//           } else {
-//               attribs[i++] = EGL_OPENGL_ES_BIT;
-//           }
-//           _this->egl_data->eglBindAPI(EGL_OPENGL_ES_API);
-//       } else {
-//           attribs[i++] = EGL_OPENGL_BIT;
-//           _this->egl_data->eglBindAPI(EGL_OPENGL_API);
-//       }
-//   }
+// /* Skip EGL_RENDERABLE_TYPE for OSMesa/Zink compatibility (similar to gl4es fix)
+//  * Set SDL_EGL_SKIP_RENDERABLE_TYPE=1 to skip this attribute */
+// const char* skip_renderable_type = SDL_getenv("SDL_EGL_SKIP_RENDERABLE_TYPE");
+// if (!skip_renderable_type || SDL_strcmp(skip_renderable_type, "1") != 0) {
+//     attribs[i++] = EGL_RENDERABLE_TYPE;
+//     if (_this->gl_config.profile_mask == SDL_GL_CONTEXT_PROFILE_ES) {
+//def EGL_KHR_create_context
+//         if (_this->gl_config.major_version >= 3 &&
+//             SDL_EGL_HasExtension(_this, SDL_EGL_DISPLAY_EXTENSION, "EGL_KHR_create_context")) {
+//             attribs[i++] = EGL_OPENGL_ES3_BIT_KHR;
+//         } else
+//dif
+//         if (_this->gl_config.major_version >= 2) {
+//             attribs[i++] = EGL_OPENGL_ES2_BIT;
+//         } else {
+//             attribs[i++] = EGL_OPENGL_ES_BIT;
+//         }
+//         _this->egl_data->eglBindAPI(EGL_OPENGL_ES_API);
+//     } else {
+//         attribs[i++] = EGL_OPENGL_BIT;
+//         _this->egl_data->eglBindAPI(EGL_OPENGL_API);
+//     }
+// }
 //
-//
-//
-    if (_this->egl_data->egl_surfacetype) {
-        attribs[i++] = EGL_SURFACE_TYPE;
-        attribs[i++] = _this->egl_data->egl_surfacetype;
-    }
+// if (_this->egl_data->egl_surfacetype) {
+//     attribs[i++] = EGL_SURFACE_TYPE;
+//     attribs[i++] = _this->egl_data->egl_surfacetype;
+// }
 
     attribs[i++] = EGL_NONE;
 
@@ -1027,7 +1024,8 @@ SDL_GLContext SDL_EGL_CreateContext(_THIS, EGLSurface egl_surface)
 
     SDL_bool is_gl4es = (fna3d_driver_attr && SDL_strcasecmp(fna3d_driver_attr, "gl4es") == 0);
     SDL_bool is_zink = (fna3d_driver_attr &&
-                        SDL_strcasecmp(fna3d_driver_attr, "zink") == 0);
+                        (SDL_strcasecmp(fna3d_driver_attr, "zink") == 0 ||
+                         SDL_strcasecmp(fna3d_driver_attr, "zink25") == 0));
 
     /* Only gl4es and native zink (without OSMesa) need GLES context */
     if (is_gl4es || (is_zink && !is_osmesa)) {
@@ -1144,7 +1142,8 @@ SDL_GLContext SDL_EGL_CreateContext(_THIS, EGLSurface egl_surface)
         if (SDL_strcasecmp(fna3d_driver, "gl4es") == 0) {
             force_es_api = 1;
             SDL_Log("SDL_EGL: gl4es detected, using EGL_OPENGL_ES_API");
-        } else if (SDL_strcasecmp(fna3d_driver, "zink") == 0) {
+        } else if ((SDL_strcasecmp(fna3d_driver, "zink") == 0 ||
+                    SDL_strcasecmp(fna3d_driver, "zink25") == 0)) {
             /* On Android, always use ES API (OSMesa handles desktop GL internally) */
             force_es_api = 1;
             if (is_osmesa_bind) {

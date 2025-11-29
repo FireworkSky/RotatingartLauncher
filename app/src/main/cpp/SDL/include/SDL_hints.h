@@ -1854,6 +1854,26 @@ extern "C" {
 #define SDL_HINT_TOUCH_MOUSE_EVENTS    "SDL_TOUCH_MOUSE_EVENTS"
 
 /**
+ *  \brief  A variable controlling whether multi-touch gestures should generate mouse events
+ *
+ *  This is a RALCore extension for touch-to-mouse conversion with multi-finger support:
+ *    "0"       - Single-touch mode: only first finger controls mouse (default)
+ *    "1"       - Multi-touch mode:
+ *                - Each finger touch sends mouse move + left button PRESSED event
+ *                - Each finger lift sends left button RELEASED event  
+ *                - SDL_mouse.c's button state check is bypassed for touch events
+ *                - This allows multiple simultaneous clicks at different positions
+ *                - The most recently touched finger controls mouse cursor movement
+ *
+ *  Implementation: When enabled, SDL_PrivateSendMouseButton in SDL_mouse.c skips
+ *  the "buttonstate == source->buttonstate" check for SDL_TOUCH_MOUSEID events,
+ *  allowing duplicate button press events from multiple touch points.
+ *
+ *  Requires SDL_TOUCH_MOUSE_EVENTS to be enabled ("1") to take effect.
+ */
+#define SDL_HINT_TOUCH_MOUSE_MULTITOUCH    "SDL_TOUCH_MOUSE_MULTITOUCH"
+
+/**
  *  \brief  A variable controlling which touchpad should generate synthetic mouse events
  *
  *  This variable can be set to the following values:

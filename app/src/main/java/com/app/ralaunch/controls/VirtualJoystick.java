@@ -46,6 +46,7 @@ public class VirtualJoystick extends View implements ControlView {
     private float mStickRadius;
     private int mCurrentDirection = DIR_NONE;
     private boolean mIsTouching = false;
+    private int mActivePointerId = -1; // 跟踪的触摸点 ID
 
     // 死区（防止漂移） - 优化为更小的死区提升灵敏度
     private static final float DEADZONE_PERCENT = 0.1f;
@@ -185,11 +186,21 @@ public class VirtualJoystick extends View implements ControlView {
     
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        float touchX = event.getX();
-        float touchY = event.getY();
-
-        switch (event.getActionMasked()) {
+        int action = event.getActionMasked();
+        int pointerId = event.getPointerId(event.getActionIndex());
+        
+        switch (action) {
             case MotionEvent.ACTION_DOWN:
+            case MotionEvent.ACTION_POINTER_DOWN: {
+                // 如果已经在跟踪一个触摸点，忽略新的
+                if (mIsTouching) {
+                    return false;
+                }
+                
+                int pointerIndex = event.getActionIndex();
+                float touchX = event.getX(pointerIndex);
+                float touchY = event.getY(pointerIndex);
+                
                 // 检查触摸点是否在圆形区域内
                 float dx = touchX - mCenterX;
                 float dy = touchY - mCenterY;
@@ -200,27 +211,54 @@ public class VirtualJoystick extends View implements ControlView {
                     return false;
                 }
 
+                // 记录触摸点
+                mActivePointerId = pointerId;
+                // 如果不穿透，标记这个触摸点被占用（不传递给游戏）
+                if (!mData.passThrough) {
+                    TouchPointerTracker.consumePointer(pointerId);
+                }
+                
                 handleMove(touchX, touchY);
                 mIsTouching = true;
                 triggerVibration(true);
                 return true;
+            }
 
-            case MotionEvent.ACTION_MOVE:
-                if (mIsTouching) {
-                    handleMove(touchX, touchY);
-                    return true;
+            case MotionEvent.ACTION_MOVE: {
+                if (!mIsTouching || mActivePointerId == -1) {
+                    return false;
                 }
-                return false;
+                
+                // 找到我们跟踪的触摸点
+                int pointerIndex = event.findPointerIndex(mActivePointerId);
+                if (pointerIndex == -1) {
+                    return false;
+                }
+                
+                float touchX = event.getX(pointerIndex);
+                float touchY = event.getY(pointerIndex);
+                handleMove(touchX, touchY);
+                return true;
+            }
 
             case MotionEvent.ACTION_UP:
             case MotionEvent.ACTION_CANCEL:
-                if (mIsTouching) {
+            case MotionEvent.ACTION_POINTER_UP: {
+                // 检查是否是我们跟踪的触摸点
+                if (pointerId == mActivePointerId && mIsTouching) {
+                    // 释放触摸点标记（如果之前标记了）
+                    if (!mData.passThrough) {
+                        TouchPointerTracker.releasePointer(mActivePointerId);
+                    }
+                    mActivePointerId = -1;
+                    
                     handleRelease();
                     mIsTouching = false;
                     triggerVibration(false);
                     return true;
                 }
                 return false;
+            }
         }
         return super.onTouchEvent(event);
     }

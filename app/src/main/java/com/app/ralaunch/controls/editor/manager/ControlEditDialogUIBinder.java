@@ -136,6 +136,17 @@ public class ControlEditDialogUIBinder {
                 }
             });
         }
+        
+        // 触摸穿透开关
+        SwitchCompat switchPassThrough = view.findViewById(R.id.switch_pass_through);
+        if (switchPassThrough != null) {
+            switchPassThrough.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                if (refs.getCurrentData() != null) {
+                    refs.getCurrentData().passThrough = isChecked;
+                    refs.notifyUpdate();
+                }
+            });
+        }
     }
     
     /**

@@ -95,6 +95,19 @@ public class GameActivity extends SDLActivity {
         try {
             RuntimePreference.applyRendererEnvironment(this);
             AppLogger.info(TAG, "Renderer environment applied before native library load");
+            
+            // 设置隐藏鼠标光标环境变量
+            com.app.ralaunch.data.SettingsManager settingsManager = 
+                com.app.ralaunch.data.SettingsManager.getInstance(this);
+            boolean hideCursor = settingsManager.isHideCursorEnabled();
+            if (hideCursor) {
+                try {
+                    android.system.Os.setenv("RALCORE_HIDE_CURSOR", "1", true);
+                    AppLogger.info(TAG, "Hide cursor enabled (RALCORE_HIDE_CURSOR=1)");
+                } catch (Exception e) {
+                    AppLogger.warn(TAG, "Failed to set RALCORE_HIDE_CURSOR: " + e.getMessage());
+                }
+            }
         } catch (Exception e) {
             AppLogger.warn(TAG, "Failed to apply renderer environment before loading libraries: " + e.getMessage());
         }
@@ -529,6 +542,10 @@ public class GameActivity extends SDLActivity {
         button.setOnTouchListener(new View.OnTouchListener() {
             private float mLastX;
             private float mLastY;
+            private float mInitialTouchX;
+            private float mInitialTouchY;
+            private float mInitialButtonX;
+            private float mInitialButtonY;
             private boolean mIsDragging = false;
             private static final float DRAG_THRESHOLD = 10f; // 拖动阈值（像素）
             
@@ -538,6 +555,15 @@ public class GameActivity extends SDLActivity {
                     case MotionEvent.ACTION_DOWN:
                         mLastX = event.getRawX();
                         mLastY = event.getRawY();
+                        mInitialTouchX = event.getRawX();
+                        mInitialTouchY = event.getRawY();
+                        
+                        // 获取按钮的初始屏幕位置
+                        int[] location = new int[2];
+                        v.getLocationOnScreen(location);
+                        mInitialButtonX = location[0];
+                        mInitialButtonY = location[1];
+                        
                         mIsDragging = false;
                         return false; // 允许点击事件继续
                         
@@ -553,21 +579,34 @@ public class GameActivity extends SDLActivity {
                                 v.getParent().requestDisallowInterceptTouchEvent(true);
                             }
                             
-                            // 更新按钮位置
-                            MarginLayoutParams params = (MarginLayoutParams) v.getLayoutParams();
-                            float newX = params.leftMargin + deltaX;
-                            float newY = params.topMargin + deltaY;
+                            // 计算按钮的新屏幕位置
+                            float newScreenX = mInitialButtonX + (event.getRawX() - mInitialTouchX);
+                            float newScreenY = mInitialButtonY + (event.getRawY() - mInitialTouchY);
                             
-                            // 限制在屏幕范围内
+                            // 限制在屏幕范围内（允许拖动到最左边x=0）
                             android.util.DisplayMetrics metrics = getResources().getDisplayMetrics();
                             int maxX = metrics.widthPixels - v.getWidth();
                             int maxY = metrics.heightPixels - v.getHeight();
-                            newX = Math.max(0, Math.min(newX, maxX));
-                            newY = Math.max(0, Math.min(newY, maxY));
+                            newScreenX = Math.max(0, Math.min(newScreenX, maxX));
+                            newScreenY = Math.max(0, Math.min(newScreenY, maxY));
                             
-                            params.leftMargin = (int) newX;
-                            params.topMargin = (int) newY;
-                            v.setLayoutParams(params);
+                            // 将屏幕坐标转换为相对于父容器的坐标
+                            int[] parentLocation = new int[2];
+                            ((View) v.getParent()).getLocationOnScreen(parentLocation);
+                            float newX = newScreenX - parentLocation[0];
+                            float newY = newScreenY - parentLocation[1];
+                            
+                            // 更新位置（优先使用setX/setY，如果父容器是FrameLayout）
+                            if (v.getParent() instanceof android.widget.FrameLayout) {
+                                v.setX(newX);
+                                v.setY(newY);
+                            } else {
+                                // 使用MarginLayoutParams
+                                ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) v.getLayoutParams();
+                                params.leftMargin = (int) newX;
+                                params.topMargin = (int) newY;
+                                v.setLayoutParams(params);
+                            }
                             
                             mLastX = event.getRawX();
                             mLastY = event.getRawY();
@@ -924,5 +963,91 @@ public class GameActivity extends SDLActivity {
         });
     }
 
+    // Touch bridge native methods
+    private static native void nativeSetTouchData(int count, float[] x, float[] y, int screenWidth, int screenHeight);
+    private static native void nativeClearTouchData();
+    
+    private static Boolean sTouchBridgeAvailable = null;
+    private float[] mTouchX = new float[10];
+    private float[] mTouchY = new float[10];
+    
+    private static boolean isTouchBridgeAvailable() {
+        if (sTouchBridgeAvailable == null) {
+            try {
+                nativeClearTouchData();
+                sTouchBridgeAvailable = true;
+                AppLogger.info(TAG, "Touch bridge available in GameActivity");
+            } catch (UnsatisfiedLinkError e) {
+                sTouchBridgeAvailable = false;
+            }
+        }
+        return sTouchBridgeAvailable;
+    }
+
+    /**
+     * 拦截所有触摸事件，传递给 touch bridge
+     * 先让虚拟控件处理触摸，然后排除被占用的触摸点
+     */
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent event) {
+        // 先正常分发事件，让虚拟控件标记占用的触摸点
+        boolean result = super.dispatchTouchEvent(event);
+        // 然后更新 touch bridge（此时 TouchPointerTracker 已更新）
+        updateTouchBridge(event);
+        return result;
+    }
+    
+    private void updateTouchBridge(MotionEvent event) {
+        if (!isTouchBridgeAvailable()) {
+            return;
+        }
+        
+        try {
+            int action = event.getActionMasked();
+            
+            if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) {
+                nativeClearTouchData();
+                return;
+            }
+            
+            int pointerCount = event.getPointerCount();
+            int actionIndex = event.getActionIndex();
+            boolean isPointerUp = (action == MotionEvent.ACTION_POINTER_UP);
+            
+            // 获取屏幕尺寸
+            android.util.DisplayMetrics metrics = getResources().getDisplayMetrics();
+            int screenWidth = metrics.widthPixels;
+            int screenHeight = metrics.heightPixels;
+            
+            int validCount = 0;
+            for (int i = 0; i < pointerCount && validCount < 10; i++) {
+                // 跳过正在抬起的触摸点
+                if (isPointerUp && i == actionIndex) {
+                    continue;
+                }
+                
+                // 跳过被虚拟控件占用的触摸点
+                int pointerId = event.getPointerId(i);
+                if (com.app.ralaunch.controls.TouchPointerTracker.isPointerConsumed(pointerId)) {
+                    continue;
+                }
+                
+                // 使用绝对屏幕坐标
+                mTouchX[validCount] = event.getX(i) / screenWidth;
+                mTouchY[validCount] = event.getY(i) / screenHeight;
+                validCount++;
+            }
+            
+            nativeSetTouchData(validCount, mTouchX, mTouchY, screenWidth, screenHeight);
+            
+            // 调试日志
+            int consumedCount = com.app.ralaunch.controls.TouchPointerTracker.getConsumedCount();
+            if (validCount > 0 || consumedCount > 0) {
+                AppLogger.debug(TAG, "Touch bridge: game=" + validCount + ", controls=" + consumedCount);
+            }
+        } catch (Exception e) {
+            // Ignore
+        }
+    }
 
 }

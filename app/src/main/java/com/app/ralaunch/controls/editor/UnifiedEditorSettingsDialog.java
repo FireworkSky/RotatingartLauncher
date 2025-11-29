@@ -21,7 +21,7 @@ import com.app.ralaunch.R;
 /**
  * 统一的MD3风格编辑器设置对话框（侧边滑动弹窗）
  * 支持两种模式：
- * 1. 编辑器模式（ControlEditorActivity）：最后一项为"保存并退出"
+ * 1. 编辑器模式（ControlEditorActivity）：最后一项为"退出"
  * 2. 游戏模式（GameActivity）：最后一项为"退出编辑"
  */
 public class UnifiedEditorSettingsDialog {
@@ -43,12 +43,8 @@ public class UnifiedEditorSettingsDialog {
     private View mItemAddText;
     private View mItemAddTextGroup;
     private ViewGroup mAddControlsSection; // 添加控件区域
-    private View mItemSaveLayout;
-    private View mItemLoadLayout;
-    private View mItemResetDefault;
-    private View mItemLastAction;
-    private ImageView mIvLastActionIcon;
-    private TextView mTvLastActionText;
+    private View mItemHideCursor;
+    private androidx.appcompat.widget.SwitchCompat mSwitchHideCursor;
     
     // 编辑模式状态
     private boolean mIsEditModeEnabled = false;
@@ -60,22 +56,16 @@ public class UnifiedEditorSettingsDialog {
      * 对话框模式
      */
     public enum DialogMode {
-        /** 编辑器模式：独立的编辑器界面，最后一项为"保存并退出" */
-        EDITOR(R.drawable.ic_check, "#4CAF50", "编辑器设置", "保存并退出"),
+        /** 编辑器模式：独立的编辑器界面 */
+        EDITOR("游戏设置"),
 
-        /** 游戏模式：游戏内编辑，最后一项为"退出编辑" */
-        GAME(R.drawable.ic_close, "#F44336", "编辑控制", "退出编辑");
+        /** 游戏模式：游戏内编辑 */
+        GAME("游戏设置");
 
-        private final int iconRes;
-        private final String iconColor;
         private final String title;
-        private final String lastActionText;
 
-        DialogMode(@DrawableRes int iconRes, String iconColor, String title, String lastActionText) {
-            this.iconRes = iconRes;
-            this.iconColor = iconColor;
+        DialogMode(String title) {
             this.title = title;
-            this.lastActionText = lastActionText;
         }
     }
 
@@ -87,10 +77,7 @@ public class UnifiedEditorSettingsDialog {
         void onAddButton();
         void onAddJoystick();
         void onAddText();
-        void onSaveLayout();
-        void onLoadLayout();
-        void onResetDefault();
-        void onLastAction(); // 统一的最后一项回调
+        void onHideCursorChanged(boolean hide); // 隐藏鼠标光标选项变化
     }
 
     public UnifiedEditorSettingsDialog(Context context, ViewGroup parent, int screenWidth, DialogMode mode) {
@@ -303,12 +290,8 @@ public class UnifiedEditorSettingsDialog {
         mItemAddJoystick = mDialogLayout.findViewById(R.id.item_add_joystick);
         mItemAddText = mDialogLayout.findViewById(R.id.item_add_text);
         mAddControlsSection = mDialogLayout.findViewById(R.id.section_add_controls);
-        mItemSaveLayout = mDialogLayout.findViewById(R.id.item_save_layout);
-        mItemLoadLayout = mDialogLayout.findViewById(R.id.item_load_layout);
-        mItemResetDefault = mDialogLayout.findViewById(R.id.item_reset_default);
-        mItemLastAction = mDialogLayout.findViewById(R.id.item_last_action);
-        mIvLastActionIcon = mDialogLayout.findViewById(R.id.iv_last_action_icon);
-        mTvLastActionText = mDialogLayout.findViewById(R.id.tv_last_action_text);
+        mItemHideCursor = mDialogLayout.findViewById(R.id.item_hide_cursor);
+        mSwitchHideCursor = mDialogLayout.findViewById(R.id.switch_hide_cursor);
 
         // 初始状态：编辑模式关闭，添加控件区域隐藏
         if (mAddControlsSection != null) {
@@ -328,12 +311,6 @@ public class UnifiedEditorSettingsDialog {
     private void configureUIForMode() {
         // 设置标题
         mTvDialogTitle.setText(mMode.title);
-
-        // 配置最后一项
-        mIvLastActionIcon.setImageResource(mMode.iconRes);
-        mIvLastActionIcon.setColorFilter(android.graphics.Color.parseColor(mMode.iconColor));
-        mTvLastActionText.setText(mMode.lastActionText);
-        mTvLastActionText.setTextColor(android.graphics.Color.parseColor(mMode.iconColor));
     }
 
     /**
@@ -373,25 +350,19 @@ public class UnifiedEditorSettingsDialog {
                 hide();
             });
 
-            mItemSaveLayout.setOnClickListener(v -> {
-                mListener.onSaveLayout();
-                hide();
-            });
-
-            mItemLoadLayout.setOnClickListener(v -> {
-                mListener.onLoadLayout();
-                hide();
-            });
-
-            mItemResetDefault.setOnClickListener(v -> {
-                mListener.onResetDefault();
-                hide();
-            });
-
-            mItemLastAction.setOnClickListener(v -> {
-                mListener.onLastAction();
-                // 不自动隐藏，让回调函数决定是否需要隐藏
-            });
+            // 隐藏鼠标光标开关
+            if (mSwitchHideCursor != null) {
+                // 加载当前设置
+                com.app.ralaunch.data.SettingsManager settingsManager = 
+                    com.app.ralaunch.data.SettingsManager.getInstance(mContext);
+                boolean hideCursor = settingsManager.isHideCursorEnabled();
+                mSwitchHideCursor.setChecked(hideCursor);
+                
+                mSwitchHideCursor.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                    settingsManager.setHideCursorEnabled(isChecked);
+                    mListener.onHideCursorChanged(isChecked);
+                });
+            }
         }
     }
 
@@ -402,6 +373,11 @@ public class UnifiedEditorSettingsDialog {
         // 更新添加控件区域的可见性
         if (mAddControlsSection != null) {
             mAddControlsSection.setVisibility(mIsEditModeEnabled ? View.VISIBLE : View.GONE);
+        }
+
+        // 更新"隐藏鼠标光标"选项的可见性：编辑模式下隐藏，非编辑模式下显示
+        if (mItemHideCursor != null) {
+            mItemHideCursor.setVisibility(mIsEditModeEnabled ? View.GONE : View.VISIBLE);
         }
 
         // 更新"切换编辑模式"按钮的文本和图标

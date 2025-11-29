@@ -107,6 +107,9 @@ public class ControlData {
     @SerializedName("visible")
     public boolean visible;
     
+    @SerializedName("passThrough")
+    public boolean passThrough; // 触摸穿透：是否将触摸传递给游戏（默认 false）
+    
     // 摇杆特有属性
     @SerializedName("stickOpacity")
     public float stickOpacity; // 摇杆圆心透明度 0.0 - 1.0（与背景透明度独立）
@@ -172,6 +175,7 @@ public class ControlData {
         this.cornerRadius = 2; // 矩形只有一点点圆角
         this.isToggle = false;
         this.visible = true;
+        this.passThrough = false; // 默认不穿透（不触发游戏点击）
         this.buttonMode = BUTTON_MODE_KEYBOARD; // 默认键盘/鼠标模式
         this.shape = SHAPE_RECTANGLE; // 默认矩形
         this.stickOpacity = 1.0f; // 默认摇杆圆心透明度（与背景透明度独立），默认完全不透明
