@@ -239,6 +239,54 @@ int Android_VideoInit(_THIS)
 
     SDL_AddDisplayMode(&_this->displays[0], &mode);
 
+    // Lets add more display modes!
+    int alt_heights[] = {480, 600, 720, 768, 800, 960, 1024, 1080, 1152, 1280, 1440, 1536, 1600,
+                         1792, 1920};
+    int num_of_alts = sizeof(alt_heights) / sizeof(alt_heights[0]);
+    // Well we don't care about the order as SDL automatically sort them
+    for (int i = 0; i < num_of_alts; i++) {
+        if (alt_heights[i] < Android_DeviceHeight) {
+            int alt_width = (alt_heights[i] * Android_DeviceWidth) / Android_DeviceHeight;
+
+            SDL_DisplayMode alt_mode;
+            alt_mode.format = Android_ScreenFormat;
+            alt_mode.w = alt_width;
+            alt_mode.h = alt_heights[i];
+            alt_mode.refresh_rate = Android_ScreenRate;
+            alt_mode.driverdata = NULL;
+            SDL_AddDisplayMode(&_this->displays[0], &alt_mode);
+        }
+    }
+    // not yet implemented, because need to implement black borders on two sides, and fix touching
+//    // 4:3 aspect ratios
+//    for (int i = 0; i < num_of_alts; i++) {
+//        if (alt_heights[i] <= Android_DeviceHeight) {
+//            int alt_width = (alt_heights[i] * 4) / 3;
+//
+//            SDL_DisplayMode alt_mode;
+//            alt_mode.format = Android_ScreenFormat;
+//            alt_mode.w = alt_width;
+//            alt_mode.h = alt_heights[i];
+//            alt_mode.refresh_rate = Android_ScreenRate;
+//            alt_mode.driverdata = NULL;
+//            SDL_AddDisplayMode(&_this->displays[0], &alt_mode);
+//        }
+//    }
+//    // 16:9 aspect ratios
+//    for (int i = 0; i < num_of_alts; i++) {
+//        if (alt_heights[i] <= Android_DeviceHeight) {
+//            int alt_width = (alt_heights[i] * 16) / 9;
+//
+//            SDL_DisplayMode alt_mode;
+//            alt_mode.format = Android_ScreenFormat;
+//            alt_mode.w = alt_width;
+//            alt_mode.h = alt_heights[i];
+//            alt_mode.refresh_rate = Android_ScreenRate;
+//            alt_mode.driverdata = NULL;
+//            SDL_AddDisplayMode(&_this->displays[0], &alt_mode);
+//        }
+//    }
+
     Android_InitTouch();
 
     Android_InitMouse();
