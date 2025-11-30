@@ -99,8 +99,10 @@ public class ControlLayout extends FrameLayout {
             mSDLSurface.dispatchTouchEvent(event);
         }
         
-        // 返回虚拟控件的处理结果
-        return handled;
+        // 重要：始终返回 true 表示事件已被消费
+        // 这样 Android 系统就不会再次把事件传递给 SDLSurface
+        // 避免重复处理导致的问题（如鼠标点击需要多次才能触发）
+        return true;
     }
     
     @Override

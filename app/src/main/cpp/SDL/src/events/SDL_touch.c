@@ -474,7 +474,8 @@ int SDL_SendTouch(SDL_TouchID id, SDL_FingerID fingerid, SDL_Window *window,
                 }
                 
                 /* Track single finger state (for non-multitouch mode) */
-                if (!multitouch_enabled) {
+                /* 只有未被虚拟控件占用的触摸点才会更新跟踪状态 */
+                if (!multitouch_enabled && !isConsumed) {
                     if (down) {
                         if (finger_touching == SDL_FALSE) {
                             finger_touching = SDL_TRUE;
@@ -485,6 +486,17 @@ int SDL_SendTouch(SDL_TouchID id, SDL_FingerID fingerid, SDL_Window *window,
                         if (finger_touching == SDL_TRUE && track_touchid == id && track_fingerid == fingerid) {
                             finger_touching = SDL_FALSE;
                         }
+                    }
+                }
+                /* 被占用的触摸点释放时，也需要检查是否需要重置状态 */
+                else if (!multitouch_enabled && isConsumed && !down) {
+                    /* 如果被占用的触摸点释放，且它是当前跟踪的触摸点，重置状态 */
+                    if (finger_touching == SDL_TRUE && track_touchid == id && track_fingerid == fingerid) {
+                        finger_touching = SDL_FALSE;
+#ifdef __ANDROID__
+                        __android_log_print(ANDROID_LOG_INFO, "SDLTouchMouse", 
+                            "Consumed finger released, resetting finger_touching state");
+#endif
                     }
                 }
             }
