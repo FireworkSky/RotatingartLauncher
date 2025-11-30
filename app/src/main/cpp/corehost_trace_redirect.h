@@ -8,6 +8,9 @@ extern "C" {
 // 初始化COREHOST_TRACE重定向到logcat
 void init_corehost_trace_redirect();
 
+// 清理hook
+void cleanup_corehost_trace_redirect();
+
 #ifdef __cplusplus
 }
 #endif

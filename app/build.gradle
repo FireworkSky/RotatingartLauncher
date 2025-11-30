@@ -50,11 +50,13 @@ android {
     }
     buildFeatures {
         viewBinding true
+        prefab true
     }
 
     packagingOptions {
         pickFirst "lib/arm64-v8a/libc++_shared.so"
         pickFirst "lib/arm64-v8a/libnetcorehost.so"
+        pickFirst "lib/arm64-v8a/libbytehook.so"
         // 确保渲染器库被打包
         jniLibs {
             useLegacyPackaging = true
@@ -92,6 +94,9 @@ android {
 
 dependencies {
     implementation 'net.java.dev.jna:jna:5.12.0'
+    
+    // ByteHook - Android PLT Hook 库
+    implementation 'com.bytedance:bytehook:1.1.1'
 
    implementation files('../app/libs/libSystem.Security.Cryptography.Native.Android.jar')
 

@@ -1,0 +1,20 @@
+{
+  "id": "fps_display",
+  "name": "FPS 显示补丁",
+  "description": "读取游戏 FPS 并通过环境变量回调 Java UI，在隐藏鼠标光标时显示",
+  "version": "1.0.0",
+  "author": "RA Launcher Team",
+  "dllFileName": "FPSDisplayPatch.dll",
+  "entryPoint": {
+    "typeName": "FPSDisplayPatch.FPSDisplayPatcher",
+    "methodName": "Initialize"
+  },
+  "targetGames": [
+    "tModLoader",
+    "Terraria"
+  ],
+  "priority": 100,
+  "enabled": true
+}
+
+

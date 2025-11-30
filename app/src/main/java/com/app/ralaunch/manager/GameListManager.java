@@ -95,7 +95,7 @@ public class GameListManager {
             gameRecyclerView.setAdapter(gameAdapter);
         }
     }
-    
+
     /**
      * 刷新游戏列表
      */

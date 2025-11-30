@@ -80,6 +80,9 @@ public static class MultiTouchPatcher
             
             ApplyPatches();
             
+            // 帧率诊断和优化
+            TryOptimizeFrameRate();
+            
             Console.WriteLine("[MultiTouchPatch] Initialization complete");
             return 0;
         }
@@ -322,6 +325,74 @@ public static class MultiTouchPatcher
             if (_frameCount % 60 == 0)
                 Console.WriteLine($"[MultiTouchPatch] Error: {ex.Message}");
             return true;
+        }
+    }
+    
+    /// <summary>
+    /// 尝试优化帧率 - 诊断和解除帧率限制
+    /// </summary>
+    private static void TryOptimizeFrameRate()
+    {
+        try
+        {
+            Console.WriteLine("[MultiTouchPatch] ===== Frame Rate Diagnostics =====");
+            
+            // 获取 Main 类（Terraria 的主类）
+            var mainType = typeof(Main);
+            var mainInstance = Main.instance;
+            
+            if (mainInstance == null)
+            {
+                Console.WriteLine("[MultiTouchPatch] Main.instance is null, skipping frame rate optimization");
+                return;
+            }
+            
+            // Game 类的属性
+            var gameType = typeof(Game);
+            
+            // 检查 IsFixedTimeStep
+            var isFixedProp = gameType.GetProperty("IsFixedTimeStep");
+            if (isFixedProp != null)
+            {
+                bool isFixed = (bool)isFixedProp.GetValue(mainInstance);
+                Console.WriteLine($"[MultiTouchPatch] IsFixedTimeStep: {isFixed}");
+            }
+            
+            // 检查 TargetElapsedTime
+            var targetProp = gameType.GetProperty("TargetElapsedTime");
+            if (targetProp != null)
+            {
+                TimeSpan target = (TimeSpan)targetProp.GetValue(mainInstance);
+                double fps = 1000.0 / target.TotalMilliseconds;
+                Console.WriteLine($"[MultiTouchPatch] TargetElapsedTime: {target.TotalMilliseconds:F2}ms ({fps:F1} FPS)");
+            }
+            
+            // 检查环境变量是否要求解除帧率限制
+            string unlockFps = Environment.GetEnvironmentVariable("FNA3D_UNLOCK_FPS");
+            if (unlockFps == "1")
+            {
+                Console.WriteLine("[MultiTouchPatch] FNA3D_UNLOCK_FPS=1 detected, unlocking frame rate...");
+                
+                // 禁用固定时间步
+                if (isFixedProp != null)
+                {
+                    isFixedProp.SetValue(mainInstance, false);
+                    Console.WriteLine("[MultiTouchPatch] Set IsFixedTimeStep = false");
+                }
+                
+                // 设置高帧率目标（120fps）
+                if (targetProp != null)
+                {
+                    targetProp.SetValue(mainInstance, TimeSpan.FromMilliseconds(1000.0 / 120.0));
+                    Console.WriteLine("[MultiTouchPatch] Set TargetElapsedTime = 8.33ms (120 FPS)");
+                }
+            }
+            
+            Console.WriteLine("[MultiTouchPatch] ===================================");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[MultiTouchPatch] Frame rate optimization error: {ex.Message}");
         }
     }
 }

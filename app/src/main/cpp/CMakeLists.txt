@@ -56,6 +56,9 @@ add_subdirectory(${FAUDIO_SOURCE_DIR})
 # 添加 Theorafile 子项目
 add_subdirectory(${THEORAFILE_SOURCE_DIR})
 
+# 添加 ByteHook 库
+find_package(bytehook REQUIRED CONFIG)
+
 # 添加 netcorehost 子项目（.NET Core Hosting）
 set(NETCOREHOST_SOURCE_DIR ${CMAKE_SOURCE_DIR}/netcorehost)
 add_subdirectory(${NETCOREHOST_SOURCE_DIR})
@@ -82,10 +85,7 @@ set(CMAKE_CXX_STANDARD 20)
 add_library(${CMAKE_PROJECT_NAME} SHARED
         sdl_entry.c
         netcorehost_launcher.cpp
-        netcorehost_manager.cpp
-        netcorehost_manager_jni.cpp
         corehost_trace_redirect.cpp
-        And64InlineHook/And64InlineHook.cpp
         framework_utils.cpp
         jni_bridge.c
         error_handler.c
@@ -94,7 +94,6 @@ add_library(${CMAKE_PROJECT_NAME} SHARED
         app_logger_jni.c
         renderer_loader.c
         thread_affinity_manager.cpp
-        # OSMesa integration
         osmesa/osmesa_loader.c
         osmesa/osm_bridge.c
         osmesa/osm_renderer.c
@@ -104,6 +103,7 @@ add_library(${CMAKE_PROJECT_NAME} SHARED
         driver_helper/nsbypass.c
         utils/loader_dlopen.c
         touch_bridge.c
+        And64InlineHook/And64InlineHook.cpp
 )
 
 # 链接库

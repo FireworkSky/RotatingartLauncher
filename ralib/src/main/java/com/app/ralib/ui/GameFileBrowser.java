@@ -34,9 +34,14 @@ public class GameFileBrowser extends LinearLayout {
     private FileAdapter adapter;
     private File currentDirectory;
     private OnFileSelectedListener listener;
+    private OnFileLongClickListener longClickListener;
     
     public interface OnFileSelectedListener {
         void onFileSelected(File file);
+    }
+    
+    public interface OnFileLongClickListener {
+        void onFileLongClick(File file);
     }
     
     public GameFileBrowser(Context context) {
@@ -89,6 +94,13 @@ public class GameFileBrowser extends LinearLayout {
      */
     public void setOnFileSelectedListener(OnFileSelectedListener listener) {
         this.listener = listener;
+    }
+    
+    /**
+     * 设置文件长按监听器
+     */
+    public void setOnFileLongClickListener(OnFileLongClickListener listener) {
+        this.longClickListener = listener;
     }
     
     /**
@@ -230,6 +242,13 @@ public class GameFileBrowser extends LinearLayout {
                         if (listener != null) {
                             listener.onFileSelected(item.file);
                         }
+                    });
+                    itemView.setOnLongClickListener(v -> {
+                        if (longClickListener != null) {
+                            longClickListener.onFileLongClick(item.file);
+                            return true;
+                        }
+                        return false;
                     });
                 }
             }

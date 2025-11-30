@@ -275,6 +275,44 @@
 
             </LinearLayout>
 
+            <!-- FPS 显示开关 -->
+            <LinearLayout
+                android:id="@+id/item_fps_display"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:background="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true">
+
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:src="@drawable/ic_info_outline"
+                    android:tint="?attr/textPrimary" />
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="16dp"
+                    android:text="FPS 显示"
+                    android:textColor="?attr/textPrimary"
+                    android:textSize="16sp" />
+
+                <androidx.appcompat.widget.SwitchCompat
+                    android:id="@+id/switch_fps_display"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
+                    app:thumbTint="?attr/colorPrimary"
+                    app:trackTint="?attr/colorOutlineVariant" />
+
+            </LinearLayout>
+
         </LinearLayout>
 
     </LinearLayout>

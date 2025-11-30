@@ -98,7 +98,7 @@ public class VirtualJoystick extends View implements ControlView {
         setClipToOutline(false);
         setClipBounds(null);
 
-        // 初始化点击攻击 Handler
+        // 初始化点击攻击 Handler（仅用于非鼠标移动模式）
         mClickAttackHandler = new android.os.Handler(android.os.Looper.getMainLooper());
         mClickAttackRunnable = new Runnable() {
             @Override
@@ -332,29 +332,17 @@ public class VirtualJoystick extends View implements ControlView {
                     int oldDirection = mCurrentDirection;
                     mCurrentDirection = newDirection;
                     
-                    // 根据攻击模式处理组合键
-                    if (mData.rightStickContinuous) {
-                        // 持续模式：进入有效区域时按下组合键，离开时释放
-                        if (oldDirection == DIR_NONE && newDirection != DIR_NONE) {
-                            // 从死区进入有效区域：先启用虚拟鼠标，再按下组合键
-                            enableVirtualMouse();
-                            pressComboKeysForMouseMove();
-                            mIsAttacking = true;
-                        } else if (oldDirection != DIR_NONE && newDirection == DIR_NONE) {
-                            // 从有效区域进入死区：释放组合键并禁用虚拟鼠标
-                            releaseComboKeysForMouseMove();
-                            disableVirtualMouse();
-                            mIsAttacking = false;
-                        }
-                    } else {
-                        // 点击模式：周期性点击
-                        if (newDirection != DIR_NONE && !mIsAttacking) {
-                            enableVirtualMouse();
-                            startClickAttackForMouseMove();
-                        } else if (newDirection == DIR_NONE && mIsAttacking) {
-                            stopClickAttackForMouseMove();
-                            disableVirtualMouse();
-                        }
+                    // 持续攻击模式：进入有效区域时按下组合键，离开时释放
+                    if (oldDirection == DIR_NONE && newDirection != DIR_NONE) {
+                        // 从死区进入有效区域：先启用虚拟鼠标，再按下组合键
+                        enableVirtualMouse();
+                        pressComboKeysForMouseMove();
+                        mIsAttacking = true;
+                    } else if (oldDirection != DIR_NONE && newDirection == DIR_NONE) {
+                        // 从有效区域进入死区：释放组合键并禁用虚拟鼠标
+                        releaseComboKeysForMouseMove();
+                        disableVirtualMouse();
+                        mIsAttacking = false;
                     }
                 }
                 
@@ -413,13 +401,9 @@ public class VirtualJoystick extends View implements ControlView {
         if (mData.joystickMode == ControlData.JOYSTICK_MODE_MOUSE) {
             // 鼠标模式：释放组合键
             if (mData.xboxUseRightStick) {
-                // 右摇杆：根据攻击模式停止
-                if (mData.rightStickContinuous) {
-                    releaseComboKeysForMouseMove();
-                    mIsAttacking = false;
-                } else {
-                    stopClickAttackForMouseMove();
-                }
+                // 右摇杆：释放组合键
+                releaseComboKeysForMouseMove();
+                mIsAttacking = false;
                 // 禁用虚拟鼠标
                 disableVirtualMouse();
             } else {
@@ -857,76 +841,6 @@ public class VirtualJoystick extends View implements ControlView {
             }
         }
     }
-    
-    /**
-     * 启动点击攻击模式（鼠标移动模式，跟随光标位置）
-     */
-    private void startClickAttackForMouseMove() {
-        if (mIsAttacking) return;
-        mIsAttacking = true;
-        // 立即触发第一次点击
-        performClickAttackForMouseMove();
-        // 启动持续点击循环
-        mClickAttackHandler.postDelayed(mClickAttackRunnableForMouseMove, CLICK_ATTACK_INTERVAL_MS);
-    }
-    
-    /**
-     * 停止点击攻击模式（鼠标移动模式）
-     */
-    private void stopClickAttackForMouseMove() {
-        if (!mIsAttacking) return;
-        mIsAttacking = false;
-        mClickAttackHandler.removeCallbacks(mClickAttackRunnableForMouseMove);
-        // 确保释放组合键
-        releaseComboKeysForMouseMove();
-    }
-    
-    /**
-     * 执行一次点击（鼠标移动模式，在当前光标位置点击）
-     */
-    private void performClickAttackForMouseMove() {
-        if (mData.joystickComboKeys == null || mData.joystickComboKeys.length == 0) return;
-        
-        for (int comboKey : mData.joystickComboKeys) {
-            // 鼠标左键：使用虚拟触屏点击
-            if (comboKey == ControlData.MOUSE_LEFT) {
-                if (mInputBridge instanceof SDLInputBridge) {
-                    SDLInputBridge bridge = (SDLInputBridge) mInputBridge;
-                    // 获取虚拟鼠标当前位置
-                    float touchX = bridge.getVirtualMouseX();
-                    float touchY = bridge.getVirtualMouseY();
-                    // 按下
-                    bridge.sendVirtualTouch(SDLInputBridge.VIRTUAL_TOUCH_RIGHT_STICK, touchX, touchY, true);
-                    // 短暂延迟后释放
-                    mClickAttackHandler.postDelayed(() -> {
-                        if (mIsAttacking) {
-                            bridge.sendVirtualTouch(SDLInputBridge.VIRTUAL_TOUCH_RIGHT_STICK, touchX, touchY, false);
-                        }
-                    }, 50);
-                }
-            }
-            // 其他鼠标按键：使用SDL鼠标
-            else if (comboKey >= ControlData.MOUSE_MIDDLE && comboKey <= ControlData.MOUSE_RIGHT) {
-                mInputBridge.sendMouseButton(comboKey, true, mScreenWidth / 2.0f, mScreenHeight / 2.0f);
-                mClickAttackHandler.postDelayed(() -> {
-                    if (mIsAttacking) {
-                        mInputBridge.sendMouseButton(comboKey, false, mScreenWidth / 2.0f, mScreenHeight / 2.0f);
-                    }
-                }, 50);
-            }
-        }
-    }
-    
-    // 点击攻击循环 Runnable（鼠标移动模式）
-    private final Runnable mClickAttackRunnableForMouseMove = new Runnable() {
-        @Override
-        public void run() {
-            if (mIsAttacking && mCurrentDirection != DIR_NONE && !mData.rightStickContinuous) {
-                performClickAttackForMouseMove();
-                mClickAttackHandler.postDelayed(this, CLICK_ATTACK_INTERVAL_MS);
-            }
-        }
-    };
     
     /**
      * 执行一次点击攻击（按下然后短暂后释放）

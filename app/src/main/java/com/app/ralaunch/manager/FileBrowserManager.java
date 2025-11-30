@@ -25,9 +25,14 @@ public class FileBrowserManager {
     private File selectedAssemblyFile;
     private boolean isFileBrowserMode = false;
     private OnFileSelectedListener onFileSelectedListener;
+    private OnFileLongClickListener onFileLongClickListener;
     
     public interface OnFileSelectedListener {
         void onFileSelected(File file);
+    }
+    
+    public interface OnFileLongClickListener {
+        void onFileLongClick(File file);
     }
     
     public FileBrowserManager(Context context) {
@@ -105,6 +110,9 @@ public class FileBrowserManager {
         // 设置文件选择监听器
         gameFileBrowser.setOnFileSelectedListener(this::onGameFileSelected);
         
+        // 设置文件长按监听器
+        gameFileBrowser.setOnFileLongClickListener(this::onGameFileLongClick);
+        
         // 添加到容器
         ViewTransitionManager.addViewToContainer((ViewGroup) fileBrowserContainer, gameFileBrowser);
     }
@@ -121,6 +129,16 @@ public class FileBrowserManager {
         // 通知监听器
         if (onFileSelectedListener != null) {
             onFileSelectedListener.onFileSelected(file);
+        }
+    }
+    
+    /**
+     * 游戏文件浏览器长按了文件
+     */
+    private void onGameFileLongClick(File file) {
+        // 通知长按监听器
+        if (onFileLongClickListener != null) {
+            onFileLongClickListener.onFileLongClick(file);
         }
     }
     
@@ -158,6 +176,13 @@ public class FileBrowserManager {
      */
     public void setOnFileSelectedListener(OnFileSelectedListener listener) {
         this.onFileSelectedListener = listener;
+    }
+    
+    /**
+     * 设置文件长按监听器
+     */
+    public void setOnFileLongClickListener(OnFileLongClickListener listener) {
+        this.onFileLongClickListener = listener;
     }
 }
 

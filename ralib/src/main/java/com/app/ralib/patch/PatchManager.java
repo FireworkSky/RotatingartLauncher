@@ -42,9 +42,8 @@ public class PatchManager {
         configFilePath = patchStoragePath.resolve(PatchManagerConfig.CONFIG_FILE_NAME);
         loadConfig();
 
-        if (isFirstTime) {
-            installBuiltInPatches(this);
-        }
+        // 每次启动都检查并安装缺失的内置补丁
+        installBuiltInPatches(this);
     }
 
     //region Patch Querying
@@ -53,6 +52,8 @@ public class PatchManager {
      * Returns all patches that are applicable to the specified game and are enabled for
      * the provided game assembly path. Results are sorted by priority in descending order
      * (higher priority first).
+     * 
+     * Note: By default, ALL applicable patches are enabled.
      *
      * @param gameId      the game ID to filter patches by
      * @param gameAsmPath the path to the game's assembly (used to lookup enabled patches)
@@ -60,12 +61,10 @@ public class PatchManager {
      */
     public ArrayList<Patch> getApplicableAndEnabledPatches(String gameId, Path gameAsmPath) {
         var installedPatches = getInstalledPatches();
-        var enabledPatchIds = config.getEnabledPatchIds(gameAsmPath);
 
+        // 默认启用所有适用的补丁
         return installedPatches.stream()
-                .filter(patch -> patch.manifest.targetGames != null
-                        && patch.manifest.targetGames.contains(gameId)
-                        && enabledPatchIds.contains(patch.manifest.id))
+                .filter(patch -> isPatchApplicableToGame(patch, gameId))
                 .sorted(Comparator.comparingInt(patch -> -patch.manifest.priority))
                 .collect(Collectors.toCollection(ArrayList::new));
     }
@@ -81,25 +80,43 @@ public class PatchManager {
         var installedPatches = getInstalledPatches();
 
         return installedPatches.stream()
-                .filter(patch -> patch.manifest.targetGames != null
-                        && patch.manifest.targetGames.contains(gameId))
+                .filter(patch -> isPatchApplicableToGame(patch, gameId))
                 .sorted(Comparator.comparingInt(patch -> -patch.manifest.priority))
                 .collect(Collectors.toCollection(ArrayList::new));
     }
 
     /**
+     * Check if a patch is applicable to a specific game.
+     * Supports wildcard "*" in targetGames to match all games.
+     *
+     * @param patch  the patch to check
+     * @param gameId the game ID to match against
+     * @return true if the patch is applicable to the game
+     */
+    private boolean isPatchApplicableToGame(Patch patch, String gameId) {
+        if (patch.manifest.targetGames == null || patch.manifest.targetGames.isEmpty()) {
+            return false;
+        }
+        // Support wildcard "*" to match all games
+        return patch.manifest.targetGames.contains("*") 
+                || patch.manifest.targetGames.contains(gameId);
+    }
+
+    /**
      * Returns all patches that are enabled for the specified game assembly path.
      * Results are sorted by priority in descending order (higher priority first).
+     * 
+     * Note: By default, ALL installed patches are enabled. This ensures all patches
+     * are active by default.
      *
      * @param gameAsmPath the game assembly path used to determine enabled patches
      * @return list of enabled patches, sorted by priority (highest first)
      */
     public ArrayList<Patch> getEnabledPatches(Path gameAsmPath) {
         var installedPatches = getInstalledPatches();
-        var enabledPatchIds = config.getEnabledPatchIds(gameAsmPath);
-
+        
+        // 默认启用所有已安装的补丁
         return installedPatches.stream()
-                .filter(patch -> enabledPatchIds.contains(patch.manifest.id))
                 .sorted(Comparator.comparingInt(patch -> -patch.manifest.priority))
                 .collect(Collectors.toCollection(ArrayList::new));
     }
@@ -319,25 +336,41 @@ public class PatchManager {
             )
                     .extract();
 
+            // 安装共享依赖库（如 0Harmony.dll）
             try (var pathsStream = Files.list(extractedPatches)) {
                 var dlls = pathsStream
                         .filter(path -> Files.isRegularFile(path) && path.toString().endsWith(".dll"))
                         .collect(Collectors.toList());
                 for (var dll : dlls) {
-                    Log.i(TAG, "正在安装补丁依赖库: " + dll.getFileName());
-                    Files.copy(dll, patchManager.patchStoragePath.resolve(dll.getFileName()));
+                    Path targetPath = patchManager.patchStoragePath.resolve(dll.getFileName());
+                    if (!Files.exists(targetPath)) {
+                        Log.i(TAG, "正在安装补丁依赖库: " + dll.getFileName());
+                        Files.copy(dll, targetPath);
+                    }
                 }
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
 
+            // 获取已安装补丁的 ID 列表
+            var installedPatchIds = patchManager.getInstalledPatches().stream()
+                    .map(p -> p.manifest.id)
+                    .collect(Collectors.toSet());
+
+            // 安装缺失的内置补丁
             try (var pathsStream = Files.list(extractedPatches)) {
                 var patchZips = pathsStream
                         .filter(path -> Files.isRegularFile(path) && path.toString().endsWith(".zip"))
                         .collect(Collectors.toList());
                 for (var patchZip : patchZips) {
-                    Log.i(TAG, "正在安装内置补丁: " + patchZip.getFileName());
-                    patchManager.installPatch(patchZip);
+                    // 读取补丁 manifest 检查是否已安装
+                    PatchManifest manifest = PatchManifest.fromZip(patchZip);
+                    if (manifest != null && !installedPatchIds.contains(manifest.id)) {
+                        Log.i(TAG, "正在安装内置补丁: " + patchZip.getFileName() + " (id: " + manifest.id + ")");
+                        patchManager.installPatch(patchZip);
+                    } else if (manifest != null) {
+                        Log.d(TAG, "补丁已安装，跳过: " + manifest.id);
+                    }
                 }
             } catch (IOException e) {
                 throw new RuntimeException(e);

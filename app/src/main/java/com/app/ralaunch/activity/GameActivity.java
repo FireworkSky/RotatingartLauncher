@@ -86,10 +86,6 @@ public class GameActivity extends SDLActivity {
     private GameMenuManager mMenuManager;
     private GameFullscreenManager mFullscreenManager;
 
-    // gl4es加载：已禁用静态预加载以避免EGL冲突
-    // 现在由SDL通过SDL_VIDEO_GL_DRIVER环境变量在需要时延迟加载
-    // 原因：过早加载会导致gl4es和SDL的EGL同时初始化，引发pthread_mutex_lock错误
-
     @Override
     public void loadLibraries() {
         try {
@@ -123,11 +119,11 @@ public class GameActivity extends SDLActivity {
         try {
             String currentRenderer = RendererLoader.getCurrentRenderer();
             AppLogger.info(TAG, "Current renderer from environment: " + currentRenderer);
-            
+
             // 检查是否是 zink 渲染器（RALCORE_RENDERER 可能是 "vulkan_zink"）
-            boolean isZink = RendererConfig.RENDERER_ZINK.equals(currentRenderer) || 
+            boolean isZink = RendererConfig.RENDERER_ZINK.equals(currentRenderer) ||
                             "vulkan_zink".equals(currentRenderer);
-            
+
             if (isZink) {
                 AppLogger.info(TAG, "Creating OSMesa-aware SDL Surface for zink renderer");
                 return new OSMSurface(context);
@@ -137,7 +133,7 @@ public class GameActivity extends SDLActivity {
         } catch (Exception e) {
             AppLogger.warn(TAG, "Failed to check renderer, using default SDL Surface: " + e.getMessage());
         }
-        
+
         // 默认使用标准 SDL Surface
         return super.createSDLSurface(context);
     }
@@ -168,12 +164,6 @@ public class GameActivity extends SDLActivity {
         super.onCreate(savedInstanceState);
 
         mainActivity = this;
-
-        // 记录 GameActivity 启动
-        AppLogger.info(TAG, "================================================");
-        AppLogger.info(TAG, "GameActivity.onCreate() started");
-        AppLogger.info(TAG, "================================================");
-
         // 强制横屏，防止 SDL 在运行时将方向改为 FULL_SENSOR 导致旋转为竖屏
         try {
             setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
@@ -181,33 +171,21 @@ public class GameActivity extends SDLActivity {
         } catch (Exception e) {
             AppLogger.warn(TAG, "Failed to set orientation onCreate: " + e.getMessage());
         }
-
         // 初始化全屏管理器
         mFullscreenManager = new GameFullscreenManager(this);
         mFullscreenManager.enableFullscreen();
         mFullscreenManager.configureIME();
-
-        // 键盘交互改由 SDL/MonoGame 层处理，这里不再添加任何 UI 或手动逻辑
 
         // 初始化虚拟控制系统
         initializeVirtualControls();
 
         // 设置游戏内菜单（需要在虚拟控制初始化后）
         setupGameMenu();
-        
-        // 初始化控件编辑器管理器（需要在菜单设置后，因为需要 contentFrame）
-        // 注意：这里只是确保管理器存在，实际初始化在 setupGameMenu 中完成
 
-        // 获取传递的游戏信息
-        String gameName = getIntent().getStringExtra("GAME_NAME");
-        String assemblyPath = getIntent().getStringExtra("GAME_PATH"); // 程序集路径（ModLoader.dll）
-        String gameBodyPath = getIntent().getStringExtra("GAME_BODY_PATH"); // 游戏本体路径（Terraria.exe）
-        boolean modLoaderEnabled = getIntent().getBooleanExtra("MOD_LOADER_ENABLED", true); // ModLoader 开关状态
-        String runtimePref = getIntent().getStringExtra("DOTNET_FRAMEWORK"); // 可选："net6"、"net8"、"net10"、"auto"
+        String runtimePref = getIntent().getStringExtra("DOTNET_FRAMEWORK");
 
         AppLogger.info(TAG, "Normal game launch mode");
 
-        // 如有按次覆盖的运行时偏好，从 Intent 写入到 app_prefs 供本次启动解析
         if (runtimePref != null && !runtimePref.isEmpty()) {
             try {
                 RuntimePreference.setDotnetFramework(this, runtimePref);
@@ -220,38 +198,14 @@ public class GameActivity extends SDLActivity {
 
         setLaunchParams();
 
-        // 设置返回键处理器（使用新的 OnBackPressedCallback API）
-        setupBackPressedHandler();
     }
     
-    /**
-     * 设置返回键处理器
-     * 注意: SDLActivity 继承自 Activity (不是 AppCompatActivity),
-     * 所以我们使用传统的 onBackPressed() 重写方法
-     */
-    private void setupBackPressedHandler() {
-        // 对于 SDLActivity, 我们在 onBackPressed() 方法中处理
-        // 这里只是一个占位方法,实际逻辑在 onBackPressed() 中
-        AppLogger.info(TAG, "Back pressed handler ready (using onBackPressed override)");
-    }
 
-//    @Override
-//    public void onConfigurationChanged(Configuration newConfig) {
-//        super.onConfigurationChanged(newConfig);
-//        // 若系统因为 SDL 的请求发生了旋转，这里立即拉回横屏
-//        try {
-//            if (newConfig.orientation != Configuration.ORIENTATION_LANDSCAPE) {
-//                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
-//                AppLogger.info(TAG, "Orientation enforced back to landscape");
-//            }
-//        } catch (Exception e) {
-//            AppLogger.warn(TAG, "Failed to enforce landscape in onConfigurationChanged: " + e.getMessage());
-//        }
-//    }
+
+
 
     @Override
     public void setOrientationBis(int w, int h, boolean resizable, String hint) {
-        // lets force orientation to be landscape
         super.setOrientationBis(w, h, resizable, "LandscapeLeft LandscapeRight");
     }
 
@@ -284,8 +238,6 @@ public class GameActivity extends SDLActivity {
             // 获取程序集路径
             String assemblyPath = getIntent().getStringExtra("ASSEMBLY_PATH");
             String gameName = getIntent().getStringExtra("GAME_NAME");
-            String gameId = getIntent().getStringExtra("GAME_ID");
-
             if (assemblyPath == null || assemblyPath.isEmpty()) {
                 AppLogger.error(TAG, "Assembly path is null or empty");
                 runOnUiThread(() -> ErrorHandler.showWarning("启动失败", "程序集路径为空"));
@@ -302,18 +254,13 @@ public class GameActivity extends SDLActivity {
                 return;
             }
 
-            AppLogger.info(TAG, "================================================");
             AppLogger.info(TAG, "Starting game: " + (gameName != null ? gameName : "Unknown"));
             AppLogger.info(TAG, "Assembly: " + assemblyPath);
-            AppLogger.info(TAG, "================================================");
 
-            // 获取启用的补丁配置
-            // TODO: 这个 patchIds 何意味
             java.util.ArrayList<String> enabledPatchIds = getIntent().getStringArrayListExtra("ENABLED_PATCH_IDS");
 
             @Nullable ArrayList<Patch> enabledPatches = null;
             if (enabledPatchIds != null && !enabledPatchIds.isEmpty()) {
-                // 从 PatchManager 重新加载完整的补丁信息
                 PatchManager patchManager = RaLaunchApplication.getPatchManager();
                 enabledPatches = patchManager.getPatchesByIds(enabledPatchIds);
 
@@ -638,101 +585,7 @@ public class GameActivity extends SDLActivity {
         });
     }
     
-    /**
-     * 进入编辑模式（已废弃，使用 GameControlEditorManager）
-     */
-    @Deprecated
-    private void enterEditMode() {
-        if (mControlEditorManager != null) {
-            mControlEditorManager.enterEditMode();
-        }
-    }
-    
 
-    /**
-     * 退出编辑模式（已废弃，使用 GameControlEditorManager）
-     */
-    @Deprecated
-    private void exitEditMode() {
-        if (mControlEditorManager != null) {
-            mControlEditorManager.exitEditMode();
-        }
-    }
-
-    /**
-     * 添加按钮（已废弃，使用 GameControlEditorManager）
-     */
-    @Deprecated
-    private void addButton() {
-        if (mControlEditorManager != null) {
-            mControlEditorManager.addButton();
-        }
-    }
-
-    /**
-     * 添加摇杆（已废弃，使用 GameControlEditorManager）
-     */
-    @Deprecated
-    private void addJoystick() {
-        if (mControlEditorManager != null) {
-            mControlEditorManager.addJoystick();
-        }
-    }
-
-    
-    /**
-     * 保存控制布局（已废弃，使用 ControlEditorManager）
-     */
-    @Deprecated
-    private void saveControlLayout() {
-        if (mControlEditorManager != null) {
-            mControlEditorManager.saveLayout();
-        }
-    }
-
-    /**
-     * 重置为默认控制布局（已废弃，使用 GameControlEditorManager）
-     */
-    @Deprecated
-    private void resetToDefaultLayout() {
-        if (mControlEditorManager != null) {
-            mControlEditorManager.resetToDefaultLayout();
-        }
-    }
-
-    /**
-     * 打开控制布局编辑器（已废弃，现在使用游戏内编辑）
-     */
-    @Deprecated
-    private void openControlEditor() {
-        try {
-            Intent intent = new Intent(this, ControlEditorActivity.class);
-            startActivityForResult(intent, CONTROL_EDITOR_REQUEST_CODE);
-        } catch (Exception e) {
-            Log.e(TAG, "Failed to open control editor", e);
-            ErrorHandler.handleError("无法打开控制编辑器", e, false);
-        }
-    }
-
-    /**
-     * 显示快速设置（已废弃，使用 GameMenuManager）
-     */
-    @Deprecated
-    private void showQuickSettings() {
-        if (mMenuManager != null) {
-            mMenuManager.showQuickSettings();
-        }
-    }
-
-    /**
-     * 显示退出确认对话框（已废弃，使用 GameMenuManager）
-     */
-    @Deprecated
-    private void showExitConfirmDialog() {
-        if (mMenuManager != null) {
-            mMenuManager.showExitConfirmDialog();
-        }
-    }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -771,35 +624,17 @@ public class GameActivity extends SDLActivity {
             return;
         }
 
-        // 否则显示退出确认对话框
-        // 关键: 这里不调用 super.onBackPressed(), 这样可以阻止 SDLActivity 和 Activity 的默认 finish() 行为
         AppLogger.debug(TAG, "Showing exit confirmation dialog");
         if (mMenuManager != null) {
             mMenuManager.showExitConfirmDialog();
         }
-        // 绝对不要调用 super.onBackPressed() !!!
     }
-
     @Override
     protected void onDestroy() {
         AppLogger.info(TAG, "GameActivity.onDestroy() called");
         
-        // 清理 OSMesa 渲染器
-        try {
-            String currentRenderer = RendererLoader.getCurrentRenderer();
-            if (RendererConfig.RENDERER_ZINK.equals(currentRenderer)) {
-                if (OSMRenderer.isInitialized()) {
-                    AppLogger.info(TAG, "Cleaning up OSMesa renderer...");
-                    OSMRenderer.cleanup();
-                }
-            }
-        } catch (Exception e) {
-            AppLogger.warn(TAG, "Failed to cleanup OSMesa renderer: " + e.getMessage());
-        }
-        
         super.onDestroy();
     }
-
     /**
      * 将文本发送到SDL游戏
      * 直接发送SDL_TEXTINPUT事件（这是Terraria/FNA正确接收文本的方式）
@@ -807,14 +642,10 @@ public class GameActivity extends SDLActivity {
     public static void sendTextToGame(String text) {
         try {
 
-            // 直接调用SDLInputConnection.nativeCommitText
-            // 这会触发SDL_TEXTINPUT事件，FNA会接收并转发给Terraria
             Class<?> sdlInputConnectionClass = Class.forName("org.libsdl.app.SDLInputConnection");
             java.lang.reflect.Method nativeCommitText = sdlInputConnectionClass.getDeclaredMethod(
                 "nativeCommitText", String.class, int.class);
             nativeCommitText.setAccessible(true);
-
-            // 发送文本，newCursorPosition设为1（光标移到文本末尾）
             nativeCommitText.invoke(null, text, 1);
 
         } catch (Exception e) {
@@ -822,7 +653,6 @@ public class GameActivity extends SDLActivity {
             Log.e(TAG, "错误详情: " + e.getMessage());
         }
     }
-
     /**
      * 发送Backspace删除操作到SDL游戏
      * 通过发送Backspace按键事件实现删除功能
@@ -850,7 +680,6 @@ public class GameActivity extends SDLActivity {
             Log.e(TAG, "发送Backspace失败", e);
         }
     }
-
     /**
      * 递归禁用所有子视图的裁剪
      * 确保控件边框等绘制内容不会被父容器裁剪
@@ -872,18 +701,6 @@ public class GameActivity extends SDLActivity {
         view.setClipBounds(null);
     }
 
-    /**
-     * 启用SDL文本输入以支持Terraria的IME
-     *
-     * 工作原理：
-     * 1. SDL.showTextInput() 会启动SDL的文本输入模式
-     * 2. FNA的TextInputEXT会接收SDL_TEXTINPUT事件
-     * 3. Terraria的FnaIme会接收TextInput事件
-     * 4. FnaIme.OnCharCallback()检查IsEnabled，只有启用时才转发
-     * 5. 通过调用SDL.showTextInput()，让Terraria的IME服务启用
-     *
-     * 这个方法会在用户点击"键盘"按钮时被调用。
-     */
     public static void enableSDLTextInputForIME() {
         try {
 
@@ -904,18 +721,10 @@ public class GameActivity extends SDLActivity {
 
             }
 
-            // 如果showTextInput失败，记录警告
-            // （不再尝试其他备用方案，避免副作用）
-
-            Log.w(TAG, "所有SDL文本输入启用方法都失败了");
-            Log.w(TAG, "文本输入功能可能无法正常工作");
-            Log.w(TAG, "建议：在游戏内使用内置虚拟键盘或连接蓝牙键盘");
-
         } catch (Exception e) {
             Log.e(TAG, "启用SDL文本输入时发生异常", e);
         }
     }
-
     /**
      * 禁用SDL文本输入
      * 防止SDL自动显示文本框

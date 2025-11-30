@@ -1,7 +1,0 @@
-{
-  "name": "TMLConsolePatch",
-  "description": "在游戏中显示C#控制台,支持输入输出和服务器命令",
-  "version": "1.0.0",
-  "author": "RaLaunch",
-  "assembly": "TMLConsolePatch.dll"
-}

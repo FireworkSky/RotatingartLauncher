@@ -369,107 +369,33 @@ public class LocalImportFragment extends BaseFragment {
                                     AppLogger.info(TAG, "ModLoader 解压路径: " + modLoaderPath);
                                     AppLogger.info(TAG, "ModLoader 原始 ZIP 路径: " + modLoaderFilePath);
 
-                                    // 根据模组zip文件名推断程序集名称
+                                    // 在 ModLoader 目录中查找程序集
                                     File modLoaderDir = new File(modLoaderPath);
                                     File assemblyFile = null;
-
-                                    if (modLoaderBaseName != null && !modLoaderBaseName.isEmpty()) {
-                                        // 优先使用 zip 文件名推断的程序集名称，递归查找
-                                        String expectedDllName = modLoaderBaseName + ".dll";
-                                        assemblyFile = findFileRecursively(modLoaderDir, expectedDllName);
-
-                                        if (assemblyFile != null && assemblyFile.exists()) {
-                                            AppLogger.debug(TAG, "Found ModLoader assembly based on zip name: " + assemblyFile.getAbsolutePath());
-                                        } else {
-                                            AppLogger.warn(TAG, "Expected DLL not found: " + expectedDllName + ", searching for any .dll/.exe");
-                                            // 如果找不到，尝试查找第一个 .dll 或 .exe 文件
-                                            assemblyFile = findFirstFileRecursively(modLoaderDir, name ->
-                                                name.toLowerCase().endsWith(".dll") || name.toLowerCase().endsWith(".exe")
-                                            );
-                                            if (assemblyFile != null) {
-                                                AppLogger.info(TAG, "Found alternative assembly: " + assemblyFile.getAbsolutePath());
-                                            }
-                                        }
-                                    } else {
-                                        // 如果没有 baseName，直接查找第一个 .dll 或 .exe
-                                        AppLogger.info(TAG, "No modLoaderBaseName, searching for any .dll/.exe");
-                                        assemblyFile = findFirstFileRecursively(modLoaderDir, name ->
-                                            name.toLowerCase().endsWith(".dll") || name.toLowerCase().endsWith(".exe")
-                                        );
-                                        if (assemblyFile != null) {
-                                            AppLogger.info(TAG, "Found assembly: " + assemblyFile.getAbsolutePath());
-                                        }
-                                    }
-
-
-
-                                    // 让 C# 自动搜索目录中有入口点的程序集
                                     boolean foundModLoaderEntry = false;
-                                    if (modLoaderDir != null && modLoaderDir.exists()) {
-                                        AppLogger.info(TAG, "让 C# 搜索目录中有入口点的程序集: " + modLoaderDir.getAbsolutePath());
-                                        try {
-                                            // 调用 C# AssemblyChecker，传入目录路径
-                                            // C# 会自动搜索目录中的所有 .dll 和 .exe 文件
-                                            AssemblyChecker.CheckResult checkResult =
-                                                    AssemblyChecker.searchDirectoryForEntryPoint(getContext(), modLoaderDir.getAbsolutePath());
 
-                                            if (checkResult != null && checkResult.hasEntryPoint && checkResult.exists) {
-                                                // C# 已经找到有入口点的程序集
-                                                AppLogger.info(TAG, "✓ 找到有入口点的程序集: " + checkResult.assemblyPath);
+                                    if (modLoaderDir != null && modLoaderDir.exists()) {
+                                        AppLogger.info(TAG, "搜索 ModLoader 目录中的程序集: " + modLoaderDir.getAbsolutePath());
+                                        
+                                        // 优先级 1: 查找有 runtimeconfig.json + 图标 的程序集
+                                        try {
+                                            AssemblyChecker.CheckResult checkResult =
+                                                    AssemblyChecker.searchDirectoryForAssemblyWithIcon(getContext(), modLoaderDir.getAbsolutePath());
+
+                                            if (checkResult != null && checkResult.exists) {
+                                                if (checkResult.hasIcon) {
+                                                    AppLogger.info(TAG, "✓ 找到符合规则的程序集（runtimeconfig.json + 图标）: " + checkResult.assemblyPath);
+                                                } else {
+                                                    AppLogger.info(TAG, "✓ 找到符合规则的程序集（runtimeconfig.json，无图标）: " + checkResult.assemblyPath);
+                                                }
                                                 assemblyFile = new File(checkResult.assemblyPath);
                                                 foundModLoaderEntry = true;
-                                            } else {
-                                                AppLogger.warn(TAG, "✗ 未找到有入口点的程序集");
                                             }
                                         } catch (Exception e) {
-                                            AppLogger.error(TAG, "C# 搜索程序集失败", e);
+                                            AppLogger.error(TAG, "搜索程序集失败", e);
                                         }
 
-                                        // 兜底逻辑：如果 C# 工具失败，尝试手动查找程序集
-                                        if (!foundModLoaderEntry) {
-                                            AppLogger.info(TAG, "C# 工具检测失败，尝试手动查找 ModLoader 程序集");
 
-                                            // 优先查找与 zip 文件名匹配的 DLL
-                                            if (modLoaderBaseName != null && !modLoaderBaseName.isEmpty()) {
-                                                String expectedDllName = modLoaderBaseName + ".dll";
-                                                assemblyFile = findFileRecursively(modLoaderDir, expectedDllName);
-
-                                                if (assemblyFile != null && assemblyFile.exists()) {
-                                                    AppLogger.info(TAG, "✓ 找到与 ZIP 名称匹配的程序集: " + assemblyFile.getName());
-                                                    foundModLoaderEntry = true;
-                                                }
-                                            }
-
-                                            // 如果没找到，查找常见的 ModLoader 程序集名称
-                                            if (!foundModLoaderEntry) {
-                                                String[] commonModLoaders = {
-                                                    "tModLoader.dll", "Terraria.dll",
-                                                    "StardewModdingAPI.dll", "SMAPI.dll",
-                                                    "MelonLoader.dll", "BepInEx.dll"
-                                                };
-
-                                                for (String modLoaderName : commonModLoaders) {
-                                                    assemblyFile = findFileRecursively(modLoaderDir, modLoaderName);
-                                                    if (assemblyFile != null && assemblyFile.exists()) {
-                                                        AppLogger.info(TAG, "✓ 找到常见 ModLoader 程序集: " + assemblyFile.getName());
-                                                        foundModLoaderEntry = true;
-                                                        break;
-                                                    }
-                                                }
-                                            }
-
-                                            // 最后兜底：查找任意 .dll 或 .exe 文件
-                                            if (!foundModLoaderEntry) {
-                                                assemblyFile = findFirstFileRecursively(modLoaderDir, name ->
-                                                    name.toLowerCase().endsWith(".dll") || name.toLowerCase().endsWith(".exe")
-                                                );
-
-                                                if (assemblyFile != null && assemblyFile.exists()) {
-                                                    AppLogger.info(TAG, "✓ 找到程序集文件: " + assemblyFile.getName());
-                                                    foundModLoaderEntry = true;
-                                                }
-                                            }
-                                        }
                                     }
 
                                     // 查找游戏本体路径
@@ -770,6 +696,115 @@ public class LocalImportFragment extends BaseFragment {
 
     private File findFirstFileRecursively(File dir, java.util.function.Predicate<String> predicate) {
         return GamePathResolver.findFirstFileRecursively(dir, predicate);
+    }
+
+    /**
+     * 递归查找第一个有图标的 DLL/EXE 文件（递归所有子目录，无深度限制）
+     */
+    private File findFirstFileWithIconRecursively(File dir) {
+        if (!dir.exists() || !dir.isDirectory()) {
+            return null;
+        }
+
+        File[] files = dir.listFiles();
+        if (files == null) {
+            return null;
+        }
+
+        AppLogger.debug(TAG, "查找有图标文件，搜索目录: " + dir.getAbsolutePath());
+
+        // 先搜索当前目录
+        for (File file : files) {
+            if (!file.isFile()) {
+                continue;
+            }
+            
+            String fileName = file.getName().toLowerCase();
+            // 只检查 DLL 和 EXE 文件
+            if (!fileName.endsWith(".dll") && !fileName.endsWith(".exe")) {
+                continue;
+            }
+            
+            // 跳过系统 DLL
+            if (fileName.startsWith("api-ms-win-") || 
+                fileName.equals("kernel32.dll") ||
+                fileName.equals("msvcrt.dll")) {
+                continue;
+            }
+            
+            // 检查是否有图标
+            boolean hasIcon = com.app.ralib.icon.IconExtractor.hasIcon(file.getAbsolutePath());
+            if (hasIcon) {
+                AppLogger.info(TAG, "✓ 找到有图标的程序集: " + file.getAbsolutePath());
+                return file;
+            }
+        }
+
+        // 递归搜索所有子目录（无深度限制）
+        for (File file : files) {
+            if (file.isDirectory()) {
+                File found = findFirstFileWithIconRecursively(file);
+                if (found != null) {
+                    return found;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * 递归查找第一个 DLL/EXE 文件（递归所有子目录，无深度限制，跳过系统 DLL）
+     */
+    private File findFirstAssemblyFileRecursively(File dir) {
+        if (!dir.exists() || !dir.isDirectory()) {
+            return null;
+        }
+
+        File[] files = dir.listFiles();
+        if (files == null) {
+            return null;
+        }
+
+        AppLogger.debug(TAG, "查找程序集文件，搜索目录: " + dir.getAbsolutePath());
+
+        // 先搜索当前目录
+        for (File file : files) {
+            if (!file.isFile()) {
+                continue;
+            }
+            
+            String fileName = file.getName().toLowerCase();
+            // 只检查 DLL 和 EXE 文件
+            if (!fileName.endsWith(".dll") && !fileName.endsWith(".exe")) {
+                continue;
+            }
+            
+            // 跳过系统 DLL
+            if (fileName.startsWith("api-ms-win-") || 
+                fileName.equals("kernel32.dll") ||
+                fileName.equals("msvcrt.dll") ||
+                fileName.contains("system.") ||  // 跳过 System.*.dll
+                fileName.contains("microsoft.")) { // 跳过 Microsoft.*.dll
+                continue;
+            }
+            
+            // 返回第一个符合条件的文件
+            AppLogger.info(TAG, "✓ 找到程序集文件: " + file.getAbsolutePath());
+            return file;
+        }
+
+        // 递归搜索所有子目录（无深度限制）
+        for (File file : files) {
+            if (file.isDirectory()) {
+                File found = findFirstAssemblyFileRecursively(file);
+                if (found != null) {
+                    return found;
+                }
+            }
+        }
+
+        return null;
     }
 
 }

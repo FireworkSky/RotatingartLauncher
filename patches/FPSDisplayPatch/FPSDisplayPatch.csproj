@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <OutputType>Library</OutputType>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Lib.Harmony.Thin" Version="2.3.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="FNA">
+      <HintPath>..\..\..\Steam\steamapps\common\tModLoader\Libraries\FNA\1.0.0\FNA.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+</Project>
+

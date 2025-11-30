@@ -1,11 +1,4 @@
-/**
- * vulkan_turnip_loader.c
- * 
- * Turnip Vulkan 驱动加载器
- * Turnip 是 Mesa 为 Qualcomm Adreno GPU 开发的开源 Vulkan 驱动
- * 
- * 简化版本 - 直接加载 Turnip，不需要 liblinkerhook.so
- */
+
 
 #include "vulkan_turnip_loader.h"
 #include <dlfcn.h>
@@ -35,7 +28,7 @@ static void set_vulkan_ptr(void* ptr) {
 }
 
 /**
- * @brief 加载 Turnip Vulkan 驱动（简化版本）
+ * @brief 加载 Turnip Vulkan 驱动
  * 
  * 直接从应用的 native 库目录加载 libvulkan_freedreno.so
  * 不需要 liblinkerhook.so 或 linker namespace bypass

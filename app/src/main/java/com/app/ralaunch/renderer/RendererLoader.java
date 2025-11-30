@@ -15,8 +15,6 @@ import java.util.Map;
  * 2. 不需要设置 LD_PRELOAD
  * 3. 只需要设置环境变量
  * 4. 让 SDL/FNA3D 自己根据环境变量选择渲染器
- *
- * 参考 FoldCraftLauncher 的实现方式
  */
 public class RendererLoader {
     private static final String TAG = "RendererLoader";

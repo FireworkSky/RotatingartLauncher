@@ -21,6 +21,7 @@ public class GameItem {
     private String engineType; // 引擎类型
     private int iconResId; // 图标资源ID
     private boolean modLoaderEnabled = true; // ModLoader 是否启用(默认启用)
+    private boolean isShortcut = false; // 是否为快捷方式（从文件浏览器添加的 DLL/EXE，不删除实际文件）
 
     // 默认构造函数(Gson需要)
     public GameItem() {
@@ -110,5 +111,13 @@ public class GameItem {
 
     public void setModLoaderEnabled(boolean modLoaderEnabled) {
         this.modLoaderEnabled = modLoaderEnabled;
+    }
+
+    public boolean isShortcut() {
+        return isShortcut;
+    }
+
+    public void setShortcut(boolean shortcut) {
+        this.isShortcut = shortcut;
     }
 }

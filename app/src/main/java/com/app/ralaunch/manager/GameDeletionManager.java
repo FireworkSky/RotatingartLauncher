@@ -28,10 +28,19 @@ public class GameDeletionManager {
         
         // 创建选项列表
         java.util.List<com.app.ralib.dialog.OptionSelectorDialog.Option> options = new java.util.ArrayList<>();
+        
+        // 根据是否为快捷方式显示不同的提示
+        String description;
+        if (game.isShortcut()) {
+            description = "确定要从列表中移除 " + game.getGameName() + " 吗？\n\n注意：这只是移除快捷方式，不会删除实际文件";
+        } else {
+            description = "确定要删除 " + game.getGameName() + " 吗？\n\n注意：这将同时删除游戏文件";
+        }
+        
         options.add(new com.app.ralib.dialog.OptionSelectorDialog.Option(
             "confirm", 
             "删除", 
-            "确定要删除 " + game.getGameName() + " 吗？\n\n注意：这将同时删除游戏文件"
+            description
         ));
         options.add(new com.app.ralib.dialog.OptionSelectorDialog.Option(
             "cancel", 
@@ -47,8 +56,18 @@ public class GameDeletionManager {
         
         dialog.setOnOptionSelectedListener(optionValue -> {
             if ("confirm".equals(optionValue)) {
-                // 删除游戏文件夹
-                boolean filesDeleted = deleteGameFiles(game);
+                // 检查是否为快捷方式
+                boolean isShortcut = game.isShortcut();
+                boolean filesDeleted = false;
+                
+                if (isShortcut) {
+                    // 快捷方式：只从列表删除，不删除实际文件
+                    AppLogger.info("GameDeletionManager", "删除快捷方式: " + game.getGameName());
+                    filesDeleted = false; // 标记为未删除文件，因为快捷方式不应该删除原始文件
+                } else {
+                    // 游戏：删除游戏文件夹
+                    filesDeleted = deleteGameFiles(game);
+                }
                 
                 // 通知监听器
                 if (listener != null) {
@@ -69,6 +88,12 @@ public class GameDeletionManager {
      */
     public boolean deleteGameFiles(GameItem game) {
         try {
+            // 如果是快捷方式，不应该删除文件
+            if (game.isShortcut()) {
+                AppLogger.info("GameDeletionManager", "跳过快捷方式的文件删除: " + game.getGameName());
+                return false;
+            }
+            
             // 优先使用 gameBasePath（游戏根目录）
             String gameBasePath = game.getGameBasePath();
             File gameDir = null;

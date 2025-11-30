@@ -1,0 +1,13 @@
+{
+  "id": "fna_performance_patch",
+  "name": "FNA Performance Patch",
+  "description": "FNA 性能优化补丁 - 减少状态切换、统计渲染调用",
+  "version": "1.0.0",
+  "author": "RALCore",
+  "dll": "FNAPerformancePatch.dll",
+  "entryPoint": "FNAPerformancePatch.FNAPerformancePatcher::Initialize",
+  "targetGames": ["tModLoader", "Terraria"],
+  "priority": 100,
+  "enabled": true
+}
+

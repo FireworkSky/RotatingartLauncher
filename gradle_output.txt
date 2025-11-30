@@ -1,0 +1,86 @@
+> Task :app:preBuild UP-TO-DATE
+> Task :app:preDebugBuild UP-TO-DATE
+> Task :app:mergeDebugNativeDebugMetadata NO-SOURCE
+> Task :app:dataBindingMergeDependencyArtifactsDebug UP-TO-DATE
+> Task :app:generateDebugResValues UP-TO-DATE
+> Task :app:generateDebugResources UP-TO-DATE
+> Task :ralib:preBuild UP-TO-DATE
+> Task :ralib:preDebugBuild UP-TO-DATE
+> Task :ralib:generateDebugResValues UP-TO-DATE
+> Task :ralib:generateDebugResources UP-TO-DATE
+> Task :ralib:packageDebugResources UP-TO-DATE
+> Task :app:mergeDebugResources UP-TO-DATE
+> Task :app:packageDebugResources UP-TO-DATE
+> Task :app:parseDebugLocalResources UP-TO-DATE
+> Task :ralib:dataBindingMergeDependencyArtifactsDebug UP-TO-DATE
+> Task :ralib:parseDebugLocalResources UP-TO-DATE
+> Task :ralib:dataBindingGenBaseClassesDebug UP-TO-DATE
+> Task :ralib:generateDebugRFile UP-TO-DATE
+> Task :app:dataBindingGenBaseClassesDebug UP-TO-DATE
+> Task :app:javaPreCompileDebug UP-TO-DATE
+> Task :ralib:writeDebugAarMetadata UP-TO-DATE
+> Task :app:checkDebugAarMetadata UP-TO-DATE
+> Task :app:mapDebugSourceSetPaths UP-TO-DATE
+> Task :app:createDebugCompatibleScreenManifests UP-TO-DATE
+> Task :app:extractDeepLinksDebug UP-TO-DATE
+> Task :ralib:extractDeepLinksDebug UP-TO-DATE
+> Task :ralib:processDebugManifest UP-TO-DATE
+> Task :app:processDebugMainManifest UP-TO-DATE
+> Task :app:processDebugManifest UP-TO-DATE
+> Task :app:processDebugManifestForPackage UP-TO-DATE
+> Task :ralib:compileDebugLibraryResources UP-TO-DATE
+> Task :app:processDebugResources UP-TO-DATE
+> Task :ralib:javaPreCompileDebug UP-TO-DATE
+> Task :ralib:compileDebugJavaWithJavac UP-TO-DATE
+> Task :ralib:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :app:compileDebugJavaWithJavac
+> Task :app:mergeDebugShaders UP-TO-DATE
+> Task :app:compileDebugShaders NO-SOURCE
+> Task :app:generateDebugAssets UP-TO-DATE
+> Task :ralib:mergeDebugShaders UP-TO-DATE
+> Task :ralib:compileDebugShaders NO-SOURCE
+> Task :ralib:generateDebugAssets UP-TO-DATE
+> Task :ralib:mergeDebugAssets UP-TO-DATE
+> Task :app:mergeDebugAssets UP-TO-DATE
+> Task :app:compressDebugAssets UP-TO-DATE
+> Task :ralib:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :app:desugarDebugFileDependencies UP-TO-DATE
+> Task :app:dexBuilderDebug
+> Task :app:mergeDebugGlobalSynthetics UP-TO-DATE
+> Task :app:processDebugJavaRes NO-SOURCE
+> Task :ralib:processDebugJavaRes NO-SOURCE
+> Task :app:mergeDebugJavaResource UP-TO-DATE
+> Task :app:checkDebugDuplicateClasses UP-TO-DATE
+> Task :app:mergeExtDexDebug UP-TO-DATE
+> Task :ralib:bundleLibRuntimeToDirDebug UP-TO-DATE
+> Task :app:mergeLibDexDebug UP-TO-DATE
+> Task :app:configureCMakeDebug[arm64-v8a]
+> Task :app:mergeProjectDexDebug
+> Task :app:buildCMakeDebug[arm64-v8a]
+> Task :app:mergeDebugJniLibFolders UP-TO-DATE
+> Task :ralib:mergeDebugJniLibFolders UP-TO-DATE
+> Task :ralib:mergeDebugNativeLibs NO-SOURCE
+> Task :ralib:copyDebugJniLibsProjectOnly UP-TO-DATE
+> Task :app:mergeDebugNativeLibs UP-TO-DATE
+> Task :app:stripDebugDebugSymbols UP-TO-DATE
+> Task :app:validateSigningDebug UP-TO-DATE
+> Task :app:writeDebugAppMetadata UP-TO-DATE
+> Task :app:writeDebugSigningConfigVersions UP-TO-DATE
+> Task :ralib:stripDebugDebugSymbols NO-SOURCE
+> Task :ralib:copyDebugJniLibsProjectAndLocalJars UP-TO-DATE
+> Task :ralib:extractDebugAnnotations UP-TO-DATE
+> Task :ralib:extractDeepLinksForAarDebug UP-TO-DATE
+> Task :ralib:mergeDebugGeneratedProguardFiles UP-TO-DATE
+> Task :ralib:mergeDebugConsumerProguardFiles UP-TO-DATE
+> Task :ralib:prepareDebugArtProfile UP-TO-DATE
+> Task :ralib:prepareLintJarForPublish UP-TO-DATE
+> Task :ralib:mergeDebugJavaResource UP-TO-DATE
+> Task :ralib:syncDebugLibJars UP-TO-DATE
+> Task :ralib:bundleDebugAar UP-TO-DATE
+> Task :ralib:assembleDebug UP-TO-DATE
+> Task :app:packageDebug
+> Task :app:createDebugApkListingFileRedirect UP-TO-DATE
+> Task :app:assembleDebug
+
+BUILD SUCCESSFUL in 960ms
+68 actionable tasks: 6 executed, 62 up-to-date

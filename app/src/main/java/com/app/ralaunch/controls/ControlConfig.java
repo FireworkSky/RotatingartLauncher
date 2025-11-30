@@ -73,13 +73,10 @@ public class ControlConfig {
                 .registerTypeAdapter(ControlData.class, new ControlDataDeserializer())
                 .create();
         ControlConfig config = gson.fromJson(json, ControlConfig.class);
-        // 后处理：确保文本控件的 displayText 正确设置
         if (config != null && config.controls != null) {
             for (ControlData data : config.controls) {
                 if (data.type == ControlData.TYPE_TEXT) {
-                    // 如果 displayText 为 null 或等于默认值 "文本"，且 JSON 中可能没有该字段，设置为空字符串
-                    // 注意：这里不能简单判断是否等于 "文本"，因为用户可能真的想显示 "文本"
-                    // 所以只有在 displayText 为 null 时才设置为空字符串
+
                     if (data.displayText == null) {
                         data.displayText = "";
                     }

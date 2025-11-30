@@ -12,17 +12,13 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 渲染器配置类 - 基于 FoldCraftLauncher/PojavLauncher 环境变量方案
+ * 渲染器配置类 - 基于环境变量的渲染器选择方案
  *
  * 核心原理：
- * 1. 通过环境变量控制渲染器选择（POJAV_RENDERER）
+ * 1. 通过环境变量控制渲染器选择（RALCORE_RENDERER）
  * 2. 库文件通过 LD_LIBRARY_PATH 自动可见
  * 3. 所有渲染器都提供标准的 EGL/OpenGL 接口
  * 4. SDL/FNA3D 读取环境变量并使用相应渲染器
- *
- * 参考实现：
- * - FoldCraftLauncher: 使用 POJAV_RENDERER + 环境变量配置
- * - PojavLauncher: 通过环境变量动态切换渲染器
  */
 public class RendererConfig {
     private static final String TAG = "RendererConfig";
@@ -274,7 +270,7 @@ public class RendererConfig {
     }
 
     /**
-     * 获取渲染器环境变量配置(基于 FoldCraftLauncher 实现，使用 RALCORE 前缀)
+     * 获取渲染器环境变量配置（使用 RALCORE 前缀）
      */
     public static Map<String, String> getRendererEnv(Context context, String rendererId) {
         Map<String, String> envMap = new HashMap<>();
@@ -287,7 +283,7 @@ public class RendererConfig {
                 com.app.ralaunch.data.SettingsManager.getInstance(context);
             boolean useTurnip = settingsManager.isVulkanDriverTurnip();
             if (useTurnip) {
-                envMap.put("POJAV_LOAD_TURNIP", "1");
+                envMap.put("RALCORE_LOAD_TURNIP", "1");
                 AppLogger.info(TAG, "Turnip Vulkan driver enabled for Adreno GPU");
             } else {
                 AppLogger.info(TAG, "Using system Vulkan driver for Adreno GPU");
@@ -345,7 +341,7 @@ public class RendererConfig {
                 // 注意：不要设置 LIBGL_ALWAYS_SOFTWARE=1，因为它会强制 zink 查找 CPU 设备
                 // 而 Android 设备通常没有 CPU Vulkan 设备，会导致 "CPU device requested but none found!" 错误
                 // zink 本身已经是软件渲染器（通过 Vulkan），不需要 LIBGL_ALWAYS_SOFTWARE
-                // 参考 PojavLauncher：不设置 MESA_VK_DEVICE_SELECT，让 zink 自动选择
+                // 不设置 MESA_VK_DEVICE_SELECT，让 zink 自动选择
                 // 但添加 ZINK_DESCRIPTORS 优化
                 envMap.put("ZINK_DESCRIPTORS", "auto");
                 break;
@@ -369,7 +365,7 @@ public class RendererConfig {
                 envMap.put("SDL_EGL_SKIP_RENDERABLE_TYPE", "1");
                 // 强制 Mesa 使用 zink 驱动（防止回退到硬件 OpenGL）
                 envMap.put("LIBGL_ALWAYS_SOFTWARE", "1"); // 强制软件渲染，确保使用 Mesa
-                // 参考 PojavLauncher：不设置 MESA_VK_DEVICE_SELECT，让 zink 自动选择
+                // 不设置 MESA_VK_DEVICE_SELECT，让 zink 自动选择
                 break;
 
             case RENDERER_VIRGL:

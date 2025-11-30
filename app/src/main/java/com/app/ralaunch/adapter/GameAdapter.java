@@ -58,7 +58,17 @@ public class GameAdapter extends RecyclerView.Adapter<GameAdapter.GameViewHolder
     public void onBindViewHolder(GameViewHolder holder, int position) {
         GameItem game = gameList.get(position);
         holder.gameName.setText(game.getGameName());
-        holder.gameDescription.setText(game.getGameDescription());
+        
+        // 设置描述，如果是快捷方式则添加标识
+        String description = game.getGameDescription();
+        if (game.isShortcut()) {
+            if (description == null || description.isEmpty()) {
+                description = "快捷方式";
+            } else {
+                description = "🔗 " + description + " (快捷方式)";
+            }
+        }
+        holder.gameDescription.setText(description);
 
         // 加载游戏图标 - 优先使用自定义图标路径，否则使用资源ID
         if (game.getIconPath() != null && !game.getIconPath().isEmpty()) {

@@ -24,6 +24,10 @@ public class GamePathResolver {
 
     /**
      * 查找游戏可执行文件路径
+     * 
+     * 通过查找 xxxx.runtimeconfig.json 文件来确定启动程序集
+     * 规则：如果有 xxxx.runtimeconfig.json，且有对应的 xxxx.dll/exe 和图标，则 xxxx.dll/exe 就是启动程序集
+     * 
      * @param gamePath 游戏基础路径
      * @return 游戏可执行文件的完整路径,如果未找到则返回 null
      */
@@ -41,30 +45,23 @@ public class GamePathResolver {
             return null;
         }
 
-        // 查找具有入口点和图标的 DLL 文件（游戏主程序）
-        File gameDll = findGameExecutable(gameDir, ".dll");
-        if (gameDll != null) {
-            AppLogger.info(TAG, "Found game DLL with entry point and icon: " + gameDll.getAbsolutePath());
-            return gameDll.getAbsolutePath();
-        }
-
-        // 查找具有入口点和图标的 EXE 文件
-        File gameExe = findGameExecutable(gameDir, ".exe");
-        if (gameExe != null) {
-            AppLogger.info(TAG, "Found game EXE with entry point and icon: " + gameExe.getAbsolutePath());
-            return gameExe.getAbsolutePath();
+        // 通过 runtimeconfig.json 查找程序集
+        File assemblyFile = findAssemblyByRuntimeConfig(gameDir);
+        if (assemblyFile != null) {
+            AppLogger.info(TAG, "Found game assembly via runtimeconfig.json: " + assemblyFile.getAbsolutePath());
+            return assemblyFile.getAbsolutePath();
         }
 
         // 如果找不到符合条件的文件，降级为查找任意 DLL/EXE
         File dllFile = findFirstFileRecursively(gameDir, name -> name.endsWith(".dll"));
         if (dllFile != null) {
-            AppLogger.debug(TAG, "Found DLL file (no entry point check): " + dllFile.getAbsolutePath());
+            AppLogger.debug(TAG, "Found DLL file (fallback): " + dllFile.getAbsolutePath());
             return dllFile.getAbsolutePath();
         }
 
         File exeFile = findFirstFileRecursively(gameDir, name -> name.endsWith(".exe"));
         if (exeFile != null) {
-            AppLogger.debug(TAG, "Found EXE file (no entry point check): " + exeFile.getAbsolutePath());
+            AppLogger.debug(TAG, "Found EXE file (fallback): " + exeFile.getAbsolutePath());
             return exeFile.getAbsolutePath();
         }
 
@@ -73,52 +70,78 @@ public class GamePathResolver {
     }
 
     /**
-     * 查找游戏可执行文件（必须同时具有入口点和图标）
+     * 通过 runtimeconfig.json 查找程序集
+     * 
+     * 查找 xxxx.runtimeconfig.json 文件，检查是否有对应的 xxxx.dll/exe 和图标
+     * 
+     * @param dir 要搜索的目录
+     * @return 找到的程序集文件，如果没有找到则返回 null
      */
-    private static File findGameExecutable(File dir, String extension) {
-        return findFirstFileRecursively(dir, name -> {
-            if (!name.endsWith(extension)) {
-                return false;
+    private static File findAssemblyByRuntimeConfig(File dir) {
+        if (!dir.exists() || !dir.isDirectory()) {
+            return null;
+        }
+
+        File[] files = dir.listFiles();
+        if (files == null) {
+            return null;
+        }
+
+        // 先搜索当前目录
+        for (File file : files) {
+            if (!file.isFile()) {
+                continue;
+            }
+            
+            String fileName = file.getName();
+            if (!fileName.endsWith(".runtimeconfig.json")) {
+                continue;
             }
 
-            File file = new File(dir, name);
-            String filePath = file.getAbsolutePath();
-
-            // 检查是否有图标（必须条件）
-            boolean hasIcon = IconExtractor.hasIcon(filePath);
+            // 提取基础名称（例如 "Stardew Valley.runtimeconfig.json" -> "Stardew Valley"）
+            String baseName = fileName.substring(0, fileName.length() - ".runtimeconfig.json".length());
+            
+            File parentDir = file.getParentFile();
+            
+            // 检查是否有对应的 DLL 或 EXE（优先 DLL）
+            File dllFile = new File(parentDir, baseName + ".dll");
+            File exeFile = new File(parentDir, baseName + ".exe");
+            
+            File assemblyFile = null;
+            if (dllFile.exists() && dllFile.isFile()) {
+                assemblyFile = dllFile;
+            } else if (exeFile.exists() && exeFile.isFile()) {
+                assemblyFile = exeFile;
+            }
+            
+            if (assemblyFile == null) {
+                AppLogger.debug(TAG, "Found runtimeconfig.json but no matching DLL/EXE: " + fileName);
+                continue;
+            }
+            
+            // 检查是否有图标
+            boolean hasIcon = IconExtractor.hasIcon(assemblyFile.getAbsolutePath());
             if (!hasIcon) {
-                return false;
+                AppLogger.debug(TAG, "Found runtimeconfig.json and DLL/EXE but no icon: " + assemblyFile.getName());
+                continue;
             }
+            
+            AppLogger.debug(TAG, String.format("Found valid assembly: %s (runtimeconfig.json: %s, hasIcon: %b)", 
+                assemblyFile.getName(), fileName, hasIcon));
+            return assemblyFile;
+        }
 
-            // 检查是否有入口点（如果 runtime 可用）
-            // ⚠️ 暂时禁用：AssemblyChecker 会初始化 CoreCLR，导致后续游戏启动失败
-            // 因为 CoreCLR 不允许在同一进程中多次初始化
-            // TODO: 未来可以通过检查文件是否在游戏启动流程中来决定是否调用
-            boolean hasEntryPoint = false; // 假设所有有图标的文件都有入口点
-
-            /*
-            if (sContext != null && isRuntimeAvailable()) {
-                try {
-                    hasEntryPoint = AssemblyChecker.hasEntryPoint(sContext, filePath);
-                } catch (Exception e) {
-                    // 如果检查失败，记录日志但不影响结果（降级为只检查图标）
-                    AppLogger.debug(TAG, "Failed to check entry point for " + name + ": " + e.getMessage());
-                    hasEntryPoint = true; // 假设有入口点
+        // 递归搜索子目录
+        for (File file : files) {
+            if (file.isDirectory()) {
+                File found = findAssemblyByRuntimeConfig(file);
+                if (found != null) {
+                    return found;
                 }
-            } else {
-                // runtime 不可用时，假设有入口点（只要有图标就认为是游戏）
-                hasEntryPoint = true;
             }
-            */
+        }
 
-            if (hasEntryPoint && hasIcon) {
-                AppLogger.debug(TAG, String.format("File %s has entry point: %b, has icon: %b",
-                    name, hasEntryPoint, hasIcon));
-                return true;
-            }
-
-            return false;
-        });
+        return null;
     }
 
     /**

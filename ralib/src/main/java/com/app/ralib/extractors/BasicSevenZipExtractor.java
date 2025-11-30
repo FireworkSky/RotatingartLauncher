@@ -139,7 +139,7 @@ public class BasicSevenZipExtractor implements ExtractorCollection.IExtractor {
                 Path filePath = Paths.get(archive.getStringProperty(index, PropID.PATH));
                 boolean isFolder = (Boolean) archive.getProperty(index, PropID.IS_FOLDER);
 
-                Log.d(TAG, "Processing item: " + filePath + " (isFolder: " + isFolder + ")");
+             //   Log.d(TAG, "Processing item: " + filePath + " (isFolder: " + isFolder + ")");
 
                 // 跳过非指定前缀的文件
                 Path relativeFilePath = sourceExtractionPrefix.relativize(filePath).normalize();

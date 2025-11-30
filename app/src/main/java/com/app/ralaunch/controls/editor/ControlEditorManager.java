@@ -46,6 +46,7 @@ public class ControlEditorManager {
     
     private OnEditorStateChangedListener mStateListener;
     private OnLayoutChangedListener mLayoutChangedListener;
+    private OnFPSDisplayChangedListener mFPSDisplayListener;
     
     /**
      * 编辑状态变化监听器
@@ -60,6 +61,13 @@ public class ControlEditorManager {
      */
     public interface OnLayoutChangedListener {
         void onLayoutChanged();
+    }
+
+    /**
+     * FPS 显示设置变化监听器
+     */
+    public interface OnFPSDisplayChangedListener {
+        void onFPSDisplayChanged(boolean enabled);
     }
     
     /**
@@ -98,6 +106,13 @@ public class ControlEditorManager {
      */
     public void setOnLayoutChangedListener(OnLayoutChangedListener listener) {
         mLayoutChangedListener = listener;
+    }
+
+    /**
+     * 设置 FPS 显示变化监听器
+     */
+    public void setOnFPSDisplayChangedListener(OnFPSDisplayChangedListener listener) {
+        mFPSDisplayListener = listener;
     }
     
     /**
@@ -338,6 +353,14 @@ public class ControlEditorManager {
             @Override
             public void onHideCursorChanged(boolean hide) {
                 // 隐藏鼠标光标设置变化
+            }
+
+            @Override
+            public void onFPSDisplayChanged(boolean enabled) {
+                // FPS 显示设置变化
+                if (mFPSDisplayListener != null) {
+                    mFPSDisplayListener.onFPSDisplayChanged(enabled);
+                }
             }
         });
         

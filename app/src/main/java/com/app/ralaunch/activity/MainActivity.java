@@ -120,10 +120,10 @@ public class MainActivity extends AppCompatActivity implements
         // 初始化错误处理器
         ErrorHandler.init(this);
 
-        // 初始化管理器（部分管理器需要在 setContentView 之前设置窗口特性）
+        // 初始化管理器
         initializeManagersBeforeContentView();
         
-        // 设置全屏模式（必须在 setContentView 之前）
+        // 设置全屏模式
         uiManager.setupFullscreen();
 
         setContentView(R.layout.activity_main);
@@ -134,10 +134,10 @@ public class MainActivity extends AppCompatActivity implements
         // 初始化视频背景
         updateVideoBackground();
 
-        // 先初始化基本 UI 控件（管理器需要这些控件）
+        // 先初始化基本 UI 控件
         mainLayout = findViewById(R.id.mainLayout);
 
-        // 初始化需要 View 的管理器（在 setContentView 之后）
+        // 初始化需要 View 的管理器
         initializeManagersAfterContentView();
 
         // 初始化界面
@@ -360,7 +360,12 @@ public class MainActivity extends AppCompatActivity implements
 
         // 设置按钮监听器（通过 UI 管理器）
         uiManager.setSettingsButtonListener(v -> showSettingsFragment());
+        // 添加游戏按钮：单击显示导入对话框，长按显示文件浏览器选择 DLL/EXE
         uiManager.setAddGameButtonListener(v -> showAddGameFragment());
+        addGameButton.setOnLongClickListener(v -> {
+            showAddAssemblyFromFileBrowser();
+            return true;
+        });
         uiManager.setRefreshButtonListener(v -> {
             showToast("刷新游戏列表");
             gameListManager.refreshGameList();
@@ -385,6 +390,11 @@ public class MainActivity extends AppCompatActivity implements
         fileBrowserManager.setOnFileSelectedListener(file -> {
             uiManager.showLaunchGameButton();
         });
+        
+        // 设置文件浏览器文件长按监听器
+        fileBrowserManager.setOnFileLongClickListener(file -> {
+            showFileActionMenu(file);
+        });
 
         // 启动游戏按钮监听器
         uiManager.setLaunchGameButtonListener(v -> {
@@ -407,7 +417,6 @@ public class MainActivity extends AppCompatActivity implements
             }
         });
 
-        // ModLoader 开关监听已移除 - 现在直接启动选中的程序集
 
         // 控制布局按钮
         MaterialButton controlLayoutButton = findViewById(R.id.controlLayoutButton);
@@ -417,10 +426,9 @@ public class MainActivity extends AppCompatActivity implements
         // 默认显示主界面
         showMainLayout();
 
-        // 初始化运行时版本选择（已在 runtimeSelectorManager.initialize 中设置）
+
     }
 
-    // setupRuntimeSelector 方法已移除，逻辑在 runtimeSelectorManager.initialize 中
 
     private void showGogClientFragment() {
         if (fragmentNavigator != null) {
@@ -478,6 +486,156 @@ public class MainActivity extends AppCompatActivity implements
             gameImportManager.showAddGameDialog(fragmentNavigator.getFragmentManager());
         }
     }
+    
+    /**
+     * 从文件浏览器选择 DLL/EXE 并添加到游戏列表
+     */
+    private void showAddAssemblyFromFileBrowser() {
+        if (fragmentNavigator == null) {
+            return;
+        }
+        
+        FileBrowserFragment fileBrowserFragment = new FileBrowserFragment();
+        fileBrowserFragment.setMode(FileBrowserFragment.MODE_SELECT_ASSEMBLY);
+        fileBrowserFragment.setFileType("assembly", new String[]{".dll", ".exe"});
+        
+        // 设置程序集选择监听器
+        fileBrowserFragment.setOnAssemblySelectedListener(assemblyPath -> {
+            addAssemblyToGameList(assemblyPath);
+            fragmentNavigator.hideFragment("file_browser");
+        });
+        
+        // 设置添加到游戏列表监听器（长按 DLL/EXE 时使用）
+        fileBrowserFragment.setOnAddToGameListListener(assemblyPath -> {
+            addAssemblyToGameList(assemblyPath);
+            showToast("已添加到游戏列表");
+        });
+        
+        fileBrowserFragment.setOnBackListener(() -> fragmentNavigator.hideFragment("file_browser"));
+        fileBrowserFragment.setOnPermissionRequestListener(this::onPermissionRequest);
+        
+        fragmentNavigator.showFragment(fileBrowserFragment, "file_browser");
+    }
+    
+    /**
+     * 将选中的程序集添加到游戏列表
+     */
+    private void addAssemblyToGameList(String assemblyPath) {
+        try {
+            java.io.File assemblyFile = new java.io.File(assemblyPath);
+            if (!assemblyFile.exists() || !assemblyFile.isFile()) {
+                showToast("选择的文件不存在");
+                return;
+            }
+            
+            // 获取文件名（不含扩展名）作为游戏名称
+            String fileName = assemblyFile.getName();
+            String gameName = fileName;
+            if (fileName.contains(".")) {
+                gameName = fileName.substring(0, fileName.lastIndexOf("."));
+            }
+            
+            // 创建 GameItem
+            com.app.ralaunch.model.GameItem gameItem = new com.app.ralaunch.model.GameItem();
+            gameItem.setGameName(gameName);
+            gameItem.setGamePath(assemblyPath);
+            gameItem.setGameDescription("程序集: " + fileName);
+            gameItem.setEngineType("FNA"); // 默认引擎类型
+            gameItem.setShortcut(true); // 标记为快捷方式，删除时不会删除实际文件
+            
+            // 设置基础路径为空，表示这不是一个完整的游戏安装
+            gameItem.setGameBasePath("");
+            
+            // 尝试提取图标（支持 EXE 和 DLL）
+            String iconPath = null;
+            String iconSourcePath = assemblyPath;
+            
+            // 如果是 EXE，设置为游戏本体路径，直接尝试提取图标
+            if (fileName.toLowerCase().endsWith(".exe")) {
+                gameItem.setGameBodyPath(assemblyPath);
+                // 尝试从 EXE 提取图标
+                try {
+                    iconPath = com.app.ralaunch.utils.IconExtractorHelper.extractGameIcon(this, assemblyPath);
+                } catch (Exception e) {
+                    com.app.ralaunch.utils.AppLogger.warn("MainActivity", "无法从 EXE 提取图标: " + e.getMessage());
+                }
+            } else {
+                // DLL 文件：先尝试从 DLL 本身提取图标
+                gameItem.setGameBodyPath(""); // DLL 作为主程序集
+                try {
+                    iconPath = com.app.ralaunch.utils.IconExtractorHelper.extractGameIcon(this, assemblyPath);
+                    if (iconPath == null) {
+                        // 如果 DLL 没有图标，尝试查找同目录下的同名 EXE 文件
+                        String exePath = assemblyPath.replaceAll("\\.[^.]+$", ".exe");
+                        java.io.File exeFile = new java.io.File(exePath);
+                        if (exeFile.exists()) {
+                            com.app.ralaunch.utils.AppLogger.info("MainActivity", "尝试从关联的 EXE 提取图标: " + exePath);
+                            iconSourcePath = exePath;
+                            gameItem.setGameBodyPath(exePath); // 设置关联的 EXE 为游戏本体
+                            iconPath = com.app.ralaunch.utils.IconExtractorHelper.extractGameIcon(this, exePath);
+                        }
+                    }
+                } catch (Exception e) {
+                    com.app.ralaunch.utils.AppLogger.warn("MainActivity", "无法从程序集提取图标: " + e.getMessage());
+                }
+            }
+            
+            // 如果成功提取到图标，设置图标路径
+            if (iconPath != null && !iconPath.isEmpty()) {
+                gameItem.setIconPath(iconPath);
+                com.app.ralaunch.utils.AppLogger.info("MainActivity", "成功提取图标: " + iconPath);
+            } else {
+                com.app.ralaunch.utils.AppLogger.warn("MainActivity", "未能提取图标，使用默认图标");
+            }
+            
+            // 添加到游戏列表
+            if (gameListManager != null) {
+                gameListManager.addGame(gameItem);
+                showToast("已添加游戏: " + gameName);
+            } else {
+                // 如果 gameListManager 未初始化，直接使用 GameDataManager
+                com.app.ralaunch.RaLaunchApplication.getGameDataManager().addGame(gameItem);
+                showToast("已添加游戏: " + gameName);
+                // 刷新列表
+                if (gameListManager != null) {
+                    gameListManager.refreshGameList();
+                }
+            }
+        } catch (Exception e) {
+            com.app.ralaunch.utils.AppLogger.error("MainActivity", "添加程序集失败: " + e.getMessage(), e);
+            showToast("添加游戏失败: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * 显示文件操作菜单（用于文件浏览器视图）
+     */
+    private void showFileActionMenu(java.io.File file) {
+        String fileName = file.getName();
+        String filePath = file.getAbsolutePath();
+        
+        // 创建选项菜单
+        java.util.List<com.app.ralib.dialog.OptionSelectorDialog.Option> options = new java.util.ArrayList<>();
+        
+        // 添加到游戏列表选项
+        options.add(new com.app.ralib.dialog.OptionSelectorDialog.Option(
+            "add_to_game_list", 
+            "添加到游戏列表", 
+            "将此程序集添加到游戏列表以便快速启动"
+        ));
+        
+        // 显示选项对话框
+        new com.app.ralib.dialog.OptionSelectorDialog()
+            .setTitle("文件操作: " + fileName)
+            .setIcon(R.drawable.ic_file)
+            .setOptions(options)
+            .setOnOptionSelectedListener(value -> {
+                if ("add_to_game_list".equals(value)) {
+                    addAssemblyToGameList(filePath);
+                }
+            })
+            .show(getSupportFragmentManager(), "file_action_menu");
+    }
 
     // 实现 OnImportCompleteListener
     @Override
@@ -516,7 +674,9 @@ public class MainActivity extends AppCompatActivity implements
                     // 从列表中删除
                     gameListManager.removeGame(deletedPosition);
                     
-                    if (filesDeleted) {
+                    if (deletedGame.isShortcut()) {
+                        showSuccessSnackbar("快捷方式已从列表移除");
+                    } else if (filesDeleted) {
                         showSuccessSnackbar("游戏及文件已删除");
                     } else {
                         showInfoSnackbar("游戏已从列表删除，但部分文件可能未删除");

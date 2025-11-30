@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.13.35931.197 d17.13
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FPSDisplayPatch", "FPSDisplayPatch.csproj", "{54B42924-68A3-B931-6301-F6EBB599D2EF}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{54B42924-68A3-B931-6301-F6EBB599D2EF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{54B42924-68A3-B931-6301-F6EBB599D2EF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{54B42924-68A3-B931-6301-F6EBB599D2EF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{54B42924-68A3-B931-6301-F6EBB599D2EF}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {3E0FAF90-CF5B-4AE0-B81E-452061970FE4}
+	EndGlobalSection
+EndGlobal

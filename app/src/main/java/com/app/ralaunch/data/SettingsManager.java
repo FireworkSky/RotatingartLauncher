@@ -54,10 +54,15 @@ public class SettingsManager {
         public static final String CONTROLS_VIBRATION_ENABLED = "controls_vibration_enabled";
         public static final String TOUCH_MULTITOUCH_ENABLED = "touch_multitouch_enabled"; // 多点触控模拟鼠标
         public static final String HIDE_CURSOR_ENABLED = "hide_cursor_enabled"; // 隐藏鼠标光标
+        public static final String FPS_DISPLAY_ENABLED = "fps_display_enabled"; // FPS 显示开关
+        public static final String FPS_DISPLAY_X = "fps_display_x"; // FPS 显示位置 X
+        public static final String FPS_DISPLAY_Y = "fps_display_y"; // FPS 显示位置 Y
 
         // 开发者设置
         public static final String VERBOSE_LOGGING = "verbose_logging";
         public static final String SET_THREAD_AFFINITY_TO_BIG_CORE_ENABLED = "set_thread_affinity_to_big_core_enabled";
+        public static final String DISABLE_VSYNC = "disable_vsync"; // 禁用垂直同步
+        public static final String UNLOCK_FPS = "unlock_fps"; // 解锁帧率限制
         // FNA设置
         public static final String FNA_RENDERER = "fna_renderer";
         
@@ -88,6 +93,8 @@ public class SettingsManager {
         public static final String RUNTIME_ARCHITECTURE = "auto";
         public static final boolean VERBOSE_LOGGING = false;
         public static final boolean SET_THREAD_AFFINITY_TO_BIG_CORE_ENABLED = false;
+        public static final boolean DISABLE_VSYNC = false; // 默认不禁用 VSync
+        public static final boolean UNLOCK_FPS = false; // 默认不解锁帧率
         public static final String FNA_RENDERER = "auto";
         
         // Vulkan 驱动默认值
@@ -97,6 +104,9 @@ public class SettingsManager {
         public static final boolean CONTROLS_VIBRATION_ENABLED = true; // 默认开启振动反馈
         public static final boolean TOUCH_MULTITOUCH_ENABLED = true; // 默认开启多点触控
         public static final boolean HIDE_CURSOR_ENABLED = false; // 默认不隐藏鼠标光标
+        public static final boolean FPS_DISPLAY_ENABLED = false; // 默认关闭 FPS 显示
+        public static final float FPS_DISPLAY_X = -1f; // 默认自动位置（跟随鼠标）
+        public static final float FPS_DISPLAY_Y = -1f; // 默认自动位置（跟随鼠标）
 
         // CoreCLR 默认值
         public static final boolean CORECLR_SERVER_GC = false; // 移动端默认关闭 Server GC
@@ -213,6 +223,26 @@ public class SettingsManager {
 
         } catch (JSONException e) {
             AppLogger.error(TAG, "Error setting boolean for key: " + key + ": " + e.getMessage());
+        }
+    }
+
+    public float getFloat(String key, float defaultValue) {
+        try {
+            if (settings.has(key)) {
+                return (float) settings.getDouble(key);
+            }
+        } catch (JSONException e) {
+            AppLogger.error(TAG, "Error getting float for key: " + key + ": " + e.getMessage());
+        }
+        return defaultValue;
+    }
+
+    public void putFloat(String key, float value) {
+        try {
+            settings.put(key, value);
+            saveSettings();
+        } catch (JSONException e) {
+            AppLogger.error(TAG, "Error setting float for key: " + key + ": " + e.getMessage());
         }
     }
     
@@ -342,6 +372,22 @@ public class SettingsManager {
         putBoolean(Keys.SET_THREAD_AFFINITY_TO_BIG_CORE_ENABLED, enabled);
     }
 
+    public boolean isDisableVSyncEnabled() {
+        return getBoolean(Keys.DISABLE_VSYNC, Defaults.DISABLE_VSYNC);
+    }
+
+    public void setDisableVSyncEnabled(boolean enabled) {
+        putBoolean(Keys.DISABLE_VSYNC, enabled);
+    }
+
+    public boolean isUnlockFPSEnabled() {
+        return getBoolean(Keys.UNLOCK_FPS, Defaults.UNLOCK_FPS);
+    }
+
+    public void setUnlockFPSEnabled(boolean enabled) {
+        putBoolean(Keys.UNLOCK_FPS, enabled);
+    }
+
     // FNA设置
     public String getFnaRenderer() {
         return getString(Keys.FNA_RENDERER, Defaults.FNA_RENDERER);
@@ -430,6 +476,48 @@ public class SettingsManager {
      */
     public void setHideCursorEnabled(boolean enabled) {
         putBoolean(Keys.HIDE_CURSOR_ENABLED, enabled);
+    }
+
+    /**
+     * 是否显示 FPS
+     */
+    public boolean isFPSDisplayEnabled() {
+        return getBoolean(Keys.FPS_DISPLAY_ENABLED, Defaults.FPS_DISPLAY_ENABLED);
+    }
+
+    /**
+     * 设置是否显示 FPS
+     */
+    public void setFPSDisplayEnabled(boolean enabled) {
+        putBoolean(Keys.FPS_DISPLAY_ENABLED, enabled);
+    }
+
+    /**
+     * 获取 FPS 显示位置 X（-1 表示跟随鼠标）
+     */
+    public float getFPSDisplayX() {
+        return getFloat(Keys.FPS_DISPLAY_X, Defaults.FPS_DISPLAY_X);
+    }
+
+    /**
+     * 设置 FPS 显示位置 X（-1 表示跟随鼠标）
+     */
+    public void setFPSDisplayX(float x) {
+        putFloat(Keys.FPS_DISPLAY_X, x);
+    }
+
+    /**
+     * 获取 FPS 显示位置 Y（-1 表示跟随鼠标）
+     */
+    public float getFPSDisplayY() {
+        return getFloat(Keys.FPS_DISPLAY_Y, Defaults.FPS_DISPLAY_Y);
+    }
+
+    /**
+     * 设置 FPS 显示位置 Y（-1 表示跟随鼠标）
+     */
+    public void setFPSDisplayY(float y) {
+        putFloat(Keys.FPS_DISPLAY_Y, y);
     }
 
     /**

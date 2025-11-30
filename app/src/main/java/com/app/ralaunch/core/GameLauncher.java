@@ -15,7 +15,6 @@ import java.io.File;
 import java.util.List;
 
 /**
- * .NET 游戏启动器（简化版）
  *
  * <p>此类负责启动 .NET 应用程序（游戏），支持以下特性：
  * <ul>
@@ -105,24 +104,6 @@ public class GameLauncher {
             String dotnetRoot,
             int frameworkMajor);
 
-    /**
-     * netcorehost API：调用程序集的方法
-     *
-     * @param appDir 应用程序目录
-     * @param assemblyName 程序集名称（如 "MyPatch.dll"）
-     * @param typeName 类型全名（如 "MyPatch.Entry"）
-     * @param methodName 方法名（如 "Initialize"）
-     * @param dotnetRoot .NET 运行时根目录（可为 null）
-     * @param frameworkMajor 首选框架主版本号（0 = 自动选择最高版本）
-     * @return 0 成功，负数失败
-     */
-    public static native int netcorehostCallMethod(
-            String appDir,
-            String assemblyName,
-            String typeName,
-            String methodName,
-            String dotnetRoot,
-            int frameworkMajor);
 
     /**
      * netcorehost API：设置 DOTNET_STARTUP_HOOKS 补丁路径
@@ -138,31 +119,7 @@ public class GameLauncher {
      */
     public static native void netcorehostSetCorehostTrace(boolean enabled);
 
-    /**
-     * netcorehost API：启动应用
-     *
-     * @return 应用退出码
-     */
-    public static native int netcorehostLaunch();
 
-    /**
-     * netcorehost API：清理资源
-     */
-    public static native void netcorehostCleanup();
-
-    /**
-     * 直接启动 .NET 程序集（简化版 + MonoMod补丁）
-     *
-     * <p>此方法直接启动指定的 .NET 程序集，并在启动前自动应用 MonoMod_Patch.zip 中的补丁
-     *
-     * @param context Android 上下文
-     * @param assemblyPath 程序集完整路径
-     * @return 0 表示参数设置成功，-1 表示失败
-     */
-    @SuppressLint("UnsafeDynamicallyLoadedCode")
-    public static int launchAssemblyDirect(Context context, String assemblyPath) {
-        return launchAssemblyDirect(context, assemblyPath, null);
-    }
 
     /**
      * 直接启动 .NET 程序集（支持自定义补丁配置）
@@ -189,7 +146,6 @@ public class GameLauncher {
                 AppLogger.error(TAG, "Assembly file not found: " + assemblyPath);
                 return -1;
             }
-
             // 获取应用目录和主程序集名称
             String appDir = assemblyFile.getParent();
             String mainAssembly = assemblyFile.getName();
@@ -206,43 +162,22 @@ public class GameLauncher {
                     AppLogger.info(TAG, String.format("  - %s (id: %s)", patch.manifest.name, patch.manifest.id));
                 }
             }
-
             AssemblyPatcher.applyMonoModPatches(context, appDir);
-
-
-            // Step 2: 执行补丁程序集入口点（在游戏启动前）
-            // 注意：根据 .NET runtime 源码分析 (fx_muxer.cpp),hostfxr 不允许在同一进程中
-            // 先调用 initialize_for_runtime_config 再调用 initialize_for_dotnet_command_line
-            // 因此暂时禁用补丁预执行,补丁将在游戏启动后动态加载
-            AppLogger.info(TAG, "");
-            AppLogger.info(TAG, "Step 2/3: Executing patch entry points (SKIPPED - v2)");
-            AppLogger.info(TAG, "  Reason: .NET runtime hostfxr limitation");
-            AppLogger.info(TAG, "  Details: Cannot call initialize_for_runtime_config then initialize_for_dotnet_command_line");
-            AppLogger.info(TAG, "  Status: Patches will be loaded after game runtime is initialized");
-
-            AppLogger.info(TAG, "No patch entry points to execute, skipped");
-
-            // Step 3: 设置游戏启动参数
-            AppLogger.info(TAG, "");
-            AppLogger.info(TAG, "Step 3/3: Configuring game runtime");
-
-            // 获取 .NET 运行时路径
             String dotnetRoot = RuntimePreference.getDotnetRootPath();
 
-            // 获取完整版本号并解析主版本号
             String selectedVersion = RuntimeManager.getSelectedVersion(context);
             int frameworkMajor = 0;
             if (selectedVersion != null && !selectedVersion.isEmpty()) {
                 try {
-                    // 从 "8.0.11" 格式中提取主版本号 "8"
+
                     frameworkMajor = Integer.parseInt(selectedVersion.split("\\.")[0]);
                 } catch (Exception e) {
                     AppLogger.error(TAG, "Failed to parse framework version: " + selectedVersion, e);
-                    frameworkMajor = 8; // 默认使用 .NET 8
+                    frameworkMajor = 10;
                 }
             } else {
-                AppLogger.warn(TAG, "No runtime version selected, using default .NET 8");
-                frameworkMajor = 8;
+                AppLogger.warn(TAG, "No runtime version selected, using default .NET 10");
+                frameworkMajor = 10;
             }
 
             AppLogger.info(TAG, ".NET path: " + (dotnetRoot != null ? dotnetRoot : "(auto-detect)"));
@@ -250,26 +185,14 @@ public class GameLauncher {
             AppLogger.info(TAG, "Framework major: " + frameworkMajor);
             AppLogger.info(TAG, "================================================");
 
-            // ⚠️ 重要：清理之前的 .NET 运行时状态
-            // 如果 AssemblyChecker 之前被调用，它可能已经初始化了 CoreCLR
-            // 我们需要清理它，避免与游戏启动时的初始化冲突
-            AppLogger.info(TAG, "");
-            AppLogger.info(TAG, "Cleaning up previous .NET runtime state...");
-            try {
-                com.app.ralaunch.netcore.NetCoreManager.cleanup();
-                com.app.ralaunch.utils.NetCoreHostHelper.cleanup();
-                AppLogger.info(TAG, "Runtime cleanup completed");
-            } catch (Exception e) {
-                AppLogger.warn(TAG, "Runtime cleanup failed (this is OK if not previously initialized): " + e.getMessage());
-            }
+
 
             // 加载所有必需的 .NET Native 库
             // 包括：System.Native (socket等), Cryptography (TLS/SSL), 等等
             AppLogger.info(TAG, "Loading .NET Native libraries...");
+
             if (!com.app.ralaunch.netcore.DotNetNativeLibraryLoader.loadAllLibraries(dotnetRoot, selectedVersion)) {
                 AppLogger.error(TAG, ".NET Native library loading failed! Network and crypto features may not work");
-                // 注意：即使库加载失败，我们仍然尝试启动应用
-                // 因为有些应用可能不需要网络功能
             }
 
             // 设置 DOTNET_STARTUP_HOOKS 补丁（在 hostfxr 初始化之前）
