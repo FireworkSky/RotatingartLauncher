@@ -122,6 +122,16 @@ JNIEXPORT void JNICALL SDL_JAVA_INTERFACE(onNativeMouseButton)(
     JNIEnv *env, jclass jcls,
     jint sdlButton, jint pressed, jfloat x, jfloat y);
 
+/* 虚拟控件触摸点管理 */
+JNIEXPORT void JNICALL SDL_JAVA_INTERFACE(nativeConsumeFingerTouch)(
+    JNIEnv *env, jclass jcls, jint fingerId);
+
+JNIEXPORT void JNICALL SDL_JAVA_INTERFACE(nativeReleaseFingerTouch)(
+    JNIEnv *env, jclass jcls, jint fingerId);
+
+JNIEXPORT void JNICALL SDL_JAVA_INTERFACE(nativeClearConsumedFingers)(
+    JNIEnv *env, jclass jcls);
+
 JNIEXPORT void JNICALL SDL_JAVA_INTERFACE(onNativeAccel)(
     JNIEnv *env, jclass jcls,
     jfloat x, jfloat y, jfloat z);
@@ -191,6 +201,9 @@ static JNINativeMethod SDLActivity_tab[] = {
     { "onNativeTouch", "(IIIFFF)V", SDL_JAVA_INTERFACE(onNativeTouch) },
     { "onNativeMouse", "(IIFFZ)V", SDL_JAVA_INTERFACE(onNativeMouse) },
     { "onNativeMouseButton", "(IIFF)V", SDL_JAVA_INTERFACE(onNativeMouseButton) },
+    { "nativeConsumeFingerTouch", "(I)V", SDL_JAVA_INTERFACE(nativeConsumeFingerTouch) },
+    { "nativeReleaseFingerTouch", "(I)V", SDL_JAVA_INTERFACE(nativeReleaseFingerTouch) },
+    { "nativeClearConsumedFingers", "()V", SDL_JAVA_INTERFACE(nativeClearConsumedFingers) },
     { "onNativeAccel", "(FFF)V", SDL_JAVA_INTERFACE(onNativeAccel) },
     { "onNativeClipboardChanged", "()V", SDL_JAVA_INTERFACE(onNativeClipboardChanged) },
     { "nativeLowMemory", "()V", SDL_JAVA_INTERFACE(nativeLowMemory) },
@@ -1191,6 +1204,30 @@ JNIEXPORT void JNICALL SDL_JAVA_INTERFACE(onNativeMouseButton)(
     Android_OnMouseButtonDirect(Android_Window, sdlButton, pressed, x, y);
 
     SDL_UnlockMutex(Android_ActivityMutex);
+}
+
+/* 外部函数声明（在 SDL_touch.c 中定义） */
+extern void SDL_ConsumeFingerTouch(int fingerId);
+extern void SDL_ReleaseFingerTouch(int fingerId);
+extern void SDL_ClearConsumedFingers(void);
+
+/* 虚拟控件触摸点管理 - 被标记的触摸点不会转换为鼠标事件 */
+JNIEXPORT void JNICALL SDL_JAVA_INTERFACE(nativeConsumeFingerTouch)(
+    JNIEnv *env, jclass jcls, jint fingerId)
+{
+    SDL_ConsumeFingerTouch((int)fingerId);
+}
+
+JNIEXPORT void JNICALL SDL_JAVA_INTERFACE(nativeReleaseFingerTouch)(
+    JNIEnv *env, jclass jcls, jint fingerId)
+{
+    SDL_ReleaseFingerTouch((int)fingerId);
+}
+
+JNIEXPORT void JNICALL SDL_JAVA_INTERFACE(nativeClearConsumedFingers)(
+    JNIEnv *env, jclass jcls)
+{
+    SDL_ClearConsumedFingers();
 }
 
 /* Accelerometer */

@@ -64,9 +64,16 @@ void Android_OnTouch(SDL_Window *window, int touch_device_id_in, int pointer_fin
     }
 
     fingerId = (SDL_FingerID)pointer_finger_id_in;
+    
+    __android_log_print(ANDROID_LOG_INFO, "SDLTouch", 
+        "Android_OnTouch: action=%d finger=%d pos=(%.2f,%.2f)",
+        action, pointer_finger_id_in, x, y);
+    
     switch (action) {
     case ACTION_DOWN:
     case ACTION_POINTER_DOWN:
+        __android_log_print(ANDROID_LOG_INFO, "SDLTouch", 
+            "  -> SendTouch DOWN finger=%d", pointer_finger_id_in);
         SDL_SendTouch(touchDeviceId, fingerId, window, SDL_TRUE, x, y, p);
         break;
 
@@ -76,6 +83,8 @@ void Android_OnTouch(SDL_Window *window, int touch_device_id_in, int pointer_fin
 
     case ACTION_UP:
     case ACTION_POINTER_UP:
+        __android_log_print(ANDROID_LOG_INFO, "SDLTouch", 
+            "  -> SendTouch UP finger=%d", pointer_finger_id_in);
         SDL_SendTouch(touchDeviceId, fingerId, window, SDL_FALSE, x, y, p);
         break;
 

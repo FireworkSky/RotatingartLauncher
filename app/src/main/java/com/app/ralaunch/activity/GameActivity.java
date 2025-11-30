@@ -104,10 +104,49 @@ public class GameActivity extends SDLActivity {
                     AppLogger.warn(TAG, "Failed to set RALCORE_HIDE_CURSOR: " + e.getMessage());
                 }
             }
+            
+            // 设置 FNA 触屏相关环境变量
+            setupTouchEnvironment(settingsManager);
+            
         } catch (Exception e) {
             AppLogger.warn(TAG, "Failed to apply renderer environment before loading libraries: " + e.getMessage());
         }
         super.loadLibraries();
+    }
+    
+    /**
+     * 设置触屏相关环境变量
+     * 触屏直接通过 SDL 转换为鼠标事件，无需 C# 补丁
+     */
+    private void setupTouchEnvironment(com.app.ralaunch.data.SettingsManager settingsManager) {
+        try {
+            // 启用触屏转鼠标事件
+            android.system.Os.setenv("SDL_TOUCH_MOUSE_EVENTS", "1", true);
+            AppLogger.info(TAG, "SDL_TOUCH_MOUSE_EVENTS=1 (touch generates mouse events)");
+            
+            // 多点触控设置
+            boolean multitouch = settingsManager.isTouchMultitouchEnabled();
+            if (multitouch) {
+                // 启用 SDL 多点触控鼠标模式
+                // 每个触摸点都可以产生独立的鼠标事件
+                android.system.Os.setenv("SDL_TOUCH_MOUSE_MULTITOUCH", "1", true);
+                AppLogger.info(TAG, "SDL_TOUCH_MOUSE_MULTITOUCH=1 (multitouch enabled)");
+            } else {
+                android.system.Os.setenv("SDL_TOUCH_MOUSE_MULTITOUCH", "0", true);
+            }
+            
+            // 鼠标模式右摇杆
+            boolean mouseRightStick = settingsManager.isMouseRightStickEnabled();
+            if (mouseRightStick) {
+                android.system.Os.setenv("RALCORE_MOUSE_RIGHT_STICK", "1", true);
+                AppLogger.info(TAG, "RALCORE_MOUSE_RIGHT_STICK=1 (right stick controls mouse)");
+            } else {
+                android.system.Os.unsetenv("RALCORE_MOUSE_RIGHT_STICK");
+            }
+            
+        } catch (Exception e) {
+            AppLogger.warn(TAG, "Failed to setup touch environment: " + e.getMessage());
+        }
     }
 
     /**
@@ -331,6 +370,13 @@ public class GameActivity extends SDLActivity {
                             ViewGroup.LayoutParams.MATCH_PARENT
                         );
                         contentView.addView(mControlLayout, params);
+                        
+                        // 设置 SDLSurface 引用，确保触摸事件能转发给 SDL
+                        // 这解决了虚拟控件消费事件后 SDL 收不到多点触控的问题
+                        if (mSurface != null) {
+                            mControlLayout.setSDLSurface(mSurface);
+                            AppLogger.info(TAG, "SDLSurface reference set for touch event forwarding");
+                        }
                     }
                 } catch (Exception e) {
                     AppLogger.error(TAG, "Failed to add virtual controls to layout", e);

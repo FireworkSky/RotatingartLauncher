@@ -58,6 +58,19 @@ public class VirtualJoystick extends View implements ControlView {
     private Runnable mClickAttackRunnable;
     private static final int CLICK_ATTACK_INTERVAL_MS = 150; // 点击攻击间隔（毫秒）
     
+    // 鼠标模式右摇杆攻击状态
+    private boolean mMouseLeftPressed = false; // 鼠标左键是否按下
+    private Runnable mMouseClickRunnable; // 点击模式 Runnable
+    private static final int MOUSE_CLICK_INTERVAL_MS = 100; // 鼠标点击间隔（毫秒）
+    private int mAttackMode = 0; // 攻击模式：0=长按, 1=点击, 2=持续
+    
+    // 鼠标移动状态
+    private Runnable mMouseMoveRunnable; // 鼠标移动 Runnable
+    private static final int MOUSE_MOVE_INTERVAL_MS = 16; // 鼠标移动更新间隔（约60fps）
+    private float mCurrentMouseDx = 0; // 当前摇杆 X 方向偏移
+    private float mCurrentMouseDy = 0; // 当前摇杆 Y 方向偏移
+    private boolean mMouseMoveActive = false; // 鼠标移动是否激活
+    
     // 右摇杆上一帧位置（用于计算位置变化量）
     private float mLastJoystickDx = 0;
     private float mLastJoystickDy = 0;
@@ -90,6 +103,15 @@ public class VirtualJoystick extends View implements ControlView {
         android.util.DisplayMetrics metrics = context.getResources().getDisplayMetrics();
         mScreenWidth = metrics.widthPixels;
         mScreenHeight = metrics.heightPixels;
+        
+        // 读取攻击模式设置
+        try {
+            com.app.ralaunch.data.SettingsManager settingsManager = 
+                com.app.ralaunch.data.SettingsManager.getInstance(context);
+            mAttackMode = settingsManager.getMouseRightStickAttackMode();
+        } catch (Exception e) {
+            mAttackMode = 0; // 默认长按模式
+        }
 
         // 设置透明背景，确保只显示绘制的圆形
         setBackgroundColor(android.graphics.Color.TRANSPARENT);
@@ -108,6 +130,32 @@ public class VirtualJoystick extends View implements ControlView {
                     performClickAttack(mCurrentDirection);
                     // 继续下一次点击
                     mClickAttackHandler.postDelayed(this, CLICK_ATTACK_INTERVAL_MS);
+                }
+            }
+        };
+        
+        // 初始化鼠标模式点击 Runnable（仅点击模式使用）
+        mMouseClickRunnable = new Runnable() {
+            @Override
+            public void run() {
+                // 仅在点击模式下执行连续点击
+                if (mIsAttacking && mMouseLeftPressed && mAttackMode == 1 && mInputBridge instanceof SDLInputBridge) {
+                    SDLInputBridge bridge = (SDLInputBridge) mInputBridge;
+                    // 使用屏幕中心作为点击位置
+                    float mouseX = mScreenWidth / 2.0f;
+                    float mouseY = mScreenHeight / 2.0f;
+                    
+                    // 发送鼠标左键点击（按下-释放）
+                    bridge.sendMouseButton(ControlData.MOUSE_LEFT, true, mouseX, mouseY);
+                    // 短暂延迟后释放
+                    mClickAttackHandler.postDelayed(() -> {
+                        if (mIsAttacking && mMouseLeftPressed && mAttackMode == 1) {
+                            bridge.sendMouseButton(ControlData.MOUSE_LEFT, false, mouseX, mouseY);
+                        }
+                    }, 50); // 50ms 按下时间
+                    
+                    // 继续下一次点击
+                    mClickAttackHandler.postDelayed(mMouseClickRunnable, MOUSE_CLICK_INTERVAL_MS);
                 }
             }
         };
@@ -325,28 +373,26 @@ public class VirtualJoystick extends View implements ControlView {
         if (mData.joystickMode == ControlData.JOYSTICK_MODE_MOUSE) {
             // 鼠标模式：根据xboxUseRightStick区分左右摇杆
             if (mData.xboxUseRightStick) {
-                // 右摇杆：鼠标移动模式（可精确控制光标位置）
-                // 检测是否进入/离开死区，处理组合键和虚拟鼠标启用
+                // 右摇杆：鼠标移动模式 + 持续点击攻击
+                // 检测是否进入/离开死区
                 int newDirection = calculateDirection(dx, dy, distance);
                 if (newDirection != mCurrentDirection) {
                     int oldDirection = mCurrentDirection;
                     mCurrentDirection = newDirection;
                     
-                    // 持续攻击模式：进入有效区域时按下组合键，离开时释放
+                    // 进入/离开死区时启动/停止持续点击
                     if (oldDirection == DIR_NONE && newDirection != DIR_NONE) {
-                        // 从死区进入有效区域：先启用虚拟鼠标，再按下组合键
-                        enableVirtualMouse();
+                        // 从死区进入有效区域：开始持续鼠标左键点击
                         pressComboKeysForMouseMove();
                         mIsAttacking = true;
                     } else if (oldDirection != DIR_NONE && newDirection == DIR_NONE) {
-                        // 从有效区域进入死区：释放组合键并禁用虚拟鼠标
+                        // 从有效区域进入死区：停止持续点击
                         releaseComboKeysForMouseMove();
-                        disableVirtualMouse();
                         mIsAttacking = false;
                     }
                 }
                 
-                // 发送虚拟鼠标相对移动（必须在 enableVirtualMouse 之后调用）
+                // 发送鼠标相对移动（只有当摇杆位置变化时才移动）
                 sendVirtualMouseMove(dx, dy, distance);
             } else {
                 // 左摇杆：将摇杆偏移量转换为鼠标移动
@@ -401,11 +447,9 @@ public class VirtualJoystick extends View implements ControlView {
         if (mData.joystickMode == ControlData.JOYSTICK_MODE_MOUSE) {
             // 鼠标模式：释放组合键
             if (mData.xboxUseRightStick) {
-                // 右摇杆：释放组合键
+                // 右摇杆：停止持续点击
                 releaseComboKeysForMouseMove();
                 mIsAttacking = false;
-                // 禁用虚拟鼠标
-                disableVirtualMouse();
             } else {
                 // 左摇杆：释放组合键
                 releaseComboKeys(mCurrentDirection);
@@ -789,8 +833,13 @@ public class VirtualJoystick extends View implements ControlView {
     
     /**
      * 按下组合键（鼠标移动模式，跟随光标位置）
+     
      */
     private void pressComboKeysForMouseMove() {
+        // 自动启动持续鼠标左键点击（不需要配置组合键）
+        startMouseClick();
+        
+        // 处理额外配置的组合键
         if (mData.joystickComboKeys == null || mData.joystickComboKeys.length == 0) return;
         
         for (int comboKey : mData.joystickComboKeys) {
@@ -798,20 +847,78 @@ public class VirtualJoystick extends View implements ControlView {
             if (comboKey > 0) {
                 mInputBridge.sendKey(comboKey, true);
             }
-            // 鼠标左键：使用虚拟触屏（游戏使用触屏控制）
+            // 鼠标左键已自动处理，跳过
             else if (comboKey == ControlData.MOUSE_LEFT) {
-                if (mInputBridge instanceof SDLInputBridge) {
-                    SDLInputBridge bridge = (SDLInputBridge) mInputBridge;
-                    // 使用虚拟鼠标当前位置作为触屏位置
-                    float touchX = bridge.getVirtualMouseX();
-                    float touchY = bridge.getVirtualMouseY();
-                    bridge.sendVirtualTouch(SDLInputBridge.VIRTUAL_TOUCH_RIGHT_STICK, touchX, touchY, true);
-                }
+                // 已在 startMouseClick() 中处理
             }
             // 其他鼠标按键：使用SDL鼠标
             else if (comboKey >= ControlData.MOUSE_MIDDLE && comboKey <= ControlData.MOUSE_RIGHT) {
-                mInputBridge.sendMouseButton(comboKey, true, mScreenWidth / 2.0f, mScreenHeight / 2.0f);
+                if (mInputBridge instanceof SDLInputBridge) {
+                    SDLInputBridge bridge = (SDLInputBridge) mInputBridge;
+                    float mouseX = bridge.getVirtualMouseX();
+                    float mouseY = bridge.getVirtualMouseY();
+                    mInputBridge.sendMouseButton(comboKey, true, mouseX, mouseY);
+                }
             }
+        }
+    }
+    
+    /**
+     * 启动鼠标攻击（鼠标模式右摇杆）
+     * 
+     * 根据攻击模式执行不同行为：
+     * - 长按模式 (0)：按下鼠标左键，保持按住
+     * - 点击模式 (1)：快速连续点击
+     * - 持续模式 (2)：按下鼠标左键，保持按住（同长按）
+     */
+    private void startMouseClick() {
+        if (mMouseLeftPressed) return;
+        mMouseLeftPressed = true;
+        
+        if (mInputBridge instanceof SDLInputBridge) {
+            SDLInputBridge bridge = (SDLInputBridge) mInputBridge;
+            // 使用屏幕中心作为点击位置
+            float mouseX = mScreenWidth / 2.0f;
+            float mouseY = mScreenHeight / 2.0f;
+            
+            Log.i(TAG, "Mouse attack started, mode=" + mAttackMode);
+            
+            switch (mAttackMode) {
+                case 0: // 长按模式：按下鼠标左键，不释放
+                case 2: // 持续模式：同长按
+                    bridge.sendMouseButton(ControlData.MOUSE_LEFT, true, mouseX, mouseY);
+                    Log.i(TAG, "Mouse left button pressed (hold mode)");
+                    break;
+                    
+                case 1: // 点击模式：启动连续点击
+                    // 立即发送第一次点击
+                    bridge.sendMouseButton(ControlData.MOUSE_LEFT, true, mouseX, mouseY);
+                    // 启动连续点击循环
+                    mClickAttackHandler.postDelayed(mMouseClickRunnable, MOUSE_CLICK_INTERVAL_MS);
+                    Log.i(TAG, "Mouse click loop started");
+                    break;
+            }
+        }
+    }
+    
+    /**
+     * 停止鼠标攻击
+     */
+    private void stopMouseClick() {
+        if (!mMouseLeftPressed) return;
+        mMouseLeftPressed = false;
+        
+        // 停止点击循环（点击模式）
+        mClickAttackHandler.removeCallbacks(mMouseClickRunnable);
+        
+        // 释放鼠标左键（所有模式都需要）
+        if (mInputBridge instanceof SDLInputBridge) {
+            SDLInputBridge bridge = (SDLInputBridge) mInputBridge;
+            float mouseX = mScreenWidth / 2.0f;
+            float mouseY = mScreenHeight / 2.0f;
+            bridge.sendMouseButton(ControlData.MOUSE_LEFT, false, mouseX, mouseY);
+            
+            Log.i(TAG, "Mouse attack stopped");
         }
     }
     
@@ -819,6 +926,10 @@ public class VirtualJoystick extends View implements ControlView {
      * 释放组合键（鼠标移动模式）
      */
     private void releaseComboKeysForMouseMove() {
+        // 停止持续鼠标左键点击
+        stopMouseClick();
+        
+        // 处理额外配置的组合键
         if (mData.joystickComboKeys == null || mData.joystickComboKeys.length == 0) return;
         
         for (int comboKey : mData.joystickComboKeys) {
@@ -826,18 +937,18 @@ public class VirtualJoystick extends View implements ControlView {
             if (comboKey > 0) {
                 mInputBridge.sendKey(comboKey, false);
             }
-            // 鼠标左键：释放虚拟触屏
+            // 鼠标左键已在 stopMouseClick() 中处理
             else if (comboKey == ControlData.MOUSE_LEFT) {
-                if (mInputBridge instanceof SDLInputBridge) {
-                    SDLInputBridge bridge = (SDLInputBridge) mInputBridge;
-                    float touchX = bridge.getVirtualMouseX();
-                    float touchY = bridge.getVirtualMouseY();
-                    bridge.sendVirtualTouch(SDLInputBridge.VIRTUAL_TOUCH_RIGHT_STICK, touchX, touchY, false);
-                }
+                // 已处理
             }
             // 其他鼠标按键
             else if (comboKey >= ControlData.MOUSE_MIDDLE && comboKey <= ControlData.MOUSE_RIGHT) {
-                mInputBridge.sendMouseButton(comboKey, false, mScreenWidth / 2.0f, mScreenHeight / 2.0f);
+                if (mInputBridge instanceof SDLInputBridge) {
+                    SDLInputBridge bridge = (SDLInputBridge) mInputBridge;
+                    float mouseX = bridge.getVirtualMouseX();
+                    float mouseY = bridge.getVirtualMouseY();
+                    mInputBridge.sendMouseButton(comboKey, false, mouseX, mouseY);
+                }
             }
         }
     }
@@ -951,7 +1062,11 @@ public class VirtualJoystick extends View implements ControlView {
     
     /**
      * 发送虚拟鼠标移动事件（用于右摇杆鼠标移动模式）
-     * 通过 touch_bridge 更新虚拟鼠标位置，C# 可以读取
+     * 
+     * 功能：
+     * - 摇杆静止不动时 → 鼠标不移动
+     * - 摇杆位置变化时 → 鼠标跟随移动
+     * - 使用 sendMouseMove 发送真正的鼠标相对移动事件
      */
     private void sendVirtualMouseMove(float dx, float dy, float distance) {
         // 死区检测：在死区内时，重置上一帧位置
@@ -968,8 +1083,9 @@ public class VirtualJoystick extends View implements ControlView {
         // 计算变化距离
         float deltaDistance = (float) Math.sqrt(deltaDx * deltaDx + deltaDy * deltaDy);
         
-        // 如果位置变化不够大，不移动鼠标（需要拖动更远才触发）
+        // 如果摇杆位置没有变化，不移动鼠标（摇杆静止不动）
         if (deltaDistance < JOYSTICK_MOVE_THRESHOLD) {
+            // 摇杆静止不动，鼠标也不移动
             return;
         }
         
@@ -987,11 +1103,10 @@ public class VirtualJoystick extends View implements ControlView {
         float mouseX = normalizedDeltaX * sensitivity;
         float mouseY = normalizedDeltaY * sensitivity;
         
-        // 发送虚拟鼠标相对移动
-        if (mInputBridge instanceof SDLInputBridge) {
-            SDLInputBridge bridge = (SDLInputBridge) mInputBridge;
-            bridge.updateVirtualMouseDelta(mouseX, mouseY);
-        }
+        // 发送真正的鼠标相对移动事件（使用 SDL onNativeMouse）
+        mInputBridge.sendMouseMove(mouseX, mouseY);
+        
+        Log.d(TAG, "Mouse move: delta=(" + mouseX + ", " + mouseY + ")");
     }
     
     /**

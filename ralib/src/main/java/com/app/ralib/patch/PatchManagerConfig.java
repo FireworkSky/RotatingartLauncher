@@ -32,6 +32,12 @@ public class PatchManagerConfig {
     public HashMap<String, ArrayList<String>> enabledPatches = new HashMap<>();
 
     /**
+     * 存储被禁用的补丁ID（默认所有补丁都是启用的）
+     */
+    @SerializedName("disabled_patches")
+    public HashMap<String, ArrayList<String>> disabledPatches = new HashMap<>();
+
+    /**
      * Load config from JSON file
      * @param pathToJson Path to the config JSON file
      * @return PatchManagerConfig instance, or null if loading fails
@@ -100,18 +106,32 @@ public class PatchManagerConfig {
 
     /**
      * Set whether a patch is enabled for a specific game
+     * 默认所有补丁都是启用的，这里只记录被禁用的补丁
      * @param gameAsmPath The game assembly file path
      * @param patchId The patch ID
-     * @param enabled true to enable the patch, false to disable it
+     * @param enabled true to enable the patch (remove from disabled list), false to disable it (add to disabled list)
      */
     public void setPatchEnabled(Path gameAsmPath, String patchId, boolean enabled) {
+        String key = gameAsmPath.toAbsolutePath().normalize().toString();
         if (enabled) {
-            ArrayList<String> patches = enabledPatches.computeIfAbsent(gameAsmPath.toAbsolutePath().normalize().toString(), k -> new ArrayList<>());
+            // 启用补丁：从禁用列表中移除
+            ArrayList<String> disabled = disabledPatches.get(key);
+            if (disabled != null) {
+                disabled.remove(patchId);
+            }
+            // 同时添加到启用列表（兼容旧逻辑）
+            ArrayList<String> patches = enabledPatches.computeIfAbsent(key, k -> new ArrayList<>());
             if (!patches.contains(patchId)) {
                 patches.add(patchId);
             }
         } else {
-            ArrayList<String> patches = enabledPatches.get(gameAsmPath.toAbsolutePath().normalize().toString());
+            // 禁用补丁：添加到禁用列表
+            ArrayList<String> disabled = disabledPatches.computeIfAbsent(key, k -> new ArrayList<>());
+            if (!disabled.contains(patchId)) {
+                disabled.add(patchId);
+            }
+            // 同时从启用列表中移除（兼容旧逻辑）
+            ArrayList<String> patches = enabledPatches.get(key);
             if (patches != null) {
                 patches.remove(patchId);
             }
@@ -120,13 +140,20 @@ public class PatchManagerConfig {
 
     /**
      * Check if a patch is enabled for a specific game
+     * 默认所有补丁都是启用的，只有被显式禁用的才返回false
      * @param gameAsmPath The game assembly file path
      * @param patchId The patch ID
-     * @return true if the patch is enabled, false otherwise
+     * @return true if the patch is enabled (not in disabled list), false if explicitly disabled
      */
     public boolean isPatchEnabled(Path gameAsmPath, String patchId) {
-        ArrayList<String> patches = enabledPatches.get(gameAsmPath.toAbsolutePath().normalize().toString());
-        return patches != null && patches.contains(patchId);
+        String key = gameAsmPath.toAbsolutePath().normalize().toString();
+        // 检查是否在禁用列表中
+        ArrayList<String> disabled = disabledPatches.get(key);
+        if (disabled != null && disabled.contains(patchId)) {
+            return false;
+        }
+        // 默认启用
+        return true;
     }
 }
 

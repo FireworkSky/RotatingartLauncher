@@ -28,6 +28,10 @@
 #include "SDL_events_c.h"
 #include "../video/SDL_sysvideo.h"
 
+#ifdef __ANDROID__
+#include <android/log.h>
+#endif
+
 static int SDL_num_touch = 0;
 static SDL_Touch **SDL_touchDevices = NULL;
 
@@ -54,6 +58,53 @@ static float multitouch_finger_x[MAX_TRACKED_FINGERS];
 static float multitouch_finger_y[MAX_TRACKED_FINGERS];
 static SDL_bool multitouch_enabled = SDL_FALSE;
 static SDL_FingerID multitouch_active_finger = 0;
+
+/* 被虚拟控件占用的触摸点（不参与触屏转鼠标） */
+#define MAX_CONSUMED_FINGERS 10
+static int consumed_finger_count = 0;
+static int consumed_fingers[MAX_CONSUMED_FINGERS];
+
+/* 检查触摸点是否被虚拟控件占用 */
+static SDL_bool SDL_IsFingerConsumed(int fingerId) {
+    for (int i = 0; i < consumed_finger_count; i++) {
+        if (consumed_fingers[i] == fingerId) return SDL_TRUE;
+    }
+    return SDL_FALSE;
+}
+
+/* 标记触摸点被虚拟控件占用（由 Java 层调用） */
+void SDL_ConsumeFingerTouch(int fingerId) {
+    if (consumed_finger_count >= MAX_CONSUMED_FINGERS) return;
+    if (SDL_IsFingerConsumed(fingerId)) return;
+    consumed_fingers[consumed_finger_count++] = fingerId;
+#ifdef __ANDROID__
+    __android_log_print(ANDROID_LOG_INFO, "SDLTouch", "Finger %d consumed by virtual control", fingerId);
+#endif
+}
+
+/* 释放被虚拟控件占用的触摸点（由 Java 层调用） */
+void SDL_ReleaseFingerTouch(int fingerId) {
+    for (int i = 0; i < consumed_finger_count; i++) {
+        if (consumed_fingers[i] == fingerId) {
+            for (int j = i; j < consumed_finger_count - 1; j++) {
+                consumed_fingers[j] = consumed_fingers[j + 1];
+            }
+            consumed_finger_count--;
+#ifdef __ANDROID__
+            __android_log_print(ANDROID_LOG_INFO, "SDLTouch", "Finger %d released", fingerId);
+#endif
+            return;
+        }
+    }
+}
+
+/* 清除所有占用的触摸点 */
+void SDL_ClearConsumedFingers(void) {
+    consumed_finger_count = 0;
+#ifdef __ANDROID__
+    __android_log_print(ANDROID_LOG_INFO, "SDLTouch", "All consumed fingers cleared");
+#endif
+}
 
 static int SDL_FindMultitouchFinger(SDL_FingerID fingerid) {
     for (int i = 0; i < multitouch_finger_count; i++) {
@@ -298,6 +349,15 @@ int SDL_SendTouch(SDL_TouchID id, SDL_FingerID fingerid, SDL_Window *window,
     mouse = SDL_GetMouse();
 
 #if SYNTHESIZE_TOUCH_TO_MOUSE
+    /* 检查此触摸点是否被虚拟控件占用（如虚拟摇杆）*/
+    SDL_bool isConsumed = SDL_IsFingerConsumed((int)fingerid);
+#ifdef __ANDROID__
+    if (isConsumed) {
+        __android_log_print(ANDROID_LOG_INFO, "SDLTouchMouse", 
+            "Finger %d is consumed by virtual control, skipping mouse events", (int)fingerid);
+    }
+#endif
+    
     /* Check for multitouch mode: SDL_TOUCH_MOUSE_MULTITOUCH=1 enables multi-finger gestures */
     {
         const char* multitouch_hint = SDL_GetHint("SDL_TOUCH_MOUSE_MULTITOUCH");
@@ -306,11 +366,12 @@ int SDL_SendTouch(SDL_TouchID id, SDL_FingerID fingerid, SDL_Window *window,
     
     /* SDL_HINT_TOUCH_MOUSE_EVENTS: controlling whether touch events should generate synthetic mouse events */
     /* SDL_HINT_VITA_TOUCH_MOUSE_DEVICE: controlling which touchpad should generate synthetic mouse events, PSVita-only */
+    /* 只有未被虚拟控件占用的触摸点才会生成鼠标事件 */
     {
 #if defined(__vita__)
-        if (mouse->touch_mouse_events && ((mouse->vita_touch_mouse_device == id) || (mouse->vita_touch_mouse_device == 2))) {
+        if (mouse->touch_mouse_events && !isConsumed && ((mouse->vita_touch_mouse_device == id) || (mouse->vita_touch_mouse_device == 2))) {
 #else
-        if (mouse->touch_mouse_events) {
+        if (mouse->touch_mouse_events && !isConsumed) {
 #endif
             /* FIXME: maybe we should only restrict to a few SDL_TouchDeviceType */
             if (id != SDL_MOUSE_TOUCHID) {
@@ -367,6 +428,11 @@ int SDL_SendTouch(SDL_TouchID id, SDL_FingerID fingerid, SDL_Window *window,
                         }
                     } else {
                         /* Original single-touch behavior */
+#ifdef __ANDROID__
+                        __android_log_print(ANDROID_LOG_INFO, "SDLTouchMouse", 
+                            "Single-touch mode: down=%d finger_touching=%d finger=%lld track_finger=%lld",
+                            down, finger_touching, (long long)fingerid, (long long)track_fingerid);
+#endif
                         if (down) {
                             if (finger_touching == SDL_FALSE) {
                                 int pos_x = (int)(x * (float)window->w);
@@ -383,11 +449,24 @@ int SDL_SendTouch(SDL_TouchID id, SDL_FingerID fingerid, SDL_Window *window,
                                 if (pos_y > window->h - 1) {
                                     pos_y = window->h - 1;
                                 }
+#ifdef __ANDROID__
+                                __android_log_print(ANDROID_LOG_INFO, "SDLTouchMouse", 
+                                    "  -> Sending mouse DOWN at (%d,%d)", pos_x, pos_y);
+#endif
                                 SDL_SendMouseMotion(window, SDL_TOUCH_MOUSEID, 0, pos_x, pos_y);
                                 SDL_SendMouseButton(window, SDL_TOUCH_MOUSEID, SDL_PRESSED, SDL_BUTTON_LEFT);
+                            } else {
+#ifdef __ANDROID__
+                                __android_log_print(ANDROID_LOG_INFO, "SDLTouchMouse", 
+                                    "  -> SKIPPED (finger_touching=TRUE)");
+#endif
                             }
                         } else {
                             if (finger_touching == SDL_TRUE && track_touchid == id && track_fingerid == fingerid) {
+#ifdef __ANDROID__
+                                __android_log_print(ANDROID_LOG_INFO, "SDLTouchMouse", 
+                                    "  -> Sending mouse UP");
+#endif
                                 SDL_SendMouseButton(window, SDL_TOUCH_MOUSEID, SDL_RELEASED, SDL_BUTTON_LEFT);
                             }
                         }

@@ -53,7 +53,8 @@ public class PatchManager {
      * the provided game assembly path. Results are sorted by priority in descending order
      * (higher priority first).
      * 
-     * Note: By default, ALL applicable patches are enabled.
+     * Note: By default, ALL applicable patches are enabled. Only explicitly disabled patches
+     * will be filtered out.
      *
      * @param gameId      the game ID to filter patches by
      * @param gameAsmPath the path to the game's assembly (used to lookup enabled patches)
@@ -62,9 +63,10 @@ public class PatchManager {
     public ArrayList<Patch> getApplicableAndEnabledPatches(String gameId, Path gameAsmPath) {
         var installedPatches = getInstalledPatches();
 
-        // 默认启用所有适用的补丁
+        // 过滤出适用于该游戏且未被禁用的补丁
         return installedPatches.stream()
                 .filter(patch -> isPatchApplicableToGame(patch, gameId))
+                .filter(patch -> config.isPatchEnabled(gameAsmPath, patch.manifest.id))
                 .sorted(Comparator.comparingInt(patch -> -patch.manifest.priority))
                 .collect(Collectors.toCollection(ArrayList::new));
     }
@@ -106,8 +108,8 @@ public class PatchManager {
      * Returns all patches that are enabled for the specified game assembly path.
      * Results are sorted by priority in descending order (higher priority first).
      * 
-     * Note: By default, ALL installed patches are enabled. This ensures all patches
-     * are active by default.
+     * Note: By default, ALL installed patches are enabled. Only explicitly disabled
+     * patches will be filtered out.
      *
      * @param gameAsmPath the game assembly path used to determine enabled patches
      * @return list of enabled patches, sorted by priority (highest first)
@@ -115,8 +117,9 @@ public class PatchManager {
     public ArrayList<Patch> getEnabledPatches(Path gameAsmPath) {
         var installedPatches = getInstalledPatches();
         
-        // 默认启用所有已安装的补丁
+        // 过滤出未被禁用的补丁（默认全部启用）
         return installedPatches.stream()
+                .filter(patch -> config.isPatchEnabled(gameAsmPath, patch.manifest.id))
                 .sorted(Comparator.comparingInt(patch -> -patch.manifest.priority))
                 .collect(Collectors.toCollection(ArrayList::new));
     }

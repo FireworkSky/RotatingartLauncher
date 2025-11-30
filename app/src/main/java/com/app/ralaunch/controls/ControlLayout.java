@@ -12,6 +12,7 @@ import com.app.ralaunch.utils.AppLogger;
 import com.app.ralaunch.utils.ControlLayoutManager;
 import com.app.ralaunch.model.ControlElement;
 import com.app.ralaunch.controls.ControlDataConverter;
+import org.libsdl.app.SDLActivity;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,9 +20,14 @@ import java.util.List;
 /**
  * 虚拟控制布局管理器
  * 负责管理所有虚拟控制元素的布局和显示
+ * 
+ * 重要：所有触摸事件都会转发给 SDLSurface，确保游戏能收到完整的多点触控输入
  */
 public class ControlLayout extends FrameLayout {
     private static final String TAG = "ControlLayout";
+    
+    // SDLSurface 引用，用于转发触摸事件
+    private View mSDLSurface;
     
     private List<ControlView> mControls;
     private ControlInputBridge mInputBridge;
@@ -63,6 +69,40 @@ public class ControlLayout extends FrameLayout {
         setLayerType(View.LAYER_TYPE_HARDWARE, null);
     }
     
+    /**
+     * 设置 SDLSurface 引用，用于转发触摸事件
+     */
+    public void setSDLSurface(View sdlSurface) {
+        mSDLSurface = sdlSurface;
+    }
+    
+    /**
+     * 重写 dispatchTouchEvent 确保 SDLSurface 能收到所有触摸事件
+     * 这解决了虚拟控件消费事件后 SDLSurface 收不到多点触控的问题
+     * 
+     * 事件处理顺序：
+     * 1. 先让虚拟控件处理（会调用 TouchPointerTracker.consumePointer 标记被占用的触摸点）
+     * 2. 再转发给 SDLSurface（SDL 层会根据 consumed fingers 列表决定是否生成鼠标事件）
+     * 
+     * 穿透模式（passThrough=true）：虚拟控件不标记触摸点 → SDL 正常生成鼠标事件
+     * 非穿透模式（passThrough=false）：虚拟控件标记触摸点 → SDL 跳过鼠标事件
+     */
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent event) {
+        // 先让虚拟控件处理事件
+        // 这样 TouchPointerTracker 会先标记被占用的触摸点
+        boolean handled = super.dispatchTouchEvent(event);
+        
+        // 再转发给 SDLSurface（如果存在）
+        // SDLSurface 会处理触屏转鼠标的逻辑，SDL 层会根据 consumed fingers 列表过滤
+        if (mSDLSurface != null) {
+            mSDLSurface.dispatchTouchEvent(event);
+        }
+        
+        // 返回虚拟控件的处理结果
+        return handled;
+    }
+    
     @Override
     protected void onDraw(android.graphics.Canvas canvas) {
         super.onDraw(canvas);
@@ -99,6 +139,9 @@ public class ControlLayout extends FrameLayout {
     
     /**
      * 加载控制布局配置
+     * 
+     * 会根据设置自动配置：
+     * - MOUSE_RIGHT_STICK_ENABLED: 自动将右摇杆切换为鼠标移动模式
      */
     public void loadLayout(ControlConfig config) {
         if (mInputBridge == null) {
@@ -115,9 +158,22 @@ public class ControlLayout extends FrameLayout {
             return;
         }
         
+        // 检查鼠标右摇杆设置
+        boolean mouseRightStickEnabled = isMouseRightStickEnabled();
+        if (mouseRightStickEnabled) {
+            AppLogger.info(TAG, "Mouse right stick mode enabled from settings");
+        }
+        
         // 创建虚拟控制元素
         for (ControlData data : config.controls) {
             if (!data.visible) continue;
+            
+            // 如果启用了鼠标右摇杆模式，自动配置右摇杆
+            if (mouseRightStickEnabled && data.type == ControlData.TYPE_JOYSTICK && data.xboxUseRightStick) {
+                // 将右摇杆切换为鼠标模式（类似 Steam Deck 触控板）
+                data.joystickMode = ControlData.JOYSTICK_MODE_MOUSE;
+                AppLogger.info(TAG, "Auto-configured right stick to mouse mode");
+            }
             
             ControlView controlView = createControlView(data);
             if (controlView != null) {
@@ -125,6 +181,20 @@ public class ControlLayout extends FrameLayout {
             }
         }
         
+    }
+    
+    /**
+     * 检查是否启用鼠标右摇杆模式
+     */
+    private boolean isMouseRightStickEnabled() {
+        try {
+            com.app.ralaunch.data.SettingsManager settingsManager = 
+                com.app.ralaunch.data.SettingsManager.getInstance(getContext());
+            return settingsManager.isMouseRightStickEnabled();
+        } catch (Exception e) {
+            AppLogger.warn(TAG, "Failed to check mouse right stick setting", e);
+            return false;
+        }
     }
     
     /**

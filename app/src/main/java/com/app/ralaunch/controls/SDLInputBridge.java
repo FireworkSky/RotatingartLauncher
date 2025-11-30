@@ -28,19 +28,20 @@ public class SDLInputBridge implements ControlInputBridge {
     private static int screenWidth = 1920;
     private static int screenHeight = 1080;
     
-    // Native 方法声明（在 touch_bridge.c 中实现）
+    // 虚拟触屏 Native 方法（在 touch_bridge.c 中实现，用于虚拟摇杆发送触屏事件）
     private static native void nativeSetVirtualTouch(int index, float x, float y, int screenWidth, int screenHeight);
     private static native void nativeClearVirtualTouch(int index);
-    private static native void nativeClearAllVirtualTouches();
     
-    // 虚拟鼠标位置 Native 方法（供右摇杆鼠标移动使用）
-    private static native void nativeEnableVirtualMouse(int screenWidth, int screenHeight);
-    private static native void nativeDisableVirtualMouse();
-    private static native void nativeUpdateVirtualMouseDelta(float deltaX, float deltaY);
-    private static native void nativeSetVirtualMousePosition(float x, float y);
-    private static native float nativeGetVirtualMouseX();
-    private static native float nativeGetVirtualMouseY();
-    private static native void nativeSetVirtualMouseRange(float left, float top, float right, float bottom);
+    // SDL 原生虚拟鼠标方法（在 virtual_mouse_sdl.c 中实现）
+    private static native void nativeEnableVirtualMouseSDL(int screenWidth, int screenHeight);
+    private static native void nativeDisableVirtualMouseSDL();
+    private static native void nativeUpdateVirtualMouseDeltaSDL(float deltaX, float deltaY);
+    private static native void nativeSetVirtualMousePositionSDL(float x, float y);
+    private static native float nativeGetVirtualMouseXSDL();
+    private static native float nativeGetVirtualMouseYSDL();
+    private static native void nativeSetVirtualMouseRangeSDL(float left, float top, float right, float bottom);
+    private static native void nativeSendVirtualMouseButtonSDL(int button, boolean pressed);
+    private static native boolean nativeIsVirtualMouseActiveSDL();
     
     // 静态初始化
     static {
@@ -226,28 +227,28 @@ public class SDLInputBridge implements ControlInputBridge {
     @Override
     public void sendMouseButton(int button, boolean isDown, float x, float y) {
         try {
-            // Android_OnMouse expects Android button state (bit mask), not SDL button value
-            int androidButtonState;
+            // 使用 SDL 按钮常量（1=左键, 2=中键, 3=右键）
+            // 使用 onNativeMouseButton 直接发送按钮事件，绕过状态跟踪
+            // 这样不会与触屏转鼠标冲突
+            int sdlButton;
             switch (button) {
                 case ControlData.MOUSE_LEFT:
-                    androidButtonState = BUTTON_PRIMARY;
+                    sdlButton = 1; // SDL_BUTTON_LEFT
                     break;
                 case ControlData.MOUSE_RIGHT:
-                    androidButtonState = BUTTON_SECONDARY;
+                    sdlButton = 3; // SDL_BUTTON_RIGHT
                     break;
                 case ControlData.MOUSE_MIDDLE:
-                    androidButtonState = BUTTON_TERTIARY;
+                    sdlButton = 2; // SDL_BUTTON_MIDDLE
                     break;
                 default:
                     Log.w(TAG, "Unknown mouse button: " + button);
                     return;
             }
             
-            int action = isDown ? ACTION_DOWN : ACTION_UP;
-            // 调用SDLActivity的静态native方法，传递Android按钮状态（位掩码）和按钮中心坐标
-            // Android_OnMouse expects: (state, action, x, y, relative)
-            // where state is Android button state bit mask (BUTTON_PRIMARY, BUTTON_SECONDARY, etc.)
-            SDLActivity.onNativeMouse(androidButtonState, action, x, y, false);
+            // 使用 onNativeMouseButton 直接发送，不影响触屏转鼠标
+            // pressed: 1=按下, 0=释放
+            SDLActivity.onNativeMouseButton(sdlButton, isDown ? 1 : 0, x, y);
 
         } catch (Exception e) {
             Log.e(TAG, "Error sending mouse button: " + button, e);
@@ -269,7 +270,7 @@ public class SDLInputBridge implements ControlInputBridge {
      */
     public void enableVirtualMouse() {
         try {
-            nativeEnableVirtualMouse(screenWidth, screenHeight);
+            nativeEnableVirtualMouseSDL(screenWidth, screenHeight);
             Log.i(TAG, "Virtual mouse enabled");
         } catch (Exception e) {
             Log.e(TAG, "Error enabling virtual mouse", e);
@@ -281,7 +282,7 @@ public class SDLInputBridge implements ControlInputBridge {
      */
     public void disableVirtualMouse() {
         try {
-            nativeDisableVirtualMouse();
+            nativeDisableVirtualMouseSDL();
             Log.i(TAG, "Virtual mouse disabled");
         } catch (Exception e) {
             Log.e(TAG, "Error disabling virtual mouse", e);
@@ -297,7 +298,7 @@ public class SDLInputBridge implements ControlInputBridge {
      */
     public void setVirtualMouseRange(float left, float top, float right, float bottom) {
         try {
-            nativeSetVirtualMouseRange(left, top, right, bottom);
+            nativeSetVirtualMouseRangeSDL(left, top, right, bottom);
             Log.i(TAG, "Virtual mouse range set: left=" + left + ", top=" + top + ", right=" + right + ", bottom=" + bottom);
         } catch (Exception e) {
             Log.e(TAG, "Error setting virtual mouse range", e);
@@ -311,7 +312,7 @@ public class SDLInputBridge implements ControlInputBridge {
      */
     public void updateVirtualMouseDelta(float deltaX, float deltaY) {
         try {
-            nativeUpdateVirtualMouseDelta(deltaX, deltaY);
+            nativeUpdateVirtualMouseDeltaSDL(deltaX, deltaY);
         } catch (Exception e) {
             Log.e(TAG, "Error updating virtual mouse delta", e);
         }
@@ -322,7 +323,7 @@ public class SDLInputBridge implements ControlInputBridge {
      */
     public float getVirtualMouseX() {
         try {
-            return nativeGetVirtualMouseX();
+            return nativeGetVirtualMouseXSDL();
         } catch (Exception e) {
             return screenWidth / 2.0f;
         }
@@ -333,9 +334,22 @@ public class SDLInputBridge implements ControlInputBridge {
      */
     public float getVirtualMouseY() {
         try {
-            return nativeGetVirtualMouseY();
+            return nativeGetVirtualMouseYSDL();
         } catch (Exception e) {
             return screenHeight / 2.0f;
+        }
+    }
+    
+    /**
+     * 发送虚拟鼠标按钮事件
+     * @param button 1=左键, 2=右键, 3=中键
+     * @param pressed 是否按下
+     */
+    public void sendVirtualMouseButton(int button, boolean pressed) {
+        try {
+            nativeSendVirtualMouseButtonSDL(button, pressed);
+        } catch (Exception e) {
+            Log.e(TAG, "Error sending virtual mouse button", e);
         }
     }
     

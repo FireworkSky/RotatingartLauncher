@@ -57,6 +57,10 @@ public class SettingsManager {
         public static final String FPS_DISPLAY_ENABLED = "fps_display_enabled"; // FPS 显示开关
         public static final String FPS_DISPLAY_X = "fps_display_x"; // FPS 显示位置 X
         public static final String FPS_DISPLAY_Y = "fps_display_y"; // FPS 显示位置 Y
+        
+        // 触屏设置
+        public static final String MOUSE_RIGHT_STICK_ENABLED = "mouse_right_stick_enabled"; // 鼠标模式右摇杆
+        public static final String MOUSE_RIGHT_STICK_ATTACK_MODE = "mouse_right_stick_attack_mode"; // 右摇杆攻击模式
 
         // 开发者设置
         public static final String VERBOSE_LOGGING = "verbose_logging";
@@ -107,6 +111,10 @@ public class SettingsManager {
         public static final boolean FPS_DISPLAY_ENABLED = false; // 默认关闭 FPS 显示
         public static final float FPS_DISPLAY_X = -1f; // 默认自动位置（跟随鼠标）
         public static final float FPS_DISPLAY_Y = -1f; // 默认自动位置（跟随鼠标）
+        
+        // 触屏设置
+        public static final boolean MOUSE_RIGHT_STICK_ENABLED = false; // 默认关闭鼠标模式右摇杆
+        public static final int MOUSE_RIGHT_STICK_ATTACK_MODE = 0; // 默认长按模式
 
         // CoreCLR 默认值
         public static final boolean CORECLR_SERVER_GC = false; // 移动端默认关闭 Server GC
@@ -353,6 +361,38 @@ public class SettingsManager {
     
     public void setTouchMultitouchEnabled(boolean enabled) {
         putBoolean(Keys.TOUCH_MULTITOUCH_ENABLED, enabled);
+    }
+    
+    // FNA 触屏设置
+    
+    /**
+     * 是否启用鼠标模式右摇杆
+     * 启用后：虚拟右摇杆控制鼠标移动，适合需要精确鼠标控制的游戏
+     */
+    public boolean isMouseRightStickEnabled() {
+        return getBoolean(Keys.MOUSE_RIGHT_STICK_ENABLED, Defaults.MOUSE_RIGHT_STICK_ENABLED);
+    }
+    
+    public void setMouseRightStickEnabled(boolean enabled) {
+        putBoolean(Keys.MOUSE_RIGHT_STICK_ENABLED, enabled);
+    }
+    
+    /**
+     * 右摇杆攻击模式
+     * 0 = 长按模式（默认）：按住鼠标左键不放
+     * 1 = 点击模式：快速点击（按下-释放循环）
+     * 2 = 持续模式：保持按住状态
+     */
+    public static final int ATTACK_MODE_HOLD = 0;      // 长按
+    public static final int ATTACK_MODE_CLICK = 1;     // 点击
+    public static final int ATTACK_MODE_CONTINUOUS = 2; // 持续
+    
+    public int getMouseRightStickAttackMode() {
+        return getInt(Keys.MOUSE_RIGHT_STICK_ATTACK_MODE, Defaults.MOUSE_RIGHT_STICK_ATTACK_MODE);
+    }
+    
+    public void setMouseRightStickAttackMode(int mode) {
+        putInt(Keys.MOUSE_RIGHT_STICK_ATTACK_MODE, mode);
     }
     
     // 开发者设置

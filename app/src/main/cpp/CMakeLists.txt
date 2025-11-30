@@ -103,6 +103,7 @@ add_library(${CMAKE_PROJECT_NAME} SHARED
         driver_helper/nsbypass.c
         utils/loader_dlopen.c
         touch_bridge.c
+        virtual_mouse_sdl.c
         And64InlineHook/And64InlineHook.cpp
 )
 

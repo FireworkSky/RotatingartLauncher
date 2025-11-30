@@ -88,12 +88,14 @@ osm_render_window_t* osm_init_context(osm_render_window_t* share) {
     // Fallback to simple OSMesaCreateContext if attribs version failed or not available
     if (context == NULL) {
         LOGI("Using OSMesaCreateContext (simple version)...");
-        // Use OSMESA_BGRA (0x1) for correct color channel order on Android
-        // Android ANativeWindow expects BGRA byte order
-        context = OSMesaCreateContext_p(0x1, osmesa_share); // OSMESA_BGRA = 0x1
+        // Use OSMESA_RGBA for correct color channel order on Android
+        // OSMESA_RGBA = GL_RGBA = 0x1908
+        // On little-endian Android, this produces R8G8B8A8 in memory
+        // which matches ANativeWindow's WINDOW_FORMAT_RGBA_8888
+        context = OSMesaCreateContext_p(GL_RGBA, osmesa_share); // OSMESA_RGBA
         if (context == NULL) {
-            LOGI("OSMESA_BGRA failed, trying GL_RGBA...");
-            context = OSMesaCreateContext_p(GL_RGBA, osmesa_share);
+            LOGI("GL_RGBA failed, trying OSMESA_BGRA...");
+            context = OSMesaCreateContext_p(0x1, osmesa_share); // OSMESA_BGRA = 0x1
         }
     }
     
@@ -136,11 +138,11 @@ void osm_swap_surfaces(osm_render_window_t* bundle) {
         bundle->nativeSurface = bundle->newNativeSurface;
         bundle->newNativeSurface = NULL;
         ANativeWindow_acquire(bundle->nativeSurface);
-        // Use WINDOW_FORMAT_RGBA_8888 (1) to match OSMesa's BGRA output
-        // OSMesa with BGRA format outputs B,G,R,A bytes which Android interprets correctly
+        // Use WINDOW_FORMAT_RGBA_8888 (1) to match OSMesa's RGBA output
+        // OSMesa with GL_RGBA format outputs R,G,B,A bytes which matches WINDOW_FORMAT_RGBA_8888
         ANativeWindow_setBuffersGeometry(bundle->nativeSurface, 0, 0, 1); // WINDOW_FORMAT_RGBA_8888
         bundle->disable_rendering = false;
-        LOGI("osm_swap_surfaces: Set buffer format to RGBA_8888 for BGRA OSMesa output");
+        LOGI("osm_swap_surfaces: Set buffer format to RGBA_8888 for OSMesa RGBA output");
         return;
     }
     
@@ -247,9 +249,33 @@ void osm_swap_buffers(void) {
     static int frame_count = 0;
     static bool first_frame_logged = false;
     
+    // Function pointers - load once
+    static void (*glBindFramebuffer_p)(GLenum, GLuint) = NULL;
+    static void (*glGetIntegerv_p)(GLenum, GLint*) = NULL;
+    static void (*glViewport_p)(GLint, GLint, GLsizei, GLsizei) = NULL;
+    static void (*glScissor_p)(GLint, GLint, GLsizei, GLsizei) = NULL;
+    static void (*glFlush_p)(void) = NULL;
+    static void (*glBlitFramebuffer_p)(GLint, GLint, GLint, GLint, GLint, GLint, GLint, GLint, GLbitfield, GLenum) = NULL;
+    static GLenum (*glGetError_p)(void) = NULL;
+    static bool funcs_loaded = false;
+    
     if (currentBundle == NULL) {
         LOGW("osm_swap_buffers: currentBundle is NULL!");
         return;
+    }
+    
+    // Load GL functions once
+    if (!funcs_loaded && OSMesaGetProcAddress_p != NULL) {
+        glBindFramebuffer_p = (void (*)(GLenum, GLuint))OSMesaGetProcAddress_p("glBindFramebuffer");
+        glGetIntegerv_p = (void (*)(GLenum, GLint*))OSMesaGetProcAddress_p("glGetIntegerv");
+        glViewport_p = (void (*)(GLint, GLint, GLsizei, GLsizei))OSMesaGetProcAddress_p("glViewport");
+        glScissor_p = (void (*)(GLint, GLint, GLsizei, GLsizei))OSMesaGetProcAddress_p("glScissor");
+        glFlush_p = (void (*)(void))OSMesaGetProcAddress_p("glFlush");
+        glBlitFramebuffer_p = (void (*)(GLint, GLint, GLint, GLint, GLint, GLint, GLint, GLint, GLbitfield, GLenum))
+            OSMesaGetProcAddress_p("glBlitFramebuffer");
+        glGetError_p = (GLenum (*)(void))OSMesaGetProcAddress_p("glGetError");
+        funcs_loaded = true;
+        LOGI("osm_swap_buffers: GL functions loaded - glBlitFramebuffer=%p", glBlitFramebuffer_p);
     }
     
     // Always log first frame state for debugging
@@ -272,105 +298,93 @@ void osm_swap_buffers(void) {
     // 2. Then lock and prepare the NEXT buffer for rendering
     
     if (buffer_is_locked && currentBundle->nativeSurface != NULL && !currentBundle->disable_rendering) {
-        // CRITICAL: Bind back to default framebuffer (0) before glFinish
-        // FNA3D might be rendering to an FBO, and glFinish needs to flush the default FB
-        static void (*glBindFramebuffer_p)(GLenum, GLuint) = NULL;
-        static void (*glGetIntegerv_p)(GLenum, GLint*) = NULL;
-        static void (*glViewport_p)(GLint, GLint, GLsizei, GLsizei) = NULL;
-        static bool fb_funcs_loaded = false;
+        ANativeWindow_Buffer* buf = &currentBundle->buffer;
         
-        if (!fb_funcs_loaded && OSMesaGetProcAddress_p != NULL) {
-            glBindFramebuffer_p = (void (*)(GLenum, GLuint))OSMesaGetProcAddress_p("glBindFramebuffer");
-            glGetIntegerv_p = (void (*)(GLenum, GLint*))OSMesaGetProcAddress_p("glGetIntegerv");
-            glViewport_p = (void (*)(GLint, GLint, GLsizei, GLsizei))OSMesaGetProcAddress_p("glViewport");
-            fb_funcs_loaded = true;
-        }
+        // CRITICAL FIX: Get current FBO and check if we need to blit from FBO to default framebuffer
+        // FNA3D uses a faux-backbuffer (FBO) for rendering, then blits to FBO 0
+        // OSMesa's flush_front ONLY flushes FBO 0 to the user buffer!
+        GLint current_fb = 0;
+        GLint current_read_fb = 0;
+        GLint current_draw_fb = 0;
         
-        // Check current framebuffer binding and log it
-        if (frame_count < 5 && glGetIntegerv_p != NULL) {
-            GLint current_fb = -1;
-            GLint viewport[4] = {0};
+        if (glGetIntegerv_p != NULL) {
             glGetIntegerv_p(0x8CA6, &current_fb); // GL_FRAMEBUFFER_BINDING
-            glGetIntegerv_p(0x0BA2, viewport); // GL_VIEWPORT
-            LOGI("osm_swap_buffers: DEBUG frame %d - FB=%d, viewport=(%d,%d,%d,%d)", 
-                frame_count, current_fb, viewport[0], viewport[1], viewport[2], viewport[3]);
+            glGetIntegerv_p(0x8CA8, &current_read_fb); // GL_READ_FRAMEBUFFER_BINDING  
+            glGetIntegerv_p(0x8CA9, &current_draw_fb); // GL_DRAW_FRAMEBUFFER_BINDING
+        }
+        
+        if (frame_count < 10) {
+            LOGI("osm_swap_buffers: frame %d - current FB=%d, read=%d, draw=%d",
+                frame_count, current_fb, current_read_fb, current_draw_fb);
+        }
+        
+        // CRITICAL: If rendering was done to a non-zero FBO, we need to blit it to FBO 0
+        // Because OSMesa only flushes FBO 0 to the user-provided buffer
+        if (current_fb != 0 || current_draw_fb != 0) {
+            GLint fbo_to_blit = (current_draw_fb != 0) ? current_draw_fb : current_fb;
             
-            // If bound to non-zero FBO, bind back to default
-            if (current_fb != 0 && glBindFramebuffer_p != NULL) {
-                LOGI("osm_swap_buffers: DEBUG - Binding back to default framebuffer (0)");
+            if (glBlitFramebuffer_p != NULL && glBindFramebuffer_p != NULL) {
+                // Set up read from the FBO that was rendered to
+                glBindFramebuffer_p(0x8CA8, fbo_to_blit); // GL_READ_FRAMEBUFFER
+                // Set up write to default framebuffer (FBO 0)
+                glBindFramebuffer_p(0x8CA9, 0); // GL_DRAW_FRAMEBUFFER
+                
+                // Blit the FBO content to default framebuffer
+                glBlitFramebuffer_p(
+                    0, 0, buf->width, buf->height,  // src rect
+                    0, 0, buf->width, buf->height,  // dst rect
+                    0x00004000,  // GL_COLOR_BUFFER_BIT
+                    0x2600       // GL_NEAREST
+                );
+                
+                // Now bind FBO 0 as the active framebuffer so glFinish flushes it
                 glBindFramebuffer_p(0x8D40, 0); // GL_FRAMEBUFFER
-            }
-        }
-        
-        // CRITICAL: Reset viewport after buffer switch since FNA3D may have cached wrong size
-        if (glViewport_p != NULL) {
-            ANativeWindow_Buffer* buf = &currentBundle->buffer;
-            glViewport_p(0, 0, buf->width, buf->height);
-            if (frame_count < 5) {
-                LOGI("osm_swap_buffers: Reset viewport to %dx%d", buf->width, buf->height);
-            }
-        }
-        
-        // Check for GL errors before flush
-        if (frame_count < 5) {
-            static GLenum (*glGetError_p)(void) = NULL;
-            if (glGetError_p == NULL && OSMesaGetProcAddress_p != NULL) {
-                glGetError_p = (GLenum (*)(void))OSMesaGetProcAddress_p("glGetError");
-            }
-            if (glGetError_p != NULL) {
-                GLenum err = glGetError_p();
-                if (err != 0) {
-                    LOGE("osm_swap_buffers: GL ERROR before flush: 0x%x", err);
+                
+                if (frame_count < 10) {
+                    LOGI("osm_swap_buffers: Blitted FBO %d to FBO 0 (%dx%d)", 
+                        fbo_to_blit, buf->width, buf->height);
+                }
+            } else {
+                // Fallback: just bind to FBO 0
+                if (glBindFramebuffer_p != NULL) {
+                    glBindFramebuffer_p(0x8D40, 0); // GL_FRAMEBUFFER
+                }
+                if (frame_count < 5) {
+                    LOGW("osm_swap_buffers: No glBlitFramebuffer, just binding FBO 0");
                 }
             }
         }
         
-        // Flush the current frame's rendering to the buffer
+        // Set viewport to match buffer dimensions
+        if (glViewport_p != NULL) {
+            glViewport_p(0, 0, buf->width, buf->height);
+        }
+        if (glScissor_p != NULL) {
+            glScissor_p(0, 0, buf->width, buf->height);
+        }
+        
+        // Check for GL errors before flush
+        if (frame_count < 10 && glGetError_p != NULL) {
+            GLenum err = glGetError_p();
+            if (err != 0) {
+                LOGE("osm_swap_buffers: GL ERROR before flush: 0x%x", err);
+            }
+        }
+        
+        // CRITICAL: Call glFlush first to trigger OSMesa's flush_front
+        // OSMesa's flush_front copies the internal texture to the user buffer
+        if (glFlush_p != NULL) {
+            glFlush_p();
+        }
+        
+        // Then call glFinish to ensure all rendering is complete
         if (glFinish_p != NULL) {
             glFinish_p();
         }
         
-        // OSMESA DEBUG: Try forcing OSMesa to write to buffer with glReadPixels
-        if (frame_count < 3) {
-            static void (*glReadPixels_local)(GLint, GLint, GLsizei, GLsizei, GLenum, GLenum, void*) = NULL;
-            if (glReadPixels_local == NULL && OSMesaGetProcAddress_p != NULL) {
-                glReadPixels_local = (void (*)(GLint, GLint, GLsizei, GLsizei, GLenum, GLenum, void*))
-                    OSMesaGetProcAddress_p("glReadPixels");
-            }
-            if (glReadPixels_local != NULL) {
-                // Read a single pixel to force sync
-                uint32_t test_pixel = 0;
-                glReadPixels_local(100, 100, 1, 1, 0x1908, 0x1401, &test_pixel); // GL_RGBA, GL_UNSIGNED_BYTE
-                LOGI("osm_swap_buffers: DEBUG glReadPixels test at (100,100): 0x%08x", test_pixel);
-            }
-        }
-        
-        // DEBUG: Check if buffer has any non-zero data after glFinish
-        if (frame_count < 5) {
-            ANativeWindow_Buffer* buf = &currentBundle->buffer;
+        // DEBUG: Check if buffer has non-zero data after flush
+        if (frame_count < 10) {
             uint32_t* pixels = (uint32_t*)buf->bits;
-            
-            // Find first non-black pixel and its location
-            int first_nonblack_x = -1, first_nonblack_y = -1;
-            uint32_t first_nonblack_color = 0;
-            int nonblack_count = 0;
-            
-            for (int y = 0; y < buf->height && first_nonblack_x < 0; y += 10) {
-                for (int x = 0; x < buf->width && first_nonblack_x < 0; x += 10) {
-                    uint32_t pixel = pixels[y * buf->stride + x];
-                    if (pixel != 0xff000000 && pixel != 0x00000000) {
-                        first_nonblack_x = x;
-                        first_nonblack_y = y;
-                        first_nonblack_color = pixel;
-                    }
-                    if (pixel != 0xff000000 && pixel != 0x00000000) {
-                        nonblack_count++;
-                    }
-                }
-            }
-            
-            LOGI("osm_swap_buffers: DEBUG frame %d - first nonblack at (%d,%d) color=0x%08x, nonblack_count=%d",
-                frame_count, first_nonblack_x, first_nonblack_y, first_nonblack_color, nonblack_count);
             
             // Sample corners and center
             uint32_t p_topleft = pixels[0];
@@ -379,12 +393,20 @@ void osm_swap_buffers(void) {
             uint32_t p_bottomleft = pixels[(buf->height-1) * buf->stride];
             uint32_t p_bottomright = pixels[(buf->height-1) * buf->stride + buf->width-1];
             
-            LOGI("osm_swap_buffers: DEBUG frame %d - TL=0x%08x TR=0x%08x C=0x%08x BL=0x%08x BR=0x%08x",
-                frame_count, p_topleft, p_topright, p_center, p_bottomleft, p_bottomright);
+            // Count non-black pixels
+            int nonblack_count = 0;
+            for (int y = 0; y < buf->height; y += 20) {
+                for (int x = 0; x < buf->width; x += 20) {
+                    uint32_t pixel = pixels[y * buf->stride + x];
+                    if ((pixel & 0x00FFFFFF) != 0x00000000) {
+                        nonblack_count++;
+                    }
+                }
+            }
             
-            // Check buffer dimensions match what OSMesa expects
-            LOGI("osm_swap_buffers: DEBUG frame %d - buffer: %dx%d stride=%d, bits=%p",
-                frame_count, buf->width, buf->height, buf->stride, buf->bits);
+            LOGI("osm_swap_buffers: frame %d - buffer %dx%d - nonblack=%d TL=0x%08x C=0x%08x BR=0x%08x",
+                frame_count, buf->width, buf->height, nonblack_count, 
+                p_topleft, p_center, p_bottomright);
         }
         
         // Post the current frame
@@ -428,8 +450,8 @@ void osm_swap_buffers(void) {
     }
     
     frame_count++;
-    // Log every 60 frames (approximately every second at 60fps)
-    if (frame_count % 60 == 0) {
+    // Log every 120 frames (approximately every 2 seconds at 60fps)
+    if (frame_count % 120 == 0) {
         LOGI("osm_swap_buffers: frame %d (nativeSurface=%p, disabled=%d)", 
             frame_count, currentBundle->nativeSurface, currentBundle->disable_rendering);
     }

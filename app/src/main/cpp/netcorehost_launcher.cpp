@@ -99,9 +99,6 @@ int netcorehost_set_params(
     str_free(g_app_path);
     g_app_path = str_dup(app_path_str.c_str());
 
-    LOGI(LOG_TAG, "========================================");
-    LOGI(LOG_TAG, " Launch parameters set");
-    LOGI(LOG_TAG, "========================================");
     LOGI(LOG_TAG, "  App directory: %s", app_dir);
     LOGI(LOG_TAG, "  Main assembly: %s", main_assembly);
     LOGI(LOG_TAG, "  Full path: %s", g_app_path);
@@ -142,7 +139,7 @@ int netcorehost_set_params(
     setenv("XDG_CONFIG_HOME", std::string(app_dir).c_str(), 1);
     setenv("HOME", std::string(app_dir).c_str(), 1);
 
-    setenv("SDL_TOUCH_MOUSE_EVENTS", "0 ", 1);
+
     return 0;
 }
 /**

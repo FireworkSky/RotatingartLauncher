@@ -19,6 +19,8 @@ import android.view.SurfaceView;
 import android.view.View;
 import android.view.WindowManager;
 
+import com.app.ralaunch.controls.TouchPointerTracker;
+
 /**
     SDLSurface. This is what we draw on, so we need to know when it's created
     in order to do anything useful.
@@ -260,6 +262,8 @@ public class SDLSurface extends SurfaceView implements SurfaceHolder.Callback,
 
             SDLActivity.onNativeMouse(mouseButton, action, x, y, motionListener.inRelativeMode());
         } else {
+            // 简化的触摸事件处理 - SDL 层会处理虚拟控件的过滤
+            // 所有触摸事件都发送给 SDL，SDL 层会根据 consumed fingers 列表决定是否转换为鼠标事件
             switch(action) {
                 case MotionEvent.ACTION_MOVE:
                     for (i = 0; i < pointerCount; i++) {
@@ -323,7 +327,7 @@ public class SDLSurface extends SurfaceView implements SurfaceHolder.Callback,
         return true;
    }
    
-    // Update touch bridge data for C# access
+    // Update touch bridge data for C# access (filters out virtual control touches)
     private void updateTouchBridge(MotionEvent event) {
         if (!isTouchBridgeAvailable()) {
             return;
@@ -349,6 +353,12 @@ public class SDLSurface extends SurfaceView implements SurfaceHolder.Callback,
             for (int i = 0; i < pointerCount && validCount < 10; i++) {
                 // Skip the finger being lifted
                 if (isPointerUp && i == actionIndex) {
+                    continue;
+                }
+                
+                // Skip fingers consumed by virtual controls
+                int pointerId = event.getPointerId(i);
+                if (TouchPointerTracker.isPointerConsumed(pointerId)) {
                     continue;
                 }
                 

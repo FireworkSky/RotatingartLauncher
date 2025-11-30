@@ -1,6 +1,7 @@
 package com.app.ralaunch.settings;
 
 import android.view.View;
+import android.widget.RadioGroup;
 import android.widget.TextView;
 import androidx.fragment.app.Fragment;
 import com.app.ralaunch.R;
@@ -24,6 +25,8 @@ public class ControlsSettingsModule implements SettingsModule {
         
         setupVibrationSettings();
         setupMultitouchSettings();
+        setupMouseRightStickSettings();
+        setupAttackModeSettings();
     }
     
     private void setupVibrationSettings() {
@@ -32,8 +35,7 @@ public class ControlsSettingsModule implements SettingsModule {
             boolean vibrationEnabled = settingsManager.getVibrationEnabled();
             switchVibration.setChecked(vibrationEnabled);
             switchVibration.setOnCheckedChangeListener((buttonView, isChecked) -> {
-                // 保存振动反馈设置
-                 settingsManager.setVibrationEnabled(isChecked);
+                settingsManager.setVibrationEnabled(isChecked);
             });
         }
     }
@@ -44,11 +46,66 @@ public class ControlsSettingsModule implements SettingsModule {
             boolean multitouchEnabled = settingsManager.isTouchMultitouchEnabled();
             switchMultitouch.setChecked(multitouchEnabled);
             switchMultitouch.setOnCheckedChangeListener((buttonView, isChecked) -> {
-                // 保存多点触控设置
                 settingsManager.setTouchMultitouchEnabled(isChecked);
             });
         }
     }
+    
+    private void setupMouseRightStickSettings() {
+        MaterialSwitch switchMouseRightStick = rootView.findViewById(R.id.switchMouseRightStick);
+        if (switchMouseRightStick != null) {
+            boolean mouseRightStickEnabled = settingsManager.isMouseRightStickEnabled();
+            switchMouseRightStick.setChecked(mouseRightStickEnabled);
+            switchMouseRightStick.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                settingsManager.setMouseRightStickEnabled(isChecked);
+                // 更新攻击模式卡片可见性
+                updateAttackModeCardVisibility(isChecked);
+            });
+        }
+    }
+    
+    private void setupAttackModeSettings() {
+        RadioGroup rgAttackMode = rootView.findViewById(R.id.rgAttackMode);
+        View attackModeCard = rootView.findViewById(R.id.attackModeCard);
+        
+        if (rgAttackMode != null && attackModeCard != null) {
+            // 初始化可见性（根据鼠标模式右摇杆是否启用）
+            boolean mouseRightStickEnabled = settingsManager.isMouseRightStickEnabled();
+            attackModeCard.setVisibility(mouseRightStickEnabled ? View.VISIBLE : View.GONE);
+            
+            // 初始化选中状态
+            int attackMode = settingsManager.getMouseRightStickAttackMode();
+            switch (attackMode) {
+                case SettingsManager.ATTACK_MODE_HOLD:
+                    rgAttackMode.check(R.id.rbAttackModeHold);
+                    break;
+                case SettingsManager.ATTACK_MODE_CLICK:
+                    rgAttackMode.check(R.id.rbAttackModeClick);
+                    break;
+                case SettingsManager.ATTACK_MODE_CONTINUOUS:
+                    rgAttackMode.check(R.id.rbAttackModeContinuous);
+                    break;
+            }
+            
+            // 监听选择变化
+            rgAttackMode.setOnCheckedChangeListener((group, checkedId) -> {
+                int mode = SettingsManager.ATTACK_MODE_HOLD;
+                if (checkedId == R.id.rbAttackModeHold) {
+                    mode = SettingsManager.ATTACK_MODE_HOLD;
+                } else if (checkedId == R.id.rbAttackModeClick) {
+                    mode = SettingsManager.ATTACK_MODE_CLICK;
+                } else if (checkedId == R.id.rbAttackModeContinuous) {
+                    mode = SettingsManager.ATTACK_MODE_CONTINUOUS;
+                }
+                settingsManager.setMouseRightStickAttackMode(mode);
+            });
+        }
+    }
+    
+    private void updateAttackModeCardVisibility(boolean visible) {
+        View attackModeCard = rootView.findViewById(R.id.attackModeCard);
+        if (attackModeCard != null) {
+            attackModeCard.setVisibility(visible ? View.VISIBLE : View.GONE);
+        }
+    }
 }
-
-

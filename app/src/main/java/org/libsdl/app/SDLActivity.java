@@ -911,6 +911,10 @@ public class SDLActivity extends Activity implements View.OnSystemUiVisibilityCh
     public static native void onNativeTouch(int touchDevId, int pointerFingerId,
                                             int action, float x,
                                             float y, float p);
+    // 虚拟控件触摸点管理 - 被标记的触摸点不会转换为鼠标事件
+    public static native void nativeConsumeFingerTouch(int fingerId);
+    public static native void nativeReleaseFingerTouch(int fingerId);
+    public static native void nativeClearConsumedFingers();
     public static native void onNativeAccel(float x, float y, float z);
     public static native void onNativeClipboardChanged();
     public static native void onNativeSurfaceCreated();
