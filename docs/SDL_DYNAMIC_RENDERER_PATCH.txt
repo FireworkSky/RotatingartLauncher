@@ -1,0 +1,78 @@
+====================================================================
+SDL 动态渲染器加载补丁
+====================================================================
+
+替换 SDL_androidvideo.c 中的 GL 指针设置部分（第 133-233 行）
+
+原代码：大量的 #if defined... 条件编译
+
+新代码：使用动态加载器
+
+--------------------------------------------------------------------
+
+将以下代码替换第 133-233 行（从 "/* GL pointers" 到 "#endif" 之前）：
+
+    /* ================================================================
+     * 🔥 Dynamic Renderer Loading (lwjgl3 + PojavLauncher style)
+     * ================================================================
+     *
+     * 支持运行时动态切换渲染器，无需重新编译
+     *
+     * 环境变量：
+     *   SDL_RENDERER 或 FNA3D_OPENGL_DRIVER
+     *     - native: 系统默认 (libEGL.so + libGLESv2.so)
+     *     - gl4es: OpenGL 2.1 翻译层
+     *     - angle: OpenGL ES over Vulkan
+     *     - zink: OpenGL over Vulkan
+     *
+     * 实现原理：
+     *   1. 通过 dlopen(RTLD_GLOBAL) 预加载渲染器库
+     *   2. 通过 LD_PRELOAD 劫持 SDL 的 dlopen("libEGL.so")
+     *   3. 所有渲染器都提供标准 EGL 接口
+     *   4. SDL 无感知，直接使用 Android_GLES_* 函数
+     */
+
+    /* 从环境变量读取渲染器配置 */
+    const char* renderer_name = SDL_getenv("SDL_RENDERER");
+    if (!renderer_name || renderer_name[0] == '\0') {
+        renderer_name = SDL_getenv("FNA3D_OPENGL_DRIVER");
+    }
+    if (!renderer_name || renderer_name[0] == '\0') {
+        renderer_name = "native";  /* 默认使用系统渲染器 */
+    }
+
+    /* 动态加载渲染器 */
+    if (!Android_LoadRenderer(renderer_name)) {
+        SDL_LogWarn(SDL_LOG_CATEGORY_VIDEO,
+                    "Failed to load renderer '%s', falling back to native",
+                    renderer_name);
+        Android_LoadRenderer("native");
+    }
+
+    /* 设置 GL 函数指针 */
+    /* 由于使用 LD_PRELOAD，所有渲染器都提供标准 EGL 接口 */
+    if (!Android_SetupGLFunctions(device)) {
+        SDL_LogError(SDL_LOG_CATEGORY_VIDEO, "Failed to setup GL functions");
+        SDL_free(data);
+        SDL_free(device);
+        return NULL;
+    }
+
+    SDL_LogInfo(SDL_LOG_CATEGORY_VIDEO,
+                "✅ Renderer initialized: %s",
+                Android_GetCurrentRenderer());
+
+--------------------------------------------------------------------
+
+完整修改步骤：
+
+1. 备份原文件：
+   cp SDL_androidvideo.c SDL_androidvideo.c.backup
+
+2. 删除第 133-233 行的所有 #if defined 代码块
+
+3. 插入上面的新代码
+
+4. 保存文件
+
+====================================================================

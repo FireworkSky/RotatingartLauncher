@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 基础路径配置 -->
+    <external-path name="external_root" path="." />
+    <files-path name="app_files" path="." />
+    <cache-path name="app_cache" path="." />
+    <external-files-path name="app_external_files" path="." />
+    <external-cache-path name="app_external_cache" path="." />
+
+    <!-- 根目录，适用于一些特殊路径 -->
+    <root-path name="root" path="." />
+
+    <!-- 特定的 data 子目录配置 -->
+    <files-path name="data_files" path="files/" />
+    <files-path name="data_databases" path="databases/" />
+    <files-path name="data_shared_prefs" path="shared_prefs/" />
+
+    <!-- 自定义路径配置 -->
+    <files-path name="my_documents" path="documents/" />
+    <files-path name="my_images" path="images/" />
+    <files-path name="my_downloads" path="downloads/" />
+
+    <!-- 支持 SD 卡路径 -->
+    <external-path name="sdcard_downloads" path="Download/" />
+    <external-path name="sdcard_documents" path="Documents/" />
+    <external-path name="sdcard_pictures" path="Pictures/" />
+    <external-path name="sdcard_music" path="Music/" />
+    <external-path name="sdcard_movies" path="Movies/" />
+
+    <!-- 支持 Android/data 目录 -->
+    <external-files-path name="android_data" path="." />
+
+
+</paths>
