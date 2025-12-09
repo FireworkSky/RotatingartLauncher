@@ -12,6 +12,7 @@ import android.content.pm.PackageManager;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.content.Context;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -679,10 +680,13 @@ public class GameActivity extends SDLActivity {
             return;
         }
 
-        AppLogger.debug(TAG, "Showing exit confirmation dialog");
-        if (mMenuManager != null) {
-            mMenuManager.showExitConfirmDialog();
-        }
+        AppLogger.debug(TAG, "Toggle virtual controls visibility");
+        toggleVirtualControls();
+
+//        AppLogger.debug(TAG, "Showing exit confirmation dialog");
+//        if (mMenuManager != null) {
+//            mMenuManager.showExitConfirmDialog();
+//        }
     }
     @Override
     protected void onDestroy() {
@@ -847,6 +851,19 @@ public class GameActivity extends SDLActivity {
             }
         }
         return sTouchBridgeAvailable;
+    }
+
+    @Override
+    public boolean dispatchKeyEvent(KeyEvent event) {
+        int keyCode = event.getKeyCode();
+        // Ignore certain back key
+        if (keyCode == KeyEvent.KEYCODE_BACK) {
+            if (event.getAction() == KeyEvent.ACTION_DOWN) {
+                onBackPressed();
+            }
+            return false;
+        }
+        return super.dispatchKeyEvent(event);
     }
 
     /**
