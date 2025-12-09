@@ -11,7 +11,7 @@ import com.app.ralaunch.renderer.RendererConfig;
 import com.app.ralaunch.utils.RuntimePreference;
 import com.app.ralib.dialog.OptionSelectorDialog;
 import com.google.android.material.card.MaterialCardView;
-import com.google.android.material.switchmaterial.SwitchMaterial;
+import com.google.android.material.materialswitch.MaterialSwitch;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -103,7 +103,7 @@ public class GameSettingsModule implements SettingsModule {
             if (isAdreno) {
                 turnipDriverCard.setVisibility(View.VISIBLE);
                 
-                SwitchMaterial switchTurnip = rootView.findViewById(R.id.switchTurnipDriver);
+                MaterialSwitch switchTurnip = rootView.findViewById(R.id.switchTurnipDriver);
                 if (switchTurnip != null) {
                     boolean turnipEnabled = settingsManager.isVulkanDriverTurnip();
                     switchTurnip.setChecked(turnipEnabled);

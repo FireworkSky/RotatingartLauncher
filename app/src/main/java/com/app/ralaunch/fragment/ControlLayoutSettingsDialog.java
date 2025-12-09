@@ -164,7 +164,7 @@ public class ControlLayoutSettingsDialog {
         final float finalDialogWidth = dialogWidth;
         
         mDialogLayout.setVisibility(View.VISIBLE);
-        mDialogLayout.setTranslationX(finalDialogWidth);
+        mDialogLayout.setTranslationX(-finalDialogWidth);
         
         // 确保遮罩层存在
         if (mOverlay != null) {
@@ -177,7 +177,7 @@ public class ControlLayoutSettingsDialog {
         mAnimator.setInterpolator(new DecelerateInterpolator());
         mAnimator.addUpdateListener(animation -> {
             float progress = animation.getAnimatedFraction();
-            mDialogLayout.setTranslationX(finalDialogWidth * (1f - progress));
+            mDialogLayout.setTranslationX(-finalDialogWidth * (1f - progress));
             if (mOverlay != null) {
                 mOverlay.setAlpha(progress * 0.5f);
             }
@@ -204,7 +204,7 @@ public class ControlLayoutSettingsDialog {
         mAnimator.setInterpolator(new AccelerateInterpolator());
         mAnimator.addUpdateListener(animation -> {
             float progress = animation.getAnimatedFraction();
-            mDialogLayout.setTranslationX(finalDialogWidth * progress);
+            mDialogLayout.setTranslationX(finalDialogWidth * -progress);
             if (mOverlay != null) {
                 mOverlay.setAlpha(0.5f * (1f - progress));
             }
