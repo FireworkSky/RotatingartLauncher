@@ -71,6 +71,12 @@
             android:launchMode="singleTop"
             android:theme="@style/Theme.raLaunch" />
 
+        <!-- DocumentsProvider 唤醒活动 -->
+        <activity
+            android:name=".provider.RaLaunchWakeUpActivity"
+            android:exported="false"
+            android:theme="@android:style/Theme.NoDisplay" />
+
         <!-- 通用进程启动服务 -->
         <service
             android:name=".service.ProcessLauncherService"
@@ -78,13 +84,24 @@
             android:exported="false"
             android:foregroundServiceType="dataSync" />
 
-        <!-- 文件提供者 -->
+        <!-- RaLaunch 文件提供器 - 用于安全地分享文件 -->
         <provider
-            android:name="bin.mt.file.content.MTDataFilesProvider"
-            android:permission="android.permission.MANAGE_DOCUMENTS"
-            android:exported="true"
-            android:authorities="com.app.ralaunch.provider"
+            android:name=".provider.RaLaunchFileProvider"
+            android:authorities="com.app.ralaunch.fileprovider"
+            android:exported="false"
             android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+
+        <!-- RaLaunch 文档提供器 - 在系统文件管理器中显示 -->
+        <provider
+            android:name=".provider.RaLaunchDocumentsProvider"
+            android:authorities="com.app.ralaunch.documents"
+            android:exported="true"
+            android:grantUriPermissions="true"
+            android:permission="android.permission.MANAGE_DOCUMENTS">
             <intent-filter>
                 <action android:name="android.content.action.DOCUMENTS_PROVIDER" />
             </intent-filter>

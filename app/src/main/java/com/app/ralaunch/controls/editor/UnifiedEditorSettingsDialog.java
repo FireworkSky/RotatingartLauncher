@@ -44,8 +44,6 @@ public class UnifiedEditorSettingsDialog {
     private View mItemAddTextGroup;
     private ViewGroup mAddControlsSection; // 添加控件区域
     private View mItemSaveLayout; // 保存布局
-    private View mItemHideCursor;
-    private androidx.appcompat.widget.SwitchCompat mSwitchHideCursor;
     private View mItemFPSDisplay;
     private androidx.appcompat.widget.SwitchCompat mSwitchFPSDisplay;
     
@@ -81,7 +79,6 @@ public class UnifiedEditorSettingsDialog {
         void onAddJoystick();
         void onAddText();
         void onSaveLayout(); // 保存布局
-        void onHideCursorChanged(boolean hide); // 隐藏鼠标光标选项变化
         void onFPSDisplayChanged(boolean enabled); // FPS 显示选项变化
     }
 
@@ -302,8 +299,6 @@ public class UnifiedEditorSettingsDialog {
         mItemAddText = mDialogLayout.findViewById(R.id.item_add_text);
         mAddControlsSection = mDialogLayout.findViewById(R.id.section_add_controls);
         mItemSaveLayout = mDialogLayout.findViewById(R.id.item_save_layout);
-        mItemHideCursor = mDialogLayout.findViewById(R.id.item_hide_cursor);
-        mSwitchHideCursor = mDialogLayout.findViewById(R.id.switch_hide_cursor);
         mItemFPSDisplay = mDialogLayout.findViewById(R.id.item_fps_display);
         mSwitchFPSDisplay = mDialogLayout.findViewById(R.id.switch_fps_display);
 
@@ -372,20 +367,6 @@ public class UnifiedEditorSettingsDialog {
                 });
             }
 
-            // 隐藏鼠标光标开关
-            if (mSwitchHideCursor != null) {
-                // 加载当前设置
-                com.app.ralaunch.data.SettingsManager settingsManager = 
-                    com.app.ralaunch.data.SettingsManager.getInstance(mContext);
-                boolean hideCursor = settingsManager.isHideCursorEnabled();
-                mSwitchHideCursor.setChecked(hideCursor);
-                
-                mSwitchHideCursor.setOnCheckedChangeListener((buttonView, isChecked) -> {
-                    settingsManager.setHideCursorEnabled(isChecked);
-                    mListener.onHideCursorChanged(isChecked);
-                });
-            }
-
             // FPS 显示开关
             if (mSwitchFPSDisplay != null) {
                 // 加载当前设置
@@ -411,11 +392,6 @@ public class UnifiedEditorSettingsDialog {
         // 更新添加控件区域的可见性
         if (mAddControlsSection != null) {
             mAddControlsSection.setVisibility(mIsEditModeEnabled ? View.VISIBLE : View.GONE);
-        }
-
-        // 更新"隐藏鼠标光标"选项的可见性：编辑模式下隐藏，非编辑模式下显示
-        if (mItemHideCursor != null) {
-            mItemHideCursor.setVisibility(mIsEditModeEnabled ? View.GONE : View.VISIBLE);
         }
 
         // 更新"FPS 显示"选项的可见性：编辑模式下隐藏，非编辑模式下显示

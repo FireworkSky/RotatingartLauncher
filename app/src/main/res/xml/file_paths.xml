@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 应用内部存储 -->
+    <files-path
+        name="internal_files"
+        path="." />
+    
+    <!-- 应用缓存目录 -->
+    <cache-path
+        name="cache"
+        path="." />
+    
+    <!-- 外部存储根目录 -->
+    <external-path
+        name="external"
+        path="." />
+    
+    <!-- 应用外部文件目录 -->
+    <external-files-path
+        name="external_files"
+        path="." />
+    
+    <!-- 应用外部缓存目录 -->
+    <external-cache-path
+        name="external_cache"
+        path="." />
+    
+    <!-- 游戏目录 -->
+    <external-files-path
+        name="games"
+        path="games/" />
+    
+    <!-- 运行时目录 -->
+    <external-files-path
+        name="runtimes"
+        path="runtimes/" />
+    
+    <!-- 日志目录 -->
+    <external-files-path
+        name="logs"
+        path="logs/" />
+    
+    <!-- 临时文件目录 -->
+    <external-cache-path
+        name="temp"
+        path="temp/" />
+    
+    <!-- 下载目录 -->
+    <external-cache-path
+        name="downloads"
+        path="downloads/" />
+</paths>
+

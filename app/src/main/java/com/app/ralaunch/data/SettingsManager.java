@@ -53,7 +53,6 @@ public class SettingsManager {
         // 控制设置
         public static final String CONTROLS_VIBRATION_ENABLED = "controls_vibration_enabled";
         public static final String TOUCH_MULTITOUCH_ENABLED = "touch_multitouch_enabled"; // 多点触控模拟鼠标
-        public static final String HIDE_CURSOR_ENABLED = "hide_cursor_enabled"; // 隐藏鼠标光标
         public static final String FPS_DISPLAY_ENABLED = "fps_display_enabled"; // FPS 显示开关
         public static final String FPS_DISPLAY_X = "fps_display_x"; // FPS 显示位置 X
         public static final String FPS_DISPLAY_Y = "fps_display_y"; // FPS 显示位置 Y
@@ -112,7 +111,6 @@ public class SettingsManager {
         // 控制设置
         public static final boolean CONTROLS_VIBRATION_ENABLED = true; // 默认开启振动反馈
         public static final boolean TOUCH_MULTITOUCH_ENABLED = true; // 默认开启多点触控（不可更改）
-        public static final boolean HIDE_CURSOR_ENABLED = false; // 默认不隐藏鼠标光标
         public static final boolean FPS_DISPLAY_ENABLED = false; // 默认关闭 FPS 显示
         public static final float FPS_DISPLAY_X = -1f; // 默认自动位置（跟随鼠标）
         public static final float FPS_DISPLAY_Y = -1f; // 默认自动位置（跟随鼠标）
@@ -558,20 +556,6 @@ public class SettingsManager {
 
     public void setJitOptimizeType(int type) {
         putInt(Keys.CORECLR_JIT_OPTIMIZE_TYPE, type);
-    }
-
-    /**
-     * 是否隐藏鼠标光标
-     */
-    public boolean isHideCursorEnabled() {
-        return getBoolean(Keys.HIDE_CURSOR_ENABLED, Defaults.HIDE_CURSOR_ENABLED);
-    }
-
-    /**
-     * 设置是否隐藏鼠标光标
-     */
-    public void setHideCursorEnabled(boolean enabled) {
-        putBoolean(Keys.HIDE_CURSOR_ENABLED, enabled);
     }
 
     /**

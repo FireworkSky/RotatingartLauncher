@@ -79,9 +79,9 @@ public class GameActivity extends SDLActivity {
     private FPSDisplayView mFPSDisplayView;
     private DrawerLayout mDrawerLayout;
     private ListView mGameMenu;
-    private View mDrawerButton; // 改为 View，因为现在是 MaterialCardView
-    private View mEditorSettingsButton; // 改为 View，因为现在是 MaterialCardView
-    private FrameLayout mContentFrame; // 内容框架
+    private View mDrawerButton;
+    private View mEditorSettingsButton;
+    private FrameLayout mContentFrame;
     
     // 统一管理器
     private ControlEditorManager mControlEditorManager;
@@ -92,20 +92,9 @@ public class GameActivity extends SDLActivity {
     public void loadLibraries() {
         try {
             RuntimePreference.applyRendererEnvironment(this);
-            AppLogger.info(TAG, "Renderer environment applied before native library load");
-            
-            // 设置隐藏鼠标光标环境变量
-            com.app.ralaunch.data.SettingsManager settingsManager = 
+
+            com.app.ralaunch.data.SettingsManager settingsManager =
                 com.app.ralaunch.data.SettingsManager.getInstance(this);
-            boolean hideCursor = settingsManager.isHideCursorEnabled();
-            if (hideCursor) {
-                try {
-                    android.system.Os.setenv("RALCORE_HIDE_CURSOR", "1", true);
-                    AppLogger.info(TAG, "Hide cursor enabled (RALCORE_HIDE_CURSOR=1)");
-                } catch (Exception e) {
-                    AppLogger.warn(TAG, "Failed to set RALCORE_HIDE_CURSOR: " + e.getMessage());
-                }
-            }
             
             // 设置 FNA 触屏相关环境变量
             setupTouchEnvironment(settingsManager);

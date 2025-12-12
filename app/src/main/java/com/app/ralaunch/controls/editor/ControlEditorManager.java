@@ -351,11 +351,6 @@ public class ControlEditorManager {
             }
 
             @Override
-            public void onHideCursorChanged(boolean hide) {
-                // 隐藏鼠标光标设置变化
-            }
-
-            @Override
             public void onFPSDisplayChanged(boolean enabled) {
                 // FPS 显示设置变化
                 if (mFPSDisplayListener != null) {

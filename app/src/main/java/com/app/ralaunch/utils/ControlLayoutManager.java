@@ -32,8 +32,7 @@ public class ControlLayoutManager {
     private static final String KEY_LAYOUTS = "saved_layouts";
     private static final String KEY_CURRENT_LAYOUT = "current_layout";
 
-    private SharedPreferences preferences;
-    private Gson gson;
+    private SharedPreferences preferences;    private Gson gson;
     private List<ControlLayout> layouts;
     private String currentLayoutName;
     private Context context;
@@ -123,37 +122,21 @@ public class ControlLayoutManager {
             if (keyboardLayout != null) {
                 layouts.add(keyboardLayout);
             } else {
-                AppLogger.warn("ControlLayoutManager", "Failed to load keyboard layout from JSON, using minimal fallback");
-                // 如果加载失败，创建一个最小布局
-                keyboardLayout = new ControlLayout("键盘模式");
-                layouts.add(keyboardLayout);
+                AppLogger.warn("ControlLayoutManager", "Layout file not found");
             }
         }
 
         // 创建手柄模式默认布局（从 gamepad_layout_classic.json 加载，设置为默认）
         if (!skipGamepad) {
             // 首先加载经典手柄布局作为默认手柄布局
-            ControlLayout classicLayout = loadLayoutFromAssets("controls/gamepad_layout_classic.json", "手柄模式");
+            ControlLayout classicLayout = loadLayoutFromAssets("controls/gamepad_layout.json", "手柄模式");
             if (classicLayout != null) {
                 layouts.add(classicLayout);
             } else {
-                AppLogger.warn("ControlLayoutManager", "Failed to load classic gamepad layout from JSON, using minimal fallback");
-                // 如果加载失败，创建一个最小布局
-                classicLayout = new ControlLayout("手柄模式");
-                layouts.add(classicLayout);
+                AppLogger.warn("ControlLayoutManager", "Layout file not found");
             }
             
-            // 加载其他手柄布局（径向布局）
-            ControlLayout gamepadLayout = loadLayoutFromAssets("controls/gamepad_layout.json", "径向手柄布局");
-            if (gamepadLayout != null) {
-                layouts.add(gamepadLayout);
-            }
-            
-            // 加载现代手柄布局
-            ControlLayout modernLayout = loadLayoutFromAssets("controls/gamepad_layout_modern.json", "现代手柄布局");
-            if (modernLayout != null) {
-                layouts.add(modernLayout);
-            }
+
         }
     }
 
@@ -212,8 +195,6 @@ public class ControlLayoutManager {
     }
 
     public List<ControlLayout> getLayouts() {
-        // 返回布局列表的副本，避免外部修改影响内部状态
-        // 注意：这里不重新检查默认布局，因为 ensureDefaultLayoutsExist 只在 loadLayouts 时调用
         return new ArrayList<>(layouts);
     }
 
@@ -272,7 +253,6 @@ public class ControlLayoutManager {
         // 删除布局
         boolean removed = layouts.removeIf(layout -> layout.getName().equals(layoutName));
         if (removed) {
-            // 如果删除的是默认布局，标记为已删除，防止自动重新创建
             if (isDefaultLayout) {
                 preferences.edit().putBoolean(KEY_DEFAULT_LAYOUTS_DELETED, true).apply();
                 AppLogger.info("ControlLayoutManager", "Default layout deleted: " + layoutName);
