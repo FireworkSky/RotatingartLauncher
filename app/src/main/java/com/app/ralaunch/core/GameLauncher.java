@@ -142,22 +142,6 @@ public class GameLauncher {
      */
     public static native void netcorehostSetCorehostTrace(boolean enabled);
 
-    /**
-     * Box64 API：初始化 Box64
-     *
-     * @param dataDir 数据目录路径
-     * @param nativeLibDir native 库目录路径
-     * @return true 成功，false 失败
-     */
-    public static native boolean initBox64(String dataDir, String nativeLibDir);
-
-    /**
-     * Box64 API：通过 Box64 运行程序
-     *
-     * @param args 命令行参数数组
-     * @return 程序退出码
-     */
-    public static native int runBox64(String[] args);
 
 
 

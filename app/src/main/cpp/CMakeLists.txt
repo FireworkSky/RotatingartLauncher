@@ -125,7 +125,7 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
         # lgogdownloader
 )
 
-# 包含 SDL、FNA3D、netcorehost 和 Box64 头文件
+# 包含 SDL、FNA3D、netcorehost 头文件
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
         ${SDL_SOURCE_DIR}/include
         ${FNA3D_SOURCE_DIR}/include

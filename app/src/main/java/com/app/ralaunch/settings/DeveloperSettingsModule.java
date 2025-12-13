@@ -5,7 +5,6 @@ import android.view.View;
 import android.widget.Toast;
 import androidx.fragment.app.Fragment;
 import com.app.ralaunch.R;
-import com.app.ralaunch.core.SteamCMDLauncher;
 import com.app.ralaunch.data.SettingsManager;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.materialswitch.MaterialSwitch;
@@ -32,7 +31,6 @@ public class DeveloperSettingsModule implements SettingsModule {
         setupServerGC();
         setupConcurrentGC();
         setupTieredCompilation();
-        setupSteamCMD();
     }
     
     private void setupVerboseLogging() {
@@ -96,38 +94,6 @@ public class DeveloperSettingsModule implements SettingsModule {
         }
     }
     
-    private void setupSteamCMD() {
-        MaterialButton btnLaunchSteamCMD = rootView.findViewById(R.id.btnLaunchSteamCMD);
-        if (btnLaunchSteamCMD != null) {
-            btnLaunchSteamCMD.setOnClickListener(v -> {
-                Log.i(TAG, "Launching SteamCMD...");
-                Toast.makeText(fragment.requireContext(), "正在启动 SteamCMD...", Toast.LENGTH_SHORT).show();
-                
-                // 在后台线程启动 SteamCMD
-                new Thread(() -> {
-                    try {
-                        int exitCode = SteamCMDLauncher.launchSteamCMD(fragment.requireContext());
-                        
-                        fragment.requireActivity().runOnUiThread(() -> {
-                            if (exitCode == 0) {
-                                Toast.makeText(fragment.requireContext(), 
-                                    "SteamCMD 已启动", Toast.LENGTH_SHORT).show();
-                            } else {
-                                Toast.makeText(fragment.requireContext(), 
-                                    "SteamCMD 启动失败，退出码: " + exitCode, Toast.LENGTH_LONG).show();
-                            }
-                        });
-                    } catch (Exception e) {
-                        Log.e(TAG, "Failed to launch SteamCMD", e);
-                        fragment.requireActivity().runOnUiThread(() -> {
-                            Toast.makeText(fragment.requireContext(), 
-                                "SteamCMD 启动异常: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                        });
-                    }
-                }).start();
-            });
-        }
-    }
 }
 
 

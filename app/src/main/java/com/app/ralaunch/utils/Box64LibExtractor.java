@@ -8,8 +8,9 @@ import java.io.File;
 /**
  * Box64 x64 库检查工具
  * 
- * 注意：库文件在初始化阶段已解压，此类仅用于检查库文件是否存在
+ * @deprecated Box64 支持已移除，此类已废弃
  */
+@Deprecated
 public class Box64LibExtractor {
     private static final String TAG = "Box64LibExtractor";
     

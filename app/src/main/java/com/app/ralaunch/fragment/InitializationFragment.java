@@ -228,23 +228,6 @@ public class InitializationFragment extends Fragment {
             false  // 不在初始化时解压
         ));
 
-        // Box64 x64 库（需要解压）
-        // 注意：Android 构建系统会自动解压 .tar.gz，所以 assets 中是 .tar 文件
-        componentList.add(new ComponentItem(
-            "Box64 x64 Libs",
-            "Box64 x86_64 模拟库文件",
-            "box64-x64-libs.tar",
-            true  // 需要解压
-        ));
-
-        // SteamCMD（需要解压）
-        // 注意：Android 构建系统会自动解压 .tar.gz，所以 assets 中是 .tar 文件
-        componentList.add(new ComponentItem(
-            "SteamCMD",
-            "Steam 命令行工具",
-            "steamcmd.tar",
-            true  // 需要解压
-        ));
 
         return componentList;
     }
@@ -561,14 +544,7 @@ public class InitializationFragment extends Fragment {
             updateComponentStatus(componentIndex, 30, getString(R.string.init_file_ready));
 
             // 3. 根据组件名称确定目标目录
-            String dirName;
-            if (component.getName().equals("Box64 x64 Libs")) {
-                dirName = "x64lib";  // Box64 库解压到 x64lib 目录
-            } else if (component.getName().equals("SteamCMD")) {
-                dirName = "steamcmd";  // SteamCMD 解压到 steamcmd 目录
-            } else {
-                dirName = component.getName(); // 其他组件使用组件名称作为目录名
-            }
+            String dirName = component.getName(); // 使用组件名称作为目录名
             File outputDir = new File(requireActivity().getFilesDir(), dirName);
             
             if (!outputDir.exists()) {
@@ -661,11 +637,6 @@ public class InitializationFragment extends Fragment {
             
             // 根据组件名称确定前缀
             String stripPrefix = null;
-            if (component.getName().equals("Box64 x64 Libs")) {
-                stripPrefix = "usr/lib/";  // 移除 usr/lib/ 前缀
-            } else if (component.getName().equals("SteamCMD")) {
-                stripPrefix = "steamcmd/";  // 移除 steamcmd/ 前缀
-            }
             
             // 使用 Apache Commons Compress 解压 tar 文件
             try (FileInputStream fis = new FileInputStream(archiveFile);
@@ -698,13 +669,6 @@ public class InitializationFragment extends Fragment {
                         } else if (entryName.contains(stripPrefix)) {
                             int idx = entryName.indexOf(stripPrefix);
                             entryName = entryName.substring(idx + stripPrefix.length());
-                        } else {
-                            // 对于 Box64 库，同时支持 x86_64 和 i386 架构
-                            if (stripPrefix.equals("usr/lib/") && 
-                                !entryName.contains("box64-x86_64-linux-gnu/") && 
-                                !entryName.contains("box64-i386-linux-gnu/")) {
-                                continue;
-                            }
                         }
                     }
                     
@@ -773,11 +737,6 @@ public class InitializationFragment extends Fragment {
             
             // 根据组件名称确定前缀
             String stripPrefix = null;
-            if (component.getName().equals("Box64 x64 Libs")) {
-                stripPrefix = "usr/lib/";  // 移除 usr/lib/ 前缀
-            } else if (component.getName().equals("SteamCMD")) {
-                stripPrefix = "steamcmd/";  // 移除 steamcmd/ 前缀
-            }
             
             // 使用通用解压工具
             int fileCount = com.app.ralaunch.utils.ArchiveExtractor.extractTarGz(

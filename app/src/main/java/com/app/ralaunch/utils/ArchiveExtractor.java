@@ -59,16 +59,6 @@ public class ArchiveExtractor {
                         entryName = entryName.substring(idx + stripPrefix.length());
                     } else {
                         // 如果没有找到前缀，跳过不相关的文件（仅当指定了前缀时）
-                        // 对于 box64-x64-libs，同时支持 x86_64 和 i386 架构
-                        if (stripPrefix.equals("usr/lib/") && 
-                            !entryName.contains("box64-x86_64-linux-gnu/") && 
-                            !entryName.contains("box64-i386-linux-gnu/")) {
-                            continue;
-                        }
-                        // 对于 SteamCMD，如果没有找到 steamcmd/ 前缀，可能是其他文件，跳过
-                        if (stripPrefix.equals("steamcmd/") && !entryName.startsWith("steamcmd/")) {
-                            continue;
-                        }
                     }
                 }
                 
