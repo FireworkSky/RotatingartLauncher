@@ -100,7 +100,7 @@ public class SettingsManager {
         public static final String DOTNET_FRAMEWORK = "auto";
         public static final String RUNTIME_ARCHITECTURE = "auto";
         public static final boolean VERBOSE_LOGGING = false;
-        public static final boolean SET_THREAD_AFFINITY_TO_BIG_CORE_ENABLED = false;
+        public static final boolean SET_THREAD_AFFINITY_TO_BIG_CORE_ENABLED = true;
         public static final boolean DISABLE_VSYNC = false; // 默认不禁用 VSync
         public static final boolean UNLOCK_FPS = false; // 默认不解锁帧率
         public static final String FNA_RENDERER = "auto";
