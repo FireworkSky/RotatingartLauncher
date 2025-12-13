@@ -209,16 +209,16 @@ public final class RuntimePreference {
         }
 
         // glMapBufferRange 优化设置
-        // 默认开启，但所有使用 Vulkan 后端的渲染器自动关闭
-        // Vulkan 后端渲染器包括：zink, zink25, angle, gl4es+angle
+        // 默认开启，但所有翻译成 Vulkan 的渲染器自动关闭此环境变量
+        // 翻译成 Vulkan 的渲染器包括：zink, zink25, angle, gl4es+angle
+        // 这些渲染器将 OpenGL/GLES 翻译到 Vulkan，glMapBufferRange 优化不适用
         if (RendererConfig.RENDERER_ZINK.equals(rendererId) ||
             RendererConfig.RENDERER_ZINK_25.equals(rendererId) ||
             RendererConfig.RENDERER_ANGLE.equals(rendererId) ||
             RendererConfig.RENDERER_GL4ES_ANGLE.equals(rendererId)) {
-            // Vulkan 后端渲染器：禁用 glMapBufferRange 优化
-            // 这些渲染器将 OpenGL/GLES 翻译到 Vulkan，glMapBufferRange 优化不适用
+            // 翻译成 Vulkan 的渲染器：关闭 glMapBufferRange 优化环境变量
             setEnv("FNA3D_OPENGL_USE_MAP_BUFFER_RANGE", "0");
-            android.util.Log.i(TAG, "FNA3D_OPENGL_USE_MAP_BUFFER_RANGE = 0 (disabled for Vulkan backend renderer: " + rendererId + ")");
+            android.util.Log.i(TAG, "FNA3D_OPENGL_USE_MAP_BUFFER_RANGE = 0 (disabled for Vulkan-translated renderer: " + rendererId + ")");
         } else {
             // 其他渲染器：默认开启（不设置环境变量，使用代码中的默认值）
             // 可以通过设置环境变量为 "0" 来手动禁用

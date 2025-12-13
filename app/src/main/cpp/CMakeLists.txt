@@ -59,27 +59,7 @@ add_subdirectory(${THEORAFILE_SOURCE_DIR})
 # 添加 ByteHook 库
 find_package(bytehook REQUIRED CONFIG)
 
-# 添加 Box64 子项目（启用 BOX32 支持 32 位程序）
-set(ANDROID ON CACHE BOOL "Building for Android" FORCE)
-set(ARM64 ON CACHE BOOL "ARM64 target" FORCE)
-set(ARM_DYNAREC ON CACHE BOOL "Enable ARM64 DynaRec" FORCE)
-set(NOGIT ON CACHE BOOL "Not building from git" FORCE)
-set(BAD_SIGNAL ON CACHE BOOL "Android BAD_SIGNAL workaround" FORCE)
-set(CI ON CACHE BOOL "Skip Python wrapper generation" FORCE)
-set(BOX64_AS_LIBRARY ON CACHE BOOL "Build Box64 as a library" FORCE)
-set(NO_LIB_INSTALL ON CACHE BOOL "Skip lib installation" FORCE)
-set(NO_CONF_INSTALL ON CACHE BOOL "Skip config installation" FORCE)
-set(BOX32 ON CACHE BOOL "Enable 32-bit support (experimental)" FORCE)  # 启用 BOX32
-set(BOX32_BINFMT OFF CACHE BOOL "Disable binfmt integration" FORCE)
-add_subdirectory(box64)
 
-# Box64 include directories
-set(BOX64_INCLUDE_DIRS
-    ${CMAKE_CURRENT_SOURCE_DIR}/box64/src/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/box64/src
-    ${CMAKE_CURRENT_SOURCE_DIR}/box64/src/wrapped/generated
-    ${CMAKE_CURRENT_SOURCE_DIR}/box64/src/dynarec/arm64
-)
 
 # 添加 netcorehost 子项目（.NET Core Hosting）
 set(NETCOREHOST_SOURCE_DIR ${CMAKE_SOURCE_DIR}/netcorehost)
@@ -125,7 +105,7 @@ add_library(${CMAKE_PROJECT_NAME} SHARED
         touch_bridge.c
         virtual_mouse_sdl.c
         And64InlineHook/And64InlineHook.cpp
-        box64_launcher.cpp
+
 )
 
 # 链接库
@@ -140,10 +120,8 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
         theorafile  # Theorafile视频库（FNA需要）
         mojoshader  # MojoShader着色器库（FNA3D需要）
         netcorehost # .NET Core Hosting库
-        box64       # Box64 库（支持 32 位和 64 位程序）
         c++_shared
         ${CXX_SHARED_LIB}
-        m           # 数学库（Box64 需要）
         # lgogdownloader
 )
 
@@ -153,7 +131,6 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
         ${FNA3D_SOURCE_DIR}/include
         ${NETCOREHOST_SOURCE_DIR}/include
         ${LGOG_SOURCE_DIR}/include
-        ${BOX64_INCLUDE_DIRS}  # Box64 头文件
         ${CMAKE_SOURCE_DIR}  # For GL/osmesa.h and other local headers
 )
 
