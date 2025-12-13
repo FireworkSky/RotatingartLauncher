@@ -379,7 +379,7 @@
     <string name="editor_joystick_added">Joystick added</string>
     <string name="editor_text_added">Text added</string>
     <string name="editor_select_joystick_type">Select Joystick Type</string>
-    <string name="editor_joystick_type_keyboard_mouse">Keyboard/Mouse Joystick</string>
+    <string name="editor_joystick_type_move_aim">Move + Aim Joystick</string>
     <string name="editor_joystick_type_gamepad">Gamepad Joystick</string>
     <string name="editor_select_joystick_side">Select Joystick Side</string>
     <string name="editor_joystick_side_left">Left Joystick</string>
@@ -635,6 +635,8 @@
     <string name="editor_add_text_text">Add Text</string>
     <string name="editor_save_layout_text">Save Layout</string>
     <string name="editor_fps_display">FPS Display</string>
+    <string name="editor_hide_controls">Hide Controls</string>
+    <string name="editor_exit_game">Exit Game</string>
 
     <!-- KeySelectorDialog XML Messages -->
     <string name="editor_select_key_title">Select Key</string>
@@ -698,8 +700,8 @@
     <string name="editor_auto_size_desc">Lock aspect ratio, height automatically matches when adjusting width</string>
     
     <!-- Content Appearance -->
-    <string name="editor_opacity_title">Opacity</string>
-    <string name="editor_opacity_desc">Set the opacity of the control</string>
+    <string name="editor_opacity_title">Background Opacity</string>
+    <string name="editor_opacity_desc">Set the opacity of the control background</string>
     <string name="editor_border_opacity">Border Opacity</string>
     <string name="editor_border_opacity_desc">Set the opacity of the control border</string>
     <string name="editor_text_opacity">Text Opacity</string>

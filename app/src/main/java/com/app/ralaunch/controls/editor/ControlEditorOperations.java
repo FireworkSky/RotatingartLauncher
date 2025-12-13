@@ -44,8 +44,8 @@ public class ControlEditorOperations {
         ControlData button = new ControlData(context.getString(R.string.editor_default_button_name), ControlData.TYPE_BUTTON);
         button.x = screenWidth / 2f;
         button.y = screenHeight / 2f;
-        button.width = 100;
-        button.height = 100;
+        button.width = 150;
+        button.height = 150;
         button.opacity = 0.5f;
         button.visible = true;
         button.keycode = 62; // Space键
@@ -108,8 +108,12 @@ public class ControlEditorOperations {
         joystick.width = 450;
         joystick.height = 450;
         joystick.opacity = 0.5f;
-        joystick.strokeColor = 0x00000000;
-        joystick.strokeWidth = 0;
+        joystick.bgColor = 0xFF4A4A4A; // 更柔和的深灰色背景
+        joystick.strokeColor = 0x66FFFFFF; // 半透明白色边框，增加层次感
+        joystick.strokeWidth = 2; // 2dp 细边框
+        joystick.cornerRadius = 225; // 完全圆形（半径 = 宽度/2）
+        joystick.stickOpacity = 0.8f; // 摇杆圆心稍不透明，更清晰
+        joystick.stickKnobSize = 0.35f; // 摇杆圆心大小（35%半径），更精致
         
         config.controls.add(joystick);
         return joystick;

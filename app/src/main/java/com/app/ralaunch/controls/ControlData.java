@@ -187,8 +187,8 @@ public class ControlData {
         this.type = type;
         this.x = 100;
         this.y = 100;
-        this.width = 80;
-        this.height = 80;
+        this.width = 120;
+        this.height = 120;
         this.rotation = 0; // 默认不旋转
         this.keycode = SDL_SCANCODE_UNKNOWN;
         this.opacity = 0.5f;
@@ -263,6 +263,7 @@ public class ControlData {
     /**
      * 创建默认摇杆配置
      * 优化尺寸：450x450 提升操作舒适度
+     * 优化外观：柔和的背景色、细边框、圆角、摇杆圆心设置
      */
     public static ControlData createDefaultJoystick() {
         ControlData joystick = new ControlData("移动摇杆", TYPE_JOYSTICK);
@@ -271,45 +272,20 @@ public class ControlData {
         joystick.width = 450;
         joystick.height = 450;
         joystick.opacity = 0.5f;
-        joystick.bgColor = 0xFF808080; // 灰色背景（更清晰可见）
-        joystick.strokeColor = 0x00000000; // 无边框
-        joystick.strokeWidth = 0; // 无边框宽度
+        joystick.bgColor = 0xFF4A4A4A; // 更柔和的深灰色背景
+        joystick.strokeColor = 0x66FFFFFF; // 半透明白色边框，增加层次感
+        joystick.strokeWidth = 2; // 2dp 细边框
+        joystick.cornerRadius = 225; // 完全圆形（半径 = 宽度/2）
+        joystick.stickOpacity = 0.8f; // 摇杆圆心稍不透明，更清晰
+        joystick.stickKnobSize = 0.35f; // 摇杆圆心大小（35%半径），更精致
         return joystick;
     }
     
-    /**
-     * 创建默认跳跃按钮
-     */
-    public static ControlData createDefaultJumpButton() {
-        ControlData button = new ControlData("跳跃", TYPE_BUTTON);
-        button.x = 1800;
-        button.y = 900;
-        button.width = 120;
-        button.height = 120;
-        button.keycode = SDL_SCANCODE_SPACE;
-        button.strokeColor = 0x00000000; // 无边框
-        button.strokeWidth = 0; // 无边框宽度
-        return button;
-    }
-    
-    /**
-     * 创建默认攻击按钮（鼠标左键）
-     */
-    public static ControlData createDefaultAttackButton() {
-        ControlData button = new ControlData("攻击", TYPE_BUTTON);
-        button.x = 1950;
-        button.y = 800;
-        button.width = 120;
-        button.height = 120;
-        button.keycode = MOUSE_LEFT;
-        button.strokeColor = 0x00000000; // 无边框
-        button.strokeWidth = 0; // 无边框宽度
-        return button;
-    }
-    
+
     /**
      * 创建默认右摇杆（瞄准/攻击方向控制）
      * 鼠标移动模式，用于控制攻击方向
+     * 优化外观：柔和的背景色、细边框、圆角、摇杆圆心设置
      */
     public static ControlData createDefaultAttackJoystick() {
         ControlData joystick = new ControlData("瞄准摇杆", TYPE_JOYSTICK);
@@ -318,11 +294,15 @@ public class ControlData {
         joystick.width = 450;
         joystick.height = 450;
         joystick.opacity = 0.5f;
+        joystick.bgColor = 0xFF4A4A4A; // 更柔和的深灰色背景
         joystick.joystickMode = JOYSTICK_MODE_MOUSE; // 鼠标移动模式
         joystick.xboxUseRightStick = true; // 右摇杆模式
         joystick.joystickKeys = null; // 鼠标模式不需要按键映射
-        joystick.strokeColor = 0x00000000; // 无边框
-        joystick.strokeWidth = 0; // 无边框宽度
+        joystick.strokeColor = 0x66FFFFFF; // 半透明白色边框，增加层次感
+        joystick.strokeWidth = 2; // 2dp 细边框
+        joystick.cornerRadius = 225; // 完全圆形（半径 = 宽度/2）
+        joystick.stickOpacity = 0.8f; // 摇杆圆心稍不透明，更清晰
+        joystick.stickKnobSize = 0.35f; // 摇杆圆心大小（35%半径），更精致
         // 鼠标移动范围：默认全屏 (0%, 0%, 100%, 100%)
         joystick.mouseRangeLeft = 0.0f;
         joystick.mouseRangeTop = 0.0f;
@@ -331,218 +311,8 @@ public class ControlData {
         return joystick;
     }
 
-    /**
-     * 创建默认手柄布局（完整的手柄按钮配置）
-     * 包括：左右摇杆 + A/B/X/Y按钮 + LB/RB + LT/RT + 完整D-Pad + Start/Back
-     * 适合使用手柄玩游戏的用户
-     */
-    public static ControlData[] createDefaultGamepadLayout() {
-        ControlData[] controls = new ControlData[16];
-
-        // 左摇杆（移动）- 使用SDL控制器模式，径向布局风格
-        ControlData leftStick = new ControlData("左摇杆", TYPE_JOYSTICK);
-        leftStick.x = 200;
-        leftStick.y = 700;
-        leftStick.width = 400;
-        leftStick.height = 400;
-        leftStick.opacity = 0.7f;
-        leftStick.stickOpacity = 1.0f; // 摇杆圆心默认完全不透明
-        leftStick.joystickMode = JOYSTICK_MODE_SDL_CONTROLLER;
-        leftStick.xboxUseRightStick = false; // 使用左摇杆
-        leftStick.strokeColor = 0x00000000; // 无边框
-        leftStick.strokeWidth = 0; // 无边框宽度
-        controls[0] = leftStick;
-
-        // 右摇杆（瞄准）- 使用SDL控制器模式，径向布局风格
-        ControlData rightStick = new ControlData("右摇杆", TYPE_JOYSTICK);
-        rightStick.x = 1500;
-        rightStick.y = 700;
-        rightStick.width = 400;
-        rightStick.height = 400;
-        rightStick.opacity = 0.7f;
-        rightStick.stickOpacity = 1.0f; // 摇杆圆心默认完全不透明
-        rightStick.joystickMode = JOYSTICK_MODE_SDL_CONTROLLER;
-        rightStick.xboxUseRightStick = true; // 使用右摇杆
-        rightStick.strokeColor = 0x00000000; // 无边框
-        rightStick.strokeWidth = 0; // 无边框宽度
-        controls[1] = rightStick;
-
-        // A按钮（跳跃）- 径向布局右下角，使用圆形按钮
-        ControlData btnA = new ControlData("A", TYPE_BUTTON);
-        btnA.x = 1920;
-        btnA.y = 920;
-        btnA.width = 130;
-        btnA.height = 130;
-        btnA.keycode = XBOX_BUTTON_A;
-        btnA.buttonMode = BUTTON_MODE_GAMEPAD;
-        btnA.shape = SHAPE_CIRCLE; // 圆形按钮
-        btnA.strokeColor = 0x00000000; // 无边框
-        btnA.strokeWidth = 0; // 无边框宽度
-        controls[2] = btnA;
-
-        // B按钮（返回/取消）- 径向布局右侧，使用圆形按钮
-        ControlData btnB = new ControlData("B", TYPE_BUTTON);
-        btnB.x = 2030;
-        btnB.y = 820;
-        btnB.width = 130;
-        btnB.height = 130;
-        btnB.keycode = XBOX_BUTTON_B;
-        btnB.buttonMode = BUTTON_MODE_GAMEPAD;
-        btnB.shape = SHAPE_CIRCLE; // 圆形按钮
-        btnB.strokeColor = 0x00000000; // 无边框
-        btnB.strokeWidth = 0; // 无边框宽度
-        controls[3] = btnB;
-
-        // X按钮（攻击）- 径向布局左侧，使用圆形按钮
-        ControlData btnX = new ControlData("X", TYPE_BUTTON);
-        btnX.x = 1810;
-        btnX.y = 820;
-        btnX.width = 130;
-        btnX.height = 130;
-        btnX.keycode = XBOX_BUTTON_X;
-        btnX.buttonMode = BUTTON_MODE_GAMEPAD;
-        btnX.shape = SHAPE_CIRCLE; // 圆形按钮
-        btnX.strokeColor = 0x00000000; // 无边框
-        btnX.strokeWidth = 0; // 无边框宽度
-        controls[4] = btnX;
-
-        // Y按钮（使用/交互）- 径向布局上方，使用圆形按钮
-        ControlData btnY = new ControlData("Y", TYPE_BUTTON);
-        btnY.x = 1920;
-        btnY.y = 710;
-        btnY.width = 130;
-        btnY.height = 130;
-        btnY.keycode = XBOX_BUTTON_Y;
-        btnY.buttonMode = BUTTON_MODE_GAMEPAD;
-        btnY.shape = SHAPE_CIRCLE; // 圆形按钮
-        btnY.strokeColor = 0x00000000; // 无边框
-        btnY.strokeWidth = 0; // 无边框宽度
-        controls[5] = btnY;
-
-        // LB按钮（左肩键）- 左上角
-        ControlData btnLB = new ControlData("LB", TYPE_BUTTON);
-        btnLB.x = 50;
-        btnLB.y = 50;
-        btnLB.width = 120;
-        btnLB.height = 60;
-        btnLB.keycode = XBOX_BUTTON_LB;
-        btnLB.buttonMode = BUTTON_MODE_GAMEPAD;
-        btnLB.strokeColor = 0x00000000; // 无边框
-        btnLB.strokeWidth = 0; // 无边框宽度
-        controls[6] = btnLB;
-
-        // RB按钮（右肩键）- 右上角
-        ControlData btnRB = new ControlData("RB", TYPE_BUTTON);
-        btnRB.x = 1950;
-        btnRB.y = 50;
-        btnRB.width = 120;
-        btnRB.height = 60;
-        btnRB.keycode = XBOX_BUTTON_RB;
-        btnRB.buttonMode = BUTTON_MODE_GAMEPAD;
-        btnRB.strokeColor = 0x00000000; // 无边框
-        btnRB.strokeWidth = 0; // 无边框宽度
-        controls[7] = btnRB;
-
-        // LT按钮（左扳机）
-        ControlData btnLT = new ControlData("LT", TYPE_BUTTON);
-        btnLT.x = 200;
-        btnLT.y = 50;
-        btnLT.width = 100;
-        btnLT.height = 60;
-        btnLT.keycode = XBOX_TRIGGER_LEFT;
-        btnLT.buttonMode = BUTTON_MODE_GAMEPAD;
-        btnLT.strokeColor = 0x00000000; // 无边框
-        btnLT.strokeWidth = 0; // 无边框宽度
-        controls[8] = btnLT;
-
-        // RT按钮（右扳机）
-        ControlData btnRT = new ControlData("RT", TYPE_BUTTON);
-        btnRT.x = 1820;
-        btnRT.y = 50;
-        btnRT.width = 100;
-        btnRT.height = 60;
-        btnRT.keycode = XBOX_TRIGGER_RIGHT;
-        btnRT.buttonMode = BUTTON_MODE_GAMEPAD;
-        btnRT.strokeColor = 0x00000000; // 无边框
-        btnRT.strokeWidth = 0; // 无边框宽度
-        controls[9] = btnRT;
-
-        // Start按钮（菜单）- 中上部
-        ControlData btnStart = new ControlData("Start", TYPE_BUTTON);
-        btnStart.x = 1100;
-        btnStart.y = 50;
-        btnStart.width = 80;
-        btnStart.height = 60;
-        btnStart.keycode = XBOX_BUTTON_START;
-        btnStart.buttonMode = BUTTON_MODE_GAMEPAD;
-        btnStart.strokeColor = 0x00000000; // 无边框
-        btnStart.strokeWidth = 0; // 无边框宽度
-        controls[10] = btnStart;
-
-        // Back按钮 - 中上部
-        ControlData btnBack = new ControlData("Back", TYPE_BUTTON);
-        btnBack.x = 950;
-        btnBack.y = 50;
-        btnBack.width = 80;
-        btnBack.height = 60;
-        btnBack.keycode = XBOX_BUTTON_BACK;
-        btnBack.buttonMode = BUTTON_MODE_GAMEPAD;
-        btnBack.strokeColor = 0x00000000; // 无边框
-        btnBack.strokeWidth = 0; // 无边框宽度
-        controls[11] = btnBack;
-
-        // D-Pad上按钮 - 径向布局风格，圆形按钮
-        ControlData btnDPadUp = new ControlData("D-Up", TYPE_BUTTON);
-        btnDPadUp.x = 650;
-        btnDPadUp.y = 700;
-        btnDPadUp.width = 90;
-        btnDPadUp.height = 90;
-        btnDPadUp.keycode = XBOX_BUTTON_DPAD_UP;
-        btnDPadUp.buttonMode = BUTTON_MODE_GAMEPAD;
-        btnDPadUp.shape = SHAPE_CIRCLE; // 圆形按钮
-        btnDPadUp.strokeColor = 0x00000000; // 无边框
-        btnDPadUp.strokeWidth = 0; // 无边框宽度
-        controls[12] = btnDPadUp;
-
-        // D-Pad下按钮 - 径向布局风格，圆形按钮
-        ControlData btnDPadDown = new ControlData("D-Down", TYPE_BUTTON);
-        btnDPadDown.x = 650;
-        btnDPadDown.y = 860;
-        btnDPadDown.width = 90;
-        btnDPadDown.height = 90;
-        btnDPadDown.keycode = XBOX_BUTTON_DPAD_DOWN;
-        btnDPadDown.buttonMode = BUTTON_MODE_GAMEPAD;
-        btnDPadDown.shape = SHAPE_CIRCLE; // 圆形按钮
-        btnDPadDown.strokeColor = 0x00000000; // 无边框
-        btnDPadDown.strokeWidth = 0; // 无边框宽度
-        controls[13] = btnDPadDown;
-
-        // D-Pad左按钮 - 径向布局风格，圆形按钮
-        ControlData btnDPadLeft = new ControlData("D-Left", TYPE_BUTTON);
-        btnDPadLeft.x = 560;
-        btnDPadLeft.y = 780;
-        btnDPadLeft.width = 90;
-        btnDPadLeft.height = 90;
-        btnDPadLeft.keycode = XBOX_BUTTON_DPAD_LEFT;
-        btnDPadLeft.buttonMode = BUTTON_MODE_GAMEPAD;
-        btnDPadLeft.shape = SHAPE_CIRCLE; // 圆形按钮
-        btnDPadLeft.strokeColor = 0x00000000; // 无边框
-        btnDPadLeft.strokeWidth = 0; // 无边框宽度
-        controls[14] = btnDPadLeft;
-
-        // D-Pad右按钮 - 径向布局风格，圆形按钮
-        ControlData btnDPadRight = new ControlData("D-Right", TYPE_BUTTON);
-        btnDPadRight.x = 740;
-        btnDPadRight.y = 780;
-        btnDPadRight.width = 90;
-        btnDPadRight.height = 90;
-        btnDPadRight.keycode = XBOX_BUTTON_DPAD_RIGHT;
-        btnDPadRight.buttonMode = BUTTON_MODE_GAMEPAD;
-        btnDPadRight.shape = SHAPE_CIRCLE; // 圆形按钮
-        btnDPadRight.strokeColor = 0x00000000; // 无边框
-        btnDPadRight.strokeWidth = 0; // 无边框宽度
-        controls[15] = btnDPadRight;
-
-        return controls;
-    }
+    
 }
+
+
+

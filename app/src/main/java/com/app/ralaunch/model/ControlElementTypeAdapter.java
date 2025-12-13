@@ -13,6 +13,7 @@ import java.lang.reflect.Type;
 
 /**
  * ControlElement 自定义序列化/反序列化器
+ * 处理 joystickComboKeys 从 int[][] 到 int[] 的兼容性
  */
 public class ControlElementTypeAdapter implements JsonSerializer<ControlElement>, JsonDeserializer<ControlElement> {
     
@@ -37,7 +38,43 @@ public class ControlElementTypeAdapter implements JsonSerializer<ControlElement>
             org.json.JSONObject jsonObj = new org.json.JSONObject(jsonObject.toString());
             ControlElement element = ControlElement.fromJSON(jsonObj);
             
-            // 组合键已移除，忽略旧数据中的 joystickComboKeys 字段
+            // 特殊处理 joystickComboKeys 的兼容性（如果 fromJSON 没有正确处理）
+            if (element != null && element.getType() == ControlElement.ElementType.JOYSTICK) {
+                if (jsonObject.has("joystickComboKeys")) {
+                    JsonElement comboKeysElement = jsonObject.get("joystickComboKeys");
+                    if (comboKeysElement.isJsonArray()) {
+                        JsonArray comboKeysArray = comboKeysElement.getAsJsonArray();
+                        if (comboKeysArray.size() > 0) {
+                            // 检查是否是二维数组（旧格式）
+                            JsonElement firstItem = comboKeysArray.get(0);
+                            if (firstItem.isJsonArray()) {
+                                // 旧格式：二维数组，转换为统一数组（使用第一个非空的组合键）
+                                int[] firstNonEmpty = null;
+                                for (int i = 0; i < comboKeysArray.size(); i++) {
+                                    JsonArray directionArray = comboKeysArray.get(i).getAsJsonArray();
+                                    if (directionArray != null && directionArray.size() > 0) {
+                                        firstNonEmpty = new int[directionArray.size()];
+                                        for (int j = 0; j < directionArray.size(); j++) {
+                                            firstNonEmpty[j] = directionArray.get(j).getAsInt();
+                                        }
+                                        break;
+                                    }
+                                }
+                                // joystickComboKeys field removed
+                            } else {
+                                // 新格式：一维数组
+                                int[] comboKeys = new int[comboKeysArray.size()];
+                                for (int i = 0; i < comboKeysArray.size(); i++) {
+                                    comboKeys[i] = comboKeysArray.get(i).getAsInt();
+                                }
+                                // joystickComboKeys field removed
+                            }
+                        } else {
+                              // joystickComboKeys field removed
+                        }
+                    }
+                }
+            }
             
             return element;
         } catch (Exception e) {

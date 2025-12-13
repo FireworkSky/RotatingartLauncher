@@ -41,6 +41,14 @@ public class ControlEditDialogVisibilityManager {
             cardCornerRadius.setVisibility((isRectangle && !isJoystick) ? View.VISIBLE : View.GONE);
         }
         
+        // 文本透明度：仅按钮和文本控件显示
+        View cardTextOpacity = view.findViewById(R.id.card_text_opacity);
+        if (cardTextOpacity != null) {
+            boolean isButton = (data.type == ControlData.TYPE_BUTTON);
+            boolean isText = (data.type == ControlData.TYPE_TEXT);
+            cardTextOpacity.setVisibility((isButton || isText) ? View.VISIBLE : View.GONE);
+        }
+        
         // 摇杆透明度：仅摇杆类型显示
         View cardStickOpacity = view.findViewById(R.id.card_stick_opacity);
         if (cardStickOpacity != null) {

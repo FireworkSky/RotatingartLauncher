@@ -379,7 +379,7 @@
     <string name="editor_joystick_added">已添加摇杆</string>
     <string name="editor_text_added">已添加文本</string>
     <string name="editor_select_joystick_type">选择摇杆类型</string>
-    <string name="editor_joystick_type_keyboard_mouse">键盘/鼠标摇杆</string>
+    <string name="editor_joystick_type_move_aim">移动+瞄准摇杆</string>
     <string name="editor_joystick_type_gamepad">手柄摇杆</string>
     <string name="editor_select_joystick_side">选择摇杆位置</string>
     <string name="editor_joystick_side_left">左摇杆</string>
@@ -635,6 +635,8 @@
     <string name="editor_add_text_text">添加文本</string>
     <string name="editor_save_layout_text">保存布局</string>
     <string name="editor_fps_display">FPS 显示</string>
+    <string name="editor_hide_controls">隐藏控件</string>
+    <string name="editor_exit_game">退出游戏</string>
 
     <!-- KeySelectorDialog XML 消息 -->
     <string name="editor_select_key_title">选择按键</string>
@@ -698,8 +700,8 @@
     <string name="editor_auto_size_desc">锁定宽高比，调整宽度时高度自动匹配</string>
     
     <!-- Content Appearance -->
-    <string name="editor_opacity_title">透明度</string>
-    <string name="editor_opacity_desc">设置控件的透明度</string>
+    <string name="editor_opacity_title">背景透明度</string>
+    <string name="editor_opacity_desc">设置控件背景的透明度</string>
     <string name="editor_border_opacity">边框透明度</string>
     <string name="editor_border_opacity_desc">设置控件边框的透明度</string>
     <string name="editor_text_opacity">文本透明度</string>

@@ -37,19 +37,24 @@ public class VirtualText extends View implements ControlView {
         mBackgroundPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         mBackgroundPaint.setColor(mData.bgColor);
         mBackgroundPaint.setStyle(Paint.Style.FILL);
+        // 背景透明度完全独立
         mBackgroundPaint.setAlpha((int) (mData.opacity * 255));
         
         mStrokePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         mStrokePaint.setColor(mData.strokeColor);
         mStrokePaint.setStyle(Paint.Style.STROKE);
         mStrokePaint.setStrokeWidth(dpToPx(mData.strokeWidth));
-        mStrokePaint.setAlpha((int) (mData.opacity * 255));
+        // 边框透明度完全独立，默认1.0（完全不透明）
+        float borderOpacity = mData.borderOpacity != 0 ? mData.borderOpacity : 1.0f;
+        mStrokePaint.setAlpha((int) (borderOpacity * 255));
         
         mTextPaint = new TextPaint(Paint.ANTI_ALIAS_FLAG);
         mTextPaint.setColor(0xFFFFFFFF);
         mTextPaint.setTextSize(dpToPx(16));
         mTextPaint.setTextAlign(Paint.Align.CENTER);
-        mTextPaint.setAlpha((int) (mData.opacity * 255));
+        // 文本透明度完全独立，默认1.0（完全不透明）
+        float textOpacity = mData.textOpacity != 0 ? mData.textOpacity : 1.0f;
+        mTextPaint.setAlpha((int) (textOpacity * 255));
     }
     
     private float dpToPx(float dp) {
@@ -137,4 +142,8 @@ public class VirtualText extends View implements ControlView {
         return false;
     }
 }
+
+
+
+
 

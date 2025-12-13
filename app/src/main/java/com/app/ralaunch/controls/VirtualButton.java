@@ -93,8 +93,8 @@ public class VirtualButton extends View implements ControlView {
             mTextPaint.setColor(textColor);
             mTextPaint.setTypeface(android.graphics.Typeface.DEFAULT_BOLD); // 粗体
             mTextPaint.setTextAlign(Paint.Align.CENTER);
-            // 使用文本透明度（如果为0则使用背景透明度作为兼容）
-            float textOpacity = mData.textOpacity != 0 ? mData.textOpacity : mData.opacity;
+            // 使用文本透明度（如果为0则默认不透明，确保文本可见）
+            float textOpacity = mData.textOpacity != 0 ? mData.textOpacity : 1.0f;
             mTextPaint.setAlpha((int) (textOpacity * 255));
         } else {
             // 键盘模式保持原有逻辑
@@ -107,16 +107,16 @@ public class VirtualButton extends View implements ControlView {
             mStrokePaint.setColor(mData.strokeColor);
             mStrokePaint.setStyle(Paint.Style.STROKE);
             mStrokePaint.setStrokeWidth(dpToPx(mData.strokeWidth));
-            // 使用边框透明度（如果为0则使用背景透明度作为兼容）
-            float borderOpacity = mData.borderOpacity != 0 ? mData.borderOpacity : mData.opacity;
+            // 边框透明度完全独立，默认1.0（完全不透明）
+            float borderOpacity = mData.borderOpacity != 0 ? mData.borderOpacity : 1.0f;
             mStrokePaint.setAlpha((int) (borderOpacity * 255));
             
             mTextPaint = new TextPaint(Paint.ANTI_ALIAS_FLAG);
             mTextPaint.setColor(0xFFFFFFFF);
             mTextPaint.setTextSize(dpToPx(16));
             mTextPaint.setTextAlign(Paint.Align.CENTER);
-            // 使用文本透明度（如果为0则使用背景透明度作为兼容）
-            float textOpacity = mData.textOpacity != 0 ? mData.textOpacity : mData.opacity;
+            // 文本透明度完全独立，默认1.0（完全不透明）
+            float textOpacity = mData.textOpacity != 0 ? mData.textOpacity : 1.0f;
             mTextPaint.setAlpha((int) (textOpacity * 255));
         }
     }
@@ -130,14 +130,6 @@ public class VirtualButton extends View implements ControlView {
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-        
-        // 应用旋转（只旋转绘制内容，不改变控件形状和边界）
-        float centerX = getWidth() / 2f;
-        float centerY = getHeight() / 2f;
-        if (mData.rotation != 0) {
-            canvas.save();
-            canvas.rotate(mData.rotation, centerX, centerY);
-        }
         
         // 根据形状类型绘制背景
         int shape = mData.shape;
@@ -314,14 +306,6 @@ public class VirtualButton extends View implements ControlView {
             // 显示真实按键会挡视野
             float textY = getHeight() / 2f - ((mTextPaint.descent() + mTextPaint.ascent()) / 2);
             canvas.drawText(displayText, getWidth() / 2f, textY, mTextPaint);
-            
-            // 恢复 canvas 状态
-            canvas.restore();
-        }
-        
-        // 恢复旋转
-        if (mData.rotation != 0) {
-            canvas.restore();
         }
     }
     

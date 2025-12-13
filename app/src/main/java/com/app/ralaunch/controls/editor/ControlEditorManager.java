@@ -47,6 +47,8 @@ public class ControlEditorManager {
     private OnEditorStateChangedListener mStateListener;
     private OnLayoutChangedListener mLayoutChangedListener;
     private OnFPSDisplayChangedListener mFPSDisplayListener;
+    private OnHideControlsListener mOnHideControlsListener;
+    private OnExitGameListener mOnExitGameListener;
     
     /**
      * 编辑状态变化监听器
@@ -68,6 +70,20 @@ public class ControlEditorManager {
      */
     public interface OnFPSDisplayChangedListener {
         void onFPSDisplayChanged(boolean enabled);
+    }
+
+    /**
+     * 隐藏控件监听器
+     */
+    public interface OnHideControlsListener {
+        void onHideControls();
+    }
+
+    /**
+     * 退出游戏监听器
+     */
+    public interface OnExitGameListener {
+        void onExitGame();
     }
     
     /**
@@ -113,6 +129,20 @@ public class ControlEditorManager {
      */
     public void setOnFPSDisplayChangedListener(OnFPSDisplayChangedListener listener) {
         mFPSDisplayListener = listener;
+    }
+
+    /**
+     * 设置隐藏控件监听器
+     */
+    public void setOnHideControlsListener(OnHideControlsListener listener) {
+        mOnHideControlsListener = listener;
+    }
+
+    /**
+     * 设置退出游戏监听器
+     */
+    public void setOnExitGameListener(OnExitGameListener listener) {
+        mOnExitGameListener = listener;
     }
     
     /**
@@ -358,6 +388,22 @@ public class ControlEditorManager {
                     mFPSDisplayListener.onFPSDisplayChanged(enabled);
                 }
             }
+
+            @Override
+            public void onHideControls() {
+                // 隐藏控件
+                if (mOnHideControlsListener != null) {
+                    mOnHideControlsListener.onHideControls();
+                }
+            }
+
+            @Override
+            public void onExitGame() {
+                // 退出游戏
+                if (mOnExitGameListener != null) {
+                    mOnExitGameListener.onExitGame();
+                }
+            }
         });
         
         // 独立模式下设置编辑模式为启用状态
@@ -429,51 +475,71 @@ public class ControlEditorManager {
             finalConfig = config;
         }
         
-        // 第一步：选择摇杆类型（键盘/鼠标 或 手柄摇杆）
+        // 第一步：选择摇杆类型
         String[] joystickTypeOptions = new String[]{
-            mContext.getString(R.string.editor_joystick_type_keyboard_mouse),
+            mContext.getString(R.string.editor_joystick_type_move_aim),
             mContext.getString(R.string.editor_joystick_type_gamepad)
         };
         
         new com.google.android.material.dialog.MaterialAlertDialogBuilder(mContext)
             .setTitle(mContext.getString(R.string.editor_select_joystick_type))
             .setItems(joystickTypeOptions, (dialog, which) -> {
-                final int joystickMode;
                 if (which == 0) {
-                    // 键盘/鼠标模式
-                    joystickMode = ControlData.JOYSTICK_MODE_KEYBOARD;
-                } else {
-                    // 手柄摇杆模式
-                    joystickMode = ControlData.JOYSTICK_MODE_SDL_CONTROLLER;
-                }
-                
-                // 第二步：选择左摇杆还是右摇杆
-                String[] stickSideOptions = new String[]{
-                    mContext.getString(R.string.editor_joystick_side_left),
-                    mContext.getString(R.string.editor_joystick_side_right)
-                };
-                
-                new com.google.android.material.dialog.MaterialAlertDialogBuilder(mContext)
-                    .setTitle(mContext.getString(R.string.editor_select_joystick_side))
-                    .setItems(stickSideOptions, (dialog2, which2) -> {
-                        boolean isRightStick = (which2 == 1);
+                    // 移动+瞄准摇杆：直接创建键盘左摇杆和鼠标右摇杆
+                    ControlData leftJoystick = ControlEditorOperations.addJoystick(
+                        finalConfig, mScreenWidth, mScreenHeight, 
+                        ControlData.JOYSTICK_MODE_KEYBOARD, false);
+                    ControlData rightJoystick = ControlEditorOperations.addJoystick(
+                        finalConfig, mScreenWidth, mScreenHeight, 
+                        ControlData.JOYSTICK_MODE_MOUSE, true);
+                    
+                    if (leftJoystick != null && rightJoystick != null) {
+                        mControlLayout.loadLayout(finalConfig);
+                        disableClippingRecursive(mControlLayout);
+                        mHasUnsavedChanges = true;
+                        Toast.makeText(mContext, mContext.getString(R.string.editor_joystick_added), Toast.LENGTH_SHORT).show();
                         
-                        // 创建摇杆
-                        ControlData joystick = ControlEditorOperations.addJoystick(
-                            finalConfig, mScreenWidth, mScreenHeight, joystickMode, isRightStick);
-                        
-                        if (joystick != null) {
-                            mControlLayout.loadLayout(finalConfig);
-                            disableClippingRecursive(mControlLayout);
-                            mHasUnsavedChanges = true;
-                            Toast.makeText(mContext, mContext.getString(R.string.editor_joystick_added), Toast.LENGTH_SHORT).show();
-                            
-                            if (mLayoutChangedListener != null) {
-                                mLayoutChangedListener.onLayoutChanged();
-                            }
+                        if (mLayoutChangedListener != null) {
+                            mLayoutChangedListener.onLayoutChanged();
                         }
-                    })
-                    .show();
+                    }
+                } else {
+                    // 手柄摇杆模式：选择左摇杆还是右摇杆
+                    final int joystickMode = ControlData.JOYSTICK_MODE_SDL_CONTROLLER;
+                    showStickSideDialog(finalConfig, joystickMode);
+                }
+            })
+            .show();
+    }
+    
+    /**
+     * 显示选择摇杆位置的对话框
+     */
+    private void showStickSideDialog(final ControlConfig finalConfig, final int joystickMode) {
+        String[] stickSideOptions = new String[]{
+            mContext.getString(R.string.editor_joystick_side_left),
+            mContext.getString(R.string.editor_joystick_side_right)
+        };
+        
+        new com.google.android.material.dialog.MaterialAlertDialogBuilder(mContext)
+            .setTitle(mContext.getString(R.string.editor_select_joystick_side))
+            .setItems(stickSideOptions, (dialog2, which2) -> {
+                boolean isRightStick = (which2 == 1);
+                
+                // 创建摇杆
+                ControlData joystick = ControlEditorOperations.addJoystick(
+                    finalConfig, mScreenWidth, mScreenHeight, joystickMode, isRightStick);
+                
+                if (joystick != null) {
+                    mControlLayout.loadLayout(finalConfig);
+                    disableClippingRecursive(mControlLayout);
+                    mHasUnsavedChanges = true;
+                    Toast.makeText(mContext, mContext.getString(R.string.editor_joystick_added), Toast.LENGTH_SHORT).show();
+                    
+                    if (mLayoutChangedListener != null) {
+                        mLayoutChangedListener.onLayoutChanged();
+                    }
+                }
             })
             .show();
     }

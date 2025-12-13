@@ -40,7 +40,7 @@ public class ControlDataDeserializer implements JsonDeserializer<ControlData> {
             }
         }
         
-        // 组合键已移除，忽略旧数据中的 joystickComboKeys 字段
+        // joystickComboKeys field has been removed - compatibility code no longer needed
         
         return data;
     }

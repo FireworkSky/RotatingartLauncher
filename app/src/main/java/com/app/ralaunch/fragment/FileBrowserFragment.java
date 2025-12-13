@@ -46,6 +46,7 @@ public class FileBrowserFragment extends BaseFragment implements FileBrowserAdap
     private int mode = MODE_SELECT_FILE;
     private OnFileSelectedListener fileSelectedListener;
     private OnAssemblySelectedListener assemblySelectedListener;
+    private OnAddToGameListListener addToGameListListener;
     private OnBackListener backListener;
 
     // 界面控件
@@ -88,6 +89,10 @@ public class FileBrowserFragment extends BaseFragment implements FileBrowserAdap
     public interface OnAssemblySelectedListener {
         void onAssemblySelected(String assemblyPath);
     }
+    
+    public interface OnAddToGameListListener {
+        void onAddToGameList(String assemblyPath);
+    }
 
     public interface OnBackListener {
         void onBack();
@@ -109,6 +114,10 @@ public class FileBrowserFragment extends BaseFragment implements FileBrowserAdap
         this.assemblySelectedListener = listener;
     }
     
+    public void setOnAddToGameListListener(OnAddToGameListListener listener) {
+        this.addToGameListListener = listener;
+    }
+
     public void setOnBackListener(OnBackListener listener) {
         this.backListener = listener;
     }
@@ -399,7 +408,56 @@ public class FileBrowserFragment extends BaseFragment implements FileBrowserAdap
 
     @Override
     public void onFileLongClick(FileItem fileItem) {
-        // 长按文件时不做任何操作（已移除添加到游戏列表功能）
+        // 长按 DLL/EXE 文件时显示操作菜单
+        if (!fileItem.isDirectory()) {
+            String fileName = fileItem.getName().toLowerCase();
+            if (fileName.endsWith(".dll") || fileName.endsWith(".exe")) {
+                showFileActionMenu(fileItem);
+            }
+        }
+    }
+    
+    /**
+     * 显示文件操作菜单
+     */
+    private void showFileActionMenu(FileItem fileItem) {
+        String filePath = fileItem.getPath();
+        String fileName = fileItem.getName();
+        
+        // 创建选项菜单
+        java.util.List<com.app.ralib.dialog.OptionSelectorDialog.Option> options = new java.util.ArrayList<>();
+        
+        // 添加到游戏列表选项（仅在非程序集选择模式下显示）
+        if (mode != MODE_SELECT_ASSEMBLY && addToGameListListener != null) {
+            // File browser add to game list option removed
+        }
+        
+        // 选择此文件选项
+        options.add(new com.app.ralib.dialog.OptionSelectorDialog.Option(
+            "select_file", 
+            getString(R.string.filebrowser_select_this_file), 
+            getString(R.string.filebrowser_select_this_file_desc)
+        ));
+        
+        if (options.isEmpty()) {
+            return;
+        }
+        
+        // 显示选项对话框
+        new com.app.ralib.dialog.OptionSelectorDialog()
+            .setTitle(getString(R.string.filebrowser_file_action, fileName))
+            .setIcon(R.drawable.ic_file)
+            .setOptions(options)
+            .setOnOptionSelectedListener(value -> {
+                if ("add_to_game_list".equals(value) && addToGameListListener != null) {
+                    addToGameListListener.onAddToGameList(filePath);
+                    com.app.ralaunch.utils.AppLogger.info("FileBrowserFragment", "添加到游戏列表: " + filePath);
+                } else if ("select_file".equals(value)) {
+                    // 直接选择文件（相当于点击）
+                    onFileClick(fileItem);
+                }
+            })
+            .show(getParentFragmentManager(), "file_action_menu");
     }
     
     /**

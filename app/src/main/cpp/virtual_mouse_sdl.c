@@ -54,19 +54,28 @@ JNIEXPORT void JNICALL
 Java_com_app_ralaunch_controls_SDLInputBridge_nativeEnableVirtualMouseSDL(
     JNIEnv *env, jclass clazz, int screenWidth, int screenHeight) {
     
+    // 如果已经启用，只更新屏幕尺寸，不重置鼠标位置
+    int wasEnabled = g_vm_enabled;
     g_vm_enabled = 1;
     g_vm_screen_width = screenWidth > 0 ? screenWidth : 1920;
     g_vm_screen_height = screenHeight > 0 ? screenHeight : 1080;
-    g_vm_x = g_vm_screen_width / 2.0f;
-    g_vm_y = g_vm_screen_height / 2.0f;
     
-    LOGI("Virtual mouse SDL enabled: screen=%dx%d, pos=(%.0f,%.0f)", 
-        g_vm_screen_width, g_vm_screen_height, g_vm_x, g_vm_y);
-    
-    // 发送初始鼠标位置到 SDL
-    SDL_Window* window = get_sdl_window();
-    if (window) {
-        SDL_WarpMouseInWindow(window, (int)g_vm_x, (int)g_vm_y);
+    // 只在第一次启用时初始化位置到屏幕中心
+    if (!wasEnabled) {
+        g_vm_x = g_vm_screen_width / 2.0f;
+        g_vm_y = g_vm_screen_height / 2.0f;
+        
+        LOGI("Virtual mouse SDL enabled (first time): screen=%dx%d, pos=(%.0f,%.0f)", 
+            g_vm_screen_width, g_vm_screen_height, g_vm_x, g_vm_y);
+        
+        // 发送初始鼠标位置到 SDL
+        SDL_Window* window = get_sdl_window();
+        if (window) {
+            SDL_WarpMouseInWindow(window, (int)g_vm_x, (int)g_vm_y);
+        }
+    } else {
+        LOGI("Virtual mouse SDL re-enabled: screen=%dx%d, keeping pos=(%.0f,%.0f)", 
+            g_vm_screen_width, g_vm_screen_height, g_vm_x, g_vm_y);
     }
 }
 

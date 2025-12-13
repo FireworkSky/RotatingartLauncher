@@ -246,6 +246,10 @@ public class SDLInputBridge implements ControlInputBridge {
                     return;
             }
             
+            // 添加日志查看发送的值
+            Log.d(TAG, "Sending mouse button: button=" + button + " -> sdlButton=" + sdlButton + 
+                  ", isDown=" + isDown + ", pos=(" + x + "," + y + ")");
+            
             // 使用 onNativeMouseButton 直接发送，不影响触屏转鼠标
             // pressed: 1=按下, 0=释放
             SDLActivity.onNativeMouseButton(sdlButton, isDown ? 1 : 0, x, y);
@@ -315,6 +319,19 @@ public class SDLInputBridge implements ControlInputBridge {
             nativeUpdateVirtualMouseDeltaSDL(deltaX, deltaY);
         } catch (Exception e) {
             Log.e(TAG, "Error updating virtual mouse delta", e);
+        }
+    }
+    
+    /**
+     * 设置虚拟鼠标绝对位置
+     * @param x 绝对X坐标
+     * @param y 绝对Y坐标
+     */
+    public void setVirtualMousePosition(float x, float y) {
+        try {
+            nativeSetVirtualMousePositionSDL(x, y);
+        } catch (Exception e) {
+            Log.e(TAG, "Error setting virtual mouse position", e);
         }
     }
     

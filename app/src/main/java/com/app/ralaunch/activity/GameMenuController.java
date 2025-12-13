@@ -110,6 +110,18 @@ public class GameMenuController {
                 contentFrame,
                 ControlEditorManager.MODE_IN_GAME
         );
+        
+        // 设置隐藏控件监听器
+        controlEditorManager.setOnHideControlsListener(() -> {
+            controlsManager.toggle(activity);
+        });
+        
+        // 设置退出游戏监听器
+        controlEditorManager.setOnExitGameListener(() -> {
+            if (menuManager != null) {
+                menuManager.showExitConfirmDialog();
+            }
+        });
     }
 
     private void setupDraggableButton(View button, Runnable onClickAction) {
@@ -184,7 +196,7 @@ public class GameMenuController {
             controlEditorManager.exitEditMode();
             return;
         }
-        controlsManager.toggle((GameActivity) drawerLayout.getContext());
+        // 返回键不再隐藏控件，用户可以通过游戏设置中的"隐藏控件"按钮来隐藏
     }
 
     public void stop() {

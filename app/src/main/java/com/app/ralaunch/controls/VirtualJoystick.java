@@ -121,6 +121,27 @@ public class VirtualJoystick extends View implements ControlView {
             mGlobalMouseRangeTop = settingsManager.getMouseRightStickRangeTop();
             mGlobalMouseRangeRight = settingsManager.getMouseRightStickRangeRight();
             mGlobalMouseRangeBottom = settingsManager.getMouseRightStickRangeBottom();
+            
+            // 自动修正异常的范围设置（避免鼠标移动受限）
+            boolean needsReset = false;
+            if (mGlobalMouseRangeLeft > 0.1f || mGlobalMouseRangeTop > 0.1f || 
+                mGlobalMouseRangeRight < 0.9f || mGlobalMouseRangeBottom < 0.9f) {
+                Log.w(TAG, "Detected restricted mouse range, resetting to full screen");
+                mGlobalMouseRangeLeft = 0.0f;
+                mGlobalMouseRangeTop = 0.0f;
+                mGlobalMouseRangeRight = 1.0f;
+                mGlobalMouseRangeBottom = 1.0f;
+                needsReset = true;
+            }
+            
+            // 保存修正后的值到设置
+            if (needsReset) {
+                settingsManager.setMouseRightStickRangeLeft(mGlobalMouseRangeLeft);
+                settingsManager.setMouseRightStickRangeTop(mGlobalMouseRangeTop);
+                settingsManager.setMouseRightStickRangeRight(mGlobalMouseRangeRight);
+                settingsManager.setMouseRightStickRangeBottom(mGlobalMouseRangeBottom);
+            }
+            
             Log.i(TAG, "Global settings loaded: speed=" + mGlobalMouseSpeed + 
                   ", range=(" + mGlobalMouseRangeLeft + "," + mGlobalMouseRangeTop + 
                   "," + mGlobalMouseRangeRight + "," + mGlobalMouseRangeBottom + ")");
@@ -207,8 +228,8 @@ public class VirtualJoystick extends View implements ControlView {
         mStrokePaint.setColor(0x00000000); // 透明
         mStrokePaint.setStyle(Paint.Style.STROKE);
         mStrokePaint.setStrokeWidth(0);
-        // 使用边框透明度（如果为0则使用背景透明度作为兼容）
-        float borderOpacity = mData.borderOpacity != 0 ? mData.borderOpacity : mData.opacity;
+        // 边框透明度完全独立，默认1.0（完全不透明）
+        float borderOpacity = mData.borderOpacity != 0 ? mData.borderOpacity : 1.0f;
         mStrokePaint.setAlpha((int) (borderOpacity * 255));
     }
     
@@ -323,6 +344,11 @@ public class VirtualJoystick extends View implements ControlView {
                 // 如果不穿透，标记这个触摸点被占用（不传递给游戏）
                 if (!mData.passThrough) {
                     TouchPointerTracker.consumePointer(pointerId);
+                }
+
+                // 如果是右摇杆鼠标模式，启用虚拟鼠标系统
+                if (mData.joystickMode == ControlData.JOYSTICK_MODE_MOUSE && mData.xboxUseRightStick) {
+                    enableVirtualMouse();
                 }
 
                 handleMove(touchX, touchY);
@@ -450,6 +476,24 @@ public class VirtualJoystick extends View implements ControlView {
                 // 右摇杆：停止持续点击
                 stopMouseClick();
                 mIsAttacking = false;
+                
+                // 重要：保存当前虚拟鼠标位置，防止松开时鼠标位置被重置
+                // 因为触摸事件可能会被SDL转换为鼠标事件，导致鼠标位置跳回触摸位置
+                // 使用延迟执行确保在SDL处理完触摸事件后再设置鼠标位置
+                if (mInputBridge instanceof SDLInputBridge) {
+                    final SDLInputBridge bridge = (SDLInputBridge) mInputBridge;
+                    final float currentX = bridge.getVirtualMouseX();
+                    final float currentY = bridge.getVirtualMouseY();
+                    
+                    // 延迟50ms执行，确保SDL处理完触摸事件
+                    postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            bridge.setVirtualMousePosition(currentX, currentY);
+                            Log.d(TAG, "Restored mouse position after release: (" + currentX + ", " + currentY + ")");
+                        }
+                    }, 50);
+                }
             }
             mCurrentDirection = DIR_NONE;
         } else if (mData.joystickMode == ControlData.JOYSTICK_MODE_KEYBOARD) {
@@ -649,11 +693,11 @@ public class VirtualJoystick extends View implements ControlView {
         
         if (mInputBridge instanceof SDLInputBridge) {
             SDLInputBridge bridge = (SDLInputBridge) mInputBridge;
-            // 使用屏幕中心作为点击位置
-            float mouseX = mScreenWidth / 2.0f;
-            float mouseY = mScreenHeight / 2.0f;
+            // 使用当前虚拟鼠标位置作为点击位置，避免鼠标跳动
+            float mouseX = bridge.getVirtualMouseX();
+            float mouseY = bridge.getVirtualMouseY();
             
-            // Log.v(TAG, "Mouse attack started, mode=" + mAttackMode);
+            // Log.v(TAG, "Mouse attack started at (" + mouseX + "," + mouseY + "), mode=" + mAttackMode);
             
             switch (mAttackMode) {
                 case 0: // 长按模式：按下鼠标左键，不释放
@@ -686,11 +730,12 @@ public class VirtualJoystick extends View implements ControlView {
         // 释放鼠标左键（所有模式都需要）
         if (mInputBridge instanceof SDLInputBridge) {
             SDLInputBridge bridge = (SDLInputBridge) mInputBridge;
-            float mouseX = mScreenWidth / 2.0f;
-            float mouseY = mScreenHeight / 2.0f;
+            // 使用当前虚拟鼠标位置作为释放位置
+            float mouseX = bridge.getVirtualMouseX();
+            float mouseY = bridge.getVirtualMouseY();
             bridge.sendMouseButton(ControlData.MOUSE_LEFT, false, mouseX, mouseY);
             
-            // Log.v(TAG, "Mouse attack stopped");
+            // Log.v(TAG, "Mouse attack stopped at (" + mouseX + "," + mouseY + ")");
         }
     }
     
@@ -801,6 +846,7 @@ public class VirtualJoystick extends View implements ControlView {
      * - 摇杆静止不动时 → 鼠标不移动
      * - 摇杆位置变化时 → 鼠标跟随移动
      * - 使用 sendMouseMove 发送真正的鼠标相对移动事件
+     * - 同时更新虚拟鼠标位置追踪，以便松开时恢复位置
      */
     private void sendVirtualMouseMove(float dx, float dy, float distance) {
         // 死区检测：在死区内时，重置上一帧位置
@@ -839,6 +885,11 @@ public class VirtualJoystick extends View implements ControlView {
         
         // 发送真正的鼠标相对移动事件（使用 SDL onNativeMouse）
         mInputBridge.sendMouseMove(mouseX, mouseY);
+        
+        // 同时更新虚拟鼠标位置追踪（用于松开时恢复位置）
+        if (mInputBridge instanceof SDLInputBridge) {
+            ((SDLInputBridge) mInputBridge).updateVirtualMouseDelta(mouseX, mouseY);
+        }
         
         // Log.v(TAG, "Mouse move: delta=(" + mouseX + ", " + mouseY + "), speed=" + sensitivity);
     }

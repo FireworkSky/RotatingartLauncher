@@ -189,7 +189,7 @@ public class ControlEditDialogDataFiller {
             )
         );
         
-        // 边框透明度设置（使用统一管理器）
+        // 边框透明度设置（使用统一管理器，完全独立）
         ControlEditDialogSeekBarManager.fillSeekBarSetting(view,
             R.id.seekbar_border_opacity,
             R.id.tv_border_opacity_value,
@@ -198,8 +198,8 @@ public class ControlEditDialogDataFiller {
                 new ControlEditDialogSeekBarManager.ValueSetter() {
                     @Override
                     public float get(ControlData d) {
-                        // 如果为0则使用背景透明度作为兼容
-                        return d.borderOpacity != 0 ? d.borderOpacity : d.opacity;
+                        // 边框透明度完全独立，默认1.0（完全不透明）
+                        return d.borderOpacity != 0 ? d.borderOpacity : 1.0f;
                     }
                     
                     @Override
@@ -222,8 +222,8 @@ public class ControlEditDialogDataFiller {
                     new ControlEditDialogSeekBarManager.ValueSetter() {
                         @Override
                         public float get(ControlData d) {
-                            // 如果为0则使用背景透明度作为兼容
-                            return d.textOpacity != 0 ? d.textOpacity : d.opacity;
+                            // 文本透明度完全独立，默认1.0（完全不透明）
+                            return d.textOpacity != 0 ? d.textOpacity : 1.0f;
                         }
                         
                         @Override
@@ -315,14 +315,6 @@ public class ControlEditDialogDataFiller {
             ControlColorManager.updateColorView(viewStrokeColor, data.strokeColor, 8, 2);
         }
         
-        // 旋转角度设置（0-360度）
-        Slider sliderRotation = view.findViewById(R.id.seekbar_rotation);
-        TextView tvRotationValue = view.findViewById(R.id.tv_rotation_value);
-        if (sliderRotation != null && tvRotationValue != null) {
-            int rotation = (int) data.rotation;
-            sliderRotation.setValue(rotation);
-            tvRotationValue.setText(rotation + "°");
-        }
     }
     
     /**

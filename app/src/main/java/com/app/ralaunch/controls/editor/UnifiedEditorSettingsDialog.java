@@ -46,6 +46,8 @@ public class UnifiedEditorSettingsDialog {
     private View mItemSaveLayout; // 保存布局
     private View mItemFPSDisplay;
     private androidx.appcompat.widget.SwitchCompat mSwitchFPSDisplay;
+    private View mItemHideControls; // 隐藏控件
+    private View mItemExitGame; // 退出游戏
     
     // 编辑模式状态
     private boolean mIsEditModeEnabled = false;
@@ -78,6 +80,8 @@ public class UnifiedEditorSettingsDialog {
         void onAddText();
         void onSaveLayout(); // 保存布局
         void onFPSDisplayChanged(boolean enabled); // FPS 显示选项变化
+        void onHideControls(); // 隐藏控件
+        void onExitGame(); // 退出游戏
     }
 
     public UnifiedEditorSettingsDialog(Context context, ViewGroup parent, int screenWidth, DialogMode mode) {
@@ -299,6 +303,8 @@ public class UnifiedEditorSettingsDialog {
         mItemSaveLayout = mDialogLayout.findViewById(R.id.item_save_layout);
         mItemFPSDisplay = mDialogLayout.findViewById(R.id.item_fps_display);
         mSwitchFPSDisplay = mDialogLayout.findViewById(R.id.switch_fps_display);
+        mItemHideControls = mDialogLayout.findViewById(R.id.item_hide_controls);
+        mItemExitGame = mDialogLayout.findViewById(R.id.item_exit_game);
 
         // 初始状态：编辑模式关闭，添加控件区域隐藏
         if (mAddControlsSection != null) {
@@ -378,6 +384,26 @@ public class UnifiedEditorSettingsDialog {
                     if (mListener != null) {
                         mListener.onFPSDisplayChanged(isChecked);
                     }
+                });
+            }
+
+            // 隐藏控件
+            if (mItemHideControls != null) {
+                mItemHideControls.setOnClickListener(v -> {
+                    if (mListener != null) {
+                        mListener.onHideControls();
+                    }
+                    hide();
+                });
+            }
+
+            // 退出游戏
+            if (mItemExitGame != null) {
+                mItemExitGame.setOnClickListener(v -> {
+                    if (mListener != null) {
+                        mListener.onExitGame();
+                    }
+                    hide();
                 });
             }
         }

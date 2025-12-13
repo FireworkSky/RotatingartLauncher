@@ -56,7 +56,7 @@ public class ControlDataSerializer implements JsonSerializer<ControlData> {
             if (src.joystickKeys != null) {
                 jsonObject.add("joystickKeys", context.serialize(src.joystickKeys));
             }
-            // 组合键已移除
+            // joystickComboKeys field removed
         } else if (src.type == ControlData.TYPE_TEXT) {
             // 文本控件特有字段
             jsonObject.addProperty("displayText", src.displayText != null ? src.displayText : "");

@@ -275,6 +275,66 @@
 
             </LinearLayout>
 
+            <!-- 隐藏控件 -->
+            <LinearLayout
+                android:id="@+id/item_hide_controls"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:background="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true"
+                android:layout_marginTop="8dp">
+
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:src="@drawable/ic_visibility_off"
+                    android:tint="?attr/textPrimary" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
+                    android:text="@string/editor_hide_controls"
+                    android:textColor="?attr/textPrimary"
+                    android:textSize="16sp" />
+
+            </LinearLayout>
+
+            <!-- 退出游戏 -->
+            <LinearLayout
+                android:id="@+id/item_exit_game"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:background="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true"
+                android:layout_marginTop="8dp">
+
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:src="@drawable/ic_close"
+                    android:tint="#F44336" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
+                    android:text="@string/editor_exit_game"
+                    android:textColor="#F44336"
+                    android:textSize="16sp" />
+
+            </LinearLayout>
+
         </LinearLayout>
 
     </LinearLayout>
