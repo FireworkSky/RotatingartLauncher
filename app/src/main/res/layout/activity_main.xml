@@ -40,19 +40,25 @@
             android:orientation="horizontal"
             android:background="?android:attr/colorBackground">
 
-            <!-- 左侧 NavigationRail - 现代化风格 (80dp) -->
-            <com.google.android.material.navigationrail.NavigationRailView
-                android:id="@+id/navigationRail"
-                android:layout_width="80dp"
-                android:layout_height="match_parent"
-                android:background="?attr/colorSurface"
-                android:paddingTop="8dp"
-                android:paddingBottom="8dp"
-                app:itemIconTint="@color/navigation_rail_item_color"
-                app:itemTextColor="@color/navigation_rail_item_color"
-                app:itemActiveIndicatorStyle="@style/Widget.App.NavigationRailView.ActiveIndicator"
-                app:labelVisibilityMode="labeled"
-                app:menu="@menu/navigation_rail_menu" />
+            <ScrollView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:scrollbars="vertical"
+                android:scrollbarSize="0dp">
+                <!-- 左侧 NavigationRail - 现代化风格 (80dp) -->
+                <com.google.android.material.navigationrail.NavigationRailView
+                    android:id="@+id/navigationRail"
+                    android:layout_width="80dp"
+                    android:layout_height="match_parent"
+                    android:background="?attr/colorSurface"
+                    android:paddingTop="8dp"
+                    android:paddingBottom="8dp"
+                    app:itemIconTint="@color/navigation_rail_item_color"
+                    app:itemTextColor="@color/navigation_rail_item_color"
+                    app:itemActiveIndicatorStyle="@style/Widget.App.NavigationRailView.ActiveIndicator"
+                    app:labelVisibilityMode="labeled"
+                    app:menu="@menu/navigation_rail_menu" />
+            </ScrollView>
 
             <!-- 主内容区域 - 根据导航切换 -->
             <FrameLayout
