@@ -287,6 +287,43 @@ public class AppearanceSettingsModule implements SettingsModule {
             });
         }
         
+        // 设置爱发电按钮
+        com.google.android.material.button.MaterialButton btnAfdian = 
+            rootView.findViewById(R.id.btnAfdian);
+        if (btnAfdian != null) {
+            btnAfdian.setOnClickListener(v -> {
+                openUrl("https://afdian.com/@rotatingart");
+            });
+        }
+        
+        // 设置 Patreon 按钮
+        com.google.android.material.button.MaterialButton btnPatreon = 
+            rootView.findViewById(R.id.btnPatreon);
+        if (btnPatreon != null) {
+            btnPatreon.setOnClickListener(v -> {
+                openUrl("https://patreon.com/rotatingart");
+            });
+        }
+        
+        // 设置 Discord 按钮
+        com.google.android.material.button.MaterialButton btnDiscord = 
+            rootView.findViewById(R.id.btnDiscord);
+        if (btnDiscord != null) {
+            btnDiscord.setOnClickListener(v -> {
+                openUrl("https://discord.gg/rotatingart");
+            });
+        }
+        
+        // 设置 QQ 群按钮
+        com.google.android.material.button.MaterialButton btnQQGroup = 
+            rootView.findViewById(R.id.btnQQGroup);
+        if (btnQQGroup != null) {
+            btnQQGroup.setOnClickListener(v -> {
+                // QQ 群一键加群链接
+                openUrl("https://qm.qq.com/q/your_qq_group_key");
+            });
+        }
+        
         // 设置开发者 GitHub 按钮
         com.google.android.material.button.MaterialButton btnContributorGithub = 
             rootView.findViewById(R.id.btnContributorGithub);
@@ -298,10 +335,14 @@ public class AppearanceSettingsModule implements SettingsModule {
     }
     
     private void openGitHubProfile(String username) {
+        openUrl("https://github.com/" + username);
+    }
+    
+    private void openUrl(String url) {
         try {
             android.content.Intent intent = new android.content.Intent(
                 android.content.Intent.ACTION_VIEW, 
-                Uri.parse("https://github.com/" + username)
+                Uri.parse(url)
             );
             fragment.startActivity(intent);
         } catch (Exception e) {

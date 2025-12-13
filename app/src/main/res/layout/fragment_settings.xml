@@ -92,6 +92,19 @@
 
         </androidx.core.widget.NestedScrollView>
 
+        <!-- 关于设置内容 -->
+        <androidx.core.widget.NestedScrollView
+            android:id="@+id/contentAbout"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:fillViewport="true"
+            android:padding="16dp"
+            android:visibility="gone">
+
+            <include layout="@layout/fragment_settings_about" />
+
+        </androidx.core.widget.NestedScrollView>
+
         <!-- 实验性设置内容 -->
         <androidx.core.widget.NestedScrollView
             android:id="@+id/contentDeveloper"

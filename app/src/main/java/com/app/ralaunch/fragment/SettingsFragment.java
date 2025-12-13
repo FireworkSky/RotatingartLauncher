@@ -10,6 +10,7 @@ import com.app.ralaunch.settings.SettingsModule;
 import com.app.ralaunch.settings.AppearanceSettingsModule;
 import com.app.ralaunch.settings.ControlsSettingsModule;
 import com.app.ralaunch.settings.GameSettingsModule;
+import com.app.ralaunch.settings.AboutSettingsModule;
 import com.app.ralaunch.settings.DeveloperSettingsModule;
 
 /**
@@ -27,12 +28,14 @@ public class SettingsFragment extends BaseFragment {
     private View contentControls;
     private View contentGame;
     private View contentLauncher;
+    private View contentAbout;
     private View contentDeveloper;
     
     // 设置模块
     private SettingsModule appearanceModule;
     private SettingsModule controlsModule;
     private SettingsModule gameModule;
+    private SettingsModule aboutModule;
     private SettingsModule developerModule;
 
     public interface OnSettingsBackListener {
@@ -57,6 +60,7 @@ public class SettingsFragment extends BaseFragment {
         contentControls = view.findViewById(R.id.contentControls);
         contentGame = view.findViewById(R.id.contentGame);
         contentLauncher = view.findViewById(R.id.contentLauncher);
+        contentAbout = view.findViewById(R.id.contentAbout);
         contentDeveloper = view.findViewById(R.id.contentDeveloper);
 
         // 初始化 TabLayout
@@ -72,12 +76,14 @@ public class SettingsFragment extends BaseFragment {
         appearanceModule = new AppearanceSettingsModule();
         controlsModule = new ControlsSettingsModule();
         gameModule = new GameSettingsModule();
+        aboutModule = new AboutSettingsModule();
         developerModule = new DeveloperSettingsModule();
         
         // 设置各个模块
         appearanceModule.setup(this, view);
         controlsModule.setup(this, view);
         gameModule.setup(this, view);
+        aboutModule.setup(this, view);
         developerModule.setup(this, view);
     }
     
@@ -97,6 +103,9 @@ public class SettingsFragment extends BaseFragment {
         
         settingsTabLayout.addTab(settingsTabLayout.newTab()
             .setText(getString(R.string.settings_launcher)));
+        
+        settingsTabLayout.addTab(settingsTabLayout.newTab()
+            .setText("关于"));
         
         settingsTabLayout.addTab(settingsTabLayout.newTab()
             .setText(getString(R.string.settings_developer)));
@@ -138,6 +147,7 @@ public class SettingsFragment extends BaseFragment {
         else if (contentControls.getVisibility() == View.VISIBLE) currentView = contentControls;
         else if (contentGame.getVisibility() == View.VISIBLE) currentView = contentGame;
         else if (contentLauncher.getVisibility() == View.VISIBLE) currentView = contentLauncher;
+        else if (contentAbout.getVisibility() == View.VISIBLE) currentView = contentAbout;
         else if (contentDeveloper.getVisibility() == View.VISIBLE) currentView = contentDeveloper;
         
         // 选择要显示的内容
@@ -147,7 +157,8 @@ public class SettingsFragment extends BaseFragment {
             case 1: nextView = contentControls; break;
             case 2: nextView = contentGame; break;
             case 3: nextView = contentLauncher; break;
-            case 4: nextView = contentDeveloper; break;
+            case 4: nextView = contentAbout; break;
+            case 5: nextView = contentDeveloper; break;
         }
 
         // 如果是同一个内容，不需要切换
