@@ -378,6 +378,12 @@
     <string name="editor_button_added">Button added</string>
     <string name="editor_joystick_added">Joystick added</string>
     <string name="editor_text_added">Text added</string>
+    <string name="editor_select_joystick_type">Select Joystick Type</string>
+    <string name="editor_joystick_type_keyboard_mouse">Keyboard/Mouse Joystick</string>
+    <string name="editor_joystick_type_gamepad">Gamepad Joystick</string>
+    <string name="editor_select_joystick_side">Select Joystick Side</string>
+    <string name="editor_joystick_side_left">Left Joystick</string>
+    <string name="editor_joystick_side_right">Right Joystick</string>
 
     <!-- GogClientFragment Messages -->
     <string name="gog_email_verification">Email Verification</string>

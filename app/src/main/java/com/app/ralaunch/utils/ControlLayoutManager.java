@@ -48,7 +48,7 @@ public class ControlLayoutManager {
         this.context = context;
         preferences = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
         // 配置 Gson 序列化空值和空字符串，确保 displayText 等字段即使为空也能正确保存和加载
-        // 注册 ControlElement 的自定义 TypeAdapter 以处理 joystickComboKeys 的兼容性
+        // 注册 ControlElement 的自定义 TypeAdapter
         gson = new com.google.gson.GsonBuilder()
                 .serializeNulls()
                 .registerTypeAdapter(com.app.ralaunch.model.ControlElement.class, new com.app.ralaunch.model.ControlElementTypeAdapter())

@@ -378,6 +378,12 @@
     <string name="editor_button_added">已添加按钮</string>
     <string name="editor_joystick_added">已添加摇杆</string>
     <string name="editor_text_added">已添加文本</string>
+    <string name="editor_select_joystick_type">选择摇杆类型</string>
+    <string name="editor_joystick_type_keyboard_mouse">键盘/鼠标摇杆</string>
+    <string name="editor_joystick_type_gamepad">手柄摇杆</string>
+    <string name="editor_select_joystick_side">选择摇杆位置</string>
+    <string name="editor_joystick_side_left">左摇杆</string>
+    <string name="editor_joystick_side_right">右摇杆</string>
 
     <!-- GogClientFragment 消息 -->
     <string name="gog_email_verification">邮箱验证</string>

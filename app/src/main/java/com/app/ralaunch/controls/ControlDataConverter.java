@@ -136,14 +136,7 @@ public class ControlDataConverter {
                     }
                     data.joystickKeys = new int[]{upKey, rightKey, downKey, leftKey};
                 }
-                // 加载统一组合键数组
-                int[] elementComboKeys = element.getJoystickComboKeys();
-                if (elementComboKeys != null && elementComboKeys.length > 0) {
-                    data.joystickComboKeys = elementComboKeys.clone();
-                } else {
-                    // 兼容旧数据：初始化空数组
-                    data.joystickComboKeys = new int[0];
-                }
+                // 组合键已移除
                 break;
                 
             case TEXT:
@@ -284,12 +277,7 @@ public class ControlDataConverter {
             } else {
                 element.setKeyCode(data.joystickKeys != null && data.joystickKeys.length > 0 ? data.joystickKeys[0] : 0);
             }
-            // 保存统一组合键数组（所有方向共用）
-            if (data.joystickComboKeys != null && data.joystickComboKeys.length > 0) {
-                element.setJoystickComboKeys(data.joystickComboKeys.clone());
-            } else {
-                element.setJoystickComboKeys(null);
-            }
+            // 组合键已移除
         }
         
         // 外观属性

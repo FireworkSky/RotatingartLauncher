@@ -75,9 +75,6 @@ public class ControlElement {
     private float textSize;
     private float stickOpacity;   // 摇杆头透明度（仅摇杆类型）
     private float stickKnobSize;  // 摇杆圆心大小比例 (0.0-1.0)，默认0.4
-    
-    // 摇杆统一组合键（仅摇杆类型）
-    private int[] joystickComboKeys; // 统一组合键映射：所有方向共用的组合按钮列表
 
     // 显示设置
     private Visibility visibility;
@@ -124,13 +121,12 @@ public class ControlElement {
         this.borderColor = Color.TRANSPARENT; // 默认无边框
         this.textColor = Color.WHITE;
         this.borderWidth = 0.0f; // 默认无边框宽度
-        this.opacity = 0.7f;
+        this.opacity = 0.5f;
         this.borderOpacity = 1.0f; // 默认边框完全不透明
         this.textOpacity = 1.0f; // 默认文本完全不透明
         this.textSize = 16f;
         this.stickOpacity = 0.7f; // 默认摇杆头透明度
         this.stickKnobSize = 0.4f; // 默认摇杆圆心大小（40%半径）
-        this.joystickComboKeys = null; // 默认无组合键
 
         this.visibility = Visibility.ALWAYS;
         this.repeatDelay = 100;
@@ -228,52 +224,6 @@ public class ControlElement {
         if (json.has("textSize")) element.textSize = (float) json.getDouble("textSize");
         if (json.has("stickOpacity")) element.stickOpacity = (float) json.getDouble("stickOpacity");
         if (json.has("stickKnobSize")) element.stickKnobSize = (float) json.getDouble("stickKnobSize");
-        
-        // 加载统一组合键数组（仅摇杆类型）
-        if (json.has("joystickComboKeys") && element.type == ElementType.JOYSTICK) {
-            try {
-                org.json.JSONArray comboKeysArray = json.getJSONArray("joystickComboKeys");
-                if (comboKeysArray != null && comboKeysArray.length() > 0) {
-                    // 兼容旧数据：检查是否是二维数组（旧格式）
-                    try {
-                        Object firstItem = comboKeysArray.get(0);
-                        if (firstItem instanceof org.json.JSONArray) {
-                            // 旧格式：二维数组，转换为统一数组（使用第一个非空的组合键）
-                            int[] firstNonEmpty = null;
-                            for (int i = 0; i < comboKeysArray.length(); i++) {
-                                org.json.JSONArray directionArray = comboKeysArray.getJSONArray(i);
-                                if (directionArray != null && directionArray.length() > 0) {
-                                    firstNonEmpty = new int[directionArray.length()];
-                                    for (int j = 0; j < directionArray.length(); j++) {
-                                        firstNonEmpty[j] = directionArray.getInt(j);
-                                    }
-                                    break;
-                                }
-                            }
-                            element.joystickComboKeys = (firstNonEmpty != null) ? firstNonEmpty : new int[0];
-                        } else {
-                            // 新格式：一维数组
-                            element.joystickComboKeys = new int[comboKeysArray.length()];
-                            for (int i = 0; i < comboKeysArray.length(); i++) {
-                                element.joystickComboKeys[i] = comboKeysArray.getInt(i);
-                            }
-                        }
-                    } catch (JSONException e) {
-                        // 如果解析失败，尝试作为一维数组
-                        element.joystickComboKeys = new int[comboKeysArray.length()];
-                        for (int i = 0; i < comboKeysArray.length(); i++) {
-                            element.joystickComboKeys[i] = comboKeysArray.getInt(i);
-                        }
-                    }
-                } else {
-                    element.joystickComboKeys = null;
-                }
-            } catch (JSONException e) {
-                element.joystickComboKeys = null;
-            }
-        } else {
-            element.joystickComboKeys = null;
-        }
 
         // 显示设置
         if (json.has("visibility")) element.visibility = Visibility.valueOf(json.getString("visibility"));
@@ -352,15 +302,6 @@ public class ControlElement {
         json.put("textSize", textSize);
         json.put("stickOpacity", stickOpacity);
         json.put("stickKnobSize", stickKnobSize);
-        
-        // 保存统一组合键数组（仅摇杆类型，所有方向共用）
-        if (type == ElementType.JOYSTICK && joystickComboKeys != null && joystickComboKeys.length > 0) {
-            org.json.JSONArray comboKeysArray = new org.json.JSONArray();
-            for (int key : joystickComboKeys) {
-                comboKeysArray.put(key);
-            }
-            json.put("joystickComboKeys", comboKeysArray);
-        }
 
         // 显示设置
         json.put("visibility", visibility.name());
@@ -494,11 +435,6 @@ public class ControlElement {
     
     public float getStickKnobSize() { return stickKnobSize; }
     public void setStickKnobSize(float stickKnobSize) { this.stickKnobSize = stickKnobSize; }
-    
-    public int[] getJoystickComboKeys() { 
-        return joystickComboKeys; 
-    }
-    public void setJoystickComboKeys(int[] joystickComboKeys) { this.joystickComboKeys = joystickComboKeys; }
 
     public float getTextSize() { return textSize; }
     public void setTextSize(float textSize) { this.textSize = textSize; }

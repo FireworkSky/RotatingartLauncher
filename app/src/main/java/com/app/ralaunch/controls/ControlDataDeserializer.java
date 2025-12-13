@@ -40,44 +40,7 @@ public class ControlDataDeserializer implements JsonDeserializer<ControlData> {
             }
         }
         
-        // 处理 joystickComboKeys 的兼容性（从 int[][] 转换为 int[]）
-        if (data != null && data.type == ControlData.TYPE_JOYSTICK && jsonObject.has("joystickComboKeys")) {
-            JsonElement comboKeysElement = jsonObject.get("joystickComboKeys");
-            if (comboKeysElement.isJsonArray()) {
-                com.google.gson.JsonArray comboKeysArray = comboKeysElement.getAsJsonArray();
-                if (comboKeysArray.size() > 0) {
-                    // 检查是否是二维数组（旧格式）
-                    com.google.gson.JsonElement firstItem = comboKeysArray.get(0);
-                    if (firstItem.isJsonArray()) {
-                        // 旧格式：二维数组，转换为统一数组（使用第一个非空的组合键）
-                        int[] firstNonEmpty = null;
-                        for (int i = 0; i < comboKeysArray.size(); i++) {
-                            com.google.gson.JsonArray directionArray = comboKeysArray.get(i).getAsJsonArray();
-                            if (directionArray != null && directionArray.size() > 0) {
-                                firstNonEmpty = new int[directionArray.size()];
-                                for (int j = 0; j < directionArray.size(); j++) {
-                                    firstNonEmpty[j] = directionArray.get(j).getAsInt();
-                                }
-                                break;
-                            }
-                        }
-                        data.joystickComboKeys = (firstNonEmpty != null) ? firstNonEmpty : new int[0];
-                    } else {
-                        // 新格式：一维数组（Gson 应该已经正确反序列化）
-                        // 如果 data.joystickComboKeys 仍然是 null，手动处理
-                        if (data.joystickComboKeys == null) {
-                            int[] comboKeys = new int[comboKeysArray.size()];
-                            for (int i = 0; i < comboKeysArray.size(); i++) {
-                                comboKeys[i] = comboKeysArray.get(i).getAsInt();
-                            }
-                            data.joystickComboKeys = comboKeys;
-                        }
-                    }
-                } else {
-                    data.joystickComboKeys = new int[0];
-                }
-            }
-        }
+        // 组合键已移除，忽略旧数据中的 joystickComboKeys 字段
         
         return data;
     }

@@ -87,23 +87,6 @@ public class ControlEditDialogUIBinder {
             });
         }
         
-        // 组合键映射（仅摇杆类型显示）
-        MaterialCardView itemJoystickComboKeys = view.findViewById(R.id.item_joystick_combo_keys);
-        TextView tvJoystickComboKeys = view.findViewById(R.id.tv_joystick_combo_keys);
-        if (itemJoystickComboKeys != null) {
-            itemJoystickComboKeys.setOnClickListener(v -> {
-                // 直接显示统一组合键选择对话框（所有方向共用）
-                ControlJoystickComboKeysManager.showComboKeysSelectDialog(dialog.getContext(), refs.getCurrentData(),
-                    (updatedData) -> {
-                        // 更新显示
-                        if (tvJoystickComboKeys != null) {
-                            ControlJoystickComboKeysManager.updateComboKeysDisplay(dialog.getContext(), updatedData, tvJoystickComboKeys);
-                        }
-                        refs.notifyUpdate();
-                    });
-            });
-        }
-        
         if (etName != null) {
             etName.addTextChangedListener(new android.text.TextWatcher() {
                 @Override

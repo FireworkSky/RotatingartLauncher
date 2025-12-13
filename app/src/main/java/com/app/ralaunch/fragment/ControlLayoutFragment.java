@@ -55,6 +55,8 @@ public class ControlLayoutFragment extends Fragment implements ControlLayoutAdap
     private ControlLayoutAdapter adapter;
     private RecyclerView recyclerView;
     private ExtendedFloatingActionButton fabAddLayout;
+    private com.google.android.material.button.MaterialButton btnImportLayout;
+    private com.google.android.material.button.MaterialButton btnImportPreset;
     private LinearLayout emptyState;
     private Toolbar toolbar;
     private com.google.android.material.button.MaterialButton btnLayoutSettings;
@@ -89,6 +91,8 @@ public class ControlLayoutFragment extends Fragment implements ControlLayoutAdap
         toolbar = view.findViewById(R.id.toolbar);
         recyclerView = view.findViewById(R.id.recyclerView);
         fabAddLayout = view.findViewById(R.id.fabAddLayout);
+        btnImportLayout = view.findViewById(R.id.btnImportLayout);
+        btnImportPreset = view.findViewById(R.id.btnImportPreset);
         emptyState = view.findViewById(R.id.emptyState);
         btnLayoutSettings = view.findViewById(R.id.btn_layout_settings);
 
@@ -99,6 +103,12 @@ public class ControlLayoutFragment extends Fragment implements ControlLayoutAdap
         });
 
         fabAddLayout.setOnClickListener(v -> showAddLayoutDialog());
+        
+        // 导入布局按钮
+        btnImportLayout.setOnClickListener(v -> importLayoutFromFile());
+        
+        // 导入预设按钮
+        btnImportPreset.setOnClickListener(v -> showImportPresetDialog());
 
         // 初始化布局设置侧边弹窗
         android.util.DisplayMetrics metrics = getResources().getDisplayMetrics();

@@ -46,7 +46,7 @@ public class ControlEditorOperations {
         button.y = screenHeight / 2f;
         button.width = 100;
         button.height = 100;
-        button.opacity = 0.7f;
+        button.opacity = 0.5f;
         button.visible = true;
         button.keycode = 62; // Space键
         
@@ -60,16 +60,56 @@ public class ControlEditorOperations {
      * @param config 控件配置
      * @param screenWidth 屏幕宽度
      * @param screenHeight 屏幕高度
+     * @param joystickMode 摇杆模式：JOYSTICK_MODE_KEYBOARD(0) 或 JOYSTICK_MODE_SDL_CONTROLLER(2)
+     * @param isRightStick 是否为右摇杆
      * @return 新创建的摇杆数据
      */
-    public static ControlData addJoystick(ControlConfig config, int screenWidth, int screenHeight) {
+    public static ControlData addJoystick(ControlConfig config, int screenWidth, int screenHeight, 
+                                          int joystickMode, boolean isRightStick) {
         if (config == null || config.controls == null) {
             return null;
         }
         
-        ControlData joystick = ControlData.createDefaultJoystick();
-        joystick.x = screenWidth / 2f;
-        joystick.y = screenHeight / 2f;
+        ControlData joystick;
+        if (joystickMode == ControlData.JOYSTICK_MODE_SDL_CONTROLLER) {
+            // 手柄摇杆模式
+            joystick = new ControlData(
+                isRightStick ? "右摇杆" : "左摇杆", 
+                ControlData.TYPE_JOYSTICK);
+            joystick.joystickMode = ControlData.JOYSTICK_MODE_SDL_CONTROLLER;
+            joystick.xboxUseRightStick = isRightStick;
+            joystick.joystickKeys = null; // 手柄模式不需要键盘映射
+            // 设置默认位置
+            if (isRightStick) {
+                joystick.x = screenWidth - 550f; // 右侧
+            } else {
+                joystick.x = 200f; // 左侧
+            }
+            joystick.y = screenHeight - 500f; // 底部
+        } else {
+            // 键盘/鼠标模式
+            if (isRightStick) {
+                // 右摇杆：使用鼠标移动模式（用于瞄准/攻击）
+                joystick = ControlData.createDefaultAttackJoystick();
+                joystick.joystickMode = ControlData.JOYSTICK_MODE_MOUSE;
+                joystick.xboxUseRightStick = true;
+                joystick.x = screenWidth - 550f; // 右侧
+                joystick.y = screenHeight - 500f; // 底部
+            } else {
+                // 左摇杆：使用键盘模式（WASD移动）
+                joystick = ControlData.createDefaultJoystick();
+                joystick.joystickMode = ControlData.JOYSTICK_MODE_KEYBOARD;
+                joystick.xboxUseRightStick = false;
+                joystick.x = 200f; // 左侧
+                joystick.y = screenHeight - 500f; // 底部
+            }
+        }
+        
+        joystick.width = 450;
+        joystick.height = 450;
+        joystick.opacity = 0.5f;
+        joystick.strokeColor = 0x00000000;
+        joystick.strokeWidth = 0;
         
         config.controls.add(joystick);
         return joystick;
@@ -95,7 +135,7 @@ public class ControlEditorOperations {
         text.y = screenHeight / 2f;
         text.width = 150;
         text.height = 150;
-        text.opacity = 0.7f;
+        text.opacity = 0.5f;
         text.bgColor = 0xFF808080; // 灰色背景（更清晰可见）
         text.visible = true;
         text.shape = ControlData.SHAPE_RECTANGLE; // 默认方形

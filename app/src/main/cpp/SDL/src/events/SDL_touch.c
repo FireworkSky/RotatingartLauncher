@@ -78,7 +78,10 @@ void SDL_ConsumeFingerTouch(int fingerId) {
     if (SDL_IsFingerConsumed(fingerId)) return;
     consumed_fingers[consumed_finger_count++] = fingerId;
 #ifdef __ANDROID__
-    __android_log_print(ANDROID_LOG_INFO, "SDLTouch", "Finger %d consumed by virtual control", fingerId);
+    /* Reduced logging */
+    #if 0
+    __android_log_print(ANDROID_LOG_VERBOSE, "SDLTouch", "Finger %d consumed by virtual control", fingerId);
+    #endif
 #endif
 }
 
@@ -352,10 +355,13 @@ int SDL_SendTouch(SDL_TouchID id, SDL_FingerID fingerid, SDL_Window *window,
     /* 检查此触摸点是否被虚拟控件占用（如虚拟摇杆）*/
     SDL_bool isConsumed = SDL_IsFingerConsumed((int)fingerid);
 #ifdef __ANDROID__
+    /* Reduced logging */
+    #if 0
     if (isConsumed) {
-        __android_log_print(ANDROID_LOG_INFO, "SDLTouchMouse", 
+        __android_log_print(ANDROID_LOG_VERBOSE, "SDLTouchMouse", 
             "Finger %d is consumed by virtual control, skipping mouse events", (int)fingerid);
     }
+    #endif
 #endif
     
     /* Check for multitouch mode: SDL_TOUCH_MOUSE_MULTITOUCH=1 enables multi-finger gestures */

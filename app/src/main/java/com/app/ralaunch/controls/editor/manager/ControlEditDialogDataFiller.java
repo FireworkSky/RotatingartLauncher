@@ -91,12 +91,6 @@ public class ControlEditDialogDataFiller {
         // 鼠标移动范围和速度（从全局设置读取）
         // 初始化已在 ControlEditDialogUIBinder 中处理
         
-        // 组合键映射显示（仅摇杆类型显示）
-        TextView tvJoystickComboKeys = view.findViewById(R.id.tv_joystick_combo_keys);
-        if (tvJoystickComboKeys != null && refs.getCurrentData().type == ControlData.TYPE_JOYSTICK) {
-            // 显示统一组合键
-            ControlJoystickComboKeysManager.updateComboKeysDisplay(refs.getContext(), refs.getCurrentData(), tvJoystickComboKeys);
-        }
     }
     
     /**

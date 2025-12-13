@@ -99,19 +99,52 @@
 
     </LinearLayout>
 
-    <!-- Material 3 Extended FAB -->
-    <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
-        android:id="@+id/fabAddLayout"
+    <!-- Bottom Action Bar -->
+    <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
         android:layout_margin="24dp"
-        android:text="@string/control_new_layout_button"
-        android:contentDescription="@string/content_desc_add_layout"
-        app:icon="@drawable/ic_add"
-        app:backgroundTint="?attr/colorPrimary"
-        app:iconTint="@android:color/white"
-        android:textColor="@android:color/white"
-        style="@style/Widget.Material3.ExtendedFloatingActionButton.Primary" />
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <!-- 导入布局按钮 -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnImportLayout"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/import_layout"
+            android:contentDescription="@string/import_layout"
+            app:icon="@drawable/ic_folder"
+            app:iconGravity="textStart"
+            android:layout_marginEnd="12dp"
+            style="@style/Widget.Material3.Button.TonalButton" />
+
+        <!-- 导入预设按钮 -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnImportPreset"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/import_preset"
+            android:contentDescription="@string/import_preset"
+            app:icon="@drawable/ic_download"
+            app:iconGravity="textStart"
+            android:layout_marginEnd="12dp"
+            style="@style/Widget.Material3.Button.TonalButton" />
+
+        <!-- 新建布局按钮 -->
+        <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
+            android:id="@+id/fabAddLayout"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/control_new_layout_button"
+            android:contentDescription="@string/content_desc_add_layout"
+            app:icon="@drawable/ic_add"
+            app:backgroundTint="?attr/colorPrimary"
+            app:iconTint="@android:color/white"
+            android:textColor="@android:color/white"
+            style="@style/Widget.Material3.ExtendedFloatingActionButton.Primary" />
+
+    </LinearLayout>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

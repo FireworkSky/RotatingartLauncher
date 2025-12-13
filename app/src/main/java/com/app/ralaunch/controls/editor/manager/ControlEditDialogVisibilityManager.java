@@ -110,7 +110,7 @@ public class ControlEditDialogVisibilityManager {
         }
         
         // 摇杆左右选择：仅摇杆类型且为SDL控制器模式或鼠标模式时显示
-        // - 鼠标模式：左摇杆=相对移动，右摇杆=八方向攻击（通过组合键的鼠标左键）
+        // - 鼠标模式：左摇杆=相对移动，右摇杆=八方向攻击（自动鼠标左键）
         // - SDL控制器模式：左摇杆=左摇杆输入，右摇杆=右摇杆输入
         View itemJoystickStickSelect = view.findViewById(R.id.item_joystick_stick_select);
         if (itemJoystickStickSelect != null) {

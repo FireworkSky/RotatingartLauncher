@@ -403,11 +403,11 @@ public class VirtualJoystick extends View implements ControlView {
                     // 进入/离开死区时启动/停止持续点击
                     if (oldDirection == DIR_NONE && newDirection != DIR_NONE) {
                         // 从死区进入有效区域：开始持续鼠标左键点击
-                        pressComboKeysForMouseMove();
+                        startMouseClick();
                         mIsAttacking = true;
                     } else if (oldDirection != DIR_NONE && newDirection == DIR_NONE) {
                         // 从有效区域进入死区：停止持续点击
-                        releaseComboKeysForMouseMove();
+                        stopMouseClick();
                         mIsAttacking = false;
                     }
                 }
@@ -416,31 +416,11 @@ public class VirtualJoystick extends View implements ControlView {
                 sendVirtualMouseMove(dx, dy, distance);
             } else {
                 // 左摇杆：将摇杆偏移量转换为鼠标移动
-            sendMouseMove(dx, dy, distance);
-                // 左摇杆也支持组合键（基于方向）
-                int newDirection = calculateDirection(dx, dy, distance);
-                if (newDirection != mCurrentDirection) {
-                    releaseComboKeys(mCurrentDirection);
-                    if (newDirection != DIR_NONE) {
-                        pressComboKeys(newDirection);
-                    }
-                    mCurrentDirection = newDirection;
-                }
+                sendMouseMove(dx, dy, distance);
             }
         } else if (mData.joystickMode == ControlData.JOYSTICK_MODE_SDL_CONTROLLER) {
             // SDL控制器模式：发送模拟摇杆输入
             sendSDLStick(dx, dy, distance, maxDistance);
-            // SDL控制器模式也支持组合键（基于方向）
-            int newDirection = calculateDirection(dx, dy, distance);
-            if (newDirection != mCurrentDirection) {
-                // 释放旧方向的组合键
-                releaseComboKeys(mCurrentDirection);
-                // 按下新方向的组合键（如果不在死区内）
-                if (newDirection != DIR_NONE) {
-                    pressComboKeys(newDirection);
-                }
-                mCurrentDirection = newDirection;
-            }
         } else {
             // 键盘模式：计算方向并发送按键事件
             int newDirection = calculateDirection(dx, dy, distance);
@@ -465,14 +445,11 @@ public class VirtualJoystick extends View implements ControlView {
         
         // 根据模式执行不同的释放操作
         if (mData.joystickMode == ControlData.JOYSTICK_MODE_MOUSE) {
-            // 鼠标模式：释放组合键
+            // 鼠标模式
             if (mData.xboxUseRightStick) {
                 // 右摇杆：停止持续点击
-                releaseComboKeysForMouseMove();
+                stopMouseClick();
                 mIsAttacking = false;
-            } else {
-                // 左摇杆：释放组合键
-                releaseComboKeys(mCurrentDirection);
             }
             mCurrentDirection = DIR_NONE;
         } else if (mData.joystickMode == ControlData.JOYSTICK_MODE_KEYBOARD) {
@@ -480,13 +457,12 @@ public class VirtualJoystick extends View implements ControlView {
             releaseDirection(mCurrentDirection);
             mCurrentDirection = DIR_NONE;
         } else if (mData.joystickMode == ControlData.JOYSTICK_MODE_SDL_CONTROLLER) {
-            // SDL控制器模式：摇杆回中，并释放组合键
+            // SDL控制器模式：摇杆回中
             if (mData.xboxUseRightStick) {
                 mInputBridge.sendXboxRightStick(0.0f, 0.0f);
             } else {
                 mInputBridge.sendXboxLeftStick(0.0f, 0.0f);
             }
-            releaseComboKeys(mCurrentDirection);
             mCurrentDirection = DIR_NONE;
         }
         
@@ -529,7 +505,6 @@ public class VirtualJoystick extends View implements ControlView {
     /**
      * 按下方向对应的按键
      * joystickKeys数组：[上W, 右D, 下S, 左A]（可选，如果为null则不发送键盘按键）
-     * joystickComboKeys数组：[方向][组合按钮列表] - 每个方向可以组合多个手柄按钮
      */
     private void pressDirection(int direction) {
         if (direction == DIR_NONE) return;
@@ -568,34 +543,6 @@ public class VirtualJoystick extends View implements ControlView {
             }
         }
         
-        // 发送统一组合键（键盘、鼠标、手柄按钮和触发器）- 无论joystickKeys是否为null都发送，所有方向共用
-        // 注意：在鼠标模式下，不发送手柄按钮和触发器，避免触发手柄模式切换
-        if (mData.joystickComboKeys != null && mData.joystickComboKeys.length > 0) {
-            for (int comboKey : mData.joystickComboKeys) {
-                // 键盘按键（正数，SDL scancode）
-                if (comboKey > 0) {
-                    mInputBridge.sendKey(comboKey, true);
-                }
-                // 鼠标按键（-1 到 -3）
-                else if (comboKey >= ControlData.MOUSE_MIDDLE && comboKey <= ControlData.MOUSE_LEFT) {
-                    // 鼠标按键：使用 sendMouseButton，坐标使用摇杆中心位置
-                    mInputBridge.sendMouseButton(comboKey, true, mCenterX, mCenterY);
-                }
-                // 手柄触发器（范围: -221 到 -220）- 只在非鼠标模式下发送
-                else if (mData.joystickMode != ControlData.JOYSTICK_MODE_MOUSE &&
-                         comboKey >= ControlData.XBOX_TRIGGER_RIGHT && comboKey <= ControlData.XBOX_TRIGGER_LEFT) {
-                    // 触发器：使用 sendXboxTrigger，值为 1.0 表示按下
-                    mInputBridge.sendXboxTrigger(comboKey, 1.0f);
-                }
-                // 手柄按钮（范围: -200 到 -214）- 只在非鼠标模式下发送
-                else if (mData.joystickMode != ControlData.JOYSTICK_MODE_MOUSE &&
-                         comboKey >= ControlData.XBOX_BUTTON_DPAD_RIGHT && comboKey <= ControlData.XBOX_BUTTON_A) {
-                    // 普通按钮：使用 sendXboxButton
-                    mInputBridge.sendXboxButton(comboKey, true);
-                }
-            }
-        }
-
     }
     
     /**
@@ -638,169 +585,6 @@ public class VirtualJoystick extends View implements ControlView {
             }
         }
         
-        // 释放统一组合键（键盘、鼠标、手柄按钮和触发器）- 无论joystickKeys是否为null都释放，所有方向共用
-        // 注意：在鼠标模式下，不发送手柄按钮和触发器，避免触发手柄模式切换
-        if (mData.joystickComboKeys != null && mData.joystickComboKeys.length > 0) {
-            for (int comboKey : mData.joystickComboKeys) {
-                // 键盘按键（正数，SDL scancode）
-                if (comboKey > 0) {
-                    mInputBridge.sendKey(comboKey, false);
-                }
-                // 鼠标按键（-1 到 -3）
-                else if (comboKey >= ControlData.MOUSE_MIDDLE && comboKey <= ControlData.MOUSE_LEFT) {
-                    // 鼠标按键：使用 sendMouseButton，坐标使用摇杆中心位置
-                    mInputBridge.sendMouseButton(comboKey, false, mCenterX, mCenterY);
-                }
-                // 手柄触发器（范围: -221 到 -220）- 只在非鼠标模式下发送
-                else if (mData.joystickMode != ControlData.JOYSTICK_MODE_MOUSE &&
-                         comboKey >= ControlData.XBOX_TRIGGER_RIGHT && comboKey <= ControlData.XBOX_TRIGGER_LEFT) {
-                    // 触发器：使用 sendXboxTrigger，值为 0.0 表示释放
-                    mInputBridge.sendXboxTrigger(comboKey, 0.0f);
-                }
-                // 手柄按钮（范围: -200 到 -214）- 只在非鼠标模式下发送
-                else if (mData.joystickMode != ControlData.JOYSTICK_MODE_MOUSE &&
-                         comboKey >= ControlData.XBOX_BUTTON_DPAD_RIGHT && comboKey <= ControlData.XBOX_BUTTON_A) {
-                    // 普通按钮：使用 sendXboxButton
-                    mInputBridge.sendXboxButton(comboKey, false);
-                }
-            }
-        }
-
-    }
-    
-    /**
-     * 仅发送统一组合键（键盘、鼠标、手柄按钮和触发器）- 用于鼠标模式和SDL控制器模式
-     * 所有方向共用同一个组合键
-     * 注意：在鼠标模式下，不发送手柄按钮和触发器，避免触发手柄模式切换
-     */
-    private void pressComboKeys(int direction) {
-        if (direction == DIR_NONE) return;
-        
-        // 发送统一组合键（键盘、鼠标、手柄按钮和触发器）- 所有方向共用
-        // 注意：在鼠标模式下，不发送手柄按钮和触发器，避免触发手柄模式切换
-        if (mData.joystickComboKeys != null && mData.joystickComboKeys.length > 0) {
-            for (int comboKey : mData.joystickComboKeys) {
-                // 键盘按键（正数，SDL scancode）
-                if (comboKey > 0) {
-                    mInputBridge.sendKey(comboKey, true);
-                }
-                // 鼠标按键（-1 到 -3）
-                else if (comboKey >= ControlData.MOUSE_MIDDLE && comboKey <= ControlData.MOUSE_LEFT) {
-                    // 鼠标按键：使用 sendMouseButton，坐标使用摇杆中心位置
-                    mInputBridge.sendMouseButton(comboKey, true, mCenterX, mCenterY);
-                }
-                // 手柄触发器（范围: -221 到 -220）- 只在非鼠标模式下发送
-                else if (mData.joystickMode != ControlData.JOYSTICK_MODE_MOUSE &&
-                         comboKey >= ControlData.XBOX_TRIGGER_RIGHT && comboKey <= ControlData.XBOX_TRIGGER_LEFT) {
-                    // 触发器：使用 sendXboxTrigger，值为 1.0 表示按下
-                    mInputBridge.sendXboxTrigger(comboKey, 1.0f);
-                }
-                // 手柄按钮（范围: -200 到 -214）- 只在非鼠标模式下发送
-                else if (mData.joystickMode != ControlData.JOYSTICK_MODE_MOUSE &&
-                         comboKey >= ControlData.XBOX_BUTTON_DPAD_RIGHT && comboKey <= ControlData.XBOX_BUTTON_A) {
-                    // 普通按钮：使用 sendXboxButton
-                    mInputBridge.sendXboxButton(comboKey, true);
-                }
-            }
-        }
-    }
-    
-    /**
-     * 仅释放统一组合键（键盘、鼠标、手柄按钮和触发器）- 用于鼠标模式和SDL控制器模式
-     * 所有方向共用同一个组合键
-     * 注意：在鼠标模式下，不发送手柄按钮和触发器，避免触发手柄模式切换
-     */
-    private void releaseComboKeys(int direction) {
-        if (direction == DIR_NONE) return;
-        
-        // 释放统一组合键（键盘、鼠标、手柄按钮和触发器）- 所有方向共用
-        // 注意：在鼠标模式下，不发送手柄按钮和触发器，避免触发手柄模式切换
-        if (mData.joystickComboKeys != null && mData.joystickComboKeys.length > 0) {
-            for (int comboKey : mData.joystickComboKeys) {
-                // 键盘按键（正数，SDL scancode）
-                if (comboKey > 0) {
-                    mInputBridge.sendKey(comboKey, false);
-                }
-                // 鼠标按键（-1 到 -3）
-                else if (comboKey >= ControlData.MOUSE_MIDDLE && comboKey <= ControlData.MOUSE_LEFT) {
-                    // 鼠标按键：使用 sendMouseButton，坐标使用摇杆中心位置
-                    mInputBridge.sendMouseButton(comboKey, false, mCenterX, mCenterY);
-                }
-                // 手柄触发器（范围: -221 到 -220）- 只在非鼠标模式下发送
-                else if (mData.joystickMode != ControlData.JOYSTICK_MODE_MOUSE &&
-                         comboKey >= ControlData.XBOX_TRIGGER_RIGHT && comboKey <= ControlData.XBOX_TRIGGER_LEFT) {
-                    // 触发器：使用 sendXboxTrigger，值为 0.0 表示释放
-                    mInputBridge.sendXboxTrigger(comboKey, 0.0f);
-                }
-                // 手柄按钮（范围: -200 到 -214）- 只在非鼠标模式下发送
-                else if (mData.joystickMode != ControlData.JOYSTICK_MODE_MOUSE &&
-                         comboKey >= ControlData.XBOX_BUTTON_DPAD_RIGHT && comboKey <= ControlData.XBOX_BUTTON_A) {
-                    // 普通按钮：使用 sendXboxButton
-                    mInputBridge.sendXboxButton(comboKey, false);
-                }
-            }
-        }
-    }
-    
-    /**
-     * 右摇杆专用：发送组合键（使用八方向位置）
-     * 鼠标左键使用虚拟触屏实现，不影响正常触屏控制
-     */
-    private void pressComboKeysForRightStick(int direction) {
-        if (direction == DIR_NONE) return;
-        
-        if (mData.joystickComboKeys != null && mData.joystickComboKeys.length > 0) {
-            // 计算当前方向对应的屏幕位置
-            float[] pos = calculateDirectionPosition(direction);
-            
-            for (int comboKey : mData.joystickComboKeys) {
-                // 键盘按键（正数，SDL scancode）
-                if (comboKey > 0) {
-                    mInputBridge.sendKey(comboKey, true);
-                }
-                // 鼠标左键：使用虚拟触屏（游戏使用触屏控制）
-                else if (comboKey == ControlData.MOUSE_LEFT) {
-                    if (mInputBridge instanceof SDLInputBridge) {
-                        ((SDLInputBridge) mInputBridge).sendVirtualTouch(
-                            SDLInputBridge.VIRTUAL_TOUCH_RIGHT_STICK, pos[0], pos[1], true);
-                    }
-                }
-                // 其他鼠标按键：使用SDL鼠标
-                else if (comboKey >= ControlData.MOUSE_MIDDLE && comboKey <= ControlData.MOUSE_RIGHT) {
-                    mInputBridge.sendMouseButton(comboKey, true, pos[0], pos[1]);
-                }
-            }
-        }
-    }
-    
-    /**
-     * 右摇杆专用：释放组合键
-     */
-    private void releaseComboKeysForRightStick(int direction) {
-        if (direction == DIR_NONE) return;
-        
-        if (mData.joystickComboKeys != null && mData.joystickComboKeys.length > 0) {
-            // 计算当前方向对应的屏幕位置
-            float[] pos = calculateDirectionPosition(direction);
-            
-            for (int comboKey : mData.joystickComboKeys) {
-                // 键盘按键（正数，SDL scancode）
-                if (comboKey > 0) {
-                    mInputBridge.sendKey(comboKey, false);
-                }
-                // 鼠标左键：使用虚拟触屏释放
-                else if (comboKey == ControlData.MOUSE_LEFT) {
-                    if (mInputBridge instanceof SDLInputBridge) {
-                        ((SDLInputBridge) mInputBridge).sendVirtualTouch(
-                            SDLInputBridge.VIRTUAL_TOUCH_RIGHT_STICK, pos[0], pos[1], false);
-                    }
-                }
-                // 其他鼠标按键：使用SDL鼠标
-                else if (comboKey >= ControlData.MOUSE_MIDDLE && comboKey <= ControlData.MOUSE_RIGHT) {
-                    mInputBridge.sendMouseButton(comboKey, false, pos[0], pos[1]);
-                }
-            }
-        }
     }
     
     /**
@@ -810,7 +594,7 @@ public class VirtualJoystick extends View implements ControlView {
         if (!mIsAttacking) return;
         mIsAttacking = false;
         // 释放攻击状态
-        releaseComboKeysForRightStick(mCurrentDirection);
+        // 组合键已移除
     }
     
     /**
@@ -820,11 +604,11 @@ public class VirtualJoystick extends View implements ControlView {
     private void updateAttackDirection(int oldDirection, int newDirection) {
         // 释放旧方向
         if (oldDirection != DIR_NONE) {
-            releaseComboKeysForRightStick(oldDirection);
+            // 组合键已移除
         }
         // 按下新方向
         if (newDirection != DIR_NONE) {
-            pressComboKeysForRightStick(newDirection);
+            // 组合键已移除
         }
     }
     
@@ -848,39 +632,7 @@ public class VirtualJoystick extends View implements ControlView {
         mIsAttacking = false;
         mClickAttackHandler.removeCallbacks(mClickAttackRunnable);
         // 确保释放最后的虚拟触屏点
-        releaseComboKeysForRightStick(mCurrentDirection);
-    }
-    
-    /**
-     * 按下组合键（鼠标移动模式，跟随光标位置）
-     
-     */
-    private void pressComboKeysForMouseMove() {
-        // 自动启动持续鼠标左键点击（不需要配置组合键）
-        startMouseClick();
-        
-        // 处理额外配置的组合键
-        if (mData.joystickComboKeys == null || mData.joystickComboKeys.length == 0) return;
-        
-        for (int comboKey : mData.joystickComboKeys) {
-            // 键盘按键
-            if (comboKey > 0) {
-                mInputBridge.sendKey(comboKey, true);
-            }
-            // 鼠标左键已自动处理，跳过
-            else if (comboKey == ControlData.MOUSE_LEFT) {
-                // 已在 startMouseClick() 中处理
-            }
-            // 其他鼠标按键：使用SDL鼠标
-            else if (comboKey >= ControlData.MOUSE_MIDDLE && comboKey <= ControlData.MOUSE_RIGHT) {
-                if (mInputBridge instanceof SDLInputBridge) {
-                    SDLInputBridge bridge = (SDLInputBridge) mInputBridge;
-                    float mouseX = bridge.getVirtualMouseX();
-                    float mouseY = bridge.getVirtualMouseY();
-                    mInputBridge.sendMouseButton(comboKey, true, mouseX, mouseY);
-                }
-            }
-        }
+        // 组合键已移除
     }
     
     /**
@@ -901,13 +653,13 @@ public class VirtualJoystick extends View implements ControlView {
             float mouseX = mScreenWidth / 2.0f;
             float mouseY = mScreenHeight / 2.0f;
             
-            Log.i(TAG, "Mouse attack started, mode=" + mAttackMode);
+            // Log.v(TAG, "Mouse attack started, mode=" + mAttackMode);
             
             switch (mAttackMode) {
                 case 0: // 长按模式：按下鼠标左键，不释放
                 case 2: // 持续模式：同长按
                     bridge.sendMouseButton(ControlData.MOUSE_LEFT, true, mouseX, mouseY);
-                    Log.i(TAG, "Mouse left button pressed (hold mode)");
+                    // Log.v(TAG, "Mouse left button pressed (hold mode)");
                     break;
                     
                 case 1: // 点击模式：启动连续点击
@@ -915,7 +667,7 @@ public class VirtualJoystick extends View implements ControlView {
                     bridge.sendMouseButton(ControlData.MOUSE_LEFT, true, mouseX, mouseY);
                     // 启动连续点击循环
                     mClickAttackHandler.postDelayed(mMouseClickRunnable, MOUSE_CLICK_INTERVAL_MS);
-                    Log.i(TAG, "Mouse click loop started");
+                    // Log.v(TAG, "Mouse click loop started");
                     break;
             }
         }
@@ -938,38 +690,7 @@ public class VirtualJoystick extends View implements ControlView {
             float mouseY = mScreenHeight / 2.0f;
             bridge.sendMouseButton(ControlData.MOUSE_LEFT, false, mouseX, mouseY);
             
-            Log.i(TAG, "Mouse attack stopped");
-        }
-    }
-    
-    /**
-     * 释放组合键（鼠标移动模式）
-     */
-    private void releaseComboKeysForMouseMove() {
-        // 停止持续鼠标左键点击
-        stopMouseClick();
-        
-        // 处理额外配置的组合键
-        if (mData.joystickComboKeys == null || mData.joystickComboKeys.length == 0) return;
-        
-        for (int comboKey : mData.joystickComboKeys) {
-            // 键盘按键
-            if (comboKey > 0) {
-                mInputBridge.sendKey(comboKey, false);
-            }
-            // 鼠标左键已在 stopMouseClick() 中处理
-            else if (comboKey == ControlData.MOUSE_LEFT) {
-                // 已处理
-            }
-            // 其他鼠标按键
-            else if (comboKey >= ControlData.MOUSE_MIDDLE && comboKey <= ControlData.MOUSE_RIGHT) {
-                if (mInputBridge instanceof SDLInputBridge) {
-                    SDLInputBridge bridge = (SDLInputBridge) mInputBridge;
-                    float mouseX = bridge.getVirtualMouseX();
-                    float mouseY = bridge.getVirtualMouseY();
-                    mInputBridge.sendMouseButton(comboKey, false, mouseX, mouseY);
-                }
-            }
+            // Log.v(TAG, "Mouse attack stopped");
         }
     }
     
@@ -979,25 +700,18 @@ public class VirtualJoystick extends View implements ControlView {
     private void performClickAttack(int direction) {
         if (direction == DIR_NONE) return;
         
-        if (mData.joystickComboKeys != null && mData.joystickComboKeys.length > 0) {
-            float[] pos = calculateDirectionPosition(direction);
-            
-            for (int comboKey : mData.joystickComboKeys) {
-                // 鼠标左键：触发点击（按下）
-                if (comboKey == ControlData.MOUSE_LEFT) {
-                    if (mInputBridge instanceof SDLInputBridge) {
-                        SDLInputBridge bridge = (SDLInputBridge) mInputBridge;
-                        // 按下
-                        bridge.sendVirtualTouch(SDLInputBridge.VIRTUAL_TOUCH_RIGHT_STICK, pos[0], pos[1], true);
-                        // 短暂延迟后释放
-                        mClickAttackHandler.postDelayed(() -> {
-                            if (mIsAttacking) {
-                                bridge.sendVirtualTouch(SDLInputBridge.VIRTUAL_TOUCH_RIGHT_STICK, pos[0], pos[1], false);
-                            }
-                        }, 50); // 50ms 按下时间
-                    }
+        // 组合键已移除，直接使用鼠标左键点击
+        float[] pos = calculateDirectionPosition(direction);
+        if (mInputBridge instanceof SDLInputBridge) {
+            SDLInputBridge bridge = (SDLInputBridge) mInputBridge;
+            // 按下
+            bridge.sendVirtualTouch(SDLInputBridge.VIRTUAL_TOUCH_RIGHT_STICK, pos[0], pos[1], true);
+            // 短暂延迟后释放
+            mClickAttackHandler.postDelayed(() -> {
+                if (mIsAttacking) {
+                    bridge.sendVirtualTouch(SDLInputBridge.VIRTUAL_TOUCH_RIGHT_STICK, pos[0], pos[1], false);
                 }
-            }
+            }, 50); // 50ms 按下时间
         }
     }
     
@@ -1126,7 +840,7 @@ public class VirtualJoystick extends View implements ControlView {
         // 发送真正的鼠标相对移动事件（使用 SDL onNativeMouse）
         mInputBridge.sendMouseMove(mouseX, mouseY);
         
-        Log.d(TAG, "Mouse move: delta=(" + mouseX + ", " + mouseY + "), speed=" + sensitivity);
+        // Log.v(TAG, "Mouse move: delta=(" + mouseX + ", " + mouseY + "), speed=" + sensitivity);
     }
     
     /**
