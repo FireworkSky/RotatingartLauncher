@@ -49,12 +49,7 @@ public class GameSettingsModule implements SettingsModule {
 
                 List<OptionSelectorDialog.Option> options = new ArrayList<>();
 
-                options.add(new OptionSelectorDialog.Option(
-                    RuntimePreference.RENDERER_AUTO,
-                    fragment.getString(R.string.renderer_auto),
-                    fragment.getString(R.string.renderer_auto_desc)
-                ));
-
+                // 移除自动选择选项，直接显示所有可用渲染器
                 for (RendererConfig.RendererInfo renderer : compatibleRenderers) {
                     String stringId = "renderer_" + renderer.id;
                     String descId = "renderer_" + renderer.id + "_desc";

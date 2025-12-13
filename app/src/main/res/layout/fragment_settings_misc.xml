@@ -530,7 +530,7 @@
 
                     </com.google.android.material.card.MaterialCardView>
 
-                    <!-- 贡献者卡片 - 长矩形 -->
+                    <!-- 开发者卡片 - 长矩形 -->
                     <com.google.android.material.card.MaterialCardView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -566,7 +566,7 @@
                                 <TextView
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="贡献者"
+                                    android:text="开发者"
                                     android:textColor="?attr/textSecondary"
                                     android:textSize="12sp"
                                     android:layout_marginBottom="4dp" />

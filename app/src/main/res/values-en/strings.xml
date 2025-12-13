@@ -155,10 +155,12 @@
     <string name="renderer_title">Renderer</string>
     <string name="renderer_auto">Auto (Recommended)</string>
     <string name="renderer_auto_desc">Automatically select best renderer</string>
-    <string name="renderer_native">Native OpenGL ES</string>
-    <string name="renderer_native_desc">System native EGL/OpenGL ES (best compatibility)</string>
+    <string name="renderer_native">Native OpenGL ES 3</string>
+    <string name="renderer_native_desc">Native hardware acceleration, best performance. Limited features, some games may have compatibility issues</string>
     <string name="renderer_gl4es">GL4ES</string>
-    <string name="renderer_gl4es_desc">OpenGL 2.1 translation to OpenGL ES 2.0 (strongest compatibility)</string>
+    <string name="renderer_gl4es_desc">OpenGL translation layer, strong compatibility. Minor performance overhead from translation</string>
+    <string name="renderer_gl4es_angle">GL4ES + ANGLE</string>
+    <string name="renderer_gl4es_angle_desc">Translates to Vulkan backend, best balance of compatibility and performance (Recommended)</string>
     <string name="renderer_angle">ANGLE (Vulkan)</string>
     <string name="renderer_angle_desc">OpenGL ES over Vulkan (Google official, requires Android 7.0+)</string>
     <string name="renderer_zink">Zink (Mesa)</string>

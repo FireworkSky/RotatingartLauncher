@@ -427,10 +427,7 @@ public class FileBrowserFragment extends BaseFragment implements FileBrowserAdap
         // 创建选项菜单
         java.util.List<com.app.ralib.dialog.OptionSelectorDialog.Option> options = new java.util.ArrayList<>();
         
-        // 添加到游戏列表选项（仅在非程序集选择模式下显示）
-        if (mode != MODE_SELECT_ASSEMBLY && addToGameListListener != null) {
-            // File browser add to game list option removed
-        }
+        // 添加到游戏列表功能已移除
         
         // 选择此文件选项
         options.add(new com.app.ralib.dialog.OptionSelectorDialog.Option(
@@ -449,10 +446,7 @@ public class FileBrowserFragment extends BaseFragment implements FileBrowserAdap
             .setIcon(R.drawable.ic_file)
             .setOptions(options)
             .setOnOptionSelectedListener(value -> {
-                if ("add_to_game_list".equals(value) && addToGameListListener != null) {
-                    addToGameListListener.onAddToGameList(filePath);
-                    com.app.ralaunch.utils.AppLogger.info("FileBrowserFragment", "添加到游戏列表: " + filePath);
-                } else if ("select_file".equals(value)) {
+                if ("select_file".equals(value)) {
                     // 直接选择文件（相当于点击）
                     onFileClick(fileItem);
                 }

@@ -287,7 +287,7 @@ public class AppearanceSettingsModule implements SettingsModule {
             });
         }
         
-        // 设置贡献者 GitHub 按钮
+        // 设置开发者 GitHub 按钮
         com.google.android.material.button.MaterialButton btnContributorGithub = 
             rootView.findViewById(R.id.btnContributorGithub);
         if (btnContributorGithub != null) {
