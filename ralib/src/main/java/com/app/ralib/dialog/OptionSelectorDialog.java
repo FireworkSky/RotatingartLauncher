@@ -273,6 +273,7 @@ public class OptionSelectorDialog extends DialogFragment {
             MaterialCardView cardOption;
             ImageView ivOptionIcon;
             TextView tvOptionLabel;
+            TextView tvOptionDescription;
             ImageView ivCheckmark;
 
             ViewHolder(View itemView) {
@@ -280,11 +281,20 @@ public class OptionSelectorDialog extends DialogFragment {
                 cardOption = (MaterialCardView) itemView;
                 ivOptionIcon = itemView.findViewById(R.id.ivOptionIcon);
                 tvOptionLabel = itemView.findViewById(R.id.tvOptionLabel);
+                tvOptionDescription = itemView.findViewById(R.id.tvOptionDescription);
                 ivCheckmark = itemView.findViewById(R.id.ivCheckmark);
             }
 
             void bind(Option option) {
                 tvOptionLabel.setText(option.getLabel());
+                
+                // 设置描述
+                if (option.getDescription() != null && !option.getDescription().isEmpty()) {
+                    tvOptionDescription.setVisibility(View.VISIBLE);
+                    tvOptionDescription.setText(option.getDescription());
+                } else {
+                    tvOptionDescription.setVisibility(View.GONE);
+                }
                 
                 // 设置图标
                 if (option.getIconRes() > 0) {

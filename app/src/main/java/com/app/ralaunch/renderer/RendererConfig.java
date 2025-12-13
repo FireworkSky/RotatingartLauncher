@@ -67,8 +67,8 @@ public class RendererConfig {
         // 系统原生渲染器（默认）
         new RendererInfo(
             RENDERER_NATIVE_GLES,
-            "Native OpenGL ES",
-            "使用系统原生 EGL/OpenGL ES（最佳兼容性）",
+            "Native OpenGL ES 3",
+            "最快，有GPU加速，但可能有渲染错误",
             null,           // 使用系统 libEGL.so
             null,           // 使用系统 libGLESv2.so
             false,
@@ -79,7 +79,7 @@ public class RendererConfig {
         new RendererInfo(
             RENDERER_GL4ES,
             "GL4ES",
-            "OpenGL 2.1 翻译至 OpenGL ES 2.0（兼容性最强）",
+            "最完美，游戏兼容性最强，但帧率稍慢",
             "libEGL_gl4es.so",
             "libGL_gl4es.so",
             true,
@@ -90,7 +90,7 @@ public class RendererConfig {
         new RendererInfo(
             RENDERER_GL4ES_ANGLE,
             "GL4ES + ANGLE",
-            "OpenGL 2.1 翻译至 OpenGL ES 2.0 再翻译至 Vulkan（兼容性强+性能强）",
+            "翻译成Vulkan，速度和兼容性最佳，推荐高通骁龙使用",
             "libEGL_gl4es.so",
             "libGL_gl4es.so",
             true,
