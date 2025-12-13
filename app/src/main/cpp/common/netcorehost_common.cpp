@@ -12,6 +12,7 @@
 #include <cassert>
 #include <format>
 #include <string>
+#include <sys/stat.h>
 
 // 直接声明 JNI Bridge 函数
 extern "C" {
@@ -84,12 +85,29 @@ int netcorehost_common_setup_env(const netcorehost_env_config_t* config) {
         LOGI(LOG_TAG, "COREHOST_TRACE disabled");
     }
 
-    // 5. 设置保存目录
+    // 5. 设置保存目录（游戏数据目录，不是游戏安装目录）
+    const char* game_data_dir = "/storage/emulated/0/RALauncher";
+    // 确保目录存在
+    struct stat st;
+    if (stat(game_data_dir, &st) != 0) {
+        // 目录不存在，尝试创建
+        mode_t mode = S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH;
+        if (mkdir(game_data_dir, mode) != 0) {
+            LOGW(LOG_TAG, "Failed to create game data directory: %s, using app_dir as fallback", game_data_dir);
+            game_data_dir = config->app_dir;
+        } else {
+            LOGI(LOG_TAG, "Created game data directory: %s", game_data_dir);
+        }
+    } else {
+        LOGI(LOG_TAG, "Using game data directory: %s", game_data_dir);
+    }
+    
+    setenv("XDG_DATA_HOME", game_data_dir, 1);
+    setenv("XDG_CONFIG_HOME", game_data_dir, 1);
+    setenv("HOME", game_data_dir, 1);
+    LOGI(LOG_TAG, "Game data directories set to: %s", game_data_dir);
     if (config->app_dir) {
-        setenv("XDG_DATA_HOME", config->app_dir, 1);
-        setenv("XDG_CONFIG_HOME", config->app_dir, 1);
-        setenv("HOME", config->app_dir, 1);
-        LOGI(LOG_TAG, "App directories: %s", config->app_dir);
+        LOGI(LOG_TAG, "App directory (for assemblies): %s", config->app_dir);
     }
 
     // 6. 设置输入相关

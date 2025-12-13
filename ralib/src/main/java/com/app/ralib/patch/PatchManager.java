@@ -32,6 +32,10 @@ public class PatchManager {
     private PatchManagerConfig config;
 
     public PatchManager(@Nullable String customStoragePath) throws IOException {
+        this(customStoragePath, false);
+    }
+
+    public PatchManager(@Nullable String customStoragePath, boolean installPatchesImmediately) throws IOException {
         var isFirstTime = false;
         patchStoragePath = getDefaultPatchStorageDirectories(customStoragePath);
         if (!Files.isDirectory(patchStoragePath) || !Files.exists(patchStoragePath)) {
@@ -42,8 +46,11 @@ public class PatchManager {
         configFilePath = patchStoragePath.resolve(PatchManagerConfig.CONFIG_FILE_NAME);
         loadConfig();
 
-        // 每次启动都检查并安装缺失的内置补丁
-        installBuiltInPatches(this);
+        // 如果指定立即安装，则在当前线程安装补丁（用于向后兼容）
+        // 否则，应该由调用者在后台线程调用 installBuiltInPatches
+        if (installPatchesImmediately) {
+            installBuiltInPatches(this);
+        }
     }
 
     //region Patch Querying

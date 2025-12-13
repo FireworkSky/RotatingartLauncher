@@ -190,17 +190,6 @@ int netcorehost_set_params(
     // 释放旧的命令行参数
     free_argv();
     
-    // 检测是否是服务器模式（-server 参数）
-    bool is_server_mode = false;
-    if (argc > 0 && argv != nullptr) {
-        for (int i = 0; i < argc; i++) {
-            if (argv[i] && strcmp(argv[i], "-server") == 0) {
-                is_server_mode = true;
-                break;
-            }
-        }
-    }
-    
 
     
     // 复制新的命令行参数
@@ -259,9 +248,27 @@ int netcorehost_set_params(
         setenv("COREHOST_TRACE", "1", 1);
         setenv("COREHOST_TRACEFILE", std::format("/sdcard/Android/data/{}/files/corehost_trace.log", get_package_name()).c_str(), 1);
     }
-    setenv("XDG_DATA_HOME", std::string(app_dir).c_str(), 1);
-    setenv("XDG_CONFIG_HOME", std::string(app_dir).c_str(), 1);
-    setenv("HOME", std::string(app_dir).c_str(), 1);
+    
+    // 设置游戏数据目录到 SD 卡的 RALauncher 文件夹
+    const char* game_data_dir = "/storage/emulated/0/RALauncher";
+    // 确保目录存在
+    struct stat st;
+    if (stat(game_data_dir, &st) != 0) {
+        // 目录不存在，尝试创建
+        mode_t mode = S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH;
+        if (mkdir(game_data_dir, mode) != 0) {
+            LOGW(LOG_TAG, "Failed to create game data directory: %s, using app_dir as fallback", game_data_dir);
+            game_data_dir = app_dir;
+        } else {
+            LOGI(LOG_TAG, "Created game data directory: %s", game_data_dir);
+        }
+    } else {
+        LOGI(LOG_TAG, "Using game data directory: %s", game_data_dir);
+    }
+    
+    setenv("XDG_DATA_HOME", game_data_dir, 1);
+    setenv("XDG_CONFIG_HOME", game_data_dir, 1);
+    setenv("HOME", game_data_dir, 1);
 
 
     return 0;

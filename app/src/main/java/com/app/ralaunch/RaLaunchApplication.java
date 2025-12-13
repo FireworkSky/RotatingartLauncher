@@ -69,15 +69,26 @@ public class RaLaunchApplication extends Application {
         // 初始化 GameDataManager
         gameDataManager = new GameDataManager(appContext);
 
-        // 初始化 PatchManager
+        // 初始化 PatchManager（不在构造函数中安装补丁，避免主线程阻塞）
         try {
-            patchManager = new PatchManager(null);
+            patchManager = new PatchManager(null, false);
         } catch (Exception e) {
             Log.e(TAG, "Failed to initialize PatchManager", e);
         }
         
-        // 提取并安装内置补丁（如果需要）
-        com.app.ralaunch.utils.PatchExtractor.extractPatchesIfNeeded(appContext);
+        // 在后台线程安装内置补丁（避免 ANR）
+        if (patchManager != null) {
+            new Thread(() -> {
+                try {
+                    // 提取并安装内置补丁（如果需要）
+                    com.app.ralaunch.utils.PatchExtractor.extractPatchesIfNeeded(appContext);
+                    // 安装内置补丁
+                    PatchManager.installBuiltInPatches(patchManager);
+                } catch (Exception e) {
+                    Log.e(TAG, "Failed to install built-in patches in background", e);
+                }
+            }, "PatchInstaller").start();
+        }
 
         vibrationManager = new VibrationManager(appContext);
 

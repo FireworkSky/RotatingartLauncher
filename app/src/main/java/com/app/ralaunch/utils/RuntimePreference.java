@@ -208,6 +208,23 @@ public final class RuntimePreference {
             android.util.Log.i(TAG, "FNA3D configured for OpenGL ES 3.0 (renderer: " + rendererId + ")");
         }
 
+        // glMapBufferRange 优化设置
+        // 默认开启，但所有使用 Vulkan 后端的渲染器自动关闭
+        // Vulkan 后端渲染器包括：zink, zink25, angle, gl4es+angle
+        if (RendererConfig.RENDERER_ZINK.equals(rendererId) ||
+            RendererConfig.RENDERER_ZINK_25.equals(rendererId) ||
+            RendererConfig.RENDERER_ANGLE.equals(rendererId) ||
+            RendererConfig.RENDERER_GL4ES_ANGLE.equals(rendererId)) {
+            // Vulkan 后端渲染器：禁用 glMapBufferRange 优化
+            // 这些渲染器将 OpenGL/GLES 翻译到 Vulkan，glMapBufferRange 优化不适用
+            setEnv("FNA3D_OPENGL_USE_MAP_BUFFER_RANGE", "0");
+            android.util.Log.i(TAG, "FNA3D_OPENGL_USE_MAP_BUFFER_RANGE = 0 (disabled for Vulkan backend renderer: " + rendererId + ")");
+        } else {
+            // 其他渲染器：默认开启（不设置环境变量，使用代码中的默认值）
+            // 可以通过设置环境变量为 "0" 来手动禁用
+            android.util.Log.i(TAG, "FNA3D_OPENGL_USE_MAP_BUFFER_RANGE = enabled by default (can be disabled via env var)");
+        }
+
         // VSync 设置
         setEnv("FORCE_VSYNC", "true");
 

@@ -98,14 +98,30 @@ public class ProcessLauncherService extends Service {
         AppLogger.info(TAG, "Process ID: " + Process.myPid());
         AppLogger.info(TAG, "========================================");
         
-        // 设置基本环境变量
+       
         try {
             Os.setenv("PACKAGE_NAME", getPackageName(), true);
-            Os.setenv("HOME", getFilesDir().getAbsolutePath(), true);
-            Os.setenv("XDG_DATA_HOME", getFilesDir().getAbsolutePath(), true);
-            Os.setenv("XDG_CONFIG_HOME", getFilesDir().getAbsolutePath(), true);
+            
+           
+            File gameDataDir = new File("/storage/emulated/0/RALauncher");
+            if (!gameDataDir.exists()) {
+                if (!gameDataDir.mkdirs()) {
+                    AppLogger.warn(TAG, "Failed to create game data directory: " + gameDataDir.getAbsolutePath() + ", using files dir as fallback");
+                    gameDataDir = getFilesDir();
+                } else {
+                    AppLogger.info(TAG, "Created game data directory: " + gameDataDir.getAbsolutePath());
+                }
+            } else {
+                AppLogger.info(TAG, "Using game data directory: " + gameDataDir.getAbsolutePath());
+            }
+            
+            String gameDataPath = gameDataDir.getAbsolutePath();
+            Os.setenv("HOME", gameDataPath, true);
+            Os.setenv("XDG_DATA_HOME", gameDataPath, true);
+            Os.setenv("XDG_CONFIG_HOME", gameDataPath, true);
             Os.setenv("XDG_CACHE_HOME", getCacheDir().getAbsolutePath(), true);
-        } catch (Exception e) {
+        } 
+        catch (Exception e) {
             AppLogger.error(TAG, "Failed to set environment", e);
         }
         

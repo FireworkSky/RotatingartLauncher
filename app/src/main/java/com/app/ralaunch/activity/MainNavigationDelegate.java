@@ -5,6 +5,7 @@ import androidx.fragment.app.FragmentManager;
 import com.app.ralaunch.R;
 import com.app.ralaunch.fragment.ControlLayoutFragment;
 import com.app.ralaunch.fragment.FileBrowserFragment;
+import com.app.ralaunch.fragment.ModManagerFragment;
 import com.app.ralaunch.fragment.SettingsFragment;
 import com.app.ralaunch.fragment.LocalImportFragment;
 import com.app.ralaunch.fragment.GameImportFragment;
@@ -107,24 +108,18 @@ public class MainNavigationDelegate {
     }
 
     /**
-     * 显示文件管理器页面
+     * 显示文件管理器页面（模组管理器）
      */
     public void showFilePage() {
         setPageVisibility(false, true, false, false, false, false);
         updateTopAppBar();
         
-        // 初始化文件浏览器 Fragment（如果尚未初始化）
+        // 初始化模组管理器 Fragment（如果尚未初始化）
         if (fileManagerPage != null && fragmentManager.findFragmentById(R.id.fileManagerPage) == null) {
-            FileBrowserFragment fileBrowserFragment = new FileBrowserFragment();
-            fileBrowserFragment.setMode(FileBrowserFragment.MODE_SELECT_FILE);
-            fileBrowserFragment.setOnPermissionRequestListener(permissionRequestListener);
-            fileBrowserFragment.setOnBackListener(() -> {
-                // 文件浏览器返回时，切换到游戏页面
-                showGamePage();
-            });
+            ModManagerFragment modManagerFragment = new ModManagerFragment();
             
             fragmentManager.beginTransaction()
-                    .replace(R.id.fileManagerPage, fileBrowserFragment, "file_browser")
+                    .replace(R.id.fileManagerPage, modManagerFragment, "mod_manager")
                     .commit();
         }
         

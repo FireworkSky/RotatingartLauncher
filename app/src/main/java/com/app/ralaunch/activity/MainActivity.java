@@ -356,32 +356,6 @@ public class MainActivity extends AppCompatActivity implements
         }
     }
     
-    /**
-     * 从文件浏览器选择 DLL/EXE 并添加到游戏列表
-     */
-    private void showAddAssemblyFromFileBrowser() {
-        if (importDelegate != null) {
-            importDelegate.showAddAssemblyFromFileBrowser();
-        }
-    }
-    
-    /**
-     * 将选中的程序集添加到游戏列表（供其他类调用）
-     */
-    public void addAssemblyToGameList(String assemblyPath) {
-        if (importDelegate != null) {
-            importDelegate.addAssemblyToGameList(assemblyPath);
-        }
-    }
-    
-    /**
-     * 显示文件操作菜单（供其他类调用）
-     */
-    public void showFileActionMenu(java.io.File file) {
-        if (importDelegate != null) {
-            importDelegate.showFileActionMenu(file);
-        }
-    }
 
     // 实现 OnImportCompleteListener
     @Override
@@ -399,7 +373,6 @@ public class MainActivity extends AppCompatActivity implements
         }
     }
 
-    // 文件浏览器相关方法已迁移到 FileBrowserManager
     
     private void refreshGameList() {
         if (gameListManager != null) {

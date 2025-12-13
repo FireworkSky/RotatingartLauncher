@@ -10,7 +10,6 @@
     <string name="main_settings">设置</string>
     <string name="main_control_layout">控制布局</string>
     <string name="main_game_list_mode">游戏列表模式</string>
-    <string name="main_file_browser_mode">文件浏览器模式 - 选择 DLL/EXE 文件启动</string>
     <string name="main_refresh_complete">已刷新游戏列表</string>
 
     <!-- 游戏信息 -->
@@ -341,8 +340,6 @@
     <string name="filebrowser_directory_empty">当前目录为空</string>
     <string name="filebrowser_confirm_select">确认选择: %s</string>
     <string name="filebrowser_select_file">选择文件</string>
-    <string name="filebrowser_add_to_list">添加到游戏列表</string>
-    <string name="filebrowser_add_to_list_desc">将此程序集添加到游戏列表以便快速启动</string>
     <string name="filebrowser_select_this_file">选择此文件</string>
     <string name="filebrowser_select_this_file_desc">确认选择此文件</string>
     <string name="filebrowser_file_action">文件操作: %s</string>
@@ -971,4 +968,41 @@
     <string name="menu_add_cross">添加方向键</string>
     <string name="menu_load_default_layout">加载默认布局</string>
     <string name="menu_clear_all_controls">清空所有控件</string>
+    
+    <!-- Game File Browser -->
+    <string name="mod_manager_title">游戏文件浏览器</string>
+    <string name="mod_manager_path">路径</string>
+    <string name="mod_manager_new_folder">新建文件夹</string>
+    <string name="mod_manager_refresh">刷新</string>
+    <string name="mod_manager_copy">复制</string>
+    <string name="mod_manager_move">移动</string>
+    <string name="mod_manager_paste">粘贴</string>
+    <string name="mod_manager_delete">删除</string>
+    <string name="mod_manager_empty">文件夹为空</string>
+    <string name="mod_manager_file_selected">已选择: %s</string>
+    <string name="mod_manager_no_selection">请先选择文件或文件夹</string>
+    <string name="mod_manager_copied">已复制: %s</string>
+    <string name="mod_manager_moved">已移动: %s</string>
+    <string name="mod_manager_copied_success">复制成功: %s</string>
+    <string name="mod_manager_moved_success">移动成功: %s</string>
+    <string name="mod_manager_deleted">已删除: %s</string>
+    <string name="mod_manager_refreshed">已刷新</string>
+    <string name="mod_manager_folder_created">文件夹创建成功</string>
+    <string name="mod_manager_folder_create_failed">文件夹创建失败</string>
+    <string name="mod_manager_delete_title">删除</string>
+    <string name="mod_manager_delete_message">确定要删除 %s 吗？</string>
+    <string name="mod_manager_delete_failed">删除失败</string>
+    <string name="mod_manager_overwrite_title">覆盖文件</string>
+    <string name="mod_manager_overwrite_message">文件 %s 已存在，是否覆盖？</string>
+    <string name="mod_manager_overwrite">覆盖</string>
+    <string name="mod_manager_no_file_to_paste">没有可粘贴的文件</string>
+    <string name="mod_manager_paste_failed">粘贴失败: %s</string>
+    <string name="mod_manager_enter_folder_name">请输入文件夹名称</string>
+    <string name="mod_manager_create">创建</string>
+    <string name="mod_manager_invalid_path">无效的路径</string>
+    <string name="mod_manager_grid_view">网格视图</string>
+    <string name="mod_manager_list_view">列表视图</string>
+    <string name="mod_manager_view_mode_grid">已切换到网格视图</string>
+    <string name="mod_manager_view_mode_list">已切换到列表视图</string>
+    <string name="mod_manager_home">主目录</string>
 </resources>

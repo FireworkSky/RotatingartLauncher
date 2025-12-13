@@ -1,0 +1,277 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 模组管理器 Fragment 布局 - 横屏 Material Design 3 风格 -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="?android:attr/colorBackground"
+    android:orientation="horizontal"
+    android:padding="16dp">
+
+    <!-- 左侧工具栏 -->
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="0.35"
+        android:layout_marginEnd="16dp"
+        app:strokeWidth="1dp"
+        app:strokeColor="?attr/colorOutline"
+        style="@style/Widget.App.CardView.Standard">
+
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:fillViewport="true"
+            android:scrollbars="vertical">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+            <!-- 标题 -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/mod_manager_title"
+                android:textColor="?attr/colorOnSurface"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:fontFamily="sans-serif-medium"
+                android:layout_marginBottom="24dp" />
+
+            <!-- 路径输入 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="12dp">
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/pathInputLayout"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:hint="@string/mod_manager_path"
+                    style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                    android:layout_marginEnd="8dp"
+                    app:boxCollapsedPaddingTop="8dp"
+                    app:boxStrokeWidth="1dp">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/pathEditText"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="text"
+                        android:imeOptions="actionGo"
+                        android:singleLine="true"
+                        android:textSize="12sp"
+                        android:minHeight="40dp"
+                        android:paddingTop="8dp"
+                        android:paddingBottom="8dp" />
+
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnHome"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:minWidth="0dp"
+                    android:minHeight="40dp"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    app:icon="@drawable/ic_folder"
+                    app:iconGravity="textStart"
+                    app:iconPadding="4dp"
+                    app:iconSize="18dp"
+                    android:text="@string/mod_manager_home"
+                    android:textSize="11sp" />
+
+            </LinearLayout>
+
+            <!-- 操作按钮组 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginBottom="16dp">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnNewFolder"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/mod_manager_new_folder"
+                    android:textSize="13sp"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_marginBottom="6dp"
+                    android:minHeight="48dp"
+                    app:icon="@drawable/ic_folder"
+                    app:iconGravity="start"
+                    app:iconPadding="6dp"
+                    app:iconSize="18dp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnRefresh"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/mod_manager_refresh"
+                    android:textSize="13sp"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_marginBottom="6dp"
+                    android:minHeight="48dp"
+                    app:icon="@drawable/ic_refresh"
+                    app:iconGravity="start"
+                    app:iconPadding="6dp"
+                    app:iconSize="18dp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnToggleView"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/mod_manager_grid_view"
+                    android:textSize="13sp"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_marginBottom="12dp"
+                    android:minHeight="48dp"
+                    app:icon="@drawable/ic_grid_view"
+                    app:iconGravity="start"
+                    app:iconPadding="6dp"
+                    app:iconSize="18dp" />
+
+                <!-- 分隔线 -->
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="?attr/colorOutline"
+                    android:alpha="0.12"
+                    android:layout_marginVertical="8dp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnCopy"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/mod_manager_copy"
+                    android:textSize="13sp"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_marginBottom="6dp"
+                    android:minHeight="48dp"
+                    app:icon="@drawable/ic_content_copy"
+                    app:iconGravity="start"
+                    app:iconPadding="6dp"
+                    app:iconSize="18dp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnMove"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/mod_manager_move"
+                    android:textSize="13sp"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_marginBottom="6dp"
+                    android:minHeight="48dp"
+                    app:icon="@drawable/ic_content_cut"
+                    app:iconGravity="start"
+                    app:iconPadding="6dp"
+                    app:iconSize="18dp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnPaste"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/mod_manager_paste"
+                    android:textSize="13sp"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_marginBottom="6dp"
+                    android:minHeight="48dp"
+                    app:icon="@drawable/ic_content_paste"
+                    app:iconGravity="start"
+                    app:iconPadding="6dp"
+                    app:iconSize="18dp"
+                    android:enabled="false" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnDelete"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/mod_manager_delete"
+                    android:textSize="13sp"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:minHeight="48dp"
+                    app:icon="@drawable/ic_delete"
+                    app:iconGravity="start"
+                    app:iconPadding="6dp"
+                    app:iconSize="18dp"
+                    app:strokeColor="?attr/colorError"
+                    android:textColor="?attr/colorError" />
+
+            </LinearLayout>
+
+            </LinearLayout>
+
+        </ScrollView>
+
+    </com.google.android.material.card.MaterialCardView>
+
+    <!-- 右侧文件列表区域 -->
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="0.65"
+        app:strokeWidth="1dp"
+        app:strokeColor="?attr/colorOutline"
+        style="@style/Widget.App.CardView.Standard">
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <!-- 文件列表 -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/fileRecyclerView"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:padding="12dp"
+                android:clipToPadding="false"
+                android:overScrollMode="never"
+                android:scrollbars="vertical" />
+
+            <!-- 空状态 -->
+            <LinearLayout
+                android:id="@+id/emptyState"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:padding="32dp"
+                android:visibility="gone">
+
+                <ImageView
+                    android:layout_width="80dp"
+                    android:layout_height="80dp"
+                    android:src="@drawable/ic_folder"
+                    app:tint="?attr/colorOnSurfaceVariant"
+                    android:alpha="0.4"
+                    android:layout_marginBottom="16dp" />
+
+                <TextView
+                    android:id="@+id/emptyText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/mod_manager_empty"
+                    android:textColor="?attr/textSecondary"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+            </LinearLayout>
+
+        </FrameLayout>
+
+    </com.google.android.material.card.MaterialCardView>
+
+</LinearLayout>
+
