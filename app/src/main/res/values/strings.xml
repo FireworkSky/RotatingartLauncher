@@ -735,6 +735,10 @@
     <string name="settings_control_opacity_desc">调整屏幕手柄的透明度</string>
     <string name="settings_vibration">振动反馈</string>
     <string name="settings_vibration_desc">按键时提供振动反馈</string>
+    <string name="settings_keyboard_type">键盘类型</string>
+    <string name="settings_keyboard_type_desc">选择使用虚拟键盘或系统键盘</string>
+    <string name="keyboard_type_virtual">虚拟键盘</string>
+    <string name="keyboard_type_system">系统键盘</string>
     <string name="settings_joystick_mouse_mode_info">右摇杆鼠标模式的速度、范围和攻击模式设置已移至控件编辑器中，长按控件即可进入编辑模式。</string>
     
     <!-- Settings Launcher -->

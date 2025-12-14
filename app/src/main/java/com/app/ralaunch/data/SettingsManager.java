@@ -56,6 +56,7 @@ public class SettingsManager {
         public static final String FPS_DISPLAY_ENABLED = "fps_display_enabled"; // FPS 显示开关
         public static final String FPS_DISPLAY_X = "fps_display_x"; // FPS 显示位置 X
         public static final String FPS_DISPLAY_Y = "fps_display_y"; // FPS 显示位置 Y
+        public static final String KEYBOARD_TYPE = "keyboard_type"; // 键盘类型: "system" 或 "virtual"
         
         // 触屏设置
         public static final String MOUSE_RIGHT_STICK_ENABLED = "mouse_right_stick_enabled"; // 鼠标模式右摇杆
@@ -114,6 +115,7 @@ public class SettingsManager {
         public static final boolean FPS_DISPLAY_ENABLED = false; // 默认关闭 FPS 显示
         public static final float FPS_DISPLAY_X = -1f; // 默认自动位置（跟随鼠标）
         public static final float FPS_DISPLAY_Y = -1f; // 默认自动位置（跟随鼠标）
+        public static final String KEYBOARD_TYPE = "virtual"; // 默认使用虚拟键盘
         
         // 触屏设置
         public static final boolean MOUSE_RIGHT_STICK_ENABLED = true; // 默认开启鼠标模式右摇杆（不可更改）
@@ -605,6 +607,19 @@ public class SettingsManager {
      */
     public String getSettingsFilePath() {
         return settingsFile.getAbsolutePath();
+    }
+
+    // 键盘类型设置
+    public String getKeyboardType() {
+        return getString(Keys.KEYBOARD_TYPE, Defaults.KEYBOARD_TYPE);
+    }
+    
+    public void setKeyboardType(String type) {
+        putString(Keys.KEYBOARD_TYPE, type);
+    }
+    
+    public boolean isVirtualKeyboard() {
+        return "virtual".equals(getKeyboardType());
     }
 
     /**

@@ -1,13 +1,62 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
     android:gravity="center_horizontal"
-    android:padding="8dp"
     android:background="#F0F0F0">
 
+    <!-- 拖动把手区域 -->
+    <LinearLayout
+        android:id="@+id/keyboard_drag_handle"
+        android:layout_width="match_parent"
+        android:layout_height="32dp"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:background="#E0E0E0"
+        android:paddingHorizontal="12dp">
+
+        <!-- 拖动指示器 -->
+        <View
+            android:layout_width="40dp"
+            android:layout_height="4dp"
+            android:layout_marginEnd="8dp"
+            android:background="#999999"
+            android:alpha="0.5" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="虚拟键盘 - 可拖动"
+            android:textSize="11sp"
+            android:textColor="#666666"
+            android:gravity="center" />
+
+        <!-- 关闭按钮 -->
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/btn_close_keyboard"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:text="✕"
+            android:textSize="14sp"
+            android:textColor="#666666"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:padding="0dp"
+            android:minWidth="0dp"
+            android:minHeight="0dp" />
+
+    </LinearLayout>
+
     <!-- 主键盘区域 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="8dp">
+
+    <!-- 主键盘内容 -->
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -279,8 +328,8 @@
         <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_mouse_left" style="@style/KeyboardKeyCompact" android:layout_width="60dp" android:text="@string/key_mouse_left" />
         <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_mouse_middle" style="@style/KeyboardKeyCompact" android:layout_width="60dp" android:text="@string/key_mouse_middle" />
         <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_mouse_right" style="@style/KeyboardKeyCompact" android:layout_width="60dp" android:text="@string/key_mouse_right" />
-        <View android:layout_width="20dp" android:layout_height="match_parent" />
-        <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_mouse_Keyboard" style="@style/KeyboardKeyCompact" android:layout_width="60dp" android:text="@string/key_open_keyboard" />
+    </LinearLayout>
+
     </LinearLayout>
 
 </LinearLayout>

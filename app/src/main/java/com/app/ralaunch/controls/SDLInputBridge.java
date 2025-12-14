@@ -211,16 +211,32 @@ public class SDLInputBridge implements ControlInputBridge {
             // 将Scancode转换为Keycode
             int keycode = scancodeToKeycode(scancode);
             
-            // 调用SDLActivity的静态native方法
-            if (isDown) {
-                SDLActivity.onNativeKeyDown(keycode);
-
-            } else {
-                SDLActivity.onNativeKeyUp(keycode);
-
-            }
+            Log.d(TAG, "sendKey: scancode=" + scancode + " -> keycode=" + keycode + 
+                  ", isDown=" + isDown + ", calling SDLActivity.onNativeKey" + (isDown ? "Down" : "Up"));
+            
+            // 确保在主线程上调用SDL方法（SDL的native方法需要在主线程调用）
+            android.os.Handler mainHandler = new android.os.Handler(android.os.Looper.getMainLooper());
+            final int finalKeycode = keycode;
+            final boolean finalIsDown = isDown;
+            
+            mainHandler.post(() -> {
+                try {
+                    // 调用SDLActivity的静态native方法
+                    if (finalIsDown) {
+                        SDLActivity.onNativeKeyDown(finalKeycode);
+                        Log.d(TAG, "SDLActivity.onNativeKeyDown(" + finalKeycode + ") called successfully");
+                    } else {
+                        SDLActivity.onNativeKeyUp(finalKeycode);
+                        Log.d(TAG, "SDLActivity.onNativeKeyUp(" + finalKeycode + ") called successfully");
+                    }
+                } catch (Exception e) {
+                    Log.e(TAG, "Error in SDL native key method: keycode=" + finalKeycode, e);
+                    e.printStackTrace();
+                }
+            });
         } catch (Exception e) {
-            Log.e(TAG, "Error sending key: " + scancode, e);
+            Log.e(TAG, "Error sending key: scancode=" + scancode, e);
+            e.printStackTrace();
         }
     }
     

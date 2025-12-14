@@ -14,6 +14,7 @@ import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.materialswitch.MaterialSwitch;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -33,6 +34,7 @@ public class GameSettingsModule implements SettingsModule {
         
         setupRendererSettings();
         setupVulkanDriverSettings();
+        setupKeyboardTypeSettings();
         setupPatchManagement();
     }
     
@@ -153,6 +155,17 @@ public class GameSettingsModule implements SettingsModule {
         }
 
         textView.setText(display);
+    }
+    
+    private void setupKeyboardTypeSettings() {
+        // 虚拟键盘已移除，隐藏键盘类型设置
+        MaterialCardView keyboardTypeCard = rootView.findViewById(R.id.keyboardTypeCard);
+        if (keyboardTypeCard != null) {
+            keyboardTypeCard.setVisibility(View.GONE);
+        }
+        
+        // 确保设置使用系统键盘
+        settingsManager.setKeyboardType("system");
     }
 }
 

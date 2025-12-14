@@ -14,6 +14,7 @@ import android.text.TextPaint;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewParent;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.LinearLayout;
@@ -21,6 +22,7 @@ import java.lang.ref.WeakReference;
 
 import com.app.ralaunch.RaLaunchApplication;
 import com.app.ralaunch.activity.GameActivity;
+import com.app.ralaunch.data.SettingsManager;
 
 /**
  * 虚拟按钮View
@@ -358,7 +360,7 @@ public class VirtualButton extends View implements ControlView {
         
         // 处理特殊功能按键
         if (mData.keycode == ControlData.SPECIAL_KEYBOARD) {
-            // 弹出Android键盘
+            // 显示系统键盘
             showKeyboard();
             invalidate();
             return;
@@ -511,11 +513,55 @@ public class VirtualButton extends View implements ControlView {
             }
             
             try {
+                // 标志位防止重复清理（需要在创建EditText之前声明，因为会在监听器中使用）
+                final boolean[] isCleanedUp = {false};
+                
                 // 第二步：创建透明EditText激活IME
                 final EditText dummyInput = new EditText(activity);
                 dummyInput.setAlpha(0f);
                 dummyInput.setWidth(1);
                 dummyInput.setHeight(1);
+                
+                // 关键修复：确保EditText在触摸模式下也能保持焦点
+                // 这样即使其他视图消费了触摸事件，键盘也不会关闭
+                dummyInput.setFocusable(true);
+                dummyInput.setFocusableInTouchMode(true);
+                dummyInput.setClickable(true);
+                dummyInput.setLongClickable(false);
+                
+                // 防止触摸事件导致焦点丢失
+                // 当触摸事件发生时，重新请求焦点以保持键盘显示
+                dummyInput.setOnTouchListener((v, event) -> {
+                    // 如果失去焦点，立即重新获取焦点
+                    if (!v.hasFocus()) {
+                        v.post(() -> {
+                            if (v != null && v.getParent() != null) {
+                                v.requestFocus();
+                            }
+                        });
+                    }
+                    return false; // 不消费事件，让系统正常处理
+                });
+                
+                // 监听焦点变化，如果意外失去焦点则重新获取
+                dummyInput.setOnFocusChangeListener((v, hasFocus) -> {
+                    if (!hasFocus && !isCleanedUp[0]) {
+                        Log.d(TAG, "EditText失去焦点，准备重新获取焦点以保持键盘显示");
+                        // 延迟重新获取焦点，避免与其他事件冲突
+                        v.postDelayed(() -> {
+                            if (v != null && v.getParent() != null && !isCleanedUp[0]) {
+                                Log.d(TAG, "重新获取EditText焦点");
+                                v.requestFocus();
+                                // 确保键盘仍然显示
+                                InputMethodManager imm = (InputMethodManager)
+                                    context.getSystemService(Context.INPUT_METHOD_SERVICE);
+                                if (imm != null) {
+                                    imm.showSoftInput(v, InputMethodManager.SHOW_IMPLICIT);
+                                }
+                            }
+                        }, 50);
+                    }
+                });
                 
                 // 添加到根视图
                 android.view.ViewGroup rootView = (android.view.ViewGroup)
@@ -526,14 +572,12 @@ public class VirtualButton extends View implements ControlView {
                 }
                 rootView.addView(dummyInput);
                 
-                // 标志位防止重复清理
-                final boolean[] isCleanedUp = {false};
-                
                 // 创建Handler用于30秒超时
                 final Handler timeoutHandler = new Handler(Looper.getMainLooper());
                 final Runnable[] timeoutRunnable = new Runnable[1]; // 数组是为了能在lambda中修改
                 
                 // 创建清理函数
+                final Runnable[] focusKeeper = new Runnable[1]; // 提前声明，供清理函数使用
                 final Runnable cleanup = () -> {
                     if (isCleanedUp[0]) {
                         return; // 已经清理过了，不要重复执行
@@ -544,6 +588,11 @@ public class VirtualButton extends View implements ControlView {
                         // 移除30秒超时
                         if (timeoutRunnable[0] != null) {
                             timeoutHandler.removeCallbacks(timeoutRunnable[0]);
+                        }
+                        
+                        // 停止焦点保持检查
+                        if (focusKeeper[0] != null) {
+                            timeoutHandler.removeCallbacks(focusKeeper[0]);
                         }
                         
                         // 先禁用SDL文本输入（最重要！）
@@ -597,6 +646,36 @@ public class VirtualButton extends View implements ControlView {
                 if (imm != null) {
                     imm.showSoftInput(dummyInput, InputMethodManager.SHOW_FORCED);
                 }
+                
+                // 定期检查并保持焦点（针对不同设备的键盘行为差异）
+                // 有些设备的系统键盘在点击其他区域时会自动关闭，需要定期重新获取焦点
+                focusKeeper[0] = new Runnable() {
+                    @Override
+                    public void run() {
+                        if (isCleanedUp[0] || dummyInput.getParent() == null) {
+                            return; // 已经清理或已移除，停止检查
+                        }
+                        
+                        // 如果失去焦点，重新获取
+                        if (!dummyInput.hasFocus()) {
+                            Log.d(TAG, "定期检查发现EditText失去焦点，重新获取焦点");
+                            dummyInput.requestFocus();
+                            // 确保键盘仍然显示
+                            InputMethodManager imm = (InputMethodManager)
+                                context.getSystemService(Context.INPUT_METHOD_SERVICE);
+                            if (imm != null) {
+                                imm.showSoftInput(dummyInput, InputMethodManager.SHOW_IMPLICIT);
+                            }
+                        }
+                        
+                        // 每500ms检查一次（不要太频繁，避免影响性能）
+                        if (!isCleanedUp[0] && dummyInput.getParent() != null) {
+                            timeoutHandler.postDelayed(this, 500);
+                        }
+                    }
+                };
+                // 延迟启动，给键盘一些时间显示
+                timeoutHandler.postDelayed(focusKeeper[0], 300);
                 
                 // 实时发送每个字符和删除操作
                 dummyInput.addTextChangedListener(new android.text.TextWatcher() {

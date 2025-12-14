@@ -206,7 +206,11 @@ public class KeySelectorDialog extends LocalizedDialog {
         bindKey(layout, R.id.key_mouse_left, "LMB", ControlData.MOUSE_LEFT);
         bindKey(layout, R.id.key_mouse_right, "RMB", ControlData.MOUSE_RIGHT);
         bindKey(layout, R.id.key_mouse_middle, "MMB", ControlData.MOUSE_MIDDLE);
-        bindKey(layout, R.id.key_mouse_Keyboard, getLocalizedContext().getString(R.string.editor_keyboard), ControlData.SPECIAL_KEYBOARD);
+        // 键盘按钮现在在拖动把手中
+        View btnCloseKeyboard = layout.findViewById(R.id.btn_close_keyboard);
+        if (btnCloseKeyboard != null) {
+            bindKey(layout, R.id.btn_close_keyboard, getLocalizedContext().getString(R.string.editor_keyboard), ControlData.SPECIAL_KEYBOARD);
+        }
 
     }
 

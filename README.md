@@ -1,5 +1,8 @@
 <h1 align="center">Rotating Art Launcher</h1>
 
+<div align="center">
+  <a href="README.md">中文</a> | <a href="README_EN.md">English</a>
+</div>
 
 <div align="center">
   <img src="icons/ral_app.svg" alt="Rotating Art Launcher Logo" width="128" height="128">
@@ -9,7 +12,7 @@
   [![Android](https://img.shields.io/badge/Android-7.0+-green?logo=android)](https://www.android.com)
   [![.NET](https://img.shields.io/badge/.NET-8.0-blue?logo=dotnet)](https://dotnet.microsoft.com)
   [![License](https://img.shields.io/badge/License-LGPL--3.0-green)](LICENSE)
-  [![Stars](https://img.shields.io/github/stars/Fireworkshh/Rotating-art-Launcher?style=social)](https://github.com/Fireworkshh/Rotating-art-Launcher/stargazers)
+  [![Stars](https://img.shields.io/badge/Stars-Give%20us%20a%20star-yellow?style=social&logo=github)](https://github.com/Fireworkshh/Rotating-art-Launcher/stargazers)
   [![Discord](https://img.shields.io/discord/724163890803638273.svg?label=&logo=discord&logoColor=ffffff&color=7389D8&labelColor=6A7EC2)](https://discord.gg/cVkrRdffGp)
   [![Patreon](https://img.shields.io/badge/Patreon-支持我们-FF424D?style=for-the-badge&logo=patreon&logoColor=white)](https://www.patreon.com/c/RotatingArtLauncher)
 </div>
@@ -22,6 +25,8 @@
 -  **FNA/XNA 框架兼容** - 支持 FNA 和 XNA 游戏框架
 -  **多种渲染器** - 支持 GL4ES、OSMesa + Zink、Angle 等多种渲染方案
 -  **自定义编辑的手柄以及鼠标键盘支持** - Xbox 手柄模式、虚拟手柄控制器、鼠标+键盘控制、自定义游戏控件映射
+-  **虚拟键盘** - 内置虚拟键盘，支持拖动和透明度调整
+-  **动态渲染器选择** - 可在 Native OpenGL ES 3、GL4ES、GL4ES + ANGLE 之间选择
 
 
 
