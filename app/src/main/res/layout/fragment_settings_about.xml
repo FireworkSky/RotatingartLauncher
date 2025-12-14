@@ -404,8 +404,8 @@
                     <ImageView
                         android:layout_width="40dp"
                         android:layout_height="40dp"
-                        android:src="@drawable/ic_devices"
-                        app:tint="?attr/colorSecondary"
+                        android:src="@drawable/ic_laosparrow"
+                        android:scaleType="centerCrop"
                         android:layout_marginEnd="16dp" />
 
                     <LinearLayout
