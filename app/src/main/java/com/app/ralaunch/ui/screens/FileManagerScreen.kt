@@ -81,6 +81,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
+import com.app.ralaunch.locales.LocaleManager.strings
 import com.app.ralaunch.ui.model.FileItem
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -116,7 +117,7 @@ fun FileManagerScreen(refreshKey: Int) {
                 onClick = { showCreateDialog = true },
                 containerColor = MaterialTheme.colorScheme.primary
             ) {
-                Icon(Icons.Default.Add, contentDescription = "创建")
+                Icon(Icons.Default.Add, contentDescription = strings.fileManagerCreate)
             }
         }
     ) { padding ->
@@ -176,16 +177,16 @@ fun FileManagerScreen(refreshKey: Int) {
                             targetPanel.refresh()
                             showCreateDialog = false
                             coroutineScope.launch {
-                                snackbarHostState.showSnackbar("文件创建成功")
+                                snackbarHostState.showSnackbar(strings.fileManagerSnackbarCreatedFile)
                             }
                         } else {
                             coroutineScope.launch {
-                                snackbarHostState.showSnackbar("文件已存在或创建失败")
+                                snackbarHostState.showSnackbar(strings.fileManagerSnackbarFileExistsOrFailed)
                             }
                         }
                     } catch (e: Exception) {
                         coroutineScope.launch {
-                            snackbarHostState.showSnackbar("创建失败: ${e.message}")
+                            snackbarHostState.showSnackbar(strings.fileManagerSnackbarCreateFailedTemplate.format(e.message ?: ""))
                         }
                     }
                 },
@@ -197,16 +198,16 @@ fun FileManagerScreen(refreshKey: Int) {
                             targetPanel?.refresh()
                             showCreateDialog = false
                             coroutineScope.launch {
-                                snackbarHostState.showSnackbar("文件夹创建成功")
+                                snackbarHostState.showSnackbar(strings.fileManagerSnackbarCreatedFolder)
                             }
                         } else {
                             coroutineScope.launch {
-                                snackbarHostState.showSnackbar("文件夹已存在或创建失败")
+                                snackbarHostState.showSnackbar(strings.fileManagerSnackbarFolderExistsOrFailed)
                             }
                         }
                     } catch (e: Exception) {
                         coroutineScope.launch {
-                            snackbarHostState.showSnackbar("创建失败: ${e.message}")
+                            snackbarHostState.showSnackbar(strings.fileManagerSnackbarCreateFailedTemplate.format(e.message ?: ""))
                         }
                     }
                 },
@@ -223,14 +224,14 @@ fun FileManagerScreen(refreshKey: Int) {
                     pendingOperation = FileOperation.Copy(fileItem.file, activePanel)
                     showFileMenu = null
                     coroutineScope.launch {
-                        snackbarHostState.showSnackbar("已选择复制: ${fileItem.name}")
+                        snackbarHostState.showSnackbar(strings.fileManagerSnackbarCopiedTemplate.format(fileItem.name))
                     }
                 },
                 onMove = {
                     pendingOperation = FileOperation.Move(fileItem.file, activePanel)
                     showFileMenu = null
                     coroutineScope.launch {
-                        snackbarHostState.showSnackbar("已选择移动: ${fileItem.name}")
+                        snackbarHostState.showSnackbar(strings.fileManagerSnackbarMovedTemplate.format(fileItem.name))
                     }
                 },
                 onDelete = {
@@ -258,11 +259,11 @@ fun FileManagerScreen(refreshKey: Int) {
                             if (dialogData.fileItem.file.deleteRecursively()) {
                                 activePanel?.refresh()
                                 coroutineScope.launch {
-                                    snackbarHostState.showSnackbar("删除成功")
+                                    snackbarHostState.showSnackbar(strings.fileManagerSnackbarDeleted)
                                 }
                             } else {
                                 coroutineScope.launch {
-                                    snackbarHostState.showSnackbar("删除失败")
+                                    snackbarHostState.showSnackbar(strings.fileManagerSnackbarDeleteFailed)
                                 }
                             }
                             showOperationDialog = null
@@ -278,11 +279,11 @@ fun FileManagerScreen(refreshKey: Int) {
                             if (dialogData.fileItem.file.renameTo(newFile)) {
                                 activePanel?.refresh()
                                 coroutineScope.launch {
-                                    snackbarHostState.showSnackbar("重命名成功")
+                                    snackbarHostState.showSnackbar(strings.fileManagerSnackbarRenamed)
                                 }
                             } else {
                                 coroutineScope.launch {
-                                    snackbarHostState.showSnackbar("重命名失败")
+                                    snackbarHostState.showSnackbar(strings.fileManagerSnackbarRenameFailed)
                                 }
                             }
                             showOperationDialog = null
@@ -311,11 +312,11 @@ fun FileManagerScreen(refreshKey: Int) {
                             leftPanelState.refresh()
                             rightPanelState.refresh()
                             coroutineScope.launch {
-                                snackbarHostState.showSnackbar("操作成功")
+                                snackbarHostState.showSnackbar(strings.fileManagerSnackbarOperationSuccess)
                             }
                         } catch (e: Exception) {
                             coroutineScope.launch {
-                                snackbarHostState.showSnackbar("操作失败: ${e.message}")
+                                snackbarHostState.showSnackbar(strings.fileManagerSnackbarOperationFailedTemplate.format(e.message ?: ""))
                             }
                         }
                         pendingOperation = null
@@ -402,7 +403,7 @@ fun PathNavigationBar(
             OutlinedTextField(
                 value = customPath,
                 onValueChange = { customPath = it },
-                label = { Text("输入路径") },
+                label = { Text(strings.fileManagerPathDialogLabel) }, // "输入路径"
                 modifier = Modifier.fillMaxWidth(),
                 keyboardOptions = KeyboardOptions(
                     imeAction = ImeAction.Done
@@ -426,7 +427,7 @@ fun PathNavigationBar(
                             focusManager.clearFocus()
                         }
                     }) {
-                        Icon(Icons.AutoMirrored.Filled.NavigateNext, contentDescription = "跳转")
+                        Icon(Icons.AutoMirrored.Filled.NavigateNext, contentDescription = strings.fileManagerOpenPath) // "跳转" -> "路径导航"
                     }
                 }
             )
@@ -440,12 +441,12 @@ fun PathNavigationBar(
                     onClick = { state.navigateUp() },
                     enabled = state.canNavigateUp
                 ) {
-                    Icon(Icons.Default.ArrowUpward, contentDescription = "返回上级")
+                    Icon(Icons.Default.ArrowUpward, contentDescription = strings.fileManagerNavigateUp) // "返回上级"
                 }
 
                 Spacer(modifier = Modifier.width(8.dp))
 
-                // 路径显示
+                // 路径显示 (文件夹名称)
                 Text(
                     text = state.currentDirectory.name,
                     modifier = Modifier.weight(1f),
@@ -460,12 +461,13 @@ fun PathNavigationBar(
                 BadgedBox(
                     badge = {
                         Badge {
-                            Text(state.fileItems.size.toString())
+                            // Text(state.fileItems.size.toString()) // 通常只需要数字
+                            Text(state.fileItems.size.toString(), maxLines = 1)
                         }
                     }
                 ) {
                     IconButton(onClick = { showPathInput = true }) {
-                        Icon(Icons.Default.FolderOpen, contentDescription = "路径导航")
+                        Icon(Icons.Default.FolderOpen, contentDescription = strings.fileManagerOpenPath) // "路径导航"
                     }
                 }
             }
@@ -517,7 +519,7 @@ fun FileListItem(
             Icon(
                 imageVector = if (fileItem.isDirectory) Icons.Default.Folder
                 else Icons.AutoMirrored.Filled.InsertDriveFile,
-                contentDescription = if (fileItem.isDirectory) "文件夹" else "文件",
+                contentDescription = if (fileItem.isDirectory) strings.fileManagerFolder else strings.fileManagerFile, // "文件夹" / "文件"
                 modifier = Modifier.size(32.dp),
                 tint = if (fileItem.isDirectory) MaterialTheme.colorScheme.primary
                 else MaterialTheme.colorScheme.onSurfaceVariant
@@ -563,7 +565,7 @@ fun FileListItem(
                     ) {
                         Icon(
                             Icons.Default.MoreVert,
-                            contentDescription = "更多操作",
+                            contentDescription = strings.fileManagerMoreActions, // "更多操作"
                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
@@ -573,13 +575,13 @@ fun FileListItem(
                         onDismissRequest = { showDropdown = false }
                     ) {
                         DropdownMenuItem(
-                            text = { Text("打开") },
+                            text = { Text(strings.fileManagerOpenAction) }, // "打开"
                             onClick = {
                                 showDropdown = false
                                 onClick()
                             },
                             leadingIcon = {
-                                Icon(Icons.AutoMirrored.Filled.OpenInNew, contentDescription = "打开")
+                                Icon(Icons.AutoMirrored.Filled.OpenInNew, contentDescription = strings.fileManagerOperationButtonOpenDesc) // "打开"
                             }
                         )
                     }
@@ -602,21 +604,21 @@ fun CreateFileDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("创建新项") },
+        title = { Text(strings.fileManagerInputDialogTitle) }, // "创建新项"
         text = {
             Column {
                 OutlinedTextField(
                     value = fileName,
                     onValueChange = { fileName = it },
-                    label = { Text("名称") },
+                    label = { Text(strings.fileManagerInputFileNameLabel) }, // "名称"
                     modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("输入文件或文件夹名称") }
+                    placeholder = { Text(strings.fileManagerInputPlaceholder) } // "输入文件或文件夹名称"
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Text(
-                    text = "位置: $currentDirectory",
+                    text = "${strings.fileManagerCurrentLocation} $currentDirectory", // "位置:"
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -628,19 +630,25 @@ fun CreateFileDialog(
                 horizontalArrangement = Arrangement.End
             ) {
                 TextButton(onClick = onDismiss) {
-                    Text("取消")
+                    Text(strings.cancel) // "取消"
                 }
                 Spacer(modifier = Modifier.width(8.dp))
                 Button(
                     onClick = {
-                        if (fileName.isNotEmpty()) {
-                            if (selectedType == 0) onCreateFile(fileName)
-                            else onCreateFolder(fileName)
-                        }
+                        if (fileName.isNotEmpty()) onCreateFolder(fileName)
                     },
                     enabled = fileName.isNotEmpty()
                 ) {
-                    Text(if (selectedType == 0) "创建文件" else "创建文件夹")
+                    Text(strings.fileManagerCreateFolder) // "创建文件夹"
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+                Button(
+                    onClick = {
+                        if (fileName.isNotEmpty()) onCreateFile(fileName)
+                    },
+                    enabled = fileName.isNotEmpty()
+                ) {
+                    Text(strings.fileManagerCreateFile) // "创建文件"
                 }
             }
         }
@@ -662,7 +670,7 @@ fun FileOperationDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                text = "文件操作",
+                text = strings.fileManagerOperationDialogTitle, // "文件操作"
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold
             )
@@ -690,7 +698,7 @@ fun FileOperationDialog(
         confirmButton = {},
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("关闭")
+                Text(strings.cancel) // "关闭" -> "取消"
             }
         }
     )
@@ -714,7 +722,7 @@ private fun FileInfoSection(fileItem: FileItem) {
                 Icon(
                     imageVector = if (fileItem.isDirectory) Icons.Default.Folder
                     else Icons.AutoMirrored.Filled.InsertDriveFile,
-                    contentDescription = null,
+                    contentDescription = null, // 在上下文中已经明确，这里可以为空或复用 fileManagerFolder/File
                     modifier = Modifier.size(40.dp),
                     tint = if (fileItem.isDirectory) MaterialTheme.colorScheme.primary
                     else MaterialTheme.colorScheme.onSurfaceVariant
@@ -734,7 +742,7 @@ private fun FileInfoSection(fileItem: FileItem) {
                     )
 
                     Text(
-                        text = if (fileItem.isDirectory) "文件夹" else "文件",
+                        text = if (fileItem.isDirectory) strings.fileManagerFolder else strings.fileManagerFile, // "文件夹" / "文件"
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -754,13 +762,13 @@ private fun FileInfoSection(fileItem: FileItem) {
             Column(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                InfoRow("位置", fileItem.file.parent ?: "未知")
+                InfoRow(strings.fileManagerCurrentLocation.dropLast(1), fileItem.file.parent ?: "Unknown") // "位置" (去掉冒号)
                 if (fileItem.formattedSize.isNotEmpty()) {
-                    InfoRow("大小", fileItem.formattedSize)
+                    InfoRow("Size", fileItem.formattedSize) // 英文，假设 formattedSize 是本地化的或者数字
                 }
-                InfoRow("修改时间", fileItem.formattedDate)
+                InfoRow("Modified", fileItem.formattedDate) // 英文，假设 formattedDate 是本地化的
                 if (fileItem.extension.isNotEmpty()) {
-                    InfoRow("类型", fileItem.extension.uppercase())
+                    InfoRow("Type", fileItem.extension.uppercase()) // 英文
                 }
             }
         }
@@ -773,7 +781,7 @@ private fun InfoRow(label: String, value: String) {
         modifier = Modifier.fillMaxWidth()
     ) {
         Text(
-            text = "$label:",
+            text = "$label:", // Label 本身应来自资源
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.width(80.dp),
@@ -801,7 +809,7 @@ private fun OperationGridSection(
     onDelete: (FileItem) -> Unit
 ) {
     Text(
-        text = "可用操作",
+        text = strings.fileManagerOperationsTitle, // "可用操作"
         style = MaterialTheme.typography.titleSmall,
         fontWeight = FontWeight.Medium,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -818,18 +826,18 @@ private fun OperationGridSection(
             modifier = Modifier.fillMaxWidth()
         ) {
             OperationButton(
-                label = "打开",
+                label = strings.fileManagerOpenButton, // "打开"
                 icon = Icons.AutoMirrored.Filled.OpenInNew,
-                description = if (fileItem.isDirectory) "打开文件夹" else "打开文件",
+                description = strings.fileManagerOperationButtonOpenDesc, // "打开"
                 onClick = { onOpen(fileItem) },
                 modifier = Modifier.weight(1f),
                 isPrimary = true
             )
 
             OperationButton(
-                label = "复制",
+                label = strings.fileManagerCopyButton, // "复制"
                 icon = Icons.Default.ContentCopy,
-                description = "复制到剪贴板",
+                description = strings.fileManagerOperationButtonCopyDesc, // "复制"
                 onClick = { onCopy(fileItem.file) },
                 modifier = Modifier.weight(1f)
             )
@@ -841,17 +849,17 @@ private fun OperationGridSection(
             modifier = Modifier.fillMaxWidth()
         ) {
             OperationButton(
-                label = "移动",
+                label = strings.fileManagerMoveButton, // "移动"
                 icon = Icons.AutoMirrored.Filled.DriveFileMove,
-                description = "移动到其他位置",
+                description = strings.fileManagerOperationButtonMoveDesc, // "移动"
                 onClick = { onMove(fileItem.file) },
                 modifier = Modifier.weight(1f)
             )
 
             OperationButton(
-                label = "重命名",
+                label = strings.fileManagerRenameButton, // "重命名"
                 icon = Icons.Default.Create,
-                description = "重命名文件",
+                description = strings.fileManagerOperationButtonRenameDesc, // "重命名"
                 onClick = { onRename(fileItem) },
                 modifier = Modifier.weight(1f)
             )
@@ -859,9 +867,9 @@ private fun OperationGridSection(
 
         // 第三行（单独一行，因为是危险操作）
         OperationButton(
-            label = "删除",
+            label = strings.fileManagerDeleteButton, // "删除"
             icon = Icons.Default.Delete,
-            description = "永久删除文件",
+            description = strings.fileManagerOperationButtonDeleteDesc, // "删除"
             onClick = { onDelete(fileItem) },
             modifier = Modifier.fillMaxWidth(),
             isDestructive = true
@@ -936,9 +944,9 @@ fun DeleteConfirmationDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("确认删除") },
+        title = { Text(strings.fileManagerDeleteConfirmTitle) }, // "确认删除"
         text = {
-            Text("确定要删除 \"${fileItem.name}\" 吗？此操作不可恢复。")
+            Text(strings.fileManagerDeleteConfirmMessage.format(fileItem.name)) // "确定要删除 \"%s\" 吗？..."
         },
         confirmButton = {
             TextButton(
@@ -947,12 +955,12 @@ fun DeleteConfirmationDialog(
                     contentColor = MaterialTheme.colorScheme.error
                 )
             ) {
-                Text("删除")
+                Text(strings.fileManagerDeleteAction) // "删除"
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("取消")
+                Text(strings.cancel) // "取消"
             }
         }
     )
@@ -968,12 +976,12 @@ fun RenameDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("重命名") },
+        title = { Text(strings.fileManagerRenameDialogTitle) }, // "重命名"
         text = {
             OutlinedTextField(
                 value = newName,
                 onValueChange = { newName = it },
-                label = { Text("新名称") },
+                label = { Text(strings.fileManagerRenameInputLabel) }, // "新名称"
                 modifier = Modifier.fillMaxWidth()
             )
         },
@@ -982,12 +990,12 @@ fun RenameDialog(
                 onClick = { onConfirm(newName) },
                 enabled = newName.isNotEmpty() && newName != fileItem.name
             ) {
-                Text("确定")
+                Text(strings.fileManagerRenameAction) // "确定"
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("取消")
+                Text(strings.cancel) // "取消"
             }
         }
     )
@@ -1000,25 +1008,28 @@ fun OperationConfirmationDialog(
     onConfirm: () -> Unit,
     onDismiss: () -> Unit
 ) {
-    val operationText = when (operation) {
-        is FileOperation.Copy -> "复制"
-        is FileOperation.Move -> "移动"
+    val operationName = when (operation) {
+        is FileOperation.Copy -> strings.fileManagerOperationCopy // "复制"
+        is FileOperation.Move -> strings.fileManagerOperationMove // "移动"
     }
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("确认$operationText") },
+        title = { Text(strings.fileManagerOperationConfirmTitleTemplate.format(operationName)) }, // "确认%s"
         text = {
-            Text("确定要${operationText} \"${operation.source.name}\" 到 \"${targetDirectory.name}\" 吗？")
+            Text(strings.fileManagerOperationConfirmMessageTemplate.format(operationName, operation.source.name, targetDirectory.name)) // "确定要%s \"%s\" 到 \"%s\" 吗？"
         },
         confirmButton = {
             TextButton(onClick = onConfirm) {
-                Text(operationText)
+                Text(when (operation) {
+                    is FileOperation.Copy -> strings.fileManagerOperationCopyAction // "复制"
+                    is FileOperation.Move -> strings.fileManagerOperationMoveAction // "移动"
+                })
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("取消")
+                Text(strings.cancel) // "取消"
             }
         }
     )
@@ -1095,7 +1106,7 @@ fun openFile(context: Context, file: File, snackbarHostState: SnackbarHostState,
         // 检查文件是否存在
         if (!file.exists()) {
             coroutineScope.launch {
-                snackbarHostState.showSnackbar("文件不存在: ${file.name}")
+                snackbarHostState.showSnackbar(strings.fileManagerSnackbarFileNotFoundTemplate.format(file.name))
             }
             return
         }
@@ -1123,29 +1134,26 @@ fun openFile(context: Context, file: File, snackbarHostState: SnackbarHostState,
 
         if (resolveInfo != null) {
             // 有应用可以处理，启动选择器
-            val chooserIntent = Intent.createChooser(intent, "选择应用打开 ${file.name}")
+            val chooserIntent = Intent.createChooser(intent, "Open with") // TODO: 也许这个也应该国际化？
             context.startActivity(chooserIntent)
 
             coroutineScope.launch {
-                snackbarHostState.showSnackbar("正在打开: ${file.name}")
+                snackbarHostState.showSnackbar(strings.fileManagerSnackbarOpeningTemplate.format(file.name))
             }
         } else {
             // 没有应用可以处理此文件类型
             coroutineScope.launch {
-                snackbarHostState.showSnackbar("没有应用可以打开此文件类型: ${file.extension}")
+                snackbarHostState.showSnackbar(strings.fileManagerSnackbarNoAppToOpenTemplate.format(file.extension))
             }
         }
 
     } catch (e: Exception) {
         coroutineScope.launch {
-            snackbarHostState.showSnackbar("打开文件失败: ${e.message}")
+            snackbarHostState.showSnackbar(strings.fileManagerSnackbarOpenFailedTemplate.format(e.message ?: ""))
         }
     }
 }
 
-/**
- * 根据文件扩展名获取 MIME 类型
- */
 private fun getMimeType(file: File): String? {
     val extension = file.extension.lowercase()
 

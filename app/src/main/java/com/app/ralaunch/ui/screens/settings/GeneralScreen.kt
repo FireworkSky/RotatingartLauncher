@@ -68,12 +68,10 @@ fun GeneralScreen() {
                 SettingsComponents.DropdownSetting(
                     title = strings.settingsLanguage,
                     icon = Icons.Default.Language,
-                    enabled = true,
                     options = listOf(strings.settingsFollowSystem, AppLanguage.ZH.displayName, AppLanguage.EN.displayName),
-                    selectedOption = LocaleManager.currentLanguage.displayName,
+                    selectedOption = if (LocaleManager.currentLanguage == AppLanguage.SYSTEM) strings.settingsFollowSystem else LocaleManager.currentLanguage.displayName,
                     onOptionSelected = {
-                        if (it == strings.settingsFollowSystem) LocaleManager.setLanguage(AppLanguage.SYSTEM)
-                        else LocaleManager.setLanguage(fromDisplayName(it))
+                        LocaleManager.setLanguage(fromDisplayName(it))
                     }
                 )
             }
@@ -82,7 +80,6 @@ fun GeneralScreen() {
                 SettingsComponents.DropdownSetting(
                     title = strings.settingsTheme,
                     icon = Icons.Default.Style,
-                    enabled = true,
                     options = listOf(
                         ConfigManager.ThemeMode.SYSTEM.getName(),
                         ConfigManager.ThemeMode.DARK.getName(),
@@ -132,12 +129,12 @@ private fun ThemeColorSetting(
     icon: androidx.compose.ui.graphics.vector.ImageVector? = null,
     enabled: Boolean = true
 ) {
-    var showColorPicker by remember { mutableStateOf(false) }
+    val showColorPicker = remember { mutableStateOf(false) }
 
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(enabled = enabled) { showColorPicker = true },
+            .clickable(enabled = enabled) { showColorPicker.value = true },
         color = Color.Transparent
     ) {
         Row(
@@ -205,14 +202,14 @@ private fun ThemeColorSetting(
     }
 
     // 颜色选择器对话框
-    if (showColorPicker && enabled) {
+    if (showColorPicker.value && enabled) {
         MaterialColorPickerDialog(
             currentColor = currentColor,
             onColorSelected = { color ->
                 onColorSelected(color)
-                showColorPicker = false
+                showColorPicker.value = false
             },
-            onDismiss = { showColorPicker = false }
+            onDismiss = { showColorPicker.value = false }
         )
     }
 }

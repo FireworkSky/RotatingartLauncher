@@ -62,6 +62,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.app.ralaunch.locales.LocaleManager.strings
 import com.app.ralaunch.ui.model.NavItem
 import com.app.ralaunch.ui.screens.settings.AboutScreen
 import com.app.ralaunch.ui.screens.settings.ControlScreen
@@ -73,15 +74,15 @@ import com.app.ralaunch.ui.screens.settings.AdvancedScreen
 fun SettingsScreen(
     refreshKey: Int
 ) {
-    var isToolbarExpanded by remember { mutableStateOf(false) }
+    val isToolbarExpanded = remember { mutableStateOf(false) }
     val navController = rememberNavController()
 
     Scaffold(
         floatingActionButton = {
             SettingsFloatingNavigation(
-                isExpanded = isToolbarExpanded,
+                isExpanded = isToolbarExpanded.value,
                 onExpandedChange = { expanded ->
-                    isToolbarExpanded = expanded
+                    isToolbarExpanded.value = expanded
                 },
                 navController = navController
             )
@@ -116,25 +117,25 @@ fun SettingsFloatingNavigation(
 ) {
     val items = listOf(
         NavItem(
-            title = "常规",
+            title = strings.navrailSettingsGeneral,
             icon = Icons.Outlined.Settings,
             selectedIcon = Icons.Filled.Settings,
             route = "settings_general"
         ),
         NavItem(
-            title = "控制",
+            title = strings.navrailSettingsControl,
             icon = Icons.Outlined.Gamepad,
             selectedIcon = Icons.Filled.Gamepad,
             route = "settings_control"
         ),
         NavItem(
-            title = "高级",
+            title = strings.navrailSettingsAdvanced,
             icon = Icons.Outlined.SettingsSuggest,
             selectedIcon = Icons.Filled.SettingsSuggest,
             route = "settings_advanced"
         ),
         NavItem(
-            title = "关于",
+            title = strings.navrailSettingsAbout,
             icon = Icons.Outlined.Info,
             selectedIcon = Icons.Filled.Info,
             route = "settings_about"
@@ -250,7 +251,7 @@ fun SettingsFloatingNavigation(
         ) {
             Icon(
                 imageVector = if (isExpanded) Icons.Default.ArrowDropDown else Icons.Default.ArrowDropUp,
-                contentDescription = if (isExpanded) "收起导航" else "展开导航",
+                contentDescription = null,
                 tint = fabIconColor,
                 modifier = Modifier.size(24.dp)
             )

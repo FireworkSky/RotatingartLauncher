@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.app.ralaunch.locales.LocaleManager
+import com.app.ralaunch.locales.LocaleManager.strings
 import com.app.ralaunch.ui.model.ComponentItem
 import com.app.ralaunch.ui.model.SetupScreen
 import com.app.ralaunch.ui.model.SetupState
@@ -72,8 +73,6 @@ fun LauncherSetupScreen(
                     SetupScreen.Legal -> LegalScreen(
                         onDecline = { exitApp(context) },
                         onAccept = {
-                            // 添加日志确认点击事件
-                            Log.d("SetupScreen", "Accept button clicked")
                             viewModel.acceptLegalAgreement(context)
                         }
                     )
@@ -128,7 +127,7 @@ private fun InfoPanel(modifier: Modifier = Modifier) {
         )
 
         Text(
-            text = "一步完成首次配置",
+            text = strings.setupOneStepTitle,
             style = MaterialTheme.typography.titleLarge.copy(
                 fontWeight = FontWeight.Bold
             ),
@@ -136,9 +135,7 @@ private fun InfoPanel(modifier: Modifier = Modifier) {
         )
 
         Text(
-            text = "• 同意法律条款后即可开始安装\n" +
-                    "• 内置 .NET 运行时，免手动下载\n" +
-                    "• 实时显示安装进度和状态",
+            text = strings.setupOneStepDescription,
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             lineHeight = 24.sp,
@@ -159,7 +156,7 @@ private fun InfoPanel(modifier: Modifier = Modifier) {
             Spacer(modifier = Modifier.width(12.dp))
 
             Text(
-                text = "针对横屏设备优化的初始化体验",
+                text = strings.setupOptimizedForLandscape,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -200,7 +197,7 @@ private fun LegalScreen(
                 )
 
                 Text(
-                    text = "法律声明",
+                    text = strings.setupLegalTitle,
                     style = MaterialTheme.typography.headlineSmall.copy(
                         fontWeight = FontWeight.Bold
                     ),
@@ -218,9 +215,7 @@ private fun LegalScreen(
                     .verticalScroll(rememberScrollState())
             ) {
                 Text(
-                    text = "本启动器是第三方工具，需要原始游戏文件才能运行。您必须拥有合法授权的游戏副本才能使用本软件。\n\n" +
-                            "本启动器开发者与原游戏创作者无关联，对因使用本软件而产生的任何法律后果不承担责任。\n\n" +
-                            "使用本软件即表示您已阅读、理解并同意遵守上述条款。",
+                    text = strings.setupLegalContent,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     lineHeight = 24.sp
@@ -244,7 +239,7 @@ private fun LegalScreen(
                     )
                 ) {
                     Text(
-                        text = "退出应用",
+                        text = strings.setupExitApp,
                         style = MaterialTheme.typography.bodyLarge.copy(
                             fontWeight = FontWeight.Bold
                         )
@@ -262,7 +257,7 @@ private fun LegalScreen(
                     )
                 ) {
                     Text(
-                        text = "接受并继续",
+                        text = strings.setupAcceptAndContinue,
                         style = MaterialTheme.typography.bodyLarge.copy(
                             fontWeight = FontWeight.Bold
                         )
@@ -310,7 +305,7 @@ private fun ExtractionScreen(
                     )
 
                     Text(
-                        text = "安装必要组件",
+                        text = strings.setupExtractionTitle,
                         style = MaterialTheme.typography.headlineSmall.copy(
                             fontWeight = FontWeight.Bold
                         ),
@@ -323,7 +318,7 @@ private fun ExtractionScreen(
             // 描述文本
             item {
                 Text(
-                    text = "启动器需要安装这些组件才能确保游戏正常运行。这些组件已包含在应用中，需要解压后才能使用。",
+                    text = strings.setupExtractionDescription,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     lineHeight = 20.sp
@@ -382,7 +377,7 @@ private fun ExtractionScreen(
             // 组件列表标题
             item {
                 Text(
-                    text = "组件列表",
+                    text = strings.setupComponentsListTitle,
                     style = MaterialTheme.typography.titleMedium.copy(
                         fontWeight = FontWeight.Bold
                     ),
@@ -416,9 +411,9 @@ private fun ExtractionScreen(
                 ) {
                     Text(
                         text = when {
-                            state.overallProgress >= 100 -> "重新安装"
-                            state.isExtracting -> "安装中..."
-                            else -> "开始安装"
+                            state.overallProgress >= 100 -> strings.setupInstallButtonReinstall
+                            state.isExtracting -> strings.setupInstallButtonInstalling
+                            else -> strings.setupInstallButtonStart
                         },
                         style = MaterialTheme.typography.bodyLarge.copy(
                             fontWeight = FontWeight.Bold

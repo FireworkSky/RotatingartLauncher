@@ -180,15 +180,3 @@ fun TopBar(
         }
     )
 }
-
-@Composable
-fun DownloadScreen(refreshKey: Int) {
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background
-    ) {
-        Box(modifier = Modifier.padding(16.dp)) {
-            Text("下载界面 - 全屏横屏优化", style = MaterialTheme.typography.headlineMedium)
-        }
-    }
-}

@@ -1,50 +1,69 @@
 package com.app.ralaunch.utils
 
 import android.os.Build
+import androidx.compose.ui.graphics.Color
 import com.app.ralaunch.locales.AppLanguage
 import com.app.ralaunch.locales.LocaleManager.strings
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 import java.io.File
 
 /**
  * 配置管理器
  * 支持应用设置的保存、加载和管理
+ *
+ * 注意：所有需要序列化/反序列化的类都需要标记 @Serializable
  */
 class ConfigManager private constructor() {
 
-    private val serializer = JsonSerializer()
+    // 使用 Kotlinx.Serialization 的 Json 实例
+    private val json = Json {
+        prettyPrint = true // 保存时格式化，便于阅读
+        ignoreUnknownKeys = true // 忽略 JSON 中未知的键，提高兼容性
+    }
+
     private var configFile: File? = null
     var currentConfig: AppConfig? = null
+        private set // 限制外部直接修改
 
-    // 应用配置数据类
-    // 在 ConfigManager 中修改 AppConfig 数据类
+    // 应用配置数据类 - 添加 @Serializable 注解
+    @Serializable
     data class AppConfig(
         // 应用设置
-        var language: AppLanguage = AppLanguage.EN,
+        var language: AppLanguage = AppLanguage.SYSTEM,
         var themeMode: ThemeMode = ThemeMode.SYSTEM,
         var dynamicColor: Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S,
-        var themeSeedColor : Long = 0xFF2196F3,
+        var themeSeedColor: Long = Color(0xFF2196F3).value.toLong(),
 
-        // 嵌套对象 - 控制设置
         var controlSettings: ControlSettings = ControlSettings(),
         var advancedSettings: AdvancedSettings = AdvancedSettings()
     ) {
-        // 控制设置子对象
+        // 控制设置子对象 - 添加 @Serializable 注解
+        @Serializable
         data class ControlSettings(
             var virtualJoystickOpacity: Float = 0.8f,
-            var vibrationEnabled: Boolean = true
+            var vibration: Boolean = true
         )
 
+        // 高级设置子对象 - 添加 @Serializable 注解
+        @Serializable
         data class AdvancedSettings(
-            var renderer: Renderer = Renderer.AUTO
+            var renderer: Renderer = Renderer.AUTO,
+            var serverGc : Boolean = false,
+            var concurrentGc : Boolean = true,
+            var tieredCompilation : Boolean = true,
+            var coreClrDebugLog : Boolean = false,
+            var threadAffinity : Boolean = false
         )
     }
 
-    // 枚举定义
+    // 枚举定义 - 添加 @Serializable 注解
+    @Serializable
     enum class ThemeMode {
         LIGHT, DARK, SYSTEM;
 
-        fun getName() : String {
-            return when(this) {
+        fun getName(): String {
+            return when (this) {
                 LIGHT -> strings.settingsLight
                 DARK -> strings.settingsDark
                 SYSTEM -> strings.settingsFollowSystem
@@ -52,25 +71,46 @@ class ConfigManager private constructor() {
         }
     }
 
-    enum class Renderer(val displayName: String) {
-        AUTO("AUTO"),
-        NATIVE_OPENGL_ES("Native OpenGL ES"),
-        GL4ES("GL4ES"),
-        GL4ES_ANGLE("GL4ES + ANGLE"),
-        MOBILE_GL("MobileGl"),
-        ANGLE_VULKAN("ANGLE (Vulkan)"),
-        ZINK_MESA("Zink (Mesa)"),
-        ZINK_MESA_25("Zink (Mesa 25)"),
-        VIRGL("VirGL Renderer"),
-        FREEDRENO("Freedreno(Adreno)");
+    // 枚举定义 - 添加 @Serializable 注解
+    @Serializable
+    enum class Renderer {
+        AUTO,
+        NATIVE_OPENGL_ES,
+        GL4ES,
+        GL4ES_ANGLE,
+        MOBILE_GL,
+        ANGLE_VULKAN,
+        ZINK_MESA,
+        ZINK_MESA_25,
+        VIRGL,
+        FREEDRENO;
+
+        // 注意：displayName 不再存储在枚举本身，而是通过序列化名称或自定义序列化器处理
+        // 如果需要保留原始显示名称，可以考虑自定义序列化器或者在 JSON 中单独处理
+        // 这里简化处理，序列化名称即为枚举常量名
+        val displayName: String
+            get() = when (this) {
+                AUTO -> "AUTO"
+                NATIVE_OPENGL_ES -> "Native OpenGL ES"
+                GL4ES -> "GL4ES"
+                GL4ES_ANGLE -> "GL4ES + ANGLE"
+                MOBILE_GL -> "MobileGl"
+                ANGLE_VULKAN -> "ANGLE (Vulkan)"
+                ZINK_MESA -> "Zink (Mesa)"
+                ZINK_MESA_25 -> "Zink (Mesa 25)"
+                VIRGL -> "VirGL Renderer"
+                FREEDRENO -> "Freedreno(Adreno)"
+            }
 
         companion object {
+            // 根据序列化后的名称（即枚举常量名）查找
             fun fromDisplayName(displayName: String): Renderer {
                 return entries.find { it.displayName == displayName }
                     ?: AUTO // 默认改为自动选择
             }
         }
     }
+
 
     companion object {
         @Volatile
@@ -99,12 +139,20 @@ class ConfigManager private constructor() {
     fun loadConfig() {
         try {
             configFile?.let { file ->
-                currentConfig = serializer.loadFromFile<AppConfig>(file) ?: AppConfig()
+                if (file.exists()) {
+                    val jsonString = file.readText()
+                    currentConfig = json.decodeFromString<AppConfig>(jsonString)
+                } else {
+                    RALaunchLogger.d("Config file does not exist, creating default.")
+                    currentConfig = AppConfig()
+                    saveConfig() // 保存默认配置
+                }
             } ?: run {
+                RALaunchLogger.w("Config directory/file not initialized, using default config.")
                 currentConfig = AppConfig()
             }
-        } catch (e: Exception) {
-            Logger.error(message = "Failed to load config, using default", throwable = e)
+        } catch (e: Exception) { // 捕获 SerializationException 等
+            RALaunchLogger.e(message = "Failed to load or parse config, using default", throwable = e)
             currentConfig = AppConfig()
         }
     }
@@ -116,17 +164,20 @@ class ConfigManager private constructor() {
         return try {
             currentConfig?.let { config ->
                 configFile?.let { file ->
-                    serializer.saveToFile(config, file)
+                    val jsonString = json.encodeToString(config)
+                    file.writeText(jsonString)
+                    true
                 } ?: false
             } ?: false
-        } catch (e: Exception) {
-            Logger.error(message = "Failed to save config", throwable = e)
+        } catch (e: Exception) { // 捕获 SerializationException 等
+            RALaunchLogger.e(message = "Failed to save config", throwable = e)
             false
         }
     }
 
     /**
-     * 获取当前配置（只读）
+     * 获取当前配置（深拷贝副本）
+     * 注意：Kotlinx.Serialization decode 本身返回的就是新对象，但为了语义清晰，这里仍用 copy()
      */
     fun getConfig(): AppConfig {
         return currentConfig?.copy() ?: AppConfig()
@@ -142,109 +193,8 @@ class ConfigManager private constructor() {
                 saveConfig()
             } ?: false
         } catch (e: Exception) {
-            Logger.error(message = "Failed to update config", throwable = e)
+            RALaunchLogger.e(message = "Failed to update config", throwable = e)
             false
-        }
-    }
-
-    /**
-     * 获取配置值
-     */
-    inline fun <reified T> getValue(key: String, defaultValue: T): T {
-        return try {
-            currentConfig?.let { config ->
-                val field = config.javaClass.getDeclaredField(key)
-                field.isAccessible = true
-                (field.get(config) as? T) ?: defaultValue
-            } ?: defaultValue
-        } catch (_: Exception) {
-            defaultValue
-        }
-    }
-
-    /**
-     * 设置配置值
-     */
-    fun <T> setValue(key: String, value: T): Boolean {
-        return updateConfig { config ->
-            try {
-                val field = config.javaClass.getDeclaredField(key)
-                field.isAccessible = true
-                field.set(config, value)
-            } catch (e: Exception) {
-                throw IllegalArgumentException("Invalid config key: $key", e)
-            }
-        }
-    }
-
-    /**
-     * 获取嵌套对象的值
-     */
-    inline fun <reified T> getNestedValue(path: String, defaultValue: T): T {
-        return try {
-            currentConfig?.let { config ->
-                val pathParts = path.split(".")
-                var currentObj: Any = config
-
-                for (part in pathParts) {
-                    val field = currentObj.javaClass.getDeclaredField(part)
-                    field.isAccessible = true
-                    currentObj = field.get(currentObj) ?: return defaultValue
-                }
-
-                currentObj as? T ?: defaultValue
-            } ?: defaultValue
-        } catch (_: Exception) {
-            defaultValue
-        }
-    }
-
-    /**
-     * 设置嵌套对象的值
-     */
-    fun <T> setNestedValue(path: String, value: T): Boolean {
-        return updateConfig { config ->
-            try {
-                val pathParts = path.split(".")
-                var currentObj: Any = config
-
-                // 遍历到倒数第二个对象（父对象）
-                for (i in 0 until pathParts.size - 1) {
-                    val field = currentObj.javaClass.getDeclaredField(pathParts[i])
-                    field.isAccessible = true
-                    currentObj = field.get(currentObj) ?: throw IllegalArgumentException("Path not found: $path")
-                }
-
-                // 设置最终字段的值
-                val finalField = currentObj.javaClass.getDeclaredField(pathParts.last())
-                finalField.isAccessible = true
-                finalField.set(currentObj, value)
-
-            } catch (e: Exception) {
-                throw IllegalArgumentException("Invalid config path: $path", e)
-            }
-        }
-    }
-
-    /**
-     * 获取整个嵌套对象
-     */
-    inline fun <reified T> getNestedObject(path: String): T? {
-        return try {
-            currentConfig?.let { config ->
-                val pathParts = path.split(".")
-                var currentObj: Any = config
-
-                for (part in pathParts) {
-                    val field = currentObj.javaClass.getDeclaredField(part)
-                    field.isAccessible = true
-                    currentObj = field.get(currentObj) ?: return null
-                }
-
-                currentObj as? T
-            }
-        } catch (_: Exception) {
-            null
         }
     }
 
@@ -262,10 +212,12 @@ class ConfigManager private constructor() {
     fun exportConfig(exportFile: File): Boolean {
         return try {
             currentConfig?.let { config ->
-                serializer.saveToFile(config, exportFile)
+                val jsonString = json.encodeToString(config)
+                exportFile.writeText(jsonString)
+                true
             } ?: false
         } catch (e: Exception) {
-            Logger.error("Failed to export config", e)
+            RALaunchLogger.e(message = "Failed to export config", throwable = e)
             false
         }
     }
@@ -275,16 +227,18 @@ class ConfigManager private constructor() {
      */
     fun importConfig(importFile: File): Boolean {
         return try {
-            if (!importFile.exists()) return false
+            if (!importFile.exists()) {
+                RALaunchLogger.w("Import file does not exist: ${importFile.absolutePath}")
+                return false
+            }
 
-            val importedConfig = serializer.loadFromFile<AppConfig>(importFile)
-            importedConfig?.let { config ->
-                currentConfig = config
-                saveConfig()
-                true
-            } ?: false
-        } catch (e: Exception) {
-            Logger.error("Failed to import config", e)
+            val jsonString = importFile.readText()
+            val importedConfig = json.decodeFromString<AppConfig>(jsonString)
+            currentConfig = importedConfig
+            saveConfig() // 保存到主配置文件
+            true
+        } catch (e: Exception) { // 捕获 SerializationException 等
+            RALaunchLogger.e(message = "Failed to import or parse config from ${importFile.absolutePath}", throwable = e)
             false
         }
     }
@@ -294,7 +248,8 @@ class ConfigManager private constructor() {
      */
     fun getConfigAsJson(): String {
         return currentConfig?.let { config ->
-            serializer.toJson(config).toString(2)
+            // 使用 prettyPrint = true 的 Json 实例进行编码
+            json.encodeToString(config)
         } ?: "{}"
     }
 
@@ -315,6 +270,7 @@ class ConfigManager private constructor() {
         listeners.remove(listener)
     }
 
+    // 注意：notifyConfigChanged 需要你知道哪些键改变了才能有效调用
     private fun notifyConfigChanged(changedKeys: List<String>) {
         listeners.forEach { it.onConfigChanged(changedKeys) }
     }

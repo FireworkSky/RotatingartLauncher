@@ -13,6 +13,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.Dispatchers
 import androidx.core.content.edit
+import com.app.ralaunch.locales.LocaleManager.strings
 import java.io.File
 import java.io.FileOutputStream
 import java.io.InputStream
@@ -40,7 +41,7 @@ class SetupViewModel : ViewModel() {
         val components = listOf(
             ComponentItem(
                 name = ".NET Runtime",
-                description = ".NET 7/8/9/10 运行时环境",
+                description = ".NET 7/8/9/10 Runtime",
                 fileName = "dotnet.zip"
             )
         )
@@ -81,7 +82,7 @@ class SetupViewModel : ViewModel() {
             it.copy(
                 currentScreen = SetupScreen.Extraction,
                 overallProgress = 0,
-                overallStatus = "准备安装..."
+                overallStatus = strings.setupOverallProgressPreparing
             )
         }
         resetComponentsState()
@@ -91,7 +92,7 @@ class SetupViewModel : ViewModel() {
         val updatedComponents = _state.value.components.map { component ->
             component.copy(
                 progress = 0,
-                status = "等待安装",
+                status = strings.setupOverallProgressPreparing,
                 isInstalled = false
             )
         }
@@ -116,7 +117,7 @@ class SetupViewModel : ViewModel() {
             } catch (e: Exception) {
                 updateState {
                     it.copy(
-                        extractionError = "解压失败: ${e.message}",
+                        extractionError = strings.setupExtractionFailedPrefix.format(e.message),
                         isExtracting = false
                     )
                 }
@@ -129,15 +130,15 @@ class SetupViewModel : ViewModel() {
      */
     private suspend fun extractAllComponents(context: Context) {
         for ((index, component) in _state.value.components.withIndex()) {
-            updateComponentStatus(index, 0, "开始解压 ${component.name}...")
+            updateComponentStatus(index, 0, strings.setupStartExtracting.format(component.name))
 
             try {
                 // 实际解压组件
                 extractComponentFromAssets(context, component, index)
-                updateComponentStatus(index, 100, "解压完成")
+                updateComponentStatus(index, 100, strings.setupExtractingSuccessful)
                 markComponentAsInstalled(index)
             } catch (e: Exception) {
-                updateComponentStatus(index, 0, "解压失败: ${e.message}")
+                updateComponentStatus(index, 0, strings.setupExtractionFailedPrefix.format(e.message))
                 throw e // 重新抛出异常，让外层捕获
             }
         }
@@ -151,16 +152,16 @@ class SetupViewModel : ViewModel() {
         component: ComponentItem,
         componentIndex: Int
     ) {
-        updateComponentStatus(componentIndex, 10, "准备资源文件...")
+        updateComponentStatus(componentIndex, 10, strings.setupCheckAssets)
 
         // 检查 assets 中是否存在文件
         val assetManager = context.assets
         val assetFiles = assetManager.list("") ?: emptyArray()
         if (component.fileName !in assetFiles) {
-            throw IllegalStateException("资源文件 ${component.fileName} 不存在")
+            throw IllegalStateException(strings.setupAssetFileMissingPrefix.format(component.fileName))
         }
 
-        updateComponentStatus(componentIndex, 20, "创建目标目录...")
+        updateComponentStatus(componentIndex, 20, strings.setupCreateTargetDir)
 
         // 创建目标目录
         val outputDir = File(context.filesDir, "components")
@@ -169,16 +170,16 @@ class SetupViewModel : ViewModel() {
         }
         outputDir.mkdirs()
 
-        updateComponentStatus(componentIndex, 30, "开始解压文件...")
+        updateComponentStatus(componentIndex, 30, strings.setupStartExtracting)
 
         // 实际解压 ZIP 文件（使用分块读取）
         extractZipFromAssetsWithChunkedReading(context, component.fileName, outputDir, componentIndex)
 
-        updateComponentStatus(componentIndex, 95, "验证文件完整性...")
+        updateComponentStatus(componentIndex, 95, strings.setupOverallProgressVerifying)
 
         // 验证解压结果
         if (!outputDir.exists() || outputDir.listFiles().isNullOrEmpty()) {
-            throw IllegalStateException("解压后目录为空或不存在")
+            throw IllegalStateException("The directory is empty or does not exist after extraction")
         }
     }
 
@@ -207,7 +208,7 @@ class SetupViewModel : ViewModel() {
             var entriesProcessed = 0
             var totalBytesExtracted: Long = 0
 
-            updateComponentStatus(componentIndex, 40, "解压文件结构...")
+            updateComponentStatus(componentIndex, 40, strings.setupExtractingStructure)
 
             val buffer = ByteArray(BUFFER_SIZE)
             var entry: ZipEntry?
@@ -216,10 +217,8 @@ class SetupViewModel : ViewModel() {
                 entry?.let { zipEntry ->
                     val fileName = zipEntry.name
 
-                    // 安全检查：防止路径遍历攻击
-                    if (fileName.contains("..") || fileName.contains("/..") || fileName.contains("\\..")) {
-                        throw SecurityException("无效的文件路径: $fileName")
-                    }
+                    if (fileName.contains("..") || fileName.contains("/..") || fileName.contains("\\.."))
+                        throw SecurityException(strings.setupInvalidFilePathPrefix.format(fileName))
 
                     val outputFile = File(outputDir, fileName)
 
@@ -251,7 +250,7 @@ class SetupViewModel : ViewModel() {
                                         entryBytesExtracted,
                                         zipEntry.size
                                     )
-                                    val status = "解压中: ${formatFileSize(entryBytesExtracted)}/${formatFileSize(zipEntry.size)}"
+                                    val status = "${strings.setupExtracting} - ${formatFileSize(entryBytesExtracted)}/${formatFileSize(zipEntry.size)}"
                                     updateComponentStatus(componentIndex, progress, status)
                                     lastProgressUpdateSize = entryBytesExtracted
                                 }
@@ -266,7 +265,7 @@ class SetupViewModel : ViewModel() {
                                 entryBytesExtracted,
                                 zipEntry.size
                             )
-                            updateComponentStatus(componentIndex, finalProgress, "文件解压完成")
+                            updateComponentStatus(componentIndex, finalProgress, strings.setupExtractingSuccessful)
                         }
                     }
 
@@ -282,7 +281,7 @@ class SetupViewModel : ViewModel() {
                         0L,
                         0L
                     )
-                    val status = "解压中 ($entriesProcessed/$totalEntries)"
+                    val status = "${strings.setupExtracting} ($entriesProcessed/$totalEntries)"
                     updateComponentStatus(componentIndex, progress, status)
                 }
             }
@@ -412,7 +411,7 @@ class SetupViewModel : ViewModel() {
 
     private fun updateOverallProgress() {
         if (_state.value.components.isEmpty()) {
-            updateState { it.copy(overallProgress = 0, overallStatus = "准备安装...") }
+            updateState { it.copy(overallProgress = 0, overallStatus = strings.setupOverallProgressPreparing) }
             return
         }
 
@@ -420,10 +419,10 @@ class SetupViewModel : ViewModel() {
         val avgProgress = totalProgress / _state.value.components.size
 
         val status = when {
-            avgProgress >= 100 -> "安装完成"
-            avgProgress >= 95 -> "验证文件..."
-            avgProgress > 0 -> "安装中..."
-            else -> "准备安装..."
+            avgProgress >= 100 -> strings.setupOverallProgressCompleted
+            avgProgress >= 95 -> strings.setupOverallProgressVerifying
+            avgProgress > 0 -> strings.setupOverallProgressInstalling
+            else -> strings.setupOverallProgressPreparing
         }
 
         updateState { it.copy(overallProgress = avgProgress, overallStatus = status) }
@@ -433,7 +432,7 @@ class SetupViewModel : ViewModel() {
         updateState {
             it.copy(
                 overallProgress = 100,
-                overallStatus = "安装完成",
+                overallStatus = strings.setupOverallProgressCompleted,
                 isExtracting = false
             )
         }
