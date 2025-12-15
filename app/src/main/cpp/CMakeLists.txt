@@ -4,10 +4,6 @@ project("main")
 # 设置路径
 set(SDL_SOURCE_DIR ${CMAKE_SOURCE_DIR}/SDL)
 set(FNA3D_SOURCE_DIR ${CMAKE_SOURCE_DIR}/FNA3D)
-set(FAUDIO_SOURCE_DIR ${CMAKE_SOURCE_DIR}/FAudio)
-set(THEORAFILE_SOURCE_DIR ${CMAKE_SOURCE_DIR}/Theorafile)
-
-
 
 
 # 添加 gl4es 子项目
@@ -47,14 +43,9 @@ set(BUILD_SHARED_LIBS ON CACHE BOOL "Build shared library" FORCE)
 set(BUILD_UTILS OFF CACHE BOOL "Don't build utils" FORCE)
 set(BUILD_TESTS OFF CACHE BOOL "Don't build tests" FORCE)
 set(XNASONG ON CACHE BOOL "Enable XNA_Song" FORCE)
-set(FAUDIO_INSTALL OFF CACHE BOOL "Disable install" FORCE)
-# 设置 SDL2 变量供 FAudio 使用
+
 set(SDL2_INCLUDE_DIRS ${SDL_SOURCE_DIR}/include)
 set(SDL2_LIBRARIES SDL2)
-add_subdirectory(${FAUDIO_SOURCE_DIR})
-
-# 添加 Theorafile 子项目
-add_subdirectory(${THEORAFILE_SOURCE_DIR})
 
 # 添加 ByteHook 库
 find_package(bytehook REQUIRED CONFIG)
@@ -112,9 +103,7 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
         # GL 现在是共享库，运行时动态加载，不再静态链接
         SDL2        # SDL2使用EGL后端
         dl          # 用于dlopen/dlsym（动态加载EGL库）
-        FAudio-shared  # FAudio音频库（FNA需要）
         FNA3D       # FNA3D图形库
-        theorafile  # Theorafile视频库（FNA需要）
         mojoshader  # MojoShader着色器库（FNA3D需要）
         netcorehost # .NET Core Hosting库
         c++_shared
@@ -131,6 +120,5 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
         ${CMAKE_SOURCE_DIR}  # For GL/osmesa.h and other local headers
 )
 
-install(TARGETS ${CMAKE_PROJECT_NAME} SDL2 FAudio-shared FNA3D netcorehost DESTINATION ${CMAKE_INSTALL_LIBDIR})
-install(TARGETS mojoshader theorafile DESTINATION ${CMAKE_INSTALL_LIBDIR})
+install(TARGETS ${CMAKE_PROJECT_NAME} SDL2  FNA3D netcorehost DESTINATION ${CMAKE_INSTALL_LIBDIR})
 install(TARGETS GL_gl4es EGL_gl4es DESTINATION ${CMAKE_INSTALL_LIBDIR})
