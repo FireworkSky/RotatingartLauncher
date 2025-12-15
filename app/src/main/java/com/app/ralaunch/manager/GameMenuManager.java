@@ -18,13 +18,6 @@ import com.app.ralaunch.utils.AppLogger;
 
 /**
  * 游戏菜单管理器
- * 
- * 统一管理游戏内菜单功能，包括：
- * - 菜单初始化
- * - 菜单项点击处理
- * - 菜单显示/隐藏
- * 
- * 减少 GameActivity 的代码耦合
  */
 public class GameMenuManager {
     private static final String TAG = "GameMenuManager";
@@ -93,11 +86,7 @@ public class GameMenuManager {
             // 移除默认分隔线，使用卡片样式
             mGameMenu.setDivider(null);
             mGameMenu.setDividerHeight(0);
-            
-            // 注意：点击事件现在在适配器的 getView 方法中直接设置，不在这里设置
-            // 这样可以避免 MaterialCardView 拦截点击事件的问题
-            
-            AppLogger.info(TAG, "Game menu setup successfully");
+
         } catch (Exception e) {
             AppLogger.error(TAG, "Failed to setup game menu", e);
         }
@@ -210,13 +199,6 @@ public class GameMenuManager {
             .show();
     }
     
-    /**
-     * 显示快速设置（已废弃，使用编辑器设置）
-     */
-    @Deprecated
-    public void showQuickSettings() {
-        // 已废弃，不再显示快速设置
-        // 游戏内设置统一使用编辑器设置界面
-    }
+
 }
 

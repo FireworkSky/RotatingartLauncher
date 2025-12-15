@@ -24,6 +24,7 @@ import com.app.ralaunch.R;
 import com.app.ralaunch.RaLaunchApplication;
 import com.app.ralaunch.utils.AppLogger;
 import com.app.ralaunch.utils.RuntimePreference;
+import com.app.ralaunch.utils.RendererPreference;
 import com.app.ralaunch.manager.GameFullscreenManager;
 
 import com.app.ralaunch.core.GameLauncher;
@@ -39,18 +40,7 @@ import android.view.Surface;
 
 import com.app.ralib.error.ErrorHandler;
 
-/**
- * 游戏运行Activity
- * 
- * 继承自 SDLActivity，负责实际运行游戏，提供：
- * - SDL 环境初始化
- * - .NET 运行时加载
- * - 游戏程序集启动
- * - 强制横屏显示
- * - 权限管理和输入法支持
- * 
- * 通过 JNI 与 C/C++ 层交互，调用 dotnet host 启动游戏
- */
+
 public class GameActivity extends SDLActivity {
     private static final String TAG = "GameActivity";
     private static final int CONTROL_EDITOR_REQUEST_CODE = 2001;
@@ -62,6 +52,7 @@ public class GameActivity extends SDLActivity {
     private GameMenuController gameMenuController = new GameMenuController();
     private final GameLaunchDelegate launchDelegate = new GameLaunchDelegate();
     private final GameTouchBridge touchBridge = new GameTouchBridge();
+    public LongPressRightClickDetector longPressDetector; // public 以便GameMenuController可以访问
 
     @Override
     protected void attachBaseContext(Context newBase) {
@@ -72,7 +63,7 @@ public class GameActivity extends SDLActivity {
     @Override
     public void loadLibraries() {
         try {
-            RuntimePreference.applyRendererEnvironment(this);
+            RendererPreference.applyRendererEnvironment(this);
 
             com.app.ralaunch.data.SettingsManager settingsManager =
                 com.app.ralaunch.data.SettingsManager.getInstance(this);
@@ -81,68 +72,47 @@ public class GameActivity extends SDLActivity {
             setupTouchEnvironment(settingsManager);
             
         } catch (Exception e) {
-            AppLogger.warn(TAG, "Failed to apply renderer environment before loading libraries: " + e.getMessage());
         }
         super.loadLibraries();
     }
     
-    /**
-     * 设置触屏相关环境变量
-     * 触屏直接通过 SDL 转换为鼠标事件，无需 C# 补丁
-     */
+
     private void setupTouchEnvironment(com.app.ralaunch.data.SettingsManager settingsManager) {
         try {
-            // 启用触屏转鼠标事件
             android.system.Os.setenv("SDL_TOUCH_MOUSE_EVENTS", "1", true);
-            AppLogger.info(TAG, "SDL_TOUCH_MOUSE_EVENTS=1 (touch generates mouse events)");
             
-            // 多点触控设置
             boolean multitouch = settingsManager.isTouchMultitouchEnabled();
             if (multitouch) {
-                // 启用 SDL 多点触控鼠标模式
-                // 每个触摸点都可以产生独立的鼠标事件
                 android.system.Os.setenv("SDL_TOUCH_MOUSE_MULTITOUCH", "1", true);
-                AppLogger.info(TAG, "SDL_TOUCH_MOUSE_MULTITOUCH=1 (multitouch enabled)");
             } else {
                 android.system.Os.setenv("SDL_TOUCH_MOUSE_MULTITOUCH", "0", true);
             }
             
-            // 鼠标模式右摇杆
             boolean mouseRightStick = settingsManager.isMouseRightStickEnabled();
             if (mouseRightStick) {
                 android.system.Os.setenv("RALCORE_MOUSE_RIGHT_STICK", "1", true);
-                AppLogger.info(TAG, "RALCORE_MOUSE_RIGHT_STICK=1 (right stick controls mouse)");
             } else {
                 android.system.Os.unsetenv("RALCORE_MOUSE_RIGHT_STICK");
             }
             
         } catch (Exception e) {
-            AppLogger.warn(TAG, "Failed to setup touch environment: " + e.getMessage());
         }
     }
 
     /**
      * 创建 SDL Surface（使用 OSMesa-aware Surface）
-     * 当选择 zink 渲染器时，使用 OSMSurface 以自动初始化 OSMesa
      */
     @Override
     protected org.libsdl.app.SDLSurface createSDLSurface(Context context) {
         try {
             String currentRenderer = RendererLoader.getCurrentRenderer();
-            AppLogger.info(TAG, "Current renderer from environment: " + currentRenderer);
-
-            // 检查是否是 zink 渲染器（RALCORE_RENDERER 可能是 "vulkan_zink"）
             boolean isZink = RendererConfig.RENDERER_ZINK.equals(currentRenderer) ||
                             "vulkan_zink".equals(currentRenderer);
 
             if (isZink) {
-                AppLogger.info(TAG, "Creating OSMesa-aware SDL Surface for zink renderer");
                 return new OSMSurface(context);
-            } else {
-                AppLogger.info(TAG, "Using standard SDL Surface for renderer: " + currentRenderer);
             }
         } catch (Exception e) {
-            AppLogger.warn(TAG, "Failed to check renderer, using default SDL Surface: " + e.getMessage());
         }
 
         // 默认使用标准 SDL Surface
@@ -175,12 +145,16 @@ public class GameActivity extends SDLActivity {
         super.onCreate(savedInstanceState);
 
         mainActivity = this;
+        // 初始化错误处理器（用于显示错误弹窗）
+        try {
+            ErrorHandler.setCurrentActivity(this);
+        } catch (Exception e) {
+            AppLogger.error("GameActivity", "设置 ErrorHandler 失败: " + e.getMessage());
+        }
         // 强制横屏，防止 SDL 在运行时将方向改为 FULL_SENSOR 导致旋转为竖屏
         try {
             setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
-            AppLogger.info(TAG, "Screen orientation set to landscape");
         } catch (Exception e) {
-            AppLogger.warn(TAG, "Failed to set orientation onCreate: " + e.getMessage());
         }
         // 初始化全屏管理器
         mFullscreenManager = new GameFullscreenManager(this);
@@ -198,17 +172,19 @@ public class GameActivity extends SDLActivity {
         // 设置游戏内菜单（需要在虚拟控制初始化后）
         gameMenuController.setup(this, (ViewGroup) mLayout, virtualControlsManager);
 
-        String runtimePref = getIntent().getStringExtra("DOTNET_FRAMEWORK");
+        // 初始化长按右键检测器
+        if (virtualControlsManager.getInputBridge() != null) {
+            longPressDetector = new LongPressRightClickDetector(virtualControlsManager.getInputBridge());
+            longPressDetector.setEnabled(settingsManager.isLongPressRightClickEnabled());
+        }
 
-        AppLogger.info(TAG, "Normal game launch mode");
+        String runtimePref = getIntent().getStringExtra("DOTNET_FRAMEWORK");
 
         if (runtimePref != null && !runtimePref.isEmpty()) {
             try {
                 RuntimePreference.setDotnetFramework(this, runtimePref);
-                AppLogger.info(TAG, "Runtime preference set: " + runtimePref);
             }
             catch (Throwable t) {
-                AppLogger.warn(TAG, "Failed to apply runtime preference from intent: " + t.getMessage());
             }
         }
 
@@ -292,12 +268,10 @@ public class GameActivity extends SDLActivity {
      */
     @Override
     public void onBackPressed() {
-        AppLogger.debug(TAG, "onBackPressed() called - handling back button");
         gameMenuController.handleBack(virtualControlsManager);
     }
     @Override
     protected void onDestroy() {
-        AppLogger.info(TAG, "GameActivity.onDestroy() called");
         virtualControlsManager.stop();
         super.onDestroy();
     }
@@ -384,6 +358,12 @@ public class GameActivity extends SDLActivity {
     @Override
     public boolean dispatchTouchEvent(MotionEvent event) {
         boolean result = super.dispatchTouchEvent(event);
+        
+        // 处理长按右键检测
+        if (longPressDetector != null) {
+            longPressDetector.handleTouchEvent(event);
+        }
+        
         touchBridge.handleMotionEvent(event, getResources());
         return result;
     }

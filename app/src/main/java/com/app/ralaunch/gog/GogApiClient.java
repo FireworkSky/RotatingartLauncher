@@ -52,8 +52,6 @@ public class GogApiClient {
         this.cookieManager = new java.net.CookieManager();
         this.cookieManager.setCookiePolicy(java.net.CookiePolicy.ACCEPT_ALL);
         java.net.CookieHandler.setDefault(cookieManager);
-
-        AppLogger.info(TAG, "GOG API 客户端初始化，Cookie管理已启用");
     }
 
     // 两步验证回调接口
@@ -97,7 +95,6 @@ public class GogApiClient {
             String name = cookieNameValue.substring(0, equals);
             String value = cookieNameValue.substring(equals + 1);
             cookies.put(name, value);
-            AppLogger.info(TAG, "保存Cookie: " + name + "=" + value.substring(0, Math.min(20, value.length())) + "...");
         }
     }
 
@@ -108,12 +105,9 @@ public class GogApiClient {
     private void saveAllCookies(HttpURLConnection conn) {
         java.util.List<String> setCookieHeaders = conn.getHeaderFields().get("Set-Cookie");
         if (setCookieHeaders != null) {
-            AppLogger.info(TAG, "响应包含 " + setCookieHeaders.size() + " 个 Set-Cookie 头");
             for (String setCookie : setCookieHeaders) {
                 saveCookie(setCookie);
             }
-        } else {
-            AppLogger.info(TAG, "响应不包含 Set-Cookie 头");
         }
     }
 
@@ -147,17 +141,11 @@ public class GogApiClient {
             try {
                 return operation.execute();
             } catch (java.net.UnknownHostException e) {
-                // DNS 解析失败
                 lastException = e;
-                AppLogger.warn(TAG, operationName + " - DNS解析失败 (尝试 " + (retries + 1) + "/" + (MAX_RETRIES + 1) + "): " + e.getMessage());
             } catch (java.net.SocketTimeoutException e) {
-                // 连接或读取超时
                 lastException = e;
-                AppLogger.warn(TAG, operationName + " - 连接超时 (尝试 " + (retries + 1) + "/" + (MAX_RETRIES + 1) + "): " + e.getMessage());
             } catch (java.net.ConnectException e) {
-                // 连接被拒绝
                 lastException = e;
-                AppLogger.warn(TAG, operationName + " - 连接失败 (尝试 " + (retries + 1) + "/" + (MAX_RETRIES + 1) + "): " + e.getMessage());
             } catch (IOException e) {
                 // 其他 IO 异常，不重试
                 throw e;
@@ -166,7 +154,6 @@ public class GogApiClient {
             retries++;
             if (retries <= MAX_RETRIES) {
                 try {
-                    AppLogger.info(TAG, "等待 " + RETRY_DELAY_MS + "ms 后重试...");
                     Thread.sleep(RETRY_DELAY_MS);
                 } catch (InterruptedException ie) {
                     Thread.currentThread().interrupt();
@@ -269,31 +256,18 @@ public class GogApiClient {
                     "&redirect_uri=" + URLEncoder.encode(REDIRECT_URI, "UTF-8") +
                     "&response_type=code&layout=default&brand=gog";
 
-            AppLogger.info(TAG, "正在访问: " + authUrl);
-
             HttpURLConnection conn = (HttpURLConnection) new URL(authUrl).openConnection();
             try {
                 conn.setRequestMethod("GET");
-                conn.setConnectTimeout(15000); // 15秒连接超时
-                conn.setReadTimeout(15000); // 15秒读取超时
+                conn.setConnectTimeout(15000);
+                conn.setReadTimeout(15000);
                 conn.setRequestProperty("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36");
                 conn.setRequestProperty("Accept-Language", "zh-CN,zh;q=0.9,en;q=0.8");
 
-                AppLogger.info(TAG, "连接响应码: " + conn.getResponseCode());
-
-                // 保存所有cookies（修复：使用saveAllCookies获取所有Set-Cookie头）
                 saveAllCookies(conn);
 
                 String html = readResponse(conn.getInputStream());
 
-                // 调试：输出HTML长度和前500个字符
-                AppLogger.info(TAG, "HTML长度: " + html.length() + " 字符");
-                if (html.length() > 0) {
-                    int previewLen = Math.min(500, html.length());
-                    AppLogger.info(TAG, "HTML预览: " + html.substring(0, previewLen));
-                }
-
-                // 从 HTML 中提取 _token 值（indexOf 使用字面字符串，不需要转义）
                 String tokenPattern = "name=\"login[_token]\" value=\"";
                 int tokenStart = html.indexOf(tokenPattern);
                 if (tokenStart != -1) {
@@ -301,12 +275,10 @@ public class GogApiClient {
                     int tokenEnd = html.indexOf("\"", tokenStart);
                     if (tokenEnd != -1) {
                         String token = html.substring(tokenStart, tokenEnd);
-                        AppLogger.info(TAG, "成功获取登录令牌: " + token);
                         return token;
                     }
                 }
 
-                // 尝试其他可能的token pattern
                 String altPattern1 = "name='login[_token]' value='";
                 int altStart1 = html.indexOf(altPattern1);
                 if (altStart1 != -1) {
@@ -314,27 +286,17 @@ public class GogApiClient {
                     int altEnd1 = html.indexOf("'", altStart1);
                     if (altEnd1 != -1) {
                         String token = html.substring(altStart1, altEnd1);
-                        AppLogger.info(TAG, "成功获取登录令牌 (备用模式1)");
                         return token;
                     }
                 }
-
-                // 查找是否包含 "login[_token]" 字符串
-                if (html.contains("login[_token]")) {
-                    AppLogger.warn(TAG, "找到 login[_token] 但无法提取值");
-                    int pos = html.indexOf("login[_token]");
-                    int start = Math.max(0, pos - 50);
-                    int end = Math.min(html.length(), pos + 150);
-                    AppLogger.info(TAG, "上下文: " + html.substring(start, end));
-                } else {
-                    AppLogger.warn(TAG, "HTML中不包含 login[_token]");
-                }
-
-                AppLogger.error(TAG, "无法从登录表单提取令牌");
-                return null;
+            } catch (Exception e) {
+                AppLogger.error(TAG, "无法从登录表单提取令牌", e);
             } finally {
                 conn.disconnect();
             }
+            
+            AppLogger.error(TAG, "无法从登录表单提取令牌");
+            return null;
         }, "获取登录表单令牌");
     }
 

@@ -6,12 +6,12 @@ import android.graphics.BitmapFactory;
 import android.widget.ImageView;
 import com.app.ralaunch.R;
 import com.app.ralaunch.model.GameItem;
-import com.app.ralaunch.utils.IconExtractorHelper;
+import com.app.ralib.icon.IconExtractor;
+import com.app.ralaunch.utils.AppLogger;
 import java.io.File;
 
 /**
  * 图标加载器
- * 统一管理图标加载逻辑，减少代码重复
  */
 public class IconLoader {
     
@@ -60,14 +60,30 @@ public class IconLoader {
         
         // 异步提取图标
         new Thread(() -> {
-            String iconPath = IconExtractorHelper.extractGameIcon(context, filePath);
-            if (iconPath != null && !iconPath.isEmpty()) {
-                Bitmap bitmap = BitmapFactory.decodeFile(iconPath);
-                if (bitmap != null && context instanceof android.app.Activity) {
-                    ((android.app.Activity) context).runOnUiThread(() -> {
-                        imageView.setImageBitmap(bitmap);
-                    });
+            try {
+                java.io.File gameFile = new java.io.File(filePath);
+                if (!gameFile.exists()) {
+                    return;
                 }
+                
+                // 生成输出路径：在游戏文件旁边创建 xxx_icon.png
+                String nameWithoutExt = gameFile.getName().replaceAll("\\.[^.]+$", "");
+                String iconPath = gameFile.getParent() + java.io.File.separator + nameWithoutExt + "_icon.png";
+                
+                boolean success = IconExtractor.extractIconToPng(filePath, iconPath);
+                if (success) {
+                    java.io.File iconFile = new java.io.File(iconPath);
+                    if (iconFile.exists() && iconFile.length() > 0) {
+                        Bitmap bitmap = BitmapFactory.decodeFile(iconPath);
+                        if (bitmap != null && context instanceof android.app.Activity) {
+                            ((android.app.Activity) context).runOnUiThread(() -> {
+                                imageView.setImageBitmap(bitmap);
+                            });
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                AppLogger.error("IconLoader", "Exception during icon extraction: " + e.getMessage(), e);
             }
         }).start();
     }

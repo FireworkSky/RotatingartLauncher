@@ -16,9 +16,6 @@ import android.widget.TextView;
 
 import com.app.ralaunch.R;
 
-/**
- * 布局设置侧边弹窗（MD3风格）
- */
 public class ControlLayoutSettingsDialog {
     private final Context mContext;
     private final ViewGroup mParent;

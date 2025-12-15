@@ -14,15 +14,7 @@ import java.util.zip.GZIPInputStream;
 public class ArchiveExtractor {
     private static final String TAG = "ArchiveExtractor";
     
-    /**
-     * 解压 tar.gz 文件到目标目录
-     * 
-     * @param archiveFile tar.gz 文件
-     * @param targetDir 目标目录
-     * @param stripPrefix 要移除的前缀路径（例如 "usr/lib/" 或 null）
-     * @return 解压的文件数量
-     * @throws Exception 解压失败时抛出异常
-     */
+
     public static int extractTarGz(File archiveFile, File targetDir, String stripPrefix) throws Exception {
         try (FileInputStream fis = new FileInputStream(archiveFile);
              BufferedInputStream bis = new BufferedInputStream(fis);
@@ -73,7 +65,6 @@ public class ArchiveExtractor {
                 String canonicalEntryPath = targetFile.getCanonicalPath();
                 if (!canonicalEntryPath.startsWith(canonicalDestPath + File.separator) && 
                     !canonicalEntryPath.equals(canonicalDestPath)) {
-                    AppLogger.warn(TAG, "跳过不安全的路径: " + entryName);
                     continue;
                 }
                 
@@ -110,7 +101,6 @@ public class ArchiveExtractor {
                 processedFiles++;
             }
             
-            AppLogger.info(TAG, "Extracted " + processedFiles + " files from tar.gz");
             return processedFiles;
             
         } catch (Exception e) {

@@ -9,21 +9,11 @@
 
 
 #define LOG_TAG "GameLauncher"
-// 使用 app_logger 以支持文件日志
 #define LOGI(...) app_logger_log(LOG_LEVEL_INFO, LOG_TAG, __VA_ARGS__)
 #define LOGW(...) app_logger_log(LOG_LEVEL_WARN, LOG_TAG, __VA_ARGS__)
 #define LOGE(...) app_logger_log(LOG_LEVEL_ERROR, LOG_TAG, __VA_ARGS__)
 
-/**
- * @brief JNI_OnLoad 回调
- *
- * @param vm JavaVM 指针
- * @param reserved 保留参数（未使用）
- * @return JNI 版本号
- *
- * SDL 库加载时的初始化回调。
 
- */
 
 JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void* reserved) {
     (void)reserved;

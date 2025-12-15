@@ -522,6 +522,12 @@ public class VirtualButton extends View implements ControlView {
                 dummyInput.setWidth(1);
                 dummyInput.setHeight(1);
                 
+                // 设置输入法选项，防止全屏模式，让键盘以浮动模式显示
+                dummyInput.setImeOptions(
+                    android.view.inputmethod.EditorInfo.IME_FLAG_NO_FULLSCREEN |
+                    android.view.inputmethod.EditorInfo.IME_FLAG_NO_EXTRACT_UI
+                );
+                
                 // 关键修复：确保EditText在触摸模式下也能保持焦点
                 // 这样即使其他视图消费了触摸事件，键盘也不会关闭
                 dummyInput.setFocusable(true);
@@ -563,14 +569,20 @@ public class VirtualButton extends View implements ControlView {
                     }
                 });
                 
-                // 添加到根视图
+             
                 android.view.ViewGroup rootView = (android.view.ViewGroup)
                     activity.findViewById(android.R.id.content);
                 if (rootView == null) {
                     Log.e(TAG, "Root view not found");
                     return;
                 }
-                rootView.addView(dummyInput);
+                
+                // 创建LayoutParams，将EditText放置在屏幕中央
+                android.widget.FrameLayout.LayoutParams layoutParams = 
+                    new android.widget.FrameLayout.LayoutParams(1, 1);
+                layoutParams.gravity = android.view.Gravity.CENTER;
+                
+                rootView.addView(dummyInput, layoutParams);
                 
                 // 创建Handler用于30秒超时
                 final Handler timeoutHandler = new Handler(Looper.getMainLooper());

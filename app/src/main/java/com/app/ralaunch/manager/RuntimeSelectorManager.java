@@ -108,9 +108,7 @@ public class RuntimeSelectorManager {
                 // 添加更新动画
                 AnimationHelper.animateScaleUpdate(tvCurrentRuntime);
             });
-        
-        // 需要 FragmentManager 来显示对话框，这里返回对话框让调用者显示
-        // 或者可以传入 FragmentManager
+
     }
     
     /**

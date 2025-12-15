@@ -2,13 +2,7 @@ package com.app.ralaunch.model;
 
 /**
  * 组件安装项数据模型
- * 
- * 表示一个需要安装的组件，包含：
- * - 组件名称和描述
- * - 安装包文件名
- * - 安装状态和进度
- * - 是否需要解压
- * 
+
  * 用于在初始化过程中跟踪组件安装状态
  */
 public class ComponentItem {

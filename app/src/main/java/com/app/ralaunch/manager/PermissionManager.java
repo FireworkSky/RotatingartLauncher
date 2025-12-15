@@ -4,16 +4,16 @@ import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
+import android.net.Uri;
+import android.os.Environment;
+import android.provider.Settings;
 import androidx.activity.ComponentActivity;
 import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.core.content.ContextCompat;
-import com.app.ralaunch.utils.PermissionHelper;
 
 /**
  * 权限管理器
- * 负责处理权限请求和管理，包括：
- * - 存储权限（所有Android版本必需）
- * - 通知权限（Android 13+ 可选）
  */
 public class PermissionManager {
     private final ComponentActivity activity;
@@ -34,48 +34,49 @@ public class PermissionManager {
      * 初始化权限请求器
      */
     public void initialize() {
-        requestPermissionLauncher = PermissionHelper.registerStoragePermissions(activity, new PermissionHelper.Callback() {
-            @Override
-            public void onGranted() {
+        requestPermissionLauncher = activity.registerForActivityResult(
+            new ActivityResultContracts.RequestMultiplePermissions(), result -> {
+                boolean allGranted = true;
+                for (Boolean granted : result.values()) {
+                    if (!granted) {
+                        allGranted = false;
+                        break;
+                    }
+                }
                 if (currentPermissionCallback != null) {
-                    currentPermissionCallback.onPermissionsGranted();
+                    if (allGranted) {
+                        currentPermissionCallback.onPermissionsGranted();
+                    } else {
+                        currentPermissionCallback.onPermissionsDenied();
+                    }
                     currentPermissionCallback = null;
                 }
-            }
-            
-            @Override
-            public void onDenied() {
-                if (currentPermissionCallback != null) {
-                    currentPermissionCallback.onPermissionsDenied();
-                    currentPermissionCallback = null;
-                }
-            }
-        });
+            });
         
-        manageAllFilesLauncher = PermissionHelper.registerAllFilesAccess(activity, new PermissionHelper.Callback() {
-            @Override
-            public void onGranted() {
-                if (currentPermissionCallback != null) {
-                    currentPermissionCallback.onPermissionsGranted();
-                    currentPermissionCallback = null;
+        manageAllFilesLauncher = activity.registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(), result -> {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                    if (currentPermissionCallback != null) {
+                        if (Environment.isExternalStorageManager()) {
+                            currentPermissionCallback.onPermissionsGranted();
+                        } else {
+                            currentPermissionCallback.onPermissionsDenied();
+                        }
+                        currentPermissionCallback = null;
+                    }
                 }
-            }
-            
-            @Override
-            public void onDenied() {
-                if (currentPermissionCallback != null) {
-                    currentPermissionCallback.onPermissionsDenied();
-                    currentPermissionCallback = null;
-                }
-            }
-        });
+            });
     }
     
     /**
      * 检查是否具有必要的权限（仅检查存储权限，通知权限为可选）
      */
     public boolean hasRequiredPermissions() {
-        return PermissionHelper.hasStorageAccess(activity);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            return Environment.isExternalStorageManager();
+        }
+        return ContextCompat.checkSelfPermission(activity, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED &&
+               ContextCompat.checkSelfPermission(activity, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
     }
     
     /**
@@ -96,7 +97,21 @@ public class PermissionManager {
     public void requestRequiredPermissions(PermissionCallback callback) {
         this.currentPermissionCallback = callback;
         // 先请求存储权限，这是必需的
-        PermissionHelper.requestStorage(activity, requestPermissionLauncher, manageAllFilesLauncher);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            try {
+                Intent intent = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
+                intent.setData(Uri.parse("package:" + activity.getPackageName()));
+                manageAllFilesLauncher.launch(intent);
+            } catch (Exception e) {
+                Intent intent = new Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION);
+                manageAllFilesLauncher.launch(intent);
+            }
+        } else {
+            requestPermissionLauncher.launch(new String[]{
+                Manifest.permission.READ_EXTERNAL_STORAGE,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE
+            });
+        }
     }
     
     /**

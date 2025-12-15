@@ -17,7 +17,6 @@ import com.app.ralaunch.activity.MainActivity;
 import com.app.ralaunch.model.GameItem;
 import com.app.ralaunch.utils.AppLogger;
 import com.app.ralaunch.utils.GameExtractor;
-import com.app.ralaunch.utils.IconExtractorHelper;
 import com.app.ralib.error.ErrorHandler;
 import com.app.ralib.extractors.GogShFileExtractor;
 import com.google.android.material.button.MaterialButton;
@@ -198,7 +197,6 @@ public class LocalImportDialog extends DialogFragment {
                             if (getActivity() != null) {
                                 ((MainActivity) getActivity()).showToast(getString(R.string.import_game_detected, gameName, gameVersion));
                             }
-                            AppLogger.debug(TAG, "Game detected: " + gameName + " " + gameVersion);
                         }
                         updateImportButtonState();
                     });

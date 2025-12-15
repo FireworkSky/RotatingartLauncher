@@ -46,6 +46,8 @@ public class UnifiedEditorSettingsDialog {
     private View mItemSaveLayout; // 保存布局
     private View mItemFPSDisplay;
     private androidx.appcompat.widget.SwitchCompat mSwitchFPSDisplay;
+    private View mItemLongPressRightClick; // 长按右键
+    private androidx.appcompat.widget.SwitchCompat mSwitchLongPressRightClick;
     private View mItemHideControls; // 隐藏控件
     private View mItemExitGame; // 退出游戏
     
@@ -80,6 +82,7 @@ public class UnifiedEditorSettingsDialog {
         void onAddText();
         void onSaveLayout(); // 保存布局
         void onFPSDisplayChanged(boolean enabled); // FPS 显示选项变化
+        void onLongPressRightClickChanged(boolean enabled); // 长按右键选项变化
         void onHideControls(); // 隐藏控件
         void onExitGame(); // 退出游戏
     }
@@ -303,6 +306,8 @@ public class UnifiedEditorSettingsDialog {
         mItemSaveLayout = mDialogLayout.findViewById(R.id.item_save_layout);
         mItemFPSDisplay = mDialogLayout.findViewById(R.id.item_fps_display);
         mSwitchFPSDisplay = mDialogLayout.findViewById(R.id.switch_fps_display);
+        mItemLongPressRightClick = mDialogLayout.findViewById(R.id.item_long_press_right_click);
+        mSwitchLongPressRightClick = mDialogLayout.findViewById(R.id.switch_long_press_right_click);
         mItemHideControls = mDialogLayout.findViewById(R.id.item_hide_controls);
         mItemExitGame = mDialogLayout.findViewById(R.id.item_exit_game);
 
@@ -387,6 +392,22 @@ public class UnifiedEditorSettingsDialog {
                 });
             }
 
+            // 长按右键开关
+            if (mSwitchLongPressRightClick != null) {
+                // 加载当前设置
+                com.app.ralaunch.data.SettingsManager settingsManager = 
+                    com.app.ralaunch.data.SettingsManager.getInstance(mContext);
+                boolean longPressEnabled = settingsManager.isLongPressRightClickEnabled();
+                mSwitchLongPressRightClick.setChecked(longPressEnabled);
+                
+                mSwitchLongPressRightClick.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                    settingsManager.setLongPressRightClickEnabled(isChecked);
+                    if (mListener != null) {
+                        mListener.onLongPressRightClickChanged(isChecked);
+                    }
+                });
+            }
+
             // 隐藏控件
             if (mItemHideControls != null) {
                 mItemHideControls.setOnClickListener(v -> {
@@ -413,7 +434,7 @@ public class UnifiedEditorSettingsDialog {
      * 更新编辑模式UI（包括按钮文本、图标和添加控件区域的可见性）
      */
     private void updateEditModeUI() {
-        // 更新添加控件区域的可见性
+        // 更新添加控件区域的可见性：编辑模式下显示，非编辑模式下隐藏
         if (mAddControlsSection != null) {
             mAddControlsSection.setVisibility(mIsEditModeEnabled ? View.VISIBLE : View.GONE);
         }
@@ -421,6 +442,21 @@ public class UnifiedEditorSettingsDialog {
         // 更新"FPS 显示"选项的可见性：编辑模式下隐藏，非编辑模式下显示
         if (mItemFPSDisplay != null) {
             mItemFPSDisplay.setVisibility(mIsEditModeEnabled ? View.GONE : View.VISIBLE);
+        }
+
+        // 更新"长按右键"选项的可见性：编辑模式下隐藏，非编辑模式下显示
+        if (mItemLongPressRightClick != null) {
+            mItemLongPressRightClick.setVisibility(mIsEditModeEnabled ? View.GONE : View.VISIBLE);
+        }
+
+        // 更新"隐藏控件"选项的可见性：编辑模式下隐藏，非编辑模式下显示
+        if (mItemHideControls != null) {
+            mItemHideControls.setVisibility(mIsEditModeEnabled ? View.GONE : View.VISIBLE);
+        }
+
+        // 更新"退出游戏"选项的可见性：编辑模式下隐藏，非编辑模式下显示
+        if (mItemExitGame != null) {
+            mItemExitGame.setVisibility(mIsEditModeEnabled ? View.GONE : View.VISIBLE);
         }
 
         // 更新"切换编辑模式"按钮的文本和图标

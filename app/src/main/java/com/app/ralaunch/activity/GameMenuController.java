@@ -111,6 +111,14 @@ public class GameMenuController {
                 ControlEditorManager.MODE_IN_GAME
         );
         
+        // 设置长按右键监听器
+        controlEditorManager.setOnLongPressRightClickChangedListener(enabled -> {
+            // 更新GameActivity中的长按检测器状态
+            if (activity.longPressDetector != null) {
+                activity.longPressDetector.setEnabled(enabled);
+            }
+        });
+        
         // 设置隐藏控件监听器
         controlEditorManager.setOnHideControlsListener(() -> {
             controlsManager.toggle(activity);

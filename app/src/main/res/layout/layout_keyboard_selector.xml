@@ -7,11 +7,11 @@
     android:gravity="center_horizontal"
     android:background="#F0F0F0">
 
-    <!-- 拖动把手区域 -->
+    <!-- 拖动把手区域 - 精简版 -->
     <LinearLayout
         android:id="@+id/keyboard_drag_handle"
         android:layout_width="match_parent"
-        android:layout_height="32dp"
+        android:layout_height="24dp"
         android:orientation="horizontal"
         android:gravity="center"
         android:background="#E0E0E0"
@@ -19,33 +19,25 @@
 
         <!-- 拖动指示器 -->
         <View
-            android:layout_width="40dp"
+            android:layout_width="0dp"
             android:layout_height="4dp"
-            android:layout_marginEnd="8dp"
+            android:layout_weight="1"
             android:background="#999999"
             android:alpha="0.5" />
-
-        <TextView
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="虚拟键盘 - 可拖动"
-            android:textSize="11sp"
-            android:textColor="#666666"
-            android:gravity="center" />
 
         <!-- 关闭按钮 -->
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/btn_close_keyboard"
-            android:layout_width="28dp"
-            android:layout_height="28dp"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
             android:text="✕"
-            android:textSize="14sp"
+            android:textSize="12sp"
             android:textColor="#666666"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:padding="0dp"
             android:minWidth="0dp"
-            android:minHeight="0dp" />
+            android:minHeight="0dp"
+            android:layout_marginStart="12dp" />
 
     </LinearLayout>
 
@@ -54,281 +46,303 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="8dp">
+        android:paddingHorizontal="8dp"
+        android:paddingTop="4dp"
+        android:paddingBottom="6dp">
 
-    <!-- 主键盘内容 -->
-    <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal">
-
+        <!-- 主键盘内容 -->
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:orientation="horizontal">
 
-            <!-- 第一行：ESC + F功能键 -->
             <LinearLayout
                 android:layout_width="wrap_content"
-                android:layout_height="28dp"
-                android:orientation="horizontal"
-                android:layout_marginBottom="4dp">
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
 
-                <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_esc" style="@style/KeyboardKeyCompact" android:layout_width="30dp" android:text="Esc" />
-                <View android:layout_width="8dp" android:layout_height="match_parent" />
-                <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_f1" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="F1" />
-                <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_f2" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="F2" />
-                <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_f3" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="F3" />
-                <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_f4" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="F4" />
-                <View android:layout_width="6dp" android:layout_height="match_parent" />
-                <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_f5" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="F5" />
-                <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_f6" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="F6" />
-                <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_f7" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="F7" />
-                <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_f8" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="F8" />
-                <View android:layout_width="6dp" android:layout_height="match_parent" />
-                <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_f9" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="F9" />
-                <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_f10" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="F10" />
-                <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_f11" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="F11" />
-                <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_f12" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="F12" />
-                <View android:layout_width="6dp" android:layout_height="match_parent" />
-                <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_prt" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="Prt" />
-                <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_scr" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="Scr" />
-                <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_pause" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="Pau" />
+                <!-- 第一行：ESC + F功能键 -->
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="28dp"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="4dp">
+
+                    <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_esc" style="@style/KeyboardKeyCompact" android:layout_width="30dp" android:text="Esc" />
+                    <View android:layout_width="8dp" android:layout_height="match_parent" />
+                    <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_f1" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="F1" />
+                    <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_f2" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="F2" />
+                    <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_f3" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="F3" />
+                    <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_f4" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="F4" />
+                    <View android:layout_width="6dp" android:layout_height="match_parent" />
+                    <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_f5" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="F5" />
+                    <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_f6" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="F6" />
+                    <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_f7" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="F7" />
+                    <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_f8" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="F8" />
+                    <View android:layout_width="6dp" android:layout_height="match_parent" />
+                    <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_f9" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="F9" />
+                    <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_f10" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="F10" />
+                    <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_f11" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="F11" />
+                    <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_f12" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="F12" />
+                    <View android:layout_width="6dp" android:layout_height="match_parent" />
+                    <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_prt" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="Prt" />
+                    <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_scr" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="Scr" />
+                    <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_pause" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="Pau" />
+                </LinearLayout>
+
+                <!-- 第二行：数字行 -->
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="28dp"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="2dp">
+
+                    <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_grave" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="`" />
+                    <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_1" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="1" />
+                    <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_2" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="2" />
+                    <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_3" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="3" />
+                    <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_4" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="4" />
+                    <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_5" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="5" />
+                    <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_6" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="6" />
+                    <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_7" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="7" />
+                    <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_8" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="8" />
+                    <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_9" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="9" />
+                    <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_0" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="0" />
+                    <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_minus" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="-" />
+                    <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_equals" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="=" />
+                    <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_backspace" style="@style/KeyboardKeyCompact" android:layout_width="44dp" android:text="⌫" />
+                    <View android:layout_width="6dp" android:layout_height="match_parent" />
+                    <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_ins" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="Ins" />
+                    <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_home" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="Hm" />
+                    <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_pgup" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="PU" />
+                </LinearLayout>
+
+                <!-- 第三行：Tab + QWERTY -->
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="28dp"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="2dp">
+
+                    <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_tab" style="@style/KeyboardKeyCompact" android:layout_width="40dp" android:text="Tab" />
+                    <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_q" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="Q" />
+                    <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_w" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="W" />
+                    <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_e" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="E" />
+                    <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_r" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="R" />
+                    <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_t" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="T" />
+                    <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_y" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="Y" />
+                    <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_u" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="U" />
+                    <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_i" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="I" />
+                    <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_o" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="O" />
+                    <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_p" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="P" />
+                    <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_lbracket" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="[" />
+                    <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_rbracket" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="]" />
+                    <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_backslash" style="@style/KeyboardKeyCompact" android:layout_width="32dp" android:text="\\" />
+                    <View android:layout_width="6dp" android:layout_height="match_parent" />
+                    <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_del" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="Del" />
+                    <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_end" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="End" />
+                    <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_pgdn" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="PD" />
+                </LinearLayout>
+
+                <!-- 第四行：CapsLock + ASDFGH -->
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="28dp"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="2dp">
+
+                    <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_capslock" style="@style/KeyboardKeyCompact" android:layout_width="48dp" android:text="Caps" />
+                    <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_a" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="A" />
+                    <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_s" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="S" />
+                    <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_d" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="D" />
+                    <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_f" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="F" />
+                    <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_g" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="G" />
+                    <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_h" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="H" />
+                    <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_j" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="J" />
+                    <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_k" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="K" />
+                    <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_l" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="L" />
+                    <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_semicolon" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text=";" />
+                    <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_quote" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="'" />
+                    <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_enter" style="@style/KeyboardKeyCompact" android:layout_width="52dp" android:text="Enter" />
+                    <View android:layout_width="90dp" android:layout_height="match_parent" />
+                </LinearLayout>
+
+                <!-- 第五行：Shift + ZXCVBN -->
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="28dp"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="2dp">
+
+                    <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_lshift" style="@style/KeyboardKeyCompact" android:layout_width="60dp" android:text="Shift" />
+                    <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_z" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="Z" />
+                    <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_x" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="X" />
+                    <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_c" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="C" />
+                    <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_v" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="V" />
+                    <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_b" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="B" />
+                    <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_n" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="N" />
+                    <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_m" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="M" />
+                    <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_comma" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="," />
+                    <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_period" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="." />
+                    <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_slash" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="/" />
+                    <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_rshift" style="@style/KeyboardKeyCompact" android:layout_width="60dp" android:text="Shift" />
+                    <View android:layout_width="34dp" android:layout_height="match_parent" />
+                    <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_up" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="↑" />
+                    <View android:layout_width="28dp" android:layout_height="match_parent" />
+                </LinearLayout>
+
+                <!-- 第六行：Ctrl + 空格行 -->
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="28dp"
+                    android:orientation="horizontal">
+
+                    <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_lctrl" style="@style/KeyboardKeyCompact" android:layout_width="38dp" android:text="Ctrl" />
+                    <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_lwin" style="@style/KeyboardKeyCompact" android:layout_width="32dp" android:text="Win" />
+                    <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_lalt" style="@style/KeyboardKeyCompact" android:layout_width="32dp" android:text="Alt" />
+                    <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_space" style="@style/KeyboardKeyCompact" android:layout_width="168dp" android:text="Space" />
+                    <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_ralt" style="@style/KeyboardKeyCompact" android:layout_width="32dp" android:text="Alt" />
+                    <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_rwin" style="@style/KeyboardKeyCompact" android:layout_width="32dp" android:text="Win" />
+                    <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_menu" style="@style/KeyboardKeyCompact" android:layout_width="32dp" android:text="Fn" />
+                    <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_rctrl" style="@style/KeyboardKeyCompact" android:layout_width="38dp" android:text="Ctrl" />
+                    <View android:layout_width="6dp" android:layout_height="match_parent" />
+                    <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_left" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="←" />
+                    <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_down" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="↓" />
+                    <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_right" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="→" />
+                </LinearLayout>
+
             </LinearLayout>
 
-            <!-- 第二行：数字行 -->
+            <!-- 小键盘区域 -->
             <LinearLayout
                 android:layout_width="wrap_content"
-                android:layout_height="28dp"
-                android:orientation="horizontal"
-                android:layout_marginBottom="2dp">
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginStart="8dp"
+                android:layout_marginTop="32dp">
 
-                <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_grave" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="`" />
-                <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_1" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="1" />
-                <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_2" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="2" />
-                <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_3" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="3" />
-                <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_4" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="4" />
-                <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_5" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="5" />
-                <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_6" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="6" />
-                <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_7" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="7" />
-                <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_8" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="8" />
-                <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_9" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="9" />
-                <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_0" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="0" />
-                <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_minus" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="-" />
-                <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_equals" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="=" />
-                <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_backspace" style="@style/KeyboardKeyCompact" android:layout_width="44dp" android:text="⌫" />
-                <View android:layout_width="6dp" android:layout_height="match_parent" />
-                <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_ins" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="Ins" />
-                <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_home" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="Hm" />
-                <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_pgup" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="PU" />
-            </LinearLayout>
+                <!-- 小键盘第一行: Num / * - -->
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="28dp"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="2dp">
 
-            <!-- 第三行：Tab + QWERTY -->
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="28dp"
-                android:orientation="horizontal"
-                android:layout_marginBottom="2dp">
+                    <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_numlock" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="Num" />
+                    <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_numdiv" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="/" />
+                    <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_nummul" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="*" />
+                    <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_numsub" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="-" />
+                </LinearLayout>
 
-                <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_tab" style="@style/KeyboardKeyCompact" android:layout_width="40dp" android:text="Tab" />
-                <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_q" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="Q" />
-                <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_w" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="W" />
-                <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_e" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="E" />
-                <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_r" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="R" />
-                <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_t" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="T" />
-                <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_y" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="Y" />
-                <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_u" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="U" />
-                <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_i" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="I" />
-                <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_o" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="O" />
-                <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_p" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="P" />
-                <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_lbracket" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="[" />
-                <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_rbracket" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="]" />
-                <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_backslash" style="@style/KeyboardKeyCompact" android:layout_width="32dp" android:text="\\" />
-                <View android:layout_width="6dp" android:layout_height="match_parent" />
-                <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_del" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="Del" />
-                <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_end" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="End" />
-                <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_pgdn" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="PD" />
-            </LinearLayout>
+                <!-- 小键盘 789 + 456 行 -->
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="58dp"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="2dp">
 
-            <!-- 第四行：CapsLock + ASDFGH -->
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="28dp"
-                android:orientation="horizontal"
-                android:layout_marginBottom="2dp">
+                    <!-- 左侧 789 456 -->
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:orientation="vertical">
 
-                <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_capslock" style="@style/KeyboardKeyCompact" android:layout_width="48dp" android:text="Caps" />
-                <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_a" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="A" />
-                <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_s" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="S" />
-                <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_d" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="D" />
-                <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_f" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="F" />
-                <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_g" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="G" />
-                <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_h" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="H" />
-                <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_j" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="J" />
-                <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_k" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="K" />
-                <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_l" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="L" />
-                <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_semicolon" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text=";" />
-                <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_quote" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="'" />
-                <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_enter" style="@style/KeyboardKeyCompact" android:layout_width="52dp" android:text="Enter" />
-                <View android:layout_width="90dp" android:layout_height="match_parent" />
-            </LinearLayout>
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="28dp"
+                            android:orientation="horizontal"
+                            android:layout_marginBottom="2dp">
+                            <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_7num" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="7" />
+                            <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_8num" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="8" />
+                            <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_9num" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="9" />
+                        </LinearLayout>
 
-            <!-- 第五行：Shift + ZXCVBN -->
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="28dp"
-                android:orientation="horizontal"
-                android:layout_marginBottom="2dp">
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="28dp"
+                            android:orientation="horizontal">
+                            <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_4num" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="4" />
+                            <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_5num" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="5" />
+                            <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_6num" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="6" />
+                        </LinearLayout>
+                    </LinearLayout>
 
-                <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_lshift" style="@style/KeyboardKeyCompact" android:layout_width="60dp" android:text="Shift" />
-                <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_z" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="Z" />
-                <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_x" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="X" />
-                <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_c" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="C" />
-                <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_v" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="V" />
-                <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_b" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="B" />
-                <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_n" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="N" />
-                <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_m" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="M" />
-                <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_comma" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="," />
-                <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_period" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="." />
-                <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_slash" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="/" />
-                <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_rshift" style="@style/KeyboardKeyCompact" android:layout_width="60dp" android:text="Shift" />
-                <View android:layout_width="34dp" android:layout_height="match_parent" />
-                <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_up" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="↑" />
-                <View android:layout_width="28dp" android:layout_height="match_parent" />
-            </LinearLayout>
+                    <!-- 右侧 + 跨两行 -->
+                    <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_numadd" style="@style/KeyboardKeyCompactTall" android:layout_width="28dp" android:layout_height="match_parent" android:text="+" />
+                </LinearLayout>
 
-            <!-- 第六行：Ctrl + 空格行 -->
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="28dp"
-                android:orientation="horizontal">
+                <!-- 小键盘 123 + Enter 行 -->
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="58dp"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="2dp">
 
-                <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_lctrl" style="@style/KeyboardKeyCompact" android:layout_width="38dp" android:text="Ctrl" />
-                <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_lwin" style="@style/KeyboardKeyCompact" android:layout_width="32dp" android:text="Win" />
-                <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_lalt" style="@style/KeyboardKeyCompact" android:layout_width="32dp" android:text="Alt" />
-                <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_space" style="@style/KeyboardKeyCompact" android:layout_width="168dp" android:text="Space" />
-                <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_ralt" style="@style/KeyboardKeyCompact" android:layout_width="32dp" android:text="Alt" />
-                <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_rwin" style="@style/KeyboardKeyCompact" android:layout_width="32dp" android:text="Win" />
-                <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_menu" style="@style/KeyboardKeyCompact" android:layout_width="32dp" android:text="Fn" />
-                <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_rctrl" style="@style/KeyboardKeyCompact" android:layout_width="38dp" android:text="Ctrl" />
-                <View android:layout_width="6dp" android:layout_height="match_parent" />
-                <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_left" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="←" />
-                <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_down" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="↓" />
-                <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_right" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="→" />
+                    <!-- 左侧 123 0. -->
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:orientation="vertical">
+
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="28dp"
+                            android:orientation="horizontal"
+                            android:layout_marginBottom="2dp">
+                            <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_1num" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="1" />
+                            <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_2num" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="2" />
+                            <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_3num" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="3" />
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="28dp"
+                            android:orientation="horizontal">
+                            <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_0num" style="@style/KeyboardKeyCompact" android:layout_width="58dp" android:text="0" />
+                            <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_numdot" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="." />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <!-- 右侧 Enter 跨两行 -->
+                    <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_numenter" style="@style/KeyboardKeyCompactTall" android:layout_width="28dp" android:layout_height="match_parent" android:text="↵" />
+                </LinearLayout>
+
             </LinearLayout>
 
         </LinearLayout>
 
-        <!-- 小键盘区域 -->
+        <!-- 鼠标按键行 + 弹出键盘 -->
         <LinearLayout
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:layout_marginStart="8dp"
-            android:layout_marginTop="32dp">
+            android:layout_height="28dp"
+            android:orientation="horizontal"
+            android:layout_marginTop="8dp"
+            android:gravity="center">
 
-            <!-- 小键盘第一行: Num / * - -->
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="28dp"
-                android:orientation="horizontal"
-                android:layout_marginBottom="2dp">
-
-                <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_numlock" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="Num" />
-                <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_numdiv" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="/" />
-                <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_nummul" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="*" />
-                <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_numsub" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="-" />
-            </LinearLayout>
-
-            <!-- 小键盘 789 + 456 行 -->
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="58dp"
-                android:orientation="horizontal"
-                android:layout_marginBottom="2dp">
-
-                <!-- 左侧 789 456 -->
-                <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:orientation="vertical">
-
-                    <LinearLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="28dp"
-                        android:orientation="horizontal"
-                        android:layout_marginBottom="2dp">
-                        <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_7num" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="7" />
-                        <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_8num" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="8" />
-                        <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_9num" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="9" />
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="28dp"
-                        android:orientation="horizontal">
-                        <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_4num" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="4" />
-                        <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_5num" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="5" />
-                        <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_6num" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="6" />
-                    </LinearLayout>
-                </LinearLayout>
-
-                <!-- 右侧 + 跨两行 -->
-                <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_numadd" style="@style/KeyboardKeyCompactTall" android:layout_width="28dp" android:layout_height="match_parent" android:text="+" />
-            </LinearLayout>
-
-            <!-- 小键盘 123 + Enter 行 -->
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="58dp"
-                android:orientation="horizontal"
-                android:layout_marginBottom="2dp">
-
-                <!-- 左侧 123 0. -->
-                <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:orientation="vertical">
-
-                    <LinearLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="28dp"
-                        android:orientation="horizontal"
-                        android:layout_marginBottom="2dp">
-                        <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_1num" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="1" />
-                        <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_2num" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="2" />
-                        <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_3num" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="3" />
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="28dp"
-                        android:orientation="horizontal">
-                        <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_0num" style="@style/KeyboardKeyCompact" android:layout_width="58dp" android:text="0" />
-                        <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_numdot" style="@style/KeyboardKeyCompact" android:layout_width="28dp" android:text="." />
-                    </LinearLayout>
-                </LinearLayout>
-
-                <!-- 右侧 Enter 跨两行 -->
-                <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_numenter" style="@style/KeyboardKeyCompactTall" android:layout_width="28dp" android:layout_height="match_parent" android:text="↵" />
-            </LinearLayout>
-
+            <androidx.appcompat.widget.AppCompatButton 
+                android:id="@+id/key_mouse_left" 
+                style="@style/KeyboardKeyCompact" 
+                android:layout_width="60dp" 
+                android:text="@string/key_mouse_left" />
+            <androidx.appcompat.widget.AppCompatButton 
+                android:id="@+id/key_mouse_middle" 
+                style="@style/KeyboardKeyCompact" 
+                android:layout_width="60dp" 
+                android:text="@string/key_mouse_middle" />
+            <androidx.appcompat.widget.AppCompatButton 
+                android:id="@+id/key_mouse_right" 
+                style="@style/KeyboardKeyCompact" 
+                android:layout_width="60dp" 
+                android:text="@string/key_mouse_right" />
+            <androidx.appcompat.widget.AppCompatButton 
+                android:id="@+id/key_show_ime"
+                style="@style/KeyboardKeyCompact"
+                android:layout_width="80dp"
+                android:layout_marginStart="4dp"
+                android:text="键盘"
+                android:textSize="11sp" />
+            
         </LinearLayout>
-
-    </LinearLayout>
-
-    <!-- 鼠标按键行 -->
-    <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_height="28dp"
-        android:orientation="horizontal"
-        android:layout_marginTop="8dp"
-        android:gravity="center">
-
-        <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_mouse_left" style="@style/KeyboardKeyCompact" android:layout_width="60dp" android:text="@string/key_mouse_left" />
-        <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_mouse_middle" style="@style/KeyboardKeyCompact" android:layout_width="60dp" android:text="@string/key_mouse_middle" />
-        <androidx.appcompat.widget.AppCompatButton android:id="@+id/key_mouse_right" style="@style/KeyboardKeyCompact" android:layout_width="60dp" android:text="@string/key_mouse_right" />
-    </LinearLayout>
 
     </LinearLayout>
 

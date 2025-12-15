@@ -1,6 +1,7 @@
 package com.app.ralaunch.utils;
 
 import com.app.ralaunch.RaLaunchApplication;
+import com.app.ralib.utils.StreamUtils;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -285,8 +286,6 @@ public class GameInfoParser {
                     StreamUtils.transferTo(is, fos);
                 }
 
-            } else {
-                AppLogger.warn(TAG, "gameinfo not found at path: " + GAMEINFO_PATH);
             }
             
             // 直接获取icon条目
@@ -301,8 +300,6 @@ public class GameInfoParser {
                 }
                 iconPath = iconFile.getAbsolutePath();
 
-            } else {
-                AppLogger.warn(TAG, "icon not found at path: " + ICON_PATH);
             }
         }
         
@@ -366,9 +363,6 @@ public class GameInfoParser {
             }
 
             if (gameinfoFile == null) {
-                AppLogger.warn(TAG, "gameinfo not found in ZIP after scanning " + entryCount + " entries");
-                AppLogger.warn(TAG, "This means gameinfo is NOT in the game data ZIP");
-                AppLogger.warn(TAG, "We need to extract it from a different location in the .sh file");
             } else {
 
             }
@@ -385,8 +379,6 @@ public class GameInfoParser {
             if (gameInfo != null) {
                 gameInfo.iconPath = iconPath;
             }
-        } else {
-            AppLogger.warn(TAG, "gameinfo file not found in archive");
         }
         
         return gameInfo;
@@ -489,9 +481,6 @@ public class GameInfoParser {
             gameInfo.iconPath = iconPath;
         }
         
-        if (gameInfo == null) {
-            AppLogger.warn(TAG, "gameinfo file not found in tar.gz");
-        }
         return gameInfo;
     }
     

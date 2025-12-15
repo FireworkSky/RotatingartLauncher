@@ -7,14 +7,7 @@ import android.view.WindowManager;
 import com.app.ralaunch.utils.AppLogger;
 
 /**
- * 游戏全屏管理器
- * 
- * 统一管理游戏全屏模式，包括：
- * - 全屏模式启用/禁用
- * - 窗口焦点变化处理
- * - 输入法支持配置
- * 
- * 减少 GameActivity 的代码耦合
+ * 游戏全屏
  */
 public class GameFullscreenManager {
     private static final String TAG = "GameFullscreenManager";
@@ -39,10 +32,7 @@ public class GameFullscreenManager {
                     | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
                     | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN;
             decorView.setSystemUiVisibility(uiOptions);
-            
-            AppLogger.info(TAG, "Fullscreen mode enabled");
         } catch (Exception e) {
-            AppLogger.warn(TAG, "Failed to enable fullscreen: " + e.getMessage());
         }
     }
     
@@ -54,9 +44,7 @@ public class GameFullscreenManager {
         try {
             mActivity.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM);
             mActivity.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
-            AppLogger.info(TAG, "Window IME flags configured");
         } catch (Throwable t) {
-            AppLogger.warn(TAG, "Failed to adjust window flags for IME: " + t.getMessage());
         }
     }
     
@@ -69,7 +57,6 @@ public class GameFullscreenManager {
             try {
                 enableFullscreen();
             } catch (Exception e) {
-                AppLogger.warn(TAG, "Failed to re-enable fullscreen: " + e.getMessage());
             }
         }
     }

@@ -150,11 +150,7 @@ public class ThemeManager {
         // 检查是否是 UI 模式改变（深色/浅色模式）
         int currentNightMode = newConfig.uiMode & Configuration.UI_MODE_NIGHT_MASK;
         
-        AppLogger.debug("ThemeManager", "配置改变: nightMode=" + currentNightMode);
-        
-        // 如果设置为"跟随系统"，立即重建Activity以应用主题
         if (settingsManager.getThemeMode() == 0) {
-            AppLogger.debug("ThemeManager", "跟随系统模式，重建Activity");
             
             // 先关闭所有对话框，防止recreate后被恢复
             androidx.fragment.app.FragmentManager fm = activity.getSupportFragmentManager();

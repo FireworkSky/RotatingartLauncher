@@ -20,7 +20,9 @@ import android.webkit.MimeTypeMap;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.List;
+import com.app.ralib.utils.FileUtils;
 
 /**
  * RaLaunch 文档提供器
@@ -143,7 +145,7 @@ public class RaLaunchDocumentsProvider extends DocumentsProvider {
         final MatrixCursor.RowBuilder row = result.newRow();
         row.add(Root.COLUMN_ROOT_ID, mPackageName);
         row.add(Root.COLUMN_DOCUMENT_ID, mPackageName);
-        row.add(Root.COLUMN_SUMMARY, "RaLaunch 启动器 - 游戏、运行时、配置等");
+        row.add(Root.COLUMN_SUMMARY, "RaLaunch ");
         row.add(Root.COLUMN_FLAGS, Root.FLAG_SUPPORTS_CREATE | Root.FLAG_SUPPORTS_IS_CHILD);
         row.add(Root.COLUMN_TITLE, appName);
         row.add(Root.COLUMN_MIME_TYPES, "*/*");
@@ -292,26 +294,23 @@ public class RaLaunchDocumentsProvider extends DocumentsProvider {
     @Override
     public void deleteDocument(String documentId) throws FileNotFoundException {
         File file = getFileForDocId(documentId);
-        if (file == null || !deleteFileRecursive(file)) {
+        if (file == null) {
             throw new FileNotFoundException("Failed to delete document " + documentId);
         }
-    }
-    
-    /**
-     * 递归删除文件（包括目录）
-     */
-    private static boolean deleteFileRecursive(File file) {
-        if (file.isDirectory() && !isSymbolicLink(file)) {
-            File[] children = file.listFiles();
-            if (children != null) {
-                for (File child : children) {
-                    if (!deleteFileRecursive(child)) {
-                        return false;
-                    }
-                }
+        
+        // 对于符号链接，直接删除
+        if (isSymbolicLink(file)) {
+            if (!file.delete()) {
+                throw new FileNotFoundException("Failed to delete document " + documentId);
             }
+            return;
         }
-        return file.delete();
+        
+        // 使用 ralib 的 FileUtils 删除目录
+        boolean success = FileUtils.deleteDirectoryRecursively(Paths.get(file.getAbsolutePath()));
+        if (!success) {
+            throw new FileNotFoundException("Failed to delete document " + documentId);
+        }
     }
     
     /**
@@ -509,13 +508,13 @@ public class RaLaunchDocumentsProvider extends DocumentsProvider {
         boolean addExtras = false;
         
         if (path.equals(mDataDir.getPath())) {
-            displayName = "data (内部存储)";
+            displayName = "data";
         } else if (mAndroidDataDir != null && path.equals(mAndroidDataDir.getPath())) {
-            displayName = "android_data (外部存储)";
+            displayName = "android_data";
         } else if (mAndroidObbDir != null && path.equals(mAndroidObbDir.getPath())) {
-            displayName = "android_obb (OBB)";
+            displayName = "android_obb";
         } else if (mUserDeDataDir != null && path.equals(mUserDeDataDir.getPath())) {
-            displayName = "user_de_data (设备加密)";
+            displayName = "user_de_data ";
         } else {
             displayName = file.getName();
             addExtras = true;

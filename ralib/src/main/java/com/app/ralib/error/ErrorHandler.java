@@ -21,7 +21,8 @@ import java.lang.ref.WeakReference;
 public class ErrorHandler {
 
     private static volatile ErrorHandler instance;
-    private static WeakReference<FragmentActivity> currentActivity;
+    private static WeakReference<FragmentActivity> currentFragmentActivity;
+    private static WeakReference<Activity> currentActivity;
     private static ErrorListener globalErrorListener;
     private static boolean autoShowDialog = true;
     private static boolean logErrors = true;
@@ -66,15 +67,27 @@ public class ErrorHandler {
      * @param activity 当前Activity（用于显示对话框）
      */
     public static void init(@NonNull FragmentActivity activity) {
+        currentFragmentActivity = new WeakReference<>(activity);
         currentActivity = new WeakReference<>(activity);
         getInstance().setupUncaughtExceptionHandler();
     }
 
     /**
-     * 设置当前Activity
+     * 设置当前Activity（FragmentActivity）
      */
     public static void setCurrentActivity(@NonNull FragmentActivity activity) {
+        currentFragmentActivity = new WeakReference<>(activity);
         currentActivity = new WeakReference<>(activity);
+    }
+
+    /**
+     * 设置当前Activity（普通Activity，用于 GameActivity 等）
+     */
+    public static void setCurrentActivity(@NonNull Activity activity) {
+        currentActivity = new WeakReference<>(activity);
+        if (activity instanceof FragmentActivity) {
+            currentFragmentActivity = new WeakReference<>((FragmentActivity) activity);
+        }
     }
 
     /**
@@ -102,7 +115,12 @@ public class ErrorHandler {
      * 手动处理错误（非致命）
      */
     public static void handleError(@NonNull Throwable throwable) {
-        handleError("错误", throwable, false);
+        ErrorHandler instance = getInstance();
+        Activity activity = instance.getActivity();
+        String title = activity != null 
+            ? instance.getLocalizedString(activity, "error_title_default", "Error")
+            : "Error";
+        handleError(title, throwable, false);
     }
 
     /**
@@ -131,12 +149,25 @@ public class ErrorHandler {
      */
     private void setupUncaughtExceptionHandler() {
         Thread.setDefaultUncaughtExceptionHandler((thread, throwable) -> {
-            processError("应用崩溃", throwable, true);
+            // 先处理错误（记录日志并显示对话框）
+            Activity activity = getActivity();
+            String title = activity != null
+                ? getLocalizedString(activity, "error_crash_title", "Application Crash")
+                : "Application Crash";
+            processError(title, throwable, true);
 
-            // 调用原始处理器
-            if (defaultHandler != null) {
-                defaultHandler.uncaughtException(thread, throwable);
-            }
+            // 延迟调用原始处理器，给对话框显示时间
+            // 注意：对于未捕获异常，我们仍然需要让系统处理，以便生成崩溃报告
+            // 但先尝试显示错误弹窗
+            mainHandler.postDelayed(() -> {
+                if (defaultHandler != null) {
+                    defaultHandler.uncaughtException(thread, throwable);
+                } else {
+                    // 如果没有默认处理器，直接退出
+                    android.os.Process.killProcess(android.os.Process.myPid());
+                    System.exit(1);
+                }
+            }, 500); // 给对话框 500ms 的显示时间
         });
     }
 
@@ -165,28 +196,75 @@ public class ErrorHandler {
     }
 
     /**
-     * 显示错误对话框（已移除，仅记录日志）
+     * 显示错误对话框
      */
     private void showErrorDialog(String title, Throwable throwable, boolean isFatal) {
-        // 错误弹窗已移除，仅记录日志
-        // 致命错误直接退出应用
-        if (isFatal) {
-            mainHandler.post(() -> {
-                FragmentActivity activity = getActivity();
-                if (activity != null && !activity.isFinishing() && !activity.isDestroyed()) {
+        mainHandler.post(() -> {
+            Activity activity = getActivity();
+            if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
+                return;
+            }
+
+            try {
+                // 使用反射创建 ErrorDialog（ErrorDialog 在 app 模块中）
+                Class<?> errorDialogClass = Class.forName("com.app.ralaunch.utils.ErrorDialog");
+                java.lang.reflect.Method createMethod = errorDialogClass.getMethod(
+                    "create", 
+                    android.content.Context.class, 
+                    String.class, 
+                    Throwable.class, 
+                    boolean.class
+                );
+                Object dialog = createMethod.invoke(null, activity, title, throwable, isFatal);
+                
+                // 显示对话框
+                if (dialog instanceof android.app.Dialog) {
+                    ((android.app.Dialog) dialog).show();
+                }
+            } catch (Exception e) {
+                // 如果 ErrorDialog 不可用，使用 Android Log 记录
+                android.util.Log.e("RALib/ErrorHandler", "Failed to show error dialog, using log instead", e);
+                
+                // 对于致命错误，仍然需要退出应用
+                if (isFatal) {
                     activity.finishAffinity();
                     System.exit(1);
                 }
-            });
-        }
+            }
+        });
     }
 
     /**
-     * 显示警告对话框（已移除，仅记录日志）
+     * 显示警告对话框
      */
     private void showWarningDialog(String title, String message) {
-        // 警告弹窗已移除，仅记录日志
-        logError(title, new RuntimeException(message), false);
+        mainHandler.post(() -> {
+            Activity activity = getActivity();
+            if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
+                return;
+            }
+
+            try {
+                // 使用反射创建 ErrorDialog（ErrorDialog 在 app 模块中）
+                Class<?> errorDialogClass = Class.forName("com.app.ralaunch.utils.ErrorDialog");
+                java.lang.reflect.Method createMethod = errorDialogClass.getMethod(
+                    "create", 
+                    android.content.Context.class, 
+                    String.class, 
+                    String.class
+                );
+                Object dialog = createMethod.invoke(null, activity, title, message);
+                
+                // 显示对话框
+                if (dialog instanceof android.app.Dialog) {
+                    ((android.app.Dialog) dialog).show();
+                }
+            } catch (Exception e) {
+                // 如果 ErrorDialog 不可用，使用 Android Log 记录
+                android.util.Log.e("RALib/ErrorHandler", "Failed to show warning dialog, using log instead", e);
+                logError(title, new RuntimeException(message), false);
+            }
+        });
     }
 
     /**
@@ -206,10 +284,60 @@ public class ErrorHandler {
     }
 
     /**
-     * 获取当前Activity
+     * 获取当前Activity（优先返回 FragmentActivity，否则返回普通 Activity）
      */
-    private FragmentActivity getActivity() {
+    private Activity getActivity() {
+        if (currentFragmentActivity != null) {
+            FragmentActivity fa = currentFragmentActivity.get();
+            if (fa != null) return fa;
+        }
         return currentActivity != null ? currentActivity.get() : null;
+    }
+
+    /**
+     * 获取当前 FragmentActivity（如果存在）
+     */
+    private FragmentActivity getFragmentActivity() {
+        return currentFragmentActivity != null ? currentFragmentActivity.get() : null;
+    }
+
+    /**
+     * 获取本地化的字符串资源
+     * 通过反射调用 Context.getString() 来获取字符串，支持多语言
+     * 
+     * @param context Context
+     * @param resId 资源ID名称（例如 "error_title_default"）
+     * @param defaultValue 默认值（如果获取失败时返回）
+     * @return 本地化的字符串
+     */
+    private String getLocalizedString(android.content.Context context, String resId, String defaultValue) {
+        if (context == null) {
+            return defaultValue;
+        }
+
+        try {
+            // 获取 R.string 类
+            Class<?> rClass = Class.forName(context.getPackageName() + ".R$string");
+            java.lang.reflect.Field field = rClass.getField(resId);
+            int stringResId = field.getInt(null);
+
+            // 调用 getString 方法获取本地化字符串
+            // 尝试应用语言设置（如果 LocaleManager 可用）
+            android.content.Context localizedContext = context;
+            try {
+                Class<?> localeManagerClass = Class.forName("com.app.ralaunch.utils.LocaleManager");
+                java.lang.reflect.Method applyLanguageMethod = localeManagerClass.getMethod("applyLanguage", android.content.Context.class);
+                localizedContext = (android.content.Context) applyLanguageMethod.invoke(null, context);
+            } catch (Exception e) {
+                // LocaleManager 不可用，使用原始 Context
+            }
+
+            return localizedContext.getString(stringResId);
+        } catch (Exception e) {
+            // 如果获取失败，返回默认值
+            android.util.Log.w("RALib/ErrorHandler", "Failed to get localized string for " + resId + ", using default: " + defaultValue);
+            return defaultValue;
+        }
     }
 
     /**
@@ -224,22 +352,51 @@ public class ErrorHandler {
     }
 
     /**
-     * Show native error dialog implementation（已移除，仅记录日志）
+     * Show native error dialog implementation
      */
     private void showNativeErrorDialog(String title, String message, boolean isFatal) {
-        // 错误弹窗已移除，仅记录日志
-        logError(title, new RuntimeException(message), isFatal);
+        RuntimeException exception = new RuntimeException(message);
+        logError(title, exception, isFatal);
         
-        // 致命错误直接退出应用
-        if (isFatal) {
-            mainHandler.post(() -> {
-                FragmentActivity activity = getActivity();
-                if (activity != null && !activity.isFinishing() && !activity.isDestroyed()) {
+        mainHandler.post(() -> {
+            Activity activity = getActivity();
+            if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
+                // 对于致命错误，仍然需要退出应用
+                if (isFatal && activity != null) {
                     activity.finishAffinity();
                     System.exit(1);
                 }
-            });
-        }
+                return;
+            }
+
+            try {
+                // 使用反射创建 ErrorDialog（ErrorDialog 在 app 模块中）
+                Class<?> errorDialogClass = Class.forName("com.app.ralaunch.utils.ErrorDialog");
+                java.lang.reflect.Method createMethod = errorDialogClass.getMethod(
+                    "create", 
+                    android.content.Context.class, 
+                    String.class, 
+                    String.class, 
+                    Throwable.class, 
+                    boolean.class
+                );
+                Object dialog = createMethod.invoke(null, activity, title, message, exception, isFatal);
+                
+                // 显示对话框
+                if (dialog instanceof android.app.Dialog) {
+                    ((android.app.Dialog) dialog).show();
+                }
+            } catch (Exception e) {
+                // 如果 ErrorDialog 不可用，使用 Android Log 记录
+                android.util.Log.e("RALib/ErrorHandler", "Failed to show native error dialog, using log instead", e);
+                
+                // 对于致命错误，仍然需要退出应用
+                if (isFatal) {
+                    activity.finishAffinity();
+                    System.exit(1);
+                }
+            }
+        });
     }
 
     /**
@@ -256,7 +413,15 @@ public class ErrorHandler {
         try {
             action.run();
         } catch (Exception e) {
-            handleError(errorTitle != null ? errorTitle : "操作失败", e, false);
+            if (errorTitle != null) {
+                handleError(errorTitle, e, false);
+            } else {
+                Activity activity = getInstance().getActivity();
+                String defaultTitle = activity != null
+                    ? getInstance().getLocalizedString(activity, "error_operation_failed", "Operation failed")
+                    : "Operation failed";
+                handleError(defaultTitle, e, false);
+            }
         }
     }
 
@@ -274,7 +439,15 @@ public class ErrorHandler {
         try {
             return callable.call();
         } catch (Exception e) {
-            handleError(errorTitle != null ? errorTitle : "操作失败", e, false);
+            if (errorTitle != null) {
+                handleError(errorTitle, e, false);
+            } else {
+                Activity activity = getInstance().getActivity();
+                String defaultTitle = activity != null
+                    ? getInstance().getLocalizedString(activity, "error_operation_failed", "Operation failed")
+                    : "Operation failed";
+                handleError(defaultTitle, e, false);
+            }
             return defaultValue;
         }
     }

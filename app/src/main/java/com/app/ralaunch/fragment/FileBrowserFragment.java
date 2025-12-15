@@ -16,7 +16,6 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.app.ralaunch.R;
 import com.app.ralaunch.activity.MainActivity;
-import com.app.ralaunch.fragment.FragmentHelper;
 import com.app.ralaunch.adapter.FileBrowserAdapter;
 import com.app.ralaunch.model.FileItem;
 
@@ -25,18 +24,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * 文件浏览器Fragment
- * 
- * 提供文件系统浏览功能，用于选择游戏文件：
- * - 浏览文件夹和文件
- * - 上级目录导航
- * - 文件选择和确认
- * - 权限请求处理
- * - 当前路径显示
- * 
- * 支持选择 .zip 等游戏压缩包文件
- */
+
 public class FileBrowserFragment extends BaseFragment implements FileBrowserAdapter.OnFileClickListener {
 
     // 模式常量
@@ -239,7 +227,10 @@ public class FileBrowserFragment extends BaseFragment implements FileBrowserAdap
      * 如果没有权限，会显示权限拒绝状态，用户需要主动点击授权按钮
      */
     private void checkPermissionsAndLoadFiles() {
-        MainActivity activity = FragmentHelper.getMainActivity(this);
+        MainActivity activity = null;
+        if (isAdded() && getActivity() instanceof MainActivity) {
+            activity = (MainActivity) getActivity();
+        }
         if (activity != null) {
             if (activity.hasRequiredPermissions()) {
                 // 已有权限，加载文件

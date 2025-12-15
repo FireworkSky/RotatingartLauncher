@@ -46,7 +46,6 @@ public class GameImportService {
      */
     private static void importGame(ImportTask task, ImportProgressListener listener) {
         try {
-            AppLogger.info(TAG, "开始导入游戏: " + task.getGameName());
 
             // 1. 验证文件
             if (!validateFiles(task, listener)) {
@@ -71,7 +70,6 @@ public class GameImportService {
             }
 
             // 5. 完成
-            AppLogger.info(TAG, "游戏导入完成");
             if (listener != null) {
                 listener.onComplete(gamePath, modLoaderPath);
             }
@@ -148,8 +146,6 @@ public class GameImportService {
             return false;
         }
 
-        AppLogger.debug(TAG, String.format("Storage check passed: available %.1f GB",
-                availableSpace / 1024.0 / 1024 / 1024));
         return true;
     }
 

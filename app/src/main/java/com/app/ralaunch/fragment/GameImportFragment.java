@@ -15,10 +15,7 @@ import com.google.android.material.card.MaterialCardView;
 
 import java.io.File;
 
-/**
- * 游戏导入 Fragment - 现代化MD3风格页面
- * 通过NavigationRail导航显示，不使用弹窗
- */
+
 public class GameImportFragment extends BaseFragment {
     private static final String TAG = "GameImportFragment";
 
@@ -226,7 +223,6 @@ public class GameImportFragment extends BaseFragment {
                     gameVersion = info.version;
                 }
             } catch (Exception e) {
-                AppLogger.warn(TAG, "无法提取游戏信息: " + e.getMessage());
             }
         }
         updateStartButtonState();

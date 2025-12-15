@@ -34,7 +34,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.channels.FileChannel;
-import com.app.ralaunch.utils.StreamUtils;
+import com.app.ralib.utils.StreamUtils;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -273,10 +273,7 @@ public class ModManagerFragment extends BaseFragment implements FileBrowserAdapt
     private void loadInitialDirectory() {
         File defaultDir = new File(DEFAULT_PATH);
         if (!defaultDir.exists()) {
-            if (defaultDir.mkdirs()) {
-                AppLogger.info(TAG, "Created default directory: " + DEFAULT_PATH);
-            } else {
-                AppLogger.warn(TAG, "Failed to create default directory, using external storage");
+            if (!defaultDir.mkdirs()) {
                 defaultDir = Environment.getExternalStorageDirectory();
             }
         }
@@ -542,8 +539,6 @@ public class ModManagerFragment extends BaseFragment implements FileBrowserAdapt
                 try {
                     fos.getFD().sync();
                 } catch (Exception e) {
-                    // sync() 在某些设备上可能不可用，忽略错误
-                    AppLogger.warn(TAG, "Failed to sync file descriptor", e);
                 }
             }
         }
@@ -621,6 +616,7 @@ public class ModManagerFragment extends BaseFragment implements FileBrowserAdapt
         Toast.makeText(requireContext(), message, Toast.LENGTH_LONG).show();
     }
 }
+
 
 
 

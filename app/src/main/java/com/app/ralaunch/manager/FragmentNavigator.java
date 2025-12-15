@@ -5,15 +5,12 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 import com.app.ralaunch.utils.AppLogger;
-import com.app.ralaunch.utils.PageManager;
 
 /**
  * Fragment 导航管理器
- * 统一管理 Fragment 的显示和导航，替代直接使用 PageManager 和 FragmentManager
  */
 public class FragmentNavigator {
     private final FragmentManager fragmentManager;
-    private final PageManager pageManager;
     private final View mainLayout;
     private final View fragmentContainer;
     private final int containerId;
@@ -23,7 +20,6 @@ public class FragmentNavigator {
         this.mainLayout = mainLayout;
         this.containerId = fragmentContainerId;
         this.fragmentContainer = mainLayout.getRootView().findViewById(fragmentContainerId);
-        this.pageManager = new PageManager(fragmentManager, fragmentContainerId);
     }
     
     /**
@@ -39,7 +35,16 @@ public class FragmentNavigator {
     public void showFragment(Fragment fragment, String tag) {
         mainLayout.setVisibility(View.GONE);
         fragmentContainer.setVisibility(View.VISIBLE);
-        pageManager.showPage(fragment, tag);
+        FragmentTransaction transaction = fragmentManager.beginTransaction();
+        transaction.setCustomAnimations(
+                android.R.anim.fade_in,
+                android.R.anim.fade_out,
+                android.R.anim.fade_in,
+                android.R.anim.fade_out
+        );
+        transaction.replace(containerId, fragment, tag);
+        transaction.addToBackStack(tag);
+        transaction.commit();
     }
     
     /**
@@ -82,10 +87,10 @@ public class FragmentNavigator {
      * 返回上一页
      */
     public void goBack() {
-        pageManager.goBack();
-        fragmentManager.popBackStack();
-        var a = pageManager.getBackStackCount();
-        if (a <= 1) {
+        if (fragmentManager.getBackStackEntryCount() > 1) {
+            fragmentManager.popBackStack();
+        }
+        if (fragmentManager.getBackStackEntryCount() <= 1) {
             hideFragment();
         }
     }
@@ -94,7 +99,7 @@ public class FragmentNavigator {
      * 获取回退栈数量
      */
     public int getBackStackCount() {
-        return pageManager.getBackStackCount();
+        return fragmentManager.getBackStackEntryCount();
     }
     
     /**
@@ -115,46 +120,34 @@ public class FragmentNavigator {
      * 隐藏 Fragment 并清理容器（用于特殊场景如 ControlLayoutFragment）
      */
     public void hideFragmentWithCleanup(String tag) {
-        AppLogger.info("FragmentNavigator", "hideFragmentWithCleanup called for tag: " + tag);
-        
-        // 先移除Fragment
         Fragment fragment = fragmentManager.findFragmentById(containerId);
         if (fragment != null) {
-            AppLogger.info("FragmentNavigator", "Removing fragment: " + fragment.getClass().getSimpleName());
             FragmentTransaction transaction = fragmentManager.beginTransaction();
             transaction.remove(fragment);
             transaction.commitNow();
         }
         
-        // 清除回退栈
         try {
             fragmentManager.popBackStack(tag, FragmentManager.POP_BACK_STACK_INCLUSIVE);
         } catch (Exception e) {
-            AppLogger.warn("FragmentNavigator", "Failed to pop back stack: " + e.getMessage());
         }
         
-        // 清除Fragment容器的背景并隐藏
         if (fragmentContainer != null) {
             fragmentContainer.setBackground(null);
             fragmentContainer.setBackgroundColor(android.graphics.Color.TRANSPARENT);
             fragmentContainer.setVisibility(View.GONE);
-            AppLogger.info("FragmentNavigator", "Fragment container hidden and cleared");
         }
         
-        // 显示主布局
         mainLayout.setVisibility(View.VISIBLE);
         mainLayout.bringToFront();
         mainLayout.requestLayout();
         mainLayout.invalidate();
         
-        // 强制刷新整个Activity视图
         View rootView = mainLayout.getRootView();
         if (rootView != null) {
             rootView.requestLayout();
             rootView.postInvalidate();
         }
-        
-        AppLogger.info("FragmentNavigator", "Main layout visibility restored");
     }
 }
 

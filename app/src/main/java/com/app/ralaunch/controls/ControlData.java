@@ -116,6 +116,9 @@ public class ControlData {
     @SerializedName("passThrough")
     public boolean passThrough; // 触摸穿透：是否将触摸传递给游戏（默认 false）
     
+    @SerializedName("longPressToRightClick")
+    public boolean longPressToRightClick; // 长按1秒触发鼠标右键（仅对鼠标左键按钮有效）
+    
     // 摇杆特有属性
     @SerializedName("stickOpacity")
     public float stickOpacity; // 摇杆圆心透明度 0.0 - 1.0（与背景透明度独立）

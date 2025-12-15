@@ -5,7 +5,7 @@ import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import com.google.android.material.button.MaterialButton;
-import com.app.ralaunch.manager.common.ButtonAnimationManager;
+import com.app.ralaunch.manager.common.AnimationHelper;
 
 /**
  * UI 管理器
@@ -84,35 +84,35 @@ public class UIManager {
      * 设置设置按钮点击监听器
      */
     public void setSettingsButtonListener(View.OnClickListener listener) {
-        ButtonAnimationManager.setClickListenerWithBounce(settingsButton, listener);
+        AnimationHelper.setClickListenerWithBounce(settingsButton, listener);
     }
     
     /**
      * 设置添加游戏按钮点击监听器
      */
     public void setAddGameButtonListener(View.OnClickListener listener) {
-        ButtonAnimationManager.setClickListenerWithBounce(addGameButton, listener);
+        AnimationHelper.setClickListenerWithBounce(addGameButton, listener);
     }
     
     /**
      * 设置刷新按钮点击监听器
      */
     public void setRefreshButtonListener(View.OnClickListener listener) {
-        ButtonAnimationManager.setClickListener(refreshButton, listener);
+        AnimationHelper.setClickListener(refreshButton, listener);
     }
     
     /**
      * 设置 GOG 按钮点击监听器
      */
     public void setGogButtonListener(View.OnClickListener listener) {
-        ButtonAnimationManager.setClickListenerWithBounce(gogButton, listener);
+        AnimationHelper.setClickListenerWithBounce(gogButton, listener);
     }
     
     /**
      * 设置启动游戏按钮点击监听器
      */
     public void setLaunchGameButtonListener(View.OnClickListener listener) {
-        ButtonAnimationManager.setClickListenerWithPulse(launchGameButton, listener);
+        AnimationHelper.setClickListenerWithPulse(launchGameButton, listener);
     }
     
     /**

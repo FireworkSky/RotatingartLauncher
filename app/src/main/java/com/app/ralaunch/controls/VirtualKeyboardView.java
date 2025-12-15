@@ -27,8 +27,12 @@ public class VirtualKeyboardView extends FrameLayout {
     // 拖动相关
     private float lastTouchX;
     private float lastTouchY;
+    private float initialTouchX;
+    private float initialTouchY;
+    private float initialTranslationX;
+    private float initialTranslationY;
     private boolean isDragging = false;
-    private static final int DRAG_THRESHOLD = 10; // 拖动阈值（像素）
+    private static final float DRAG_THRESHOLD_DP = 10f; // 拖动阈值（dp）
     
     public VirtualKeyboardView(Context context) {
         super(context);
@@ -381,40 +385,55 @@ public class VirtualKeyboardView extends FrameLayout {
         // 找到拖动把手
         View dragHandle = findViewById(R.id.keyboard_drag_handle);
         if (dragHandle != null) {
+            // 计算DPI相关的拖动阈值
+            final float density = getResources().getDisplayMetrics().density;
+            final float dragThresholdPx = DRAG_THRESHOLD_DP * density;
+            
             dragHandle.setOnTouchListener((v, event) -> {
                 switch (event.getAction()) {
                     case MotionEvent.ACTION_DOWN:
+                        // 记录初始触摸位置和键盘位置
+                        initialTouchX = event.getRawX();
+                        initialTouchY = event.getRawY();
+                        initialTranslationX = getTranslationX();
+                        initialTranslationY = getTranslationY();
                         lastTouchX = event.getRawX();
                         lastTouchY = event.getRawY();
                         isDragging = false;
                         return true;
                         
                     case MotionEvent.ACTION_MOVE:
-                        float deltaX = event.getRawX() - lastTouchX;
-                        float deltaY = event.getRawY() - lastTouchY;
+                        // 计算从初始触摸点的总移动距离
+                        float totalDeltaX = event.getRawX() - initialTouchX;
+                        float totalDeltaY = event.getRawY() - initialTouchY;
+                        float totalDistance = (float) Math.sqrt(totalDeltaX * totalDeltaX + totalDeltaY * totalDeltaY);
                         
                         // 如果移动距离超过阈值，开始拖动
-                        if (!isDragging && (Math.abs(deltaX) > DRAG_THRESHOLD || Math.abs(deltaY) > DRAG_THRESHOLD)) {
+                        if (!isDragging && totalDistance > dragThresholdPx) {
                             isDragging = true;
+                            // 请求父视图不要拦截触摸事件
+                            getParent().requestDisallowInterceptTouchEvent(true);
                         }
                         
                         if (isDragging) {
-                            // 更新整个键盘的位置
-                            setTranslationX(getTranslationX() + deltaX);
-                            setTranslationY(getTranslationY() + deltaY);
-                            
-                            lastTouchX = event.getRawX();
-                            lastTouchY = event.getRawY();
+                            // 更新整个键盘的位置（相对于初始位置）
+                            setTranslationX(initialTranslationX + totalDeltaX);
+                            setTranslationY(initialTranslationY + totalDeltaY);
                         }
                         return true;
                         
                     case MotionEvent.ACTION_UP:
                     case MotionEvent.ACTION_CANCEL:
                         isDragging = false;
+                        // 允许父视图拦截触摸事件
+                        getParent().requestDisallowInterceptTouchEvent(false);
                         return true;
                 }
                 return false;
             });
+            Log.d(TAG, "Drag setup complete. Threshold: " + dragThresholdPx + "px (density=" + density + ")");
+        } else {
+            Log.w(TAG, "Drag handle not found!");
         }
     }
     

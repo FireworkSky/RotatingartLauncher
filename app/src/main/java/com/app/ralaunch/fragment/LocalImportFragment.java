@@ -13,14 +13,12 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import com.app.ralaunch.R;
-import com.app.ralaunch.fragment.FragmentHelper;
 import com.app.ralaunch.activity.MainActivity;
 import com.app.ralaunch.model.GameItem;
 import com.app.ralaunch.utils.AppLogger;
 import com.app.ralaunch.utils.AssemblyChecker;
 import com.app.ralaunch.utils.GameExtractor;
 import com.app.ralaunch.utils.GamePathResolver;
-import com.app.ralaunch.utils.IconExtractorHelper;
 import com.app.ralib.error.ErrorHandler;
 import com.app.ralib.extractors.GogShFileExtractor;
 import com.app.ralib.icon.IconExtractor;
@@ -225,8 +223,6 @@ public class LocalImportFragment extends BaseFragment {
                             gameVersion = gdzf.version;
                             gameIconPath = null; // TODO: 从 gdzf 提取图标路径
                             showToast(getString(R.string.import_game_detected, gameName, gameVersion));
-                            AppLogger.debug(TAG, "Game data zip file: " + gdzf);
-                            AppLogger.debug(TAG, "Icon path: " + gameIconPath);
                         } else {
                             gameName = getString(R.string.import_unknown_game);
                             showToast(getString(R.string.import_cannot_read_info));
@@ -249,7 +245,6 @@ public class LocalImportFragment extends BaseFragment {
             String fileName = file.getName();
             if (fileName.toLowerCase().endsWith(".zip")) {
                 modLoaderBaseName = fileName.substring(0, fileName.length() - 4);
-                AppLogger.debug("LocalImportFragment", "ModLoader base name: " + modLoaderBaseName);
             }
 
             // 确保UI更新在主线程执行
@@ -267,14 +262,31 @@ public class LocalImportFragment extends BaseFragment {
     private interface FileChosen { void onChosen(String path); }
 
     private void openFileBrowser(String type, String[] exts, FileChosen cb) {
-        // 使用统一的文件浏览器工具
-        FragmentHelper.openFileBrowser(
-            this,
-            type,
-            exts,
-            (filePath, fileType) -> cb.onChosen(filePath),
-            null
-        );
+        // 直接打开文件浏览器
+        MainActivity mainActivity = getMainActivity();
+        if (mainActivity == null) {
+            return;
+        }
+
+        FileBrowserFragment fileBrowserFragment = new FileBrowserFragment();
+        if (type != null && exts != null) {
+            fileBrowserFragment.setFileType(type, exts);
+        }
+
+        fileBrowserFragment.setOnFileSelectedListener((filePath, fileType) -> {
+            cb.onChosen(filePath);
+            mainActivity.onFragmentBack();
+        });
+
+        fileBrowserFragment.setOnBackListener(mainActivity::onFragmentBack);
+        mainActivity.getFragmentNavigator().showFragment(fileBrowserFragment, "file_browser");
+    }
+    
+    private MainActivity getMainActivity() {
+        if (isAdded() && getActivity() instanceof MainActivity) {
+            return (MainActivity) getActivity();
+        }
+        return null;
     }
 
     private void updateImportButtonState() {
@@ -296,9 +308,7 @@ public class LocalImportFragment extends BaseFragment {
             return;
         }
         
-        // 防止重复导入
         if (isImporting) {
-            AppLogger.warn(TAG, "导入已经在进行中，忽略重复调用");
             return;
         }
         isImporting = true;
@@ -311,16 +321,7 @@ public class LocalImportFragment extends BaseFragment {
         importProgressContainer.setVisibility(View.VISIBLE);
         startImportButton.setEnabled(false);
 
-        // 添加日志检查gameName的值
-        AppLogger.debug(TAG, "startImport() - gameName: " + gameName);
-        AppLogger.debug(TAG, "startImport() - gameVersion: " + gameVersion);
-        AppLogger.debug(TAG, "startImport() - gameIconPath: " + gameIconPath);
-        AppLogger.debug(TAG, "startImport() - gameFilePath: " + gameFilePath);
-        AppLogger.debug(TAG, "startImport() - hasModLoader: " + hasModLoader);
-
-        // 如果游戏信息丢失，重新解析
         if (gameName == null || gameVersion == null) {
-            AppLogger.warn(TAG, "Game info lost, re-parsing...");
             updateProgress(getString(R.string.import_reading_info), 0);
 
             new Thread(() -> {
@@ -331,8 +332,6 @@ public class LocalImportFragment extends BaseFragment {
                             gameName = gdzf.id;
                             gameVersion = gdzf.version;
                             gameIconPath = null;
-                            AppLogger.debug(TAG, "Re-parsed game info: " + gameName + " " + gameVersion);
-                            AppLogger.debug(TAG, "Re-parsed icon path: " + gameIconPath);
 
                             // 继续导入
                             continueImport();
@@ -357,13 +356,10 @@ public class LocalImportFragment extends BaseFragment {
         // 如果有 ModLoader，尝试从文件名提取名称
         boolean hasModLoader = modLoaderFilePath != null && !modLoaderFilePath.isEmpty();
         if (hasModLoader && modLoaderBaseName != null && !modLoaderBaseName.isEmpty()) {
-            directoryBaseName = modLoaderBaseName; // 使用 ModLoader 名称
-            AppLogger.info(TAG, "Using ModLoader name for directory: " + directoryBaseName);
+            directoryBaseName = modLoaderBaseName;
         } else if (hasModLoader) {
-            // 如果有 modLoaderFilePath 但没有 modLoaderBaseName，尝试从路径提取
             try {
                 String modLoaderFileName = new File(modLoaderFilePath).getName();
-                // 移除扩展名
                 if (modLoaderFileName.endsWith(".zip")) {
                     directoryBaseName = modLoaderFileName.substring(0, modLoaderFileName.length() - 4);
                 } else if (modLoaderFileName.contains(".")) {
@@ -371,18 +367,13 @@ public class LocalImportFragment extends BaseFragment {
                 } else {
                     directoryBaseName = modLoaderFileName;
                 }
-                AppLogger.info(TAG, "Extracted ModLoader name from file: " + directoryBaseName);
             } catch (Exception e) {
-                AppLogger.warn(TAG, "Failed to extract ModLoader name, using game name", e);
             }
-        } else {
-            AppLogger.info(TAG, "No ModLoader, using game name for directory: " + directoryBaseName);
         }
         
         // 创建游戏目录
         gameDir = createGameDirectory(directoryBaseName);
         String outputPath = gameDir.getAbsolutePath();
-        AppLogger.debug(TAG, "Created game directory: " + outputPath);
 
         // 复制图标到游戏目录
         if (gameIconPath != null) {
@@ -394,7 +385,6 @@ public class LocalImportFragment extends BaseFragment {
 
                     // 更新图标路径为游戏目录中的路径
                     gameIconPath = iconDest.toAbsolutePath().toString();
-                    AppLogger.debug(TAG, "Icon copied to: " + gameIconPath);
                 } catch (Exception e) {
                     AppLogger.error(TAG, "Failed to copy icon", e);
                 }
@@ -422,80 +412,44 @@ public class LocalImportFragment extends BaseFragment {
                                     isImporting = false; // 重置导入标志
                                     updateProgress(getString(R.string.import_complete_exclamation), 100);
 
-                                    AppLogger.info(TAG, "=== 导入完成回调 ===");
-                                    AppLogger.info(TAG, "游戏路径: " + gamePath);
-                                    AppLogger.info(TAG, "ModLoader 解压路径: " + modLoaderPath);
-                                    AppLogger.info(TAG, "ModLoader 原始 ZIP 路径: " + modLoaderFilePath);
-
-                                    // 在 ModLoader 目录中查找程序集
                                     File modLoaderDir = new File(modLoaderPath);
                                     File assemblyFile = null;
                                     boolean foundModLoaderEntry = false;
 
                                     if (modLoaderDir != null && modLoaderDir.exists()) {
-                                        AppLogger.info(TAG, "搜索 ModLoader 目录中的程序集: " + modLoaderDir.getAbsolutePath());
-                                        
-                                        // 优先级 1: 查找有 runtimeconfig.json + 图标 的程序集
                                         try {
                                             AssemblyChecker.CheckResult checkResult =
                                                     AssemblyChecker.searchDirectoryForAssemblyWithIcon(getContext(), modLoaderDir.getAbsolutePath());
 
                                             if (checkResult != null && checkResult.exists) {
-                                                if (checkResult.hasIcon) {
-                                                    AppLogger.info(TAG, "✓ 找到符合规则的程序集（runtimeconfig.json + 图标）: " + checkResult.assemblyPath);
-                                                } else {
-                                                    AppLogger.info(TAG, "✓ 找到符合规则的程序集（runtimeconfig.json，无图标）: " + checkResult.assemblyPath);
-                                                }
                                                 assemblyFile = new File(checkResult.assemblyPath);
                                                 foundModLoaderEntry = true;
                                             }
                                         } catch (Exception e) {
                                             AppLogger.error(TAG, "搜索程序集失败", e);
                                         }
-
-
                                     }
 
-                                    // 查找游戏本体路径
                                     String gameBodyPath = findGameBodyPath(gamePath);
-                                    if (gameBodyPath != null) {
-                                        AppLogger.debug(TAG, "Game body path: " + gameBodyPath);
-                                    } else {
-                                        AppLogger.warn(TAG, "Game body not found in: " + gamePath);
-                                    }
-
-                                    // 确定最终的游戏路径和图标路径
                                     String finalGamePath;
                                     String iconSourcePath;
                                     String displayName;
 
                                     if (foundModLoaderEntry && assemblyFile != null && assemblyFile.exists()) {
-                                        // 找到了模组入口点，使用模组配置
                                         finalGamePath = assemblyFile.getAbsolutePath();
                                         iconSourcePath = finalGamePath;
 
-                                        // 优先级：modLoaderBaseName > 程序集文件名 > 游戏名称
                                         if (modLoaderBaseName != null && !modLoaderBaseName.isEmpty()) {
                                             displayName = modLoaderBaseName;
-                                            AppLogger.info(TAG, "Using ModLoader zip name: " + displayName);
                                         } else {
                                             String modLoaderName = assemblyFile.getName().replace(".dll", "").replace(".exe", "");
                                             displayName = modLoaderName;
-                                            AppLogger.info(TAG, "Using ModLoader assembly name: " + modLoaderName);
                                         }
-                                        AppLogger.info(TAG, "✓ 使用模组配置");
                                     } else {
-                                        // 未找到 ModLoader 入口点，使用游戏本体配置
-                                        AppLogger.warn(TAG, "⚠ 未找到模组程序集入口点，使用游戏本体配置");
                                         finalGamePath = (gameBodyPath != null) ? gameBodyPath : gamePath;
                                         iconSourcePath = finalGamePath;
                                         displayName = gameName;
-                                        AppLogger.info(TAG, "✓ 使用游戏原本配置（作为纯游戏）");
                                     }
-
-                                    AppLogger.debug(TAG, "Final game path: " + finalGamePath);
-                                    AppLogger.debug(TAG, "Icon source path: " + iconSourcePath);
-                                    AppLogger.debug(TAG, "Display name: " + displayName);
 
                                     // 创建 GameItem
                                     var newGame = new GameItem();
@@ -511,11 +465,6 @@ public class LocalImportFragment extends BaseFragment {
 
                                     // 设置 ModLoader 状态
                                     newGame.setModLoaderEnabled(foundModLoaderEntry);
-                                    if (foundModLoaderEntry) {
-                                        AppLogger.info(TAG, "ModLoader enabled");
-                                    } else {
-                                        AppLogger.info(TAG, "ModLoader disabled (using game as pure game)");
-                                    }
 
                                     // 提取图标
                                     String extractedIconPath = extractIconFromExecutable(iconSourcePath, gameIconPath);
@@ -570,11 +519,8 @@ public class LocalImportFragment extends BaseFragment {
                                         finalGamePath = findGameBodyPath(gamePath);
 
                                         if (finalGamePath == null) {
-                                            AppLogger.warn("LocalImportFragment", "Game executable not found, using directory path");
                                             finalGamePath = gamePath;
                                         }
-
-                                        AppLogger.debug(TAG, "Pure game path: " + finalGamePath);
 
                                     var newGame = new GameItem();
                                     String iconSourcePath;
@@ -588,7 +534,9 @@ public class LocalImportFragment extends BaseFragment {
                                     try {
                                         newGame.setGameBasePath(new File(gamePath).getCanonicalPath());
                                     } catch (IOException e) {
-                                        throw new RuntimeException(e);
+                                        // 使用错误处理器显示错误，而不是抛出运行时异常
+                                        ErrorHandler.handleError(getString(R.string.import_error_game_import_failed), e);
+                                        return; // 错误已处理，退出导入流程
                                     }
                                     newGame.setGamePath(finalGamePath);
 
@@ -660,19 +608,7 @@ public class LocalImportFragment extends BaseFragment {
             gameDir.mkdirs();
         }
 
-        AppLogger.info(TAG, "Created game directory with name: " + dirName);
         return gameDir;
-    }
-
-    /**
-     * 高清化小图标（使用双三次插值+锐化）
-     * 现在使用 ralib 中的实现
-     *
-     * @param iconPath 原始图标路径
-     * @return 高清化后的图标路径，失败返回null
-     */
-    private String upscaleIcon(String iconPath) {
-        return IconExtractor.upscaleIcon(getContext(), iconPath);
     }
 
     /**
@@ -684,13 +620,11 @@ public class LocalImportFragment extends BaseFragment {
      */
     private String extractIconFromExecutable(String exePath, String fallbackIconPath) {
         if (exePath == null || exePath.isEmpty()) {
-            AppLogger.warn(TAG, "EXE path is null or empty, using fallback icon");
             return fallbackIconPath;
         }
 
         File exeFile = new File(exePath);
         if (!exeFile.exists()) {
-            AppLogger.warn(TAG, "EXE file not found: " + exePath + ", using fallback icon");
             return fallbackIconPath;
         }
 
@@ -703,43 +637,47 @@ public class LocalImportFragment extends BaseFragment {
             // 尝试 .exe (Windows)
             File winExe = new File(gameDir, baseName + ".exe");
             if (winExe.exists()) {
-                AppLogger.info(TAG, "Found Windows .exe file: " + winExe.getName());
                 tryPath = winExe.getAbsolutePath();
-            } else {
-                AppLogger.info(TAG, "No .exe file found, will try .dll (may have small icons)");
             }
         }
 
         try {
-            AppLogger.info(TAG, "Attempting to extract icon from: " + tryPath);
-
-            // 使用IconExtractorHelper提取图标
-            String extractedIconPath = IconExtractorHelper.extractGameIcon(getContext(), tryPath);
-
+            // 直接使用 IconExtractor 提取图标
+            File gameFile = new File(tryPath);
+            if (!gameFile.exists()) {
+                return fallbackIconPath;
+            }
+            
+            // 生成输出路径：在游戏文件旁边创建 xxx_icon.png
+            String nameWithoutExt = gameFile.getName().replaceAll("\\.[^.]+$", "");
+            String iconPath = gameFile.getParent() + File.separator + nameWithoutExt + "_icon.png";
+            
+            boolean success = IconExtractor.extractIconToPng(tryPath, iconPath);
+            String extractedIconPath = null;
+            
+            if (success) {
+                File iconFile = new File(iconPath);
+                if (iconFile.exists() && iconFile.length() > 0) {
+                    extractedIconPath = iconPath;
+                }
+            }
+            
             if (extractedIconPath != null && new File(extractedIconPath).exists()) {
                 // 检查提取的图标大小，如果太小则高清化
                 File iconFile = new File(extractedIconPath);
                 long fileSize = iconFile.length();
 
-                // 如果图标文件小于5KB，可能是16x16或32x32的小图标，需要高清化
                 if (fileSize < 5 * 1024) {
-                    AppLogger.warn(TAG, String.format("Extracted icon is small (%d bytes), applying upscaling...", fileSize));
-
-                    // 尝试高清化图标
-                    String upscaledPath = upscaleIcon(extractedIconPath);
+                    String upscaledPath = IconExtractor.upscaleIcon(getContext(), extractedIconPath);
                     if (upscaledPath != null) {
-                        AppLogger.info(TAG, "Icon upscaled successfully: " + upscaledPath);
                         return upscaledPath;
                     } else if (fallbackIconPath != null) {
-                        AppLogger.warn(TAG, "Upscaling failed, using fallback GOG icon");
                         return fallbackIconPath;
                     }
                 }
 
-                AppLogger.info(TAG, "Successfully extracted icon to: " + extractedIconPath);
                 return extractedIconPath;
             } else {
-                AppLogger.warn(TAG, "Icon extraction returned null or file doesn't exist, using fallback");
                 return fallbackIconPath;
             }
         } catch (Exception e) {
@@ -770,7 +708,6 @@ public class LocalImportFragment extends BaseFragment {
             return null;
         }
 
-        AppLogger.debug(TAG, "查找有图标文件，搜索目录: " + dir.getAbsolutePath());
 
         // 先搜索当前目录
         for (File file : files) {
@@ -794,7 +731,6 @@ public class LocalImportFragment extends BaseFragment {
             // 检查是否有图标
             boolean hasIcon = com.app.ralib.icon.IconExtractor.hasIcon(file.getAbsolutePath());
             if (hasIcon) {
-                AppLogger.info(TAG, "✓ 找到有图标的程序集: " + file.getAbsolutePath());
                 return file;
             }
         }
@@ -825,7 +761,6 @@ public class LocalImportFragment extends BaseFragment {
             return null;
         }
 
-        AppLogger.debug(TAG, "查找程序集文件，搜索目录: " + dir.getAbsolutePath());
 
         // 先搜索当前目录
         for (File file : files) {
@@ -848,8 +783,6 @@ public class LocalImportFragment extends BaseFragment {
                 continue;
             }
             
-            // 返回第一个符合条件的文件
-            AppLogger.info(TAG, "✓ 找到程序集文件: " + file.getAbsolutePath());
             return file;
         }
 

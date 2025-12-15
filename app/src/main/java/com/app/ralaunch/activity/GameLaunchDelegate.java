@@ -45,28 +45,17 @@ public class GameLaunchDelegate {
                 return -2;
             }
 
-            AppLogger.info(TAG, "Starting game: " + (gameName != null ? gameName : "Unknown"));
-            AppLogger.info(TAG, "Assembly: " + assemblyPath);
-
             ArrayList<String> enabledPatchIds = intent.getStringArrayListExtra("ENABLED_PATCH_IDS");
 
             @Nullable ArrayList<Patch> enabledPatches = null;
             if (enabledPatchIds != null && !enabledPatchIds.isEmpty()) {
                 PatchManager patchManager = RaLaunchApplication.getPatchManager();
                 enabledPatches = patchManager.getPatchesByIds(enabledPatchIds);
-
-                AppLogger.info(TAG, "Enabled patches: " + enabledPatches.size());
-                for (Patch patch : enabledPatches) {
-                    AppLogger.info(TAG, String.format("  - %s (id: %s)", patch.manifest.name, patch.manifest.id));
-                }
             }
 
-            // 启动程序集（带补丁配置）
             int result = GameLauncher.launchAssemblyDirect(activity, assemblyPath, enabledPatches);
 
-            if (result == 0) {
-                AppLogger.info(TAG, "Launch parameters set successfully");
-            } else {
+            if (result != 0) {
                 AppLogger.error(TAG, "Failed to set launch parameters: " + result);
                 int finalResult = result;
                 activity.runOnUiThread(() ->

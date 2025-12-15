@@ -48,24 +48,19 @@ public class GamePathResolver {
         // 通过 runtimeconfig.json 查找程序集
         File assemblyFile = findAssemblyByRuntimeConfig(gameDir);
         if (assemblyFile != null) {
-            AppLogger.info(TAG, "Found game assembly via runtimeconfig.json: " + assemblyFile.getAbsolutePath());
             return assemblyFile.getAbsolutePath();
         }
 
-        // 如果找不到符合条件的文件，降级为查找任意 DLL/EXE
         File dllFile = findFirstFileRecursively(gameDir, name -> name.endsWith(".dll"));
         if (dllFile != null) {
-            AppLogger.debug(TAG, "Found DLL file (fallback): " + dllFile.getAbsolutePath());
             return dllFile.getAbsolutePath();
         }
 
         File exeFile = findFirstFileRecursively(gameDir, name -> name.endsWith(".exe"));
         if (exeFile != null) {
-            AppLogger.debug(TAG, "Found EXE file (fallback): " + exeFile.getAbsolutePath());
             return exeFile.getAbsolutePath();
         }
 
-        AppLogger.warn(TAG, "No executable file found in: " + gamePath);
         return null;
     }
 
@@ -115,19 +110,14 @@ public class GamePathResolver {
             }
             
             if (assemblyFile == null) {
-                AppLogger.debug(TAG, "Found runtimeconfig.json but no matching DLL/EXE: " + fileName);
                 continue;
             }
             
-            // 检查是否有图标
             boolean hasIcon = IconExtractor.hasIcon(assemblyFile.getAbsolutePath());
             if (!hasIcon) {
-                AppLogger.debug(TAG, "Found runtimeconfig.json and DLL/EXE but no icon: " + assemblyFile.getName());
                 continue;
             }
             
-            AppLogger.debug(TAG, String.format("Found valid assembly: %s (runtimeconfig.json: %s, hasIcon: %b)", 
-                assemblyFile.getName(), fileName, hasIcon));
             return assemblyFile;
         }
 
@@ -245,7 +235,6 @@ public class GamePathResolver {
             return null;
         }
 
-        AppLogger.info(TAG, "Created game directory: " + gameDir.getAbsolutePath());
         return gameDir;
     }
 }

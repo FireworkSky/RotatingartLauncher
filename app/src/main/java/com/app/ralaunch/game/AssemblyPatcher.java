@@ -43,51 +43,25 @@ public class AssemblyPatcher {
      * @return 替换的程序集数量，失败返回 -1
      */
     public static int applyMonoModPatches(Context context, String gameDirectory, boolean verboseLog) {
-        if (verboseLog) {
-            AppLogger.info(TAG, "开始应用 MonoMod 补丁");
-            AppLogger.info(TAG, "游戏目录: " + gameDirectory);
-        }
-
         try {
-            // 1. 从解压目录加载 MonoMod 补丁
             Map<String, byte[]> patchAssemblies = loadPatchArchive(context);
-
             if (patchAssemblies.isEmpty()) {
-                if (verboseLog) {
-                    AppLogger.warn(TAG, "未找到任何补丁程序集");
-                }
                 return 0;
-            }
-
-            if (verboseLog) {
-                AppLogger.debug(TAG, "已加载 " + patchAssemblies.size() + " 个补丁程序集");
             }
 
             // 2. 扫描游戏目录中的程序集
             File gameDir = new File(gameDirectory);
             List<File> gameAssemblies = findGameAssemblies(gameDir);
 
-            if (verboseLog) {
-                AppLogger.debug(TAG, "找到 " + gameAssemblies.size() + " 个游戏程序集");
-            }
-
-            // 3. 替换对应的程序集
             int patchedCount = 0;
             for (File assemblyFile : gameAssemblies) {
                 String assemblyName = assemblyFile.getName();
 
                 if (patchAssemblies.containsKey(assemblyName)) {
                     if (replaceAssembly(assemblyFile, patchAssemblies.get(assemblyName))) {
-                        AppLogger.info(TAG, "  ✓ 已替换: " + assemblyName);
                         patchedCount++;
-                    } else {
-                        AppLogger.warn(TAG, "  ✗ 替换失败: " + assemblyName);
                     }
                 }
-            }
-
-            if (verboseLog && patchedCount > 0) {
-                AppLogger.info(TAG, "补丁应用完成，共处理 " + patchedCount + " 个程序集");
             }
             return patchedCount;
 
@@ -107,7 +81,6 @@ public class AssemblyPatcher {
             File monoModDir = new File(context.getFilesDir(), MONOMOD_DIR);
 
             if (!monoModDir.exists() || !monoModDir.isDirectory()) {
-                AppLogger.warn(TAG, "MonoMod 目录不存在: " + monoModDir.getAbsolutePath());
                 return assemblies;
             }
 
@@ -118,9 +91,7 @@ public class AssemblyPatcher {
                     byte[] assemblyData = java.nio.file.Files.readAllBytes(dllFile.toPath());
                     String fileName = dllFile.getName();
                     assemblies.put(fileName, assemblyData);
-                    AppLogger.debug(TAG, "加载: " + fileName + " (" + assemblyData.length + " bytes)");
                 } catch (IOException e) {
-                    AppLogger.warn(TAG, "无法读取: " + dllFile.getName(), e);
                 }
             }
 

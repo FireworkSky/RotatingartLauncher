@@ -41,19 +41,8 @@ public class GameLaunchManager {
             return false;
         }
         
-        AppLogger.info(TAG, "Launching game: " + game.getGameName());
-        AppLogger.info(TAG, "Assembly path: " + assemblyPath);
-        
-        // 获取启用的补丁列表
         PatchManager patchManager = RaLaunchApplication.getPatchManager();
         List<Patch> enabledPatches = patchManager.getEnabledPatches(assemblyFile.toPath());
-        
-        if (!enabledPatches.isEmpty()) {
-            AppLogger.info(TAG, "Enabled patches for this game:");
-            for (Patch patch : enabledPatches) {
-                AppLogger.info(TAG, String.format("  - %s (id: %s)", patch.manifest.name, patch.manifest.id));
-            }
-        }
         
         // 创建启动 Intent
         Intent intent = new Intent(context, GameActivity.class);

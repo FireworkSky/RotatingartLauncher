@@ -50,10 +50,6 @@ public class GameExtractor {
         long availableSpace = outputDir.getUsableSpace();
         long requiredSpace = inputFile.length() * 3; // 预留3倍空间用于解压
 
-        AppLogger.debug(TAG, String.format("Space check: available=%.1f GB, required=%.1f GB",
-                availableSpace / 1024.0 / 1024 / 1024,
-                requiredSpace / 1024.0 / 1024 / 1024));
-
         if (availableSpace < requiredSpace) {
             Context context = RaLaunchApplication.getAppContext();
             String errorMsg = context != null ? 
@@ -86,8 +82,6 @@ public class GameExtractor {
                             listener.onProgress(localizedMessage, (int)(progress*0.7f*100));
                         } else if (extractorIndex == 1) { // BasicSevenZipExtractor
                             listener.onProgress(localizedMessage, (int)((0.7f+progress*0.3f)*100));
-                        } else {
-                            AppLogger.warn(TAG, "Unknown extractor index: " + extractorIndex);
                         }
                     }
                 }
@@ -121,8 +115,6 @@ public class GameExtractor {
                             }
                             var modLoaderPath = Paths.get(outputDir, "GoG Games", "ModLoader");
                             listener.onComplete(gamePath.toString(), modLoaderPath.toString());
-                        } else {
-                            AppLogger.warn(TAG, "Unknown extractor index: " + extractorIndex);
                         }
                     }
                 }
@@ -276,31 +268,16 @@ public class GameExtractor {
                 }
             });
 
-            AppLogger.debug(TAG, "ZIP结构分析: " + rootDirs.size() + " 个根目录, " +
-                    rootEntries.size() + " 个根文件");
-
-            // 2. 如果只有一个根目录且没有根文件,使用该目录
             if (rootDirs.size() == 1 && rootEntries.isEmpty()) {
                 String singleRoot = rootDirs.get(0);
-                AppLogger.info(TAG, "检测到单一根目录: " + singleRoot);
                 return Paths.get(singleRoot);
             }
 
-            // 3. 如果有多个根目录,尝试智能选择
             if (rootDirs.size() > 1) {
-                // 3.1 优先选择非installer/setup等包装目录
                 String selected = selectBestRootDirectory(rootDirs, zipFilePath);
                 if (selected != null) {
-                    AppLogger.info(TAG, "智能选择根目录: " + selected);
                     return Paths.get(selected);
                 }
-            }
-
-            // 4. 如果有根级文件,或无法智能选择,返回空路径
-            if (!rootEntries.isEmpty()) {
-                AppLogger.info(TAG, "检测到根级文件,直接解压");
-            } else {
-                AppLogger.warn(TAG, "无法确定最佳解压路径,使用默认策略");
             }
             return Paths.get("");
 

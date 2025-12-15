@@ -88,10 +88,7 @@ add_library(${CMAKE_PROJECT_NAME} SHARED
         sdl_entry.c
         netcorehost_launcher.cpp
         corehost_trace_redirect.cpp
-        framework_utils.cpp
         jni_bridge.c
-        error_handler.c
-        console_bridge.c
         app_logger.c
         app_logger_jni.c
         renderer_loader.c

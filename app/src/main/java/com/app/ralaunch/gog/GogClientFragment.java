@@ -20,6 +20,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.app.ralaunch.R;
 import com.app.ralaunch.utils.AppLogger;
+import com.app.ralib.error.ErrorHandler;
 import com.bumptech.glide.Glide;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
@@ -86,21 +87,18 @@ public class GogClientFragment extends Fragment {
      * 显示两步验证对话框
      */
     private String showTwoFactorDialog(String type) {
-        AppLogger.info(TAG, "showTwoFactorDialog 被调用，类型: " + type);
         final String[] result = {null};
         final Object lock = new Object();
 
         try {
             requireActivity().runOnUiThread(() -> {
                 try {
-                    AppLogger.info(TAG, "开始在UI线程创建对话框");
                     View dialogView = getLayoutInflater().inflate(R.layout.dialog_two_factor, null);
                     TextInputLayout codeLayout = dialogView.findViewById(R.id.codeLayout);
                     TextInputEditText editCode = dialogView.findViewById(R.id.editSecurityCode);
                     TextView tvTitle = dialogView.findViewById(R.id.tvTwoFactorTitle);
                     TextView tvMessage = dialogView.findViewById(R.id.tvTwoFactorMessage);
 
-                    // 根据验证类型设置提示
                     if ("email".equals(type)) {
                         tvTitle.setText(getString(R.string.gog_email_verification));
                         tvMessage.setText(getString(R.string.gog_email_code_prompt));
@@ -111,26 +109,21 @@ public class GogClientFragment extends Fragment {
                         codeLayout.setHint(getString(R.string.gog_6_digit_code));
                     }
 
-                    AppLogger.info(TAG, "准备显示MaterialAlertDialog");
                     new MaterialAlertDialogBuilder(requireContext())
                             .setView(dialogView)
                             .setPositiveButton(getString(R.string.ok), (dialog, which) -> {
-                                AppLogger.info(TAG, "用户点击确定按钮");
                                 synchronized (lock) {
                                     result[0] = editCode.getText() != null ? editCode.getText().toString() : "";
-                                    AppLogger.info(TAG, "唤醒等待线程，验证码长度: " + (result[0] != null ? result[0].length() : 0));
                                     lock.notify();
                                 }
                             })
                             .setNegativeButton(getString(R.string.cancel), (dialog, which) -> {
-                                AppLogger.info(TAG, "用户点击取消按钮");
                                 synchronized (lock) {
                                     lock.notify();
                                 }
                             })
                             .setCancelable(false)
                             .show();
-                    AppLogger.info(TAG, "对话框已显示");
                 } catch (Exception e) {
                     AppLogger.error(TAG, "创建对话框时发生异常", e);
                     synchronized (lock) {
@@ -139,12 +132,9 @@ public class GogClientFragment extends Fragment {
                 }
             });
 
-            // 等待用户输入
-            AppLogger.info(TAG, "开始等待用户输入验证码");
             synchronized (lock) {
                 try {
                     lock.wait();
-                    AppLogger.info(TAG, "等待结束，返回结果: " + (result[0] != null ? "有值" : "null"));
                 } catch (InterruptedException e) {
                     AppLogger.error(TAG, "等待验证码输入被中断", e);
                 }
@@ -341,9 +331,6 @@ public class GogClientFragment extends Fragment {
                                     .error(R.drawable.ic_person)
                                     .circleCrop()
                                     .into(userAvatar);
-                            AppLogger.info(TAG, "加载用户头像: " + userInfo.avatarUrl);
-                        } else {
-                            AppLogger.warn(TAG, "用户头像 URL 为空");
                         }
                     }
                 });
@@ -399,7 +386,11 @@ public class GogClientFragment extends Fragment {
                 AppLogger.error(TAG, "登录异常", e);
                 requireActivity().runOnUiThread(() -> {
                     hideLoading();
-                    Toast.makeText(requireContext(), getString(R.string.gog_login_error, e.getMessage()), Toast.LENGTH_SHORT).show();
+                    // 使用统一的错误弹窗
+                    com.app.ralib.error.ErrorHandler.handleError(
+                        getString(R.string.gog_login_error, e.getMessage()),
+                        e
+                    );
                 });
             }
         }).start();
@@ -435,9 +426,11 @@ public class GogClientFragment extends Fragment {
                 AppLogger.error(TAG, "获取游戏列表失败", e);
                 requireActivity().runOnUiThread(() -> {
                     hideLoading();
-                    Toast.makeText(requireContext(),
-                            getString(R.string.gog_load_games_failed, e.getMessage()),
-                            Toast.LENGTH_SHORT).show();
+                    // 使用统一的错误弹窗
+                    com.app.ralib.error.ErrorHandler.handleError(
+                        getString(R.string.gog_load_games_failed, e.getMessage()),
+                        e
+                    );
                 });
             }
         }).start();
@@ -474,12 +467,9 @@ public class GogClientFragment extends Fragment {
         // 检查是否有 ModLoader 规则
         ModLoaderConfigManager.ModLoaderRule rule = modLoaderConfigManager.getRule(game.id);
         if (rule == null) {
-            AppLogger.info(TAG, "[flow] no modloader rule for game " + game.id + ", ignore click");
             Toast.makeText(requireContext(), getString(R.string.gog_one_click_not_supported), Toast.LENGTH_SHORT).show();
             return;
         }
-        
-        AppLogger.info(TAG, "[flow] ✓ game clicked, loading versions: " + game.title + " (" + game.id + ")");
         
         // 显示加载状态
         showLoading(getString(R.string.gog_loading_version_info, game.title));
@@ -616,8 +606,6 @@ public class GogClientFragment extends Fragment {
         btnInstall.setOnClickListener(v -> {
             GogApiClient.GameFile selectedGame = gameVersions.get(selectedGameVersion[0]);
             ModLoaderConfigManager.ModLoaderVersion selectedModLoader = modLoaderVersions.get(selectedModLoaderVersion[0]);
-            AppLogger.info(TAG, "[flow] user selected game version: " + selectedGame.version + 
-                                ", modloader: " + selectedModLoader.version);
             dialog.dismiss();
             startModLoaderFlow(game, details, selectedGame, selectedModLoader, rule);
         });
@@ -656,8 +644,6 @@ public class GogClientFragment extends Fragment {
         
         progressDialog = GogDownloadProgressDialog.newInstance(gameFileName, modLoaderName);
         progressDialog.setOnCancelListener(() -> {
-            // 取消下载逻辑（如果需要）
-            AppLogger.info(TAG, "[modloader] user cancelled download");
         });
         progressDialog.show(getParentFragmentManager(), "gog_download_progress");
 
@@ -681,7 +667,6 @@ public class GogClientFragment extends Fragment {
             });
             String installerUrl = resolveDownloadUrl(game.id, installer);
             if (installerUrl == null || installerUrl.isEmpty()) {
-                AppLogger.warn(TAG, "[modloader] installer url empty, manual=" + installer.manualUrl + " path=" + installer.path);
                 requireActivity().runOnUiThread(() -> {
                     if (progressDialog != null) progressDialog.dismiss();
                     Toast.makeText(requireContext(), getString(R.string.gog_cannot_get_download_link), Toast.LENGTH_SHORT).show();
@@ -697,15 +682,12 @@ public class GogClientFragment extends Fragment {
             });
             String modLoaderUrl = modLoaderVersion.url;
             if (modLoaderUrl == null || modLoaderUrl.isEmpty()) {
-                AppLogger.warn(TAG, "[modloader] modLoaderUrl invalid for game " + game.id + ", version=" + modLoaderVersion.version);
                 requireActivity().runOnUiThread(() -> {
                     if (progressDialog != null) progressDialog.dismiss();
                     Toast.makeText(requireContext(), getString(R.string.gog_modloader_link_invalid), Toast.LENGTH_SHORT).show();
                 });
                 return;
             }
-            AppLogger.info(TAG, "[modloader] start download installer=" + installerUrl + 
-                                " modloader=" + modLoaderUrl + " (" + modLoaderVersion.version + ")");
             File downloadDir = new File(external, "gog_downloads/" + game.id);
             File installerFile = new File(downloadDir, sanitizeFileName(
                     installer.name != null && !installer.name.isEmpty() ? installer.name : game.title) + ".sh");
@@ -775,11 +757,6 @@ public class GogClientFragment extends Fragment {
                                 new com.app.ralaunch.fragment.LocalImportFragment();
                         importFragment.setArguments(args);
                         importFragment.setOnImportCompleteListener((gameType, newGame) -> {
-                            // 导入完成后的回调
-                            AppLogger.info(TAG, "[modloader] import complete: " + newGame.getGameName());
-                            
-                            // 清理下载的临时文件
-                            AppLogger.info(TAG, "[modloader] cleaning up downloaded files");
                             deleteQuietly(installerFile);
                             deleteQuietly(modLoaderFile);
                             deleteQuietly(downloadDir);
@@ -793,8 +770,6 @@ public class GogClientFragment extends Fragment {
                                     Toast.LENGTH_SHORT).show();
                         });
                         importFragment.setOnBackListener(() -> {
-                            // 用户取消导入时，清理下载的文件
-                            AppLogger.info(TAG, "[modloader] import cancelled, cleaning up");
                             deleteQuietly(installerFile);
                             deleteQuietly(modLoaderFile);
                             deleteQuietly(downloadDir);
@@ -829,7 +804,11 @@ public class GogClientFragment extends Fragment {
                 AppLogger.error(TAG, "下载或安装失败", e);
                 requireActivity().runOnUiThread(() -> {
                     if (progressDialog != null) progressDialog.dismiss();
-                    Toast.makeText(requireContext(), getString(R.string.gog_download_failed, e.getMessage()), Toast.LENGTH_LONG).show();
+                    // 使用统一的错误弹窗
+                    com.app.ralib.error.ErrorHandler.handleError(
+                        getString(R.string.gog_download_failed, e.getMessage()),
+                        e
+                    );
                 });
             }
         });
@@ -848,18 +827,15 @@ public class GogClientFragment extends Fragment {
     private String resolveDownloadUrl(long productId, GogApiClient.GameFile file) {
         if (file == null) return null;
         if (file.manualUrl != null && !file.manualUrl.isEmpty()) {
-            AppLogger.debug(TAG, "[download] use manualUrl directly: " + file.manualUrl);
             return file.manualUrl;
         }
         if (file.path == null || file.path.isEmpty()) {
-            AppLogger.warn(TAG, "[download] path empty, cannot resolve secure_link");
             return null;
         }
         String normalizedPath = normalizeSecurePath(file.path);
         try {
             JSONObject json = apiClient.getSecureLink(String.valueOf(productId), normalizedPath);
             if (json != null) {
-                AppLogger.debug(TAG, "[download] secure_link response: " + json.toString());
                 String link = json.optString("link", "");
                 if (link.isEmpty()) {
                     link = json.optString("download_link", "");
@@ -867,7 +843,6 @@ public class GogClientFragment extends Fragment {
                 if (link.isEmpty()) {
                     link = json.optString("href", "");
                 }
-                AppLogger.debug(TAG, "[download] resolved link=" + link + " from path=" + normalizedPath);
                 return link;
             }
         } catch (Exception e) {

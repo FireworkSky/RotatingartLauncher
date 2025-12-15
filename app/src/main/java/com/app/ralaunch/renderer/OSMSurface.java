@@ -46,36 +46,25 @@ public class OSMSurface extends SDLSurface {
     private void initOSMRendererIfNeeded() {
         try {
             String currentRenderer = RendererLoader.getCurrentRenderer();
-            AppLogger.info(TAG, "Checking OSMesa initialization for renderer: " + currentRenderer);
-            
-            // 检查是否是 zink 渲染器（RALCORE_RENDERER 可能是 "vulkan_zink"）
             boolean isZink = RendererConfig.RENDERER_ZINK.equals(currentRenderer) || 
                             "vulkan_zink".equals(currentRenderer);
             
             if (isZink) {
-                
                 if (!OSMRenderer.isAvailable()) {
-                    AppLogger.warn(TAG, "OSMesa is not available, zink will use EGL fallback");
                     return;
                 }
 
                 if (OSMRenderer.isInitialized()) {
-                    AppLogger.info(TAG, "OSMesa renderer already initialized");
                     return;
                 }
 
-                // Get Surface
                 Surface surface = getNativeSurface();
                 if (surface == null) {
-                    AppLogger.warn(TAG, "Surface not available yet, OSMesa initialization deferred");
                     return;
                 }
 
-                AppLogger.info(TAG, "Initializing OSMesa renderer for zink...");
-                if (OSMRenderer.init(surface)) {
-                    AppLogger.info(TAG, "✓ OSMesa renderer initialized successfully");
-                } else {
-                    AppLogger.error(TAG, "✗ Failed to initialize OSMesa renderer");
+                if (!OSMRenderer.init(surface)) {
+                    AppLogger.error(TAG, "Failed to initialize OSMesa renderer");
                 }
             }
         } catch (Exception e) {
@@ -92,11 +81,9 @@ public class OSMSurface extends SDLSurface {
                 Surface surface = getNativeSurface();
                 if (surface != null) {
                     OSMRenderer.setWindow(surface);
-                    AppLogger.info(TAG, "OSMesa renderer window updated");
                 }
             }
         } catch (Exception e) {
-            AppLogger.warn(TAG, "Failed to update OSMesa renderer window: " + e.getMessage());
         }
     }
 }

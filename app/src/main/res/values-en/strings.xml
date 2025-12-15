@@ -33,6 +33,19 @@
     <string name="confirm">Confirm</string>
     <string name="close">Close</string>
 
+    <!-- Error Dialog -->
+    <string name="error_title_default">Error</string>
+    <string name="error_message_default">An error occurred</string>
+    <string name="error_operation_failed">Operation failed</string>
+    <string name="error_details_title">Error Details</string>
+    <string name="error_show_details">Show Details</string>
+    <string name="error_hide_details">Hide Details</string>
+    <string name="error_copy">Copy</string>
+    <string name="error_copy_success">Copied to clipboard</string>
+    <string name="error_icon_desc">Error icon</string>
+    <string name="error_crash_title">Application Crash</string>
+    <string name="error_fatal_title">Fatal Error</string>
+
     <!-- Import Game -->
     <string name="import_select_game_file">Select Game File</string>
     <string name="import_select_modloader">Select ModLoader</string>
@@ -48,6 +61,7 @@
     <string name="import_complete">Import Complete</string>
     <string name="import_error">Import failed: %s</string>
     <string name="import_install_failed">Installation failed: %s</string>
+    <string name="import_error_game_import_failed">Failed to import game</string>
     <string name="import_storage_insufficient">Insufficient storage!\nRequired: %1$.1f GB\nAvailable: %2$.1f GB\n\nPlease free up space and try again</string>
     <string name="import_game_file_not_exist">Game file does not exist: %s</string>
     <string name="import_modloader_file_not_exist">ModLoader file does not exist: %s</string>

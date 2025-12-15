@@ -10,7 +10,7 @@ android {
     defaultConfig {
         applicationId "com.app.ralaunch"
         minSdk 28
-        targetSdk 28
+        targetSdk 35
         versionCode 1
         versionName "1.0.0"
 
@@ -93,15 +93,13 @@ android {
 }
 
 dependencies {
-    implementation 'net.java.dev.jna:jna:5.12.0'
-    
-    // ByteHook - Android PLT Hook 库
-    implementation 'com.bytedance:bytehook:1.1.1'
+
 
    implementation files('../app/libs/libSystem.Security.Cryptography.Native.Android.jar')
 
 
     implementation 'com.nineoldandroids:library:2.3.0'
+
     implementation 'com.daimajia.easing:library:2.0@aar'
 
     // 使用 AndroidX 兼容的动画库
@@ -118,14 +116,12 @@ dependencies {
     implementation 'com.github.bumptech.glide:glide:4.16.0'
 
     implementation 'com.google.code.gson:gson:2.13.2'
-    
-    // Apache Commons Compress + XZ 用于 tar.xz 解压
+
     implementation 'org.apache.commons:commons-compress:1.24.0'
     implementation 'org.tukaani:xz:1.9'
 
     implementation project(path: ':ralib')
 
-    // Fishnet 崩溃捕捉库 (使用本地 AAR)
     implementation files('libs/fishnet-release.aar')
 
     implementation libs.appcompat

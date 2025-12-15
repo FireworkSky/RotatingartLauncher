@@ -14,7 +14,6 @@ import com.app.ralaunch.fragment.BaseFragment;
 import com.app.ralaunch.manager.ThemeManager;
 import com.app.ralaunch.utils.AppLogger;
 import com.app.ralaunch.utils.LocaleManager;
-import com.app.ralaunch.utils.ThemeColorUpdater;
 import com.app.ralib.dialog.ColorPickerDialog;
 import com.app.ralib.dialog.OptionSelectorDialog;
 import com.app.ralaunch.activity.MainActivity;
@@ -135,10 +134,11 @@ public class AppearanceSettingsModule implements SettingsModule {
                     
                     if (color != oldColor) {
                         Activity activity = fragment.getActivity();
-                        if (activity instanceof androidx.appcompat.app.AppCompatActivity) {
-                            ThemeColorUpdater colorUpdater = 
-                                new ThemeColorUpdater((androidx.appcompat.app.AppCompatActivity) activity);
-                            colorUpdater.applyThemeColorDynamically();
+                        if (activity instanceof androidx.appcompat.app.AppCompatActivity && activity.getWindow() != null) {
+                            // 直接设置窗口背景颜色
+                            android.graphics.drawable.ColorDrawable background = 
+                                new android.graphics.drawable.ColorDrawable(color);
+                            activity.getWindow().setBackgroundDrawable(background);
                         }
                     }
                 });
@@ -523,7 +523,6 @@ public class AppearanceSettingsModule implements SettingsModule {
                             int takeFlags = android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION;
                             resolver.takePersistableUriPermission(uri, takeFlags);
                         } catch (Exception e) {
-                            AppLogger.debug("AppearanceSettingsModule", "无法获取持久化权限: " + e.getMessage());
                         }
                     }
                     
@@ -590,7 +589,6 @@ public class AppearanceSettingsModule implements SettingsModule {
                                 inputStream.close();
                                 
                                 path = tempFile.getAbsolutePath();
-                                AppLogger.debug("AppearanceSettingsModule", "文件已复制到: " + path);
                             }
                         } catch (Exception e) {
                             AppLogger.error("AppearanceSettingsModule", "无法从 URI 复制文件: " + e.getMessage());

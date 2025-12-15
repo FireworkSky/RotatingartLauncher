@@ -78,7 +78,6 @@ public class ModLoaderConfigManager {
                 
                 rules.add(rule);
             }
-            AppLogger.info(TAG, "已加载 ModLoader 规则 " + rules.size() + " 条");
         } catch (Exception e) {
             AppLogger.error(TAG, "读取 ModLoader 配置失败: " + e.getMessage(), e);
         }

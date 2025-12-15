@@ -60,8 +60,6 @@ public class RaLaunchApplication extends Application {
         }
         Fishnet.init(appContext, logDir.getAbsolutePath());
 
-        // 初始化 ByteHook（必须在其他库加载之前）
-        com.bytedance.android.bytehook.ByteHook.init();
 
         // 初始化 ralib
         com.app.ralib.Shared.init(appContext);

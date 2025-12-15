@@ -79,8 +79,6 @@ public class ControlLayoutManager {
         // 检查用户是否明确删除了默认布局
         boolean defaultLayoutsDeleted = preferences.getBoolean(KEY_DEFAULT_LAYOUTS_DELETED, false);
         if (defaultLayoutsDeleted) {
-            // 用户已删除默认布局，不自动重新创建
-            AppLogger.info("ControlLayoutManager", "Default layouts were deleted by user, skipping auto-creation");
             return;
         }
         
@@ -143,8 +141,6 @@ public class ControlLayoutManager {
             ControlLayout keyboardLayout = loadLayoutFromAssets("controls/default_layout.json", INTERNAL_KEYBOARD_MODE);
             if (keyboardLayout != null) {
                 layouts.add(keyboardLayout);
-            } else {
-                AppLogger.warn("ControlLayoutManager", "Layout file not found");
             }
         }
 
@@ -155,8 +151,6 @@ public class ControlLayoutManager {
             ControlLayout classicLayout = loadLayoutFromAssets("controls/gamepad_layout.json", INTERNAL_GAMEPAD_MODE);
             if (classicLayout != null) {
                 layouts.add(classicLayout);
-            } else {
-                AppLogger.warn("ControlLayoutManager", "Layout file not found");
             }
             
 
@@ -180,7 +174,6 @@ public class ControlLayoutManager {
             // 解析为 ControlConfig
             ControlConfig config = ControlConfig.loadFromJson(json);
             if (config == null || config.controls == null || config.controls.isEmpty()) {
-                AppLogger.warn("ControlLayoutManager", "Empty config loaded from: " + assetPath);
                 return null;
             }
             
@@ -200,7 +193,6 @@ public class ControlLayoutManager {
                 }
             }
             
-            AppLogger.info("ControlLayoutManager", "Loaded layout from JSON: " + assetPath + " with " + layout.getElements().size() + " elements");
             return layout;
             
         } catch (Exception e) {
@@ -278,13 +270,9 @@ public class ControlLayoutManager {
         if (removed) {
             if (isDefaultLayout) {
                 preferences.edit().putBoolean(KEY_DEFAULT_LAYOUTS_DELETED, true).apply();
-                AppLogger.info("ControlLayoutManager", "Default layout deleted: " + layoutName);
             }
             
             saveLayouts();
-            AppLogger.info("ControlLayoutManager", "Layout removed: " + layoutName);
-        } else {
-            AppLogger.warn("ControlLayoutManager", "Layout not found for removal: " + layoutName);
         }
     }
 

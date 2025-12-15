@@ -18,7 +18,6 @@ import com.app.ralaunch.utils.AppLogger;
 
 /**
  * FPS 显示视图
- * 在隐藏鼠标光标时，在光标下方显示 FPS
  */
 public class FPSDisplayView extends View {
     private static final String TAG = "FPSDisplayView";
@@ -204,7 +203,6 @@ public class FPSDisplayView extends View {
     private void updateVisibility() {
         // 重新从设置管理器读取（确保获取最新值）
         boolean shouldShow = mSettingsManager.isFPSDisplayEnabled();
-        AppLogger.debug(TAG, "updateVisibility: shouldShow=" + shouldShow + ", mCurrentFPS=" + mCurrentFPS);
         if (shouldShow) {
             setVisibility(VISIBLE);
         } else {

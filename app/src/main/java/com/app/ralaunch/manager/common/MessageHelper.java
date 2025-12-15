@@ -6,7 +6,6 @@ import com.app.ralib.ui.SnackbarHelper;
 
 /**
  * 消息提示辅助类
- * 统一管理 Toast 和 Snackbar 消息提示，减少代码重复
  */
 public class MessageHelper {
     

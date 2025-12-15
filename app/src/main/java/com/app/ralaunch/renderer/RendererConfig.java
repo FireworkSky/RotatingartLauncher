@@ -171,64 +171,31 @@ public class RendererConfig {
         List<RendererInfo> compatible = new ArrayList<>();
         File nativeLibDir = new File(context.getApplicationInfo().nativeLibraryDir);
 
-        AppLogger.info(TAG, "========== Checking Compatible Renderers ==========");
-        AppLogger.info(TAG, "Native library directory: " + nativeLibDir.getAbsolutePath());
-        AppLogger.info(TAG, "Android API Level: " + Build.VERSION.SDK_INT);
-
         for (RendererInfo renderer : ALL_RENDERERS) {
-            AppLogger.info(TAG, "\n--- Checking renderer: " + renderer.id + " ---");
-            AppLogger.info(TAG, "  Display Name: " + renderer.displayName);
-            AppLogger.info(TAG, "  Min API: " + renderer.minAndroidVersion);
-
-            // 检查 Android 版本
             if (Build.VERSION.SDK_INT < renderer.minAndroidVersion) {
-                AppLogger.info(TAG, "  ✗ SKIP: requires Android API " + renderer.minAndroidVersion +
-                              " (current: " + Build.VERSION.SDK_INT + ")");
                 continue;
             }
 
-            // 检查库文件是否存在
             boolean hasLibraries = true;
             if (renderer.eglLibrary != null) {
                 File eglLib = new File(nativeLibDir, renderer.eglLibrary);
-                AppLogger.info(TAG, "  EGL Library: " + renderer.eglLibrary);
-                AppLogger.info(TAG, "  EGL Path: " + eglLib.getAbsolutePath());
-                AppLogger.info(TAG, "  EGL Exists: " + eglLib.exists());
-
                 if (!eglLib.exists()) {
-                    AppLogger.info(TAG, "  ✗ SKIP: " + renderer.eglLibrary + " not found");
                     hasLibraries = false;
                 }
-            } else {
-                AppLogger.info(TAG, "  EGL Library: (system default)");
             }
 
             if (hasLibraries && renderer.glesLibrary != null &&
                 !renderer.glesLibrary.equals(renderer.eglLibrary)) {
                 File glesLib = new File(nativeLibDir, renderer.glesLibrary);
-                AppLogger.info(TAG, "  GLES Library: " + renderer.glesLibrary);
-                AppLogger.info(TAG, "  GLES Path: " + glesLib.getAbsolutePath());
-                AppLogger.info(TAG, "  GLES Exists: " + glesLib.exists());
-
                 if (!glesLib.exists()) {
-                    AppLogger.info(TAG, "  ✗ SKIP: " + renderer.glesLibrary + " not found");
                     hasLibraries = false;
                 }
             }
 
             if (hasLibraries) {
                 compatible.add(renderer);
-                AppLogger.info(TAG, "  ✓ COMPATIBLE: " + renderer.id + " added to list");
             }
         }
-
-        AppLogger.info(TAG, "\n========== Summary ==========");
-        AppLogger.info(TAG, "Total compatible renderers: " + compatible.size());
-        for (RendererInfo r : compatible) {
-            AppLogger.info(TAG, "  - " + r.id + " (" + r.displayName + ")");
-        }
-        AppLogger.info(TAG, "================================\n");
-
         return compatible;
     }
 
@@ -284,9 +251,6 @@ public class RendererConfig {
             boolean useTurnip = settingsManager.isVulkanDriverTurnip();
             if (useTurnip) {
                 envMap.put("RALCORE_LOAD_TURNIP", "1");
-                AppLogger.info(TAG, "Turnip Vulkan driver enabled for Adreno GPU");
-            } else {
-                AppLogger.info(TAG, "Using system Vulkan driver for Adreno GPU");
             }
         }
 
@@ -397,3 +361,4 @@ public class RendererConfig {
         return envMap;
     }
 }
+

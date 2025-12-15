@@ -24,8 +24,6 @@ public class GameVirtualControlsManager {
 
     public void initialize(GameActivity activity, ViewGroup sdlLayout, SDLSurface sdlSurface, Runnable disableSDLTextInput) {
         try {
-            AppLogger.info("GameVirtualControls", "Initializing virtual controls...");
-
             inputBridge = new SDLInputBridge();
 
             android.util.DisplayMetrics metrics = activity.getResources().getDisplayMetrics();
@@ -57,8 +55,6 @@ public class GameVirtualControlsManager {
             if (sdlLayout != null) {
                 sdlLayout.postDelayed(disableSDLTextInput, 2000);
             }
-
-            AppLogger.info("GameVirtualControls", "Virtual controls initialized");
         } catch (Exception e) {
             AppLogger.error("GameVirtualControls", "Failed to initialize virtual controls", e);
         }

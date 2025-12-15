@@ -42,7 +42,8 @@
             android:configChanges="orientation|screenSize|keyboardHidden|screenLayout|smallestScreenSize|uiMode"
             android:exported="true"
             android:screenOrientation="landscape"
-            android:theme="@style/FullScreenTheme">
+            android:theme="@style/FullScreenTheme"
+            android:windowSoftInputMode="adjustPan">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -55,7 +56,8 @@
             android:configChanges="orientation|keyboardHidden|screenSize|screenLayout|smallestScreenSize|uiMode"
             android:screenOrientation="landscape"
             android:theme="@style/FullScreenTheme"
-            android:hardwareAccelerated="true">
+            android:hardwareAccelerated="true"
+            android:windowSoftInputMode="adjustPan">
             <!-- 启用硬件加速以支持 RippleDrawable 等 Material 组件动画 -->
             <!-- 强制 SDL 使用横屏方向 -->
             <meta-data android:name="SDL_ORIENTATION" android:value="Landscape" />

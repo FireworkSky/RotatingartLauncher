@@ -14,7 +14,6 @@ public class RaLaunchWakeUpActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // 立即结束，仅用于唤醒应用和 DocumentsProvider
         finish();
     }
 }

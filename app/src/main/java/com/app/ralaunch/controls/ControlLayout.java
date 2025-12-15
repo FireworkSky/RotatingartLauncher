@@ -40,12 +40,6 @@ public class ControlLayout extends FrameLayout {
     private EditControlListener mEditControlListener; // 编辑监听器
     private OnControlChangedListener mOnControlChangedListener; // 控件修改监听器
     
-    // 多选功能相关（已移除长按触发，保留多选功能代码但不使用）
-    private boolean mIsMultiSelectMode = false; // 是否处于多选模式
-    private List<ControlView> mSelectedControls = new ArrayList<>(); // 选中的控件列表
-    private float mSelectionStartX, mSelectionStartY; // 选择框起始位置
-    private float mSelectionEndX, mSelectionEndY; // 选择框结束位置
-    
     public ControlLayout(Context context) {
         super(context);
         init();
@@ -58,7 +52,6 @@ public class ControlLayout extends FrameLayout {
     
     private void init() {
         mControls = new ArrayList<>();
-        mSelectedControls = new ArrayList<>();
         setWillNotDraw(false);
         
         // 禁用子View裁剪，让控件的绘制效果（如摇杆方向线）完整显示
@@ -109,28 +102,6 @@ public class ControlLayout extends FrameLayout {
     @Override
     protected void onDraw(android.graphics.Canvas canvas) {
         super.onDraw(canvas);
-        
-        // 如果处于多选模式，绘制选择框
-        if (mIsMultiSelectMode && mModifiable) {
-            android.graphics.Paint paint = new android.graphics.Paint();
-            paint.setColor(0x6600AAFF); // 半透明蓝色
-            paint.setStyle(android.graphics.Paint.Style.FILL);
-            paint.setAlpha(50);
-            
-            android.graphics.Paint strokePaint = new android.graphics.Paint();
-            strokePaint.setColor(0xFF00AAFF); // 蓝色边框
-            strokePaint.setStyle(android.graphics.Paint.Style.STROKE);
-            strokePaint.setStrokeWidth(3);
-            
-            float left = Math.min(mSelectionStartX, mSelectionEndX);
-            float top = Math.min(mSelectionStartY, mSelectionEndY);
-            float right = Math.max(mSelectionStartX, mSelectionEndX);
-            float bottom = Math.max(mSelectionStartY, mSelectionEndY);
-            
-            android.graphics.RectF rect = new android.graphics.RectF(left, top, right, bottom);
-            canvas.drawRect(rect, paint);
-            canvas.drawRect(rect, strokePaint);
-        }
     }
     
     /**
@@ -156,7 +127,6 @@ public class ControlLayout extends FrameLayout {
         clearControls();
         
         if (config == null || config.controls == null) {
-            AppLogger.warn(TAG, "Empty config, loading default layout");
             loadDefaultLayout();
             return;
         }
@@ -201,11 +171,9 @@ public class ControlLayout extends FrameLayout {
                 }
                 
                 loadLayout(config);
-                AppLogger.info(TAG, "Loaded layout from ControlLayoutManager: " + layout.getName());
                 return;
             }
         } catch (Exception e) {
-            AppLogger.warn(TAG, "Failed to load layout from ControlLayoutManager, falling back to default", e);
         }
         
         // 如果加载失败，使用默认布局
@@ -251,11 +219,9 @@ public class ControlLayout extends FrameLayout {
                 }
                 
                 loadLayout(config);
-                AppLogger.info(TAG, "Loaded default layout from ControlLayoutManager: " + layout.getName());
                 return;
             }
         } catch (Exception e) {
-            AppLogger.warn(TAG, "Failed to load default layout from ControlLayoutManager, using fallback", e);
         }
         
         // 如果加载失败，尝试加载键盘模式默认布局（从 JSON）
@@ -282,20 +248,16 @@ public class ControlLayout extends FrameLayout {
                 }
                 
                 loadLayout(config);
-                AppLogger.info(TAG, "Loaded keyboard layout as fallback from ControlLayoutManager");
                 return;
             }
         } catch (Exception e) {
-            AppLogger.warn(TAG, "Failed to load keyboard layout as fallback", e);
         }
         
-        // 如果所有加载都失败，创建一个空的布局
         ControlConfig config = new ControlConfig();
         config.name = "默认布局";
         config.version = 1;
         config.controls = new ArrayList<>();
         loadLayout(config);
-        AppLogger.warn(TAG, "All layout loading failed, using empty layout");
     }
     
     /**
@@ -310,7 +272,6 @@ public class ControlLayout extends FrameLayout {
             case ControlData.TYPE_TEXT:
                 return new VirtualText(getContext(), data, mInputBridge);
             default:
-                AppLogger.warn(TAG, "Unknown control type: " + data.type);
                 return null;
         }
     }
@@ -353,11 +314,6 @@ public class ControlLayout extends FrameLayout {
                 return false;
             }
             
-            // 如果处于多选模式，不处理单个控件的触摸事件
-            if (mIsMultiSelectMode) {
-                return false;
-            }
-            
             // 编辑模式下处理触摸事件
             switch (event.getAction()) {
                 case MotionEvent.ACTION_DOWN:
@@ -374,7 +330,7 @@ public class ControlLayout extends FrameLayout {
                     return true;
                     
                 case MotionEvent.ACTION_MOVE:
-                    if (mSelectedControl == controlView && !mIsMultiSelectMode) {
+                    if (mSelectedControl == controlView) {
                         float deltaX = event.getRawX() - mLastTouchX;
                         float deltaY = event.getRawY() - mLastTouchY;
                         
@@ -415,23 +371,21 @@ public class ControlLayout extends FrameLayout {
                         ((VirtualButton) controlView).setPressedState(false);
                     }
                     
-                    if (!mIsMultiSelectMode) {
-                        // 计算从按下到释放的总移动距离
-                        float finalDx = event.getRawX() - downPos[0];
-                        float finalDy = event.getRawY() - downPos[1];
-                        float finalDistance = (float) Math.sqrt(finalDx * finalDx + finalDy * finalDy);
-                        
-                        // 只有在没有拖动（移动距离小于阈值）时才打开编辑对话框
-                        if (finalDistance <= DRAG_THRESHOLD && !isDragging[0]) {
-                            // 点击事件 - 通知监听器显示编辑对话框
-                            if (mEditControlListener != null) {
-                                mEditControlListener.onEditControl(data);
-                            }
-                        } else {
-                            // 拖动事件 - 通知控件已修改
-                            if (mOnControlChangedListener != null) {
-                                mOnControlChangedListener.onControlChanged();
-                            }
+                    // 计算从按下到释放的总移动距离
+                    float finalDx = event.getRawX() - downPos[0];
+                    float finalDy = event.getRawY() - downPos[1];
+                    float finalDistance = (float) Math.sqrt(finalDx * finalDx + finalDy * finalDy);
+                    
+                    // 只有在没有拖动（移动距离小于阈值）时才打开编辑对话框
+                    if (finalDistance <= DRAG_THRESHOLD && !isDragging[0]) {
+                        // 点击事件 - 通知监听器显示编辑对话框
+                        if (mEditControlListener != null) {
+                            mEditControlListener.onEditControl(data);
+                        }
+                    } else {
+                        // 拖动事件 - 通知控件已修改
+                        if (mOnControlChangedListener != null) {
+                            mOnControlChangedListener.onControlChanged();
                         }
                     }
                     
@@ -442,185 +396,6 @@ public class ControlLayout extends FrameLayout {
             return false;
         });
     }
-    
-    /**
-     * 进入多选模式
-     */
-    private void enterMultiSelectMode(float startX, float startY) {
-        mIsMultiSelectMode = true;
-        mSelectedControls.clear();
-        mSelectionStartX = startX;
-        mSelectionStartY = startY;
-        mSelectionEndX = startX;
-        mSelectionEndY = startY;
-        
-        // 设置整个布局的触摸监听器来处理框选
-        setOnTouchListener((v, event) -> {
-            if (!mModifiable || !mIsMultiSelectMode) {
-                return false;
-            }
-            
-            switch (event.getAction()) {
-                case MotionEvent.ACTION_DOWN:
-                    mSelectionStartX = event.getX();
-                    mSelectionStartY = event.getY();
-                    mSelectionEndX = event.getX();
-                    mSelectionEndY = event.getY();
-                    invalidate();
-                    return true;
-                    
-                case MotionEvent.ACTION_MOVE:
-                    mSelectionEndX = event.getX();
-                    mSelectionEndY = event.getY();
-                    updateSelectedControls();
-                    invalidate();
-                    return true;
-                    
-                case MotionEvent.ACTION_UP:
-                case MotionEvent.ACTION_CANCEL:
-                    // 完成选择
-                    if (mSelectedControls.size() > 0) {
-                        // 有选中的控件，准备拖动
-                        mLastTouchX = event.getRawX();
-                        mLastTouchY = event.getRawY();
-                        // 切换到拖动模式
-                        setOnTouchListener((view, dragEvent) -> handleMultiSelectDrag(dragEvent));
-                    } else {
-                        // 没有选中任何控件，退出多选模式
-                        exitMultiSelectMode();
-                    }
-                    return true;
-            }
-            
-            return false;
-        });
-    }
-    
-    /**
-     * 更新选中的控件列表
-     */
-    private void updateSelectedControls() {
-        // 先恢复所有控件的透明度
-        for (ControlView controlView : mControls) {
-            View view = (View) controlView;
-            view.setAlpha(1.0f);
-        }
-        
-        mSelectedControls.clear();
-        
-        if (mConfig == null || mConfig.controls == null) {
-            return;
-        }
-        
-        float left = Math.min(mSelectionStartX, mSelectionEndX);
-        float top = Math.min(mSelectionStartY, mSelectionEndY);
-        float right = Math.max(mSelectionStartX, mSelectionEndX);
-        float bottom = Math.max(mSelectionStartY, mSelectionEndY);
-        
-        android.graphics.RectF selectionRect = new android.graphics.RectF(left, top, right, bottom);
-        
-        // 检查所有控件是否在选择框内
-        for (int i = 0; i < mControls.size() && i < mConfig.controls.size(); i++) {
-            ControlView controlView = mControls.get(i);
-            View view = (View) controlView;
-            ControlData data = mConfig.controls.get(i);
-            
-            if (!data.visible) continue;
-            
-            // 获取控件在父容器中的位置
-            LayoutParams params = (LayoutParams) view.getLayoutParams();
-            float controlLeft = params.leftMargin;
-            float controlTop = params.topMargin;
-            float controlRight = controlLeft + view.getWidth();
-            float controlBottom = controlTop + view.getHeight();
-            
-            android.graphics.RectF controlRect = new android.graphics.RectF(
-                controlLeft, controlTop, controlRight, controlBottom);
-            
-            // 如果控件在选择框内（包含或相交），添加到选中列表
-            if (selectionRect.contains(controlRect) || 
-                selectionRect.intersect(controlRect)) {
-                mSelectedControls.add(controlView);
-                view.setAlpha(0.7f); // 高亮选中的控件
-            }
-        }
-    }
-    
-    /**
-     * 处理多选拖动
-     */
-    private boolean handleMultiSelectDrag(MotionEvent event) {
-        if (!mModifiable || !mIsMultiSelectMode || mSelectedControls.isEmpty()) {
-            return false;
-        }
-        
-        switch (event.getAction()) {
-            case MotionEvent.ACTION_DOWN:
-                mLastTouchX = event.getRawX();
-                mLastTouchY = event.getRawY();
-                return true;
-                
-            case MotionEvent.ACTION_MOVE:
-                // 计算移动距离
-                float deltaX = event.getRawX() - mLastTouchX;
-                float deltaY = event.getRawY() - mLastTouchY;
-                
-                // 移动所有选中的控件
-                for (ControlView controlView : mSelectedControls) {
-                    View view = (View) controlView;
-                    LayoutParams params = (LayoutParams) view.getLayoutParams();
-                    params.leftMargin += (int) deltaX;
-                    params.topMargin += (int) deltaY;
-                    view.setLayoutParams(params);
-                    
-                    // 更新对应的数据
-                    for (int i = 0; i < mControls.size(); i++) {
-                        if (mControls.get(i) == controlView && mConfig != null && 
-                            mConfig.controls != null && i < mConfig.controls.size()) {
-                            ControlData data = mConfig.controls.get(i);
-                            data.x = params.leftMargin;
-                            data.y = params.topMargin;
-                            break;
-                        }
-                    }
-                }
-                
-                mLastTouchX = event.getRawX();
-                mLastTouchY = event.getRawY();
-                return true;
-                
-            case MotionEvent.ACTION_UP:
-            case MotionEvent.ACTION_CANCEL:
-                // 拖动结束，退出多选模式
-                exitMultiSelectMode();
-                
-                // 通知控件已修改
-                if (mOnControlChangedListener != null) {
-                    mOnControlChangedListener.onControlChanged();
-                }
-                return true;
-        }
-        
-        return false;
-    }
-    
-    /**
-     * 退出多选模式
-     */
-    private void exitMultiSelectMode() {
-        mIsMultiSelectMode = false;
-        mSelectedControls.clear();
-        setOnTouchListener(null);
-        
-        // 恢复所有控件的透明度
-        for (ControlView controlView : mControls) {
-            View view = (View) controlView;
-            view.setAlpha(1.0f);
-        }
-        
-        invalidate();
-    }
-    
     /**
      * 清除所有控制元素
      */
@@ -671,11 +446,6 @@ public class ControlLayout extends FrameLayout {
      */
     public void setModifiable(boolean modifiable) {
         mModifiable = modifiable;
-        
-        if (!modifiable) {
-            // 退出编辑模式时，退出多选模式
-            exitMultiSelectMode();
-        }
         
         // 重新设置所有控件的触摸监听器
         if (mConfig != null && mConfig.controls != null) {

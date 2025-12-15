@@ -5,7 +5,9 @@ import androidx.fragment.app.FragmentManager;
 import com.app.ralaunch.R;
 import com.app.ralaunch.model.GameItem;
 import com.app.ralaunch.utils.AppLogger;
+import com.app.ralib.utils.FileUtils;
 import java.io.File;
+import java.nio.file.Paths;
 
 /**
  * 游戏删除管理器
@@ -61,9 +63,7 @@ public class GameDeletionManager {
                 boolean filesDeleted = false;
                 
                 if (isShortcut) {
-                    // 快捷方式：只从列表删除，不删除实际文件
-                    AppLogger.info("GameDeletionManager", "删除快捷方式: " + game.getGameName());
-                    filesDeleted = false; // 标记为未删除文件，因为快捷方式不应该删除原始文件
+                    filesDeleted = false;
                 } else {
                     // 游戏：删除游戏文件夹
                     filesDeleted = deleteGameFiles(game);
@@ -88,24 +88,18 @@ public class GameDeletionManager {
      */
     public boolean deleteGameFiles(GameItem game) {
         try {
-            // 如果是快捷方式，不应该删除文件
             if (game.isShortcut()) {
-                AppLogger.info("GameDeletionManager", "跳过快捷方式的文件删除: " + game.getGameName());
                 return false;
             }
             
-            // 优先使用 gameBasePath（游戏根目录）
             String gameBasePath = game.getGameBasePath();
             File gameDir = null;
             
             if (gameBasePath != null && !gameBasePath.isEmpty()) {
                 gameDir = new File(gameBasePath);
-                AppLogger.info("GameDeletionManager", "使用游戏根目录: " + gameBasePath);
             } else {
-                // 如果没有 gameBasePath，尝试从 gamePath 推断
                 String gamePath = game.getGamePath();
                 if (gamePath == null || gamePath.isEmpty()) {
-                    AppLogger.warn("GameDeletionManager", "游戏路径为空，无法删除文件");
                     return false;
                 }
                 
@@ -120,32 +114,18 @@ public class GameDeletionManager {
                 if (gameDir == null) {
                     gameDir = gameFile.getParentFile();
                 }
-                
-                AppLogger.info("GameDeletionManager", "从游戏路径推断根目录: " + (gameDir != null ? gameDir.getAbsolutePath() : "null"));
             }
             
             if (gameDir == null || !gameDir.exists()) {
-                AppLogger.warn("GameDeletionManager", "游戏目录不存在: " + (gameDir != null ? gameDir.getAbsolutePath() : "null"));
                 return false;
             }
             
-            // 确认这是一个游戏目录（在 files/games/ 下）
             String dirPath = gameDir.getAbsolutePath();
             if (!dirPath.contains("/files/games/") && !dirPath.contains("/files/imported_games/")) {
-                AppLogger.warn("GameDeletionManager", "路径不在游戏目录中，跳过删除: " + dirPath);
                 return false;
             }
             
-            AppLogger.info("GameDeletionManager", "准备删除游戏目录: " + gameDir.getAbsolutePath());
-            
-            // 递归删除目录
-            boolean success = deleteDirectory(gameDir);
-            
-            if (success) {
-                AppLogger.info("GameDeletionManager", "游戏目录删除成功: " + gameDir.getName());
-            } else {
-                AppLogger.warn("GameDeletionManager", "删除游戏目录失败: " + gameDir.getName());
-            }
+            boolean success = FileUtils.deleteDirectoryRecursively(Paths.get(gameDir.getAbsolutePath()));
             
             return success;
             
@@ -156,30 +136,6 @@ public class GameDeletionManager {
         }
     }
     
-    /**
-     * 递归删除目录及其内容
-     */
-    private boolean deleteDirectory(File dir) {
-        if (dir == null || !dir.exists()) {
-            return false;
-        }
-        
-        if (dir.isDirectory()) {
-            File[] children = dir.listFiles();
-            if (children != null) {
-                for (File child : children) {
-                    boolean success = deleteDirectory(child);
-                    if (!success) {
-                        AppLogger.warn("GameDeletionManager", "无法删除: " + child.getAbsolutePath());
-                    }
-                }
-            }
-        }
-        
-        // 删除文件或空目录
-        boolean deleted = dir.delete();
-        return deleted;
-    }
     
     /**
      * 删除确认监听器

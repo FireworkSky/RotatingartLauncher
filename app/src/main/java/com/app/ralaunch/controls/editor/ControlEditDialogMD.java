@@ -628,8 +628,9 @@ public class ControlEditDialogMD extends LocalizedDialog {
     private void deleteControl() {
         if (mCurrentData == null) return;
 
+        // 使用getContext()获取带主题的Context，getLocalizedContext()获取本地化字符串
         Context localizedContext = getLocalizedContext();
-        new MaterialAlertDialogBuilder(localizedContext)
+        new MaterialAlertDialogBuilder(getContext())
             .setTitle(localizedContext.getString(R.string.editor_delete_control))
             .setMessage(localizedContext.getString(R.string.editor_delete_control_confirm))
             .setPositiveButton(localizedContext.getString(R.string.ok), (dialog, which) -> {

@@ -1,9 +1,4 @@
-/**
- * Virtual Mouse SDL Injection
- * 
- * 将虚拟鼠标（右摇杆控制）直接注入 SDL 鼠标事件系统
- * 无需 C# 补丁，纯 SDL 原生实现
- */
+
 
 #include <jni.h>
 #include <android/log.h>
@@ -238,16 +233,4 @@ Java_com_app_ralaunch_controls_SDLInputBridge_nativeIsVirtualMouseActiveSDL(
     return g_vm_enabled ? JNI_TRUE : JNI_FALSE;
 }
 
-// ===== 导出给其他 C 模块使用 =====
-
-__attribute__((visibility("default")))
-int VirtualMouse_IsEnabled(void) {
-    return g_vm_enabled;
-}
-
-__attribute__((visibility("default")))
-void VirtualMouse_GetPosition(float* x, float* y) {
-    if (x) *x = g_vm_x;
-    if (y) *y = g_vm_y;
-}
 

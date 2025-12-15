@@ -26,6 +26,7 @@ import com.app.ralaunch.adapter.ComponentAdapter;
 import com.app.ralaunch.model.ComponentItem;
 import com.app.ralaunch.utils.AppLogger;
 import com.app.ralaunch.manager.PermissionManager;
+import com.app.ralib.error.ErrorHandler;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
@@ -451,7 +452,6 @@ public class InitializationFragment extends Fragment {
      */
     private void startExtraction() {
         if (isExtracting.getAndSet(true)) {
-            AppLogger.warn(TAG, "Extraction already in progress");
             return;
         }
 
@@ -523,11 +523,9 @@ public class InitializationFragment extends Fragment {
      * 解压单个组件
      */
     private boolean extractComponent(ComponentItem component, int componentIndex) {
-        // 检查是否需要解压
         if (!component.needsExtraction()) {
-            AppLogger.info(TAG, "组件 " + component.getName() + " 不需要解压，跳过...");
             updateComponentStatus(componentIndex, 100, getString(R.string.init_no_extraction_needed));
-            return true;  // 直接标记为成功
+            return true;
         }
 
         AssetManager assetManager = requireActivity().getAssets();
@@ -565,7 +563,6 @@ public class InitializationFragment extends Fragment {
                 try {
                     java.nio.file.Files.deleteIfExists(tempArchiveFile.toPath());
                 } catch (IOException e) {
-                    AppLogger.warn(TAG, "Failed to delete temp file: " + tempArchiveFile.getAbsolutePath(), e);
                 }
             }
         }
@@ -576,19 +573,10 @@ public class InitializationFragment extends Fragment {
      */
     private void copyAssetToFile(AssetManager assetManager, String assetFileName, 
                                   File targetFile) throws IOException {
-        // 调试：列出所有 assets 文件
-        try {
-            String[] assetFiles = assetManager.list("");
-            AppLogger.debug(TAG, "Available assets files: " + java.util.Arrays.toString(assetFiles));
-            AppLogger.debug(TAG, "Looking for: " + assetFileName);
-        } catch (Exception e) {
-            AppLogger.warn(TAG, "Failed to list assets", e);
-        }
         
         try (InputStream inputStream = assetManager.open(assetFileName)) {
             java.nio.file.Files.copy(inputStream, targetFile.toPath(),
                 java.nio.file.StandardCopyOption.REPLACE_EXISTING);
-            AppLogger.info(TAG, "Successfully copied asset: " + assetFileName + " to " + targetFile.getAbsolutePath());
         } catch (FileNotFoundException e) {
             AppLogger.error(TAG, "Asset file not found: " + assetFileName, e);
             // 尝试列出 assets 目录内容以便调试
@@ -610,16 +598,10 @@ public class InitializationFragment extends Fragment {
         String fileName = component.getFileName().toLowerCase();
         
         if (fileName.endsWith(".tar.gz") || fileName.endsWith(".tgz")) {
-            // 使用通用解压工具处理 tar.gz
-            AppLogger.info(TAG, "Extracting tar.gz: " + component.getName());
             return extractTarGz(archiveFile, targetDir, component, componentIndex);
         } else if (fileName.endsWith(".tar.xz")) {
-            // 使用现有方法处理 tar.xz
-            AppLogger.info(TAG, "Extracting tar.xz: " + component.getName());
             return extractTarXz(archiveFile, targetDir, component, componentIndex);
         } else if (fileName.endsWith(".tar") && !fileName.endsWith(".tar.gz") && !fileName.endsWith(".tar.xz")) {
-            // 处理纯 tar 文件（Android 构建系统自动解压了 .tar.gz）
-            AppLogger.info(TAG, "Extracting tar: " + component.getName());
             return extractTar(archiveFile, targetDir, component, componentIndex);
         } else {
             AppLogger.error(TAG, "Unsupported archive format: " + fileName);
@@ -683,7 +665,6 @@ public class InitializationFragment extends Fragment {
                     String canonicalEntryPath = targetFile.getCanonicalPath();
                     if (!canonicalEntryPath.startsWith(canonicalDestPath + File.separator) && 
                         !canonicalEntryPath.equals(canonicalDestPath)) {
-                        AppLogger.warn(TAG, "跳过不安全的路径: " + entryName);
                         continue;
                     }
                     
@@ -716,7 +697,6 @@ public class InitializationFragment extends Fragment {
                 }
                 
                 updateComponentStatus(componentIndex, 100, getString(R.string.init_complete));
-                AppLogger.info(TAG, "Extracted " + processedFiles + " files from tar");
                 return true;
             }
             
@@ -743,7 +723,6 @@ public class InitializationFragment extends Fragment {
                 archiveFile, targetDir, stripPrefix);
             
             updateComponentStatus(componentIndex, 100, getString(R.string.init_complete));
-            AppLogger.info(TAG, "Extracted " + fileCount + " files from tar.gz");
             return true;
             
         } catch (Exception e) {
@@ -777,7 +756,6 @@ public class InitializationFragment extends Fragment {
             
             while ((entry = tarIn.getNextTarEntry()) != null) {
                 if (!tarIn.canReadEntryData(entry)) {
-                    AppLogger.warn(TAG, "Cannot read entry: " + entry.getName());
                     continue;
                 }
                 
@@ -802,7 +780,6 @@ public class InitializationFragment extends Fragment {
                 String canonicalDestPath = targetDir.getCanonicalPath();
                 String canonicalEntryPath = targetFile.getCanonicalPath();
                 if (!canonicalEntryPath.startsWith(canonicalDestPath + File.separator)) {
-                    AppLogger.warn(TAG, "Entry outside target dir: " + entryName);
                     continue;
                 }
                 
@@ -842,7 +819,6 @@ public class InitializationFragment extends Fragment {
             }
             
             updateComponentStatus(componentIndex, 100, getString(R.string.init_complete));
-            AppLogger.info(TAG, "Extracted " + processedFiles + " files from tar.xz");
             return true;
             
         } catch (Exception e) {
@@ -923,7 +899,8 @@ public class InitializationFragment extends Fragment {
         btnStartExtraction.setText(getString(R.string.init_retry_install));
         
         String errorMessage = getString(R.string.init_extraction_failed, error.getMessage());
-        Toast.makeText(requireActivity(), errorMessage, Toast.LENGTH_LONG).show();
+        // 使用统一的错误弹窗
+        ErrorHandler.handleError(errorMessage, error);
 
         AppLogger.error(TAG, "Extraction error handled", error);
     }
@@ -951,7 +928,6 @@ public class InitializationFragment extends Fragment {
             }
         } catch (Exception e) {
             Toast.makeText(requireActivity(), getString(R.string.init_dotnet_install_success), Toast.LENGTH_SHORT).show();
-            AppLogger.warn(TAG, "Failed to get installed versions", e);
         }
         
         // 延迟后回调，给用户看到成功状态的时间

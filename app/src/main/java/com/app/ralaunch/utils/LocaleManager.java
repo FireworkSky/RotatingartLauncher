@@ -46,7 +46,6 @@ public class LocaleManager {
     public static void setLanguage(Context context, String language) {
         SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
         prefs.edit().putString(KEY_LANGUAGE, language).apply();
-        AppLogger.info(TAG, "Language set to: " + language);
     }
 
     /**
@@ -58,8 +57,6 @@ public class LocaleManager {
         String language = getLanguage(context);
 
         if (LANGUAGE_AUTO.equals(language)) {
-            // 跟随系统语言
-            AppLogger.debug(TAG, "Using system default language");
             return context;
         }
 
@@ -120,7 +117,7 @@ public class LocaleManager {
     public static String getLanguageDisplayName(String language) {
         switch (language) {
             case LANGUAGE_AUTO:
-                return "跟随系统 / Follow System";
+                return "Follow System";
             case LANGUAGE_ZH:
                 return "简体中文";
             case LANGUAGE_EN:

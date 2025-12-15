@@ -568,12 +568,8 @@ public class MainActivity extends AppCompatActivity implements
         // 在应用退出时保存游戏列表
         // gameDataManager.updateGameList(gameList);
 
-        // 只在应用真正退出时关闭日志系统（不是因为配置变化如旋转或主题切换）
         if (!isChangingConfigurations()) {
-            AppLogger.info("MainActivity", "RALaunch stopped");
             AppLogger.close();
-        } else {
-            AppLogger.info("MainActivity", "MainActivity recreating due to configuration change");
         }
     }
 }

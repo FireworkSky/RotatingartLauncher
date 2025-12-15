@@ -34,64 +34,36 @@ public class CoreCLRConfig {
      * 应用 GC 配置
      */
     private static void applyGCConfig(SettingsManager settings) {
-        // Server GC
         boolean serverGC = settings.isServerGC();
         setNativeEnv("DOTNET_gcServer", serverGC ? "1" : "0");
-        AppLogger.info(TAG, "  Server GC: " + (serverGC ? "启用" : "关闭"));
 
-        // Concurrent GC
         boolean concurrentGC = settings.isConcurrentGC();
         setNativeEnv("DOTNET_gcConcurrent", concurrentGC ? "1" : "0");
-        AppLogger.info(TAG, "  Concurrent GC: " + (concurrentGC ? "启用" : "关闭"));
 
         // GC Heap Count
         String heapCount = settings.getGCHeapCount();
         if (!"auto".equals(heapCount)) {
             setNativeEnv("DOTNET_GCHeapCount", heapCount);
-            AppLogger.info(TAG, "  GC Heap Count: " + heapCount);
-        } else {
-            AppLogger.info(TAG, "  GC Heap Count: 自动");
         }
 
-        // Retain VM
         boolean retainVM = settings.isRetainVM();
         setNativeEnv("DOTNET_GCRetainVM", retainVM ? "1" : "0");
-        AppLogger.info(TAG, "  Retain VM: " + (retainVM ? "启用" : "关闭"));
     }
 
     /**
      * 应用 JIT 配置
      */
     private static void applyJITConfig(SettingsManager settings) {
-        // Tiered Compilation
         boolean tieredCompilation = settings.isTieredCompilation();
         setNativeEnv("DOTNET_TieredCompilation", tieredCompilation ? "1" : "0");
-        AppLogger.info(TAG, "  Tiered Compilation: " + (tieredCompilation ? "启用" : "关闭"));
 
-        // Quick JIT
         boolean quickJIT = settings.isQuickJIT();
         if (tieredCompilation) {
             setNativeEnv("DOTNET_TC_QuickJit", quickJIT ? "1" : "0");
-            AppLogger.info(TAG, "  Quick JIT: " + (quickJIT ? "启用" : "关闭"));
         }
 
-        // JIT Optimize Type
         int optimizeType = settings.getJitOptimizeType();
-        String optimizeTypeName;
-        switch (optimizeType) {
-            case 1:
-                optimizeTypeName = "size (体积优先)";
-                break;
-            case 2:
-                optimizeTypeName = "speed (速度优先)";
-                break;
-            case 0:
-            default:
-                optimizeTypeName = "blended (混合)";
-                break;
-        }
         setNativeEnv("DOTNET_JitOptimizeType", String.valueOf(optimizeType));
-        AppLogger.info(TAG, "  JIT Optimize Type: " + optimizeTypeName);
     }
 
     /**
@@ -105,7 +77,6 @@ public class CoreCLRConfig {
         try {
             nativeSetEnv(key, value);
         } catch (UnsatisfiedLinkError e) {
-            AppLogger.warn(TAG, "无法设置环境变量 " + key + ": native 方法未找到");
         }
     }
 

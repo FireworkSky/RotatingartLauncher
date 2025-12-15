@@ -14,27 +14,7 @@ import com.app.ralib.patch.PatchManager;
 import java.io.File;
 import java.util.List;
 
-/**
- *
- * <p>此类负责启动 .NET 应用程序（游戏），支持以下特性：
- * <ul>
- *   <li>使用 netcorehost API 直接启动程序集</li>
- *   <li>多版本运行时支持（.NET 6/7/8/9/10）</li>
- *   <li>运行时版本自动选择和手动指定</li>
- *   <li>程序集自动替换（通过MonoMod_Patch.zip）</li>
- * </ul>
- *
- * <p>启动流程：
- * <ol>
- *   <li>Java 层设置启动参数（程序集路径、运行时路径等）</li>
- *   <li>参数通过 JNI 传递给 Native 层</li>
- *   <li>Native 层使用 netcorehost 加载 hostfxr</li>
- *   <li>hostfxr 初始化 .NET 运行时并执行程序集</li>
- * </ol>
- *
- * @author RA Launcher Team
- * @see com.app.ralaunch.utils.RuntimeManager
- */
+
 public class GameLauncher {
     private static final String TAG = "GameLauncher";
 
@@ -46,11 +26,10 @@ public class GameLauncher {
             preloadRendererLibrary();
 
             System.loadLibrary("netcorehost");
+            System.loadLibrary("FAudio");
+            System.loadLibrary("theorafile");
             System.loadLibrary("SDL2");
-
             System.loadLibrary("main");
-
-            AppLogger.info(TAG, "Native libraries loaded successfully");
         } catch (UnsatisfiedLinkError e) {
             AppLogger.error(TAG, "Failed to load native libraries: " + e.getMessage());
         }
@@ -66,26 +45,14 @@ public class GameLauncher {
      */
     private static void preloadRendererLibrary() {
         try {
-            // 获取当前渲染器设置（但不获取Context，避免初始化问题）
-            // 我们假设用户在启动游戏前已经通过设置界面配置好了
-            // 如果没有配置，默认使用原生渲染器（不需要预加载）
 
-            // 尝试读取渲染器偏好（通过SharedPreferences，不需要Context）
             String renderer = System.getProperty("fna.renderer", "auto");
 
             if ("opengl_gl4es".equals(renderer)) {
-                // 预加载 gl4es 渲染器
-                AppLogger.info(TAG, "Preloading gl4es renderer...");
-                System.loadLibrary("GL");  // libGL.so (gl4es)
-                AppLogger.info(TAG, "gl4es renderer loaded successfully");
-            } else {
-                // 原生渲染器或自动模式：不需要预加载
-                // SDL 会自动使用系统的 libEGL.so
-                AppLogger.info(TAG, "Using native renderer (system EGL)");
+                System.loadLibrary("GL");
             }
         } catch (UnsatisfiedLinkError e) {
-            AppLogger.warn(TAG, "Failed to preload renderer library: " + e.getMessage());
-            AppLogger.warn(TAG, "Will fallback to system native renderer");
+            // Fallback to system native renderer
         }
     }
 
@@ -157,35 +124,16 @@ public class GameLauncher {
      */
     @SuppressLint("UnsafeDynamicallyLoadedCode")
     public static int launchAssemblyDirect(Context context, String assemblyPath, List<Patch> enabledPatches) {
-        AppLogger.info(TAG, "================================================");
-        AppLogger.info(TAG, "Preparing to launch assembly directly");
-        AppLogger.info(TAG, "================================================");
-        AppLogger.info(TAG, "Assembly path: " + assemblyPath);
-
         try {
             File assemblyFile = new File(assemblyPath);
 
-            // 验证程序集文件存在
             if (!assemblyFile.exists()) {
                 AppLogger.error(TAG, "Assembly file not found: " + assemblyPath);
                 return -1;
             }
-            // 获取应用目录和主程序集名称
             String appDir = assemblyFile.getParent();
             String mainAssembly = assemblyFile.getName();
 
-            AppLogger.info(TAG, "Application directory: " + appDir);
-            AppLogger.info(TAG, "Main assembly: " + mainAssembly);
-
-            // Step 1: 应用补丁文件替换（MonoMod + 自定义补丁）
-            AppLogger.info(TAG, "");
-            AppLogger.info(TAG, "Step 1/3: Applying patch files");
-            if (enabledPatches != null && !enabledPatches.isEmpty()) {
-                AppLogger.info(TAG, "Enabled custom patches: " + enabledPatches.size());
-                for (Patch patch : enabledPatches) {
-                    AppLogger.info(TAG, String.format("  - %s (id: %s)", patch.manifest.name, patch.manifest.id));
-                }
-            }
             AssemblyPatcher.applyMonoModPatches(context, appDir);
             String dotnetRoot = RuntimePreference.getDotnetRootPath();
 
@@ -193,68 +141,39 @@ public class GameLauncher {
             int frameworkMajor = 0;
             if (selectedVersion != null && !selectedVersion.isEmpty()) {
                 try {
-
                     frameworkMajor = Integer.parseInt(selectedVersion.split("\\.")[0]);
                 } catch (Exception e) {
                     AppLogger.error(TAG, "Failed to parse framework version: " + selectedVersion, e);
                     frameworkMajor = 10;
                 }
             } else {
-                AppLogger.warn(TAG, "No runtime version selected, using default .NET 10");
                 frameworkMajor = 10;
             }
-
-            AppLogger.info(TAG, ".NET path: " + (dotnetRoot != null ? dotnetRoot : "(auto-detect)"));
-            AppLogger.info(TAG, "Selected version: " + selectedVersion);
-            AppLogger.info(TAG, "Framework major: " + frameworkMajor);
-            AppLogger.info(TAG, "================================================");
-
-
-
-            // 加载所有必需的 .NET Native 库
-            // 包括：System.Native (socket等), Cryptography (TLS/SSL), 等等
-            AppLogger.info(TAG, "Loading .NET Native libraries...");
 
             if (!com.app.ralaunch.netcore.DotNetNativeLibraryLoader.loadAllLibraries(dotnetRoot, selectedVersion)) {
                 AppLogger.error(TAG, ".NET Native library loading failed! Network and crypto features may not work");
             }
 
-            // 设置 DOTNET_STARTUP_HOOKS 补丁（在 hostfxr 初始化之前）
             if (enabledPatches != null && !enabledPatches.isEmpty()) {
-                AppLogger.info(TAG, "Configuring DOTNET_STARTUP_HOOKS patches...");
-
                 var startupHooksEnvVar = PatchManager.constructStartupHooksEnvVar(enabledPatches);
-
-                AppLogger.info(TAG, "DOTNET_STARTUP_HOOKS: " + startupHooksEnvVar);
                 netcorehostSetStartupHooks(startupHooksEnvVar);
             } else {
-                AppLogger.info(TAG, "No patches to configure for DOTNET_STARTUP_HOOKS");
                 netcorehostSetStartupHooks("");
             }
 
-            // 应用 CoreCLR 配置（GC 和 JIT 设置）
-            AppLogger.info(TAG, "");
-            AppLogger.info(TAG, "Applying CoreCLR configuration...");
             com.app.ralaunch.utils.CoreCLRConfig.applyConfig(context);
 
-            // 设置 COREHOST_TRACE（根据详细日志设置）
             com.app.ralaunch.data.SettingsManager settingsManager = com.app.ralaunch.data.SettingsManager.getInstance(context);
             boolean enableVerboseLogging = settingsManager.isVerboseLogging();
             netcorehostSetCorehostTrace(enableVerboseLogging);
-            AppLogger.info(TAG, "COREHOST_TRACE: " + (enableVerboseLogging ? "启用" : "禁用"));
 
-            // 设置 线程亲和性
             com.app.ralaunch.data.SettingsManager dataSettingsManager = com.app.ralaunch.data.SettingsManager.getInstance(context);
             if (dataSettingsManager.getSetThreadAffinityToBigCoreEnabled()) {
                 Os.setenv("SET_THREAD_AFFINITY_TO_BIG_CORE", "1", true);
-                AppLogger.info(TAG, "SET_THREAD_AFFINITY_TO_BIG_CORE: 启用");
-            }
-            else {
+            } else {
                 Os.unsetenv("SET_THREAD_AFFINITY_TO_BIG_CORE");
-                AppLogger.info(TAG, "SET_THREAD_AFFINITY_TO_BIG_CORE: 禁用");
             }
 
-            // 设置启动参数（简化版 - 4个参数）
             int result = netcorehostSetParams(appDir, mainAssembly, dotnetRoot, frameworkMajor);
 
             if (result != 0) {
@@ -262,7 +181,6 @@ public class GameLauncher {
                 return -1;
             }
 
-            AppLogger.info(TAG, "Launch parameters set successfully");
             return 0;
 
         } catch (Exception e) {

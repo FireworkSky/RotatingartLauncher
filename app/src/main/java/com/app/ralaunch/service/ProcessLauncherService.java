@@ -62,14 +62,6 @@ public class ProcessLauncherService extends Service {
      */
     public static void launch(Context context, String assemblyPath, String[] args, 
                              String startupHooks, String title) {
-        AppLogger.info(TAG, "========================================");
-        AppLogger.info(TAG, "ProcessLauncherService.launch()");
-        AppLogger.info(TAG, "  Assembly: " + assemblyPath);
-        AppLogger.info(TAG, "  Args: " + (args != null ? String.join(" ", args) : "(none)"));
-        AppLogger.info(TAG, "  StartupHooks: " + (startupHooks != null ? "yes" : "no"));
-        AppLogger.info(TAG, "  Title: " + title);
-        AppLogger.info(TAG, "========================================");
-        
         Intent intent = new Intent(context, ProcessLauncherService.class);
         intent.putExtra(EXTRA_ASSEMBLY_PATH, assemblyPath);
         intent.putExtra(EXTRA_ARGS, args);
@@ -93,26 +85,14 @@ public class ProcessLauncherService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
-        AppLogger.info(TAG, "========================================");
-        AppLogger.info(TAG, "ProcessLauncherService Created");
-        AppLogger.info(TAG, "Process ID: " + Process.myPid());
-        AppLogger.info(TAG, "========================================");
-        
-       
         try {
             Os.setenv("PACKAGE_NAME", getPackageName(), true);
             
-           
             File gameDataDir = new File("/storage/emulated/0/RALauncher");
             if (!gameDataDir.exists()) {
                 if (!gameDataDir.mkdirs()) {
-                    AppLogger.warn(TAG, "Failed to create game data directory: " + gameDataDir.getAbsolutePath() + ", using files dir as fallback");
                     gameDataDir = getFilesDir();
-                } else {
-                    AppLogger.info(TAG, "Created game data directory: " + gameDataDir.getAbsolutePath());
                 }
-            } else {
-                AppLogger.info(TAG, "Using game data directory: " + gameDataDir.getAbsolutePath());
             }
             
             String gameDataPath = gameDataDir.getAbsolutePath();
@@ -120,8 +100,7 @@ public class ProcessLauncherService extends Service {
             Os.setenv("XDG_DATA_HOME", gameDataPath, true);
             Os.setenv("XDG_CONFIG_HOME", gameDataPath, true);
             Os.setenv("XDG_CACHE_HOME", getCacheDir().getAbsolutePath(), true);
-        } 
-        catch (Exception e) {
+        } catch (Exception e) {
             AppLogger.error(TAG, "Failed to set environment", e);
         }
         
@@ -158,7 +137,6 @@ public class ProcessLauncherService extends Service {
     
     private void launchAsync(String assemblyPath, String[] args, String startupHooks, String title) {
         if (mRunning) {
-            AppLogger.warn(TAG, "Already running");
             return;
         }
         
@@ -167,9 +145,7 @@ public class ProcessLauncherService extends Service {
                 mRunning = true;
                 updateNotification(title + " 正在运行");
                 
-                int result = doLaunch(assemblyPath, args, startupHooks);
-                
-                AppLogger.info(TAG, "Process exited with code: " + result);
+                doLaunch(assemblyPath, args, startupHooks);
             } catch (Exception e) {
                 AppLogger.error(TAG, "Launch error: " + e.getMessage(), e);
             } finally {
@@ -188,18 +164,12 @@ public class ProcessLauncherService extends Service {
             String mainAssembly = assemblyFile.getName();
             String dotnetRoot = RuntimePreference.getDotnetRootPath();
             
-            AppLogger.info(TAG, "Launching:");
-            AppLogger.info(TAG, "  App Dir: " + appDir);
-            AppLogger.info(TAG, "  Assembly: " + mainAssembly);
-            AppLogger.info(TAG, "  .NET Root: " + dotnetRoot);
-            
             // 预加载加密库
             preloadCryptoLibrary(dotnetRoot);
             
             // 设置启动钩子（如果提供）
             if (startupHooks != null && !startupHooks.isEmpty()) {
                 GameLauncher.netcorehostSetStartupHooks(startupHooks);
-                AppLogger.info(TAG, "  StartupHooks set");
             } else {
                 // 自动加载补丁
                 setupStartupHooksAuto(assemblyPath);
@@ -208,7 +178,6 @@ public class ProcessLauncherService extends Service {
             // 设置参数
             int setResult;
             if (args != null && args.length > 0) {
-                AppLogger.info(TAG, "  Args: " + String.join(" ", args));
                 setResult = GameLauncher.netcorehostSetParamsWithArgs(
                         appDir, mainAssembly, dotnetRoot, 10, args);
             } else {
@@ -221,8 +190,6 @@ public class ProcessLauncherService extends Service {
                 return setResult;
             }
             
-            // 启动
-            AppLogger.info(TAG, "Launching .NET runtime...");
             return GameLauncher.netcorehostLaunch();
             
         } catch (Exception e) {
@@ -247,9 +214,7 @@ public class ProcessLauncherService extends Service {
             
             File cryptoLib = new File(cryptoLibPath);
             if (cryptoLib.exists()) {
-                AppLogger.info(TAG, "  Preloading crypto library...");
                 System.load(cryptoLibPath);
-                AppLogger.info(TAG, "  Crypto library loaded");
             }
         } catch (Exception e) {
             AppLogger.error(TAG, "Failed to preload crypto: " + e.getMessage());
@@ -268,7 +233,6 @@ public class ProcessLauncherService extends Service {
                 String hooks = PatchManager.constructStartupHooksEnvVar(enabledPatches);
                 if (hooks != null && !hooks.isEmpty()) {
                     GameLauncher.netcorehostSetStartupHooks(hooks);
-                    AppLogger.info(TAG, "  Auto StartupHooks: " + enabledPatches.size() + " patches");
                 }
             }
         } catch (Exception e) {
@@ -285,7 +249,6 @@ public class ProcessLauncherService extends Service {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        AppLogger.info(TAG, "ProcessLauncherService Destroyed");
         mRunning = false;
         if (mLauncherThread != null && mLauncherThread.isAlive()) {
             mLauncherThread.interrupt();

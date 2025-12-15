@@ -11,7 +11,6 @@ import com.app.ralaunch.model.GameItem;
 import com.app.ralaunch.manager.GameListManager;
 import com.app.ralaunch.manager.FragmentNavigator;
 import com.app.ralaunch.utils.AppLogger;
-import com.app.ralaunch.utils.IconExtractorHelper;
 import java.io.File;
 import java.util.List;
 import java.util.ArrayList;

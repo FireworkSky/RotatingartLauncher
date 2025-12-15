@@ -11,6 +11,10 @@ import com.app.ralaunch.model.ControlElement;
  */
 public class ControlDataConverter {
     
+    // 基准分辨率（用于DPI适配）- 选择一个常见的平板分辨率作为基准
+    private static final float BASE_WIDTH = 2560f;
+    private static final float BASE_HEIGHT = 1600f;
+    
     /**
      * 将 ControlElement 转换为 ControlData
      * 
@@ -26,12 +30,16 @@ public class ControlDataConverter {
         
         ControlData data = new ControlData();
         
+        // 计算DPI缩放因子（基于屏幕宽度）
+        float scaleFactor = screenWidth / BASE_WIDTH;
+        
         // 基本属性
         data.name = element.getName() != null ? element.getName() : "控件";
         data.x = element.getX() * screenWidth;  // 相对坐标转绝对坐标
         data.y = element.getY() * screenHeight;
-        data.width = element.getWidth();
-        data.height = element.getHeight();
+        // 尺寸根据DPI缩放因子进行适配
+        data.width = element.getWidth() * scaleFactor;
+        data.height = element.getHeight() * scaleFactor;
         data.rotation = element.getRotation();
         data.opacity = element.getOpacity();
         data.borderOpacity = element.getBorderOpacity() > 0 ? element.getBorderOpacity() : 1.0f;
@@ -228,11 +236,15 @@ public class ControlDataConverter {
             data.name != null ? data.name : "控件"
         );
         
-        // 位置和大小（绝对坐标转相对坐标）
+        // 计算DPI缩放因子（基于屏幕宽度）
+        float scaleFactor = screenWidth / BASE_WIDTH;
+        
+        // 位置和大小（绝对坐标转相对坐标，尺寸转换为基准分辨率）
         element.setX(data.x / screenWidth);
         element.setY(data.y / screenHeight);
-        element.setWidth(data.width);
-        element.setHeight(data.height);
+        // 尺寸转换为基准分辨率的值，保存时统一使用基准分辨率
+        element.setWidth(data.width / scaleFactor);
+        element.setHeight(data.height / scaleFactor);
         element.setRotation(data.rotation);
         element.setOpacity(data.opacity);
         element.setBorderOpacity(data.borderOpacity != 0 ? data.borderOpacity : 1.0f);

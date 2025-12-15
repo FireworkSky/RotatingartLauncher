@@ -20,11 +20,15 @@ import com.app.ralaunch.utils.LocalizedDialog;
 
 /**
  * MD3风格的键值选择对话框
- * 根据模式显示键盘按键或手柄按键的网格布局
+ * 支持在对话框内切换键盘按键和手柄按键模式
  */
 public class KeySelectorDialog extends LocalizedDialog {
-    private final boolean isGamepadMode;
+    private boolean isGamepadMode;
     private OnKeySelectedListener listener;
+    private LinearLayout contentContainer;
+    private com.google.android.material.button.MaterialButtonToggleGroup toggleGroup;
+    private com.google.android.material.button.MaterialButton btnKeyboardMode;
+    private com.google.android.material.button.MaterialButton btnGamepadMode;
 
     public interface OnKeySelectedListener {
         void onKeySelected(int keycode, String keyName);
@@ -33,6 +37,13 @@ public class KeySelectorDialog extends LocalizedDialog {
     public KeySelectorDialog(@NonNull Context context, boolean isGamepadMode) {
         super(context);
         this.isGamepadMode = isGamepadMode;
+    }
+
+    /**
+     * 默认构造函数 - 默认显示键盘模式
+     */
+    public KeySelectorDialog(@NonNull Context context) {
+        this(context, false);
     }
 
     public void setOnKeySelectedListener(OnKeySelectedListener listener) {
@@ -62,17 +73,38 @@ public class KeySelectorDialog extends LocalizedDialog {
         // 设置标题
         TextView tvTitle = view.findViewById(R.id.tv_title);
         Context localizedContext = getLocalizedContext();
-        tvTitle.setText(isGamepadMode ? localizedContext.getString(R.string.editor_select_gamepad_key) : localizedContext.getString(R.string.editor_select_key));
+        tvTitle.setText(localizedContext.getString(R.string.editor_select_key_title));
+
+        // 获取模式切换按钮组
+        toggleGroup = view.findViewById(R.id.toggle_input_mode);
+        btnKeyboardMode = view.findViewById(R.id.btn_keyboard_mode);
+        btnGamepadMode = view.findViewById(R.id.btn_gamepad_mode);
+
+        // 设置初始选中状态
+        if (isGamepadMode) {
+            toggleGroup.check(R.id.btn_gamepad_mode);
+        } else {
+            toggleGroup.check(R.id.btn_keyboard_mode);
+        }
 
         // 获取内容容器
-        LinearLayout contentLayout = view.findViewById(R.id.content_container);
+        contentContainer = view.findViewById(R.id.content_container);
 
-        // 根据模式添加按键
-        if (isGamepadMode) {
-            addGamepadKeys(contentLayout);
-        } else {
-            addKeyboardKeys(contentLayout);
-        }
+        // 根据初始模式添加按键
+        updateKeyLayout();
+
+        // 监听模式切换
+        toggleGroup.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
+            if (isChecked) {
+                if (checkedId == R.id.btn_keyboard_mode) {
+                    isGamepadMode = false;
+                    updateKeyLayout();
+                } else if (checkedId == R.id.btn_gamepad_mode) {
+                    isGamepadMode = true;
+                    updateKeyLayout();
+                }
+            }
+        });
 
         // 取消按钮
         view.findViewById(R.id.btn_cancel).setOnClickListener(v -> dismiss());
@@ -206,6 +238,13 @@ public class KeySelectorDialog extends LocalizedDialog {
         bindKey(layout, R.id.key_mouse_left, "LMB", ControlData.MOUSE_LEFT);
         bindKey(layout, R.id.key_mouse_right, "RMB", ControlData.MOUSE_RIGHT);
         bindKey(layout, R.id.key_mouse_middle, "MMB", ControlData.MOUSE_MIDDLE);
+        
+        // 弹出系统键盘按钮
+        View btnShowIme = layout.findViewById(R.id.key_show_ime);
+        if (btnShowIme != null) {
+            bindKey(layout, R.id.key_show_ime, "键盘", ControlData.SPECIAL_KEYBOARD);
+        }
+        
         // 键盘按钮现在在拖动把手中
         View btnCloseKeyboard = layout.findViewById(R.id.btn_close_keyboard);
         if (btnCloseKeyboard != null) {
@@ -257,6 +296,23 @@ public class KeySelectorDialog extends LocalizedDialog {
         bindKey(layout, R.id.gamepad_start, "Start", ControlData.XBOX_BUTTON_START);
         bindKey(layout, R.id.gamepad_back, "Back", ControlData.XBOX_BUTTON_BACK);
         bindKey(layout, R.id.gamepad_guide, "Guide", ControlData.XBOX_BUTTON_GUIDE);
+    }
+
+    /**
+     * 更新按键布局（切换键盘/手柄模式时调用）
+     */
+    private void updateKeyLayout() {
+        // 清空当前内容
+        if (contentContainer != null) {
+            contentContainer.removeAllViews();
+            
+            // 根据当前模式添加对应的按键布局
+            if (isGamepadMode) {
+                addGamepadKeys(contentContainer);
+            } else {
+                addKeyboardKeys(contentContainer);
+            }
+        }
     }
 
     /**

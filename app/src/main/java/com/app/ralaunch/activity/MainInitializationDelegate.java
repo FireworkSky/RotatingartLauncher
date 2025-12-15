@@ -103,8 +103,6 @@ public class MainInitializationDelegate {
     }
 
     private void initializeGameData() {
-        
-        AppLogger.debug("MainInitDelegate", "initializeGameData skipped (managed by GameListManager)");
     }
 
     public boolean needInitialization(MainActivity activity) {

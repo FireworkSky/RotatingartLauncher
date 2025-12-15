@@ -28,10 +28,8 @@ public class GameTouchBridge {
             int screenWidth = metrics.widthPixels;
             int screenHeight = metrics.heightPixels;
 
-            // 结束动作
             if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) {
                 GameActivity.nativeClearTouchDataBridge();
-                AppLogger.debug(TAG, "Touch bridge: cleared (ACTION_UP/CANCEL)");
                 return;
             }
 
@@ -54,12 +52,6 @@ public class GameTouchBridge {
             }
 
             GameActivity.nativeSetTouchDataBridge(validCount, touchX, touchY, screenWidth, screenHeight);
-
-            if (validCount > 0) {
-                int consumedCount = TouchPointerTracker.getConsumedCount();
-                AppLogger.debug(TAG, "Touch bridge: game=" + validCount + ", controls=" + consumedCount +
-                        ", action=" + actionToString(action));
-            }
         } catch (Exception e) {
             AppLogger.error(TAG, "Error in handleMotionEvent: " + e.getMessage(), e);
         }
@@ -70,7 +62,6 @@ public class GameTouchBridge {
             try {
                 GameActivity.nativeClearTouchDataBridge();
                 sTouchBridgeAvailable = true;
-                AppLogger.info(TAG, "Touch bridge available");
             } catch (UnsatisfiedLinkError e) {
                 sTouchBridgeAvailable = false;
             }
