@@ -29,6 +29,12 @@ public interface ControlInputBridge {
     void sendMouseMove(float deltaX, float deltaY);
     
     /**
+     * 发送鼠标滚轮事件
+     * @param scrollY 滚轮滚动量（正数=向上，负数=向下）
+     */
+    void sendMouseWheel(float scrollY);
+    
+    /**
      * 发送绝对鼠标位置（用于右摇杆八方向攻击）
      * @param x 绝对X坐标（屏幕坐标）
      * @param y 绝对Y坐标（屏幕坐标）

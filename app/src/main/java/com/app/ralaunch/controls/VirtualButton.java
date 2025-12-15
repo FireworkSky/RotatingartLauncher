@@ -438,6 +438,13 @@ public class VirtualButton extends View implements ControlView {
         } else if (mData.keycode >= ControlData.XBOX_BUTTON_DPAD_RIGHT && mData.keycode <= ControlData.XBOX_BUTTON_A) {
             // Xbox控制器按钮 (范围: -200 到 -214)
             mInputBridge.sendXboxButton(mData.keycode, isDown);
+        } else if (mData.keycode == ControlData.MOUSE_WHEEL_UP || mData.keycode == ControlData.MOUSE_WHEEL_DOWN) {
+            // 鼠标滚轮 (MOUSE_WHEEL_UP=-4, MOUSE_WHEEL_DOWN=-5)
+            // 只在按下时发送滚轮事件，释放时不发送
+            if (isDown) {
+                float scrollY = (mData.keycode == ControlData.MOUSE_WHEEL_UP) ? 1.0f : -1.0f;
+                mInputBridge.sendMouseWheel(scrollY);
+            }
         } else if (mData.keycode >= ControlData.MOUSE_MIDDLE && mData.keycode <= ControlData.MOUSE_LEFT) {
             // 鼠标按键 (范围: -1 到 -3)
             // 计算按钮中心点的屏幕坐标

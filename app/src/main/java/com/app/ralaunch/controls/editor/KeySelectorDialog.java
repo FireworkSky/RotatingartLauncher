@@ -70,10 +70,8 @@ public class KeySelectorDialog extends LocalizedDialog {
         background.setCornerRadius(dpToPx(28));
         view.setBackground(background);
 
-        // 设置标题
-        TextView tvTitle = view.findViewById(R.id.tv_title);
-        Context localizedContext = getLocalizedContext();
-        tvTitle.setText(localizedContext.getString(R.string.editor_select_key_title));
+
+
 
         // 获取模式切换按钮组
         toggleGroup = view.findViewById(R.id.toggle_input_mode);
@@ -105,9 +103,6 @@ public class KeySelectorDialog extends LocalizedDialog {
                 }
             }
         });
-
-        // 取消按钮
-        view.findViewById(R.id.btn_cancel).setOnClickListener(v -> dismiss());
 
         // 设置对话框窗口属性
         Window window = getWindow();
@@ -238,6 +233,8 @@ public class KeySelectorDialog extends LocalizedDialog {
         bindKey(layout, R.id.key_mouse_left, "LMB", ControlData.MOUSE_LEFT);
         bindKey(layout, R.id.key_mouse_right, "RMB", ControlData.MOUSE_RIGHT);
         bindKey(layout, R.id.key_mouse_middle, "MMB", ControlData.MOUSE_MIDDLE);
+        bindKey(layout, R.id.key_mouse_wheel_up, "MW↑", ControlData.MOUSE_WHEEL_UP);
+        bindKey(layout, R.id.key_mouse_wheel_down, "MW↓", ControlData.MOUSE_WHEEL_DOWN);
         
         // 弹出系统键盘按钮
         View btnShowIme = layout.findViewById(R.id.key_show_ime);
@@ -245,11 +242,7 @@ public class KeySelectorDialog extends LocalizedDialog {
             bindKey(layout, R.id.key_show_ime, "键盘", ControlData.SPECIAL_KEYBOARD);
         }
         
-        // 键盘按钮现在在拖动把手中
-        View btnCloseKeyboard = layout.findViewById(R.id.btn_close_keyboard);
-        if (btnCloseKeyboard != null) {
-            bindKey(layout, R.id.btn_close_keyboard, getLocalizedContext().getString(R.string.editor_keyboard), ControlData.SPECIAL_KEYBOARD);
-        }
+
 
     }
 

@@ -104,7 +104,7 @@ public class PatchExtractor {
     private static void extractPatches(Context context) throws Exception {
         File patchesDir = new File(context.getExternalFilesDir(null), "patches");
         if (patchesDir.exists()) {
-            deleteDirectory(patchesDir);
+            com.app.ralib.utils.FileUtils.deleteDirectoryRecursively(patchesDir);
         }
         patchesDir.mkdirs();
         
@@ -213,7 +213,7 @@ public class PatchExtractor {
     private static void extractAndApplyMonoMod(Context context) throws Exception {
         File monoModDir = new File(context.getFilesDir(), "MonoMod");
         if (monoModDir.exists()) {
-            deleteDirectory(monoModDir);
+            com.app.ralib.utils.FileUtils.deleteDirectoryRecursively(monoModDir);
         }
         monoModDir.mkdirs();
         
@@ -329,25 +329,7 @@ public class PatchExtractor {
         
         return null;
     }
-    
-    /**
-     * 递归删除目录
-     */
-    private static void deleteDirectory(File directory) {
-        if (directory.exists()) {
-            File[] files = directory.listFiles();
-            if (files != null) {
-                for (File file : files) {
-                    if (file.isDirectory()) {
-                        deleteDirectory(file);
-                    } else {
-                        file.delete();
-                    }
-                }
-            }
-            directory.delete();
-        }
-    }
+
     
     /**
      * 重置提取状态（用于测试或重新安装）

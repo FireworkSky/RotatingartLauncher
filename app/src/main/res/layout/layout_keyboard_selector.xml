@@ -7,39 +7,6 @@
     android:gravity="center_horizontal"
     android:background="#F0F0F0">
 
-    <!-- 拖动把手区域 - 精简版 -->
-    <LinearLayout
-        android:id="@+id/keyboard_drag_handle"
-        android:layout_width="match_parent"
-        android:layout_height="24dp"
-        android:orientation="horizontal"
-        android:gravity="center"
-        android:background="#E0E0E0"
-        android:paddingHorizontal="12dp">
-
-        <!-- 拖动指示器 -->
-        <View
-            android:layout_width="0dp"
-            android:layout_height="4dp"
-            android:layout_weight="1"
-            android:background="#999999"
-            android:alpha="0.5" />
-
-        <!-- 关闭按钮 -->
-        <androidx.appcompat.widget.AppCompatButton
-            android:id="@+id/btn_close_keyboard"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:text="✕"
-            android:textSize="12sp"
-            android:textColor="#666666"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:padding="0dp"
-            android:minWidth="0dp"
-            android:minHeight="0dp"
-            android:layout_marginStart="12dp" />
-
-    </LinearLayout>
 
     <!-- 主键盘区域 -->
     <LinearLayout
@@ -322,18 +289,28 @@
             <androidx.appcompat.widget.AppCompatButton 
                 android:id="@+id/key_mouse_left" 
                 style="@style/KeyboardKeyCompact" 
-                android:layout_width="60dp" 
+                android:layout_width="50dp" 
                 android:text="@string/key_mouse_left" />
             <androidx.appcompat.widget.AppCompatButton 
                 android:id="@+id/key_mouse_middle" 
                 style="@style/KeyboardKeyCompact" 
-                android:layout_width="60dp" 
+                android:layout_width="50dp" 
                 android:text="@string/key_mouse_middle" />
             <androidx.appcompat.widget.AppCompatButton 
                 android:id="@+id/key_mouse_right" 
                 style="@style/KeyboardKeyCompact" 
-                android:layout_width="60dp" 
+                android:layout_width="50dp" 
                 android:text="@string/key_mouse_right" />
+            <androidx.appcompat.widget.AppCompatButton 
+                android:id="@+id/key_mouse_wheel_up" 
+                style="@style/KeyboardKeyCompact" 
+                android:layout_width="50dp" 
+                android:text="MW↑" />
+            <androidx.appcompat.widget.AppCompatButton 
+                android:id="@+id/key_mouse_wheel_down" 
+                style="@style/KeyboardKeyCompact" 
+                android:layout_width="50dp" 
+                android:text="MW↓" />
             <androidx.appcompat.widget.AppCompatButton 
                 android:id="@+id/key_show_ime"
                 style="@style/KeyboardKeyCompact"

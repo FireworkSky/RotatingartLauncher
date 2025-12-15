@@ -253,6 +253,7 @@ public class MainActivity extends AppCompatActivity implements
 
         // 启动游戏按钮监听器
         uiManager.setLaunchGameButtonListener(v -> {
+        
             // 启动选中的游戏
                 GameItem selectedGame = gameListManager.getSelectedGame();
                 if (selectedGame != null) {

@@ -70,13 +70,28 @@
         <item name="shapeAppearanceLargeComponent">@style/ShapeAppearance.Material3.Corner.ExtraLarge</item>
     </style>
 
-    <!-- 全屏主题 -->
+    <!-- 全屏主题（用于主界面） -->
     <style name="FullScreenTheme" parent="Theme.raLaunch">
         <item name="android:windowNoTitle">true</item>
         <item name="android:windowActionBar">false</item>
         <item name="android:windowFullscreen">true</item>
         <item name="android:windowContentOverlay">@null</item>
         <item name="android:windowBackground">?android:colorBackground</item>
+        <!-- 忽略刘海屏设置 -->
+        <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
+        <!-- 隐藏状态栏 -->
+        <item name="android:windowTranslucentStatus">false</item>
+        <item name="android:windowTranslucentNavigation">false</item>
+    </style>
+
+    <!-- 游戏全屏主题（用于游戏场景，黑色背景） -->
+    <style name="GameTheme" parent="Theme.raLaunch">
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowActionBar">false</item>
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <!-- 使用黑色背景，避免启动时白屏，且更适合游戏场景 -->
+        <item name="android:windowBackground">@android:color/black</item>
         <!-- 忽略刘海屏设置 -->
         <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
         <!-- 隐藏状态栏 -->

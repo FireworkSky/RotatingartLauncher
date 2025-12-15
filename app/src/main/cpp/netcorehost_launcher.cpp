@@ -402,6 +402,22 @@ int netcorehost_launch() {
             LOGW(LOG_TAG, "Application exit code: %d", exit_code);
             g_last_error[0] = '\0';  // 清空错误消息
         }
+        
+        // 显式关闭 hostfxr context 以确保正确清理资源
+        LOGI(LOG_TAG, "Closing hostfxr context...");
+        try {
+            context->close();
+            LOGI(LOG_TAG, "Hostfxr context closed successfully");
+        } catch (const std::exception& ex) {
+            LOGW(LOG_TAG, "Error closing hostfxr context: %s", ex.what());
+        }
+        
+        // 清理 context（虽然析构函数会自动调用 close，但我们已经显式关闭了）
+        context.reset();
+        LOGI(LOG_TAG, "Cleaning up hostfxr instance...");
+        hostfxr.reset();
+        LOGI(LOG_TAG, "Cleanup complete");
+        
         return exit_code;
 
     } catch (const netcorehost::HostingException& ex) {
@@ -409,11 +425,25 @@ int netcorehost_launch() {
         LOGE(LOG_TAG, "  %s", ex.what());
         // 保存错误消息
         snprintf(g_last_error, sizeof(g_last_error), "Hosting error: %s", ex.what());
+        
+        // 确保清理资源
+        if (hostfxr) {
+            LOGI(LOG_TAG, "Cleaning up hostfxr instance after error...");
+            hostfxr.reset();
+        }
+        
         return -1;
     } catch (const std::exception& ex) {
         LOGE(LOG_TAG, "Unexpected error");
         LOGE(LOG_TAG, "  %s", ex.what());
         snprintf(g_last_error, sizeof(g_last_error), "Unexpected error: %s", ex.what());
+        
+        // 确保清理资源
+        if (hostfxr) {
+            LOGI(LOG_TAG, "Cleaning up hostfxr instance after error...");
+            hostfxr.reset();
+        }
+        
         return -2;
     }
 }
@@ -432,10 +462,35 @@ const char* netcorehost_get_last_error() {
  * @brief 清理资源
  */
 void netcorehost_cleanup() {
+    // 清理路径字符串
     str_free(g_app_path);
+    g_app_path = nullptr;
+    
     str_free(g_dotnet_path);
-    g_last_error[0] = '\0';  // 清空错误消息
-    LOGI(LOG_TAG, "Cleanup complete");
+    g_dotnet_path = nullptr;
+    
+    // 清理 StartupHooks 路径
+    if (g_startup_hooks_dll) {
+        free(g_startup_hooks_dll);
+        g_startup_hooks_dll = nullptr;
+    }
+    
+    // 清理命令行参数数组
+    if (g_argv) {
+        for (int i = 0; i < g_argc; i++) {
+            if (g_argv[i]) {
+                free(g_argv[i]);
+            }
+        }
+        free(g_argv);
+        g_argv = nullptr;
+        g_argc = 0;
+    }
+    
+    // 清空错误消息
+    g_last_error[0] = '\0';
+    
+    LOGI(LOG_TAG, "Cleanup complete (freed: app_path, dotnet_path, startup_hooks, argv)");
 }
 /**
  * @brief JNI 函数：设置启动参数（无命令行参数）
@@ -551,6 +606,17 @@ Java_com_app_ralaunch_core_GameLauncher_netcorehostCleanup(JNIEnv *env, jclass c
     netcorehost_cleanup();
 }
 /**
+ * @brief JNI 函数：获取最后一次错误的详细消息
+ */
+extern "C" JNIEXPORT jstring JNICALL
+Java_com_app_ralaunch_core_GameLauncher_netcorehostGetLastError(JNIEnv *env, jclass clazz) {
+    const char* error = netcorehost_get_last_error();
+    if (error == nullptr || error[0] == '\0') {
+        return nullptr;
+    }
+    return env->NewStringUTF(error);
+}
+/**
  * @brief JNI 函数：设置环境变量（用于 CoreCLR 配置）
  */
 extern "C" JNIEXPORT void JNICALL
@@ -653,6 +719,11 @@ int process_launcher_start(const char* assembly_path, const char* args_json,
     jclass serviceClass = env->FindClass("com/app/ralaunch/service/ProcessLauncherService");
     if (serviceClass == nullptr) {
         LOGE(LOG_TAG, "Failed to find ProcessLauncherService class");
+        // 清理已分配的资源
+        env->DeleteLocalRef(jAssemblyPath);
+        if (jArgs) env->DeleteLocalRef(jArgs);
+        if (jStartupHooks) env->DeleteLocalRef(jStartupHooks);
+        env->DeleteLocalRef(jTitle);
         return -3;
     }
     
@@ -661,17 +732,52 @@ int process_launcher_start(const char* assembly_path, const char* args_json,
         "(Landroid/content/Context;Ljava/lang/String;[Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V");
     if (launchMethod == nullptr) {
         LOGE(LOG_TAG, "Failed to find launch method");
+        // 清理已分配的资源
+        env->DeleteLocalRef(serviceClass);
+        env->DeleteLocalRef(jAssemblyPath);
+        if (jArgs) env->DeleteLocalRef(jArgs);
+        if (jStartupHooks) env->DeleteLocalRef(jStartupHooks);
+        env->DeleteLocalRef(jTitle);
         return -4;
     }
     
     // 获取 Context
     jclass sdlActivityClass = env->FindClass("org/libsdl/app/SDLActivity");
+    if (sdlActivityClass == nullptr) {
+        LOGE(LOG_TAG, "Failed to find SDLActivity class");
+        // 清理已分配的资源
+        env->DeleteLocalRef(serviceClass);
+        env->DeleteLocalRef(jAssemblyPath);
+        if (jArgs) env->DeleteLocalRef(jArgs);
+        if (jStartupHooks) env->DeleteLocalRef(jStartupHooks);
+        env->DeleteLocalRef(jTitle);
+        return -6;
+    }
+    
     jmethodID getContextMethod = env->GetStaticMethodID(sdlActivityClass, "getContext",
         "()Landroid/content/Context;");
-    jobject context = env->CallStaticObjectMethod(sdlActivityClass, getContextMethod);
+    if (getContextMethod == nullptr) {
+        LOGE(LOG_TAG, "Failed to find getContext method");
+        // 清理已分配的资源
+        env->DeleteLocalRef(sdlActivityClass);
+        env->DeleteLocalRef(serviceClass);
+        env->DeleteLocalRef(jAssemblyPath);
+        if (jArgs) env->DeleteLocalRef(jArgs);
+        if (jStartupHooks) env->DeleteLocalRef(jStartupHooks);
+        env->DeleteLocalRef(jTitle);
+        return -7;
+    }
     
+    jobject context = env->CallStaticObjectMethod(sdlActivityClass, getContextMethod);
     if (context == nullptr) {
         LOGE(LOG_TAG, "Failed to get context");
+        // 清理已分配的资源
+        env->DeleteLocalRef(sdlActivityClass);
+        env->DeleteLocalRef(serviceClass);
+        env->DeleteLocalRef(jAssemblyPath);
+        if (jArgs) env->DeleteLocalRef(jArgs);
+        if (jStartupHooks) env->DeleteLocalRef(jStartupHooks);
+        env->DeleteLocalRef(jTitle);
         return -5;
     }
     
@@ -680,7 +786,10 @@ int process_launcher_start(const char* assembly_path, const char* args_json,
     env->CallStaticVoidMethod(serviceClass, launchMethod,
         context, jAssemblyPath, jArgs, jStartupHooks, jTitle);
     
-    // 清理
+    // 清理所有 JNI 本地引用
+    env->DeleteLocalRef(context);
+    env->DeleteLocalRef(sdlActivityClass);
+    env->DeleteLocalRef(serviceClass);
     env->DeleteLocalRef(jAssemblyPath);
     if (jArgs) env->DeleteLocalRef(jArgs);
     if (jStartupHooks) env->DeleteLocalRef(jStartupHooks);

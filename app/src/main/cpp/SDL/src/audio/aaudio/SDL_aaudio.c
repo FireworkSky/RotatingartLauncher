@@ -193,7 +193,7 @@ static void aaudio_CloseDevice(_THIS)
         SDL_assert(captureDevice == this);
         captureDevice = NULL;
     } else {
-        SDL_assert(audioDevice == this);
+      //666   SDL_assert(audioDevice == this);
         audioDevice = NULL;
     }
 

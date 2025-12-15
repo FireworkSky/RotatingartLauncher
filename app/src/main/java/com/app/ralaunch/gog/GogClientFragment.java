@@ -757,9 +757,9 @@ public class GogClientFragment extends Fragment {
                                 new com.app.ralaunch.fragment.LocalImportFragment();
                         importFragment.setArguments(args);
                         importFragment.setOnImportCompleteListener((gameType, newGame) -> {
-                            deleteQuietly(installerFile);
-                            deleteQuietly(modLoaderFile);
-                            deleteQuietly(downloadDir);
+                            com.app.ralib.utils.FileUtils.deleteDirectoryRecursively(installerFile);
+                            com.app.ralib.utils.FileUtils.deleteDirectoryRecursively(modLoaderFile);
+                            com.app.ralib.utils.FileUtils.deleteDirectoryRecursively(downloadDir);
                             
                             // 使用 MainActivity 的 onImportComplete 方法添加游戏到列表
                             // 但不要重复添加，所以先检查 LocalImportFragment 是否已经添加了
@@ -770,9 +770,9 @@ public class GogClientFragment extends Fragment {
                                     Toast.LENGTH_SHORT).show();
                         });
                         importFragment.setOnBackListener(() -> {
-                            deleteQuietly(installerFile);
-                            deleteQuietly(modLoaderFile);
-                            deleteQuietly(downloadDir);
+                            com.app.ralib.utils.FileUtils.deleteDirectoryRecursively(installerFile);
+                            com.app.ralib.utils.FileUtils.deleteDirectoryRecursively(modLoaderFile);
+                            com.app.ralib.utils.FileUtils.deleteDirectoryRecursively(downloadDir);
                         });
                         
                         // 显示导入页面
@@ -860,21 +860,6 @@ public class GogClientFragment extends Fragment {
         return name.replaceAll("[\\\\/:*?\"<>|]", "_");
     }
 
-    private void deleteQuietly(File file) {
-        if (file == null) return;
-        try {
-            if (file.isDirectory()) {
-                File[] children = file.listFiles();
-                if (children != null) {
-                    for (File child : children) {
-                        deleteQuietly(child);
-                    }
-                }
-            }
-            file.delete();
-        } catch (Exception ignored) {
-        }
-    }
 
     /**
      * 显示加载进度

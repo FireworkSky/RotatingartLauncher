@@ -37,6 +37,8 @@ public class ControlData {
     public static final int MOUSE_LEFT = -1;
     public static final int MOUSE_RIGHT = -2;
     public static final int MOUSE_MIDDLE = -3;
+    public static final int MOUSE_WHEEL_UP = -4;    // 鼠标滚轮向上
+    public static final int MOUSE_WHEEL_DOWN = -5;  // 鼠标滚轮向下
     
     // 特殊功能按键
     public static final int SPECIAL_KEYBOARD = -100; // 弹出Android键盘

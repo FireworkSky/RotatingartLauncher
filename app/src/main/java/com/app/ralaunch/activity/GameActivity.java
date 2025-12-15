@@ -272,8 +272,29 @@ public class GameActivity extends SDLActivity {
     }
     @Override
     protected void onDestroy() {
+        android.util.Log.d(TAG, "GameActivity.onDestroy() called");
+        
+        // 清理虚拟控件
         virtualControlsManager.stop();
+        
+        // 清理 .NET runtime 资源
+        try {
+            com.app.ralaunch.core.GameLauncher.netcorehostCleanup();
+            android.util.Log.d(TAG, "netcorehostCleanup() called successfully");
+        } catch (Exception e) {
+            android.util.Log.w(TAG, "Failed to cleanup netcorehost", e);
+        }
+        
         super.onDestroy();
+        
+        // [重要] .NET runtime (hostfxr) 不支持在同一进程中多次初始化
+        // GameActivity 运行在独立进程 (:game)，终止此进程不会影响主应用
+        // 延迟终止，确保所有清理工作完成
+        new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
+            android.util.Log.d(TAG, "Terminating game process to ensure clean .NET runtime state");
+            android.os.Process.killProcess(android.os.Process.myPid());
+            System.exit(0);
+        }, 100);
     }
     /**
      * 将文本发送到SDL游戏
@@ -313,17 +334,155 @@ public class GameActivity extends SDLActivity {
         mainActivity.runOnUiThread(() -> {
             if (exitCode == 0) {
                 Toast.makeText(mainActivity, mainActivity.getString(R.string.game_completed_successfully), Toast.LENGTH_LONG).show();
+                mainActivity.finish();
             } else {
-                String message;
-                if (errorMessage != null && !errorMessage.isEmpty()) {
-                    message = errorMessage + "\n" + mainActivity.getString(R.string.game_exit_code, exitCode);
-                } else {
-                    message = mainActivity.getString(R.string.game_exit_code, exitCode);
-                }
-                ErrorHandler.showWarning(mainActivity.getString(R.string.game_run_failed), message);
+                // 游戏异常退出，使用崩溃捕捉界面
+                showGameCrashReport(exitCode, errorMessage);
             }
-            mainActivity.finish();
         });
+    }
+    
+    /**
+     * 显示游戏崩溃报告界面
+     */
+    private static void showGameCrashReport(int exitCode, String errorMessage) {
+        try {
+            // 从 C 层获取详细的错误信息
+            String nativeError = null;
+            try {
+                nativeError = com.app.ralaunch.core.GameLauncher.netcorehostGetLastError();
+            } catch (Exception e) {
+                android.util.Log.w(TAG, "Failed to get native error", e);
+            }
+            
+            // 获取 logcat 日志（最近的错误日志）
+            String logcatLogs = getRecentLogcatLogs();
+            
+            String title = mainActivity.getString(R.string.game_run_failed);
+            String message;
+            if (errorMessage != null && !errorMessage.isEmpty()) {
+                message = errorMessage + "\n" + mainActivity.getString(R.string.game_exit_code, exitCode);
+            } else {
+                message = mainActivity.getString(R.string.game_exit_code, exitCode);
+            }
+            
+            // 构建错误详情
+            StringBuilder errorDetails = new StringBuilder();
+            java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault());
+            errorDetails.append("发生时间: ").append(sdf.format(new java.util.Date())).append("\n\n");
+            
+            try {
+                String versionName = mainActivity.getPackageManager()
+                        .getPackageInfo(mainActivity.getPackageName(), 0).versionName;
+                errorDetails.append("应用版本: ").append(versionName).append("\n");
+            } catch (Exception e) {
+                errorDetails.append("应用版本: 未知\n");
+            }
+            
+            errorDetails.append("设备型号: ").append(android.os.Build.MANUFACTURER).append(" ")
+                .append(android.os.Build.MODEL).append("\n");
+            errorDetails.append("Android 版本: ").append(android.os.Build.VERSION.RELEASE)
+                .append(" (SDK ").append(android.os.Build.VERSION.SDK_INT).append(")\n\n");
+            
+            errorDetails.append("错误类型: 游戏异常退出\n");
+            errorDetails.append("退出代码: ").append(exitCode).append("\n");
+            
+            if (nativeError != null && !nativeError.isEmpty()) {
+                errorDetails.append("C层错误: ").append(nativeError).append("\n");
+            }
+            
+            if (errorMessage != null && !errorMessage.isEmpty()) {
+                errorDetails.append("错误信息: ").append(errorMessage).append("\n");
+            }
+            
+            // 构建堆栈跟踪（包含 C 层错误和 logcat 日志）
+            StringBuilder stackTrace = new StringBuilder();
+            stackTrace.append("游戏进程异常退出\n");
+            stackTrace.append("退出代码: ").append(exitCode).append("\n\n");
+            
+            if (nativeError != null && !nativeError.isEmpty()) {
+                stackTrace.append("=== C层错误信息 ===\n");
+                stackTrace.append(nativeError).append("\n\n");
+            }
+            
+            if (logcatLogs != null && !logcatLogs.isEmpty()) {
+                stackTrace.append("=== Logcat 日志（最近错误） ===\n");
+                stackTrace.append(logcatLogs).append("\n\n");
+            }
+            
+            if (errorMessage != null && !errorMessage.isEmpty()) {
+                stackTrace.append("=== 错误详情 ===\n");
+                stackTrace.append(errorMessage);
+            }
+            
+            // 启动崩溃报告界面
+            Intent intent = new Intent(mainActivity, com.app.ralaunch.crash.CrashReportActivity.class);
+            intent.putExtra("stack_trace", stackTrace.toString());
+            intent.putExtra("error_details", errorDetails.toString());
+            intent.putExtra("exception_class", "GameExitException");
+            intent.putExtra("exception_message", message);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            
+            mainActivity.startActivity(intent);
+            mainActivity.finish();
+        } catch (Exception e) {
+            android.util.Log.e(TAG, "Failed to show crash report", e);
+            // 如果启动崩溃界面失败，使用旧的警告方式作为后备
+            String message;
+            if (errorMessage != null && !errorMessage.isEmpty()) {
+                message = errorMessage + "\n" + mainActivity.getString(R.string.game_exit_code, exitCode);
+            } else {
+                message = mainActivity.getString(R.string.game_exit_code, exitCode);
+            }
+            ErrorHandler.showWarning(mainActivity.getString(R.string.game_run_failed), message);
+            mainActivity.finish();
+        }
+    }
+    
+    /**
+     * 获取最近的 logcat 日志（错误和警告级别）
+     */
+    private static String getRecentLogcatLogs() {
+        try {
+            java.lang.Process process = Runtime.getRuntime().exec(
+                new String[]{"logcat", "-d", "-v", "time", "*:E", "*:W", "NetCoreHost:E", "GameLauncher:E", "SDL:E", "FNA3D:E"}
+            );
+            
+            java.io.BufferedReader reader = new java.io.BufferedReader(
+                new java.io.InputStreamReader(process.getInputStream())
+            );
+            
+            StringBuilder logs = new StringBuilder();
+            String line;
+            int lineCount = 0;
+            int maxLines = 200; // 限制最多200行
+            
+            while ((line = reader.readLine()) != null && lineCount < maxLines) {
+                // 只保留包含错误关键词的行
+                if (line.contains("ERROR") || line.contains("FATAL") || 
+                    line.contains("Exception") || line.contains("Error") ||
+                    line.contains("NetCoreHost") || line.contains("GameLauncher") ||
+                    line.contains("SDL") || line.contains("FNA3D")) {
+                    logs.append(line).append("\n");
+                    lineCount++;
+                }
+            }
+            
+            reader.close();
+            process.destroy();
+            
+            // 如果日志太长，只保留最后的部分
+            String result = logs.toString();
+            if (result.length() > 50000) {
+                result = "...[日志已截断，仅显示最后部分]...\n" + 
+                         result.substring(result.length() - 50000);
+            }
+            
+            return result.isEmpty() ? null : result;
+        } catch (Exception e) {
+            android.util.Log.w(TAG, "Failed to get logcat logs", e);
+            return null;
+        }
     }
 
     // Touch bridge native methods（提供给 GameTouchBridge 调用）

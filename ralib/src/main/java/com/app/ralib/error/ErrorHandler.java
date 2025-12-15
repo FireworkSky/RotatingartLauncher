@@ -149,26 +149,117 @@ public class ErrorHandler {
      */
     private void setupUncaughtExceptionHandler() {
         Thread.setDefaultUncaughtExceptionHandler((thread, throwable) -> {
-            // 先处理错误（记录日志并显示对话框）
             Activity activity = getActivity();
-            String title = activity != null
-                ? getLocalizedString(activity, "error_crash_title", "Application Crash")
-                : "Application Crash";
-            processError(title, throwable, true);
-
-            // 延迟调用原始处理器，给对话框显示时间
-            // 注意：对于未捕获异常，我们仍然需要让系统处理，以便生成崩溃报告
-            // 但先尝试显示错误弹窗
-            mainHandler.postDelayed(() -> {
+            android.content.Context context = activity != null ? activity : 
+                (android.content.Context) getApplicationContext();
+            
+            if (context == null) {
                 if (defaultHandler != null) {
                     defaultHandler.uncaughtException(thread, throwable);
                 } else {
-                    // 如果没有默认处理器，直接退出
                     android.os.Process.killProcess(android.os.Process.myPid());
                     System.exit(1);
                 }
-            }, 500); // 给对话框 500ms 的显示时间
+                return;
+            }
+
+            try {
+                String stackTrace = getStackTrace(throwable);
+                String errorDetails = buildErrorDetails(context, throwable, stackTrace);
+
+                android.content.Intent intent = new android.content.Intent(context, 
+                    getErrorActivityClass(context));
+                intent.putExtra("stack_trace", stackTrace);
+                intent.putExtra("error_details", errorDetails);
+                intent.putExtra("exception_class", throwable.getClass().getName());
+                intent.putExtra("exception_message", throwable.getMessage());
+                intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK | 
+                    android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK);
+
+                if (activity != null && !activity.isFinishing() && !activity.isDestroyed()) {
+                    activity.finish();
+                }
+
+                context.startActivity(intent);
+            } catch (Exception e) {
+                android.util.Log.e("RALib/ErrorHandler", "Failed to show crash activity", e);
+                if (defaultHandler != null) {
+                    defaultHandler.uncaughtException(thread, throwable);
+                } else {
+                    android.os.Process.killProcess(android.os.Process.myPid());
+                    System.exit(1);
+                }
+            }
+
+            killProcess();
         });
+    }
+
+    private String getStackTrace(Throwable throwable) {
+        java.io.StringWriter sw = new java.io.StringWriter();
+        java.io.PrintWriter pw = new java.io.PrintWriter(sw);
+        throwable.printStackTrace(pw);
+        String stackTrace = sw.toString();
+        
+        int maxSize = 100000;
+        if (stackTrace.length() > maxSize) {
+            stackTrace = stackTrace.substring(0, maxSize - 50) + "\n...[stack trace truncated]";
+        }
+        
+        return stackTrace;
+    }
+
+    private String buildErrorDetails(android.content.Context context, Throwable throwable, String stackTrace) {
+        StringBuilder details = new StringBuilder();
+        
+        java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", 
+            java.util.Locale.getDefault());
+        details.append("发生时间: ").append(sdf.format(new java.util.Date())).append("\n\n");
+        
+        try {
+            String versionName = context.getPackageManager()
+                    .getPackageInfo(context.getPackageName(), 0).versionName;
+            details.append("应用版本: ").append(versionName).append("\n");
+        } catch (Exception e) {
+            details.append("应用版本: 未知\n");
+        }
+        
+        details.append("设备型号: ").append(android.os.Build.MANUFACTURER).append(" ")
+            .append(android.os.Build.MODEL).append("\n");
+        details.append("Android 版本: ").append(android.os.Build.VERSION.RELEASE)
+            .append(" (SDK ").append(android.os.Build.VERSION.SDK_INT).append(")\n\n");
+        
+        details.append("异常类型: ").append(throwable.getClass().getName()).append("\n");
+        if (throwable.getMessage() != null) {
+            details.append("异常信息: ").append(throwable.getMessage()).append("\n");
+        }
+        details.append("\n堆栈跟踪:\n").append(stackTrace);
+        
+        return details.toString();
+    }
+
+    private Class<? extends Activity> getErrorActivityClass(android.content.Context context) {
+        try {
+            return (Class<? extends Activity>) Class.forName("com.app.ralaunch.crash.CrashReportActivity");
+        } catch (ClassNotFoundException e) {
+            android.util.Log.e("RALib/ErrorHandler", "CrashReportActivity not found", e);
+            return null;
+        }
+    }
+
+    private android.content.Context getApplicationContext() {
+        try {
+            Class<?> appClass = Class.forName("com.app.ralaunch.RaLaunchApplication");
+            java.lang.reflect.Method method = appClass.getMethod("getAppContext");
+            return (android.content.Context) method.invoke(null);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private void killProcess() {
+        android.os.Process.killProcess(android.os.Process.myPid());
+        System.exit(10);
     }
 
     /**

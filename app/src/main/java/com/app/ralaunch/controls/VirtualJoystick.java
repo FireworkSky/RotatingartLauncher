@@ -76,10 +76,11 @@ public class VirtualJoystick extends View implements ControlView {
     private float mLastJoystickDy = 0;
     
     // 右摇杆移动阈值（像素，只有当摇杆位置变化超过此值时才移动鼠标）
-    private static final float JOYSTICK_MOVE_THRESHOLD = 20.0f;
+    // 改为极小值以确保丝滑移动，死区已经处理了静止状态
+    private static final float JOYSTICK_MOVE_THRESHOLD = 0.1f;
 
-    // 死区（防止漂移）
-    private static final float DEADZONE_PERCENT = 0.15f;
+    // 死区（防止漂移）- 改为较小值以提高触摸灵敏度
+    private static final float DEADZONE_PERCENT = 0.08f;
     
     // 运行时从全局设置读取的鼠标速度和范围
     private float mGlobalMouseSpeed = 80.0f;
@@ -122,19 +123,30 @@ public class VirtualJoystick extends View implements ControlView {
             mGlobalMouseRangeRight = settingsManager.getMouseRightStickRangeRight();
             mGlobalMouseRangeBottom = settingsManager.getMouseRightStickRangeBottom();
             
-            // 自动修正异常的范围设置（避免鼠标移动受限）
+            // 验证范围有效性（从中心扩展模式）
+            // 阈值范围 0.0-1.0：0.0=中心点, 1.0=全屏（最大）
+            // 实际扩展距离 = 阈值 * 50%（因为从中心到边缘是屏幕的50%）
             boolean needsReset = false;
-            if (mGlobalMouseRangeLeft > 0.1f || mGlobalMouseRangeTop > 0.1f || 
-                mGlobalMouseRangeRight < 0.9f || mGlobalMouseRangeBottom < 0.9f) {
-                Log.w(TAG, "Detected restricted mouse range, resetting to full screen");
-                mGlobalMouseRangeLeft = 0.0f;
-                mGlobalMouseRangeTop = 0.0f;
+            
+            // 检查是否有无效值（负数或超过最大值1.0）
+            if (mGlobalMouseRangeLeft < 0 || mGlobalMouseRangeLeft > 1.0 ||
+                mGlobalMouseRangeTop < 0 || mGlobalMouseRangeTop > 1.0 ||
+                mGlobalMouseRangeRight < 0 || mGlobalMouseRangeRight > 1.0 ||
+                mGlobalMouseRangeBottom < 0 || mGlobalMouseRangeBottom > 1.0) {
+                
+                Log.w(TAG, "Invalid mouse range detected (must be 0.0-1.0), resetting to full screen. Current: (" + 
+                      mGlobalMouseRangeLeft + "," + mGlobalMouseRangeTop + "," + 
+                      mGlobalMouseRangeRight + "," + mGlobalMouseRangeBottom + ")");
+                
+                // 重置为全屏：100%
+                mGlobalMouseRangeLeft = 1.0f;
+                mGlobalMouseRangeTop = 1.0f;
                 mGlobalMouseRangeRight = 1.0f;
                 mGlobalMouseRangeBottom = 1.0f;
                 needsReset = true;
             }
             
-            // 保存修正后的值到设置
+            // 保存修正后的值（只在检测到无效值时才保存）
             if (needsReset) {
                 settingsManager.setMouseRightStickRangeLeft(mGlobalMouseRangeLeft);
                 settingsManager.setMouseRightStickRangeTop(mGlobalMouseRangeTop);
@@ -407,10 +419,13 @@ public class VirtualJoystick extends View implements ControlView {
         // 计算摇杆位置（限制在圆内）
         float maxDistance = mRadius - mStickRadius;
         if (distance > maxDistance) {
+            // 触摸点超出摇杆圆，限制在边缘
             float ratio = maxDistance / distance;
             mStickX = mCenterX + dx * ratio;
             mStickY = mCenterY + dy * ratio;
         } else {
+            // 触摸点在摇杆圆内，摇杆小圆点跟随触摸点（提供视觉反馈）
+            // 注意：即使在死区内，小圆点也会移动，但不会触发输入事件（由后续的死区检测处理）
             mStickX = touchX;
             mStickY = touchY;
         }
@@ -420,23 +435,23 @@ public class VirtualJoystick extends View implements ControlView {
             // 鼠标模式：根据xboxUseRightStick区分左右摇杆
             if (mData.xboxUseRightStick) {
                 // 右摇杆：鼠标移动模式 + 持续点击攻击
-                // 检测是否进入/离开死区
-                int newDirection = calculateDirection(dx, dy, distance);
-                if (newDirection != mCurrentDirection) {
-                    int oldDirection = mCurrentDirection;
-                    mCurrentDirection = newDirection;
-                    
-                    // 进入/离开死区时启动/停止持续点击
-                    if (oldDirection == DIR_NONE && newDirection != DIR_NONE) {
-                        // 从死区进入有效区域：开始持续鼠标左键点击
-                        startMouseClick();
-                        mIsAttacking = true;
-                    } else if (oldDirection != DIR_NONE && newDirection == DIR_NONE) {
-                        // 从有效区域进入死区：停止持续点击
-                        stopMouseClick();
-                        mIsAttacking = false;
-                    }
+                // 直接判断是否在死区外（有效区域），而不是通过方向变化判断
+                boolean inActiveZone = (distance >= mRadius * DEADZONE_PERCENT);
+                
+                // 检测攻击状态变化：进入/离开死区时启动/停止攻击
+                if (!mIsAttacking && inActiveZone) {
+                    // 从死区进入有效区域：开始持续鼠标左键点击
+                    startMouseClick();
+                    mIsAttacking = true;
+                } else if (mIsAttacking && !inActiveZone) {
+                    // 从有效区域返回死区：停止持续点击
+                    stopMouseClick();
+                    mIsAttacking = false;
                 }
+                
+                // 更新方向（用于其他逻辑，如UI显示）
+                int newDirection = calculateDirection(dx, dy, distance);
+                mCurrentDirection = newDirection;
                 
                 // 发送鼠标相对移动（只有当摇杆位置变化时才移动）
                 sendVirtualMouseMove(dx, dy, distance);
@@ -850,7 +865,8 @@ public class VirtualJoystick extends View implements ControlView {
      */
     private void sendVirtualMouseMove(float dx, float dy, float distance) {
         // 死区检测：在死区内时，重置上一帧位置
-        if (distance < mRadius * DEADZONE_PERCENT) {
+        float deadzone = mRadius * DEADZONE_PERCENT;
+        if (distance < deadzone) {
             mLastJoystickDx = 0;
             mLastJoystickDy = 0;
             return;
@@ -860,23 +876,39 @@ public class VirtualJoystick extends View implements ControlView {
         float deltaDx = dx - mLastJoystickDx;
         float deltaDy = dy - mLastJoystickDy;
         
-        // 计算变化距离
-        float deltaDistance = (float) Math.sqrt(deltaDx * deltaDx + deltaDy * deltaDy);
-        
-        // 如果摇杆位置没有变化，不移动鼠标（摇杆静止不动）
-        if (deltaDistance < JOYSTICK_MOVE_THRESHOLD) {
-            // 摇杆静止不动，鼠标也不移动
-            return;
-        }
-        
-        // 保存当前位置供下一帧使用（只有超过阈值才更新）
+        // 始终更新上一帧位置，防止delta累积导致的跳动
         mLastJoystickDx = dx;
         mLastJoystickDy = dy;
         
-        // 标准化变化量
+        // 计算变化距离
+        float deltaDistance = (float) Math.sqrt(deltaDx * deltaDx + deltaDy * deltaDy);
+        
+        // 如果摇杆位置变化极小，不移动鼠标（过滤微小抖动）
+        if (deltaDistance < JOYSTICK_MOVE_THRESHOLD) {
+            // 位置变化太小，不移动鼠标，但已更新mLast值避免累积
+            return;
+        }
+        
+        // 死区平滑映射：将死区外的范围重新映射到 [0, 1]，避免死区边缘突变
+        // 公式：adjusted = (actual - deadzone) / (max - deadzone)
+        // 这样死区边缘输出为0，最大距离输出为1，中间平滑过渡
         float maxDistance = mRadius - mStickRadius;
-        float normalizedDeltaX = deltaDx / maxDistance;
-        float normalizedDeltaY = deltaDy / maxDistance;
+        float deadzoneAdjustedMax = maxDistance - deadzone;
+        
+        // 对变化量应用死区映射（基于当前位置的距离）
+        float currentDistance = (float) Math.sqrt(dx * dx + dy * dy);
+        float mappingRatio = 1.0f;
+        if (currentDistance > deadzone && deadzoneAdjustedMax > 0) {
+            // 计算映射比例，让死区边缘的移动更平滑
+            float adjustedDistance = currentDistance - deadzone;
+            mappingRatio = adjustedDistance / deadzoneAdjustedMax;
+            // 限制在合理范围
+            if (mappingRatio > 1.0f) mappingRatio = 1.0f;
+        }
+        
+        // 标准化变化量，并应用死区映射比例
+        float normalizedDeltaX = (deltaDx / maxDistance) * mappingRatio;
+        float normalizedDeltaY = (deltaDy / maxDistance) * mappingRatio;
         
         // 应用灵敏度系数（使用全局设置的速度）
         float sensitivity = mGlobalMouseSpeed;

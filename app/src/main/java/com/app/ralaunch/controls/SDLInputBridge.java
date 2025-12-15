@@ -42,6 +42,7 @@ public class SDLInputBridge implements ControlInputBridge {
     private static native void nativeSetVirtualMouseRangeSDL(float left, float top, float right, float bottom);
     private static native void nativeSendVirtualMouseButtonSDL(int button, boolean pressed);
     private static native boolean nativeIsVirtualMouseActiveSDL();
+    private static native void nativeSendMouseWheelSDL(float scrollY);
     
     // 静态初始化
     static {
@@ -282,6 +283,17 @@ public class SDLInputBridge implements ControlInputBridge {
             SDLActivity.onNativeMouse(0, ACTION_MOVE, deltaX, deltaY, true);
         } catch (Exception e) {
             Log.e(TAG, "Error sending mouse move", e);
+        }
+    }
+    
+    @Override
+    public void sendMouseWheel(float scrollY) {
+        try {
+            // 调用native方法发送鼠标滚轮事件
+            nativeSendMouseWheelSDL(scrollY);
+            Log.d(TAG, "Sending mouse wheel: scrollY=" + scrollY);
+        } catch (Exception e) {
+            Log.e(TAG, "Error sending mouse wheel", e);
         }
     }
     

@@ -495,7 +495,7 @@ public class InitializationFragment extends Fragment {
         // 在开始解压前先清理目标目录
         if (outputDir.exists()) {
 
-            deleteDirectory(outputDir);
+            com.app.ralib.utils.FileUtils.deleteDirectoryRecursively(outputDir);
         }
         outputDir.mkdirs();
 
@@ -831,21 +831,6 @@ public class InitializationFragment extends Fragment {
     /**
      * 删除目录及其所有内容
      */
-    private void deleteDirectory(File directory) {
-        if (directory.exists()) {
-            File[] files = directory.listFiles();
-            if (files != null) {
-                for (File file : files) {
-                    if (file.isDirectory()) {
-                        deleteDirectory(file);
-                    } else {
-                        file.delete();
-                    }
-                }
-            }
-            directory.delete();
-        }
-    }
     
     /**
      * 更新组件状态

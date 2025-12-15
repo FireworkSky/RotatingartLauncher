@@ -135,20 +135,5 @@ public class ArchiveExtractor {
      * 
      * @param directory 要删除的目录
      */
-    public static void deleteDirectory(File directory) {
-        if (directory.exists() && directory.isDirectory()) {
-            File[] files = directory.listFiles();
-            if (files != null) {
-                for (File file : files) {
-                    if (file.isDirectory()) {
-                        deleteDirectory(file);
-                    } else {
-                        file.delete();
-                    }
-                }
-            }
-            directory.delete();
-        }
-    }
 }
 

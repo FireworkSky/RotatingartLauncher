@@ -109,6 +109,19 @@ public class GameLauncher {
      */
     public static native void netcorehostSetCorehostTrace(boolean enabled);
 
+    /**
+     * netcorehost API：获取最后一次错误的详细消息
+     *
+     * @return 错误消息，如果没有错误则返回 null
+     */
+    public static native String netcorehostGetLastError();
+
+    /**
+     * netcorehost API：清理资源
+     * 应该在游戏退出时调用，确保 .NET runtime 资源被正确释放
+     */
+    public static native void netcorehostCleanup();
+
 
 
 

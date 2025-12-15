@@ -61,8 +61,7 @@ public class VirtualKeyboardView extends FrameLayout {
         // 绑定所有按键
         bindAllKeys();
         
-        // 设置拖动功能
-        setupDragging();
+
     }
     
     public void setInputBridge(ControlInputBridge bridge) {
@@ -194,11 +193,7 @@ public class VirtualKeyboardView extends FrameLayout {
         bindMouseButton(R.id.key_mouse_middle, ControlData.MOUSE_MIDDLE);
         bindMouseButton(R.id.key_mouse_right, ControlData.MOUSE_RIGHT);
         
-        // 关闭键盘按钮（在拖动把手区域）
-        View btnCloseKeyboard = findViewById(R.id.btn_close_keyboard);
-        if (btnCloseKeyboard != null) {
-            btnCloseKeyboard.setOnClickListener(v -> hide());
-        }
+
     }
     
     private void bindKey(int viewId, int scancode) {
@@ -378,65 +373,7 @@ public class VirtualKeyboardView extends FrameLayout {
         return getVisibility() == VISIBLE;
     }
     
-    /**
-     * 设置拖动功能
-     */
-    private void setupDragging() {
-        // 找到拖动把手
-        View dragHandle = findViewById(R.id.keyboard_drag_handle);
-        if (dragHandle != null) {
-            // 计算DPI相关的拖动阈值
-            final float density = getResources().getDisplayMetrics().density;
-            final float dragThresholdPx = DRAG_THRESHOLD_DP * density;
-            
-            dragHandle.setOnTouchListener((v, event) -> {
-                switch (event.getAction()) {
-                    case MotionEvent.ACTION_DOWN:
-                        // 记录初始触摸位置和键盘位置
-                        initialTouchX = event.getRawX();
-                        initialTouchY = event.getRawY();
-                        initialTranslationX = getTranslationX();
-                        initialTranslationY = getTranslationY();
-                        lastTouchX = event.getRawX();
-                        lastTouchY = event.getRawY();
-                        isDragging = false;
-                        return true;
-                        
-                    case MotionEvent.ACTION_MOVE:
-                        // 计算从初始触摸点的总移动距离
-                        float totalDeltaX = event.getRawX() - initialTouchX;
-                        float totalDeltaY = event.getRawY() - initialTouchY;
-                        float totalDistance = (float) Math.sqrt(totalDeltaX * totalDeltaX + totalDeltaY * totalDeltaY);
-                        
-                        // 如果移动距离超过阈值，开始拖动
-                        if (!isDragging && totalDistance > dragThresholdPx) {
-                            isDragging = true;
-                            // 请求父视图不要拦截触摸事件
-                            getParent().requestDisallowInterceptTouchEvent(true);
-                        }
-                        
-                        if (isDragging) {
-                            // 更新整个键盘的位置（相对于初始位置）
-                            setTranslationX(initialTranslationX + totalDeltaX);
-                            setTranslationY(initialTranslationY + totalDeltaY);
-                        }
-                        return true;
-                        
-                    case MotionEvent.ACTION_UP:
-                    case MotionEvent.ACTION_CANCEL:
-                        isDragging = false;
-                        // 允许父视图拦截触摸事件
-                        getParent().requestDisallowInterceptTouchEvent(false);
-                        return true;
-                }
-                return false;
-            });
-            Log.d(TAG, "Drag setup complete. Threshold: " + dragThresholdPx + "px (density=" + density + ")");
-        } else {
-            Log.w(TAG, "Drag handle not found!");
-        }
-    }
-    
+
     /**
      * 设置透明度 (0.0 - 1.0)
      */
@@ -465,21 +402,7 @@ public class VirtualKeyboardView extends FrameLayout {
         
         Log.d(TAG, "onInterceptTouchEvent: action=" + ev.getAction() + ", x=" + ev.getX() + ", y=" + ev.getY());
         
-        // 检查触摸事件是否在拖动把手上
-        View dragHandle = findViewById(R.id.keyboard_drag_handle);
-        if (dragHandle != null) {
-            int[] location = new int[2];
-            dragHandle.getLocationOnScreen(location);
-            float x = ev.getRawX();
-            float y = ev.getRawY();
-            
-            // 如果触摸在拖动把手上，让拖动把手处理
-            if (x >= location[0] && x <= location[0] + dragHandle.getWidth() &&
-                y >= location[1] && y <= location[1] + dragHandle.getHeight()) {
-                Log.d(TAG, "Touch on drag handle, letting it handle");
-                return false; // 不拦截，让拖动把手处理
-            }
-        }
+
         
         // 不拦截，让子视图（按键）处理触摸事件
         return false;

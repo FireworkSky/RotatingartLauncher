@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 崩溃报告界面 - 横屏极简文本设计 -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="?android:attr/colorBackground"
+    android:padding="16dp">
+
+    <!-- 标题 -->
+    <TextView
+        android:id="@+id/crash_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="应用已崩溃"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:textColor="#F44336"
+        android:gravity="center"
+        android:layout_marginBottom="16dp" />
+
+    <!-- 错误详情（可滚动） -->
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:fillViewport="true"
+        android:layout_marginBottom="12dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/crash_error_details"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="13sp"
+                android:textColor="?android:attr/textColorPrimary"
+                android:fontFamily="monospace"
+                android:lineSpacingExtra="4dp"
+                android:padding="0dp" />
+
+            <!-- 堆栈跟踪（可展开） -->
+            <TextView
+                android:id="@+id/crash_stack_trace"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="11sp"
+                android:textColor="?android:attr/textColorSecondary"
+                android:fontFamily="monospace"
+                android:lineSpacingExtra="2dp"
+                android:padding="0dp"
+                android:layout_marginTop="12dp"
+                android:visibility="gone" />
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+
+    <!-- 按钮区域（可横向滚动） -->
+    <HorizontalScrollView
+        android:id="@+id/button_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:scrollbars="none"
+        android:fadeScrollbars="true"
+        android:fillViewport="false">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="end">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/crash_details_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="显示堆栈"
+                android:textSize="13sp"
+                android:minWidth="0dp"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:layout_marginEnd="6dp"
+                style="@style/Widget.Material3.Button.TextButton" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/crash_share_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="分享日志"
+                android:textSize="13sp"
+                android:icon="@android:drawable/ic_menu_share"
+                android:minWidth="0dp"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:layout_marginEnd="6dp"
+                style="@style/Widget.Material3.Button" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/crash_restart_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="重启应用"
+                android:textSize="13sp"
+                android:minWidth="0dp"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:layout_marginEnd="6dp"
+                style="@style/Widget.Material3.Button.OutlinedButton" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/crash_close_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="关闭应用"
+                android:textSize="13sp"
+                android:minWidth="0dp"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                style="@style/Widget.Material3.Button.OutlinedButton" />
+        </LinearLayout>
+    </HorizontalScrollView>
+</LinearLayout>

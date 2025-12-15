@@ -22,6 +22,8 @@ public class KeyMapper {
         keys.put("鼠标左键", ControlData.MOUSE_LEFT);
         keys.put("鼠标右键", ControlData.MOUSE_RIGHT);
         keys.put("鼠标中键", ControlData.MOUSE_MIDDLE);
+        keys.put("滚轮↑", ControlData.MOUSE_WHEEL_UP);
+        keys.put("滚轮↓", ControlData.MOUSE_WHEEL_DOWN);
 
         // 手柄按钮
         keys.put("A", ControlData.XBOX_BUTTON_A);
@@ -196,6 +198,8 @@ public class KeyMapper {
         if (keycode == ControlData.MOUSE_LEFT) return "鼠标左键";
         if (keycode == ControlData.MOUSE_RIGHT) return "鼠标右键";
         if (keycode == ControlData.MOUSE_MIDDLE) return "鼠标中键";
+        if (keycode == ControlData.MOUSE_WHEEL_UP) return "滚轮↑";
+        if (keycode == ControlData.MOUSE_WHEEL_DOWN) return "滚轮↓";
         
         // 检查特殊功能键
         if (keycode == ControlData.SPECIAL_KEYBOARD) return "键盘";

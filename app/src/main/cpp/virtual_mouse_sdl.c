@@ -17,11 +17,14 @@ static float g_vm_y = 0.0f;
 static int g_vm_screen_width = 1920;
 static int g_vm_screen_height = 1080;
 
-// 鼠标移动范围限制（屏幕百分比 0.0-1.0）
-static float g_vm_range_left = 0.0f;
-static float g_vm_range_top = 0.0f;
-static float g_vm_range_right = 1.0f;
-static float g_vm_range_bottom = 1.0f;
+// 鼠标移动范围限制（从屏幕中心向四周扩展的距离，百分比 0.0-1.0）
+// 0.0 = 不扩展（鼠标固定在中心）
+// 1.0 = 扩展到屏幕边缘（全屏）
+// 阈值 * 0.5 = 实际扩展距离（因为从中心到边缘是 50%）
+static float g_vm_range_left = 1.0f;   // 默认100%（全屏）
+static float g_vm_range_top = 1.0f;    // 默认100%（全屏）
+static float g_vm_range_right = 1.0f;  // 默认100%（全屏）
+static float g_vm_range_bottom = 1.0f; // 默认100%（全屏）
 
 // 鼠标按钮状态
 static int g_vm_left_pressed = 0;
@@ -86,7 +89,16 @@ Java_com_app_ralaunch_controls_SDLInputBridge_nativeDisableVirtualMouseSDL(
 }
 
 /**
- * 设置虚拟鼠标移动范围
+ * 设置虚拟鼠标移动范围（从中心扩展模式）
+ * @param left   向左扩展的阈值（0.0-1.0，1.0=扩展到左边缘）
+ * @param top    向上扩展的阈值（0.0-1.0，1.0=扩展到上边缘）
+ * @param right  向右扩展的阈值（0.0-1.0，1.0=扩展到右边缘）
+ * @param bottom 向下扩展的阈值（0.0-1.0，1.0=扩展到下边缘）
+ * 
+ * 例如：(1.0, 1.0, 1.0, 1.0) = 全屏（100%）
+ *      (0.6, 0.6, 0.6, 0.6) = 中间60%区域
+ *      (0.5, 0.5, 0.5, 0.5) = 中间50%区域
+ *      (0.0, 0.0, 0.0, 0.0) = 固定在中心点
  */
 JNIEXPORT void JNICALL
 Java_com_app_ralaunch_controls_SDLInputBridge_nativeSetVirtualMouseRangeSDL(
@@ -97,8 +109,8 @@ Java_com_app_ralaunch_controls_SDLInputBridge_nativeSetVirtualMouseRangeSDL(
     g_vm_range_right = right;
     g_vm_range_bottom = bottom;
     
-    LOGI("Virtual mouse range: left=%.2f, top=%.2f, right=%.2f, bottom=%.2f",
-        left, top, right, bottom);
+    LOGI("Virtual mouse range (center-based, max 100%%): left=%.0f%%, top=%.0f%%, right=%.0f%%, bottom=%.0f%%",
+        left * 100, top * 100, right * 100, bottom * 100);
 }
 
 /**
@@ -115,11 +127,16 @@ Java_com_app_ralaunch_controls_SDLInputBridge_nativeUpdateVirtualMouseDeltaSDL(
     g_vm_x += deltaX;
     g_vm_y += deltaY;
     
-    // 计算范围（百分比转像素）
-    float minX = g_vm_range_left * g_vm_screen_width;
-    float maxX = g_vm_range_right * g_vm_screen_width;
-    float minY = g_vm_range_top * g_vm_screen_height;
-    float maxY = g_vm_range_bottom * g_vm_screen_height;
+    // 计算范围（从屏幕中心向四周扩展，百分比转像素）
+    // 阈值范围 0.0-1.0：0.0=中心点, 1.0=全屏
+    // 实际扩展距离 = 阈值 * 50%（因为从中心到边缘是屏幕的50%）
+    float centerX = g_vm_screen_width * 0.5f;
+    float centerY = g_vm_screen_height * 0.5f;
+    
+    float minX = centerX - (g_vm_range_left * centerX);   // 向左扩展：阈值 * 50%宽度
+    float maxX = centerX + (g_vm_range_right * centerX);  // 向右扩展：阈值 * 50%宽度
+    float minY = centerY - (g_vm_range_top * centerY);    // 向上扩展：阈值 * 50%高度
+    float maxY = centerY + (g_vm_range_bottom * centerY); // 向下扩展：阈值 * 50%高度
     
     // 限制在范围内
     if (g_vm_x < minX) g_vm_x = minX;
@@ -231,6 +248,29 @@ JNIEXPORT jboolean JNICALL
 Java_com_app_ralaunch_controls_SDLInputBridge_nativeIsVirtualMouseActiveSDL(
     JNIEnv *env, jclass clazz) {
     return g_vm_enabled ? JNI_TRUE : JNI_FALSE;
+}
+
+/**
+ * 发送鼠标滚轮事件
+ * @param scrollY 滚轮滚动量（正数=向上，负数=向下）
+ */
+JNIEXPORT void JNICALL
+Java_com_app_ralaunch_controls_SDLInputBridge_nativeSendMouseWheelSDL(
+    JNIEnv *env, jclass clazz, jfloat scrollY) {
+    
+    // 创建 SDL 鼠标滚轮事件
+    SDL_Event event;
+    SDL_zero(event);
+    event.type = SDL_MOUSEWHEEL;
+    event.wheel.x = 0;               // 水平滚动（通常为0）
+    event.wheel.y = (int)scrollY;    // 垂直滚动（正数=向上，负数=向下）
+    event.wheel.direction = SDL_MOUSEWHEEL_NORMAL;  // 正常方向（非翻转）
+    event.wheel.windowID = SDL_GetWindowID(get_sdl_window());
+    
+    // 推送事件到 SDL 事件队列
+    SDL_PushEvent(&event);
+    
+    LOGD("Mouse wheel: scrollY=%d", (int)scrollY);
 }
 
 

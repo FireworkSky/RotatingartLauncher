@@ -7,17 +7,7 @@
     android:background="?attr/colorSurface"
     android:padding="24dp">
 
-    <!-- 标题 -->
-    <TextView
-        android:id="@+id/tv_title"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="@string/editor_select_key_title"
-        android:textSize="12sp"
-        android:textColor="?attr/textPrimary"
-        android:textStyle="bold"
-        android:gravity="center"
-        android:layout_marginBottom="16dp" />
+
 
     <!-- 模式切换按钮组 -->
     <com.google.android.material.button.MaterialButtonToggleGroup
@@ -48,24 +38,20 @@
 
     </com.google.android.material.button.MaterialButtonToggleGroup>
 
-    <!-- 内容容器 - 不滚动 -->
-    <LinearLayout
-        android:id="@+id/content_container"
+    <!-- 可滚动的内容容器 -->
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:gravity="center_horizontal" />
+        android:layout_height="wrap_content">
 
-    <!-- 取消按钮 -->
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btn_cancel"
-        android:layout_width="match_parent"
-        android:layout_height="40dp"
-        android:text="@string/cancel"
-        android:textSize="10sp"
-        android:textColor="?attr/colorPrimary"
-        android:backgroundTint="@android:color/transparent"
-        android:layout_marginTop="16dp"
-        style="@style/Widget.Material3.Button.TextButton" />
+        <LinearLayout
+            android:id="@+id/content_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center_horizontal" />
+
+    </ScrollView>
+
+
 
 </LinearLayout>

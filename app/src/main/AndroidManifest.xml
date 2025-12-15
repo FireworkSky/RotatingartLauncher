@@ -55,9 +55,10 @@
             android:exported="true"
             android:configChanges="orientation|keyboardHidden|screenSize|screenLayout|smallestScreenSize|uiMode"
             android:screenOrientation="landscape"
-            android:theme="@style/FullScreenTheme"
+            android:theme="@style/GameTheme"
             android:hardwareAccelerated="true"
-            android:windowSoftInputMode="adjustPan">
+            android:windowSoftInputMode="adjustPan"
+            android:process=":game">
             <!-- 启用硬件加速以支持 RippleDrawable 等 Material 组件动画 -->
             <!-- 强制 SDL 使用横屏方向 -->
             <meta-data android:name="SDL_ORIENTATION" android:value="Landscape" />
@@ -78,6 +79,15 @@
             android:name=".provider.RaLaunchWakeUpActivity"
             android:exported="false"
             android:theme="@android:style/Theme.NoDisplay" />
+
+        <!-- 崩溃报告活动 -->
+        <activity
+            android:name=".crash.CrashReportActivity"
+            android:exported="false"
+            android:theme="@style/Theme.raLaunch"
+            android:launchMode="singleTask"
+            android:screenOrientation="landscape"
+            android:configChanges="orientation|screenSize|keyboardHidden|screenLayout|smallestScreenSize|uiMode" />
 
         <!-- 通用进程启动服务 -->
         <service

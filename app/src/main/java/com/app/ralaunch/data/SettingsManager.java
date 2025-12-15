@@ -122,10 +122,11 @@ public class SettingsManager {
         public static final boolean MOUSE_RIGHT_STICK_ENABLED = true; // 默认开启鼠标模式右摇杆（不可更改）
         public static final int MOUSE_RIGHT_STICK_ATTACK_MODE = 0; // 默认长按模式
         public static final int MOUSE_RIGHT_STICK_SPEED = 80; // 默认速度80（范围60-200）
-        public static final float MOUSE_RIGHT_STICK_RANGE_LEFT = 0.0f; // 默认左边界0%
-        public static final float MOUSE_RIGHT_STICK_RANGE_TOP = 0.0f; // 默认上边界0%
-        public static final float MOUSE_RIGHT_STICK_RANGE_RIGHT = 1.0f; // 默认右边界100%
-        public static final float MOUSE_RIGHT_STICK_RANGE_BOTTOM = 1.0f; // 默认下边界100%
+        // 鼠标移动范围（从中心扩展模式）：0.0=中心点, 1.0=全屏（最大）
+        public static final float MOUSE_RIGHT_STICK_RANGE_LEFT = 1.0f; // 默认100%（全屏）
+        public static final float MOUSE_RIGHT_STICK_RANGE_TOP = 1.0f; // 默认100%（全屏）
+        public static final float MOUSE_RIGHT_STICK_RANGE_RIGHT = 1.0f; // 默认100%（全屏）
+        public static final float MOUSE_RIGHT_STICK_RANGE_BOTTOM = 1.0f; // 默认100%（全屏）
         public static final boolean LONG_PRESS_RIGHT_CLICK_ENABLED = false; // 默认关闭长按触发右键
 
         // CoreCLR 默认值
