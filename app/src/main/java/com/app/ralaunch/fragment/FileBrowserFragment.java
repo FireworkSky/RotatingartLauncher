@@ -369,11 +369,9 @@ public class FileBrowserFragment extends BaseFragment implements FileBrowserAdap
         
         if (selectedFile != null) {
             confirmButton.setEnabled(true);
-            confirmButton.setBackgroundTintList(getResources().getColorStateList(R.color.button_secondary));
             confirmButton.setText(getString(R.string.filebrowser_confirm_select, selectedFile.getName()));
         } else {
             confirmButton.setEnabled(false);
-            confirmButton.setBackgroundTintList(getResources().getColorStateList(R.color.button_disabled));
             confirmButton.setText(getString(R.string.filebrowser_select_file));
         }
     }

@@ -141,7 +141,7 @@ public class ModManagerFragment extends BaseFragment implements FileBrowserAdapt
             int spanCount = calculateSpanCount();
             layoutManager = new GridLayoutManager(requireContext(), spanCount);
         } else {
-            layoutManager = new LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false);
+            layoutManager = new LinearLayoutManager(requireContext(), LinearLayoutManager.VERTICAL, false);
         }
         
         fileRecyclerView.setLayoutManager(layoutManager);
@@ -182,7 +182,7 @@ public class ModManagerFragment extends BaseFragment implements FileBrowserAdapt
             int spanCount = calculateSpanCount();
             layoutManager = new GridLayoutManager(requireContext(), spanCount);
         } else {
-            layoutManager = new LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false);
+            layoutManager = new LinearLayoutManager(requireContext(), LinearLayoutManager.VERTICAL, false);
         }
         
         fileRecyclerView.setLayoutManager(layoutManager);
@@ -379,16 +379,8 @@ public class ModManagerFragment extends BaseFragment implements FileBrowserAdapt
     @Override
     public void onFileClick(FileItem fileItem) {
         if (fileItem.isDirectory()) {
-            if (fileItem.getName().equals("..")) {
-                // 返回上级目录
-                File parent = new File(fileItem.getPath()).getParentFile();
-                if (parent != null) {
-                    navigateToDirectory(parent);
-                }
-            } else {
-                // 进入子目录
-                navigateToDirectory(new File(fileItem.getPath()));
-            }
+            // 进入子目录
+            navigateToDirectory(new File(fileItem.getPath()));
         } else {
             // 选中文件
             selectedItem = fileItem;

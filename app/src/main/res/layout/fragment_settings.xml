@@ -28,7 +28,7 @@
         app:tabPaddingStart="12dp"
         app:tabPaddingEnd="12dp"
         app:tabPaddingTop="12dp"
-        app:tabPaddingBottom="12dp"
+        app:tabPaddingBottom="8dp"
         app:tabMinWidth="0dp"
         app:tabContentStart="0dp" />
 
@@ -46,7 +46,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:fillViewport="true"
-            android:padding="16dp"
+            android:padding="0dp"
             android:visibility="visible">
 
             <include layout="@layout/fragment_settings_misc" />
@@ -59,7 +59,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:fillViewport="true"
-            android:padding="16dp"
+            android:padding="0dp"
             android:visibility="gone">
 
             <include layout="@layout/fragment_settings_controls" />
@@ -72,7 +72,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:fillViewport="true"
-            android:padding="16dp"
+            android:padding="0dp"
             android:visibility="gone">
 
             <include layout="@layout/fragment_settings_game" />
@@ -85,23 +85,10 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:fillViewport="true"
-            android:padding="16dp"
+            android:padding="0dp"
             android:visibility="gone">
 
             <include layout="@layout/fragment_settings_launcher" />
-
-        </androidx.core.widget.NestedScrollView>
-
-        <!-- 关于设置内容 -->
-        <androidx.core.widget.NestedScrollView
-            android:id="@+id/contentAbout"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:fillViewport="true"
-            android:padding="16dp"
-            android:visibility="gone">
-
-            <include layout="@layout/fragment_settings_about" />
 
         </androidx.core.widget.NestedScrollView>
 
@@ -111,10 +98,23 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:fillViewport="true"
-            android:padding="16dp"
+            android:padding="0dp"
             android:visibility="gone">
 
             <include layout="@layout/fragment_settings_developer" />
+
+        </androidx.core.widget.NestedScrollView>
+
+        <!-- 关于设置内容 -->
+        <androidx.core.widget.NestedScrollView
+            android:id="@+id/contentAbout"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:fillViewport="true"
+            android:padding="0dp"
+            android:visibility="gone">
+
+            <include layout="@layout/fragment_settings_about" />
 
         </androidx.core.widget.NestedScrollView>
 

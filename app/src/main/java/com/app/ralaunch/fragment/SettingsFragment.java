@@ -35,8 +35,8 @@ public class SettingsFragment extends BaseFragment {
     private SettingsModule appearanceModule;
     private SettingsModule controlsModule;
     private SettingsModule gameModule;
-    private SettingsModule aboutModule;
     private SettingsModule developerModule;
+    private SettingsModule aboutModule;
 
     public interface OnSettingsBackListener {
         void onSettingsBack();
@@ -60,8 +60,8 @@ public class SettingsFragment extends BaseFragment {
         contentControls = view.findViewById(R.id.contentControls);
         contentGame = view.findViewById(R.id.contentGame);
         contentLauncher = view.findViewById(R.id.contentLauncher);
-        contentAbout = view.findViewById(R.id.contentAbout);
         contentDeveloper = view.findViewById(R.id.contentDeveloper);
+        contentAbout = view.findViewById(R.id.contentAbout);
 
         // 初始化 TabLayout
         settingsTabLayout = view.findViewById(R.id.settingsTabLayout);
@@ -76,15 +76,15 @@ public class SettingsFragment extends BaseFragment {
         appearanceModule = new AppearanceSettingsModule();
         controlsModule = new ControlsSettingsModule();
         gameModule = new GameSettingsModule();
-        aboutModule = new AboutSettingsModule();
         developerModule = new DeveloperSettingsModule();
+        aboutModule = new AboutSettingsModule();
         
         // 设置各个模块
         appearanceModule.setup(this, view);
         controlsModule.setup(this, view);
         gameModule.setup(this, view);
-        aboutModule.setup(this, view);
         developerModule.setup(this, view);
+        aboutModule.setup(this, view);
     }
     
     /**
@@ -105,10 +105,10 @@ public class SettingsFragment extends BaseFragment {
             .setText(getString(R.string.settings_launcher)));
         
         settingsTabLayout.addTab(settingsTabLayout.newTab()
-            .setText("关于"));
-        
-        settingsTabLayout.addTab(settingsTabLayout.newTab()
             .setText(getString(R.string.settings_developer)));
+
+        settingsTabLayout.addTab(settingsTabLayout.newTab()
+            .setText(getString(R.string.settings_about)));
         
         // 设置标签选中监听器
         settingsTabLayout.addOnTabSelectedListener(new com.google.android.material.tabs.TabLayout.OnTabSelectedListener() {
@@ -147,8 +147,8 @@ public class SettingsFragment extends BaseFragment {
         else if (contentControls.getVisibility() == View.VISIBLE) currentView = contentControls;
         else if (contentGame.getVisibility() == View.VISIBLE) currentView = contentGame;
         else if (contentLauncher.getVisibility() == View.VISIBLE) currentView = contentLauncher;
-        else if (contentAbout.getVisibility() == View.VISIBLE) currentView = contentAbout;
         else if (contentDeveloper.getVisibility() == View.VISIBLE) currentView = contentDeveloper;
+        else if (contentAbout.getVisibility() == View.VISIBLE) currentView = contentAbout;
         
         // 选择要显示的内容
         View nextView = null;
@@ -157,8 +157,8 @@ public class SettingsFragment extends BaseFragment {
             case 1: nextView = contentControls; break;
             case 2: nextView = contentGame; break;
             case 3: nextView = contentLauncher; break;
-            case 4: nextView = contentAbout; break;
-            case 5: nextView = contentDeveloper; break;
+            case 4: nextView = contentDeveloper; break;
+            case 5: nextView = contentAbout; break;
         }
 
         // 如果是同一个内容，不需要切换
@@ -204,9 +204,4 @@ public class SettingsFragment extends BaseFragment {
             }
         }
     }
-
-
-
-
-
 }

@@ -156,6 +156,7 @@
     <string name="settings_game">Game</string>
     <string name="settings_launcher">Launcher</string>
     <string name="settings_developer">Advanced Settings</string>
+    <string name="settings_about">About</string>
 
     <!-- Settings Items -->
     <string name="settings_theme_desc_auto">Follow system settings</string>

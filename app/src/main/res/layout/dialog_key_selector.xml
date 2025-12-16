@@ -39,18 +39,24 @@
     </com.google.android.material.button.MaterialButtonToggleGroup>
 
     <!-- 可滚动的内容容器 -->
-    <ScrollView
+    <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
-        <LinearLayout
-            android:id="@+id/content_container"
+        <HorizontalScrollView
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:gravity="center_horizontal" />
+            android:layout_height="wrap_content">
 
-    </ScrollView>
+            <LinearLayout
+                android:id="@+id/content_container"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:gravity="center_horizontal" />
+
+        </HorizontalScrollView>
+
+    </androidx.core.widget.NestedScrollView>
 
 
 

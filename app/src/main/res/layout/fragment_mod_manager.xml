@@ -206,6 +206,7 @@
                     app:iconGravity="start"
                     app:iconPadding="6dp"
                     app:iconSize="18dp"
+                    app:iconTint="?attr/colorError"
                     app:strokeColor="?attr/colorError"
                     android:textColor="?attr/colorError" />
 

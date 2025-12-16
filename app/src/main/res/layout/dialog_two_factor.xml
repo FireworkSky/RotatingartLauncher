@@ -1,88 +1,94 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 两步验证对话框 -->
-<LinearLayout
+<androidx.core.widget.NestedScrollView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:padding="24dp">
+    android:layout_height="wrap_content">
 
-    <!-- 图标 -->
-    <FrameLayout
-        android:layout_width="64dp"
-        android:layout_height="64dp"
-        android:layout_gravity="center_horizontal"
-        android:background="@drawable/circle_primary_container">
-
-        <ImageView
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:layout_gravity="center"
-            android:src="@drawable/ic_security"
-            app:tint="?attr/colorPrimary" />
-
-    </FrameLayout>
-
-    <!-- 标题 -->
-    <TextView
-        android:id="@+id/tvTwoFactorTitle"
+    <!-- 两步验证对话框 -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/two_factor_email_title"
-        android:textSize="20sp"
-        android:textStyle="bold"
-        android:textColor="?attr/textPrimary"
-        android:gravity="center"
-        android:layout_marginTop="16dp" />
+        android:orientation="vertical"
+        android:padding="24dp">
 
-    <!-- 消息 -->
-    <TextView
-        android:id="@+id/tvTwoFactorMessage"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="@string/two_factor_email_message"
-        android:textSize="14sp"
-        android:textColor="?attr/textSecondary"
-        android:gravity="center"
-        android:layout_marginTop="8dp"
-        android:layout_marginBottom="24dp" />
+        <!-- 图标 -->
+        <FrameLayout
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:layout_gravity="center_horizontal"
+            android:background="@drawable/circle_primary_container">
 
-    <!-- 验证码输入框 -->
-    <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/codeLayout"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        app:startIconDrawable="@drawable/ic_security"
-        app:boxCornerRadiusTopStart="16dp"
-        app:boxCornerRadiusTopEnd="16dp"
-        app:boxCornerRadiusBottomStart="16dp"
-        app:boxCornerRadiusBottomEnd="16dp"
-        style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
+            <ImageView
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_gravity="center"
+                android:src="@drawable/ic_security"
+                app:tint="?attr/colorPrimary" />
 
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/editSecurityCode"
+        </FrameLayout>
+
+        <!-- 标题 -->
+        <TextView
+            android:id="@+id/tvTwoFactorTitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:inputType="number"
-            android:maxLength="6"
-            android:gravity="center"
-            android:textSize="24sp"
+            android:text="@string/two_factor_email_title"
+            android:textSize="20sp"
             android:textStyle="bold"
-            android:letterSpacing="0.2"
-            android:singleLine="true" />
+            android:textColor="?attr/textPrimary"
+            android:gravity="center"
+            android:layout_marginTop="16dp" />
 
-    </com.google.android.material.textfield.TextInputLayout>
+        <!-- 消息 -->
+        <TextView
+            android:id="@+id/tvTwoFactorMessage"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/two_factor_email_message"
+            android:textSize="14sp"
+            android:textColor="?attr/textSecondary"
+            android:gravity="center"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="24dp" />
 
-    <!-- 提示信息 -->
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="@string/two_factor_case_sensitive"
-        android:textSize="12sp"
-        android:textColor="?attr/textSecondary"
-        android:gravity="center"
-        android:layout_marginTop="8dp"
-        android:alpha="0.7" />
+        <!-- 验证码输入框 -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/codeLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:startIconDrawable="@drawable/ic_security"
+            app:boxCornerRadiusTopStart="16dp"
+            app:boxCornerRadiusTopEnd="16dp"
+            app:boxCornerRadiusBottomStart="16dp"
+            app:boxCornerRadiusBottomEnd="16dp"
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
 
-</LinearLayout>
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/editSecurityCode"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="number"
+                android:maxLength="6"
+                android:gravity="center"
+                android:textSize="24sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.2"
+                android:singleLine="true" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- 提示信息 -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/two_factor_case_sensitive"
+            android:textSize="12sp"
+            android:textColor="?attr/textSecondary"
+            android:gravity="center"
+            android:layout_marginTop="8dp"
+            android:alpha="0.7" />
+
+    </LinearLayout>
+
+</androidx.core.widget.NestedScrollView>
