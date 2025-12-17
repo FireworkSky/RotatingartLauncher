@@ -88,6 +88,33 @@ Java_com_app_ralaunch_controls_SDLInputBridge_nativeInitVirtualMouseSDL(
 }
 
 /**
+ * 获取虚拟鼠标当前位置
+ * @return float数组，[0]=x, [1]=y
+ */
+JNIEXPORT jfloatArray JNICALL
+Java_com_app_ralaunch_controls_SDLInputBridge_nativeGetVirtualMousePositionSDL(
+    JNIEnv *env, jclass clazz) {
+    
+    // 如果未初始化，使用默认值（屏幕中心）
+    if (!g_vm_initialized) {
+        g_vm_x = g_vm_screen_width / 2.0f;
+        g_vm_y = g_vm_screen_height / 2.0f;
+    }
+    
+    // 创建返回数组
+    jfloatArray result = (*env)->NewFloatArray(env, 2);
+    if (result == NULL) {
+        LOGW("Failed to create float array for mouse position");
+        return NULL;
+    }
+    
+    float pos[2] = {g_vm_x, g_vm_y};
+    (*env)->SetFloatArrayRegion(env, result, 0, 2, pos);
+    
+    return result;
+}
+
+/**
  * 设置虚拟鼠标移动范围（从中心扩展模式）
  * @param left   向左扩展的阈值（0.0-1.0，1.0=扩展到左边缘）
  * @param top    向上扩展的阈值（0.0-1.0，1.0=扩展到上边缘）

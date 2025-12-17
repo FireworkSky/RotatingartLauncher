@@ -66,7 +66,6 @@ public class SettingsManager {
         public static final String MOUSE_RIGHT_STICK_RANGE_TOP = "mouse_right_stick_range_top"; // 鼠标范围上边界
         public static final String MOUSE_RIGHT_STICK_RANGE_RIGHT = "mouse_right_stick_range_right"; // 鼠标范围右边界
         public static final String MOUSE_RIGHT_STICK_RANGE_BOTTOM = "mouse_right_stick_range_bottom"; // 鼠标范围下边界
-        public static final String LONG_PRESS_RIGHT_CLICK_ENABLED = "long_press_right_click_enabled"; // 长按屏幕1秒触发右键
 
         // 开发者设置
         public static final String VERBOSE_LOGGING = "verbose_logging";
@@ -129,7 +128,6 @@ public class SettingsManager {
         public static final float MOUSE_RIGHT_STICK_RANGE_TOP = 1.0f; // 默认100%（全屏）
         public static final float MOUSE_RIGHT_STICK_RANGE_RIGHT = 1.0f; // 默认100%（全屏）
         public static final float MOUSE_RIGHT_STICK_RANGE_BOTTOM = 1.0f; // 默认100%（全屏）
-        public static final boolean LONG_PRESS_RIGHT_CLICK_ENABLED = false; // 默认关闭长按触发右键
 
         // CoreCLR 默认值
         public static final boolean CORECLR_SERVER_GC = false; // 移动端默认关闭 Server GC
@@ -378,17 +376,6 @@ public class SettingsManager {
         putBoolean(Keys.TOUCH_MULTITOUCH_ENABLED, enabled);
     }
     
-    /**
-     * 长按屏幕触发鼠标右键
-     * 当用户触摸屏幕并保持1秒时，触发鼠标右键点击
-     */
-    public boolean isLongPressRightClickEnabled() {
-        return getBoolean(Keys.LONG_PRESS_RIGHT_CLICK_ENABLED, Defaults.LONG_PRESS_RIGHT_CLICK_ENABLED);
-    }
-    
-    public void setLongPressRightClickEnabled(boolean enabled) {
-        putBoolean(Keys.LONG_PRESS_RIGHT_CLICK_ENABLED, enabled);
-    }
     
     // FNA 触屏设置
     

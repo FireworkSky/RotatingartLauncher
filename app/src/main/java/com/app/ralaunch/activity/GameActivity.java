@@ -52,7 +52,6 @@ public class GameActivity extends SDLActivity {
     private GameMenuController gameMenuController = new GameMenuController();
     private final GameLaunchDelegate launchDelegate = new GameLaunchDelegate();
     private final GameTouchBridge touchBridge = new GameTouchBridge();
-    public LongPressRightClickDetector longPressDetector; // public 以便GameMenuController可以访问
 
     @Override
     protected void attachBaseContext(Context newBase) {
@@ -174,12 +173,6 @@ public class GameActivity extends SDLActivity {
 
         // 设置游戏内菜单（需要在虚拟控制初始化后）
         gameMenuController.setup(this, (ViewGroup) mLayout, virtualControlsManager);
-
-        // 初始化长按右键检测器
-        if (virtualControlsManager.getInputBridge() != null) {
-            longPressDetector = new LongPressRightClickDetector(virtualControlsManager.getInputBridge());
-            longPressDetector.setEnabled(settingsManager.isLongPressRightClickEnabled());
-        }
 
         String runtimePref = getIntent().getStringExtra("DOTNET_FRAMEWORK");
 
@@ -520,11 +513,6 @@ public class GameActivity extends SDLActivity {
     @Override
     public boolean dispatchTouchEvent(MotionEvent event) {
         boolean result = super.dispatchTouchEvent(event);
-        
-        // 处理长按右键检测
-        if (longPressDetector != null) {
-            longPressDetector.handleTouchEvent(event);
-        }
         
         touchBridge.handleMotionEvent(event, getResources());
         return result;

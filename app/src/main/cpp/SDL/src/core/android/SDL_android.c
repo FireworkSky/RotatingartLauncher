@@ -122,6 +122,10 @@ JNIEXPORT void JNICALL SDL_JAVA_INTERFACE(onNativeMouseButton)(
     JNIEnv *env, jclass jcls,
     jint sdlButton, jint pressed, jfloat x, jfloat y);
 
+JNIEXPORT void JNICALL SDL_JAVA_INTERFACE(onNativeMouseButtonOnly)(
+    JNIEnv *env, jclass jcls,
+    jint sdlButton, jint pressed);
+
 /* 虚拟控件触摸点管理 */
 JNIEXPORT void JNICALL SDL_JAVA_INTERFACE(nativeConsumeFingerTouch)(
     JNIEnv *env, jclass jcls, jint fingerId);
@@ -201,6 +205,7 @@ static JNINativeMethod SDLActivity_tab[] = {
     { "onNativeTouch", "(IIIFFF)V", SDL_JAVA_INTERFACE(onNativeTouch) },
     { "onNativeMouse", "(IIFFZ)V", SDL_JAVA_INTERFACE(onNativeMouse) },
     { "onNativeMouseButton", "(IIFF)V", SDL_JAVA_INTERFACE(onNativeMouseButton) },
+    { "onNativeMouseButtonOnly", "(II)V", SDL_JAVA_INTERFACE(onNativeMouseButtonOnly) },
     { "nativeConsumeFingerTouch", "(I)V", SDL_JAVA_INTERFACE(nativeConsumeFingerTouch) },
     { "nativeReleaseFingerTouch", "(I)V", SDL_JAVA_INTERFACE(nativeReleaseFingerTouch) },
     { "nativeClearConsumedFingers", "()V", SDL_JAVA_INTERFACE(nativeClearConsumedFingers) },
@@ -1202,6 +1207,18 @@ JNIEXPORT void JNICALL SDL_JAVA_INTERFACE(onNativeMouseButton)(
     SDL_LockMutex(Android_ActivityMutex);
 
     Android_OnMouseButtonDirect(Android_Window, sdlButton, pressed, x, y);
+
+    SDL_UnlockMutex(Android_ActivityMutex);
+}
+
+/* Mouse button only - no cursor movement, for virtual button controls */
+JNIEXPORT void JNICALL SDL_JAVA_INTERFACE(onNativeMouseButtonOnly)(
+    JNIEnv *env, jclass jcls,
+    jint sdlButton, jint pressed)
+{
+    SDL_LockMutex(Android_ActivityMutex);
+
+    Android_OnMouseButtonOnly(Android_Window, sdlButton, pressed);
 
     SDL_UnlockMutex(Android_ActivityMutex);
 }

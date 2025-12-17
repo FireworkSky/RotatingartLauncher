@@ -47,7 +47,6 @@ public class ControlEditorManager {
     private OnEditorStateChangedListener mStateListener;
     private OnLayoutChangedListener mLayoutChangedListener;
     private OnFPSDisplayChangedListener mFPSDisplayListener;
-    private OnLongPressRightClickChangedListener mLongPressRightClickListener;
     private OnHideControlsListener mOnHideControlsListener;
     private OnExitGameListener mOnExitGameListener;
     
@@ -72,14 +71,6 @@ public class ControlEditorManager {
     public interface OnFPSDisplayChangedListener {
         void onFPSDisplayChanged(boolean enabled);
     }
-
-    /**
-     * 长按右键设置变化监听器
-     */
-    public interface OnLongPressRightClickChangedListener {
-        void onLongPressRightClickChanged(boolean enabled);
-    }
-
 
     /**
      * 隐藏控件监听器
@@ -139,17 +130,6 @@ public class ControlEditorManager {
     public void setOnFPSDisplayChangedListener(OnFPSDisplayChangedListener listener) {
         mFPSDisplayListener = listener;
     }
-
-    /**
-     * 设置长按右键变化监听器
-     */
-    public void setOnLongPressRightClickChangedListener(OnLongPressRightClickChangedListener listener) {
-        mLongPressRightClickListener = listener;
-    }
-
-    /**
-     * 设置虚拟鼠标变化监听器
-     */
 
     /**
      * 设置隐藏控件监听器
@@ -406,14 +386,6 @@ public class ControlEditorManager {
                 // FPS 显示设置变化
                 if (mFPSDisplayListener != null) {
                     mFPSDisplayListener.onFPSDisplayChanged(enabled);
-                }
-            }
-
-            @Override
-            public void onLongPressRightClickChanged(boolean enabled) {
-                // 长按右键设置变化，通知GameActivity更新检测器状态
-                if (mLongPressRightClickListener != null) {
-                    mLongPressRightClickListener.onLongPressRightClickChanged(enabled);
                 }
             }
 

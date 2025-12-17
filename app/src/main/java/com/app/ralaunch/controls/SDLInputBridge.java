@@ -39,6 +39,7 @@ public class SDLInputBridge implements ControlInputBridge {
     private static native void nativeSetVirtualMousePositionSDL(float x, float y);
     private static native float nativeGetVirtualMouseXSDL();
     private static native float nativeGetVirtualMouseYSDL();
+    private static native float[] nativeGetVirtualMousePositionSDL();  // 获取虚拟鼠标位置 {x, y}
     private static native void nativeSetVirtualMouseRangeSDL(float left, float top, float right, float bottom);
     private static native boolean nativeIsVirtualMouseActiveSDL();
     private static native void nativeSendMouseWheelSDL(float scrollY);
@@ -244,8 +245,8 @@ public class SDLInputBridge implements ControlInputBridge {
     public void sendMouseButton(int button, boolean isDown, float x, float y) {
         try {
             // 使用 SDL 按钮常量（1=左键, 2=中键, 3=右键）
-            // 使用 onNativeMouseButton 直接发送按钮事件，绕过状态跟踪
-            // 这样不会与触屏转鼠标冲突
+            // 使用新的 onNativeMouseButtonOnly 方法
+           
             int sdlButton;
             switch (button) {
                 case ControlData.MOUSE_LEFT:
@@ -263,12 +264,12 @@ public class SDLInputBridge implements ControlInputBridge {
             }
             
             // 添加日志查看发送的值
-            Log.d(TAG, "Sending mouse button: button=" + button + " -> sdlButton=" + sdlButton + 
-                  ", isDown=" + isDown + ", pos=(" + x + "," + y + ")");
+            Log.d(TAG, "Sending mouse button (no cursor move): button=" + button + " -> sdlButton=" + sdlButton + 
+                  ", isDown=" + isDown);
             
-            // 使用 onNativeMouseButton 直接发送，不影响触屏转鼠标
+            // 使用新的 onNativeMouseButtonOnly 方法，只发送按钮状态，不移动光标
             // pressed: 1=按下, 0=释放
-            SDLActivity.onNativeMouseButton(sdlButton, isDown ? 1 : 0, x, y);
+            SDLActivity.onNativeMouseButtonOnly(sdlButton, isDown ? 1 : 0);
 
         } catch (Exception e) {
             Log.e(TAG, "Error sending mouse button: " + button, e);
@@ -308,6 +309,23 @@ public class SDLInputBridge implements ControlInputBridge {
         } catch (Exception e) {
             Log.e(TAG, "Error initializing virtual mouse", e);
         }
+    }
+    
+    /**
+     * 获取虚拟鼠标当前位置
+     * @return float数组，[0]=x, [1]=y，如果未初始化则返回屏幕中心
+     */
+    public float[] getVirtualMousePosition() {
+        try {
+            float[] pos = nativeGetVirtualMousePositionSDL();
+            if (pos != null && pos.length >= 2) {
+                return pos;
+            }
+        } catch (Exception e) {
+            Log.w(TAG, "Error getting virtual mouse position, using screen center", e);
+        }
+        // 如果获取失败，返回屏幕中心
+        return new float[]{960.0f, 540.0f}; // 默认 1920x1080 的中心
     }
     
     /**

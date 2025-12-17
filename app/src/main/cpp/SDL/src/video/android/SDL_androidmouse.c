@@ -265,6 +265,17 @@ void Android_OnMouseButtonDirect(SDL_Window *window, int sdlButton, int pressed,
     SDL_SendMouseButton(window, 0, pressed ? SDL_PRESSED : SDL_RELEASED, (Uint8)sdlButton);
 }
 
+/* Send mouse button without moving cursor - for virtual button controls */
+void Android_OnMouseButtonOnly(SDL_Window *window, int sdlButton, int pressed)
+{
+    if (!window) {
+        return;
+    }
+    
+    /* Send button event only, don't move mouse cursor */
+    SDL_SendMouseButton(window, 0, pressed ? SDL_PRESSED : SDL_RELEASED, (Uint8)sdlButton);
+}
+
 #endif /* SDL_VIDEO_DRIVER_ANDROID */
 
 /* vi: set ts=4 sw=4 expandtab: */
