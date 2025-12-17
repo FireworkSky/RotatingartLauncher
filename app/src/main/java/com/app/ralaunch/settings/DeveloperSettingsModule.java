@@ -31,6 +31,7 @@ public class DeveloperSettingsModule implements SettingsModule {
         setupServerGC();
         setupConcurrentGC();
         setupTieredCompilation();
+        setupFnaMapBufferRangeOptimization();
     }
     
     private void setupVerboseLogging() {
@@ -94,6 +95,20 @@ public class DeveloperSettingsModule implements SettingsModule {
         }
     }
     
+    private void setupFnaMapBufferRangeOptimization() {
+        MaterialSwitch switchFnaMapBufferRangeOpt = rootView.findViewById(R.id.switchFnaMapBufferRangeOpt);
+        if (switchFnaMapBufferRangeOpt != null) {
+            switchFnaMapBufferRangeOpt.setChecked(settingsManager.isFnaEnableMapBufferRangeOptimization());
+            switchFnaMapBufferRangeOpt.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                settingsManager.setFnaEnableMapBufferRangeOptimization(isChecked);
+                String message = isChecked ?
+                        fragment.getString(R.string.fna_map_buffer_range_opt_enabled) :
+                        fragment.getString(R.string.fna_map_buffer_range_opt_disabled);
+                Toast.makeText(fragment.requireContext(), message, Toast.LENGTH_SHORT).show();
+            });
+        }
+    }
+
 }
 
 

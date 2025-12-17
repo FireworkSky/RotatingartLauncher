@@ -282,6 +282,12 @@
     <string name="coreclr_settings_warning">修改这些设置可能影响游戏性能和稳定性</string>
     <string name="coreclr_settings_restart">设置将在下次启动游戏时生效</string>
 
+    <!-- FNA 设置 -->
+    <string name="fna_map_buffer_range_opt">启用 MapBufferRange 优化</string>
+    <string name="fna_map_buffer_range_opt_desc">如果支持，启用 OpenGL MapBufferRange 优化（可能改善性能）</string>
+    <string name="fna_map_buffer_range_opt_enabled">MapBufferRange 优化已启用</string>
+    <string name="fna_map_buffer_range_opt_disabled">MapBufferRange 优化已禁用</string>
+
     <!-- 控件编辑对话框 -->
     <string name="control_edit_close">关闭</string>
     <string name="control_edit_save">保存</string>

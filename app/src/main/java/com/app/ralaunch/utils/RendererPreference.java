@@ -105,7 +105,15 @@ public final class RendererPreference {
             setEnv("FNA3D_OPENGL_USE_MAP_BUFFER_RANGE", "0");
             android.util.Log.i(TAG, "FNA3D_OPENGL_USE_MAP_BUFFER_RANGE = 0 (disabled for Vulkan-translated renderer: " + rendererId + ")");
         } else {
-            android.util.Log.i(TAG, "FNA3D_OPENGL_USE_MAP_BUFFER_RANGE = enabled by default (can be disabled via env var)");
+            SettingsManager manager = SettingsManager.getInstance(context);
+            if (manager.isFnaEnableMapBufferRangeOptimization()) {
+                unsetEnv("FNA3D_OPENGL_USE_MAP_BUFFER_RANGE");
+                android.util.Log.i(TAG, "FNA3D_OPENGL_USE_MAP_BUFFER_RANGE = enabled by default (can be disabled via env var)");
+            }
+            else {
+                setEnv("FNA3D_OPENGL_USE_MAP_BUFFER_RANGE", "0");
+                android.util.Log.i(TAG, "FNA3D_OPENGL_USE_MAP_BUFFER_RANGE = 0 (disabled via settings)");
+            }
         }
 
         setEnv("FORCE_VSYNC", "true");

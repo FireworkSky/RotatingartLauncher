@@ -75,7 +75,8 @@ public class SettingsManager {
         public static final String UNLOCK_FPS = "unlock_fps"; // 解锁帧率限制
         // FNA设置
         public static final String FNA_RENDERER = "fna_renderer";
-        
+        public static final String FNA_ENABLE_MAP_BUFFER_RANGE_OPTIMIZATION_IF_AVAILABLE = "fna_enable_map_buffer_range_optimization_if_available"; // 启用 MapBufferRange 优化（如果支持）
+
         // Vulkan 驱动设置
         public static final String VULKAN_DRIVER_TURNIP = "vulkan_driver_turnip"; // 是否使用 Turnip 驱动（Adreno GPU）
 
@@ -106,7 +107,8 @@ public class SettingsManager {
         public static final boolean DISABLE_VSYNC = false; // 默认不禁用 VSync
         public static final boolean UNLOCK_FPS = false; // 默认不解锁帧率
         public static final String FNA_RENDERER = "auto";
-        
+        public static final boolean FNA_ENABLE_MAP_BUFFER_RANGE_OPTIMIZATION_IF_AVAILABLE = true; // 默认启用 MapBufferRange 优化
+
         // Vulkan 驱动默认值
         public static final boolean VULKAN_DRIVER_TURNIP = true; // 默认启用 Turnip（如果支持）
 
@@ -506,6 +508,14 @@ public class SettingsManager {
 
     public void setFnaRenderer(String renderer) {
         putString(Keys.FNA_RENDERER, renderer);
+    }
+
+    public boolean isFnaEnableMapBufferRangeOptimization() {
+        return getBoolean(Keys.FNA_ENABLE_MAP_BUFFER_RANGE_OPTIMIZATION_IF_AVAILABLE, Defaults.FNA_ENABLE_MAP_BUFFER_RANGE_OPTIMIZATION_IF_AVAILABLE);
+    }
+
+    public void setFnaEnableMapBufferRangeOptimization(boolean enabled) {
+        putBoolean(Keys.FNA_ENABLE_MAP_BUFFER_RANGE_OPTIMIZATION_IF_AVAILABLE, enabled);
     }
 
     // Vulkan 驱动设置
