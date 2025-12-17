@@ -4,8 +4,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Reflection.Emit;
-using static System.Net.WebRequestMethods;
 
 namespace TModLoaderPatch;
 
@@ -110,14 +108,9 @@ public static class Patcher
     /// </summary>
     private static void ApplyPatchesInternal(Assembly assembly)
     {
-         
         InstallVerifierBugMitigation(assembly);
         LoggingHooksHarmonyPatch(assembly);
         TMLContentManagerPatch(assembly);
-        
-
-
-
     }
 
   
@@ -171,32 +164,92 @@ public static class Patcher
         // Harmony instance lazy loading
         Harmony harmony = _harmony!;
 
-        // Create the HarmonyMethod for the transpiler
-        HarmonyMethod transpiler = new HarmonyMethod(typeof(Patcher), nameof(TMLContentManagerPatch_Transpiler));
+        // Create the HarmonyMethod for the prefix
+        HarmonyMethod prefix = new HarmonyMethod(typeof(Patcher), nameof(TMLContentManagerPatch_Prefix));
 
         // Apply the patch
-        harmony.Patch(originalMethod, transpiler: transpiler);
+        harmony.Patch(originalMethod, prefix: prefix);
 
         Console.WriteLine("[TModLoaderPatch] TMLContentManager patch applied successfully!");
     }
     
-    public static IEnumerable<CodeInstruction> TMLContentManagerPatch_Transpiler(IEnumerable<CodeInstruction> instructions)
+    public static void TMLContentManagerPatch_Prefix(string rootDirectory)
     {
-        Console.WriteLine("[TModLoaderPatch] TMLContentManager.TryFixFileCasings modifying IL...");
-        var codeMatcher = new CodeMatcher(instructions);
+	    // The file listed below will be checked and fixed for case on disk
+		// this method does not work on UNC paths (don't think remote path Terraria
+		// installs will be present in a long time, but good to keep this logged)
+		// and will only find/change FILE case, not all the directory tree.
+		// A full implementation for search of actual name can be found at:
+		// https://stackoverflow.com/questions/325931/getting-actual-file-name-with-proper-casing-on-windows-with-net
+		string[] problematicAssets = {
+			"Images/NPC_517.xnb",
+			"Images/Gore_240.xnb",
+			"Images/Projectile_179.xnb",
+			"Images/Projectile_189.xnb",
+			"Images/Projectile_618.xnb",
+			"Images/Tiles_650.xnb",
+			"Images/Item_2648.xnb"
+		};
 
-        codeMatcher
-            .MatchStartForward(
-                new CodeMatch(OpCodes.Ldloc_S),
-                new CodeMatch(OpCodes.Callvirt, AccessTools.Method(typeof(FileSystemInfo), "get_Exists")),
-                new CodeMatch(OpCodes.Brfalse_S))
-            .ThrowIfInvalid("Could not find pattern")
-            .RemoveInstructions(2)
-            .InsertAndAdvance(new CodeInstruction(OpCodes.Ldc_I4_0));
+		foreach (string problematicAsset in problematicAssets)
+		{
+			string expectedName = Path.GetFileName(problematicAsset);
+			string expectedFullPath = Path.Combine(rootDirectory, problematicAsset);
+			var faultyAssetInfo = new FileInfo(Path.Combine(rootDirectory, problematicAsset));
 
-        Console.WriteLine("[TModLoaderPatch] TMLContentManager.TryFixFileCasings modified IL!");
-        
-        return codeMatcher.InstructionEnumeration();
+			string actualFullPath;
+
+			// // If the file exists - double-check its returned path, we may be in a case-insensitive filesystem.
+			// if (faultyAssetInfo.Exists) {
+			// 	// This assetInfo is correct cased (but only the name, need recursive if you want full case,
+			// 	// nothing more is needed in this case though
+			// 	var assetInfo = faultyAssetInfo.Directory.EnumerateFileSystemInfos(faultyAssetInfo.Name).First();
+			//
+			// 	if (expectedName == assetInfo.Name) {
+			// 		continue;
+			// 	}
+			//
+			// 	actualFullPath = assetInfo.FullName;
+			// }
+			// // If it's missing - search for it while ignoring case, we're likely in a case-sensitive filesystem.
+			// else {
+			// 	var assetInfo = faultyAssetInfo.Directory.EnumerateFileSystemInfos().FirstOrDefault(p => p.Name.Equals(expectedName, StringComparison.InvariantCultureIgnoreCase));
+			//
+			// 	if (assetInfo == null) {
+			// 		Console.WriteLine($"An expected vanilla asset is missing: (from {rootDirectory}) {problematicAsset}");
+			// 		continue;
+			// 	}
+			//
+			// 	actualFullPath = assetInfo.FullName;
+			// }
+
+			// Android is case-sensitive while reading, but case-insensitive while writing, dang.....
+			{
+				var assetInfo = faultyAssetInfo.Directory.EnumerateFileSystemInfos().FirstOrDefault(p =>
+					p.Name.Equals(expectedName, StringComparison.InvariantCultureIgnoreCase));
+
+				if (assetInfo == null)
+				{
+					Console.WriteLine(
+						$"An expected vanilla asset is missing: (from {rootDirectory}) {problematicAsset}");
+					continue;
+				}
+
+				actualFullPath = assetInfo.FullName;
+			}
+
+			// The asset is wrongfully cased, fix that,
+			// changing a vanilla file name is something to log for sure
+			string relativeActualPath = Path.GetRelativePath(rootDirectory, actualFullPath);
+
+			Console.WriteLine(
+				$"Found vanilla asset with wrong case, renaming: (from {rootDirectory}) {relativeActualPath} -> {problematicAsset}");
+			// // Programmatically move with different case works
+			// File.Move(actualFullPath, expectedFullPath);
+			// Dang android
+			File.Move(actualFullPath, actualFullPath + ".1");
+			File.Move(actualFullPath + ".1", expectedFullPath);
+		}
     }
     
     public static void InstallVerifierBugMitigation(Assembly assembly)
@@ -230,9 +283,4 @@ public static class Patcher
         
         Console.WriteLine("[TModLoaderPatch] InstallVerifier class mitigations applied successfully!");
     }
-
-
-
-
-
 }
