@@ -118,6 +118,33 @@ public class ControlEditorOperations {
         config.controls.add(joystick);
         return joystick;
     }
+
+    /**
+     * 添加触控板到配置
+     *
+     * @param context 上下文
+     * @param config 控件配置
+     * @param screenWidth 屏幕宽度
+     * @param screenHeight 屏幕高度
+     * @return 新创建的按钮数据
+     */
+    public static ControlData addTouchPad(Context context, ControlConfig config, int screenWidth, int screenHeight) {
+        if (config == null || config.controls == null) {
+            return null;
+        }
+
+        ControlData touchpad = new ControlData(context.getString(R.string.editor_default_touchpad_name), ControlData.TYPE_TOUCHPAD);
+        touchpad.x = screenWidth / 2f;
+        touchpad.y = screenHeight / 2f;
+        touchpad.width = 450;
+        touchpad.height = 450;
+        touchpad.opacity = 0.5f;
+        touchpad.cornerRadius = 22.0f;
+        touchpad.visible = true;
+
+        config.controls.add(touchpad);
+        return touchpad;
+    }
     
     /**
      * 添加文本控件到配置

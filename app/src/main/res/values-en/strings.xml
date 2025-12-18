@@ -132,6 +132,7 @@
 
     <string name="editor_add_button">Add Button</string>
     <string name="editor_add_joystick">Add Joystick</string>
+    <string name="editor_add_touchpad_text">Add Touch Pad</string>
     <string name="editor_save">Save Layout</string>
     <string name="editor_load">Load Layout</string>
     <string name="editor_reset">Reset to Default</string>
@@ -411,6 +412,7 @@
     <string name="editor_reset_complete">Reset to default layout</string>
     <string name="editor_button_added">Button added</string>
     <string name="editor_joystick_added">Joystick added</string>
+    <string name="editor_touchpad_added">Touch Pad added</string>
     <string name="editor_text_added">Text added</string>
     <string name="editor_select_joystick_type">Select Joystick Type</string>
     <string name="editor_joystick_type_move_aim">Move + Aim Joystick</string>
@@ -554,6 +556,7 @@
     <string name="control_type_button_keyboard">Button (Keyboard)</string>
     <string name="control_type_button_gamepad">Button (Gamepad)</string>
     <string name="control_type_joystick">Joystick</string>
+    <string name="control_type_touchpad">Touch Pad</string>
     <string name="control_type_text">Text</string>
     <string name="control_type_button">Button</string>
     <string name="control_import_success">Imported layout: %s</string>
@@ -650,6 +653,7 @@
 
     <!-- ControlEditorOperations Messages -->
     <string name="editor_default_button_name">Button</string>
+    <string name="editor_default_touchpad_name">Touch Pad</string>
     <string name="editor_default_text_name">Text</string>
     <string name="editor_stick_right">Right</string>
     <string name="editor_stick_left">Left</string>

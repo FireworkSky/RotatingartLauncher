@@ -170,6 +170,8 @@ public class ControlDataConverter {
             case CROSS_KEY:
             case TRIGGER_BUTTON:
             case TOUCHPAD:
+                data.type = ControlData.TYPE_TOUCHPAD;
+                break;
             case MOUSE_AREA:
             case MACRO_BUTTON:
             default:
@@ -240,6 +242,8 @@ public class ControlDataConverter {
             type = ControlElement.ElementType.BUTTON;
         } else if (data.type == ControlData.TYPE_JOYSTICK) {
             type = ControlElement.ElementType.JOYSTICK;
+        } else if (data.type == ControlData.TYPE_TOUCHPAD) {
+            type = ControlElement.ElementType.TOUCHPAD;
         } else if (data.type == ControlData.TYPE_TEXT) {
             type = ControlElement.ElementType.TEXT; // 文本控件
         } else {

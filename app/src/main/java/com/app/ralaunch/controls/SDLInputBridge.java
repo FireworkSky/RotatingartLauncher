@@ -285,6 +285,18 @@ public class SDLInputBridge implements ControlInputBridge {
             Log.e(TAG, "Error sending mouse move", e);
         }
     }
+
+    public void sdlOnNativeMouseDirect(int button, int action, float x, float y, boolean relative) {
+        SDLActivity.onNativeMouseDirect(button, action, x, y, relative);
+    }
+
+    public int sdlNativeGetMouseStateX() {
+        return SDLActivity.nativeGetMouseStateX();
+    }
+
+    public int sdlNativeGetMouseStateY() {
+        return SDLActivity.nativeGetMouseStateY();
+    }
     
     @Override
     public void sendMouseWheel(float scrollY) {

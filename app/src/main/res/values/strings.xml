@@ -132,6 +132,7 @@
     
     <string name="editor_add_button">添加按钮</string>
     <string name="editor_add_joystick">添加摇杆</string>
+    <string name="editor_add_touchpad_text">添加触摸板</string>
     <string name="editor_save">保存布局</string>
     <string name="editor_load">加载布局</string>
     <string name="editor_reset">重置为默认</string>
@@ -410,6 +411,7 @@
     <string name="editor_reset_complete">已重置为默认布局</string>
     <string name="editor_button_added">已添加按钮</string>
     <string name="editor_joystick_added">已添加摇杆</string>
+    <string name="editor_touchpad_added">已添加触控板</string>
     <string name="editor_text_added">已添加文本</string>
     <string name="editor_select_joystick_type">选择摇杆类型</string>
     <string name="editor_joystick_type_move_aim">移动+瞄准摇杆</string>
@@ -553,6 +555,7 @@
     <string name="control_type_button_keyboard">按钮（键盘）</string>
     <string name="control_type_button_gamepad">按钮（手柄）</string>
     <string name="control_type_joystick">摇杆</string>
+    <string name="control_type_touchpad">触控板</string>
     <string name="control_type_text">文本</string>
     <string name="control_type_button">按钮</string>
     <string name="control_import_success">已导入布局：%s</string>
@@ -657,6 +660,7 @@
 
     <!-- ControlEditorOperations 消息 -->
     <string name="editor_default_button_name">按钮</string>
+    <string name="editor_default_touchpad_name">触控板</string>
     <string name="editor_default_text_name">文本</string>
     <string name="editor_stick_right">右</string>
     <string name="editor_stick_left">左</string>

@@ -366,6 +366,11 @@ public class ControlEditorManager {
             }
 
             @Override
+            public void onAddTouchPad() {
+                addTouchPad();
+            }
+
+            @Override
             public void onAddText() {
                 addText();
             }
@@ -511,7 +516,34 @@ public class ControlEditorManager {
             })
             .show();
     }
-    
+
+    /**
+     * 添加触控板
+     */
+    public void addTouchPad() {
+        if (mControlLayout == null) return;
+
+        ControlConfig config = mControlLayout.getConfig();
+        if (config == null) {
+            config = new ControlConfig();
+            config.controls = new java.util.ArrayList<>();
+            mControlLayout.loadLayout(config);
+        }
+
+        ControlData touchpad = ControlEditorOperations.addTouchPad(mContext, config, mScreenWidth, mScreenHeight);
+
+        if (touchpad != null) {
+            mControlLayout.loadLayout(config);
+            disableClippingRecursive(mControlLayout);
+            mHasUnsavedChanges = true;
+            Toast.makeText(mContext, mContext.getString(R.string.editor_touchpad_added), Toast.LENGTH_SHORT).show();
+
+            if (mLayoutChangedListener != null) {
+                mLayoutChangedListener.onLayoutChanged();
+            }
+        }
+    }
+
     /**
      * 显示选择摇杆位置的对话框
      */

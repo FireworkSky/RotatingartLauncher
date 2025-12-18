@@ -315,6 +315,8 @@ public class ControlLayout extends FrameLayout {
                 return new VirtualJoystick(getContext(), data, mInputBridge);
             case ControlData.TYPE_BUTTON:
                 return new VirtualButton(getContext(), data, mInputBridge);
+            case ControlData.TYPE_TOUCHPAD:
+                return new VirtualTouchPad(getContext(), data, mInputBridge);
             case ControlData.TYPE_TEXT:
                 return new VirtualText(getContext(), data, mInputBridge);
             default:

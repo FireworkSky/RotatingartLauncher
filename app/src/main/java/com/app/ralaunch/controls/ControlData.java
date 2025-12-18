@@ -14,6 +14,7 @@ public class ControlData {
     // 特殊按钮类型
     public static final int TYPE_BUTTON = 0;
     public static final int TYPE_JOYSTICK = 1;
+    public static final int TYPE_TOUCHPAD = 2;
     public static final int TYPE_TEXT = 3; // 文本控件（显示文本，不支持按键映射）
     
     // SDL Scancode常量 (不是ASCII码！)

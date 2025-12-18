@@ -42,6 +42,7 @@ public class UnifiedEditorSettingsDialog {
     private TextView mTvToggleEditModeText;
     private View mItemAddButton;
     private View mItemAddJoystick;
+    private View mItemAddTouchPad;
     private View mItemAddText;
     private View mItemAddTextGroup;
     private ViewGroup mAddControlsSection; // 添加控件区域
@@ -79,6 +80,7 @@ public class UnifiedEditorSettingsDialog {
         void onToggleEditMode(); // 切换编辑模式
         void onAddButton();
         void onAddJoystick();
+        void onAddTouchPad();
         void onAddText();
         void onSaveLayout(); // 保存布局
         void onFPSDisplayChanged(boolean enabled); // FPS 显示选项变化
@@ -300,6 +302,7 @@ public class UnifiedEditorSettingsDialog {
         mTvToggleEditModeText = mItemToggleEditMode.findViewById(R.id.tv_toggle_edit_mode_text);
         mItemAddButton = mDialogLayout.findViewById(R.id.item_add_button);
         mItemAddJoystick = mDialogLayout.findViewById(R.id.item_add_joystick);
+        mItemAddTouchPad = mDialogLayout.findViewById(R.id.item_add_touchpad);
         mItemAddText = mDialogLayout.findViewById(R.id.item_add_text);
         mAddControlsSection = mDialogLayout.findViewById(R.id.section_add_controls);
         mItemSaveLayout = mDialogLayout.findViewById(R.id.item_save_layout);
@@ -386,6 +389,11 @@ public class UnifiedEditorSettingsDialog {
 
             mItemAddJoystick.setOnClickListener(v -> {
                 mListener.onAddJoystick();
+                hide();
+            });
+
+            mItemAddTouchPad.setOnClickListener(v -> {
+                mListener.onAddTouchPad();
                 hide();
             });
 

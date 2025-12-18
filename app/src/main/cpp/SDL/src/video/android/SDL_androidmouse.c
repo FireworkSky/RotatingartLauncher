@@ -251,16 +251,52 @@ void Android_OnMouse(SDL_Window *window, int state, int action, float x, float y
     }
 }
 
+/* Mouse events without state tracking - for direct control */
+void Android_OnMouseDirect(SDL_Window *window, int state, int action, float x, float y, SDL_bool relative)
+{
+    Uint8 button;
+
+    if (!window) {
+        return;
+    }
+
+    switch (action) {
+    case ACTION_DOWN:
+        button = TranslateButton(state);
+        SDL_SendMouseMotion(window, 0, relative, (int)x, (int)y);
+        SDL_SendMouseButton(window, 0, SDL_PRESSED, button);
+        break;
+
+    case ACTION_UP:
+        button = TranslateButton(state);
+        SDL_SendMouseMotion(window, 0, relative, (int)x, (int)y);
+        SDL_SendMouseButton(window, 0, SDL_RELEASED, button);
+        break;
+
+    case ACTION_MOVE:
+    case ACTION_HOVER_MOVE:
+        SDL_SendMouseMotion(window, 0, relative, (int)x, (int)y);
+        break;
+
+    case ACTION_SCROLL:
+        SDL_SendMouseWheel(window, 0, x, y, SDL_MOUSEWHEEL_NORMAL);
+        break;
+
+    default:
+        break;
+    }
+}
+
 /* Direct mouse button send - bypasses last_state tracking for virtual controls */
 void Android_OnMouseButtonDirect(SDL_Window *window, int sdlButton, int pressed, float x, float y)
 {
     if (!window) {
         return;
     }
-    
+
     /* First move to position */
     SDL_SendMouseMotion(window, 0, SDL_FALSE, (int)x, (int)y);
-    
+
     /* Then send button event directly */
     SDL_SendMouseButton(window, 0, pressed ? SDL_PRESSED : SDL_RELEASED, (Uint8)sdlButton);
 }
@@ -271,7 +307,7 @@ void Android_OnMouseButtonOnly(SDL_Window *window, int sdlButton, int pressed)
     if (!window) {
         return;
     }
-    
+
     /* Send button event only, don't move mouse cursor */
     SDL_SendMouseButton(window, 0, pressed ? SDL_PRESSED : SDL_RELEASED, (Uint8)sdlButton);
 }

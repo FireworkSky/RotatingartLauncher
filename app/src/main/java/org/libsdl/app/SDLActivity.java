@@ -907,8 +907,11 @@ public class SDLActivity extends Activity implements View.OnSystemUiVisibilityCh
     public static native boolean onNativeSoftReturnKey();
     public static native void onNativeKeyboardFocusLost();
     public static native void onNativeMouse(int button, int action, float x, float y, boolean relative);
+    public static native void onNativeMouseDirect(int button, int action, float x, float y, boolean relative);
     public static native void onNativeMouseButton(int sdlButton, int pressed, float x, float y);
     public static native void onNativeMouseButtonOnly(int sdlButton, int pressed);
+    public static native int nativeGetMouseStateX();
+    public static native int nativeGetMouseStateY();
     public static native void onNativeTouch(int touchDevId, int pointerFingerId,
                                             int action, float x,
                                             float y, float p);

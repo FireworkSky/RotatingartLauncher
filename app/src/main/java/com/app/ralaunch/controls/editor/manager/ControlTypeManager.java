@@ -34,6 +34,8 @@ public class ControlTypeManager {
             } else {
                 return context.getString(R.string.control_type_button_keyboard);
             }
+        } else if (data.type == ControlData.TYPE_TOUCHPAD) {
+            return context.getString(R.string.control_type_touchpad);
         } else {
             return context.getString(R.string.control_type_button);
         }
@@ -65,6 +67,7 @@ public class ControlTypeManager {
             context.getString(R.string.control_type_button_keyboard),
             context.getString(R.string.control_type_button_gamepad),
             context.getString(R.string.control_type_joystick),
+            context.getString(R.string.control_type_touchpad),
             context.getString(R.string.control_type_text)
         };
         
@@ -73,7 +76,7 @@ public class ControlTypeManager {
         if (data.type == ControlData.TYPE_JOYSTICK) {
             currentIndex = 2; // 摇杆
         } else if (data.type == ControlData.TYPE_TEXT) {
-            currentIndex = 3; // 文本
+            currentIndex = 4; // 文本
         } else if (data.type == ControlData.TYPE_BUTTON) {
             // 按钮类型：根据 buttonMode 判断
             if (data.buttonMode == ControlData.BUTTON_MODE_GAMEPAD) {
@@ -81,6 +84,8 @@ public class ControlTypeManager {
             } else {
                 currentIndex = 0; // 按钮（键盘）
             }
+        } else if (data.type == ControlData.TYPE_TOUCHPAD) {
+            currentIndex = 3; // 触控板
         } else {
             // 默认或未知类型，默认为按钮（键盘）
             currentIndex = 0;
@@ -103,6 +108,10 @@ public class ControlTypeManager {
                     // 摇杆类型不需要 buttonMode，但为了数据一致性，重置为默认值
                     data.buttonMode = ControlData.BUTTON_MODE_KEYBOARD;
                 } else if (which == 3) {
+                    data.type = ControlData.TYPE_TOUCHPAD;
+                    // 触控板类型不需要 buttonMode，但为了数据一致性，重置为默认值
+                    data.buttonMode = ControlData.BUTTON_MODE_KEYBOARD;
+                } else if (which == 4) {
                     // 文本
                     data.type = ControlData.TYPE_TEXT;
                     data.shape = ControlData.SHAPE_RECTANGLE; // 默认方形

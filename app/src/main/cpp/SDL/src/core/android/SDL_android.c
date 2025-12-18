@@ -118,6 +118,10 @@ JNIEXPORT void JNICALL SDL_JAVA_INTERFACE(onNativeMouse)(
     JNIEnv *env, jclass jcls,
     jint button, jint action, jfloat x, jfloat y, jboolean relative);
 
+JNIEXPORT void JNICALL SDL_JAVA_INTERFACE(onNativeMouseDirect)(
+    JNIEnv *env, jclass jcls,
+    jint button, jint action, jfloat x, jfloat y, jboolean relative);
+
 JNIEXPORT void JNICALL SDL_JAVA_INTERFACE(onNativeMouseButton)(
     JNIEnv *env, jclass jcls,
     jint sdlButton, jint pressed, jfloat x, jfloat y);
@@ -125,6 +129,12 @@ JNIEXPORT void JNICALL SDL_JAVA_INTERFACE(onNativeMouseButton)(
 JNIEXPORT void JNICALL SDL_JAVA_INTERFACE(onNativeMouseButtonOnly)(
     JNIEnv *env, jclass jcls,
     jint sdlButton, jint pressed);
+
+JNIEXPORT jint JNICALL SDL_JAVA_INTERFACE(nativeGetMouseStateX)(
+    JNIEnv *env, jclass jcls);
+
+JNIEXPORT jint JNICALL SDL_JAVA_INTERFACE(nativeGetMouseStateY)(
+    JNIEnv *env, jclass jcls);
 
 /* 虚拟控件触摸点管理 */
 JNIEXPORT void JNICALL SDL_JAVA_INTERFACE(nativeConsumeFingerTouch)(
@@ -204,8 +214,11 @@ static JNINativeMethod SDLActivity_tab[] = {
     { "onNativeKeyboardFocusLost", "()V", SDL_JAVA_INTERFACE(onNativeKeyboardFocusLost) },
     { "onNativeTouch", "(IIIFFF)V", SDL_JAVA_INTERFACE(onNativeTouch) },
     { "onNativeMouse", "(IIFFZ)V", SDL_JAVA_INTERFACE(onNativeMouse) },
+    { "onNativeMouseDirect", "(IIFFZ)V", SDL_JAVA_INTERFACE(onNativeMouseDirect) },
     { "onNativeMouseButton", "(IIFF)V", SDL_JAVA_INTERFACE(onNativeMouseButton) },
     { "onNativeMouseButtonOnly", "(II)V", SDL_JAVA_INTERFACE(onNativeMouseButtonOnly) },
+    { "nativeGetMouseStateX", "()I", SDL_JAVA_INTERFACE(nativeGetMouseStateX) },
+    { "nativeGetMouseStateY", "()I", SDL_JAVA_INTERFACE(nativeGetMouseStateY) },
     { "nativeConsumeFingerTouch", "(I)V", SDL_JAVA_INTERFACE(nativeConsumeFingerTouch) },
     { "nativeReleaseFingerTouch", "(I)V", SDL_JAVA_INTERFACE(nativeReleaseFingerTouch) },
     { "nativeClearConsumedFingers", "()V", SDL_JAVA_INTERFACE(nativeClearConsumedFingers) },
@@ -1199,6 +1212,18 @@ JNIEXPORT void JNICALL SDL_JAVA_INTERFACE(onNativeMouse)(
     SDL_UnlockMutex(Android_ActivityMutex);
 }
 
+/* Mouse Direct - same as onNativeMouse but without state check */
+JNIEXPORT void JNICALL SDL_JAVA_INTERFACE(onNativeMouseDirect)(
+    JNIEnv *env, jclass jcls,
+    jint button, jint action, jfloat x, jfloat y, jboolean relative)
+{
+    SDL_LockMutex(Android_ActivityMutex);
+
+    Android_OnMouseDirect(Android_Window, button, action, x, y, relative);
+
+    SDL_UnlockMutex(Android_ActivityMutex);
+}
+
 /* Direct mouse button - bypasses state tracking for virtual controls */
 JNIEXPORT void JNICALL SDL_JAVA_INTERFACE(onNativeMouseButton)(
     JNIEnv *env, jclass jcls,
@@ -1221,6 +1246,24 @@ JNIEXPORT void JNICALL SDL_JAVA_INTERFACE(onNativeMouseButtonOnly)(
     Android_OnMouseButtonOnly(Android_Window, sdlButton, pressed);
 
     SDL_UnlockMutex(Android_ActivityMutex);
+}
+
+/* Get current mouse X position */
+JNIEXPORT jint JNICALL SDL_JAVA_INTERFACE(nativeGetMouseStateX)(
+    JNIEnv *env, jclass jcls)
+{
+    int x = 0;
+    SDL_GetMouseState(&x, NULL);
+    return (jint)x;
+}
+
+/* Get current mouse Y position */
+JNIEXPORT jint JNICALL SDL_JAVA_INTERFACE(nativeGetMouseStateY)(
+    JNIEnv *env, jclass jcls)
+{
+    int y = 0;
+    SDL_GetMouseState(NULL, &y);
+    return (jint)y;
 }
 
 /* 外部函数声明（在 SDL_touch.c 中定义） */
