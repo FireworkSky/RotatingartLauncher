@@ -54,7 +54,11 @@ public class LogcatReader {
         "ComputilityLevel",
         "Activity",
         "libc",
-        "SplineOverScroller"
+        "SplineOverScroller",
+        // OPlus
+        "oplus.android.OplusFrameworkFactoryImpl",
+        "DynamicFramerate",
+        "OplusViewDragTouchViewHelper"
     };
 
     // 日志回调接口

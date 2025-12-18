@@ -212,8 +212,8 @@ public class SDLInputBridge implements ControlInputBridge {
             // 将Scancode转换为Keycode
             int keycode = scancodeToKeycode(scancode);
             
-            Log.d(TAG, "sendKey: scancode=" + scancode + " -> keycode=" + keycode + 
-                  ", isDown=" + isDown + ", calling SDLActivity.onNativeKey" + (isDown ? "Down" : "Up"));
+//            Log.d(TAG, "sendKey: scancode=" + scancode + " -> keycode=" + keycode +
+//                  ", isDown=" + isDown + ", calling SDLActivity.onNativeKey" + (isDown ? "Down" : "Up"));
             
             // 确保在主线程上调用SDL方法（SDL的native方法需要在主线程调用）
             android.os.Handler mainHandler = new android.os.Handler(android.os.Looper.getMainLooper());
@@ -225,10 +225,10 @@ public class SDLInputBridge implements ControlInputBridge {
                     // 调用SDLActivity的静态native方法
                     if (finalIsDown) {
                         SDLActivity.onNativeKeyDown(finalKeycode);
-                        Log.d(TAG, "SDLActivity.onNativeKeyDown(" + finalKeycode + ") called successfully");
+//                        Log.d(TAG, "SDLActivity.onNativeKeyDown(" + finalKeycode + ") called successfully");
                     } else {
                         SDLActivity.onNativeKeyUp(finalKeycode);
-                        Log.d(TAG, "SDLActivity.onNativeKeyUp(" + finalKeycode + ") called successfully");
+//                        Log.d(TAG, "SDLActivity.onNativeKeyUp(" + finalKeycode + ") called successfully");
                     }
                 } catch (Exception e) {
                     Log.e(TAG, "Error in SDL native key method: keycode=" + finalKeycode, e);
@@ -264,8 +264,8 @@ public class SDLInputBridge implements ControlInputBridge {
             }
             
             // 添加日志查看发送的值
-            Log.d(TAG, "Sending mouse button (no cursor move): button=" + button + " -> sdlButton=" + sdlButton + 
-                  ", isDown=" + isDown);
+//            Log.d(TAG, "Sending mouse button (no cursor move): button=" + button + " -> sdlButton=" + sdlButton +
+//                  ", isDown=" + isDown);
             
             // 使用新的 onNativeMouseButtonOnly 方法，只发送按钮状态，不移动光标
             // pressed: 1=按下, 0=释放
@@ -303,7 +303,7 @@ public class SDLInputBridge implements ControlInputBridge {
         try {
             // 调用native方法发送鼠标滚轮事件
             nativeSendMouseWheelSDL(scrollY);
-            Log.d(TAG, "Sending mouse wheel: scrollY=" + scrollY);
+//            Log.d(TAG, "Sending mouse wheel: scrollY=" + scrollY);
         } catch (Exception e) {
             Log.e(TAG, "Error sending mouse wheel", e);
         }
@@ -448,10 +448,10 @@ public class SDLInputBridge implements ControlInputBridge {
         try {
             if (isDown) {
                 nativeSetVirtualTouch(index, x, y, screenWidth, screenHeight);
-                Log.d(TAG, "Virtual touch DOWN: index=" + index + ", pos=(" + x + "," + y + ")");
+//                Log.d(TAG, "Virtual touch DOWN: index=" + index + ", pos=(" + x + "," + y + ")");
             } else {
                 nativeClearVirtualTouch(index);
-                Log.d(TAG, "Virtual touch UP: index=" + index);
+//                Log.d(TAG, "Virtual touch UP: index=" + index);
             }
         } catch (UnsatisfiedLinkError e) {
             Log.e(TAG, "Native library not loaded for sendVirtualTouch", e);

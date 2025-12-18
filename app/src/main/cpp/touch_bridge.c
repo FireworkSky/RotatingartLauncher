@@ -62,7 +62,7 @@ static void setTouchDataInternal(JNIEnv *env, int count, jfloatArray x_arr, jflo
         
         // Debug log for multi-touch
         if (count > 1) {
-            LOGI("Multi-touch: count=%d", count);
+//            LOGI("Multi-touch: count=%d", count);
         }
     } else {
         // 如果数组为空，清除数据

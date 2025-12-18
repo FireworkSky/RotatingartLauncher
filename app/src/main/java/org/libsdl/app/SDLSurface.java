@@ -343,7 +343,7 @@ public class SDLSurface extends SurfaceView implements SurfaceHolder.Callback,
             if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) {
                 // All fingers released
                 nativeClearTouchData();
-                Log.d(TAG, "Touch bridge: cleared");
+//                Log.d(TAG, "Touch bridge: cleared");
                 return;
             }
             
@@ -375,8 +375,8 @@ public class SDLSurface extends SurfaceView implements SurfaceHolder.Callback,
             nativeSetTouchData(validCount, mTouchX, mTouchY, (int)mWidth, (int)mHeight);
             
             if (validCount > 0) {
-                Log.d(TAG, "Touch bridge: count=" + validCount + 
-                    " p0=(" + (int)(mTouchX[0] * mWidth) + "," + (int)(mTouchY[0] * mHeight) + ")");
+//                Log.d(TAG, "Touch bridge: count=" + validCount +
+//                    " p0=(" + (int)(mTouchX[0] * mWidth) + "," + (int)(mTouchY[0] * mHeight) + ")");
             }
         } catch (Exception e) {
             Log.e(TAG, "Touch bridge error: " + e.getMessage());
