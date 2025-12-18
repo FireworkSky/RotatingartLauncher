@@ -23,7 +23,8 @@ public class DeveloperSettingsModule implements SettingsModule {
         this.fragment = fragment;
         this.rootView = rootView;
         this.settingsManager = SettingsManager.getInstance(fragment.requireContext());
-        
+
+        setupEnableLogSystem();
         setupVerboseLogging();
         setupThreadAffinityToBigCore();
         setupServerGC();
@@ -33,6 +34,20 @@ public class DeveloperSettingsModule implements SettingsModule {
         setupForceReinstallPatches();
     }
     
+    private void setupEnableLogSystem() {
+        MaterialSwitch switchEnableLogSystem = rootView.findViewById(R.id.switchEnableLogSystem);
+        if (switchEnableLogSystem != null) {
+            switchEnableLogSystem.setChecked(settingsManager.isLogSystemEnabled());
+            switchEnableLogSystem.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                settingsManager.setLogSystemEnabled(isChecked);
+                String message = isChecked ?
+                        fragment.getString(R.string.enable_log_system_enabled) :
+                        fragment.getString(R.string.enable_log_system_disabled);
+                Toast.makeText(fragment.requireContext(), message, Toast.LENGTH_SHORT).show();
+            });
+        }
+    }
+
     private void setupVerboseLogging() {
         MaterialSwitch switchVerboseLogging = rootView.findViewById(R.id.switchVerboseLogging);
         if (switchVerboseLogging != null) {

@@ -68,6 +68,7 @@ public class SettingsManager {
         public static final String MOUSE_RIGHT_STICK_RANGE_BOTTOM = "mouse_right_stick_range_bottom"; // 鼠标范围下边界
 
         // 开发者设置
+        public static final String ENABLE_LOG_SYSTEM = "enable_log_system";
         public static final String VERBOSE_LOGGING = "verbose_logging";
         public static final String SET_THREAD_AFFINITY_TO_BIG_CORE_ENABLED = "set_thread_affinity_to_big_core_enabled";
         public static final String DISABLE_VSYNC = "disable_vsync"; // 禁用垂直同步
@@ -101,6 +102,7 @@ public class SettingsManager {
         public static final int BACKGROUND_OPACITY = 100; // 默认完全不透明
         public static final String DOTNET_FRAMEWORK = "auto";
         public static final String RUNTIME_ARCHITECTURE = "auto";
+        public static final boolean ENABLE_LOG_SYSTEM = true;
         public static final boolean VERBOSE_LOGGING = false;
         public static final boolean SET_THREAD_AFFINITY_TO_BIG_CORE_ENABLED = true;
         public static final boolean DISABLE_VSYNC = false; // 默认不禁用 VSync
@@ -456,6 +458,14 @@ public class SettingsManager {
     }
     
     // 开发者设置
+    public boolean isLogSystemEnabled() {
+        return getBoolean(Keys.ENABLE_LOG_SYSTEM, Defaults.ENABLE_LOG_SYSTEM);
+    }
+
+    public void setLogSystemEnabled(boolean enabled) {
+        putBoolean(Keys.ENABLE_LOG_SYSTEM, enabled);
+    }
+
     public boolean isVerboseLogging() {
         return getBoolean(Keys.VERBOSE_LOGGING, Defaults.VERBOSE_LOGGING);
     }

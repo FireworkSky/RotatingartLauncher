@@ -1,6 +1,11 @@
 package com.app.ralaunch.utils;
 
+import android.nfc.Tag;
 import android.util.Log;
+
+import com.app.ralaunch.RaLaunchApplication;
+import com.app.ralaunch.data.SettingsManager;
+
 import java.io.File;
 
 /**
@@ -56,10 +61,17 @@ public class AppLogger {
 
             // Start LogcatReader to capture all logs
             logcatReader = LogcatReader.getInstance();
-            logcatReader.start(logDir);
+            var settingsManager = SettingsManager.getInstance(RaLaunchApplication.getAppContext());
+            if (settingsManager.isLogSystemEnabled()) {
+                logcatReader.start(logDir);
+                Log.i(TAG, "LogcatReader started");
+            }
+            else {
+                Log.w(TAG, "LogcatReader not started - logging disabled in settings");
+            }
 
             initialized = true;
-            Log.i(TAG, "AppLogger.init() completed - LogcatReader started");
+            Log.i(TAG, "AppLogger.init() completed");
             info("Logger", "Log system initialized: " + logDir.getAbsolutePath());
 
         } catch (Exception e) {

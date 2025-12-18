@@ -205,6 +205,11 @@
     <string name="developer_console_enabled">已启用开发者控制台，启动游戏时生效</string>
     <string name="developer_console_disabled">已禁用开发者控制台</string>
 
+    <string name="enable_log_system">启用日志系统</string>
+    <string name="enable_log_system_desc">启用后应用会记录运行日志，不建议关闭</string>
+    <string name="enable_log_system_enabled">已启用日志系统，重启应用后生效</string>
+    <string name="enable_log_system_disabled">已禁用日志系统，重启应用后生效</string>
+
     <string name="verbose_logging">详细日志</string>
     <string name="verbose_logging_on">开启</string>
     <string name="verbose_logging_off">关闭</string>

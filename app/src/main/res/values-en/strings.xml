@@ -206,6 +206,11 @@
     <string name="developer_console_enabled">Developer console enabled, will take effect on next game launch</string>
     <string name="developer_console_disabled">Developer console disabled</string>
 
+    <string name="enable_log_system">Enable Log System</string>
+    <string name="enable_log_system_desc">Enable logging for debugging, not recommended to disable</string>
+    <string name="enable_log_system_enabled">Log system enabled, restart app to apply</string>
+    <string name="enable_log_system_disabled">Log system disabled, restart app to apply</string>
+
     <string name="verbose_logging">Verbose Logging</string>
     <string name="verbose_logging_on">Enabled</string>
     <string name="verbose_logging_off">Disabled</string>
