@@ -292,8 +292,14 @@ public class UnifiedEditorSettingsDialog {
         mDialogLayout = (ViewGroup) inflater.inflate(R.layout.dialog_unified_editor_settings, mParent, false);
         
         // 设置背景和阴影
-        mDialogLayout.setBackgroundColor(mContext.getResources().getColor(android.R.color.white, mContext.getTheme()));
+        mDialogLayout.setBackgroundColor(Color.parseColor("#E6FFFFFF"));
         mDialogLayout.setElevation(16f);
+
+        // 应用背景透明度（使用统一工具类）
+        try {
+            float dialogAlpha = com.app.ralaunch.utils.OpacityHelper.getDialogAlphaFromSettings(mContext);
+            mDialogLayout.setAlpha(dialogAlpha);
+        } catch (Exception e) {}
 
         // 绑定UI元素
         mTvDialogTitle = mDialogLayout.findViewById(R.id.tv_dialog_title);

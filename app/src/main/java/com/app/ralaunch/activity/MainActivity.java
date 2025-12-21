@@ -87,6 +87,9 @@ public class MainActivity extends AppCompatActivity implements
 
         com.app.ralaunch.utils.DensityAdapter.adapt(this, true);
         
+      
+        com.app.ralib.theme.ThemeColorManager.applyThemeColor(this);
+        
         // 初始化主题管理器并应用主题（必须在 super.onCreate 之前）
         themeManager = new ThemeManager(this);
         themeManager.applyThemeFromSettings();
@@ -115,6 +118,9 @@ public class MainActivity extends AppCompatActivity implements
 
         // 先初始化基本 UI 控件
         mainLayout = findViewById(R.id.mainLayout);
+        
+        // 应用UI透明度设置
+        applyUiOpacity();
 
         // 初始化需要 View 的管理器
         MainInitializationDelegate.InitAfterResult afterResult =
@@ -139,14 +145,29 @@ public class MainActivity extends AppCompatActivity implements
         importDelegate.setOnImportCompleteListener(this::onImportComplete);
         controlFragmentDelegate = new MainControlFragmentDelegate(this, fragmentNavigator, uiManager);
 
+        // 【关键】在初始化界面之前检查是否需要恢复到设置页面
+        // 这样可以避免先显示游戏主页再跳转到设置的闪烁
+        android.content.SharedPreferences prefs = getSharedPreferences("app_prefs", Context.MODE_PRIVATE);
+        boolean restoreSettings = prefs.getBoolean("restore_settings_after_recreate", false);
+        if (restoreSettings) {
+            // 清除标志
+            prefs.edit().putBoolean("restore_settings_after_recreate", false).apply();
+        }
+        
         // 初始化界面
         setupUI();
-
+        
         // 检查初始化状态
         if (initDelegate.needInitialization(this)) {
             initDelegate.showInitializationFragment(this, fragmentNavigator, uiManager);
         } else {
             initDelegate.initializeApp(this, runtimeSelectorManager, fragmentNavigator, btnRuntimeSelector);
+        }
+        
+        // 如果需要恢复设置页面，在 UI 初始化完成后立即显示（无延迟）
+        if (restoreSettings && navigationDelegate != null) {
+            // 立即显示设置页面，避免先显示游戏页面造成的闪烁
+            navigationDelegate.showSettingsPage();
         }
     }
     
@@ -560,6 +581,47 @@ public class MainActivity extends AppCompatActivity implements
      */
     public void updateVideoBackground() {
         uiDelegate.updateVideoBackground(this, themeManager);
+    }
+
+    /**
+     * 更新视频背景播放速度
+     */
+    public void updateVideoBackgroundSpeed(float speed) {
+        uiDelegate.updateVideoBackgroundSpeed(this, speed);
+    }
+
+    /**
+     * 更新视频背景透明度
+     */
+    public void updateVideoBackgroundOpacity(int opacity) {
+        uiDelegate.updateVideoBackgroundOpacity(this, opacity);
+    }
+    
+    /**
+     * 应用UI透明度设置 
+     */
+    private void applyUiOpacity() {
+        if (mainLayout != null) {
+            boolean hasBackground = hasBackgroundSet();
+            
+            // 使用统一工具类计算透明度
+            float uiAlpha = com.app.ralaunch.utils.OpacityHelper.getUiAlphaFromSettings(this, hasBackground);
+            
+            mainLayout.setAlpha(uiAlpha);
+            AppLogger.info("MainActivity", "初始UI透明度: uiAlpha=" + uiAlpha);
+        }
+    }
+    
+    /**
+     * 检查是否设置了背景
+     */
+    private boolean hasBackgroundSet() {
+        com.app.ralaunch.data.SettingsManager settingsManager = 
+            com.app.ralaunch.data.SettingsManager.getInstance(this);
+        String imagePath = settingsManager.getBackgroundImagePath();
+        String videoPath = settingsManager.getBackgroundVideoPath();
+        return (imagePath != null && !imagePath.isEmpty()) || 
+               (videoPath != null && !videoPath.isEmpty());
     }
 
     @Override

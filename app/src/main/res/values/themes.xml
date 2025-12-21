@@ -30,11 +30,14 @@
         <item name="colorOnBackground">@color/md_theme_light_onBackground</item>
         <item name="android:windowBackground">@drawable/bg_main</item>
 
-        <!-- Material 3 表面颜色 (Surface) -->
+        <!-- Material 3 表面颜色 (Surface) - 使用动态取色的浅蓝色调 -->
         <item name="colorSurface">@color/md_theme_light_surface</item>
         <item name="colorOnSurface">@color/md_theme_light_onSurface</item>
         <item name="colorSurfaceVariant">@color/md_theme_light_surfaceVariant</item>
         <item name="colorOnSurfaceVariant">@color/md_theme_light_onSurfaceVariant</item>
+        <item name="colorSurfaceContainer">@color/md_theme_light_surfaceContainer</item>
+        <item name="colorSurfaceContainerHigh">@color/md_theme_light_surfaceContainerHigh</item>
+        <item name="colorSurfaceContainerLow">@color/md_theme_light_surfaceContainerLow</item>
         <item name="colorSurfaceContainerHighest">@color/md_theme_light_surfaceContainerHighest</item>
 
         <!-- Material 3 轮廓颜色 (Outline) -->

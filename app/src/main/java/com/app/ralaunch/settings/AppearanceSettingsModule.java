@@ -2,9 +2,11 @@ package com.app.ralaunch.settings;
 
 import android.app.Activity;
 import android.net.Uri;
+import android.os.Build;
 import android.text.Html;
 import android.text.method.LinkMovementMethod;
 import android.view.View;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.fragment.app.Fragment;
@@ -45,11 +47,25 @@ public class AppearanceSettingsModule implements SettingsModule {
             BaseFragment baseFragment = (BaseFragment) fragment;
             imagePickerLauncher = baseFragment.registerForActivityResult(
                 new androidx.activity.result.contract.ActivityResultContracts.GetContent(),
-                this::handleImageSelection
+                uri -> {
+                    try {
+                        handleImageSelection(uri);
+                    } catch (Exception e) {
+                        AppLogger.error("AppearanceSettingsModule", "处理图片选择结果失败: " + e.getMessage(), e);
+                        Toast.makeText(fragment.requireContext(), "处理图片失败: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    }
+                }
             );
             videoPickerLauncher = baseFragment.registerForActivityResult(
                 new androidx.activity.result.contract.ActivityResultContracts.GetContent(),
-                this::handleVideoSelection
+                uri -> {
+                    try {
+                        handleVideoSelection(uri);
+                    } catch (Exception e) {
+                        AppLogger.error("AppearanceSettingsModule", "处理视频选择结果失败: " + e.getMessage(), e);
+                        Toast.makeText(fragment.requireContext(), "处理视频失败: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    }
+                }
             );
         }
         
@@ -122,23 +138,92 @@ public class AppearanceSettingsModule implements SettingsModule {
     
     private void setupThemeColorSettings() {
         MaterialCardView themeColorCard = rootView.findViewById(R.id.themeColorCard);
+        MaterialCardView cardThemeColorPreview = rootView.findViewById(R.id.cardThemeColorPreview);
 
         if (themeColorCard != null) {
+            // 初始化显示当前实际应用的主题颜色（从主题中获取，而不是使用默认值）
+            if (cardThemeColorPreview != null) {
+                // 获取当前实际应用的 colorPrimary
+                android.util.TypedValue typedValue = new android.util.TypedValue();
+                fragment.requireContext().getTheme().resolveAttribute(
+                    com.google.android.material.R.attr.colorPrimary, 
+                    typedValue, 
+                    true
+                );
+                int actualColor = typedValue.data;
+                cardThemeColorPreview.setCardBackgroundColor(actualColor);
+            }
+
             themeColorCard.setOnClickListener(v -> {
-                int currentColor = settingsManager.getThemeColor();
+                // 获取当前实际应用的主题颜色
+                android.util.TypedValue typedValue = new android.util.TypedValue();
+                fragment.requireContext().getTheme().resolveAttribute(
+                    com.google.android.material.R.attr.colorPrimary, 
+                    typedValue, 
+                    true
+                );
+                int currentColor = typedValue.data;
+                
                 ColorPickerDialog dialog = ColorPickerDialog.newInstance(currentColor);
 
                 dialog.setOnColorSelectedListener(color -> {
-                    int oldColor = settingsManager.getThemeColor();
-                    settingsManager.setThemeColor(color);
+                    // 获取当前实际应用的颜色进行对比
+                    android.util.TypedValue oldTypedValue = new android.util.TypedValue();
+                    fragment.requireContext().getTheme().resolveAttribute(
+                        com.google.android.material.R.attr.colorPrimary, 
+                        oldTypedValue, 
+                        true
+                    );
+                    int oldColor = oldTypedValue.data;
+                    
+                    // 更新预览颜色
+                    if (cardThemeColorPreview != null) {
+                        cardThemeColorPreview.setCardBackgroundColor(color);
+                    }
                     
                     if (color != oldColor) {
+                        // 保存新颜色
+                        settingsManager.setThemeColor(color);
+                        
                         Activity activity = fragment.getActivity();
-                        if (activity instanceof androidx.appcompat.app.AppCompatActivity && activity.getWindow() != null) {
-                            // 直接设置窗口背景颜色
-                            android.graphics.drawable.ColorDrawable background = 
-                                new android.graphics.drawable.ColorDrawable(color);
-                            activity.getWindow().setBackgroundDrawable(background);
+                        if (activity instanceof androidx.appcompat.app.AppCompatActivity) {
+                            // 使用 ThemeManager 应用动态主题颜色
+                            ThemeManager themeManager = new ThemeManager((androidx.appcompat.app.AppCompatActivity) activity);
+                            themeManager.applyCustomThemeColor(color);
+                            
+                            // 保存标记，以便 recreate 后恢复到设置页面
+                            android.content.SharedPreferences prefs = fragment.requireContext()
+                                .getSharedPreferences("app_prefs", android.content.Context.MODE_PRIVATE);
+                            prefs.edit().putBoolean("restore_settings_after_recreate", true).apply();
+                            
+                
+                            if (fragment.isAdded() && fragment.getActivity() != null) {
+                                // 立即关闭所有对话框
+                                androidx.fragment.app.FragmentManager fm = fragment.getParentFragmentManager();
+                                for (androidx.fragment.app.Fragment f : fm.getFragments()) {
+                                    if (f instanceof androidx.fragment.app.DialogFragment) {
+                                        ((androidx.fragment.app.DialogFragment) f).dismiss();
+                                    }
+                                }
+                           
+                                new android.os.Handler().postDelayed(() -> {
+                                    if (fragment.isAdded() && fragment.getActivity() != null) {
+                                      
+                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                            activity.overrideActivityTransition(
+                                                Activity.OVERRIDE_TRANSITION_OPEN, 0, 0
+                                            );
+                                            activity.overrideActivityTransition(
+                                                Activity.OVERRIDE_TRANSITION_CLOSE, 0, 0
+                                            );
+                                        } else {
+                                            activity.overridePendingTransition(0, 0);
+                                        }
+                                     
+                                        activity.recreate();
+                                    }
+                                }, 50);
+                            }
                         }
                     }
                 });
@@ -149,44 +234,61 @@ public class AppearanceSettingsModule implements SettingsModule {
     }
     
     private void setupBackgroundSettings() {
-        // 背景图片设置
-        MaterialCardView backgroundImageCard = rootView.findViewById(R.id.backgroundImageCard);
-        TextView tvBackgroundImageValue = rootView.findViewById(R.id.tvBackgroundImageValue);
+        // 统一背景设置
+        LinearLayout backgroundSelectorLayout = rootView.findViewById(R.id.backgroundSelectorLayout);
+        TextView tvBackgroundValue = rootView.findViewById(R.id.tvBackgroundValue);
+        LinearLayout videoSpeedLayout = rootView.findViewById(R.id.videoSpeedLayout);
+        LinearLayout backgroundOpacityLayout = rootView.findViewById(R.id.backgroundOpacityLayout);
+        
+        // 透明度滑块
+        com.google.android.material.slider.Slider sliderBackgroundOpacity = 
+            rootView.findViewById(R.id.sliderBackgroundOpacity);
+        TextView tvBackgroundOpacityValue = rootView.findViewById(R.id.tvBackgroundOpacityValue);
+        
+        // 视频速度滑块
+        com.google.android.material.slider.Slider sliderVideoSpeed = 
+            rootView.findViewById(R.id.sliderVideoSpeed);
+        TextView tvVideoSpeedValue = rootView.findViewById(R.id.tvVideoSpeedValue);
 
-        if (backgroundImageCard != null && tvBackgroundImageValue != null) {
-            updateBackgroundImageDisplay(tvBackgroundImageValue);
+        if (backgroundSelectorLayout != null && tvBackgroundValue != null) {
+            updateBackgroundDisplay(tvBackgroundValue, videoSpeedLayout, backgroundOpacityLayout);
 
-            backgroundImageCard.setOnClickListener(v -> {
-                try {
-                    if (fragment.isAdded() && fragment.getContext() != null && imagePickerLauncher != null) {
-                        imagePickerLauncher.launch("image/*");
-                    }
-                } catch (Exception e) {
-                    AppLogger.error("AppearanceSettingsModule", "启动图片选择器失败: " + e.getMessage(), e);
-                    if (fragment.isAdded() && fragment.getContext() != null) {
-                        Toast.makeText(fragment.requireContext(), fragment.getString(R.string.appearance_cannot_open_image_picker), Toast.LENGTH_SHORT).show();
-                    }
+            // 背景选择器 - 弹出选择图片或视频
+            backgroundSelectorLayout.setOnClickListener(v -> {
+                showBackgroundTypeDialog();
+            });
+        }
+
+        // 透明度滑块设置
+        if (sliderBackgroundOpacity != null && tvBackgroundOpacityValue != null) {
+            int currentOpacity = settingsManager.getBackgroundOpacity();
+            sliderBackgroundOpacity.setValue(currentOpacity);
+            tvBackgroundOpacityValue.setText(currentOpacity + "%");
+
+            sliderBackgroundOpacity.addOnChangeListener((slider, value, fromUser) -> {
+                int opacity = (int) value;
+                tvBackgroundOpacityValue.setText(opacity + "%");
+                
+                if (fromUser) {
+                    settingsManager.setBackgroundOpacity(opacity);
+                    // 只更新透明度，不重新加载背景
+                    applyOpacityChange(opacity);
                 }
             });
         }
 
-        // 背景视频设置
-        MaterialCardView backgroundVideoCard = rootView.findViewById(R.id.backgroundVideoCard);
-        TextView tvBackgroundVideoValue = rootView.findViewById(R.id.tvBackgroundVideoValue);
+        // 视频速度滑块设置
+        if (sliderVideoSpeed != null && tvVideoSpeedValue != null) {
+            float currentSpeed = settingsManager.getVideoPlaybackSpeed();
+            sliderVideoSpeed.setValue(currentSpeed);
+            tvVideoSpeedValue.setText(String.format("%.1fx", currentSpeed));
 
-        if (backgroundVideoCard != null && tvBackgroundVideoValue != null) {
-            updateBackgroundVideoDisplay(tvBackgroundVideoValue);
-
-            backgroundVideoCard.setOnClickListener(v -> {
-                try {
-                    if (fragment.isAdded() && fragment.getContext() != null && videoPickerLauncher != null) {
-                        videoPickerLauncher.launch("video/*");
-                    }
-                } catch (Exception e) {
-                    AppLogger.error("AppearanceSettingsModule", "启动视频选择器失败: " + e.getMessage(), e);
-                    if (fragment.isAdded() && fragment.getContext() != null) {
-                        Toast.makeText(fragment.requireContext(), fragment.getString(R.string.appearance_cannot_open_video_picker), Toast.LENGTH_SHORT).show();
-                    }
+            sliderVideoSpeed.addOnChangeListener((slider, value, fromUser) -> {
+                tvVideoSpeedValue.setText(String.format("%.1fx", value));
+                
+                if (fromUser) {
+                    settingsManager.setVideoPlaybackSpeed(value);
+                    applyVideoSpeedChange(value);
                 }
             });
         }
@@ -198,25 +300,161 @@ public class AppearanceSettingsModule implements SettingsModule {
                 settingsManager.setBackgroundType("default");
                 settingsManager.setBackgroundImagePath("");
                 settingsManager.setBackgroundVideoPath("");
+                settingsManager.setBackgroundOpacity(75);
+                settingsManager.setVideoPlaybackSpeed(1.0f);
                 
-                TextView tvBgImage = rootView.findViewById(R.id.tvBackgroundImageValue);
-                TextView tvBgVideo = rootView.findViewById(R.id.tvBackgroundVideoValue);
-                if (tvBgImage != null) updateBackgroundImageDisplay(tvBgImage);
-                if (tvBgVideo != null) updateBackgroundVideoDisplay(tvBgVideo);
+                updateBackgroundDisplay(tvBackgroundValue, videoSpeedLayout, backgroundOpacityLayout);
+                if (sliderBackgroundOpacity != null && tvBackgroundOpacityValue != null) {
+                    sliderBackgroundOpacity.setValue(75);
+                    tvBackgroundOpacityValue.setText("75%");
+                }
+                if (sliderVideoSpeed != null && tvVideoSpeedValue != null) {
+                    sliderVideoSpeed.setValue(1.0f);
+                    tvVideoSpeedValue.setText("1.0x");
+                }
                 
-                Activity activity = fragment.getActivity();
-                if (activity instanceof androidx.appcompat.app.AppCompatActivity) {
-                    ThemeManager themeManager = 
-                        new ThemeManager((androidx.appcompat.app.AppCompatActivity) activity);
-                    themeManager.applyBackgroundFromSettings();
-                    
-                    if (activity instanceof MainActivity) {
-                        ((MainActivity) activity).updateVideoBackground();
+                applyBackgroundChanges();
+                Toast.makeText(fragment.requireContext(), fragment.getString(R.string.appearance_background_restored), Toast.LENGTH_SHORT).show();
+            });
+        }
+    }
+
+    private void showBackgroundTypeDialog() {
+        List<OptionSelectorDialog.Option> options = Arrays.asList(
+            new OptionSelectorDialog.Option("image",
+                fragment.getString(R.string.appearance_select_image),
+                fragment.getString(R.string.appearance_select_image_desc)),
+            new OptionSelectorDialog.Option("video",
+                fragment.getString(R.string.appearance_select_video),
+                fragment.getString(R.string.appearance_select_video_desc))
+        );
+
+        OptionSelectorDialog dialog = new OptionSelectorDialog()
+            .setTitle(fragment.getString(R.string.appearance_select_background_type))
+            .setIcon(R.drawable.ic_settings)
+            .setOptions(options)
+            .setAutoCloseOnSelect(true)
+            .setOnOptionSelectedListener(value -> {
+                if ("image".equals(value)) {
+                    try {
+                        if (fragment.isAdded() && fragment.getContext() != null && imagePickerLauncher != null) {
+                            imagePickerLauncher.launch("image/*");
+                        }
+                    } catch (Exception e) {
+                        AppLogger.error("AppearanceSettingsModule", "启动图片选择器失败: " + e.getMessage(), e);
+                        Toast.makeText(fragment.requireContext(), fragment.getString(R.string.appearance_cannot_open_image_picker), Toast.LENGTH_SHORT).show();
                     }
-                    
-                    Toast.makeText(fragment.requireContext(), fragment.getString(R.string.appearance_background_restored), Toast.LENGTH_SHORT).show();
+                } else if ("video".equals(value)) {
+                    try {
+                        if (fragment.isAdded() && fragment.getContext() != null && videoPickerLauncher != null) {
+                            videoPickerLauncher.launch("video/*");
+                        }
+                    } catch (Exception e) {
+                        AppLogger.error("AppearanceSettingsModule", "启动视频选择器失败: " + e.getMessage(), e);
+                        Toast.makeText(fragment.requireContext(), fragment.getString(R.string.appearance_cannot_open_video_picker), Toast.LENGTH_SHORT).show();
+                    }
                 }
             });
+        dialog.show(fragment.getParentFragmentManager(), "background_type_dialog");
+    }
+
+    private void updateBackgroundDisplay(TextView tvValue, LinearLayout videoSpeedLayout, LinearLayout backgroundOpacityLayout) {
+        String backgroundType = settingsManager.getBackgroundType();
+        String imagePath = settingsManager.getBackgroundImagePath();
+        String videoPath = settingsManager.getBackgroundVideoPath();
+        
+        boolean hasBackground = false;
+        
+        if ("image".equals(backgroundType) && !imagePath.isEmpty()) {
+            tvValue.setText(fragment.getString(R.string.appearance_background_image));
+            if (videoSpeedLayout != null) {
+                videoSpeedLayout.setVisibility(android.view.View.GONE);
+            }
+            hasBackground = true;
+        } else if ("video".equals(backgroundType) && !videoPath.isEmpty()) {
+            tvValue.setText(fragment.getString(R.string.appearance_background_video));
+            if (videoSpeedLayout != null) {
+                videoSpeedLayout.setVisibility(android.view.View.VISIBLE);
+            }
+            hasBackground = true;
+        } else {
+            tvValue.setText(fragment.getString(R.string.appearance_not_set));
+            if (videoSpeedLayout != null) {
+                videoSpeedLayout.setVisibility(android.view.View.GONE);
+            }
+            hasBackground = false;
+        }
+        
+        // 根据是否有背景显示/隐藏透明度设置
+        if (backgroundOpacityLayout != null) {
+            backgroundOpacityLayout.setVisibility(
+                hasBackground ? android.view.View.VISIBLE : android.view.View.GONE
+            );
+        }
+    }
+
+    private void applyBackgroundChanges() {
+        Activity activity = fragment.getActivity();
+        if (activity instanceof androidx.appcompat.app.AppCompatActivity) {
+            ThemeManager themeManager = 
+                new ThemeManager((androidx.appcompat.app.AppCompatActivity) activity);
+            themeManager.applyBackgroundFromSettings();
+            
+            if (activity instanceof MainActivity) {
+                ((MainActivity) activity).updateVideoBackground();
+            }
+        }
+    }
+
+    private void applyOpacityChange(int opacity) {
+        Activity activity = fragment.getActivity();
+        if (activity instanceof androidx.appcompat.app.AppCompatActivity) {
+            com.app.ralaunch.data.SettingsManager settingsManager = 
+                com.app.ralaunch.data.SettingsManager.getInstance(activity);
+            String imagePath = settingsManager.getBackgroundImagePath();
+            String videoPath = settingsManager.getBackgroundVideoPath();
+            boolean hasBackground = (imagePath != null && !imagePath.isEmpty()) || 
+                                   (videoPath != null && !videoPath.isEmpty());
+            
+            // 使用统一工具类计算透明度
+            float uiAlpha = com.app.ralaunch.utils.OpacityHelper.getUiAlpha(opacity, hasBackground);
+            int overlayAlpha = com.app.ralaunch.utils.OpacityHelper.getOverlayAlpha(opacity);
+            
+            // 更新主布局透明度（控制所有UI元素）
+            android.view.View mainLayout = activity.findViewById(com.app.ralaunch.R.id.mainLayout);
+            if (mainLayout != null) {
+                mainLayout.setAlpha(uiAlpha);
+                AppLogger.info("AppearanceSettingsModule", "UI透明度已更新: opacity=" + opacity + "%, uiAlpha=" + uiAlpha);
+            }
+            
+            // 更新遮罩层透明度（仅在有背景时）
+            android.view.View foregroundOverlay = activity.findViewById(com.app.ralaunch.R.id.foregroundOverlay);
+            if (foregroundOverlay != null && foregroundOverlay.getVisibility() == View.VISIBLE) {
+                android.content.res.Configuration config = activity.getResources().getConfiguration();
+                int nightMode = config.uiMode & android.content.res.Configuration.UI_MODE_NIGHT_MASK;
+                if (nightMode == android.content.res.Configuration.UI_MODE_NIGHT_YES) {
+                    foregroundOverlay.setBackgroundColor((overlayAlpha << 24) | 0x000000);
+                } else {
+                    foregroundOverlay.setBackgroundColor((overlayAlpha << 24) | 0xFFFFFF);
+                }
+                
+                AppLogger.info("AppearanceSettingsModule", "遮罩透明度已更新: overlayAlpha=" + overlayAlpha);
+            }
+            
+            // 如果是视频背景，也更新视频的透明度
+            if (activity instanceof MainActivity) {
+                String backgroundType = settingsManager.getBackgroundType();
+                if ("video".equals(backgroundType)) {
+                    ((MainActivity) activity).updateVideoBackgroundOpacity(opacity);
+                }
+            }
+        }
+    }
+
+    private void applyVideoSpeedChange(float speed) {
+        Activity activity = fragment.getActivity();
+        if (activity instanceof MainActivity) {
+            ((MainActivity) activity).updateVideoBackgroundSpeed(speed);
         }
     }
     
@@ -421,39 +659,77 @@ public class AppearanceSettingsModule implements SettingsModule {
             return;
         }
 
-        String imagePath = getPathFromUri(uri);
-        if (imagePath != null && !imagePath.isEmpty()) {
-            java.io.File imageFile = new java.io.File(imagePath);
-            if (!imageFile.exists()) {
-                Toast.makeText(fragment.requireContext(), fragment.getString(R.string.appearance_file_not_exist, imagePath), Toast.LENGTH_LONG).show();
-                AppLogger.error("AppearanceSettingsModule", "图片文件不存在: " + imagePath);
+
+        try {
+            // 创建背景目录
+            java.io.File backgroundDir = new java.io.File(fragment.requireContext().getFilesDir(), "backgrounds");
+            if (!backgroundDir.exists()) {
+                backgroundDir.mkdirs();
+            }
+            
+            // 生成目标文件名（使用时间戳避免冲突）
+            String fileName = "background_" + System.currentTimeMillis() + ".jpg";
+            java.io.File destFile = new java.io.File(backgroundDir, fileName);
+            
+            // 使用 ContentResolver 复制文件
+            android.content.ContentResolver resolver = fragment.requireContext().getContentResolver();
+            java.io.InputStream inputStream = resolver.openInputStream(uri);
+            if (inputStream == null) {
+                Toast.makeText(fragment.requireContext(), fragment.getString(R.string.appearance_cannot_read_image), Toast.LENGTH_SHORT).show();
                 return;
             }
             
-            settingsManager.setBackgroundImagePath(imagePath);
+            java.io.FileOutputStream outputStream = new java.io.FileOutputStream(destFile);
+            byte[] buffer = new byte[8192];
+            int bytesRead;
+            while ((bytesRead = inputStream.read(buffer)) != -1) {
+                outputStream.write(buffer, 0, bytesRead);
+            }
+            
+            inputStream.close();
+            outputStream.close();
+            
+            AppLogger.info("AppearanceSettingsModule", "背景图片已复制到: " + destFile.getAbsolutePath());
+            
+            // 删除旧的背景图片（如果存在）
+            String oldPath = settingsManager.getBackgroundImagePath();
+            if (oldPath != null && !oldPath.isEmpty()) {
+                java.io.File oldFile = new java.io.File(oldPath);
+                if (oldFile.exists() && oldFile.getParentFile().equals(backgroundDir)) {
+                    if (oldFile.delete()) {
+                        AppLogger.info("AppearanceSettingsModule", "已删除旧背景图片: " + oldPath);
+                    }
+                }
+            }
+            
+            // 保存新路径
+            settingsManager.setBackgroundImagePath(destFile.getAbsolutePath());
             settingsManager.setBackgroundType("image");
             settingsManager.setBackgroundVideoPath("");
             
-            TextView tvBackgroundImageValue = rootView.findViewById(R.id.tvBackgroundImageValue);
-            TextView tvBackgroundVideoValue = rootView.findViewById(R.id.tvBackgroundVideoValue);
-            if (tvBackgroundImageValue != null) updateBackgroundImageDisplay(tvBackgroundImageValue);
-            if (tvBackgroundVideoValue != null) updateBackgroundVideoDisplay(tvBackgroundVideoValue);
-            
-            Activity activity = fragment.getActivity();
-            if (activity instanceof androidx.appcompat.app.AppCompatActivity) {
-                ThemeManager themeManager = 
-                    new ThemeManager((androidx.appcompat.app.AppCompatActivity) activity);
-                themeManager.applyBackgroundFromSettings();
-                
-                if (activity instanceof MainActivity) {
-                    ((MainActivity) activity).updateVideoBackground();
-                }
-                
-                Toast.makeText(fragment.requireContext(), fragment.getString(R.string.appearance_background_image_set), Toast.LENGTH_SHORT).show();
+            // 自动设置透明度为 90%
+            settingsManager.setBackgroundOpacity(90);
+            com.google.android.material.slider.Slider sliderBackgroundOpacity = 
+                rootView.findViewById(R.id.sliderBackgroundOpacity);
+            TextView tvBackgroundOpacityValue = rootView.findViewById(R.id.tvBackgroundOpacityValue);
+            if (sliderBackgroundOpacity != null && tvBackgroundOpacityValue != null) {
+                sliderBackgroundOpacity.setValue(90);
+                tvBackgroundOpacityValue.setText("50%");
             }
-        } else {
-            Toast.makeText(fragment.requireContext(), fragment.getString(R.string.appearance_cannot_get_file_path), Toast.LENGTH_LONG).show();
-            AppLogger.error("AppearanceSettingsModule", "无法从 URI 获取图片路径: " + uri.toString());
+            
+            TextView tvBackgroundValue = rootView.findViewById(R.id.tvBackgroundValue);
+            LinearLayout videoSpeedLayout = rootView.findViewById(R.id.videoSpeedLayout);
+            LinearLayout backgroundOpacityLayout = rootView.findViewById(R.id.backgroundOpacityLayout);
+            if (tvBackgroundValue != null) {
+                updateBackgroundDisplay(tvBackgroundValue, videoSpeedLayout, backgroundOpacityLayout);
+            }
+            
+            applyBackgroundChanges();
+            applyOpacityChange(90);
+
+        } catch (Exception e) {
+            AppLogger.error("AppearanceSettingsModule", "复制背景图片失败: " + e.getMessage(), e);
+            Toast.makeText(fragment.requireContext(), fragment.getString(R.string.appearance_set_background_failed, e.getMessage()), Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -481,23 +757,26 @@ public class AppearanceSettingsModule implements SettingsModule {
             settingsManager.setBackgroundType("video");
             settingsManager.setBackgroundImagePath("");
             
-            TextView tvBackgroundImageValue = rootView.findViewById(R.id.tvBackgroundImageValue);
-            TextView tvBackgroundVideoValue = rootView.findViewById(R.id.tvBackgroundVideoValue);
-            if (tvBackgroundVideoValue != null) updateBackgroundVideoDisplay(tvBackgroundVideoValue);
-            if (tvBackgroundImageValue != null) updateBackgroundImageDisplay(tvBackgroundImageValue);
-            
-            Activity activity = fragment.getActivity();
-            if (activity instanceof androidx.appcompat.app.AppCompatActivity) {
-                ThemeManager themeManager = 
-                    new ThemeManager((androidx.appcompat.app.AppCompatActivity) activity);
-                themeManager.applyBackgroundFromSettings();
-                
-                if (activity instanceof MainActivity) {
-                    ((MainActivity) activity).updateVideoBackground();
-                }
-                
-                Toast.makeText(fragment.requireContext(), fragment.getString(R.string.appearance_background_video_set), Toast.LENGTH_SHORT).show();
+            // 自动设置透明度为 90%
+            settingsManager.setBackgroundOpacity(90);
+            com.google.android.material.slider.Slider sliderBackgroundOpacity = 
+                rootView.findViewById(R.id.sliderBackgroundOpacity);
+            TextView tvBackgroundOpacityValue = rootView.findViewById(R.id.tvBackgroundOpacityValue);
+            if (sliderBackgroundOpacity != null && tvBackgroundOpacityValue != null) {
+                sliderBackgroundOpacity.setValue(90);
+                tvBackgroundOpacityValue.setText("90%");
             }
+            
+            TextView tvBackgroundValue = rootView.findViewById(R.id.tvBackgroundValue);
+            LinearLayout videoSpeedLayout = rootView.findViewById(R.id.videoSpeedLayout);
+            LinearLayout backgroundOpacityLayout = rootView.findViewById(R.id.backgroundOpacityLayout);
+            if (tvBackgroundValue != null) {
+                updateBackgroundDisplay(tvBackgroundValue, videoSpeedLayout, backgroundOpacityLayout);
+            }
+            
+            applyBackgroundChanges();
+            applyOpacityChange(90);
+
         } else {
             Toast.makeText(fragment.requireContext(), fragment.getString(R.string.appearance_cannot_get_file_path), Toast.LENGTH_LONG).show();
             AppLogger.error("AppearanceSettingsModule", "无法从 URI 获取视频路径: " + uri.toString());

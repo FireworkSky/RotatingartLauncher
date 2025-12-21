@@ -2,6 +2,7 @@ package com.app.ralaunch.activity;
 
 import android.view.View;
 
+import com.app.ralaunch.data.SettingsManager;
 import com.app.ralaunch.manager.ThemeManager;
 import com.app.ralaunch.utils.AppLogger;
 import com.app.ralaunch.view.VideoBackgroundView;
@@ -24,13 +25,27 @@ public class MainUiDelegate {
             if (videoBackgroundView == null) {
                 return;
             }
+            
+            SettingsManager settingsManager = SettingsManager.getInstance(activity);
+            
             if (themeManager != null && themeManager.isVideoBackground()) {
                 String videoPath = themeManager.getVideoBackgroundPath();
                 if (videoPath != null && !videoPath.isEmpty()) {
                     videoBackgroundView.setVisibility(View.VISIBLE);
                     videoBackgroundView.setVideoPath(videoPath);
-                    videoBackgroundView.setOpacity(100);
+                    
+                    // 应用透明度设置
+                    // opacity值直接代表背景的透明度（100=完全显示背景）
+                    int opacity = settingsManager.getBackgroundOpacity();
+                    videoBackgroundView.setOpacity(opacity);
+                    
+                    // 应用播放速度设置
+                    float speed = settingsManager.getVideoPlaybackSpeed();
+                    videoBackgroundView.setPlaybackSpeed(speed);
+                    
                     videoBackgroundView.start();
+                    
+                    AppLogger.info("MainUiDelegate", "视频背景已应用 - 透明度: " + opacity + "%, 速度: " + speed + "x");
                 } else {
                     videoBackgroundView.setVisibility(View.GONE);
                     videoBackgroundView.release();
@@ -41,6 +56,30 @@ public class MainUiDelegate {
             }
         } catch (Exception e) {
             AppLogger.error("MainUiDelegate", "更新视频背景失败: " + e.getMessage());
+        }
+    }
+
+    public void updateVideoBackgroundSpeed(MainActivity activity, float speed) {
+        try {
+            VideoBackgroundView videoBackgroundView = activity.findViewById(R.id.videoBackgroundView);
+            if (videoBackgroundView != null && videoBackgroundView.getVisibility() == View.VISIBLE) {
+                videoBackgroundView.setPlaybackSpeed(speed);
+                AppLogger.info("MainUiDelegate", "视频播放速度已更新: " + speed + "x");
+            }
+        } catch (Exception e) {
+            AppLogger.error("MainUiDelegate", "更新视频播放速度失败: " + e.getMessage());
+        }
+    }
+
+    public void updateVideoBackgroundOpacity(MainActivity activity, int opacity) {
+        try {
+            VideoBackgroundView videoBackgroundView = activity.findViewById(R.id.videoBackgroundView);
+            if (videoBackgroundView != null && videoBackgroundView.getVisibility() == View.VISIBLE) {
+                videoBackgroundView.setOpacity(opacity);
+                AppLogger.info("MainUiDelegate", "视频背景透明度已更新: " + opacity + "%");
+            }
+        } catch (Exception e) {
+            AppLogger.error("MainUiDelegate", "更新视频背景透明度失败: " + e.getMessage());
         }
     }
 

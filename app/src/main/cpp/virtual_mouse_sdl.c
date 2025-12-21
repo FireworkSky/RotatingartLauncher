@@ -10,12 +10,22 @@
 #define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, TAG, __VA_ARGS__)
 #define LOGW(...) __android_log_print(ANDROID_LOG_WARN, TAG, __VA_ARGS__)
 
+/* External SDL functions for virtual mouse range limit */
+extern DECLSPEC void SDLCALL SDL_SetVirtualMouseRangeEnabled(SDL_bool enabled);
+extern DECLSPEC void SDLCALL SDL_SetVirtualMouseScreenSize(int width, int height);
+extern DECLSPEC void SDLCALL SDL_SetVirtualMouseRange(float left, float top, float right, float bottom);
+extern DECLSPEC void SDLCALL SDL_ApplyVirtualMouseRangeLimit(int *mouseX, int *mouseY);
+
 // 虚拟鼠标状态（右摇杆使用，自动初始化）
 static int g_vm_initialized = 0;
 static float g_vm_x = 0.0f;
 static float g_vm_y = 0.0f;
 static int g_vm_screen_width = 1920;
 static int g_vm_screen_height = 1080;
+static int g_vm_is_active = 0;  // 右摇杆是否正在使用（0=静止，1=移动中）
+static int g_vm_has_saved_position = 0;  // 是否有保存的位置（0=首次使用，1=已保存）
+static float g_vm_saved_x = 0.0f;  // 右摇杆停止时保存的位置
+static float g_vm_saved_y = 0.0f;
 
 // 鼠标移动范围限制（从屏幕中心向四周扩展的距离，百分比 0.0-1.0）
 // 0.0 = 不扩展（鼠标固定在中心）
@@ -57,6 +67,7 @@ static SDL_Window* get_sdl_window(void) {
 
 /**
  * 自动初始化虚拟鼠标（如果未初始化）
+ * 不会清除已保存的位置
  */
 static void ensure_virtual_mouse_initialized(int screenWidth, int screenHeight) {
     if (!g_vm_initialized) {
@@ -65,6 +76,7 @@ static void ensure_virtual_mouse_initialized(int screenWidth, int screenHeight) 
         g_vm_x = g_vm_screen_width / 2.0f;
         g_vm_y = g_vm_screen_height / 2.0f;
         g_vm_initialized = 1;
+        // 不重置 g_vm_saved_x, g_vm_saved_y, g_vm_has_saved_position
         LOGI("Virtual mouse auto-initialized: screen=%dx%d, pos=(%.0f,%.0f)", 
             g_vm_screen_width, g_vm_screen_height, g_vm_x, g_vm_y);
     }
@@ -72,6 +84,7 @@ static void ensure_virtual_mouse_initialized(int screenWidth, int screenHeight) 
 
 /**
  * 初始化虚拟鼠标（使用实际屏幕尺寸）
+ * 注意：不会清除已保存的位置，保持右摇杆的位置记忆
  */
 JNIEXPORT void JNICALL
 Java_com_app_ralaunch_controls_SDLInputBridge_nativeInitVirtualMouseSDL(
@@ -79,9 +92,18 @@ Java_com_app_ralaunch_controls_SDLInputBridge_nativeInitVirtualMouseSDL(
     
     g_vm_screen_width = screenWidth > 0 ? screenWidth : 1920;
     g_vm_screen_height = screenHeight > 0 ? screenHeight : 1080;
-    g_vm_x = g_vm_screen_width / 2.0f;
-    g_vm_y = g_vm_screen_height / 2.0f;
-    g_vm_initialized = 1;
+    
+    // 只在真正首次初始化时设置位置
+    if (!g_vm_initialized) {
+        g_vm_x = g_vm_screen_width / 2.0f;
+        g_vm_y = g_vm_screen_height / 2.0f;
+        g_vm_initialized = 1;
+    }
+    // 不要重置 g_vm_saved_x, g_vm_saved_y, g_vm_has_saved_position
+    // 保持右摇杆的位置记忆
+    
+    /* 设置SDL的虚拟鼠标屏幕尺寸 */
+    SDL_SetVirtualMouseScreenSize(g_vm_screen_width, g_vm_screen_height);
     
     LOGI("Virtual mouse initialized with real screen: %dx%d, pos=(%.0f,%.0f)", 
         g_vm_screen_width, g_vm_screen_height, g_vm_x, g_vm_y);
@@ -138,13 +160,18 @@ Java_com_app_ralaunch_controls_SDLInputBridge_nativeSetVirtualMouseRangeSDL(
     g_vm_range_right = right;
     g_vm_range_bottom = bottom;
     
+    /* 启用SDL的虚拟鼠标范围限制 */
+    SDL_SetVirtualMouseRangeEnabled(SDL_TRUE);
+    SDL_SetVirtualMouseRange(left, top, right, bottom);
+    
     LOGI("Virtual mouse range (center-based, max 100%%): left=%.0f%%, top=%.0f%%, right=%.0f%%, bottom=%.0f%%",
         left * 100, top * 100, right * 100, bottom * 100);
 }
 
 /**
  * 更新虚拟鼠标位置（相对移动）- 用于右摇杆
- * 直接注入 SDL 鼠标事件
+ * 右摇杆移动时，鼠标在限制范围内累积移动，到达边界后保持在边界
+ * 松开后再次使用时，从上次停止的位置继续
  */
 JNIEXPORT void JNICALL
 Java_com_app_ralaunch_controls_SDLInputBridge_nativeUpdateVirtualMouseDeltaSDL(
@@ -153,29 +180,59 @@ Java_com_app_ralaunch_controls_SDLInputBridge_nativeUpdateVirtualMouseDeltaSDL(
     // 自动初始化虚拟鼠标（如果未初始化）
     ensure_virtual_mouse_initialized(1920, 1080);
     
-    // 更新位置
-    g_vm_x += deltaX;
-    g_vm_y += deltaY;
-    
-    // 计算范围（从屏幕中心向四周扩展，百分比转像素）
-    // 阈值范围 0.0-1.0：0.0=中心点, 1.0=全屏
-    // 实际扩展距离 = 阈值 * 50%（因为从中心到边缘是屏幕的50%）
+    // 计算屏幕中心点
     float centerX = g_vm_screen_width * 0.5f;
     float centerY = g_vm_screen_height * 0.5f;
     
+    // 检测右摇杆是否正在移动
+    int is_moving = (deltaX != 0.0f || deltaY != 0.0f);
+    
+    if (!is_moving) {
+        // 右摇杆停止，保存当前位置
+        if (g_vm_is_active) {
+            g_vm_saved_x = g_vm_x;
+            g_vm_saved_y = g_vm_y;
+            g_vm_is_active = 0;
+            LOGD("Right joystick stopped, saved position: (%.0f, %.0f)", g_vm_saved_x, g_vm_saved_y);
+        }
+        return;  // 不移动
+    }
+    
+    // 右摇杆正在移动
+    if (!g_vm_is_active) {
+        // 刚开始移动
+        if (!g_vm_has_saved_position) {
+            // 首次使用，初始化到中心点
+            g_vm_x = centerX;
+            g_vm_y = centerY;
+            g_vm_saved_x = centerX;
+            g_vm_saved_y = centerY;
+            g_vm_has_saved_position = 1;  // 标记已有保存位置
+            LOGI("First use: virtual mouse at center: (%.0f, %.0f)", g_vm_x, g_vm_y);
+        } else {
+            // 恢复到上次保存的位置
+            g_vm_x = g_vm_saved_x;
+            g_vm_y = g_vm_saved_y;
+            LOGI("Resumed from saved position: (%.0f, %.0f)", g_vm_x, g_vm_y);
+        }
+        g_vm_is_active = 1;
+    }
+    
+    // 累积移动量
+    g_vm_x += deltaX;
+    g_vm_y += deltaY;
+    
+    // 计算范围限制（从屏幕中心向四周扩展，百分比转像素）
     float minX = centerX - (g_vm_range_left * centerX);   // 向左扩展：阈值 * 50%宽度
     float maxX = centerX + (g_vm_range_right * centerX);  // 向右扩展：阈值 * 50%宽度
     float minY = centerY - (g_vm_range_top * centerY);    // 向上扩展：阈值 * 50%高度
     float maxY = centerY + (g_vm_range_bottom * centerY); // 向下扩展：阈值 * 50%高度
     
-    // 限制在范围内
+    // 限制在范围内，到达边界后保持在边界
     if (g_vm_x < minX) g_vm_x = minX;
     if (g_vm_x > maxX) g_vm_x = maxX;
     if (g_vm_y < minY) g_vm_y = minY;
     if (g_vm_y > maxY) g_vm_y = maxY;
-    
-    // 不使用 SDL_WarpMouseInWindow，只更新内部位置追踪
-    // 实际的鼠标移动通过 sendMouseMove 发送相对移动事件
 }
 
 /**

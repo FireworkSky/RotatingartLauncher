@@ -1,275 +1,239 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 紧凑MD3风格颜色选择器 - 左右分栏布局 -->
+<!-- 仿照图示风格的颜色选择器 - 左右分栏布局 -->
 <com.google.android.material.card.MaterialCardView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="12dp"
-    app:cardCornerRadius="20dp"
+    android:layout_margin="8dp"
+    app:cardCornerRadius="16dp"
     app:cardElevation="8dp"
     app:cardBackgroundColor="?attr/colorSurface"
     style="@style/Widget.Material3.CardView.Elevated">
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical">
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="400dp"
         android:orientation="vertical"
-        android:padding="8dp">
+        android:padding="16dp">
 
-        <!-- 标题栏 -->
+        <!-- 主体内容区：左右分栏 -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:layout_marginBottom="6dp">
+            android:orientation="horizontal">
 
-            <TextView
-                android:layout_width="0dp"
+            <!-- 左侧区域：信息和预设 -->
+            <LinearLayout
+                android:layout_width="100dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="选择主题颜色"
-                android:textColor="?attr/colorOnSurface"
-                android:textSize="16sp"
-                android:textStyle="bold" />
-
-            <ImageButton
-                android:id="@+id/btnClose"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:src="@android:drawable/ic_menu_close_clear_cancel"
-                android:contentDescription="关闭"
-                app:tint="?attr/colorOnSurfaceVariant" />
-        </LinearLayout>
-
-        <!-- 左右分栏容器 -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginBottom="6dp">
-
-            <!-- 左侧：颜色显示和输入区域 -->
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="0.8"
                 android:orientation="vertical"
-                android:layout_marginEnd="8dp">
+                android:paddingEnd="16dp">
 
-                <!-- 颜色预览区域 - MD3风格：当前颜色 -> 选中颜色 -->
+                <!-- 标题栏 -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
+                    android:layout_marginBottom="12dp"
                     android:gravity="center_vertical"
-                    android:layout_marginBottom="4dp"
-                    android:padding="6dp"
-                    android:background="?attr/colorSurfaceVariant"
-                    android:backgroundTint="?attr/colorSurfaceVariant"
-                    app:cornerRadius="12dp">
+                    android:orientation="horizontal">
 
-                    <!-- 当前颜色预览块（保存的颜色） -->
-                    <LinearLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:gravity="center">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="当前"
-                            android:textColor="?attr/colorOnSurfaceVariant"
-                            android:textSize="10sp"
-                            android:layout_marginBottom="2dp" />
-
-                        <com.google.android.material.card.MaterialCardView
-                            android:id="@+id/selectedColorBlock"
-                            android:layout_width="40dp"
-                            android:layout_height="40dp"
-                            app:cardCornerRadius="8dp"
-                            app:cardElevation="2dp"
-                            app:cardBackgroundColor="#9C7AE8" />
-                    </LinearLayout>
-
-                    <!-- 箭头指向 -->
+                    <!-- 简单的图标模拟 -->
                     <ImageView
                         android:layout_width="20dp"
                         android:layout_height="20dp"
-                        android:src="@drawable/ralib_ic_arrow_right"
-                        android:layout_marginStart="8dp"
-                        android:layout_marginEnd="8dp" />
+                        android:layout_marginEnd="8dp"
+                        android:src="@android:drawable/ic_menu_edit"
+                        app:tint="?attr/colorPrimary" />
 
-                    <!-- 选中颜色块（正在选择的颜色） -->
-                    <LinearLayout
+                    <TextView
+                        android:id="@+id/tvTitle"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:gravity="center">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="选中"
-                            android:textColor="?attr/colorOnSurfaceVariant"
-                            android:textSize="10sp"
-                            android:layout_marginBottom="2dp" />
-
-                        <com.google.android.material.card.MaterialCardView
-                            android:id="@+id/colorPreview"
-                            android:layout_width="40dp"
-                            android:layout_height="40dp"
-                            app:cardCornerRadius="8dp"
-                            app:cardElevation="2dp"
-                            app:cardBackgroundColor="#9C7AE8" />
-                    </LinearLayout>
+                        android:text="颜色选取器"
+                        android:textColor="?attr/colorOnSurface"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
                 </LinearLayout>
 
-                <!-- HEX输入 - MD3风格 -->
-                <com.google.android.material.textfield.TextInputLayout
+                <!-- 大块颜色预览 -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/colorPreview"
+                    android:layout_width="match_parent"
+                    android:layout_height="60dp"
+                    android:layout_marginBottom="16dp"
+                    app:cardBackgroundColor="#E4784C"
+                    app:cardCornerRadius="8dp"
+                    app:cardElevation="0dp"
+                    app:strokeColor="?attr/colorOutlineVariant"
+                    app:strokeWidth="1dp" />
+
+                <!-- 十六进制输入 -->
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="4dp"
-                    app:boxBackgroundMode="outline"
-                    app:boxCornerRadiusTopStart="10dp"
-                    app:boxCornerRadiusTopEnd="10dp"
-                    app:boxCornerRadiusBottomStart="10dp"
-                    app:boxCornerRadiusBottomEnd="10dp"
-                    app:hintEnabled="true"
-                    android:hint="十六进制"
-                    style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
+                    android:layout_marginBottom="8dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
 
-                    <LinearLayout
-                        android:layout_width="match_parent"
+                    <TextView
+                        android:layout_width="60dp"
                         android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:gravity="center_vertical">
+                        android:text="十六进制"
+                        android:textColor="?attr/colorOnSurfaceVariant"
+                        android:textSize="12sp" />
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:layout_width="0dp"
+                        android:layout_height="40dp"
+                        android:layout_weight="1"
+                        app:boxBackgroundMode="outline"
+                        app:boxCornerRadiusBottomEnd="4dp"
+                        app:boxCornerRadiusBottomStart="4dp"
+                        app:boxCornerRadiusTopEnd="4dp"
+                        app:boxCornerRadiusTopStart="4dp"
+                        app:boxStrokeWidth="1dp"
+                        app:contentPadding="0dp"
+                        app:hintEnabled="false">
 
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/tvHexDisplay"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text="#9C7AE8"
-                            android:textSize="12sp"
-                            android:fontFamily="monospace"
-                            android:inputType="none"
-                            android:focusable="false"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
                             android:clickable="false"
-                            android:textColor="?attr/colorOnSurface" />
+                            android:focusable="false"
+                            android:fontFamily="monospace"
+                            android:gravity="center"
+                            android:inputType="none"
+                            android:padding="0dp"
+                            android:text="#E4784C"
+                            android:textColor="?attr/colorOnSurface"
+                            android:textSize="12sp" />
+                    </com.google.android.material.textfield.TextInputLayout>
 
-                        <ImageButton
-                            android:id="@+id/btnCopyHex"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-                            android:background="?attr/selectableItemBackgroundBorderless"
-                            android:src="@drawable/ic_content_copy"
-                            android:contentDescription="复制"
-                            app:tint="?attr/colorOnSurfaceVariant" />
-                    </LinearLayout>
-                </com.google.android.material.textfield.TextInputLayout>
+                    <ImageButton
+                        android:id="@+id/btnCopyHex"
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:layout_marginStart="4dp"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:padding="6dp"
+                        android:src="@drawable/ic_content_copy"
+                        app:tint="?attr/colorOnSurfaceVariant" />
+                </LinearLayout>
 
-                <!-- RGB输入 - MD3风格 -->
-                <com.google.android.material.textfield.TextInputLayout
+                <!-- RGB输入 -->
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="4dp"
-                    app:boxBackgroundMode="outline"
-                    app:boxCornerRadiusTopStart="10dp"
-                    app:boxCornerRadiusTopEnd="10dp"
-                    app:boxCornerRadiusBottomStart="10dp"
-                    app:boxCornerRadiusBottomEnd="10dp"
-                    app:hintEnabled="true"
-                    android:hint="RGB"
-                    style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
+                    android:layout_marginBottom="16dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
 
-                    <LinearLayout
-                        android:layout_width="match_parent"
+                    <TextView
+                        android:layout_width="60dp"
                         android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:gravity="center_vertical">
+                        android:text="RGB"
+                        android:textColor="?attr/colorOnSurfaceVariant"
+                        android:textSize="12sp" />
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:layout_width="0dp"
+                        android:layout_height="40dp"
+                        android:layout_weight="1"
+                        app:boxBackgroundMode="outline"
+                        app:boxCornerRadiusBottomEnd="4dp"
+                        app:boxCornerRadiusBottomStart="4dp"
+                        app:boxCornerRadiusTopEnd="4dp"
+                        app:boxCornerRadiusTopStart="4dp"
+                        app:boxStrokeWidth="1dp"
+                        app:hintEnabled="false">
 
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/tvRgbDisplay"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text="156, 122, 232"
-                            android:textSize="12sp"
-                            android:fontFamily="monospace"
-                            android:inputType="none"
-                            android:focusable="false"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
                             android:clickable="false"
-                            android:textColor="?attr/colorOnSurface" />
+                            android:focusable="false"
+                            android:fontFamily="monospace"
+                            android:gravity="center"
+                            android:inputType="none"
+                            android:padding="0dp"
+                            android:text="228, 120, 76"
+                            android:textColor="?attr/colorOnSurface"
+                            android:textSize="12sp" />
+                    </com.google.android.material.textfield.TextInputLayout>
 
-                        <ImageButton
-                            android:id="@+id/btnCopyRgb"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-                            android:background="?attr/selectableItemBackgroundBorderless"
-                            android:src="@drawable/ic_content_copy"
-                            android:contentDescription="复制"
-                            app:tint="?attr/colorOnSurfaceVariant" />
-                    </LinearLayout>
-                </com.google.android.material.textfield.TextInputLayout>
+                    <ImageButton
+                        android:id="@+id/btnCopyRgb"
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:layout_marginStart="4dp"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:padding="6dp"
+                        android:src="@drawable/ic_content_copy"
+                        app:tint="?attr/colorOnSurfaceVariant" />
+                </LinearLayout>
+
+                <!-- 基本颜色（预设） -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
+                    android:text="基本颜色"
+                    android:textColor="?attr/colorOnSurfaceVariant"
+                    android:textSize="12sp" />
+
+                <GridLayout
+                    android:id="@+id/gridPresets"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:alignmentMode="alignMargins"
+                    android:columnCount="8"
+                    android:rowCount="2"
+                    android:useDefaultMargins="true">
+                    <!-- 预设颜色将通过代码动态添加 -->
+                </GridLayout>
 
             </LinearLayout>
 
-            <!-- 右侧：颜色选择器 -->
+            <!-- 右侧区域：颜色选择器 -->
             <com.app.ralib.ui.ColorPickerView
                 android:id="@+id/colorPicker"
                 android:layout_width="0dp"
-                android:layout_height="100dp"
-                android:layout_weight="1.2"
-                android:minHeight="80dp" />
+                android:layout_height="240dp"
+                android:layout_weight="1"
+                android:minHeight="200dp" />
+
         </LinearLayout>
 
-        <!-- 底部按钮区域 - MD3 风格 -->
+        <!-- 底部按钮区域 -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
+            android:layout_marginTop="16dp"
             android:gravity="end"
-            android:layout_marginTop="4dp"
-            android:paddingTop="2dp"
-            android:paddingBottom="2dp">
+            android:orientation="horizontal">
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnCancel"
+                style="@style/Widget.Material3.Button.TextButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="取消"
-                android:textSize="13sp"
-                android:paddingStart="16dp"
-                android:paddingEnd="16dp"
-                android:minHeight="36dp"
-                android:minWidth="0dp"
-                android:visibility="visible"
-                style="@style/Widget.Material3.Button.TextButton" />
+                android:textSize="13sp" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnConfirm"
+                style="@style/Widget.Material3.Button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
                 android:text="确定"
-                android:textSize="13sp"
-                android:paddingStart="16dp"
-                android:paddingEnd="16dp"
-                android:minHeight="36dp"
-                android:minWidth="0dp"
-                android:layout_marginStart="6dp"
-                android:visibility="visible"
-                style="@style/Widget.Material3.Button" />
+                android:textSize="13sp" />
         </LinearLayout>
-    </LinearLayout>
+
     </LinearLayout>
 
 </com.google.android.material.card.MaterialCardView>

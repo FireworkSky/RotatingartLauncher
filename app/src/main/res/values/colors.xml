@@ -2,11 +2,11 @@
 <resources>
     <!-- Material Design 3 颜色系统 -->
 
-    <!-- 主色调 (Primary) - 更柔和的紫色 -->
-    <color name="md_theme_light_primary">#9C7AE8</color>
+    <!-- 主色调 (Primary) - 精致的浅蓝色，提升高级感 -->
+    <color name="md_theme_light_primary">#5B8DEF</color>
     <color name="md_theme_light_onPrimary">#FFFFFF</color>
-    <color name="md_theme_light_primaryContainer">#FFFFFF</color>
-    <color name="md_theme_light_onPrimaryContainer">#4A148C</color>
+    <color name="md_theme_light_primaryContainer">#E8F2FF</color>
+    <color name="md_theme_light_onPrimaryContainer">#1E3A5F</color>
 
     <!-- 次色调 (Secondary) -->
     <color name="md_theme_light_secondary">#9965F4</color>
@@ -26,27 +26,30 @@
     <color name="md_theme_light_onError">#FFFFFF</color>
     <color name="md_theme_light_onErrorContainer">#410002</color>
 
-    <!-- 背景色 (Background) -->
-    <color name="md_theme_light_background">#FFFFFF</color>
+    <!-- 背景色 (Background) - 使用精致的浅蓝色调 -->
+    <color name="md_theme_light_background">#FAFBFC</color>
     <color name="md_theme_light_onBackground">#1C1B1F</color>
 
-    <!-- 表面色 (Surface) - 统一为纯白色 -->
-    <color name="md_theme_light_surface">#FFFFFF</color>
+    <!-- 表面色 (Surface) - 使用精致的浅蓝色调，提升高级感 -->
+    <color name="md_theme_light_surface">#FAFBFC</color>
     <color name="md_theme_light_onSurface">#1C1B1F</color>
-    <color name="md_theme_light_surfaceVariant">#F8F8F8</color>
+    <color name="md_theme_light_surfaceVariant">#F2F4F8</color>
     <color name="md_theme_light_onSurfaceVariant">#49454F</color>
-    <color name="md_theme_light_surfaceContainerHighest">#F0F0F0</color>
+    <color name="md_theme_light_surfaceContainerHighest">#EAECF0</color>
+    <color name="md_theme_light_surfaceContainer">#F5F7FA</color>
+    <color name="md_theme_light_surfaceContainerHigh">#F2F4F8</color>
+    <color name="md_theme_light_surfaceContainerLow">#F7F9FC</color>
 
     <!-- 轮廓线 (Outline) - 增强对比度 -->
     <color name="md_theme_light_outline">#79747E</color>
     <color name="md_theme_light_outlineVariant">#E0E0E0</color>
 
     <!-- 浅色主题颜色（向后兼容） -->
-    <!-- 背景色 -->
-    <color name="background_primary">#FFFFFF</color>
-    <color name="background_secondary">#F5F5F5</color>
-    <color name="background_card">#FAFAFA</color>
-    <color name="background_sidebar">#E0E0E0</color>
+    <!-- 背景色 - 使用精致的浅蓝色调 -->
+    <color name="background_primary">#FAFBFC</color>
+    <color name="background_secondary">#F2F4F8</color>
+    <color name="background_card">#FAFBFC</color>
+    <color name="background_sidebar">#EAECF0</color>
     <color name="background_dark">#000000</color>
 
     <!-- 文本颜色 -->

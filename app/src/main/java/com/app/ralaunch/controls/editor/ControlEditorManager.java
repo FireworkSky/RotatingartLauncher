@@ -177,8 +177,9 @@ public class ControlEditorManager {
         
         // 设置控件点击监听器
         mControlLayout.setEditControlListener(data -> {
-            if (mControlEditDialog != null) {
-                mControlEditDialog.show(data);
+            if (mControlEditDialog != null && mContext instanceof androidx.fragment.app.FragmentActivity) {
+                androidx.fragment.app.FragmentActivity activity = (androidx.fragment.app.FragmentActivity) mContext;
+                mControlEditDialog.showWithData(activity.getSupportFragmentManager(), "control_edit", data);
             }
         });
         
@@ -288,8 +289,8 @@ public class ControlEditorManager {
     private void initControlEditDialog() {
         if (mControlEditDialog != null) return;
         
-        // Context应该已经应用了语言设置（从Activity传递过来的）
-        mControlEditDialog = new ControlEditDialogMD(mContext, mScreenWidth, mScreenHeight);
+        // 使用 DialogFragment 的静态工厂方法创建
+        mControlEditDialog = ControlEditDialogMD.newInstance(mScreenWidth, mScreenHeight);
         
         // 设置实时更新监听器
         mControlEditDialog.setOnControlUpdatedListener(control -> {
@@ -665,7 +666,7 @@ public class ControlEditorManager {
      * 编辑对话框是否正在显示
      */
     public boolean isEditDialogShowing() {
-        return mControlEditDialog != null && mControlEditDialog.isShowing();
+        return mControlEditDialog != null && mControlEditDialog.isAdded();
     }
     
     /**

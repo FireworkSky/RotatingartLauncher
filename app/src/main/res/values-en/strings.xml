@@ -465,8 +465,19 @@
     <string name="appearance_no_file_selected">No file selected</string>
     <string name="appearance_ui_not_initialized">UI not initialized</string>
     <string name="appearance_file_not_exist">File does not exist: %s</string>
+    <string name="appearance_background_image">Image Background</string>
+    <string name="appearance_background_video">Video Background</string>
+    <string name="appearance_select_background_type">Select Background Type</string>
+    <string name="appearance_select_image">Select Image</string>
+    <string name="appearance_select_image_desc">Select image from gallery as background</string>
+    <string name="appearance_select_video">Select Video</string>
+    <string name="appearance_select_video_desc">Select video from gallery as background</string>
+    <string name="appearance_cannot_read_image">Cannot read image</string>
+    <string name="appearance_set_background_failed">Failed to set background: %s</string>
+    <string name="appearance_image_background_set">Image background set, opacity automatically adjusted to 90%%</string>
     <string name="appearance_background_image_set">Background image set</string>
     <string name="appearance_cannot_get_file_path">Cannot get file path, please try again</string>
+    <string name="appearance_video_background_set">Video background set, opacity automatically adjusted to 90%%</string>
     <string name="appearance_background_video_set">Video background set</string>
 
     <!-- UnifiedEditorSettingsDialog Messages -->

@@ -11,8 +11,7 @@
     app:cardElevation="0dp"
     app:strokeWidth="2dp"
     app:strokeColor="?attr/colorOutline"
-    app:cardBackgroundColor="?attr/colorSurface"
-    style="@style/Widget.Material3.CardView.Outlined">
+    app:cardBackgroundColor="?attr/colorSurface">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
@@ -31,7 +30,7 @@
             app:cardCornerRadius="16dp"
             app:cardElevation="0dp"
             app:strokeWidth="0dp"
-            app:cardBackgroundColor="?attr/colorSurfaceContainerHighest"
+            app:cardBackgroundColor="?attr/colorSurfaceVariant"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toTopOf="@id/bottomButtons">

@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="horizontal"
-    android:background="?android:attr/colorBackground"
+    android:background="@android:color/transparent"
     android:padding="24dp">
 
     <!-- 左侧：标题和说明 -->
@@ -70,7 +70,7 @@
                     android:layout_height="56dp"
                     app:cardCornerRadius="16dp"
                     app:cardElevation="0dp"
-                    app:cardBackgroundColor="?attr/colorPrimaryContainer"
+                    app:cardBackgroundColor="?attr/colorSurface"
                     android:layout_marginEnd="16dp">
 
                     <ImageView

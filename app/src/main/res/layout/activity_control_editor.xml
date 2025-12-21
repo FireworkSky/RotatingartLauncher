@@ -12,7 +12,7 @@
         android:id="@+id/editor_container"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="?android:attr/colorBackground"
+        android:background="@android:color/transparent"
         android:clipChildren="false"
         android:clipToPadding="false" />
 

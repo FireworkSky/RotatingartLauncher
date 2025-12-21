@@ -20,6 +20,7 @@
         <item name="colorOnSurface">@color/text_primary</item>
         <item name="colorSurfaceVariant">@color/background_secondary</item>
         <item name="colorOnSurfaceVariant">@color/text_secondary</item>
+        <item name="colorSurfaceContainerHighest">@color/md_theme_dark_surfaceVariant</item>
 
         <!-- Material 3 背景色 -->
         <item name="android:colorBackground">@color/background_primary</item>

@@ -2,15 +2,34 @@
 <!-- 主界面 - GitHub/Kotlin 现代化风格 (Material Design 3 + NavigationRail + TopAppBar) -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/rootFrameLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="?android:attr/colorBackground">
+    android:background="?attr/colorSurface">
+
+    <!-- 背景图片视图 -->
+    <ImageView
+        android:id="@+id/backgroundImageView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="centerCrop"
+        android:visibility="gone"
+        android:importantForAccessibility="no" />
 
     <!-- 视频背景视图 -->
     <com.app.ralaunch.view.VideoBackgroundView
         android:id="@+id/videoBackgroundView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:alpha="0"
+        android:visibility="gone" />
+
+    <!-- 前景半透明遮罩 -->
+    <View
+        android:id="@+id/foregroundOverlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@android:color/transparent"
         android:visibility="gone" />
 
     <!-- MD3 Scaffold 风格主布局 -->
@@ -18,14 +37,16 @@
         android:id="@+id/mainLayout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:alpha="1.0"
+        android:background="@android:color/transparent">
 
         <!-- TopAppBar - Material 3 现代化风格（所有页面统一隐藏） -->
         <com.google.android.material.appbar.MaterialToolbar
             android:id="@+id/topAppBar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
-            android:background="?attr/colorSurface"
+            android:background="@android:color/transparent"
             android:elevation="0dp"
             android:visibility="gone"
             app:title="Rotating art Launcher"
@@ -38,7 +59,7 @@
             android:layout_height="0dp"
             android:layout_weight="1"
             android:orientation="horizontal"
-            android:background="?android:attr/colorBackground">
+            android:background="@android:color/transparent">
 
             <ScrollView
                 android:layout_width="wrap_content"
@@ -50,7 +71,7 @@
                     android:id="@+id/navigationRail"
                     android:layout_width="80dp"
                     android:layout_height="match_parent"
-                    android:background="?attr/colorSurface"
+                    android:background="@android:color/transparent"
                     android:paddingTop="8dp"
                     android:paddingBottom="8dp"
                     app:itemIconTint="@color/navigation_rail_item_color"
@@ -66,7 +87,7 @@
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
-                android:background="?android:attr/colorBackground">
+                android:background="@android:color/transparent">
 
                 <!-- 游戏列表页面 -->
                 <LinearLayout
@@ -74,7 +95,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:orientation="horizontal"
-                    android:background="?android:attr/colorBackground"
+                    android:background="@android:color/transparent"
                     android:padding="16dp"
                     android:visibility="visible">
 
@@ -84,6 +105,7 @@
                         android:layout_height="match_parent"
                         android:layout_weight="3"
                         android:layout_marginEnd="12dp"
+                        app:cardBackgroundColor="?attr/colorSurface"
                         app:strokeWidth="1dp"
                         app:strokeColor="?attr/textSecondary"
                         style="@style/Widget.App.CardView.Standard">
@@ -97,10 +119,10 @@
                                 android:id="@+id/gameRecyclerView"
                                 android:layout_width="match_parent"
                                 android:layout_height="match_parent"
-                                android:padding="12dp"
-                                android:clipToPadding="false"
                                 android:clipChildren="false"
+                                android:clipToPadding="false"
                                 android:overScrollMode="never"
+                                android:padding="12dp"
                                 android:scrollbars="vertical"
                                 app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
                                 app:spanCount="2" />
@@ -172,6 +194,7 @@
                                     android:layout_height="wrap_content"
                                     android:layout_marginTop="8dp"
                                     android:visibility="gone"
+                                    app:cardBackgroundColor="?attr/colorSurface"
                                     app:strokeWidth="1dp"
                                     app:strokeColor="?attr/colorOutline"
                                     style="@style/Widget.App.CardView.Standard">
@@ -275,6 +298,7 @@
                             android:clickable="true"
                             android:focusable="true"
                             android:foreground="?attr/selectableItemBackground"
+                            app:cardBackgroundColor="?attr/colorSurface"
                             app:strokeWidth="1dp"
                             app:strokeColor="?attr/colorOutline"
                             android:visibility="gone"
@@ -360,7 +384,7 @@
                     android:id="@+id/fileManagerPage"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:background="?android:attr/colorBackground"
+                    android:background="@android:color/transparent"
                     android:visibility="gone" />
 
                 <!-- 控制布局页面 -->
@@ -368,7 +392,7 @@
                     android:id="@+id/controlPage"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:background="?android:attr/colorBackground"
+                    android:background="@android:color/transparent"
                     android:visibility="gone" />
 
                 <!-- 下载页面 -->
@@ -376,7 +400,7 @@
                     android:id="@+id/downloadPage"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:background="?android:attr/colorBackground"
+                    android:background="@android:color/transparent"
                     android:visibility="gone" />
 
                 <!-- 设置页面 -->
@@ -384,7 +408,7 @@
                     android:id="@+id/settingsPage"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:background="?android:attr/colorBackground"
+                    android:background="@android:color/transparent"
                     android:visibility="gone" />
 
                 <!-- 导入游戏页面 -->
@@ -392,7 +416,7 @@
                     android:id="@+id/importPage"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:background="?android:attr/colorBackground"
+                    android:background="@android:color/transparent"
                     android:visibility="gone" />
 
             </FrameLayout>
@@ -407,7 +431,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:visibility="gone"
-        android:background="?android:attr/colorBackground"
+        android:background="@android:color/transparent"
         android:elevation="8dp" />
 
 </FrameLayout>

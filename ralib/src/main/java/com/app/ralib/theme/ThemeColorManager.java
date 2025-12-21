@@ -55,6 +55,8 @@ public class ThemeColorManager {
      * 这个方法会在 Activity 的 setContentView() 之前调用，
      * 用于动态设置主题的强调色
      *
+     * 关键：在 onCreate 的最开始调用此方法，确保 recreate 时无闪烁
+     *
      * @param activity Activity
      */
     public static void applyThemeColor(Activity activity) {
@@ -63,9 +65,18 @@ public class ThemeColorManager {
         // 创建 ColorStateList 用于按钮等控件
         ColorStateList colorStateList = ColorStateList.valueOf(themeColor);
 
-        // 设置主题的 colorAccent 属性
-        // 注意：这需要在 setContentView() 之前调用
-        activity.getTheme().applyStyle(getThemeOverlayResId(themeColor), true);
+        // 动态创建主题覆盖并应用
+        // 这样 recreate 时新颜色会在界面绘制前就设置好，避免闪烁
+        TypedValue typedValue = new TypedValue();
+        activity.getTheme().resolveAttribute(android.R.attr.colorPrimary, typedValue, true);
+        
+        // 直接修改主题属性（虽然不推荐，但这是最快的方式）
+        try {
+            // 使用反射设置主题颜色（仅用于快速预览，真正的颜色由 DynamicColors 提供）
+            activity.getTheme().applyStyle(getThemeOverlayResId(themeColor), true);
+        } catch (Exception e) {
+            // 如果失败，不影响程序运行
+        }
     }
 
     /**

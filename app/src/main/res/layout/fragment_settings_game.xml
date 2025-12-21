@@ -5,7 +5,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="?android:attr/colorBackground"
+    android:background="@android:color/transparent"
     tools:context=".fragment.SettingsFragment">
 
     <!-- 设置内容 -->
@@ -32,10 +32,11 @@
                 android:clickable="true"
                 android:focusable="true"
                 android:foreground="?attr/selectableItemBackground"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="0dp"
-                app:strokeWidth="0dp"
-                app:cardBackgroundColor="?attr/colorSurface"
+                app:cardCornerRadius="15dp"
+                app:cardElevation="2dp"
+                app:strokeWidth="0.5dp"
+                app:strokeColor="?attr/colorOutlineVariant"
+                app:cardBackgroundColor="?attr/colorSurfaceContainer"
                 style="@style/Widget.App.CardView.Standard">
 
                 <LinearLayout
@@ -90,10 +91,11 @@
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="12dp"
                 android:visibility="gone"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="0dp"
-                app:strokeWidth="0dp"
-                app:cardBackgroundColor="?attr/colorSurface"
+                app:cardCornerRadius="15dp"
+                app:cardElevation="2dp"
+                app:strokeWidth="0.5dp"
+                app:strokeColor="?attr/colorOutlineVariant"
+                app:cardBackgroundColor="?attr/colorSurfaceContainer"
                 style="@style/Widget.App.CardView.Standard">
 
                 <LinearLayout
@@ -147,10 +149,11 @@
                 android:clickable="true"
                 android:focusable="true"
                 android:foreground="?attr/selectableItemBackground"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="0dp"
-                app:strokeWidth="0dp"
-                app:cardBackgroundColor="?attr/colorSurface"
+                app:cardCornerRadius="15dp"
+                app:cardElevation="2dp"
+                app:strokeWidth="0.5dp"
+                app:strokeColor="?attr/colorOutlineVariant"
+                app:cardBackgroundColor="?attr/colorSurfaceContainer"
                 style="@style/Widget.App.CardView.Standard">
 
                 <LinearLayout
@@ -207,10 +210,11 @@
                 android:clickable="true"
                 android:focusable="true"
                 android:foreground="?attr/selectableItemBackground"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="0dp"
-                app:strokeWidth="0dp"
-                app:cardBackgroundColor="?attr/colorSurface"
+                app:cardCornerRadius="15dp"
+                app:cardElevation="2dp"
+                app:strokeWidth="0.5dp"
+                app:strokeColor="?attr/colorOutlineVariant"
+                app:cardBackgroundColor="?attr/colorSurfaceContainer"
                 style="@style/Widget.App.CardView.Standard">
 
                 <LinearLayout

@@ -47,7 +47,7 @@
                 app:cardElevation="4dp"
                 app:cardBackgroundColor="#66F3EDF7"
                 app:strokeWidth="0dp"
-                android:alpha="0.6"
+                android:alpha="0.75"
                 android:clickable="true"
                 android:focusable="true"
                 android:contentDescription="@string/content_desc_settings"
@@ -74,7 +74,7 @@
                 app:cardElevation="4dp"
                 app:cardBackgroundColor="#66F3EDF7"
                 app:strokeWidth="0dp"
-                android:alpha="0.6"
+                android:alpha="0.75"
                 android:clickable="true"
                 android:focusable="true"
                 android:contentDescription="@string/content_desc_edit_settings"
@@ -85,7 +85,7 @@
                     android:layout_height="20dp"
                     android:layout_gravity="center"
                     android:src="@drawable/ic_settings"
-                    app:tint="?attr/colorOnPrimaryContainer" />
+                    app:tint="?attr/colorOnSurfaceVariant" />
                     
             </com.google.android.material.card.MaterialCardView>
 
@@ -99,7 +99,7 @@
         android:layout_width="280dp"
         android:layout_height="match_parent"
         android:layout_gravity="end"
-        android:background="#E6FFFFFF"
+        android:background="?attr/colorSurface"
         android:alpha="0.90"
         android:divider="@null"
         android:dividerHeight="0dp"

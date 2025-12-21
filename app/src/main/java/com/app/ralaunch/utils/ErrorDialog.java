@@ -124,6 +124,22 @@ public class ErrorDialog extends LocalizedDialog {
         // 初始化视图
         initViews();
         
+        // 应用背景透明度
+        try {
+            float dialogAlpha = OpacityHelper.getDialogAlphaFromSettings(getContext());
+            
+            // 应用到根视图
+            View rootView = findViewById(android.R.id.content);
+            if (rootView instanceof android.view.ViewGroup) {
+                 android.view.ViewGroup viewGroup = (android.view.ViewGroup) rootView;
+                 if (viewGroup.getChildCount() > 0) {
+                     viewGroup.getChildAt(0).setAlpha(dialogAlpha);
+                 }
+            }
+        } catch (Exception e) {
+            // 忽略错误
+        }
+        
         // 设置内容
         setupContent();
         
@@ -172,10 +188,9 @@ public class ErrorDialog extends LocalizedDialog {
             }
         }
         
-        // 根据错误类型设置图标颜色（如果需要）
-        // Material 3 会自动处理错误颜色
+    
         
-        // 致命错误时，确定按钮可以显示不同的文本或行为
+    
         if (okButton != null) {
             okButton.setText(context.getString(R.string.ok));
         }

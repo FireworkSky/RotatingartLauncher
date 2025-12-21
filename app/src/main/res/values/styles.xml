@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- 设置对话框样式 - Material 3 -->
-    <style name="SettingsDialogStyle" parent="Theme.Material3.DayNight.Dialog">
+    <style name="SettingsDialogStyle" parent="Theme.raLaunch">
         <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:windowIsFloating">true</item>
         <item name="android:backgroundDimEnabled">true</item>
@@ -9,7 +9,7 @@
     </style>
 
     <!-- 运行时选择对话框样式 - Material 3 -->
-    <style name="RuntimeDialogStyle" parent="Theme.Material3.DayNight.Dialog">
+    <style name="RuntimeDialogStyle" parent="Theme.raLaunch">
         <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:windowIsFloating">true</item>
         <item name="android:backgroundDimEnabled">true</item>
@@ -18,7 +18,7 @@
     </style>
 
     <!-- 控件编辑对话框样式 - Material 3 -->
-    <style name="ControlEditDialogStyle" parent="Theme.Material3.DayNight.Dialog">
+    <style name="ControlEditDialogStyle" parent="Theme.raLaunch">
         <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:windowIsFloating">true</item>
         <item name="android:backgroundDimEnabled">true</item>
@@ -27,9 +27,6 @@
         <!-- 窗口宽度设置 -->
         <item name="android:windowMinWidthMajor">90%</item>
         <item name="android:windowMinWidthMinor">90%</item>
-        <!-- 确保使用纯白色背景 -->
-        <item name="colorSurface">@color/md_theme_light_surface</item>
-        <item name="colorPrimaryContainer">@color/md_theme_light_surface</item>
     </style>
 
     <!-- 对话框动画样式 -->
@@ -46,28 +43,12 @@
     </style>
 
     <!-- 添加游戏对话框样式 -->
-    <style name="AddGameDialogStyle" parent="Theme.Material3.DayNight.Dialog">
+    <style name="AddGameDialogStyle" parent="Theme.raLaunch">
         <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:windowIsFloating">true</item>
         <item name="android:backgroundDimEnabled">true</item>
         <item name="android:backgroundDimAmount">0.7</item>
         <item name="android:windowAnimationStyle">@style/DialogAnimation</item>
-
-        <!-- 继承主题颜色属性 - 直接映射到Material3标准属性，避免属性解析失败 -->
-        <item name="backgroundPrimary">?android:attr/colorBackground</item>
-        <item name="backgroundSecondary">?attr/colorSurfaceVariant</item>
-        <item name="backgroundCard">?attr/colorSurface</item>
-        <item name="textPrimary">?attr/colorOnSurface</item>
-        <item name="textSecondary">?attr/colorOnSurfaceVariant</item>
-        <item name="colorOutline">@color/md_theme_light_outline</item>
-        <item name="colorOutlineVariant">@color/md_theme_light_outlineVariant</item>
-        <item name="colorPrimary">@color/md_theme_light_primary</item>
-        <item name="colorSecondary">@color/md_theme_light_secondary</item>
-        <item name="colorTertiaryContainer">@color/md_theme_light_tertiaryContainer</item>
-        <item name="colorOnTertiaryContainer">@color/md_theme_light_onTertiaryContainer</item>
-        <item name="colorSurface">@color/md_theme_light_surface</item>
-        <item name="colorOnSurface">@color/md_theme_light_onSurface</item>
-        <item name="colorOnSurfaceVariant">@color/md_theme_light_onSurfaceVariant</item>
     </style>
 
     <!-- Widget 命名空间基础样式 -->
@@ -153,12 +134,12 @@
         <item name="backgroundTint">@android:color/transparent</item>
     </style>
 
-    <!-- Material 3 卡片样式 - 标准卡片（带边框） -->
+    <!-- Material 3 卡片样式 - 标准卡片（精致设计，微妙阴影和边框） -->
     <style name="Widget.App.CardView.Standard" parent="Widget.Material3.CardView.Elevated">
-        <item name="cardCornerRadius">16dp</item>
-        <item name="cardElevation">0dp</item>
-        <item name="cardBackgroundColor">?attr/colorSurface</item>
-        <item name="strokeWidth">1dp</item>
+        <item name="cardCornerRadius">15dp</item>
+        <item name="cardElevation">2dp</item>
+        <item name="cardBackgroundColor">?attr/colorSurfaceContainer</item>
+        <item name="strokeWidth">0.5dp</item>
         <item name="strokeColor">?attr/colorOutlineVariant</item>
     </style>
 
@@ -171,11 +152,11 @@
         <item name="strokeColor">?attr/colorOutline</item>
     </style>
 
-    <!-- Material 3 卡片样式 - 轻量卡片 -->
+    <!-- Material 3 卡片样式 - 轻量卡片（精致设计，微妙阴影） -->
     <style name="Widget.App.CardView.Light" parent="Widget.Material3.CardView.Elevated">
-        <item name="cardCornerRadius">16dp</item>
-        <item name="cardElevation">0dp</item>
-        <item name="cardBackgroundColor">?attr/colorSurfaceVariant</item>
+        <item name="cardCornerRadius">15dp</item>
+        <item name="cardElevation">1dp</item>
+        <item name="cardBackgroundColor">?attr/colorSurfaceContainerLow</item>
         <item name="strokeWidth">0dp</item>
     </style>
 
@@ -227,67 +208,68 @@
         <item name="android:textStyle">bold</item>
     </style>
 
-    <!-- Material 3 卡片样式 - 列表项卡片（带边框） -->
+    <!-- Material 3 卡片样式 - 列表项卡片（精致设计，微妙边框） -->
     <style name="Widget.App.CardView.ListItem" parent="Widget.Material3.CardView.Elevated">
-        <item name="cardCornerRadius">10dp</item>
-        <item name="cardElevation">1dp</item>
-        <item name="cardBackgroundColor">?attr/backgroundCard</item>
-        <item name="strokeWidth">1dp</item>
-        <item name="strokeColor">?attr/textSecondary</item>
+        <item name="cardCornerRadius">15dp</item>
+        <item name="cardElevation">1.5dp</item>
+        <item name="cardBackgroundColor">?attr/colorSurfaceContainer</item>
+        <item name="strokeWidth">0.5dp</item>
+        <item name="strokeColor">?attr/colorOutlineVariant</item>
     </style>
 
-    <!-- Material 3 卡片样式 - 图标容器卡片 -->
+    <!-- Material 3 卡片样式 - 图标容器卡片（使用 Surface Container High 增强对比） -->
     <style name="Widget.App.CardView.IconContainer" parent="Widget.Material3.CardView.Elevated">
         <item name="cardCornerRadius">8dp</item>
         <item name="cardElevation">0dp</item>
+        <item name="cardBackgroundColor">?attr/colorSurfaceContainerHigh</item>
+        <item name="strokeWidth">0dp</item>
     </style>
 
-    <!-- Material 3 卡片样式 - 搜索框卡片 -->
+    <!-- Material 3 卡片样式 - 搜索框卡片（精致设计） -->
     <style name="Widget.App.CardView.SearchBox" parent="Widget.Material3.CardView.Outlined">
-        <item name="cardCornerRadius">16dp</item>
-        <item name="cardElevation">0dp</item>
-        <item name="strokeWidth">1dp</item>
-        <item name="strokeColor">?attr/dividerColor</item>
-        <item name="cardBackgroundColor">?attr/backgroundCard</item>
+        <item name="cardCornerRadius">15dp</item>
+        <item name="cardElevation">1dp</item>
+        <item name="strokeWidth">0.5dp</item>
+        <item name="strokeColor">?attr/colorOutline</item>
+        <item name="cardBackgroundColor">?attr/colorSurfaceContainer</item>
     </style>
 
     <!-- Material 3 卡片样式 - 路径显示卡片 -->
     <style name="Widget.App.CardView.PathDisplay" parent="Widget.Material3.CardView.Elevated">
         <item name="cardCornerRadius">6dp</item>
         <item name="cardElevation">1dp</item>
-        <item name="cardBackgroundColor">?attr/backgroundCard</item>
+        <item name="cardBackgroundColor">?attr/colorSurface</item>
     </style>
 
-    <!-- Material 3 卡片样式 - 文件列表卡片（带边框） -->
+    <!-- Material 3 卡片样式 - 文件列表卡片（精致设计，微妙阴影） -->
     <style name="Widget.App.CardView.FileList" parent="Widget.Material3.CardView.Elevated">
-        <item name="cardCornerRadius">10dp</item>
-        <item name="cardElevation">3dp</item>
-        <item name="cardBackgroundColor">?attr/backgroundCard</item>
-        <item name="strokeWidth">1dp</item>
-        <item name="strokeColor">?attr/textSecondary</item>
+        <item name="cardCornerRadius">15dp</item>
+        <item name="cardElevation">2dp</item>
+        <item name="cardBackgroundColor">?attr/colorSurfaceContainer</item>
+        <item name="strokeWidth">0.5dp</item>
+        <item name="strokeColor">?attr/colorOutlineVariant</item>
     </style>
 
-    <!-- Material 3 卡片样式 - 游戏卡片（带边框） -->
     <style name="Widget.App.CardView.GameItem" parent="Widget.Material3.CardView.Elevated">
-        <item name="cardCornerRadius">16dp</item>
-        <item name="cardElevation">4dp</item>
-        <item name="strokeWidth">1dp</item>
-        <item name="strokeColor">?attr/textSecondary</item>
+        <item name="cardCornerRadius">15dp</item>
+        <item name="cardElevation">3dp</item>
+        <item name="strokeWidth">0dp</item>
+        <item name="cardBackgroundColor">?attr/colorSurfaceContainer</item>
     </style>
 
-    <!-- Material 3 卡片样式 - 删除按钮卡片 -->
+    <!-- Material 3 卡片样式 - 删除按钮卡片（使用 Surface Container High） -->
     <style name="Widget.App.CardView.DeleteButton" parent="Widget.Material3.CardView.Elevated">
         <item name="cardCornerRadius">16dp</item>
         <item name="cardElevation">0dp</item>
-        <item name="cardBackgroundColor">?attr/colorSurfaceVariant</item>
+        <item name="cardBackgroundColor">?attr/colorSurfaceContainerHigh</item>
     </style>
 
-    <!-- Material 3 卡片样式 - 图标卡片 -->
+    <!-- Material 3 卡片样式 - 图标卡片（使用主题颜色） -->
     <style name="Widget.App.CardView.Icon" parent="Widget.Material3.CardView.Elevated">
         <item name="cardCornerRadius">16dp</item>
         <item name="cardElevation">8dp</item>
         <item name="strokeWidth">2dp</item>
-        <item name="strokeColor">@android:color/white</item>
+        <item name="strokeColor">?attr/colorOutline</item>
     </style>
 
     <!-- ImageButton 样式 - 基础样式 -->

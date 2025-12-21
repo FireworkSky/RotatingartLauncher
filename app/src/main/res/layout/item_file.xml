@@ -28,7 +28,7 @@
             android:layout_width="40dp"
             android:layout_height="40dp"
             android:layout_marginEnd="10dp"
-            app:cardBackgroundColor="?attr/colorPrimary"
+            app:cardBackgroundColor="?attr/colorSurfaceVariant"
             app:strokeWidth="0dp"
             style="@style/Widget.App.CardView.IconContainer">
 
@@ -38,7 +38,7 @@
                 android:layout_height="24dp"
                 android:layout_gravity="center"
                 android:scaleType="centerInside"
-                app:tint="@android:color/white" />
+                app:tint="?attr/colorOnSurface" />
 
         </com.google.android.material.card.MaterialCardView>
 

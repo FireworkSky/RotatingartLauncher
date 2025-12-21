@@ -464,7 +464,15 @@
     <string name="appearance_no_file_selected">未选择文件</string>
     <string name="appearance_ui_not_initialized">界面未初始化</string>
     <string name="appearance_file_not_exist">文件不存在: %s</string>
-    <string name="appearance_background_image_set">背景图片已设置</string>
+    <string name="appearance_background_image">图片背景</string>
+    <string name="appearance_background_video">视频背景</string>
+    <string name="appearance_select_background_type">选择背景类型</string>
+    <string name="appearance_select_image">选择图片</string>
+    <string name="appearance_select_image_desc">从相册选择图片作为背景</string>
+    <string name="appearance_select_video">选择视频</string>
+    <string name="appearance_select_video_desc">从相册选择视频作为背景</string>
+    <string name="appearance_cannot_read_image">无法读取图片</string>
+    <string name="appearance_set_background_failed">设置背景失败: %s</string>
     <string name="appearance_cannot_get_file_path">无法获取文件路径，请重试</string>
     <string name="appearance_background_video_set">视频背景已设置</string>
 

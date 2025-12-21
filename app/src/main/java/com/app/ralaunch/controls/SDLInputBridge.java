@@ -279,8 +279,16 @@ public class SDLInputBridge implements ControlInputBridge {
     @Override
     public void sendMouseMove(float deltaX, float deltaY) {
         try {
-            // 调用SDLActivity的静态native方法
-            SDLActivity.onNativeMouse(0, ACTION_MOVE, deltaX, deltaY, true);
+            // 更新虚拟鼠标位置（会应用范围限制，并在必要时重置到中心点）
+            nativeUpdateVirtualMouseDeltaSDL(deltaX, deltaY);
+            
+            // 获取限制后的虚拟鼠标位置
+            float newX = nativeGetVirtualMouseXSDL();
+            float newY = nativeGetVirtualMouseYSDL();
+            
+            // 直接发送绝对位置到SDL，确保SDL的鼠标位置与虚拟鼠标位置同步
+            // 这样SDL的鼠标位置就不会超出范围
+            SDLActivity.onNativeMouse(0, ACTION_MOVE, newX, newY, false);
         } catch (Exception e) {
             Log.e(TAG, "Error sending mouse move", e);
         }

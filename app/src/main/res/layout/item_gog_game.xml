@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- GOG 游戏列表项 - 现代化 MD3 设计 -->
 <com.google.android.material.card.MaterialCardView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -32,7 +31,7 @@
             app:cardElevation="0dp"
             app:strokeWidth="1dp"
             app:strokeColor="?attr/colorOutline"
-            app:cardBackgroundColor="?attr/colorSurfaceVariant">
+            app:cardBackgroundColor="?attr/colorSurface">
 
             <com.google.android.material.imageview.ShapeableImageView
                 android:id="@+id/gameImage"

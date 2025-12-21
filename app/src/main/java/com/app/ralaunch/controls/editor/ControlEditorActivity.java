@@ -59,10 +59,21 @@ public class ControlEditorActivity extends AppCompatActivity {
 
         com.app.ralaunch.utils.DensityAdapter.adapt(this, true);
         
-        // 应用主题设置（必须在 super.onCreate 之前）
-        com.app.ralaunch.manager.ThemeManager themeManager = 
-            new com.app.ralaunch.manager.ThemeManager(this);
-        themeManager.applyThemeFromSettings();
+        // 应用动态颜色主题（必须在 super.onCreate 之前，避免闪烁）
+        com.app.ralaunch.manager.DynamicColorManager dynamicColorManager = 
+            com.app.ralaunch.manager.DynamicColorManager.getInstance();
+        com.app.ralaunch.data.SettingsManager settingsManager = 
+            com.app.ralaunch.data.SettingsManager.getInstance(this);
+        dynamicColorManager.applyCustomThemeColor(this, settingsManager.getThemeColor());
+        
+        // 应用其他主题设置（深色/浅色模式等）
+        androidx.appcompat.app.AppCompatDelegate.setDefaultNightMode(
+            settingsManager.getThemeMode() == 0 ? 
+                androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM :
+            settingsManager.getThemeMode() == 1 ? 
+                androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_YES :
+                androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_NO
+        );
         
         super.onCreate(savedInstanceState);
 

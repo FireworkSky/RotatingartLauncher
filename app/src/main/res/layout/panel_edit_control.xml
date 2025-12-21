@@ -7,7 +7,7 @@
     android:layout_width="380dp"
     android:layout_height="match_parent"
     android:layout_gravity="end"
-    android:background="?attr/colorSurface"
+    android:background="@android:color/transparent"
     android:elevation="16dp"
     android:visibility="gone">
 

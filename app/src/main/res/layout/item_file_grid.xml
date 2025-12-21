@@ -8,9 +8,11 @@
     android:clickable="true"
     android:focusable="true"
     android:foreground="?attr/selectableItemBackground"
+    app:cardBackgroundColor="?attr/colorSurface"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="0dp"
     app:strokeWidth="1dp"
-    app:strokeColor="?attr/colorOutline"
-    style="@style/Widget.App.CardView.Standard">
+    app:strokeColor="?attr/colorOutline">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -25,7 +27,7 @@
             android:layout_width="64dp"
             android:layout_height="64dp"
             android:layout_marginBottom="8dp"
-            app:cardBackgroundColor="?attr/colorPrimaryContainer"
+            app:cardBackgroundColor="?attr/colorSurfaceVariant"
             app:strokeWidth="0dp"
             style="@style/Widget.App.CardView.IconContainer">
 
@@ -35,7 +37,7 @@
                 android:layout_height="40dp"
                 android:layout_gravity="center"
                 android:scaleType="centerInside"
-                app:tint="?attr/colorOnPrimaryContainer" />
+                app:tint="?attr/colorOnSurface" />
 
         </com.google.android.material.card.MaterialCardView>
 

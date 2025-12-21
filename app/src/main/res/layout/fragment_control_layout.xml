@@ -4,14 +4,14 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="?android:attr/colorBackground">
+    android:background="@android:color/transparent">
 
     <!-- Material 3 Top App Bar -->
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/appBarLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="?android:attr/colorBackground"
+        android:background="@android:color/transparent"
         app:elevation="0dp">
 
         <LinearLayout
@@ -25,7 +25,7 @@
                 android:layout_width="0dp"
                 android:layout_height="?attr/actionBarSize"
                 android:layout_weight="1"
-                android:background="?android:attr/colorBackground"
+                android:background="@android:color/transparent"
                 app:title="控制布局"
                 app:titleTextColor="?attr/textPrimary"
                 app:navigationIcon="@drawable/ic_arrow_back"

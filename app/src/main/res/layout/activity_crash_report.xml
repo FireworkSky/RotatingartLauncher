@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="?android:attr/colorBackground"
+    android:background="@android:color/transparent"
     android:padding="16dp">
 
     <!-- 标题 -->

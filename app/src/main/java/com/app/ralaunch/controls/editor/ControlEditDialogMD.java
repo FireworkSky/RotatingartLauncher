@@ -16,13 +16,15 @@ import android.widget.TextView;
 
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.widget.SwitchCompat;
 import androidx.core.content.ContextCompat;
+import androidx.fragment.app.DialogFragment;
 
 import com.app.ralaunch.R;
 import com.app.ralaunch.controls.ControlData;
 import com.app.ralaunch.controls.KeyMapper;
-import com.app.ralaunch.utils.LocalizedDialog;
+import com.app.ralaunch.utils.LocaleManager;
 import com.app.ralaunch.controls.editor.manager.ControlTypeManager;
 import com.app.ralaunch.controls.editor.manager.ControlShapeManager;
 import com.app.ralaunch.controls.editor.manager.ControlEditDialogVisibilityManager;
@@ -36,9 +38,12 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 /**
  * MD3风格的控件编辑对话框
- * 使用垂直滚动的卡片列表，类似 dialog_element_properties 风格
+ * 使用 DialogFragment 实现，自动继承 Activity 的动态主题颜色
  */
-public class ControlEditDialogMD extends LocalizedDialog {
+public class ControlEditDialogMD extends DialogFragment {
+
+    private static final String ARG_SCREEN_WIDTH = "screen_width";
+    private static final String ARG_SCREEN_HEIGHT = "screen_height";
 
     private ControlData mCurrentData;
     private int mScreenWidth, mScreenHeight;
@@ -77,25 +82,72 @@ public class ControlEditDialogMD extends LocalizedDialog {
         void onControlCopied(ControlData data);
     }
 
-    public ControlEditDialogMD(@NonNull Context context, int screenWidth, int screenHeight) {
-        super(context, R.style.ControlEditDialogStyle);
-        mScreenWidth = screenWidth;
-        mScreenHeight = screenHeight;
+    // DialogFragment 使用静态工厂方法创建实例
+    public static ControlEditDialogMD newInstance(int screenWidth, int screenHeight) {
+        ControlEditDialogMD dialog = new ControlEditDialogMD();
+        Bundle args = new Bundle();
+        args.putInt(ARG_SCREEN_WIDTH, screenWidth);
+        args.putInt(ARG_SCREEN_HEIGHT, screenHeight);
+        dialog.setArguments(args);
+        return dialog;
+    }
+
+    public ControlEditDialogMD() {
+        // DialogFragment 必须有无参构造函数
+    }
+    
+    /**
+     * 获取本地化的 Context（用于字符串资源）
+     * 使用对话框的 Context 以确保主题正确
+     */
+    @NonNull
+    private Context getLocalizedContext() {
+        // 优先使用 Dialog 的 Context，它包含了正确的对话框主题
+        Dialog dialog = getDialog();
+        Context baseContext = (dialog != null && dialog.getContext() != null) 
+            ? dialog.getContext() 
+            : requireContext();
+        
+        return LocaleManager.applyLanguage(baseContext);
     }
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        
+        // 设置对话框样式
+        setStyle(DialogFragment.STYLE_NO_TITLE, R.style.ControlEditDialogStyle);
+        
+        // 从 arguments 中获取屏幕尺寸
+        if (getArguments() != null) {
+            mScreenWidth = getArguments().getInt(ARG_SCREEN_WIDTH, 0);
+            mScreenHeight = getArguments().getInt(ARG_SCREEN_HEIGHT, 0);
+        }
+    }
 
-        // 设置无标题栏
-        requestWindowFeature(Window.FEATURE_NO_TITLE);
+    @Nullable
+    @Override
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
+                             @Nullable Bundle savedInstanceState) {
+        // 直接使用对话框的 Context，它已经包含了正确的主题和语言设置
+        // 不使用 LocaleManager.applyLanguage 以避免丢失对话框样式
+        return inflater.inflate(R.layout.dialog_control_edit_md, container, false);
+    }
 
-        // 布局加载使用原始Context（包含主题），字符串资源使用getLocalizedContext()
-        View view = LayoutInflater.from(getContext()).inflate(R.layout.dialog_control_edit_md, null);
-        setContentView(view);
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
 
         // 启用硬件加速，确保 Material Design 的触摸反馈和点击事件正常工作
         view.setLayerType(View.LAYER_TYPE_HARDWARE, null);
+
+        // 应用背景透明度（使用统一工具类）
+        try {
+            float dialogAlpha = com.app.ralaunch.utils.OpacityHelper.getDialogAlphaFromSettings(requireContext());
+            view.setAlpha(dialogAlpha);
+        } catch (Exception e) {
+            // 忽略错误，使用默认不透明
+        }
 
         // 绑定UI元素
         initViews(view);
@@ -103,12 +155,31 @@ public class ControlEditDialogMD extends LocalizedDialog {
         // 设置监听器
         setupListeners();
     }
+    
+    @Override
+    public void onStart() {
+        super.onStart();
+        
+        // 设置对话框窗口大小
+        Dialog dialog = getDialog();
+        if (dialog != null && dialog.getWindow() != null) {
+            Window window = dialog.getWindow();
+            
+            // 设置窗口宽高
+            int width = (int) (getResources().getDisplayMetrics().widthPixels * 0.9);
+            int height = ViewGroup.LayoutParams.WRAP_CONTENT;
+            window.setLayout(width, height);
+        }
+    }
 
 
     /**
      * 初始化UI元素
      */
-    private void initViews(View view) {
+    private void initViews(View rootView) {
+        // 保存根视图引用
+        View view = rootView;
+        
         // 关闭按钮
         mBtnClose = view.findViewById(R.id.btn_close);
         
@@ -250,7 +321,7 @@ public class ControlEditDialogMD extends LocalizedDialog {
                 imageView.setColorFilter(primaryColor.data, PorterDuff.Mode.SRC_IN);
             }
         } else {
-            // MD3 未选中状态：透明背景 + 正常文字 + 次要色图标
+          
             card.setCardBackgroundColor(ContextCompat.getColor(getContext(), android.R.color.transparent));
             card.setStrokeWidth(0);
             
@@ -307,19 +378,22 @@ public class ControlEditDialogMD extends LocalizedDialog {
      * 设置监听器
      */
     private void setupListeners() {
+        View view = getView();
+        if (view == null) return;
+        
         // 关闭按钮
         if (mBtnClose != null) {
             mBtnClose.setOnClickListener(v -> dismiss());
         }
         
         // 删除按钮
-        findViewById(R.id.btn_delete).setOnClickListener(v -> deleteControl());
+        view.findViewById(R.id.btn_delete).setOnClickListener(v -> deleteControl());
 
         // 复制按钮
-        findViewById(R.id.btn_copy).setOnClickListener(v -> copyControl());
+        view.findViewById(R.id.btn_copy).setOnClickListener(v -> copyControl());
 
         // 保存按钮
-        findViewById(R.id.btn_save).setOnClickListener(v -> {
+        view.findViewById(R.id.btn_save).setOnClickListener(v -> {
             if (mUpdateListener != null && mCurrentData != null) {
                 mUpdateListener.onControlUpdated(mCurrentData);
             }
@@ -483,32 +557,40 @@ public class ControlEditDialogMD extends LocalizedDialog {
 
 
     /**
-     * 显示控件数据
+     * 显示控件数据（DialogFragment 方式）
      */
-    public void show(ControlData data) {
-        // 直接使用传入的数据对象，确保引用一致
+    public void showWithData(androidx.fragment.app.FragmentManager fragmentManager, String tag, ControlData data) {
+        // 保存数据
         mCurrentData = data;
-
+        
         if (data == null) return;
-
-        // 先显示对话框（触发onCreate初始化视图）
-        super.show();
-
-        // 根据控件类型决定是否显示键值设置分类
-        updateKeymapCategoryVisibility();
-
-        // 重新绑定视图，确保使用最新的数据
-        bindCategoryViews();
         
-        // 更新所有选项的可见性（必须在绑定视图之后）
-        if (mContentBasic != null && mContentAppearance != null && mContentKeymap != null) {
-            ControlEditDialogVisibilityManager.updateAllOptionsVisibility(mContentBasic, mContentAppearance, mContentKeymap, mCurrentData);
-        } else if (mContentAppearance != null && mContentKeymap != null) {
-            ControlEditDialogVisibilityManager.updateAllOptionsVisibility(mContentAppearance, mContentKeymap, mCurrentData);
+        // 显示对话框
+        show(fragmentManager, tag);
+    }
+    
+    @Override
+    public void onResume() {
+        super.onResume();
+        
+        // 对话框显示后，更新UI
+        if (mCurrentData != null) {
+            // 根据控件类型决定是否显示键值设置分类
+            updateKeymapCategoryVisibility();
+
+            // 重新绑定视图，确保使用最新的数据
+            bindCategoryViews();
+            
+            // 更新所有选项的可见性（必须在绑定视图之后）
+            if (mContentBasic != null && mContentAppearance != null && mContentKeymap != null) {
+                ControlEditDialogVisibilityManager.updateAllOptionsVisibility(mContentBasic, mContentAppearance, mContentKeymap, mCurrentData);
+            } else if (mContentAppearance != null && mContentKeymap != null) {
+                ControlEditDialogVisibilityManager.updateAllOptionsVisibility(mContentAppearance, mContentKeymap, mCurrentData);
+            }
+            
+            // 填充当前分类的数据
+            fillCategoryData();
         }
-        
-        // 填充当前分类的数据
-        fillCategoryData();
     }
 
     /**

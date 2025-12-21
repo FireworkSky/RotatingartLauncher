@@ -96,7 +96,6 @@ public class ColorPickerView extends View {
         super.onSizeChanged(w, h, oldw, oldh);
         updateRects();
         updateCursorPositions();
-        createCheckerBitmap();
     }
 
     private void updateRects() {
@@ -124,21 +123,9 @@ public class ColorPickerView extends View {
         );
     }
 
+    // 移除不再需要的 createCheckerBitmap 和 checkerBitmap 字段
     private void createCheckerBitmap() {
-        // 创建棋盘格背景
-        int size = 20;
-        checkerBitmap = Bitmap.createBitmap(size * 2, size * 2, Bitmap.Config.ARGB_8888);
-        Canvas canvas = new Canvas(checkerBitmap);
-
-        Paint lightPaint = new Paint();
-        lightPaint.setColor(0xFFFFFFFF);
-        Paint darkPaint = new Paint();
-        darkPaint.setColor(0xFFCCCCCC);
-
-        canvas.drawRect(0, 0, size, size, lightPaint);
-        canvas.drawRect(size, 0, size * 2, size, darkPaint);
-        canvas.drawRect(0, size, size, size * 2, darkPaint);
-        canvas.drawRect(size, size, size * 2, size * 2, lightPaint);
+        // 已弃用
     }
 
     @Override
@@ -156,21 +143,8 @@ public class ColorPickerView extends View {
     }
 
     private void drawColorPicker(Canvas canvas) {
-        // 绘制棋盘格背景（用于显示透明度）
-        if (checkerBitmap != null) {
-            Paint bgPaint = new Paint();
-            bgPaint.setAntiAlias(false);
-            Shader checkerShader = new android.graphics.BitmapShader(
-                checkerBitmap,
-                Shader.TileMode.REPEAT,
-                Shader.TileMode.REPEAT
-            );
-            bgPaint.setShader(checkerShader);
-            canvas.drawRoundRect(colorRect, 12, 12, bgPaint);
-        }
-
-        // 创建饱和度渐变（从白色到纯色，水平方向）
-        // 每一行都需要根据当前色相创建渐变
+        // 1. 绘制饱和度渐变（从白色到纯色，水平方向）
+        // 左边是白色，右边是当前色相的纯色
         LinearGradient saturationGradient = new LinearGradient(
             colorRect.left, 0,
             colorRect.right, 0,
@@ -178,30 +152,19 @@ public class ColorPickerView extends View {
             Color.HSVToColor(new float[]{hue, 1f, 1f}),
             Shader.TileMode.CLAMP
         );
+        colorPaint.setShader(saturationGradient);
+        canvas.drawRoundRect(colorRect, 12, 12, colorPaint);
 
-        // 创建明度和透明度组合渐变（垂直方向）
-        // 从上到下：完全不透明+最大明度 -> 完全透明+最小明度
-        // 顶部：完全不透明的纯色（根据当前色相）
-        int topColor = Color.HSVToColor(255, new float[]{hue, 1f, 1f});
-        // 底部：完全透明的黑色
-        int bottomColor = 0x00000000;
-        
-        LinearGradient valueAlphaGradient = new LinearGradient(
+        // 2. 绘制明度渐变（从透明到黑色，垂直方向）
+        // 顶部是完全透明（显示底下的饱和度层），底部是黑色
+        LinearGradient valueGradient = new LinearGradient(
             0, colorRect.top,
             0, colorRect.bottom,
-            topColor,
-            bottomColor,
+            Color.TRANSPARENT,
+            Color.BLACK,
             Shader.TileMode.CLAMP
         );
-
-        // 组合渐变：先应用饱和度（水平），再应用明度+透明度（垂直）
-        ComposeShader shader = new ComposeShader(
-            saturationGradient,
-            valueAlphaGradient,
-            PorterDuff.Mode.MULTIPLY
-        );
-
-        colorPaint.setShader(shader);
+        colorPaint.setShader(valueGradient);
         canvas.drawRoundRect(colorRect, 12, 12, colorPaint);
     }
 
@@ -289,11 +252,11 @@ public class ColorPickerView extends View {
         x = Math.max(colorRect.left, Math.min(x, colorRect.right));
         y = Math.max(colorRect.top, Math.min(y, colorRect.bottom));
 
-        // X轴：饱和度（从左到右：白色到纯色）
+        // X轴：饱和度（从左到右：0到1）
         saturation = (x - colorRect.left) / colorRect.width();
         saturation = Math.max(0f, Math.min(1f, saturation));
         
-        // Y轴：明度和透明度（从上到下：完全不透明+最大明度到完全透明+最小明度）
+        // Y轴：明度（从上到下：1到0）
         float yRatio = (y - colorRect.top) / colorRect.height();
         yRatio = Math.max(0f, Math.min(1f, yRatio));
         
@@ -301,9 +264,8 @@ public class ColorPickerView extends View {
         value = 1f - yRatio;
         value = Math.max(0f, Math.min(1f, value));
         
-        // 透明度：上到下从255到0
-        alpha = (int) (255 * (1f - yRatio));
-        alpha = Math.max(0, Math.min(255, alpha));
+        // 注意：在这个选择器中，Y轴不再控制透明度(alpha)，只控制明度(value)
+        // alpha 保持不变（或者是 setColor 设置的值）
 
         // 更新光标位置
         colorX = x;
@@ -328,9 +290,9 @@ public class ColorPickerView extends View {
 
     private void updateCursorPositions() {
         // 更新颜色选择区域光标
-        // X轴：饱和度，Y轴：明度和透明度（从上到下：完全不透明到完全透明）
+        // X轴：饱和度，Y轴：明度（从上到下：1到0）
         colorX = colorRect.left + saturation * colorRect.width();
-        float yRatio = 1f - value; // 根据明度计算Y位置（也可以根据透明度：alpha / 255f）
+        float yRatio = 1f - value; 
         colorY = colorRect.top + yRatio * colorRect.height();
 
         // 更新色调条光标

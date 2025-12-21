@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="?android:attr/colorBackground">
+    android:background="@android:color/transparent">
 
     <!-- 顶部分类导航栏 - Underline Tabs 风格 -->
     <com.google.android.material.tabs.TabLayout
@@ -13,7 +13,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
         android:layout_marginHorizontal="16dp"
-        android:background="?android:attr/colorBackground"
+        android:background="@android:color/transparent"
         android:minHeight="48dp"
         app:tabMode="fixed"
         app:tabGravity="fill"
@@ -38,7 +38,7 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:background="?android:attr/colorBackground">
+        android:background="@android:color/transparent">
 
         <!-- 外观设置内容 -->
         <androidx.core.widget.NestedScrollView

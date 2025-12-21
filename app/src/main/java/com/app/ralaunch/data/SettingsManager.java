@@ -45,6 +45,7 @@ public class SettingsManager {
         public static final String BACKGROUND_IMAGE_PATH = "background_image_path"; // 图片路径
         public static final String BACKGROUND_VIDEO_PATH = "background_video_path"; // 视频路径
         public static final String BACKGROUND_OPACITY = "background_opacity"; // 背景透明度 (0-100)
+        public static final String VIDEO_PLAYBACK_SPEED = "video_playback_speed"; // 视频播放速度 (0.5-2.0)
 
         // 运行时设置
         public static final String DOTNET_FRAMEWORK = "dotnet_framework";
@@ -94,12 +95,13 @@ public class SettingsManager {
     public static class Defaults {
         public static final int THEME_MODE = 2; // 亮色主题
         public static final int APP_LANGUAGE = 0; // 跟随系统
-        public static final int THEME_COLOR = 0xFF4CAF50; // 默认绿色
+        public static final int THEME_COLOR = 0xFF6750A4; // Material 3 默认紫色（动态主题种子色）
         public static final String BACKGROUND_TYPE = "default"; // 默认背景
         public static final int BACKGROUND_COLOR = 0xFFFFFFFF; // 默认白色
         public static final String BACKGROUND_IMAGE_PATH = ""; // 默认无图片
         public static final String BACKGROUND_VIDEO_PATH = ""; // 默认无视频
-        public static final int BACKGROUND_OPACITY = 100; // 默认完全不透明
+        public static final int BACKGROUND_OPACITY = 0; // 默认透明度0%（无背景时）
+        public static final float VIDEO_PLAYBACK_SPEED = 1.0f; // 默认播放速度 1.0x
         public static final String DOTNET_FRAMEWORK = "auto";
         public static final String RUNTIME_ARCHITECTURE = "auto";
         public static final boolean ENABLE_LOG_SYSTEM = true;
@@ -219,6 +221,15 @@ public class SettingsManager {
             return defaultValue;
         }
     }
+
+    public double getDouble(String key, double defaultValue) {
+        try {
+            return settings.optDouble(key, defaultValue);
+        } catch (Exception e) {
+            AppLogger.error(TAG, "Error getting double for key: " + key + ": " + e.getMessage());
+            return defaultValue;
+        }
+    }
     
     public void putString(String key, String value) {
         try {
@@ -246,6 +257,15 @@ public class SettingsManager {
 
         } catch (JSONException e) {
             AppLogger.error(TAG, "Error setting boolean for key: " + key + ": " + e.getMessage());
+        }
+    }
+
+    public void putDouble(String key, double value) {
+        try {
+            settings.put(key, value);
+            saveSettings();
+        } catch (JSONException e) {
+            AppLogger.error(TAG, "Error setting double for key: " + key + ": " + e.getMessage());
         }
     }
 
@@ -335,6 +355,14 @@ public class SettingsManager {
 
     public void setBackgroundOpacity(int opacity) {
         putInt(Keys.BACKGROUND_OPACITY, opacity);
+    }
+
+    public float getVideoPlaybackSpeed() {
+        return (float) getDouble(Keys.VIDEO_PLAYBACK_SPEED, Defaults.VIDEO_PLAYBACK_SPEED);
+    }
+
+    public void setVideoPlaybackSpeed(float speed) {
+        putDouble(Keys.VIDEO_PLAYBACK_SPEED, speed);
     }
 
     // 运行时设置

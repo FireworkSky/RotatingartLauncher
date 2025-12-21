@@ -9,7 +9,7 @@
     android:layout_marginBottom="2dp"
     app:cardCornerRadius="8dp"
     app:cardElevation="0dp"
-    app:cardBackgroundColor="?attr/colorSurface"
+    app:cardBackgroundColor="?attr/colorSurfaceContainer"
     android:clickable="true"
     android:focusable="true"
     android:foreground="?android:attr/selectableItemBackground">
@@ -30,7 +30,7 @@
             android:layout_width="24dp"
             android:layout_height="24dp"
             android:src="@drawable/ralib_ic_file"
-            android:tint="#4CAF50" />
+            app:tint="?attr/colorPrimary" />
 
         <!-- 文件名 -->
         <TextView
@@ -50,7 +50,7 @@
             android:layout_width="20dp"
             android:layout_height="20dp"
             android:src="@drawable/ralib_ic_arrow_right"
-            android:tint="#757575"
+            app:tint="?attr/colorOnSurfaceVariant"
             android:visibility="gone" />
 
     </LinearLayout>

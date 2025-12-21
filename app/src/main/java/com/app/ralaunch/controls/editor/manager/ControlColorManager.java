@@ -7,15 +7,17 @@ import android.view.View;
 import android.widget.GridLayout;
 
 import androidx.annotation.NonNull;
+import androidx.fragment.app.FragmentActivity;
+import androidx.fragment.app.FragmentManager;
 
 import com.app.ralaunch.R;
 import com.app.ralaunch.controls.ControlData;
+import com.app.ralib.dialog.ColorPickerDialog;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 /**
  * 控件颜色管理器
- * 统一管理颜色选择和相关UI更新
  */
 public class ControlColorManager {
 
@@ -54,51 +56,37 @@ public class ControlColorManager {
             return;
         }
 
-        // 预设颜色
-        final int[] presetColors = {
-            0xFFFFFFFF, // 白色（默认）
-            0xFFEEEEEE, // 浅灰
-            0xFFCCCCCC, // 灰色
-            0xFF888888, // 深灰
-            0xFF000000, // 黑色
-            0x80000000, // 半透明黑
-            0xFFFF0000, // 红色
-            0xFF00FF00, // 绿色
-            0xFF0000FF, // 蓝色
-            0xFFFF00FF, // 紫色
-            0xFFFFFF00, // 黄色
-            0xFFFFA500, // 橙色
-        };
+        // 获取 FragmentActivity 和 FragmentManager
+        FragmentActivity activity = null;
+        if (context instanceof FragmentActivity) {
+            activity = (FragmentActivity) context;
+        } else if (context instanceof android.view.ContextThemeWrapper) {
+            Context baseContext = ((android.view.ContextThemeWrapper) context).getBaseContext();
+            if (baseContext instanceof FragmentActivity) {
+                activity = (FragmentActivity) baseContext;
+            }
+        }
 
-        GridLayout gridLayout = new GridLayout(context);
-        gridLayout.setColumnCount(4);
-        int padding = (int) dpToPx(context, 20);
-        gridLayout.setPadding(padding, padding, padding, padding);
+        if (activity == null) {
+            // 如果无法获取 FragmentActivity，无法显示调色盘对话框
+            return;
+        }
 
-        // 创建对话框并保存引用
+        FragmentManager fragmentManager = activity.getSupportFragmentManager();
+        
+        // 获取当前颜色
+        int currentColor = isBackground ? data.bgColor : data.strokeColor;
+
+        // 创建调色盘对话框
+        ColorPickerDialog colorPickerDialog = ColorPickerDialog.newInstance(currentColor);
+        
+
+        // 设置标题
         String title = isBackground ? context.getString(R.string.editor_select_bg_color) : context.getString(R.string.editor_select_border_color);
-        android.app.Dialog colorDialog = new MaterialAlertDialogBuilder(context)
-            .setTitle(title)
-            .setView(gridLayout)
-            .setNegativeButton(context.getString(R.string.cancel), null)
-            .create();
-
-        for (int color : presetColors) {
-            MaterialButton colorBtn = new MaterialButton(context);
-            GridLayout.LayoutParams params = new GridLayout.LayoutParams();
-            params.width = (int) dpToPx(context, 60);
-            params.height = (int) dpToPx(context, 60);
-            int margin = (int) dpToPx(context, 8);
-            params.setMargins(margin, margin, margin, margin);
-            colorBtn.setLayoutParams(params);
-
-            GradientDrawable drawable = new GradientDrawable();
-            drawable.setColor(color);
-            drawable.setCornerRadius(dpToPx(context, 8));
-            drawable.setStroke((int) dpToPx(context, 2), 0xFF888888);
-            colorBtn.setBackground(drawable);
-
-            colorBtn.setOnClickListener(v -> {
+        colorPickerDialog.setTitle(title);
+        
+        // 设置颜色选择监听器
+        colorPickerDialog.setOnColorSelectedListener(color -> {
                 if (isBackground) {
                     data.bgColor = color;
                 } else {
@@ -108,17 +96,12 @@ public class ControlColorManager {
                 if (listener != null) {
                     listener.onColorSelected(data, color, isBackground);
                 }
-
-                // 点击后关闭对话框
-                colorDialog.dismiss();
             });
 
-            gridLayout.addView(colorBtn);
-        }
-
         // 显示对话框
-        colorDialog.show();
+        colorPickerDialog.show(fragmentManager, "ColorPickerDialog");
     }
+    
 
     /**
      * 颜色选择监听器

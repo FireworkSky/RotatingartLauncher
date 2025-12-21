@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 现代化游戏卡片 - Material Design 3 风格 -->
+<!-- 简洁现代游戏卡片 - 无边框设计 -->
 <com.google.android.material.card.MaterialCardView 
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -9,157 +9,125 @@
     android:clickable="true"
     android:focusable="true"
     android:foreground="?android:attr/selectableItemBackground"
-    style="@style/Widget.App.CardView.GameItem">
+    app:cardCornerRadius="24dp"
+    app:cardElevation="4dp"
+    app:strokeWidth="0dp"
+    app:cardBackgroundColor="?attr/colorSurface">
 
-    <RelativeLayout
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@drawable/bg_game_card">
+        android:orientation="vertical"
+        android:padding="20dp"
+        android:gravity="center">
 
-        <!-- 顶部渐变遮罩层 -->
-        <View
-            android:id="@+id/gradientOverlay"
+        <!-- 删除按钮 - 右上角圆形按钮 -->
+        <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="120dp"
-            android:background="@drawable/bg_gradient_overlay"
-            android:alpha="0.3" />
-
-        <!-- 删除按钮 - 现代化简约设计 -->
-        <com.google.android.material.card.MaterialCardView
-            android:id="@+id/deleteButton"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:layout_alignParentEnd="true"
-            android:layout_alignParentTop="true"
-            android:layout_margin="8dp"
-            android:clickable="true"
-            android:focusable="true"
-            android:foreground="?android:attr/selectableItemBackgroundBorderless"
-            android:alpha="0.7"
-            style="@style/Widget.App.CardView.DeleteButton">
+            android:layout_height="wrap_content">
 
             <ImageView
-                android:layout_width="16dp"
-                android:layout_height="16dp"
-                android:layout_gravity="center"
+                android:id="@+id/deleteButton"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_gravity="end"
+                android:padding="6dp"
                 android:src="@drawable/ic_close"
-                android:tint="#FFFFFF"
+                app:tint="?attr/colorOnSurfaceVariant"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:focusable="true"
                 android:contentDescription="@string/content_desc_delete_game" />
-        </com.google.android.material.card.MaterialCardView>
 
-        <!-- 游戏图标容器 -->
-        <FrameLayout
-            android:id="@+id/iconContainer"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_centerHorizontal="true"
-            android:paddingTop="16dp"
-            android:paddingBottom="12dp">
-
-            <!-- 图标光晕效果 -->
-            <View
-                android:layout_width="80dp"
-                android:layout_height="80dp"
-                android:layout_gravity="center"
-                android:background="@drawable/bg_icon_glow"
-                android:alpha="0.4" />
-
-            <!-- 游戏图标 -->
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="76dp"
-                android:layout_height="76dp"
-                android:layout_gravity="center"
-                style="@style/Widget.App.CardView.Icon">
-
-                <ImageView
-                    android:id="@+id/gameImage"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:scaleType="centerCrop"
-                    android:contentDescription="@string/content_desc_game_icon" />
-            </com.google.android.material.card.MaterialCardView>
         </FrameLayout>
 
-        <!-- 游戏信息容器 -->
-        <LinearLayout
+        <!-- 游戏图标 - 大而简洁 -->
+        <FrameLayout
+            android:id="@+id/iconContainer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="-8dp"
+            android:layout_marginBottom="16dp">
+
+            <ImageView
+                android:id="@+id/gameImage"
+                android:layout_width="96dp"
+                android:layout_height="96dp"
+                android:scaleType="centerCrop"
+                android:background="@drawable/bg_game_icon_simple"
+                android:elevation="2dp"
+                android:contentDescription="@string/content_desc_game_icon" />
+
+        </FrameLayout>
+
+        <!-- 游戏名称 -->
+        <TextView
+            android:id="@+id/gameName"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:layout_below="@id/iconContainer"
-            android:paddingStart="16dp"
-            android:paddingEnd="16dp"
-            android:paddingBottom="16dp"
-            android:paddingTop="4dp">
+            android:text="@string/game_name_placeholder"
+            android:textSize="17sp"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:fontFamily="sans-serif-medium"
+            android:textColor="?attr/textPrimary" />
 
-            <!-- 游戏名称 -->
+        <!-- 游戏描述/路径 -->
+        <TextView
+            android:id="@+id/gameDescription"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:text="@string/game_description"
+            android:textSize="12sp"
+            android:gravity="center"
+            android:maxLines="1"
+            android:ellipsize="middle"
+            android:fontFamily="sans-serif"
+            android:alpha="0.7"
+            android:textColor="?attr/textSecondary" />
+
+        <!-- 标签容器（可选） -->
+        <LinearLayout
+            android:id="@+id/tagsContainer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginTop="12dp"
+            android:orientation="horizontal"
+            android:visibility="gone">
+
             <TextView
-                android:id="@+id/gameName"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/game_name_placeholder"
-                android:textSize="16sp"
-                android:textStyle="bold"
-                android:gravity="center"
-                android:maxLines="1"
-                android:ellipsize="end"
-                android:fontFamily="sans-serif-medium"
-                android:textColor="?attr/textPrimary" />
-
-            <!-- 游戏描述/路径 -->
-            <TextView
-                android:id="@+id/gameDescription"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:text="@string/game_description"
-                android:textSize="11sp"
-                android:gravity="center"
-                android:maxLines="1"
-                android:ellipsize="middle"
-                android:fontFamily="sans-serif"
-                android:textColor="?attr/textSecondary" />
-
-            <!-- 标签容器（可选） -->
-            <LinearLayout
-                android:id="@+id/tagsContainer"
+                android:id="@+id/engineTag"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:layout_marginTop="12dp"
-                android:orientation="horizontal"
-                android:visibility="gone">
+                android:text="FNA"
+                android:textColor="?attr/colorPrimary"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:paddingStart="10dp"
+                android:paddingEnd="10dp"
+                android:paddingTop="4dp"
+                android:paddingBottom="4dp"
+                android:background="@drawable/bg_tag"
+                android:layout_marginEnd="6dp" />
 
-                <TextView
-                    android:id="@+id/engineTag"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="FNA"
-                    android:textColor="?attr/colorPrimary"
-                    android:textSize="11sp"
-                    android:textStyle="bold"
-                    android:paddingStart="10dp"
-                    android:paddingEnd="10dp"
-                    android:paddingTop="4dp"
-                    android:paddingBottom="4dp"
-                    android:background="@drawable/bg_tag"
-                    android:layout_marginEnd="6dp" />
-
-                <TextView
-                    android:id="@+id/versionTag"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="v1.0"
-                    android:textColor="?attr/textSecondary"
-                    android:textSize="11sp"
-                    android:paddingStart="10dp"
-                    android:paddingEnd="10dp"
-                    android:paddingTop="4dp"
-                    android:paddingBottom="4dp"
-                    android:background="@drawable/bg_tag_secondary" />
-            </LinearLayout>
-
+            <TextView
+                android:id="@+id/versionTag"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="v1.0"
+                android:textColor="?attr/textSecondary"
+                android:textSize="11sp"
+                android:paddingStart="10dp"
+                android:paddingEnd="10dp"
+                android:paddingTop="4dp"
+                android:paddingBottom="4dp"
+                android:background="@drawable/bg_tag_secondary" />
         </LinearLayout>
 
-    </RelativeLayout>
+    </LinearLayout>
 
 </com.google.android.material.card.MaterialCardView>

@@ -5,7 +5,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="?android:attr/colorBackground"
+    android:background="@android:color/transparent"
     tools:context=".fragment.SettingsMiscFragment">
 
     <!-- 设置内容 -->
@@ -22,7 +22,7 @@
             android:paddingHorizontal="16dp"
             android:paddingBottom="32dp">
 
-            <!-- 主题设置卡片 - Material 3 Filled -->
+            <!-- 主题设置卡片 - 精致设计 -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/themeCard"
                 android:layout_width="match_parent"
@@ -32,10 +32,11 @@
                 android:clickable="true"
                 android:focusable="true"
                 android:foreground="?attr/selectableItemBackground"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="0dp"
-                app:strokeWidth="0dp"
-                app:cardBackgroundColor="?attr/colorSurface"
+                app:cardCornerRadius="15dp"
+                app:cardElevation="2dp"
+                app:strokeWidth="0.5dp"
+                app:strokeColor="?attr/colorOutlineVariant"
+                app:cardBackgroundColor="?attr/colorSurfaceContainer"
                 style="@style/Widget.App.CardView.Standard">
 
                 <LinearLayout
@@ -83,7 +84,7 @@
 
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- 主题颜色设置卡片 - 现代化紧凑设计 -->
+            <!-- 主题颜色设置卡片 - 精致设计 -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/themeColorCard"
                 android:layout_width="match_parent"
@@ -92,10 +93,11 @@
                 android:clickable="true"
                 android:focusable="true"
                 android:foreground="?attr/selectableItemBackground"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="0dp"
-                app:strokeWidth="0dp"
-                app:cardBackgroundColor="?attr/colorSurface"
+                app:cardCornerRadius="15dp"
+                app:cardElevation="2dp"
+                app:strokeWidth="0.5dp"
+                app:strokeColor="?attr/colorOutlineVariant"
+                app:cardBackgroundColor="?attr/colorSurfaceContainer"
                 style="@style/Widget.App.CardView.Standard">
 
                 <LinearLayout
@@ -130,131 +132,188 @@
 
                     </LinearLayout>
 
+                    <!-- 当前主题颜色预览 -->
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/cardThemeColorPreview"
+                        android:layout_width="48dp"
+                        android:layout_height="28dp"
+                        android:layout_marginStart="16dp"
+                        app:cardCornerRadius="8dp"
+                        app:cardElevation="1dp"
+                        app:strokeWidth="0.5dp"
+                        app:strokeColor="?attr/colorOutlineVariant" />
+
                 </LinearLayout>
 
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- 背景图片设置卡片 - Material 3 Filled -->
+            <!-- 自定义背景设置卡片 - Material 3 Outlined -->
             <com.google.android.material.card.MaterialCardView
-                android:id="@+id/backgroundImageCard"
+                android:id="@+id/customBackgroundCard"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="12dp"
-                android:clickable="true"
-                android:focusable="true"
-                android:foreground="?attr/selectableItemBackground"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="0dp"
-                app:strokeWidth="0dp"
-                app:cardBackgroundColor="?attr/colorSurface"
+                app:cardCornerRadius="15dp"
+                app:cardElevation="2dp"
+                app:strokeWidth="0.5dp"
+                app:strokeColor="?attr/colorOutlineVariant"
+                app:cardBackgroundColor="?attr/colorSurfaceContainer"
                 style="@style/Widget.App.CardView.Standard">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical"
-                    android:paddingHorizontal="16dp"
-                    android:paddingVertical="14dp">
+                    android:orientation="vertical"
+                    android:padding="16dp">
 
+                    <!-- 背景选择按钮 -->
                     <LinearLayout
-                        android:layout_width="0dp"
+                        android:id="@+id/backgroundSelectorLayout"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:orientation="vertical">
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:background="?attr/selectableItemBackground"
+                        android:paddingVertical="8dp">
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="自定义背景"
+                                android:textColor="?attr/textPrimary"
+                                android:textSize="15sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="选择图片或视频作为背景"
+                                android:textColor="?attr/textSecondary"
+                                android:textSize="12sp"
+                                android:layout_marginTop="2dp" />
+
+                        </LinearLayout>
 
                         <TextView
+                            android:id="@+id/tvBackgroundValue"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="@string/background_custom"
-                            android:textColor="?attr/textPrimary"
-                            android:textSize="15sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/background_custom_desc"
+                            android:layout_marginStart="16dp"
+                            android:text="@string/appearance_not_set"
                             android:textColor="?attr/textSecondary"
-                            android:textSize="12sp"
-                            android:layout_marginTop="2dp" />
+                            android:textSize="12sp" />
 
                     </LinearLayout>
 
-                    <TextView
-                        android:id="@+id/tvBackgroundImageValue"
-                        android:layout_width="wrap_content"
+                    <!-- 透明度控制 -->
+                    <LinearLayout
+                        android:id="@+id/backgroundOpacityLayout"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="16dp"
-                        android:text="@string/appearance_not_set"
-                        android:textColor="?attr/textSecondary"
-                        android:textSize="12sp" />
+                        android:orientation="vertical"
+                        android:layout_marginTop="16dp"
+                        android:visibility="gone">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical">
+
+                            <TextView
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="背景透明度"
+                                android:textColor="?attr/textPrimary"
+                                android:textSize="13sp" />
+
+                            <TextView
+                                android:id="@+id/tvBackgroundOpacityValue"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="75%"
+                                android:textColor="?attr/colorPrimary"
+                                android:textSize="13sp"
+                                android:textStyle="bold"
+                                android:minWidth="48dp"
+                                android:gravity="end" />
+
+                        </LinearLayout>
+
+                        <com.google.android.material.slider.Slider
+                            android:id="@+id/sliderBackgroundOpacity"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:valueFrom="0"
+                            android:valueTo="100"
+                            android:stepSize="5"
+                            android:value="75"
+                            app:labelBehavior="gone" />
+
+                    </LinearLayout>
+
+                    <!-- 视频播放速度控制 -->
+                    <LinearLayout
+                        android:id="@+id/videoSpeedLayout"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:layout_marginTop="8dp"
+                        android:visibility="gone">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical">
+
+                            <TextView
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="视频播放速度"
+                                android:textColor="?attr/textPrimary"
+                                android:textSize="13sp" />
+
+                            <TextView
+                                android:id="@+id/tvVideoSpeedValue"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="1.0x"
+                                android:textColor="?attr/colorPrimary"
+                                android:textSize="13sp"
+                                android:textStyle="bold"
+                                android:minWidth="48dp"
+                                android:gravity="end" />
+
+                        </LinearLayout>
+
+                        <com.google.android.material.slider.Slider
+                            android:id="@+id/sliderVideoSpeed"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:valueFrom="0.5"
+                            android:valueTo="2.0"
+                            android:stepSize="0.1"
+                            android:value="1.0"
+                            app:labelBehavior="gone" />
+
+                    </LinearLayout>
 
                 </LinearLayout>
 
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- 背景视频设置卡片 -->
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/backgroundVideoCard"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="12dp"
-                android:clickable="true"
-                android:focusable="true"
-                android:foreground="?attr/selectableItemBackground"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="0dp"
-                app:strokeWidth="0dp"
-                app:cardBackgroundColor="?attr/colorSurface"
-                style="@style/Widget.App.CardView.Standard">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical"
-                    android:paddingHorizontal="16dp"
-                    android:paddingVertical="14dp">
-
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:orientation="vertical">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/background_video"
-                            android:textColor="?attr/textPrimary"
-                            android:textSize="15sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/background_video_desc"
-                            android:textColor="?attr/textSecondary"
-                            android:textSize="12sp"
-                            android:layout_marginTop="2dp" />
-
-                    </LinearLayout>
-
-                    <TextView
-                        android:id="@+id/tvBackgroundVideoValue"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="16dp"
-                        android:text="@string/appearance_not_set"
-                        android:textColor="?attr/textSecondary"
-                        android:textSize="12sp" />
-
-                </LinearLayout>
-
-            </com.google.android.material.card.MaterialCardView>
-
-            <!-- 恢复默认背景卡片 -->
+            <!-- 恢复默认背景卡片 - Material 3 Outlined -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/restoreBackgroundCard"
                 android:layout_width="match_parent"
@@ -263,10 +322,11 @@
                 android:clickable="true"
                 android:focusable="true"
                 android:foreground="?attr/selectableItemBackground"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="0dp"
-                app:strokeWidth="0dp"
-                app:cardBackgroundColor="?attr/colorSurface"
+                app:cardCornerRadius="15dp"
+                app:cardElevation="2dp"
+                app:strokeWidth="0.5dp"
+                app:strokeColor="?attr/colorOutlineVariant"
+                app:cardBackgroundColor="?attr/colorSurfaceContainer"
                 style="@style/Widget.App.CardView.Standard">
 
                 <LinearLayout
@@ -305,7 +365,7 @@
 
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- 语言设置卡片 - Material 3 Filled -->
+            <!-- 语言设置卡片 - Material 3 Outlined -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/languageCard"
                 android:layout_width="match_parent"
@@ -314,10 +374,11 @@
                 android:clickable="true"
                 android:focusable="true"
                 android:foreground="?attr/selectableItemBackground"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="0dp"
-                app:strokeWidth="0dp"
-                app:cardBackgroundColor="?attr/colorSurface"
+                app:cardCornerRadius="15dp"
+                app:cardElevation="2dp"
+                app:strokeWidth="0.5dp"
+                app:strokeColor="?attr/colorOutlineVariant"
+                app:cardBackgroundColor="?attr/colorSurfaceContainer"
                 style="@style/Widget.App.CardView.Standard">
 
                 <LinearLayout

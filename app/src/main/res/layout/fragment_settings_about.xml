@@ -11,18 +11,18 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="16dp"
-        app:cardCornerRadius="20dp"
-        app:cardElevation="0dp"
-        app:strokeWidth="1dp"
+        app:cardCornerRadius="15dp"
+        app:cardElevation="2dp"
+        app:strokeWidth="0.5dp"
         app:strokeColor="?attr/colorOutlineVariant"
-        app:cardBackgroundColor="?attr/colorSurface"
+        app:cardBackgroundColor="?attr/colorSurfaceContainer"
         style="@style/Widget.App.CardView.Standard">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="24dp">
+            android:padding="16dp">
 
             <!-- 应用标题 -->
             <LinearLayout
@@ -92,11 +92,11 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="12dp"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="0dp"
-                app:strokeWidth="1dp"
+                app:cardCornerRadius="15dp"
+                app:cardElevation="2dp"
+                app:strokeWidth="0.5dp"
                 app:strokeColor="#946CE6"
-                app:cardBackgroundColor="?attr/colorSurfaceVariant">
+                app:cardBackgroundColor="?attr/colorSurfaceContainer">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -145,11 +145,11 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="12dp"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="0dp"
-                app:strokeWidth="1dp"
+                app:cardCornerRadius="15dp"
+                app:cardElevation="2dp"
+                app:strokeWidth="0.5dp"
                 app:strokeColor="#FF424D"
-                app:cardBackgroundColor="?attr/colorSurfaceVariant">
+                app:cardBackgroundColor="?attr/colorSurfaceContainer">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -198,11 +198,11 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="12dp"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="0dp"
-                app:strokeWidth="1dp"
+                app:cardCornerRadius="15dp"
+                app:cardElevation="2dp"
+                app:strokeWidth="0.5dp"
                 app:strokeColor="#5865F2"
-                app:cardBackgroundColor="?attr/colorSurfaceVariant">
+                app:cardBackgroundColor="?attr/colorSurfaceContainer">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -251,11 +251,11 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="12dp"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="0dp"
-                app:strokeWidth="1dp"
+                app:cardCornerRadius="15dp"
+                app:cardElevation="2dp"
+                app:strokeWidth="0.5dp"
                 app:strokeColor="#12B7F5"
-                app:cardBackgroundColor="?attr/colorSurfaceVariant">
+                app:cardBackgroundColor="?attr/colorSurfaceContainer">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -321,11 +321,11 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="12dp"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="0dp"
-                app:strokeWidth="1dp"
+                app:cardCornerRadius="15dp"
+                app:cardElevation="2dp"
+                app:strokeWidth="0.5dp"
                 app:strokeColor="?attr/colorPrimary"
-                app:cardBackgroundColor="?attr/colorSurfaceVariant">
+                app:cardBackgroundColor="?attr/colorSurfaceContainer">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -388,11 +388,11 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="12dp"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="0dp"
-                app:strokeWidth="1dp"
+                app:cardCornerRadius="15dp"
+                app:cardElevation="2dp"
+                app:strokeWidth="0.5dp"
                 app:strokeColor="?attr/colorSecondary"
-                app:cardBackgroundColor="?attr/colorSurfaceVariant">
+                app:cardBackgroundColor="?attr/colorSurfaceContainer">
 
                 <LinearLayout
                     android:layout_width="match_parent"

@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- MD3 风格游戏快速设置右侧弹窗（半透明） -->
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -20,7 +19,7 @@
         android:gravity="center_vertical"
         android:paddingStart="16dp"
         android:paddingEnd="8dp"
-        android:background="#CC9C7AE8"
+        android:background="?attr/colorPrimaryContainer"
         android:alpha="0.95">
 
         <TextView
@@ -29,7 +28,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="@string/quick_settings_title"
-            android:textColor="?attr/colorOnPrimary"
+            android:textColor="?attr/colorOnPrimaryContainer"
             android:textSize="20sp"
             android:textStyle="bold" />
 
@@ -41,7 +40,7 @@
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="@string/content_desc_close"
             android:padding="8dp"
-            app:tint="#FFFFFF" />
+            app:tint="?attr/colorOnPrimaryContainer" />
 
     </LinearLayout>
 
@@ -75,7 +74,7 @@
                 android:layout_marginBottom="8dp"
                 app:cardCornerRadius="12dp"
                 app:cardElevation="2dp"
-                app:cardBackgroundColor="?attr/colorSurfaceVariant"
+                app:cardBackgroundColor="?attr/colorSurface"
                 app:strokeWidth="0dp"
                 android:clickable="false"
                 android:focusable="false">

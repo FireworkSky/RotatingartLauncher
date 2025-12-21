@@ -111,17 +111,32 @@ public class ModManagerFileAdapter extends RecyclerView.Adapter<ModManagerFileAd
         }
 
         // 设置选中状态
+        // 使用主题属性获取颜色，确保日间/夜间模式自动切换
         boolean isSelected = fileItem.getPath().equals(selectedFilePath);
+        android.util.TypedValue typedValue = new android.util.TypedValue();
+        
         if (isSelected) {
-            int primaryColor = holder.itemView.getContext().getColor(R.color.accent_primary);
+            // 选中状态：紫色边框、背景色、更高阴影
+            holder.itemView.getContext().getTheme().resolveAttribute(
+                com.google.android.material.R.attr.colorPrimary, typedValue, true);
+            int primaryColor = typedValue.data;
             holder.cardView.setStrokeColor(primaryColor);
             holder.cardView.setStrokeWidth(3);
-            int primaryContainerColor = holder.itemView.getContext().getColor(R.color.md_theme_light_primaryContainer);
+            
+            // 使用 primaryContainer 颜色作为背景
+            holder.itemView.getContext().getTheme().resolveAttribute(
+                com.google.android.material.R.attr.colorPrimaryContainer, typedValue, true);
+            int primaryContainerColor = typedValue.data;
             holder.cardView.setCardBackgroundColor(primaryContainerColor);
             holder.cardView.setCardElevation(8f);
         } else {
+            // 未选中状态：无边框、默认背景、低阴影
             holder.cardView.setStrokeWidth(1);
-            int surfaceColor = holder.itemView.getContext().getColor(R.color.md_theme_light_surface);
+            
+            // 使用 surface 颜色作为背景
+            holder.itemView.getContext().getTheme().resolveAttribute(
+                com.google.android.material.R.attr.colorSurface, typedValue, true);
+            int surfaceColor = typedValue.data;
             holder.cardView.setCardBackgroundColor(surfaceColor);
             holder.cardView.setCardElevation(2f);
         }
