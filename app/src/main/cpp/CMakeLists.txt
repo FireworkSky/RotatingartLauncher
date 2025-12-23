@@ -68,10 +68,10 @@ set(TRACING_SUPPORT OFF CACHE BOOL "Disable tracing" FORCE)
 set(BUILD_DXVK_NATIVE ON CACHE BOOL "Enable DXVK Native for D3D11 support" FORCE)
 # 设置 DXVK Native 头文件路径 (需要包含 directx/ 和 windows/ 子目录)
 set(DXVK_NATIVE_INCLUDE_DIRS
-    ${CMAKE_SOURCE_DIR}/dxvk-native/include/directx
-    ${CMAKE_SOURCE_DIR}/dxvk-native/include/windows
-    ${CMAKE_SOURCE_DIR}/dxvk-native/include/wsi
-    ${CMAKE_SOURCE_DIR}/dxvk-native/include
+    ${CMAKE_SOURCE_DIR}/dxvk/include/native/directx
+    ${CMAKE_SOURCE_DIR}/dxvk/include/native/windows
+    ${CMAKE_SOURCE_DIR}/dxvk/include/native/wsi
+    ${CMAKE_SOURCE_DIR}/dxvk/include/native
 )
 # 设置 SDL2 变量供 FNA3D 使用
 set(SDL2_INCLUDE_DIRS ${SDL_SOURCE_DIR}/include)

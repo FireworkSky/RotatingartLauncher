@@ -476,6 +476,11 @@ public class ControlEditDialogMD extends DialogFragment {
             public Context getContext() {
                 return ControlEditDialogMD.this.getLocalizedContext();
             }
+            
+            @Override
+            public boolean isUpdating() {
+                return mIsUpdating;
+            }
         };
     }
     
@@ -560,19 +565,22 @@ public class ControlEditDialogMD extends DialogFragment {
      * 显示控件数据（DialogFragment 方式）
      */
     public void showWithData(androidx.fragment.app.FragmentManager fragmentManager, String tag, ControlData data) {
-        // 保存数据
-        mCurrentData = data;
-        
         if (data == null) return;
         
-        // 如果对话框已经在显示，直接刷新UI而不是重新show
-        if (isAdded() && getView() != null) {
-            refreshUIForCurrentData();
-            return;
-        }
+        // 关键：在设置新数据之前就设置标志，防止旧的 TextWatcher 把旧文本写入新控件
+        // 无论对话框是否已显示，都需要这个保护
+        mIsUpdating = true;
+        mCurrentData = data;
         
-        // 显示对话框
-        show(fragmentManager, tag);
+        if (isAdded() && getView() != null) {
+            // 对话框已显示，直接刷新UI
+            refreshUIForCurrentData();
+            // refreshUIForCurrentData() 的 finally 块会清除 mIsUpdating
+        } else {
+            // 对话框未显示，显示对话框
+            // mIsUpdating 会在 onResume() 的 refreshUIForCurrentData() 完成后被清除
+            show(fragmentManager, tag);
+        }
     }
     
     @Override
@@ -588,21 +596,28 @@ public class ControlEditDialogMD extends DialogFragment {
     private void refreshUIForCurrentData() {
         if (mCurrentData == null) return;
 
-        // 根据控件类型决定是否显示键值设置分类
-        updateKeymapCategoryVisibility();
+        // 设置更新标志，防止 TextWatcher 在切换控件时把旧文本写入新控件
+        mIsUpdating = true;
+        try {
+            // 根据控件类型决定是否显示键值设置分类
+            updateKeymapCategoryVisibility();
 
-        // 重新绑定视图，确保使用最新的数据
-        bindCategoryViews();
-        
-        // 更新所有选项的可见性（必须在绑定视图之后）
-        if (mContentBasic != null && mContentAppearance != null && mContentKeymap != null) {
-            ControlEditDialogVisibilityManager.updateAllOptionsVisibility(mContentBasic, mContentAppearance, mContentKeymap, mCurrentData);
-        } else if (mContentAppearance != null && mContentKeymap != null) {
-            ControlEditDialogVisibilityManager.updateAllOptionsVisibility(mContentAppearance, mContentKeymap, mCurrentData);
+            // 重新绑定视图，确保使用最新的数据
+            bindCategoryViews();
+            
+            // 更新所有选项的可见性（必须在绑定视图之后）
+            if (mContentBasic != null && mContentAppearance != null && mContentKeymap != null) {
+                ControlEditDialogVisibilityManager.updateAllOptionsVisibility(mContentBasic, mContentAppearance, mContentKeymap, mCurrentData);
+            } else if (mContentAppearance != null && mContentKeymap != null) {
+                ControlEditDialogVisibilityManager.updateAllOptionsVisibility(mContentAppearance, mContentKeymap, mCurrentData);
+            }
+            
+            // 填充当前分类的数据
+            fillCategoryData();
+        } finally {
+            // 确保标志被清除
+            mIsUpdating = false;
         }
-        
-        // 填充当前分类的数据
-        fillCategoryData();
     }
 
     /**

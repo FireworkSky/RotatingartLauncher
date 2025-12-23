@@ -38,6 +38,8 @@ public class ControlEditDialogUIBinder {
         void setAutoSize(boolean autoSize);
         void notifyUpdate();
         Context getContext();
+        /** 是否正在更新UI（切换控件时），此时不应修改数据 */
+        boolean isUpdating();
     }
     
     /**
@@ -94,7 +96,8 @@ public class ControlEditDialogUIBinder {
                 
                 @Override
                 public void onTextChanged(CharSequence s, int start, int before, int count) {
-                    if (refs.getCurrentData() != null) {
+                    // 切换控件时不修改数据，避免把旧文本写入新控件
+                    if (refs.getCurrentData() != null && !refs.isUpdating()) {
                         refs.getCurrentData().name = s.toString();
                         refs.notifyUpdate();
                     }
@@ -114,7 +117,8 @@ public class ControlEditDialogUIBinder {
                 
                 @Override
                 public void onTextChanged(CharSequence s, int start, int before, int count) {
-                    if (refs.getCurrentData() != null && refs.getCurrentData().type == ControlData.TYPE_TEXT) {
+                    // 切换控件时不修改数据，避免把旧文本写入新控件
+                    if (refs.getCurrentData() != null && refs.getCurrentData().type == ControlData.TYPE_TEXT && !refs.isUpdating()) {
                         refs.getCurrentData().displayText = s.toString();
                         refs.notifyUpdate();
                     }
