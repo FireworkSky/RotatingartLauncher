@@ -1,10 +1,11 @@
 plugins {
     alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
 }
 
 android {
     namespace 'com.app.ralaunch'
-    compileSdk 35
+    compileSdk 36
     ndkVersion "28.0.13004108"
 
     defaultConfig {
@@ -54,12 +55,11 @@ android {
     }
 
     packagingOptions {
-        pickFirst "lib/arm64-v8a/libc++_shared.so"
-        pickFirst "lib/arm64-v8a/libnetcorehost.so"
         // 确保渲染器库被打包
         jniLibs {
             useLegacyPackaging = true
             keepDebugSymbols += ['**/*.so']
+            pickFirsts += ['lib/arm64-v8a/libc++_shared.so', 'lib/arm64-v8a/libnetcorehost.so']
         }
     }
 
@@ -82,12 +82,14 @@ android {
         }
     }
 
+    kotlinOptions {
+        jvmTarget = '21'
+    }
+
     // 关闭 Lint 检查
-    lintOptions {
-        checkReleaseBuilds false
-        // Or, if you prefer, you can continue to check for errors in release builds,
-        // but continue the build even when errors are found:
+    lint {
         abortOnError false
+        checkReleaseBuilds false
     }
 }
 
@@ -130,6 +132,7 @@ dependencies {
     implementation libs.material
     implementation libs.constraintlayout
     implementation libs.activity
+    implementation libs.core.ktx
     testImplementation libs.junit
     androidTestImplementation libs.ext.junit
     androidTestImplementation libs.espresso.core
