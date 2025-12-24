@@ -89,6 +89,9 @@ public class SettingsManager {
         public static final String CORECLR_QUICK_JIT = "coreclr_quick_jit";
         public static final String CORECLR_JIT_OPTIMIZE_TYPE = "coreclr_jit_optimize_type";
         public static final String CORECLR_RETAIN_VM = "coreclr_retain_vm";
+
+        // 内存优化设置
+        public static final String KILL_LAUNCHER_UI_AFTER_LAUNCH = "kill_launcher_ui_after_launch";
     }
     
     // 默认值
@@ -141,6 +144,9 @@ public class SettingsManager {
         public static final boolean CORECLR_QUICK_JIT = true; // 默认启用快速 JIT
         public static final int CORECLR_JIT_OPTIMIZE_TYPE = 0; // 0=混合, 1=体积, 2=速度
         public static final boolean CORECLR_RETAIN_VM = false; // 默认不保留虚拟内存
+
+        // 内存优化默认值
+        public static final boolean KILL_LAUNCHER_UI_AFTER_LAUNCH = false; // 默认不杀死启动器UI进程
     }
     
     private SettingsManager(Context context) {
@@ -670,6 +676,15 @@ public class SettingsManager {
     
     public boolean isVirtualKeyboard() {
         return "virtual".equals(getKeyboardType());
+    }
+
+    // 内存优化设置
+    public boolean isKillLauncherUIAfterLaunch() {
+        return getBoolean(Keys.KILL_LAUNCHER_UI_AFTER_LAUNCH, Defaults.KILL_LAUNCHER_UI_AFTER_LAUNCH);
+    }
+
+    public void setKillLauncherUIAfterLaunch(boolean enabled) {
+        putBoolean(Keys.KILL_LAUNCHER_UI_AFTER_LAUNCH, enabled);
     }
 
     /**

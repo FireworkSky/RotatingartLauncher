@@ -224,6 +224,11 @@
     <string name="thread_affinity_big_core_enabled">Big core thread affinity enabled</string>
     <string name="thread_affinity_big_core_disabled">Big core thread affinity disabled</string>
 
+    <string name="kill_launcher_ui_after_launch">Kill Launcher UI After Launch</string>
+    <string name="kill_launcher_ui_after_launch_desc">Terminate launcher UI process after game starts to free up memory</string>
+    <string name="kill_launcher_ui_enabled">Launcher UI termination enabled</string>
+    <string name="kill_launcher_ui_disabled">Launcher UI termination disabled</string>
+
     <!-- Patch Management -->
     <string name="patch_management">Patch Management</string>
     <string name="patch_management_desc">Manage game patch enable/disable status</string>

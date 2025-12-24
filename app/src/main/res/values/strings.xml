@@ -223,6 +223,11 @@
     <string name="thread_affinity_big_core_enabled">已启用大核心线程亲和性</string>
     <string name="thread_affinity_big_core_disabled">已禁用大核心线程亲和性</string>
 
+    <string name="kill_launcher_ui_after_launch">启动游戏后终止启动器UI</string>
+    <string name="kill_launcher_ui_after_launch_desc">游戏启动后终止启动器UI进程以释放内存</string>
+    <string name="kill_launcher_ui_enabled">已启用启动器UI终止</string>
+    <string name="kill_launcher_ui_disabled">已禁用启动器UI终止</string>
+
     <!-- 补丁管理 -->
     <string name="patch_management">补丁管理</string>
     <string name="patch_management_desc">管理游戏补丁的启用状态</string>

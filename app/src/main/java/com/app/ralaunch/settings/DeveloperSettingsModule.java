@@ -27,6 +27,7 @@ public class DeveloperSettingsModule implements SettingsModule {
         setupEnableLogSystem();
         setupVerboseLogging();
         setupThreadAffinityToBigCore();
+        setupKillLauncherUI();
         setupServerGC();
         setupConcurrentGC();
         setupTieredCompilation();
@@ -71,6 +72,20 @@ public class DeveloperSettingsModule implements SettingsModule {
                 String message = isChecked ?
                         fragment.getString(R.string.thread_affinity_big_core_enabled) :
                         fragment.getString(R.string.thread_affinity_big_core_disabled);
+                Toast.makeText(fragment.requireContext(), message, Toast.LENGTH_SHORT).show();
+            });
+        }
+    }
+
+    private void setupKillLauncherUI() {
+        MaterialSwitch switchKillLauncherUI = rootView.findViewById(R.id.switchKillLauncherUI);
+        if (switchKillLauncherUI != null) {
+            switchKillLauncherUI.setChecked(settingsManager.isKillLauncherUIAfterLaunch());
+            switchKillLauncherUI.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                settingsManager.setKillLauncherUIAfterLaunch(isChecked);
+                String message = isChecked ?
+                        fragment.getString(R.string.kill_launcher_ui_enabled) :
+                        fragment.getString(R.string.kill_launcher_ui_disabled);
                 Toast.makeText(fragment.requireContext(), message, Toast.LENGTH_SHORT).show();
             });
         }

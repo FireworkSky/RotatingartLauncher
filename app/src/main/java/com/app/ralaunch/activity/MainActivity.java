@@ -281,7 +281,12 @@ public class MainActivity extends AppCompatActivity implements
             // 启动选中的游戏
                 GameItem selectedGame = gameListManager.getSelectedGame();
                 if (selectedGame != null) {
-                    gameLaunchManager.launchGame(selectedGame);
+                    var isSuccess = gameLaunchManager.launchGame(selectedGame);
+                    var settingsManager = com.app.ralaunch.data.SettingsManager.getInstance(this);
+                    if (isSuccess && settingsManager.isKillLauncherUIAfterLaunch()) {
+                        // Force kill this ui process after launching to save memory
+                        System.exit(0);
+                    }
                 } else {
                     showToast(getString(R.string.main_select_game_first));
             }
