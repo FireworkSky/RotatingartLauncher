@@ -1,333 +1,381 @@
-package com.app.ralaunch.controls;
+package com.app.ralaunch.controls
 
-import android.content.Context;
-import android.graphics.Canvas;
-import android.graphics.Paint;
-import android.graphics.RectF;
-import android.os.Handler;
-import android.text.TextPaint;
-import android.util.Log;
-import android.view.MotionEvent;
-import android.view.View;
-
-import com.app.ralaunch.RaLaunchApplication;
+import android.content.Context
+import android.graphics.Canvas
+import android.graphics.Paint
+import android.graphics.RectF
+import android.os.Handler
+import android.text.TextPaint
+import android.view.MotionEvent
+import android.view.View
+import com.app.ralaunch.RaLaunchApplication
+import kotlin.math.pow
+import kotlin.math.sqrt
 
 /**
  * 虚拟触控板控件View
  * 支持触摸滑动操作，使用按钮的所有外观功能
  */
-public class VirtualTouchPad extends View implements ControlView {
-    private static final String TAG = "VirtualTouchPad";
+class VirtualTouchPad(
+    context: Context,
+    private var mData: ControlData,
+    private val mInputBridge: ControlInputBridge
+) : View(context), ControlView {
 
-    private ControlData mData;
-    private ControlInputBridge mInputBridge;
+    companion object {
+        private const val TAG = "VirtualTouchPad"
 
-    private float mScreenWidth;
-    private float mScreenHeight;
+        private const val TOUCHPAD_STATE_IDLE_TIMEOUT = 200L // 毫秒
+        private const val TOUCHPAD_CLICK_TIMEOUT = 50L // 毫秒
+        private const val TOUCHPAD_MOVE_THRESHOLD = 5 // dp, 移动超过这个距离视为移动操作, 应该用dpToPx转换
+        private const val TOUCHPAD_MOVE_RATIO = 2.0f // 移动距离放大倍数
 
-    private Handler mIdleDelayHandler = new Handler();
-    private Handler mLeftClickDelayHandler = new Handler();
-    private Handler mRightClickDelayHandler = new Handler();
-    private int mCurrentState = 0;
+        private fun triggerVibration(isPress: Boolean) {
+            if (isPress) {
+                RaLaunchApplication.getVibrationManager().vibrateOneShot(50, 30)
+            } else {
+                // 释放时不振动
+//            RaLaunchApplication.getVibrationManager().vibrateOneShot(50, 30);
+            }
+        }
+    }
 
-    public final int TOUCHPAD_STATE_IDLE = 0;
-    public final int TOUCHPAD_STATE_PENDING = 1;
-    public final int TOUCHPAD_STATE_DOUBLE_CLICK = 2;
-    public final int TOUCHPAD_STATE_MOVING = 3;
+    enum class TouchPadState {
+        IDLE,
+        PENDING,
+        DOUBLE_CLICK,
+        MOVING,
+        PRESS_MOVING
+    }
 
-    private static int TOUCHPAD_STATE_IDLE_TIMEOUT = 200; // 毫秒
-    private static int TOUCHPAD_CLICK_TIMEOUT = 50; // 毫秒
-    private static int TOUCHPAD_MOVE_THRESHOLD = 5; // dp, 移动超过这个距离视为移动操作, 应该用dpToPx转换
-    private static float TOUCHPAD_MOVE_RATIO = 2.0f; // 移动距离放大倍数
+    private val mScreenWidth: Float
+    private val mScreenHeight: Float
+
+    private val mIdleDelayHandler = Handler()
+    private val mClickDelayHandler = Handler()
+    private var mCurrentState = TouchPadState.IDLE
 
     // 绘制相关
-    private Paint mBackgroundPaint;
-    private Paint mStrokePaint;
-    private TextPaint mTextPaint;
-    private RectF mRectF;
+    private var mBackgroundPaint: Paint? = null
+    private var mStrokePaint: Paint? = null
+    private var mTextPaint: TextPaint? = null
+    private val mRectF: RectF
 
     // 按钮状态
-    private boolean mIsPressed = false;
-    private int mActivePointerId = -1; // 跟踪的触摸点 ID
-    private float mCenterX;
-    private float mCenterY;
-    private float mLastX;
-    private float mLastY;
-    private float mCurrentX;
-    private float mCurrentY;
-    private float mDeltaX;
-    private float mDeltaY;
-    private float mCenteredDeltaX;
-    private float mCenteredDeltaY;
-    private float mInitialTouchX;
-    private float mInitialTouchY;
+    private var mIsPressed = false
+    private var mActivePointerId = -1 // 跟踪的触摸点 ID
+    private val mCenterX: Float
+    private val mCenterY: Float
+    private var mLastX = 0f
+    private var mLastY = 0f
+    private var mCurrentX: Float
+    private var mCurrentY: Float
+    private var mDeltaX: Float
+    private var mDeltaY: Float
+    private var mCenteredDeltaX = 0f
+    private var mCenteredDeltaY = 0f
+    private var mInitialTouchX = 0f
+    private var mInitialTouchY = 0f
 
-    public VirtualTouchPad(Context context, ControlData data, ControlInputBridge bridge) {
-        super(context);
-        mData = data;
-        mInputBridge = bridge;
-        mRectF = new RectF();
-        mCenterX = mData.width / 2;
-        mCenterY = mData.height / 2;
-        mCurrentX = mCenterX;
-        mCurrentY = mCenterY;
-        mDeltaX = 0;
-        mDeltaY = 0;
+    init {
+        mRectF = RectF()
+        mCenterX = mData.width / 2
+        mCenterY = mData.height / 2
+        mCurrentX = mCenterX
+        mCurrentY = mCenterY
+        mDeltaX = 0f
+        mDeltaY = 0f
 
         // 获取屏幕尺寸（用于右摇杆绝对位置计算）
-        android.util.DisplayMetrics metrics = context.getResources().getDisplayMetrics();
-        mScreenWidth = metrics.widthPixels;
-        mScreenHeight = metrics.heightPixels;
+        val metrics = context.getResources().getDisplayMetrics()
+        mScreenWidth = metrics.widthPixels.toFloat()
+        mScreenHeight = metrics.heightPixels.toFloat()
 
-        initPaints();
+        initPaints()
     }
 
-    private void initPaints() {
-        mBackgroundPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        mBackgroundPaint.setColor(mData.bgColor);
-        mBackgroundPaint.setStyle(Paint.Style.FILL);
-        mBackgroundPaint.setAlpha((int) (mData.opacity * 255));
+    private fun initPaints() {
+        mBackgroundPaint = Paint(Paint.ANTI_ALIAS_FLAG)
+        mBackgroundPaint!!.setColor(mData.bgColor)
+        mBackgroundPaint!!.setStyle(Paint.Style.FILL)
+        mBackgroundPaint!!.setAlpha((mData.opacity * 255).toInt())
 
-        mStrokePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        mStrokePaint.setColor(mData.strokeColor);
-        mStrokePaint.setStyle(Paint.Style.STROKE);
-        mStrokePaint.setStrokeWidth(dpToPx(mData.strokeWidth));
+        mStrokePaint = Paint(Paint.ANTI_ALIAS_FLAG)
+        mStrokePaint!!.setColor(mData.strokeColor)
+        mStrokePaint!!.setStyle(Paint.Style.STROKE)
+        mStrokePaint!!.setStrokeWidth(dpToPx(mData.strokeWidth))
         // 边框透明度完全独立，默认1.0（完全不透明）
-        float borderOpacity = mData.borderOpacity != 0 ? mData.borderOpacity : 1.0f;
-        mStrokePaint.setAlpha((int) (borderOpacity * 255));
+        val borderOpacity = if (mData.borderOpacity != 0f) mData.borderOpacity else 1.0f
+        mStrokePaint!!.setAlpha((borderOpacity * 255).toInt())
 
-        mTextPaint = new TextPaint(Paint.ANTI_ALIAS_FLAG);
-        mTextPaint.setColor(0xFFFFFFFF);
-        mTextPaint.setTextSize(dpToPx(16));
-        mTextPaint.setTextAlign(Paint.Align.CENTER);
+        mTextPaint = TextPaint(Paint.ANTI_ALIAS_FLAG)
+        mTextPaint!!.setColor(-0x1)
+        mTextPaint!!.setTextSize(dpToPx(16f))
+        mTextPaint!!.setTextAlign(Paint.Align.CENTER)
         // 文本透明度完全独立，默认1.0（完全不透明）
-        float textOpacity = mData.textOpacity != 0 ? mData.textOpacity : 1.0f;
-        mTextPaint.setAlpha((int) (textOpacity * 255));
+        val textOpacity = if (mData.textOpacity != 0f) mData.textOpacity else 1.0f
+        mTextPaint!!.setAlpha((textOpacity * 255).toInt())
     }
 
-    @Override
-    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
-        super.onSizeChanged(w, h, oldw, oldh);
-        mRectF.set(0, 0, w, h);
+    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
+        super.onSizeChanged(w, h, oldw, oldh)
+        mRectF.set(0f, 0f, w.toFloat(), h.toFloat())
     }
 
-    @Override
-    protected void onDraw(Canvas canvas) {
-        super.onDraw(canvas);
+    override fun onDraw(canvas: Canvas) {
+        super.onDraw(canvas)
 
         // 绘制矩形（圆角矩形）
-        float cornerRadius = dpToPx(mData.cornerRadius);
-        canvas.drawRoundRect(mRectF, cornerRadius, cornerRadius, mBackgroundPaint);
-        canvas.drawRoundRect(mRectF, cornerRadius, cornerRadius, mStrokePaint);
+        val cornerRadius = dpToPx(mData.cornerRadius)
+        canvas.drawRoundRect(mRectF, cornerRadius, cornerRadius, mBackgroundPaint!!)
+        canvas.drawRoundRect(mRectF, cornerRadius, cornerRadius, mStrokePaint!!)
     }
 
-    @Override
-    public boolean onTouchEvent(MotionEvent event) {
-        int action = event.getActionMasked();
-        int pointerId = event.getPointerId(event.getActionIndex());
+    override fun onTouchEvent(event: MotionEvent): Boolean {
+        val action = event.getActionMasked()
+        val pointerId = event.getPointerId(event.getActionIndex())
 
-        switch (action) {
-            case MotionEvent.ACTION_DOWN:
-            case MotionEvent.ACTION_POINTER_DOWN:
+        when (action) {
+            MotionEvent.ACTION_DOWN,
+            MotionEvent.ACTION_POINTER_DOWN -> {
                 // 如果已经在跟踪一个触摸点，忽略新的
                 if (mActivePointerId != -1) {
-                    return false;
+                    return false
                 }
                 // 记录触摸点
-                mActivePointerId = pointerId;
+                mActivePointerId = pointerId
 
-                mLastX = event.getX();
-                mLastY = event.getY();
-                mCurrentX = mLastX;
-                mCurrentY = mLastY;
-                mCenteredDeltaX = mCurrentX - mCenterX;
-                mCenteredDeltaY = mCurrentY - mCenterY;
-                mInitialTouchX = mCurrentX;
-                mInitialTouchY = mCurrentY;
+                mLastX = event.getX()
+                mLastY = event.getY()
+                mCurrentX = mLastX
+                mCurrentY = mLastY
+                mCenteredDeltaX = mCurrentX - mCenterX
+                mCenteredDeltaY = mCurrentY - mCenterY
+                mInitialTouchX = mCurrentX
+                mInitialTouchY = mCurrentY
 
                 // 如果不穿透，标记这个触摸点被占用（不传递给游戏）
                 if (!mData.passThrough) {
-                    TouchPointerTracker.consumePointer(pointerId);
+                    TouchPointerTracker.consumePointer(pointerId)
                 }
 
                 // Trigger Press!
-                handlePress();
-                triggerVibration(true);
+                handlePress()
+                triggerVibration(true)
 
-                return true;
+                return true
+            }
 
-            case MotionEvent.ACTION_MOVE:
+            MotionEvent.ACTION_MOVE -> {
                 if (pointerId != mActivePointerId) {
-                    return false;
+                    return false
                 }
 
-                mCurrentX = event.getX();
-                mCurrentY = event.getY();
-                mDeltaX = mCurrentX - mLastX;
-                mDeltaY = mCurrentY - mLastY;
-                mLastX = mCurrentX;
-                mLastY = mCurrentY;
-                mCenteredDeltaX = mCurrentX - mCenterX;
-                mCenteredDeltaY = mCurrentY - mCenterY;
+                mCurrentX = event.getX()
+                mCurrentY = event.getY()
+                mDeltaX = mCurrentX - mLastX
+                mDeltaY = mCurrentY - mLastY
+                mLastX = mCurrentX
+                mLastY = mCurrentY
+                mCenteredDeltaX = mCurrentX - mCenterX
+                mCenteredDeltaY = mCurrentY - mCenterY
 
                 // Trigger Move!
-                handleMove();
+                handleMove()
 
-                return true;
+                return true
+            }
 
-            case MotionEvent.ACTION_UP:
-            case MotionEvent.ACTION_CANCEL:
-            case MotionEvent.ACTION_POINTER_UP:
+            MotionEvent.ACTION_UP,
+            MotionEvent.ACTION_CANCEL,
+            MotionEvent.ACTION_POINTER_UP -> {
                 // 检查是否是我们跟踪的触摸点
                 if (pointerId == mActivePointerId) {
                     // 释放触摸点标记（如果之前标记了）
                     if (!mData.passThrough) {
-                        TouchPointerTracker.releasePointer(mActivePointerId);
+                        TouchPointerTracker.releasePointer(mActivePointerId)
                     }
-                    mActivePointerId = -1;
+                    mActivePointerId = -1
 
                     // Trigger Release!
-                    handleRelease();
-                    triggerVibration(false);
+                    handleRelease()
+                    triggerVibration(false)
 
-                    return true;
+                    return true
                 }
-                return false;
+                return false
+            }
         }
-        return super.onTouchEvent(event);
+        return super.onTouchEvent(event)
     }
 
-    private void handleMove() {
+    private fun handleMove() {
         // 处理触摸移动逻辑
 
-        if (mCurrentState == TOUCHPAD_STATE_IDLE) {
-            // Do nothing
-        } else if (mCurrentState == TOUCHPAD_STATE_PENDING) {
-            // Check if movement exceeds threshold
-            float moveDistance = (float) Math.sqrt(Math.pow(mCurrentX - mInitialTouchX, 2) + Math.pow(mCurrentY - mInitialTouchY, 2));
-            if (moveDistance > dpToPx(TOUCHPAD_MOVE_THRESHOLD)) {
-                mCurrentState = TOUCHPAD_STATE_MOVING;
-                mIdleDelayHandler.removeCallbacksAndMessages(null);
-                // Send this move so that MOVE_THRESHOLD is not skipped
-                float multipliedDeltaX = (mCurrentX - mInitialTouchX) * TOUCHPAD_MOVE_RATIO;
-                float multipliedDeltaY = (mCurrentY - mInitialTouchY) * TOUCHPAD_MOVE_RATIO;
-                sdlOnNativeMouseDirect(0, MotionEvent.ACTION_MOVE, multipliedDeltaX, multipliedDeltaY, true); // in ACTION_MOVE, button value doesn't matter
+        when (mCurrentState) {
+            TouchPadState.IDLE -> {
+                // Do nothing
             }
-        } else if (mCurrentState == TOUCHPAD_STATE_DOUBLE_CLICK) {
-            // Double Click! Trigger centered movement and click!
-            float multipliedDeltaX = mDeltaX * TOUCHPAD_MOVE_RATIO;
-            float multipliedDeltaY = mDeltaY * TOUCHPAD_MOVE_RATIO;
-            sdlOnNativeMouseDirect(0, MotionEvent.ACTION_MOVE, multipliedDeltaX, multipliedDeltaY, true); // in ACTION_MOVE, button value doesn't matter
-        } else if (mCurrentState == TOUCHPAD_STATE_MOVING) {
-            // Send movement data
-            float multipliedDeltaX = mDeltaX * TOUCHPAD_MOVE_RATIO;
-            float multipliedDeltaY = mDeltaY * TOUCHPAD_MOVE_RATIO;
-            sdlOnNativeMouseDirect(0, MotionEvent.ACTION_MOVE, multipliedDeltaX, multipliedDeltaY, true); // in ACTION_MOVE, button value doesn't matter
-        }
 
-        invalidate();
-    }
-
-    private void handlePress() {
-        mIsPressed = true;
-
-        if (mCurrentState == TOUCHPAD_STATE_IDLE) {
-            mCurrentState = TOUCHPAD_STATE_PENDING;
-            mIdleDelayHandler.postDelayed(() -> {
-                if (mCurrentState == TOUCHPAD_STATE_PENDING) { // No double click detected, no movement detected
-                    mCurrentState = TOUCHPAD_STATE_IDLE;
-                    performPendingStateToIdleStateClick();
+            TouchPadState.PENDING -> {
+                // Check if movement exceeds threshold
+                val moveDistance = sqrt(
+                    (mCurrentX - mInitialTouchX).toDouble().pow(2.0) +
+                            (mCurrentY - mInitialTouchY).toDouble().pow(2.0)
+                ).toFloat()
+                if (moveDistance > dpToPx(TOUCHPAD_MOVE_THRESHOLD.toFloat())) {
+                    mCurrentState = TouchPadState.MOVING
+                    mIdleDelayHandler.removeCallbacksAndMessages(null)
+                    // Send this move so that MOVE_THRESHOLD is not skipped
+                    val multipliedDeltaX: Float = (mCurrentX - mInitialTouchX) * TOUCHPAD_MOVE_RATIO
+                    val multipliedDeltaY: Float = (mCurrentY - mInitialTouchY) * TOUCHPAD_MOVE_RATIO
+                    sdlOnNativeMouseDirect(0, MotionEvent.ACTION_MOVE, multipliedDeltaX, multipliedDeltaY, true) // in ACTION_MOVE, button value doesn't matter
                 }
-                mIdleDelayHandler.removeCallbacksAndMessages(null);
-            }, TOUCHPAD_STATE_IDLE_TIMEOUT);
-        } else if (mCurrentState == TOUCHPAD_STATE_PENDING) {
-            mCurrentState = TOUCHPAD_STATE_DOUBLE_CLICK;
-            mIdleDelayHandler.removeCallbacksAndMessages(null);
-            // Double Click! Trigger centered movement and click!
-            // Calculate on-screen centered position
-            float onScreenMouseX = (mScreenWidth / 2) + (mCenteredDeltaX * TOUCHPAD_MOVE_RATIO);
-            float onScreenMouseY = (mScreenHeight / 2) + (mCenteredDeltaY * TOUCHPAD_MOVE_RATIO);
-            // click left mouse button and send centered movement
-            sdlOnNativeMouseDirect(MotionEvent.BUTTON_PRIMARY, MotionEvent.ACTION_DOWN, onScreenMouseX, onScreenMouseY, false);
-            // The rest of the movements would be handled by handleMove()
-        } else if (mCurrentState == TOUCHPAD_STATE_DOUBLE_CLICK) {
-            // Already in double click, ignore
-        } else if (mCurrentState == TOUCHPAD_STATE_MOVING) {
-            // Already moving, ignore
+            }
+
+            TouchPadState.DOUBLE_CLICK -> {
+                // Double Click! Trigger centered movement and click!
+                // Calculate on-screen centered position
+                val onScreenMouseX: Float = (mScreenWidth / 2) + (mCenteredDeltaX * TOUCHPAD_MOVE_RATIO)
+                val onScreenMouseY: Float = (mScreenHeight / 2) + (mCenteredDeltaY * TOUCHPAD_MOVE_RATIO)
+                sdlOnNativeMouseDirect(0, MotionEvent.ACTION_MOVE, onScreenMouseX, onScreenMouseY, false) // in ACTION_MOVE, button value doesn't matter
+            }
+
+            TouchPadState.MOVING -> {
+                // Send movement data
+                val multipliedDeltaX: Float = mDeltaX * TOUCHPAD_MOVE_RATIO
+                val multipliedDeltaY: Float = mDeltaY * TOUCHPAD_MOVE_RATIO
+                sdlOnNativeMouseDirect(0, MotionEvent.ACTION_MOVE, multipliedDeltaX, multipliedDeltaY, true) // in ACTION_MOVE, button value doesn't matter
+            }
+
+            TouchPadState.PRESS_MOVING -> {
+                // Send movement data
+                val multipliedDeltaX: Float = mDeltaX * TOUCHPAD_MOVE_RATIO
+                val multipliedDeltaY: Float = mDeltaY * TOUCHPAD_MOVE_RATIO
+                sdlOnNativeMouseDirect(0, MotionEvent.ACTION_MOVE, multipliedDeltaX, multipliedDeltaY, true) // in ACTION_MOVE, button value doesn't matter
+            }
         }
 
-        invalidate();
+        invalidate()
     }
 
-    private void handleRelease() {
-        mIsPressed = false;
+    private fun handlePress() {
+        mIsPressed = true
 
-        if (mCurrentState == TOUCHPAD_STATE_IDLE) {
-            // Do nothing
-        } else if (mCurrentState == TOUCHPAD_STATE_PENDING) {
-            // Still pending, wait for timeout to confirm single click
-        } else if (mCurrentState == TOUCHPAD_STATE_DOUBLE_CLICK) {
-            // After double click, go back to idle
-            mCurrentState = TOUCHPAD_STATE_IDLE;
-            // Release mouse button
-            sdlOnNativeMouseDirect(MotionEvent.BUTTON_PRIMARY, MotionEvent.ACTION_UP, 0, 0, true);
-        } else if (mCurrentState == TOUCHPAD_STATE_MOVING) {
-            // After moving, go back to idle
-            mCurrentState = TOUCHPAD_STATE_IDLE;
+        when (mCurrentState) {
+            TouchPadState.IDLE -> {
+                mCurrentState = TouchPadState.PENDING // proceed to pending state
+                mIdleDelayHandler.postDelayed({
+                    if (mCurrentState == TouchPadState.PENDING) { // No double click detected, no movement detected
+                        mCurrentState = TouchPadState.IDLE
+                        if (mIsPressed) {
+                            // Long Press! Trigger press movement!
+                            mCurrentState = TouchPadState.PRESS_MOVING
+                            // notify the user press movement start
+                            triggerVibration(true)
+                            // Press down left mouse button
+                            sdlOnNativeMouseDirect(MotionEvent.BUTTON_PRIMARY, MotionEvent.ACTION_DOWN, 0f, 0f, true)
+                            // the rest of the movements would be handled by handleMove()
+                        } else {
+                            // Single Press! Trigger left click!
+                            mClickDelayHandler.removeCallbacksAndMessages(null)
+                            sdlOnNativeMouseDirect(MotionEvent.BUTTON_PRIMARY, MotionEvent.ACTION_UP, 0f, 0f, true)
+                            sdlOnNativeMouseDirect(MotionEvent.BUTTON_PRIMARY,MotionEvent.ACTION_DOWN,0f,0f,true)
+                            mClickDelayHandler.postDelayed({
+                                sdlOnNativeMouseDirect(MotionEvent.BUTTON_PRIMARY, MotionEvent.ACTION_UP, 0f, 0f, true)
+                            }, TOUCHPAD_CLICK_TIMEOUT)
+                        }
+                    }
+                    mIdleDelayHandler.removeCallbacksAndMessages(null)
+                }, TOUCHPAD_STATE_IDLE_TIMEOUT)
+            }
+
+            TouchPadState.PENDING -> {
+                mCurrentState = TouchPadState.DOUBLE_CLICK
+                mIdleDelayHandler.removeCallbacksAndMessages(null)
+                // Double Click! Trigger centered movement and click!
+                // Calculate on-screen centered position
+                val onScreenMouseX: Float = (mScreenWidth / 2) + (mCenteredDeltaX * TOUCHPAD_MOVE_RATIO)
+                val onScreenMouseY: Float = (mScreenHeight / 2) + (mCenteredDeltaY * TOUCHPAD_MOVE_RATIO)
+                // click left mouse button and send centered movement
+                sdlOnNativeMouseDirect(MotionEvent.BUTTON_PRIMARY, MotionEvent.ACTION_DOWN, onScreenMouseX, onScreenMouseY, false)
+                // The rest of the movements would be handled by handleMove()
+            }
+
+            TouchPadState.DOUBLE_CLICK -> {
+                // Already in double click, ignore
+            }
+
+            TouchPadState.MOVING -> {
+                // Already moving, ignore
+            }
+
+            TouchPadState.PRESS_MOVING -> {
+                // Already moving, ignore
+            }
         }
 
-        invalidate();
+        invalidate()
     }
 
-    private void sdlOnNativeMouseDirect(int button, int action, float x, float y, boolean relative) {
-        if (mInputBridge instanceof SDLInputBridge bridge) {
-            bridge.sdlOnNativeMouseDirect(button, action, x, y, relative);
+    private fun handleRelease() {
+        mIsPressed = false
+
+        when (mCurrentState) {
+            TouchPadState.IDLE -> {
+                // Do nothing
+            }
+
+            TouchPadState.PENDING -> {
+                // Still pending, wait for timeout to confirm single click
+            }
+
+            TouchPadState.DOUBLE_CLICK -> {
+                // After double click, go back to idle
+                mCurrentState = TouchPadState.IDLE
+                // Release mouse button
+                sdlOnNativeMouseDirect(MotionEvent.BUTTON_PRIMARY, MotionEvent.ACTION_UP, 0f, 0f, true)
+            }
+
+            TouchPadState.MOVING -> {
+                // After moving, go back to idle
+                mCurrentState = TouchPadState.IDLE
+            }
+
+            TouchPadState.PRESS_MOVING -> {
+                // After press moving, go back to idle
+                mCurrentState = TouchPadState.IDLE
+                // Release mouse button
+                sdlOnNativeMouseDirect(MotionEvent.BUTTON_PRIMARY, MotionEvent.ACTION_UP, 0f, 0f, true)
+            }
+        }
+
+        invalidate()
+    }
+
+    private fun sdlOnNativeMouseDirect(
+        button: Int,
+        action: Int,
+        x: Float,
+        y: Float,
+        relative: Boolean
+    ) {
+        if (mInputBridge is SDLInputBridge) {
+            mInputBridge.sdlOnNativeMouseDirect(button, action, x, y, relative)
         }
     }
 
-    private void performPendingStateToIdleStateClick() {
-        if (mIsPressed) {
-            // Long Press! Trigger right click!
-            mRightClickDelayHandler.removeCallbacksAndMessages(null);
-            sdlOnNativeMouseDirect(MotionEvent.BUTTON_PRIMARY, MotionEvent.ACTION_UP, 0, 0, true);
-            sdlOnNativeMouseDirect(MotionEvent.BUTTON_SECONDARY, MotionEvent.ACTION_DOWN, 0, 0, true);
-            mRightClickDelayHandler.postDelayed(() -> {
-                sdlOnNativeMouseDirect(MotionEvent.BUTTON_SECONDARY, MotionEvent.ACTION_UP, 0, 0, true);
-            }, TOUCHPAD_CLICK_TIMEOUT);
-        } else {
-            // Single Press! Trigger left click!
-            mLeftClickDelayHandler.removeCallbacksAndMessages(null);
-            sdlOnNativeMouseDirect(MotionEvent.BUTTON_PRIMARY, MotionEvent.ACTION_UP, 0, 0, true);
-            sdlOnNativeMouseDirect(MotionEvent.BUTTON_PRIMARY, MotionEvent.ACTION_DOWN, 0, 0, true);
-            mLeftClickDelayHandler.postDelayed(() -> {
-                sdlOnNativeMouseDirect(MotionEvent.BUTTON_PRIMARY, MotionEvent.ACTION_UP, 0, 0, true);
-            }, TOUCHPAD_CLICK_TIMEOUT);
-        }
+    override fun getData(): ControlData {
+        return mData
     }
 
-    @Override
-    public ControlData getData() {
-        return mData;
+    override fun updateData(data: ControlData) {
+        mData = data
+        initPaints()
+        invalidate()
     }
 
-    @Override
-    public void updateData(ControlData data) {
-        mData = data;
-        initPaints();
-        invalidate();
-    }
-
-    private float dpToPx(float dp) {
-        return dp * getResources().getDisplayMetrics().density;
-    }
-
-    private static void triggerVibration(boolean isPress) {
-        if (isPress) {
-            RaLaunchApplication.getVibrationManager().vibrateOneShot(50, 30);
-        }
-        else {
-            // 释放时不振动
-//            RaLaunchApplication.getVibrationManager().vibrateOneShot(50, 30);
-        }
+    private fun dpToPx(dp: Float): Float {
+        return dp * resources.displayMetrics.density
     }
 }

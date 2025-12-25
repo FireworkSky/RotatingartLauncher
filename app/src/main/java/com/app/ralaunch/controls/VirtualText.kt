@@ -1,149 +1,149 @@
-package com.app.ralaunch.controls;
+package com.app.ralaunch.controls
 
-import android.content.Context;
-import android.graphics.Canvas;
-import android.graphics.Paint;
-import android.graphics.RectF;
-import android.text.TextPaint;
-import android.util.Log;
-import android.view.MotionEvent;
-import android.view.View;
+import android.content.Context
+import android.graphics.Canvas
+import android.graphics.Paint
+import android.graphics.Rect
+import android.graphics.RectF
+import android.text.TextPaint
+import android.view.MotionEvent
+import android.view.View
+import kotlin.math.max
+import kotlin.math.min
 
 /**
  * 虚拟文本控件View
  * 显示文本内容，不支持按键映射，使用按钮的所有外观功能
  */
-public class VirtualText extends View implements ControlView {
-    private static final String TAG = "VirtualText";
-    
-    private ControlData mData;
-    private ControlInputBridge mInputBridge;
-    
+class VirtualText(
+    context: Context?,
+    private var mData: ControlData?,
+    private val mInputBridge: ControlInputBridge?
+) : View(context), ControlView {
+
+    companion object {
+        private const val TAG = "VirtualText"
+    }
+
     // 绘制相关
-    private Paint mBackgroundPaint;
-    private Paint mStrokePaint;
-    private TextPaint mTextPaint;
-    private RectF mRectF;
-    
-    public VirtualText(Context context, ControlData data, ControlInputBridge bridge) {
-        super(context);
-        mData = data;
-        mInputBridge = bridge;
-        mRectF = new RectF();
-        initPaints();
+    private var mBackgroundPaint: Paint? = null
+    private var mStrokePaint: Paint? = null
+    private var mTextPaint: TextPaint? = null
+    private val mRectF: RectF
+
+    init {
+        mRectF = RectF()
+        initPaints()
     }
-    
-    private void initPaints() {
-        mBackgroundPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        mBackgroundPaint.setColor(mData.bgColor);
-        mBackgroundPaint.setStyle(Paint.Style.FILL);
+
+    private fun initPaints() {
+        mBackgroundPaint = Paint(Paint.ANTI_ALIAS_FLAG)
+        mBackgroundPaint!!.setColor(mData!!.bgColor)
+        mBackgroundPaint!!.setStyle(Paint.Style.FILL)
         // 背景透明度完全独立
-        mBackgroundPaint.setAlpha((int) (mData.opacity * 255));
-        
-        mStrokePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        mStrokePaint.setColor(mData.strokeColor);
-        mStrokePaint.setStyle(Paint.Style.STROKE);
-        mStrokePaint.setStrokeWidth(dpToPx(mData.strokeWidth));
+        mBackgroundPaint!!.setAlpha((mData!!.opacity * 255).toInt())
+
+        mStrokePaint = Paint(Paint.ANTI_ALIAS_FLAG)
+        mStrokePaint!!.setColor(mData!!.strokeColor)
+        mStrokePaint!!.setStyle(Paint.Style.STROKE)
+        mStrokePaint!!.setStrokeWidth(dpToPx(mData!!.strokeWidth))
         // 边框透明度完全独立，默认1.0（完全不透明）
-        float borderOpacity = mData.borderOpacity != 0 ? mData.borderOpacity : 1.0f;
-        mStrokePaint.setAlpha((int) (borderOpacity * 255));
-        
-        mTextPaint = new TextPaint(Paint.ANTI_ALIAS_FLAG);
-        mTextPaint.setColor(0xFFFFFFFF);
-        mTextPaint.setTextSize(dpToPx(16));
-        mTextPaint.setTextAlign(Paint.Align.CENTER);
+        val borderOpacity = if (mData!!.borderOpacity != 0f) mData!!.borderOpacity else 1.0f
+        mStrokePaint!!.setAlpha((borderOpacity * 255).toInt())
+
+        mTextPaint = TextPaint(Paint.ANTI_ALIAS_FLAG)
+        mTextPaint!!.setColor(-0x1)
+        mTextPaint!!.setTextSize(dpToPx(16f))
+        mTextPaint!!.setTextAlign(Paint.Align.CENTER)
         // 文本透明度完全独立，默认1.0（完全不透明）
-        float textOpacity = mData.textOpacity != 0 ? mData.textOpacity : 1.0f;
-        mTextPaint.setAlpha((int) (textOpacity * 255));
+        val textOpacity = if (mData!!.textOpacity != 0f) mData!!.textOpacity else 1.0f
+        mTextPaint!!.setAlpha((textOpacity * 255).toInt())
     }
-    
-    private float dpToPx(float dp) {
-        return dp * getContext().getResources().getDisplayMetrics().density;
+
+    private fun dpToPx(dp: Float): Float {
+        return dp * getContext().getResources().getDisplayMetrics().density
     }
-    
-    @Override
-    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
-        super.onSizeChanged(w, h, oldw, oldh);
-        mRectF.set(0, 0, w, h);
+
+    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
+        super.onSizeChanged(w, h, oldw, oldh)
+        mRectF.set(0f, 0f, w.toFloat(), h.toFloat())
     }
-    
-    @Override
-    public void updateData(ControlData data) {
-        mData = data;
-        initPaints();
-        invalidate();
+
+    override fun updateData(data: ControlData?) {
+        mData = data
+        initPaints()
+        invalidate()
     }
-    
-    @Override
-    public ControlData getData() {
-        return mData;
+
+    override fun getData(): ControlData? {
+        return mData
     }
-    
-    @Override
-    protected void onDraw(Canvas canvas) {
-        super.onDraw(canvas);
-        
-        if (mData == null || !mData.visible) {
-            return;
+
+    override fun onDraw(canvas: Canvas) {
+        super.onDraw(canvas)
+
+        if (mData == null || !mData!!.visible) {
+            return
         }
-        
-        float centerX = getWidth() / 2f;
-        float centerY = getHeight() / 2f;
-        
+
+        val centerX = getWidth() / 2f
+        val centerY = getHeight() / 2f
+
+
         // 应用旋转
-        if (mData.rotation != 0) {
-            canvas.save();
-            canvas.rotate(mData.rotation, centerX, centerY);
+        if (mData!!.rotation != 0f) {
+            canvas.save()
+            canvas.rotate(mData!!.rotation, centerX, centerY)
         }
-        
-        int shape = mData.shape;
-        float radius = Math.min(mRectF.width(), mRectF.height()) / 2f;
-        
+
+        val shape = mData!!.shape
+        val radius = min(mRectF.width(), mRectF.height()) / 2f
+
+
         // 绘制背景
         if (shape == ControlData.SHAPE_CIRCLE) {
-            canvas.drawCircle(centerX, centerY, radius, mBackgroundPaint);
-            canvas.drawCircle(centerX, centerY, radius, mStrokePaint);
+            canvas.drawCircle(centerX, centerY, radius, mBackgroundPaint!!)
+            canvas.drawCircle(centerX, centerY, radius, mStrokePaint!!)
         } else {
             // 绘制矩形（圆角矩形）- 文本控件默认方形
-            float cornerRadius = dpToPx(mData.cornerRadius);
-            canvas.drawRoundRect(mRectF, cornerRadius, cornerRadius, mBackgroundPaint);
-            canvas.drawRoundRect(mRectF, cornerRadius, cornerRadius, mStrokePaint);
+            val cornerRadius = dpToPx(mData!!.cornerRadius)
+            canvas.drawRoundRect(mRectF, cornerRadius, cornerRadius, mBackgroundPaint!!)
+            canvas.drawRoundRect(mRectF, cornerRadius, cornerRadius, mStrokePaint!!)
         }
-        
+
+
         // 绘制文本
-        String displayText = mData.displayText != null ? mData.displayText : "";
-        
+        val displayText = if (mData!!.displayText != null) mData!!.displayText else ""
+
+
         // 自动计算文字大小以适应区域
-        mTextPaint.setTextSize(20f); // 临时设置用于测量
-        android.graphics.Rect textBounds = new android.graphics.Rect();
-        mTextPaint.getTextBounds(displayText, 0, displayText.length(), textBounds);
-        float textAspectRatio = textBounds.width() / (float) Math.max(textBounds.height(), 1);
-        
+        mTextPaint!!.setTextSize(20f) // 临时设置用于测量
+        val textBounds = Rect()
+        mTextPaint!!.getTextBounds(displayText, 0, displayText.length, textBounds)
+        val textAspectRatio = textBounds.width() / max(textBounds.height(), 1).toFloat()
+
+
         // 自动计算文字大小：minOf(height / 2, width / textAspectRatio)
-        float textSize = Math.min(
+        val textSize = min(
             getHeight() / 2f,
-            getWidth() / Math.max(textAspectRatio, 1f)
-        );
-        mTextPaint.setTextSize(textSize);
-        
+            getWidth() / max(textAspectRatio, 1f)
+        )
+        mTextPaint!!.setTextSize(textSize)
+
+
         // 居中显示文本
-        float textY = getHeight() / 2f - ((mTextPaint.descent() + mTextPaint.ascent()) / 2);
-        canvas.drawText(displayText, getWidth() / 2f, textY, mTextPaint);
-        
+        val textY = getHeight() / 2f - ((mTextPaint!!.descent() + mTextPaint!!.ascent()) / 2)
+        canvas.drawText(displayText, getWidth() / 2f, textY, mTextPaint!!)
+
+
         // 恢复旋转
-        if (mData.rotation != 0) {
-            canvas.restore();
+        if (mData!!.rotation != 0f) {
+            canvas.restore()
         }
     }
-    
-    @Override
-    public boolean onTouchEvent(MotionEvent event) {
+
+    override fun onTouchEvent(event: MotionEvent?): Boolean {
         // 文本控件不支持触摸事件（不处理按键映射）
-        return false;
+        return false
     }
 }
-
-
-
-
-
