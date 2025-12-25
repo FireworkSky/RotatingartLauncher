@@ -236,8 +236,10 @@ class VirtualTouchPad(
             TouchPadState.DOUBLE_CLICK -> {
                 // Double Click! Trigger centered movement and click!
                 // Calculate on-screen centered position
-                val onScreenMouseX: Float = (mScreenWidth / 2) + (mCenteredDeltaX * TOUCHPAD_MOVE_RATIO)
-                val onScreenMouseY: Float = (mScreenHeight / 2) + (mCenteredDeltaY * TOUCHPAD_MOVE_RATIO)
+                var onScreenMouseX: Float = (mScreenWidth / 2) + (mCenteredDeltaX * TOUCHPAD_MOVE_RATIO)
+                var onScreenMouseY: Float = (mScreenHeight / 2) + (mCenteredDeltaY * TOUCHPAD_MOVE_RATIO)
+                onScreenMouseX = Math.clamp(onScreenMouseX, 0f, mScreenWidth - 1)
+                onScreenMouseY = Math.clamp(onScreenMouseY, 0f, mScreenHeight - 1)
                 sdlOnNativeMouseDirect(0, MotionEvent.ACTION_MOVE, onScreenMouseX, onScreenMouseY, false) // in ACTION_MOVE, button value doesn't matter
             }
 
