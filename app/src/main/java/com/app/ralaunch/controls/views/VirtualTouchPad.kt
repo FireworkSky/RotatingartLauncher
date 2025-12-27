@@ -6,7 +6,6 @@ import android.graphics.Paint
 import android.graphics.RectF
 import android.os.Handler
 import android.text.TextPaint
-import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import com.app.ralaunch.RaLaunchApplication
@@ -14,7 +13,6 @@ import com.app.ralaunch.controls.TouchPointerTracker
 import com.app.ralaunch.controls.bridges.ControlInputBridge
 import com.app.ralaunch.controls.bridges.SDLInputBridge
 import com.app.ralaunch.controls.configs.ControlData
-import com.app.ralaunch.controls.views.ControlView
 import kotlin.math.pow
 import kotlin.math.sqrt
 
@@ -221,7 +219,6 @@ class VirtualTouchPad(
 
     private fun handleMove() {
         // 处理触摸移动逻辑
-        Log.d(TAG, "handleMove: currentState=$currentState, currentX=$currentX, currentY=$currentY, deltaX=$deltaX, deltaY=$deltaY")
 
         when (currentState) {
             TouchPadState.IDLE -> {
