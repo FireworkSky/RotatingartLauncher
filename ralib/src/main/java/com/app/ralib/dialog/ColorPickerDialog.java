@@ -240,35 +240,14 @@ public class ColorPickerDialog extends DialogFragment {
             int maxWidth = (int) (600 * displayMetrics.density); 
             dialogWidth = Math.min(dialogWidth, maxWidth);
             
-            // 使用 WRAP_CONTENT 让内容自适应
+            // 设置最大高度为屏幕的90%，让ScrollView处理内容溢出
+            int maxHeight = (int) (screenHeight * 0.9f);
+
+            // 使用 WRAP_CONTENT 让内容自适应，但不超过最大高度
             getDialog().getWindow().setLayout(
                 dialogWidth,
-                ViewGroup.LayoutParams.WRAP_CONTENT
+                maxHeight
             );
-            
-            // 获取根视图并测量实际内容高度
-            View rootView = getView();
-            if (rootView != null) {
-                // 强制布局测量
-                rootView.measure(
-                    View.MeasureSpec.makeMeasureSpec(dialogWidth, View.MeasureSpec.EXACTLY),
-                    View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
-                );
-                
-                int measuredHeight = rootView.getMeasuredHeight();
-                int maxHeight = isLandscape ?
-                    (int) (screenHeight * 0.95f) : // 横屏：70% 屏幕高度
-                    (int) (screenHeight * 0.8f);   // 竖屏：75% 屏幕高度
-                
-                // 如果内容高度超过最大高度，使用最大高度；否则使用实际高度
-                int finalHeight = Math.min(measuredHeight, maxHeight);
-                
-                // 设置弹窗高度
-                getDialog().getWindow().setLayout(
-                    dialogWidth,
-                    finalHeight
-                );
-            }
 
             // 使用透明背景让布局的圆角可见
             getDialog().getWindow().setBackgroundDrawableResource(android.R.color.transparent);

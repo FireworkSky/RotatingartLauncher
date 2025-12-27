@@ -13,18 +13,25 @@
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="400dp"
+        android:layout_height="wrap_content"
         android:orientation="vertical"
         android:padding="16dp">
 
-        <!-- 主体内容区：左右分栏 -->
-        <LinearLayout
+        <!-- 主体内容区：左右分栏（可滚动） -->
+        <androidx.core.widget.NestedScrollView
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal">
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:fillViewport="true"
+            android:scrollbars="vertical">
 
-            <!-- 左侧区域：信息和预设 -->
             <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <!-- 左侧区域：信息和预设 -->
+                <LinearLayout
                 android:layout_width="100dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
@@ -185,16 +192,23 @@
                     android:textColor="?attr/colorOnSurfaceVariant"
                     android:textSize="12sp" />
 
-                <GridLayout
-                    android:id="@+id/gridPresets"
+                <HorizontalScrollView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:alignmentMode="alignMargins"
-                    android:columnCount="8"
-                    android:rowCount="2"
-                    android:useDefaultMargins="true">
-                    <!-- 预设颜色将通过代码动态添加 -->
-                </GridLayout>
+                    android:scrollbars="horizontal">
+
+                    <GridLayout
+                        android:id="@+id/gridPresets"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:alignmentMode="alignMargins"
+                        android:columnCount="8"
+                        android:rowCount="2"
+                        android:useDefaultMargins="true">
+                        <!-- 预设颜色将通过代码动态添加 -->
+                    </GridLayout>
+
+                </HorizontalScrollView>
 
             </LinearLayout>
 
@@ -204,11 +218,14 @@
                 android:layout_width="0dp"
                 android:layout_height="240dp"
                 android:layout_weight="1"
-                android:minHeight="200dp" />
+                android:minHeight="200dp"
+                android:nestedScrollingEnabled="false" />
 
-        </LinearLayout>
+            </LinearLayout>
 
-        <!-- 底部按钮区域 -->
+        </androidx.core.widget.NestedScrollView>
+
+        <!-- 底部按钮区域（固定） -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

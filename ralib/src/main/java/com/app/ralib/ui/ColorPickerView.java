@@ -221,9 +221,17 @@ public class ColorPickerView extends View {
                 // 判断触摸的是哪个区域
                 if (colorRect.contains(x, y)) {
                     activeTracker = 1;
+                    // 请求父视图不要拦截触摸事件
+                    if (getParent() != null) {
+                        getParent().requestDisallowInterceptTouchEvent(true);
+                    }
                     updateColorFromTouch(x, y);
                 } else if (hueRect.contains(x, y)) {
                     activeTracker = 2;
+                    // 请求父视图不要拦截触摸事件
+                    if (getParent() != null) {
+                        getParent().requestDisallowInterceptTouchEvent(true);
+                    }
                     updateHueFromTouch(y);
                 } else {
                     return false;
@@ -241,6 +249,10 @@ public class ColorPickerView extends View {
             case MotionEvent.ACTION_UP:
             case MotionEvent.ACTION_CANCEL:
                 activeTracker = 0;
+                // 恢复父视图的触摸事件拦截
+                if (getParent() != null) {
+                    getParent().requestDisallowInterceptTouchEvent(false);
+                }
                 return true;
         }
 
