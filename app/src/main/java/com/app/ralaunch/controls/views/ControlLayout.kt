@@ -131,18 +131,20 @@ class ControlLayout : FrameLayout {
             .filter { it.first != null } // 过滤掉创建失败的控件
             .toTypedArray()
 
+        // 清除现有控件视图
+        clearControls()
+
         if (controlViews.isEmpty()) {
             AppLogger.warn(TAG, "No visible controls were added, layout may appear empty")
             return false
-        } else {
-            clearControls()
-            config.controls = controlViews.map { it.second }.toMutableList()
-            controlViews.forEach { (controlView, data) ->
-                addControlView(controlView, data)
-            }
-            AppLogger.debug(TAG, "Loaded " + controlViews.size + " controls from layout: " + config.name)
-            return true
         }
+
+        // 添加新的控件视图（不修改config.controls，它已经是正确的列表）
+        controlViews.forEach { (controlView, data) ->
+            addControlView(controlView, data)
+        }
+        AppLogger.debug(TAG, "Loaded " + controlViews.size + " controls from layout: " + config.name)
+        return true
     }
 
     /**
