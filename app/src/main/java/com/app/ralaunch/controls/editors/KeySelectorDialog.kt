@@ -136,6 +136,7 @@ class KeySelectorDialog
         bindKey(layout, R.id.key_f12, "F12", ControlData.KeyCode.KEYBOARD_F12)
         bindKey(layout, R.id.key_prt, "Prt", ControlData.KeyCode.KEYBOARD_PRINTSCREEN)
         bindKey(layout, R.id.key_scr, "Scr", ControlData.KeyCode.KEYBOARD_SCROLLLOCK)
+        bindKey(layout, R.id.key_pause, "Pau", ControlData.KeyCode.KEYBOARD_PAUSE)
 
         // 第二行：数字行
         bindKey(layout, R.id.key_grave, "`", ControlData.KeyCode.KEYBOARD_GRAVE)
@@ -153,6 +154,8 @@ class KeySelectorDialog
         bindKey(layout, R.id.key_equals, "=", ControlData.KeyCode.KEYBOARD_EQUALS)
         bindKey(layout, R.id.key_backspace, "←", ControlData.KeyCode.KEYBOARD_BACKSPACE)
         bindKey(layout, R.id.key_ins, "Ins", ControlData.KeyCode.KEYBOARD_INSERT)
+        bindKey(layout, R.id.key_home, "Hm", ControlData.KeyCode.KEYBOARD_HOME)
+        bindKey(layout, R.id.key_pgup, "PU", ControlData.KeyCode.KEYBOARD_PAGEUP)
 
         // 第三行：QWERTY
         bindKey(layout, R.id.key_tab, "Tab", ControlData.KeyCode.KEYBOARD_TAB)
@@ -168,7 +171,10 @@ class KeySelectorDialog
         bindKey(layout, R.id.key_p, "P", ControlData.KeyCode.KEYBOARD_P)
         bindKey(layout, R.id.key_lbracket, "[", ControlData.KeyCode.KEYBOARD_LEFTBRACKET)
         bindKey(layout, R.id.key_rbracket, "]", ControlData.KeyCode.KEYBOARD_RIGHTBRACKET)
+        bindKey(layout, R.id.key_backslash, "\\", ControlData.KeyCode.KEYBOARD_BACKSLASH)
         bindKey(layout, R.id.key_del, "Del", ControlData.KeyCode.KEYBOARD_DELETE)
+        bindKey(layout, R.id.key_end, "End", ControlData.KeyCode.KEYBOARD_END)
+        bindKey(layout, R.id.key_pgdn, "PD", ControlData.KeyCode.KEYBOARD_PAGEDOWN)
 
         // 第四行：ASDFGH
         bindKey(layout, R.id.key_capslock, "CapsLk", ControlData.KeyCode.KEYBOARD_CAPSLOCK)
@@ -184,7 +190,6 @@ class KeySelectorDialog
         bindKey(layout, R.id.key_semicolon, ";", ControlData.KeyCode.KEYBOARD_SEMICOLON)
         bindKey(layout, R.id.key_quote, "'", ControlData.KeyCode.KEYBOARD_APOSTROPHE)
         bindKey(layout, R.id.key_enter, "Enter", ControlData.KeyCode.KEYBOARD_RETURN)
-        bindKey(layout, R.id.key_4num, "4", ControlData.KeyCode.KEYBOARD_KP_4)
 
         // 第五行：ZXCVBN
         bindKey(layout, R.id.key_lshift, "Shift", ControlData.KeyCode.KEYBOARD_LSHIFT)
@@ -200,7 +205,6 @@ class KeySelectorDialog
         bindKey(layout, R.id.key_slash, "/", ControlData.KeyCode.KEYBOARD_SLASH)
         bindKey(layout, R.id.key_rshift, "Shift", ControlData.KeyCode.KEYBOARD_RSHIFT)
         bindKey(layout, R.id.key_up, "↑", ControlData.KeyCode.KEYBOARD_UP)
-        bindKey(layout, R.id.key_1num, "1", ControlData.KeyCode.KEYBOARD_KP_1)
 
         // 第六行：空格行
         bindKey(layout, R.id.key_lctrl, "Ctrl", ControlData.KeyCode.KEYBOARD_LCTRL)
@@ -214,7 +218,25 @@ class KeySelectorDialog
         bindKey(layout, R.id.key_left, "←", ControlData.KeyCode.KEYBOARD_LEFT)
         bindKey(layout, R.id.key_down, "↓", ControlData.KeyCode.KEYBOARD_DOWN)
         bindKey(layout, R.id.key_right, "→", ControlData.KeyCode.KEYBOARD_RIGHT)
+
+        // Numpad keys
+        bindKey(layout, R.id.key_numlock, "Num", ControlData.KeyCode.KEYBOARD_NUMLOCKCLEAR)
+        bindKey(layout, R.id.key_numdiv, "/", ControlData.KeyCode.KEYBOARD_KP_DIVIDE)
+        bindKey(layout, R.id.key_nummul, "*", ControlData.KeyCode.KEYBOARD_KP_MULTIPLY)
+        bindKey(layout, R.id.key_numsub, "-", ControlData.KeyCode.KEYBOARD_KP_MINUS)
+        bindKey(layout, R.id.key_7num, "7", ControlData.KeyCode.KEYBOARD_KP_7)
+        bindKey(layout, R.id.key_8num, "8", ControlData.KeyCode.KEYBOARD_KP_8)
+        bindKey(layout, R.id.key_9num, "9", ControlData.KeyCode.KEYBOARD_KP_9)
+        bindKey(layout, R.id.key_numadd, "+", ControlData.KeyCode.KEYBOARD_KP_PLUS)
+        bindKey(layout, R.id.key_4num, "4", ControlData.KeyCode.KEYBOARD_KP_4)
+        bindKey(layout, R.id.key_5num, "5", ControlData.KeyCode.KEYBOARD_KP_5)
+        bindKey(layout, R.id.key_6num, "6", ControlData.KeyCode.KEYBOARD_KP_6)
+        bindKey(layout, R.id.key_1num, "1", ControlData.KeyCode.KEYBOARD_KP_1)
+        bindKey(layout, R.id.key_2num, "2", ControlData.KeyCode.KEYBOARD_KP_2)
+        bindKey(layout, R.id.key_3num, "3", ControlData.KeyCode.KEYBOARD_KP_3)
         bindKey(layout, R.id.key_0num, "0", ControlData.KeyCode.KEYBOARD_KP_0)
+        bindKey(layout, R.id.key_numdot, ".", ControlData.KeyCode.KEYBOARD_KP_PERIOD)
+        bindKey(layout, R.id.key_numenter, "↵", ControlData.KeyCode.KEYBOARD_KP_ENTER)
 
         // 鼠标按键
         bindKey(layout, R.id.key_mouse_left, "LMB", ControlData.KeyCode.MOUSE_LEFT)
@@ -298,13 +320,11 @@ class KeySelectorDialog
      */
     private fun bindKey(layout: View, viewId: Int, keyName: String?, keyCode: ControlData.KeyCode) {
         val keyView = layout.findViewById<View?>(viewId)
-        if (keyView != null) {
-            keyView.setOnClickListener { v: View? ->
-                if (listener != null) {
-                    listener!!.onKeySelected(keyCode, keyName)
-                }
-                dismiss()
+        keyView?.setOnClickListener { v: View? ->
+            if (listener != null) {
+                listener!!.onKeySelected(keyCode, keyName)
             }
+            dismiss()
         }
     }
 
