@@ -78,23 +78,22 @@
     <!-- 文本内容卡片（仅文本控件显示） -->
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/item_text_content"
+        style="@style/Widget.App.CardView.Standard"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="12dp"
-        android:visibility="gone"
+        app:cardBackgroundColor="?attr/colorSurfaceContainer"
         app:cardCornerRadius="15dp"
         app:cardElevation="2dp"
-        app:strokeWidth="0.5dp"
-        app:cardBackgroundColor="?attr/colorSurfaceContainer"
-        style="@style/Widget.App.CardView.Standard">
+        app:strokeWidth="0.5dp">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
             android:gravity="center_vertical"
-                    android:paddingHorizontal="16dp"
-                    android:paddingVertical="14dp">
+            android:orientation="horizontal"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="14dp">
 
             <LinearLayout
                 android:layout_width="0dp"
@@ -113,10 +112,10 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
                     android:text="@string/editor_text_content_desc"
                     android:textColor="?attr/textSecondary"
-                    android:textSize="12sp"
-                    android:layout_marginTop="2dp" />
+                    android:textSize="12sp" />
 
             </LinearLayout>
 
@@ -125,15 +124,15 @@
                 android:layout_width="120dp"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="16dp"
+                android:background="@null"
+                android:gravity="end"
                 android:hint="@string/editor_text_content_hint"
+                android:importantForAutofill="no"
+                android:inputType="text"
                 android:textColor="?attr/colorPrimary"
                 android:textColorHint="?attr/colorPrimary"
                 android:textSize="14sp"
-                android:textStyle="bold"
-                android:background="@null"
-                android:gravity="end"
-                android:inputType="text"
-                android:importantForAutofill="no" />
+                android:textStyle="bold" />
 
         </LinearLayout>
 
@@ -142,25 +141,25 @@
     <!-- 控件类型卡片 -->
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/item_control_type"
+        style="@style/Widget.App.CardView.Standard"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="12dp"
         android:clickable="true"
         android:focusable="true"
         android:foreground="?attr/selectableItemBackground"
+        app:cardBackgroundColor="?attr/colorSurfaceContainer"
         app:cardCornerRadius="15dp"
         app:cardElevation="2dp"
-        app:strokeWidth="0.5dp"
-        app:cardBackgroundColor="?attr/colorSurfaceContainer"
-        style="@style/Widget.App.CardView.Standard">
+        app:strokeWidth="0.5dp">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
             android:gravity="center_vertical"
-                    android:paddingHorizontal="16dp"
-                    android:paddingVertical="14dp">
+            android:orientation="horizontal"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="14dp">
 
             <LinearLayout
                 android:layout_width="0dp"
@@ -179,10 +178,10 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
                     android:text="@string/editor_control_type_desc"
                     android:textColor="?attr/textSecondary"
-                    android:textSize="12sp"
-                    android:layout_marginTop="2dp" />
+                    android:textSize="12sp" />
 
             </LinearLayout>
 

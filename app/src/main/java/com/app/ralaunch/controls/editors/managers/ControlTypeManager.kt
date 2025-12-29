@@ -2,6 +2,7 @@ package com.app.ralaunch.controls.editors.managers
 
 import android.content.Context
 import android.widget.TextView
+import android.widget.Toast
 import com.app.ralaunch.R
 import com.app.ralaunch.controls.configs.ControlData
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -54,76 +55,80 @@ object ControlTypeManager {
         data: ControlData?,
         listener: OnTypeSelectedListener?
     ) {
-        if (data == null) {
-            return
-        }
+        // TODO: 类型转换逻辑复杂，需创建新实例
+        Toast.makeText(context, "类型转换功能待实现/Type Conversion is still WIP", Toast.LENGTH_SHORT).show()
+        return
 
-        val types = arrayOf(
-            context.getString(R.string.control_type_button_keyboard),
-            context.getString(R.string.control_type_button_gamepad),
-            context.getString(R.string.control_type_joystick),
-            context.getString(R.string.control_type_touchpad),
-            context.getString(R.string.control_type_text)
-        )
-
-        // 确定当前选中的索引
-        val currentIndex = when (data) {
-            is ControlData.Joystick -> 2
-            is ControlData.Text -> 4
-            is ControlData.Button -> {
-                if (data.mode == ControlData.Button.Mode.GAMEPAD) 1 else 0
-            }
-            is ControlData.TouchPad -> 3
-        }
-
-        MaterialAlertDialogBuilder(context)
-            .setTitle(context.getString(R.string.editor_select_control_type))
-            .setSingleChoiceItems(types, currentIndex) { dialog, which ->
-                // Note: Type conversion is complex and may require creating new instances
-                // of the sealed classes. This is a simplified version that assumes
-                // the type can be changed in place (which may not be possible with sealed classes)
-                // TODO: Implement proper type conversion by creating new instances
-
-                when (which) {
-                    0 -> {
-                        // 按钮（键盘）
-                        if (data is ControlData.Button) {
-                            data.mode = ControlData.Button.Mode.KEYBOARD
-                        }
-                        // TODO: Convert other types to Button with KEYBOARD mode
-                    }
-                    1 -> {
-                        // 按钮（手柄）
-                        if (data is ControlData.Button) {
-                            data.mode = ControlData.Button.Mode.GAMEPAD
-                        }
-                        // TODO: Convert other types to Button with GAMEPAD mode
-                    }
-                    2 -> {
-                        // 摇杆
-                        // TODO: Convert to Joystick type
-                    }
-                    3 -> {
-                        // 触控板
-                        // TODO: Convert to TouchPad type
-                    }
-                    4 -> {
-                        // 文本
-                        if (data is ControlData.Text) {
-                            data.shape = ControlData.Text.Shape.RECTANGLE
-                            if (data.displayText.isEmpty()) {
-                                data.displayText = context.getString(R.string.control_type_text)
-                            }
-                        }
-                        // TODO: Convert other types to Text
-                    }
-                }
-
-                listener?.onTypeSelected(data)
-                dialog.dismiss()
-            }
-            .setNegativeButton(context.getString(R.string.cancel), null)
-            .show()
+//        if (data == null) {
+//            return
+//        }
+//
+//        val types = arrayOf(
+//            context.getString(R.string.control_type_button_keyboard),
+//            context.getString(R.string.control_type_button_gamepad),
+//            context.getString(R.string.control_type_joystick),
+//            context.getString(R.string.control_type_touchpad),
+//            context.getString(R.string.control_type_text)
+//        )
+//
+//        // 确定当前选中的索引
+//        val currentIndex = when (data) {
+//            is ControlData.Joystick -> 2
+//            is ControlData.Text -> 4
+//            is ControlData.Button -> {
+//                if (data.mode == ControlData.Button.Mode.GAMEPAD) 1 else 0
+//            }
+//            is ControlData.TouchPad -> 3
+//        }
+//
+//        MaterialAlertDialogBuilder(context)
+//            .setTitle(context.getString(R.string.editor_select_control_type))
+//            .setSingleChoiceItems(types, currentIndex) { dialog, which ->
+//                // Note: Type conversion is complex and may require creating new instances
+//                // of the sealed classes. This is a simplified version that assumes
+//                // the type can be changed in place (which may not be possible with sealed classes)
+//                // TODO: Implement proper type conversion by creating new instances
+//
+//                when (which) {
+//                    0 -> {
+//                        // 按钮（键盘）
+//                        if (data is ControlData.Button) {
+//                            data.mode = ControlData.Button.Mode.KEYBOARD
+//                        }
+//                        // TODO: Convert other types to Button with KEYBOARD mode
+//                    }
+//                    1 -> {
+//                        // 按钮（手柄）
+//                        if (data is ControlData.Button) {
+//                            data.mode = ControlData.Button.Mode.GAMEPAD
+//                        }
+//                        // TODO: Convert other types to Button with GAMEPAD mode
+//                    }
+//                    2 -> {
+//                        // 摇杆
+//                        // TODO: Convert to Joystick type
+//                    }
+//                    3 -> {
+//                        // 触控板
+//                        // TODO: Convert to TouchPad type
+//                    }
+//                    4 -> {
+//                        // 文本
+//                        if (data is ControlData.Text) {
+//                            data.shape = ControlData.Text.Shape.RECTANGLE
+//                            if (data.displayText.isEmpty()) {
+//                                data.displayText = context.getString(R.string.control_type_text)
+//                            }
+//                        }
+//                        // TODO: Convert other types to Text
+//                    }
+//                }
+//
+//                listener?.onTypeSelected(data)
+//                dialog.dismiss()
+//            }
+//            .setNegativeButton(context.getString(R.string.cancel), null)
+//            .show()
     }
 
     /**
