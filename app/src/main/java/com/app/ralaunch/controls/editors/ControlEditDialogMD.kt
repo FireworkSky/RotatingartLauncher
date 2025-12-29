@@ -692,7 +692,7 @@ class ControlEditDialogMD : DialogFragment() {
 
         // 形状改变时，更新外观选项的可见性
         if (mContentAppearance != null) {
-            ControlEditDialogVisibilityManager.updateAppearanceOptionsVisibility(
+            ControlEditDialogVisibilityManager.updateAllOptionsVisibility(
                 mContentAppearance!!,
                 this.currentData!!
             )

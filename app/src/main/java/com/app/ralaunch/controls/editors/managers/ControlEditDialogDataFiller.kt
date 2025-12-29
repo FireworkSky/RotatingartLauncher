@@ -49,7 +49,7 @@ object ControlEditDialogDataFiller {
         }
 
         // 更新基本信息选项的可见性
-        ControlEditDialogVisibilityManager.updateBasicInfoOptionsVisibility(view, data)
+        ControlEditDialogVisibilityManager.updateAllOptionsVisibility(view, data)
 
         // 摇杆左右选择开关（仅摇杆类型且为SDL控制器模式或鼠标模式时显示）
         val switchJoystickStickSelect = view.findViewById<SwitchCompat?>(R.id.switch_joystick_stick_select)
@@ -220,7 +220,7 @@ object ControlEditDialogDataFiller {
         switchVisible?.isChecked = data.isVisible
 
         // 更新外观选项的可见性（根据控件类型和形状）
-        ControlEditDialogVisibilityManager.updateAppearanceOptionsVisibility(view, data)
+        ControlEditDialogVisibilityManager.updateAllOptionsVisibility(view, data)
 
         // 圆角半径设置（仅在矩形形状时显示）
         val cardCornerRadius = view.findViewById<View?>(R.id.card_corner_radius)
@@ -310,7 +310,7 @@ object ControlEditDialogDataFiller {
         val data = refs.currentData ?: return
 
         // 更新键值设置选项的可见性（根据控件类型）
-        ControlEditDialogVisibilityManager.updateKeymapOptionsVisibility(view, data)
+        ControlEditDialogVisibilityManager.updateAllOptionsVisibility(view, data)
 
         // 填充按钮键值数据
         fillButtonKeymap(view, data)

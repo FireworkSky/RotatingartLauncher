@@ -94,7 +94,7 @@ object ControlEditDialogUIBinder {
                             tvJoystickMode
                         )
                         // 模式改变时，更新摇杆左右选择的可见性
-                        ControlEditDialogVisibilityManager.updateBasicInfoOptionsVisibility(
+                        ControlEditDialogVisibilityManager.updateAllOptionsVisibility(
                             view,
                             data!!
                         )
@@ -164,7 +164,7 @@ object ControlEditDialogUIBinder {
                     )
                 }
                 // 更新攻击模式选项的可见性
-                ControlEditDialogVisibilityManager.updateBasicInfoOptionsVisibility(
+                ControlEditDialogVisibilityManager.updateAllOptionsVisibility(
                     view,
                     refs.currentData!!
                 )
@@ -584,7 +584,7 @@ object ControlEditDialogUIBinder {
 
 
         // 更新外观选项的可见性（根据控件类型和形状）
-        ControlEditDialogVisibilityManager.updateAppearanceOptionsVisibility(
+        ControlEditDialogVisibilityManager.updateAllOptionsVisibility(
             view,
             refs.currentData!!
         )
