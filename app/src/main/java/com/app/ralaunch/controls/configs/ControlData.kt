@@ -405,6 +405,7 @@ sealed class ControlData {
         MOUSE_WHEEL_DOWN(-5, KeyType.MOUSE),
 
         SPECIAL_KEYBOARD(-100, KeyType.SPECIAL),
+        SPECIAL_TOUCHPAD_RIGHT_BUTTON(-101, KeyType.SPECIAL),
 
         XBOX_BUTTON_A(-200, KeyType.GAMEPAD),
         XBOX_BUTTON_B(-201, KeyType.GAMEPAD),

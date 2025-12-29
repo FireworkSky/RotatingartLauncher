@@ -246,10 +246,9 @@ class KeySelectorDialog
         bindKey(layout, R.id.key_mouse_wheel_down, "MW↓", ControlData.KeyCode.MOUSE_WHEEL_DOWN)
 
         // 弹出系统键盘按钮
-        val btnShowIme = layout.findViewById<View?>(R.id.key_show_ime)
-        if (btnShowIme != null) {
-            bindKey(layout, R.id.key_show_ime, "键盘", ControlData.KeyCode.SPECIAL_KEYBOARD)
-        }
+        bindKey(layout, R.id.key_show_ime, "键盘", ControlData.KeyCode.SPECIAL_KEYBOARD)
+        // 触摸板左右键
+        bindKey(layout, R.id.key_touchpad_button, "触摸板左右键", ControlData.KeyCode.SPECIAL_TOUCHPAD_RIGHT_BUTTON)
     }
 
     /**

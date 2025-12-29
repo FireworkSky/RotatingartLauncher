@@ -318,6 +318,12 @@
                 android:layout_marginStart="4dp"
                 android:text="键盘"
                 android:textSize="11sp" />
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/key_touchpad_button"
+                style="@style/KeyboardKeyCompact"
+                android:layout_width="80dp"
+                android:text="触摸板左右键"
+                android:textSize="11sp" />
             
         </LinearLayout>
 

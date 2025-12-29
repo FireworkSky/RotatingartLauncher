@@ -9,6 +9,7 @@ import android.text.TextPaint
 import android.view.MotionEvent
 import android.view.View
 import com.app.ralaunch.RaLaunchApplication
+import com.app.ralaunch.controls.ControlsSharedState
 import com.app.ralaunch.controls.TouchPointerTracker
 import com.app.ralaunch.controls.bridges.ControlInputBridge
 import com.app.ralaunch.controls.bridges.SDLInputBridge
@@ -102,6 +103,8 @@ class VirtualTouchPad(
         get() = currentX - centerX
     private val centeredDeltaY
         get() = currentY - centerY
+
+    private var currentMouseButton = if (ControlsSharedState.isTouchPadRightButton) MotionEvent.BUTTON_SECONDARY else MotionEvent.BUTTON_PRIMARY
 
     private val settingsManager = SettingsManager.getInstance(null)
 
@@ -292,7 +295,14 @@ class VirtualTouchPad(
 
         when (currentState) {
             TouchPadState.IDLE -> {
-                currentState = TouchPadState.PENDING // proceed to pending state
+                // proceed to pending state
+                currentState = TouchPadState.PENDING
+                // we set currentMouseButton here so it wont change in the delayed handlers
+                currentMouseButton = if (ControlsSharedState.isTouchPadRightButton)
+                    MotionEvent.BUTTON_SECONDARY
+                else
+                    MotionEvent.BUTTON_PRIMARY
+
                 idleDelayHandler.postDelayed({
                     if (currentState == TouchPadState.PENDING) { // No double click detected, no movement detected
                         currentState = TouchPadState.IDLE
@@ -302,15 +312,15 @@ class VirtualTouchPad(
                             // notify the user press movement start
                             triggerVibration(true)
                             // Press down left mouse button
-                            sdlOnNativeMouseDirect(MotionEvent.BUTTON_PRIMARY, MotionEvent.ACTION_DOWN, 0f, 0f, true)
+                            sdlOnNativeMouseDirect(currentMouseButton, MotionEvent.ACTION_DOWN, 0f, 0f, true)
                             // the rest of the movements would be handled by handleMove()
                         } else {
                             // Single Press! Trigger left click!
                             clickDelayHandler.removeCallbacksAndMessages(null)
-                            sdlOnNativeMouseDirect(MotionEvent.BUTTON_PRIMARY, MotionEvent.ACTION_UP, 0f, 0f, true)
-                            sdlOnNativeMouseDirect(MotionEvent.BUTTON_PRIMARY,MotionEvent.ACTION_DOWN,0f,0f,true)
+                            sdlOnNativeMouseDirect(currentMouseButton, MotionEvent.ACTION_UP, 0f, 0f, true)
+                            sdlOnNativeMouseDirect(currentMouseButton,MotionEvent.ACTION_DOWN,0f,0f,true)
                             clickDelayHandler.postDelayed({
-                                sdlOnNativeMouseDirect(MotionEvent.BUTTON_PRIMARY, MotionEvent.ACTION_UP, 0f, 0f, true)
+                                sdlOnNativeMouseDirect(currentMouseButton, MotionEvent.ACTION_UP, 0f, 0f, true)
                             }, TOUCHPAD_CLICK_TIMEOUT)
                         }
                     }
@@ -343,7 +353,7 @@ class VirtualTouchPad(
                 onScreenMouseX = Math.clamp(onScreenMouseX, 0f, screenWidth - 1)
                 onScreenMouseY = Math.clamp(onScreenMouseY, 0f, screenHeight - 1)
                 // click left mouse button and send centered movement
-                sdlOnNativeMouseDirect(MotionEvent.BUTTON_PRIMARY, MotionEvent.ACTION_DOWN, onScreenMouseX, onScreenMouseY, false)
+                sdlOnNativeMouseDirect(currentMouseButton, MotionEvent.ACTION_DOWN, onScreenMouseX, onScreenMouseY, false)
                 // The rest of the movements would be handled by handleMove()
             }
 
@@ -379,7 +389,7 @@ class VirtualTouchPad(
                 // After double click, go back to idle
                 currentState = TouchPadState.IDLE
                 // Release mouse button
-                sdlOnNativeMouseDirect(MotionEvent.BUTTON_PRIMARY, MotionEvent.ACTION_UP, 0f, 0f, true)
+                sdlOnNativeMouseDirect(currentMouseButton, MotionEvent.ACTION_UP, 0f, 0f, true)
             }
 
             TouchPadState.MOVING -> {
@@ -391,7 +401,7 @@ class VirtualTouchPad(
                 // After press moving, go back to idle
                 currentState = TouchPadState.IDLE
                 // Release mouse button
-                sdlOnNativeMouseDirect(MotionEvent.BUTTON_PRIMARY, MotionEvent.ACTION_UP, 0f, 0f, true)
+                sdlOnNativeMouseDirect(currentMouseButton, MotionEvent.ACTION_UP, 0f, 0f, true)
             }
         }
 

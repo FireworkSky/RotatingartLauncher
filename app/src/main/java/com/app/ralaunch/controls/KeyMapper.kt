@@ -16,6 +16,7 @@ object KeyMapper {
 
             // 特殊功能
             keys[ControlData.KeyCode.SPECIAL_KEYBOARD] = "键盘"
+            keys[ControlData.KeyCode.SPECIAL_TOUCHPAD_RIGHT_BUTTON] = "触摸板左右键"
 
             // 鼠标按键
             keys[ControlData.KeyCode.MOUSE_LEFT] = "鼠标左键"

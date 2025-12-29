@@ -29,6 +29,7 @@ import android.widget.FrameLayout
 import android.widget.TextView
 import com.app.ralaunch.RaLaunchApplication
 import com.app.ralaunch.activity.GameActivity
+import com.app.ralaunch.controls.ControlsSharedState
 import com.app.ralaunch.controls.configs.ControlData
 import com.app.ralaunch.controls.bridges.ControlInputBridge
 import com.app.ralaunch.controls.views.ControlView
@@ -216,7 +217,11 @@ class VirtualButton(
 
 
         // 绘制文字（名称 + 按键）
-        val displayText = castedData.name
+        // 为特殊按键显示特殊符号
+        val displayText = if (castedData.keycode == ControlData.KeyCode.SPECIAL_TOUCHPAD_RIGHT_BUTTON)
+            if (ControlsSharedState.isTouchPadRightButton) "◑" else "◐"
+        else
+            castedData.name
 
         if (!displayText.isEmpty()) {
             // 保存 canvas 状态以便裁剪
@@ -252,16 +257,22 @@ class VirtualButton(
                 )
                 mTextPaint?.textSize = textSize
             } else {
-                // 键盘模式：检查文本宽度，如果超出则缩小字体
-                mTextPaint?.textSize = dpToPx(16f)
-                val textWidth = mTextPaint?.measureText(displayText)
-                val availableWidth = width - dpToPx(4f) // 留出边距
+                if (castedData.keycode != ControlData.KeyCode.SPECIAL_TOUCHPAD_RIGHT_BUTTON) {
+                    // 键盘模式：检查文本宽度，如果超出则缩小字体
+                    mTextPaint?.textSize = dpToPx(16f)
+                    val textWidth = mTextPaint?.measureText(displayText)
+                    val availableWidth = width - dpToPx(4f) // 留出边距
 
-                if (textWidth!! > availableWidth) {
-                    // 文本超出，按比例缩小字体
-                    val scale = availableWidth / textWidth!!
-                    val newTextSize = mTextPaint?.textSize!! * scale
-                    mTextPaint?.textSize = newTextSize
+                    if (textWidth!! > availableWidth) {
+                        // 文本超出，按比例缩小字体
+                        val scale = availableWidth / textWidth!!
+                        val newTextSize = mTextPaint?.textSize!! * scale
+                        mTextPaint?.textSize = newTextSize
+                    }
+                }
+                else {
+                    // 特殊按键：保持固定字体大小
+                    mTextPaint?.textSize = dpToPx(32f)
                 }
             }
 
@@ -324,6 +335,11 @@ class VirtualButton(
         if (castedData.keycode == ControlData.KeyCode.SPECIAL_KEYBOARD) {
             // 显示系统键盘
             showKeyboard()
+            invalidate()
+            return
+        }
+        if (castedData.keycode == ControlData.KeyCode.SPECIAL_TOUCHPAD_RIGHT_BUTTON) {
+            ControlsSharedState.isTouchPadRightButton = !ControlsSharedState.isTouchPadRightButton
             invalidate()
             return
         }
