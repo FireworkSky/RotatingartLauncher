@@ -250,10 +250,10 @@ class VirtualTouchPad(
                 var onScreenMouseX: Float = (screenWidth / 2) + (centeredDeltaX * TOUCHPAD_MOVE_RATIO)
                 var onScreenMouseY: Float = (screenHeight / 2) + (centeredDeltaY * TOUCHPAD_MOVE_RATIO)
                 // Sanity check
-                var minRangeX = settingsManager.mouseRightStickRangeLeft * screenWidth
-                var maxRangeX = settingsManager.mouseRightStickRangeRight * screenWidth
-                var minRangeY = settingsManager.mouseRightStickRangeTop * screenHeight
-                var maxRangeY = settingsManager.mouseRightStickRangeBottom * screenHeight
+                var minRangeX = (0.5f - settingsManager.mouseRightStickRangeLeft / 2) * screenWidth
+                var maxRangeX = (0.5f + settingsManager.mouseRightStickRangeRight / 2) * screenWidth
+                var minRangeY = (0.5f - settingsManager.mouseRightStickRangeTop / 2) * screenHeight
+                var maxRangeY = (0.5f + settingsManager.mouseRightStickRangeBottom / 2) * screenHeight
                 if (minRangeX >= maxRangeX || minRangeY >= maxRangeY) {
                     minRangeX = screenWidth * 0.5f
                     maxRangeX = screenWidth * 0.5f
@@ -326,10 +326,10 @@ class VirtualTouchPad(
                 var onScreenMouseX: Float = (screenWidth / 2) + (centeredDeltaX * TOUCHPAD_MOVE_RATIO)
                 var onScreenMouseY: Float = (screenHeight / 2) + (centeredDeltaY * TOUCHPAD_MOVE_RATIO)
                 // Sanity check
-                var minRangeX = settingsManager.mouseRightStickRangeLeft * screenWidth
-                var maxRangeX = settingsManager.mouseRightStickRangeRight * screenWidth
-                var minRangeY = settingsManager.mouseRightStickRangeTop * screenHeight
-                var maxRangeY = settingsManager.mouseRightStickRangeBottom * screenHeight
+                var minRangeX = (0.5f - settingsManager.mouseRightStickRangeLeft / 2) * screenWidth
+                var maxRangeX = (0.5f + settingsManager.mouseRightStickRangeRight / 2) * screenWidth
+                var minRangeY = (0.5f - settingsManager.mouseRightStickRangeTop / 2) * screenHeight
+                var maxRangeY = (0.5f + settingsManager.mouseRightStickRangeBottom / 2) * screenHeight
                 if (minRangeX >= maxRangeX || minRangeY >= maxRangeY) {
                     minRangeX = screenWidth * 0.5f
                     maxRangeX = screenWidth * 0.5f
