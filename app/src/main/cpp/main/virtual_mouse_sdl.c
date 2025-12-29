@@ -3,7 +3,7 @@
 #include <jni.h>
 #include <android/log.h>
 #include <stdlib.h>
-#include "SDL/include/SDL.h"
+#include "SDL.h"
 
 #define TAG "VirtualMouseSDL"
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, TAG, __VA_ARGS__)

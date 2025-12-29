@@ -49,7 +49,7 @@ public class GameLauncher {
             String renderer = System.getProperty("fna.renderer", "auto");
 
             if ("opengl_gl4es".equals(renderer)) {
-                System.loadLibrary("GL");
+                System.loadLibrary("main/GL");
             }
         } catch (UnsatisfiedLinkError e) {
             // Fallback to system native renderer
