@@ -219,6 +219,15 @@
     <string name="verbose_logging_enabled">Verbose logging enabled, restart app to apply</string>
     <string name="verbose_logging_disabled">Verbose logging disabled</string>
 
+    <string name="export_share_log">Export and Share Log File</string>
+    <string name="export_share_log_desc">Export app logs to a file and share with other apps</string>
+    <string name="export">Export</string>
+    <string name="exporting_log">Exporting log…</string>
+    <string name="log_exported">Log exported</string>
+    <string name="log_export_failed">Log export failed: %s</string>
+    <string name="log_system_disabled_title">Log System Not Enabled</string>
+    <string name="log_system_disabled_message">The log system is currently disabled and cannot export log files. Please enable the \"Enable Log System\" option first, then restart the app to start logging.</string>
+
     <string name="thread_affinity_big_core">Thread Affinity - Big Core</string>
     <string name="thread_affinity_big_core_desc">Bind main thread to big cores for better performance</string>
     <string name="thread_affinity_big_core_enabled">Big core thread affinity enabled</string>

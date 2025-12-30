@@ -218,6 +218,15 @@
     <string name="verbose_logging_enabled">已启用详细日志，重启应用后生效</string>
     <string name="verbose_logging_disabled">已禁用详细日志</string>
 
+    <string name="export_share_log">导出并分享日志文件</string>
+    <string name="export_share_log_desc">将应用日志导出为文件并分享给其他应用</string>
+    <string name="export">导出</string>
+    <string name="exporting_log">正在导出日志…</string>
+    <string name="log_exported">日志已导出</string>
+    <string name="log_export_failed">日志导出失败: %s</string>
+    <string name="log_system_disabled_title">日志系统未启用</string>
+    <string name="log_system_disabled_message">日志系统当前未启用，无法导出日志文件。请先启用"启用日志系统"选项，然后重启应用以开始记录日志。</string>
+
     <string name="thread_affinity_big_core">线程亲和性 - 大核心</string>
     <string name="thread_affinity_big_core_desc">将主线程绑定到大核心以提升性能</string>
     <string name="thread_affinity_big_core_enabled">已启用大核心线程亲和性</string>
