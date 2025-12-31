@@ -1166,9 +1166,9 @@
     <string name="editor_texture_desc">为控件设置自定义纹理图像</string>
 
     <!-- 赞助商相关 -->
-    <string name="sponsors_title">赞助商墙</string>
-    <string name="sponsors_wall_title">赞助商墙</string>
-    <string name="sponsors_wall_desc">查看支持本项目的赞助者名单</string>
+    <string name="sponsors_title">荣耀星河</string>
+    <string name="sponsors_wall_title">荣耀星河</string>
+    <string name="sponsors_wall_desc">致敬每一位星辰守护者</string>
     <string name="sponsors_loading">正在加载赞助者列表...</string>
     <string name="sponsors_error">加载失败</string>
     <string name="sponsors_empty">暂无赞助者</string>
