@@ -291,7 +291,7 @@ class TextureSelectorDialog : DialogFragment() {
     }
     
     /**
-     * 从 Uri 导入纹理文件
+     * 从 Uri 导入纹理文件并直接应用到当前控件
      */
     private fun importTextureFromUri(uri: Uri) {
         val context = context ?: return
@@ -340,9 +340,20 @@ class TextureSelectorDialog : DialogFragment() {
             }
             
             Log.i(TAG, "Imported texture: ${targetFile.absolutePath}")
-            Toast.makeText(context, getString(R.string.control_texture_imported, targetFile.name), Toast.LENGTH_SHORT).show()
             
-            // 刷新纹理列表
+            // 创建纹理信息并直接应用到当前控件
+            val textureInfo = TextureFileInfo(
+                name = targetFile.name,
+                relativePath = targetFile.relativeTo(assetsDir).path.replace('\\', '/'),
+                absolutePath = targetFile.absolutePath,
+                format = extension.uppercase(),
+                fileSize = targetFile.length()
+            )
+            
+            // 直接应用纹理到当前槽位
+            onTextureSelected(textureInfo)
+            
+            // 刷新纹理列表（后台刷新，不影响用户体验）
             loadTextures()
             
         } catch (e: Exception) {
