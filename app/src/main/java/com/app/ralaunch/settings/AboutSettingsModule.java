@@ -94,6 +94,16 @@ public class AboutSettingsModule implements SettingsModule {
                 openGitHubProfile("LaoSparrow");
             });
         }
+        
+        // 设置 Future 版本贡献者 GitHub 按钮
+        com.google.android.material.button.MaterialButton btnFutureContributorGithub = 
+            rootView.findViewById(com.app.ralaunch.R.id.btnFutureContributorGithub);
+        if (btnFutureContributorGithub != null) {
+            btnFutureContributorGithub.setOnClickListener(v -> {
+                // 打开 future 分支页面
+                openUrl("https://github.com/FireworkSky/RotatingartLauncher/tree/future");
+            });
+        }
     }
     
     private void openGitHubProfile(String username) {

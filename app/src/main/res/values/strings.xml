@@ -1165,6 +1165,9 @@
     <string name="editor_texture">纹理设置</string>
     <string name="editor_texture_desc">为控件设置自定义纹理图像</string>
 
+    <!-- 开发者相关 -->
+    <string name="future_version_contributor">Future 版本贡献者</string>
+    
     <!-- 赞助商相关 -->
     <string name="sponsors_title">荣耀星河</string>
     <string name="sponsors_wall_title">荣耀星河</string>

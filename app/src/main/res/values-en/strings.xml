@@ -1090,6 +1090,9 @@
     <string name="patch_dialog_import_title">⚠️ Warning</string>
     <string name="patch_dialog_import_message">Patches have the ability to load executable files.\nInstalling patches with malicious code may result in:\n- Personal data and privacy information leakage\n- Device damage\nBefore installation, please confirm that:\n- You trust the source of this patch\n- You understand the patch\'s specific functionality\n- You have backed up important data\nContinuing with installation indicates that you understand and accept the associated risks.</string>
 
+    <!-- Developer -->
+    <string name="future_version_contributor">Future Branch Contributor</string>
+    
     <!-- Sponsors -->
     <string name="sponsors_title">Galaxy of Honor</string>
     <string name="sponsors_wall_title">Galaxy of Honor</string>
