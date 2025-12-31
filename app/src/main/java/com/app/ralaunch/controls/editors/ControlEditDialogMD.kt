@@ -1,9 +1,14 @@
 package com.app.ralaunch.controls.editors
 
+import android.app.Activity
 import android.content.Context
+import android.content.Intent
 import android.graphics.PorterDuff
 import android.graphics.Typeface
+import android.net.Uri
 import android.os.Bundle
+import android.provider.OpenableColumns
+import android.util.Log
 import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.View
@@ -11,9 +16,17 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.Toast
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.FragmentManager
+import com.app.ralaunch.RaLaunchApplication
+import com.app.ralaunch.controls.editors.managers.ControlTextureManager.TextureFileInfo
+import com.app.ralaunch.controls.textures.TextureConfig
+import java.io.File
+import java.io.FileOutputStream
 import com.app.ralaunch.R
 import com.app.ralaunch.controls.data.ControlData
 import com.app.ralaunch.controls.editors.managers.ControlColorManager
@@ -76,6 +89,9 @@ class ControlEditDialogMD : DialogFragment() {
     private var mUpdateListener: OnControlUpdatedListener? = null
     private var mDeleteListener: OnControlDeletedListener? = null
     private var mCopyListener: OnControlCopiedListener? = null
+    
+    // 纹理文件选择器
+    private lateinit var texturePickerLauncher: ActivityResultLauncher<Intent>
 
     interface OnControlUpdatedListener {
         fun onControlUpdated(data: ControlData?)
@@ -111,6 +127,17 @@ class ControlEditDialogMD : DialogFragment() {
         arguments?.let {
             screenWidth = it.getInt(ARG_SCREEN_WIDTH, 0)
             screenHeight = it.getInt(ARG_SCREEN_HEIGHT, 0)
+        }
+        
+        // 注册纹理文件选择器
+        texturePickerLauncher = registerForActivityResult(
+            ActivityResultContracts.StartActivityForResult()
+        ) { result ->
+            if (result.resultCode == Activity.RESULT_OK) {
+                result.data?.data?.let { uri ->
+                    importAndApplyTexture(uri)
+                }
+            }
         }
     }
 
@@ -788,32 +815,124 @@ class ControlEditDialogMD : DialogFragment() {
     }
     
     /**
-     * 打开纹理选择器
+     * 打开纹理选择器 - 简化版
+     * 直接打开系统文件选择器，选择后立即应用到控件
      */
     fun openTextureSelector() {
         if (this.currentData == null) return
         
-        val packManager = com.app.ralaunch.RaLaunchApplication.getControlPackManager()
+        val packManager = RaLaunchApplication.getControlPackManager()
         val packId = packManager.getSelectedPackId()
         if (packId == null) {
-            android.widget.Toast.makeText(
-                requireContext(),
-                R.string.pack_apply_failed,
-                android.widget.Toast.LENGTH_SHORT
-            ).show()
+            Toast.makeText(requireContext(), R.string.pack_apply_failed, Toast.LENGTH_SHORT).show()
             return
         }
         
-        val dialog = TextureSelectorDialog.newInstance(packId)
-        dialog.setControlData(this.currentData)
-        dialog.setOnTextureConfiguredListener(object : TextureSelectorDialog.OnTextureConfiguredListener {
-            override fun onTextureConfigured(data: ControlData?) {
-                // 更新纹理状态显示
-                refreshTextureStatus()
-                notifyUpdate()
+        // 直接打开系统文件选择器
+        val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
+            type = "image/*"
+            putExtra(Intent.EXTRA_MIME_TYPES, SUPPORTED_TEXTURE_TYPES)
+            addCategory(Intent.CATEGORY_OPENABLE)
+        }
+        texturePickerLauncher.launch(Intent.createChooser(intent, getString(R.string.control_texture_import)))
+    }
+    
+    /**
+     * 导入并直接应用纹理到当前控件
+     */
+    private fun importAndApplyTexture(uri: Uri) {
+        val context = context ?: return
+        val packManager = RaLaunchApplication.getControlPackManager()
+        val packId = packManager.getSelectedPackId() ?: return
+        val data = currentData ?: return
+        
+        try {
+            // 获取文件名
+            val fileName = getFileNameFromUri(context, uri) ?: "texture_${System.currentTimeMillis()}.png"
+            val extension = fileName.substringAfterLast('.', "png").lowercase()
+            
+            if (extension !in listOf("png", "jpg", "jpeg", "webp", "bmp")) {
+                Toast.makeText(context, R.string.control_texture_unsupported_format, Toast.LENGTH_SHORT).show()
+                return
             }
-        })
-        dialog.show(parentFragmentManager, "texture_selector")
+            
+            // 获取 assets 目录
+            val assetsDir = packManager.getPackAssetsDir(packId) ?: run {
+                Toast.makeText(context, R.string.control_texture_import_failed, Toast.LENGTH_SHORT).show()
+                return
+            }
+            
+            if (!assetsDir.exists()) assetsDir.mkdirs()
+            
+            // 目标文件（避免重名）
+            var targetFile = File(assetsDir, fileName)
+            var counter = 1
+            val nameWithoutExt = fileName.substringBeforeLast('.')
+            while (targetFile.exists()) {
+                targetFile = File(assetsDir, "${nameWithoutExt}_$counter.$extension")
+                counter++
+            }
+            
+            // 复制文件
+            context.contentResolver.openInputStream(uri)?.use { input ->
+                FileOutputStream(targetFile).use { output ->
+                    input.copyTo(output)
+                }
+            }
+            
+            val relativePath = targetFile.relativeTo(assetsDir).path.replace('\\', '/')
+            
+            // 直接应用纹理到控件（根据控件类型应用到主纹理槽位）
+            when (data) {
+                is ControlData.Button -> {
+                    data.texture = data.texture.copy(
+                        normal = data.texture.normal.copy(path = relativePath, enabled = true)
+                    )
+                }
+                is ControlData.Joystick -> {
+                    data.texture = data.texture.copy(
+                        background = data.texture.background.copy(path = relativePath, enabled = true)
+                    )
+                }
+                is ControlData.TouchPad -> {
+                    data.texture = data.texture.copy(
+                        background = data.texture.background.copy(path = relativePath, enabled = true)
+                    )
+                }
+                is ControlData.Text -> {
+                    data.texture = data.texture.copy(
+                        background = data.texture.background.copy(path = relativePath, enabled = true)
+                    )
+                }
+                else -> {}
+            }
+            
+            Log.i(TAG, "Texture applied: $relativePath")
+            Toast.makeText(context, R.string.control_texture_applied, Toast.LENGTH_SHORT).show()
+            
+            refreshTextureStatus()
+            notifyUpdate()
+            
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to import texture", e)
+            Toast.makeText(context, R.string.control_texture_import_failed, Toast.LENGTH_SHORT).show()
+        }
+    }
+    
+    /**
+     * 从 Uri 获取文件名
+     */
+    private fun getFileNameFromUri(context: Context, uri: Uri): String? {
+        var result: String? = null
+        if (uri.scheme == "content") {
+            context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
+                if (cursor.moveToFirst()) {
+                    val index = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                    if (index != -1) result = cursor.getString(index)
+                }
+            }
+        }
+        return result ?: uri.path?.substringAfterLast('/')
     }
     
     /**
@@ -856,8 +975,10 @@ class ControlEditDialogMD : DialogFragment() {
     }
 
     companion object {
+        private const val TAG = "ControlEditDialogMD"
         private const val ARG_SCREEN_WIDTH = "screen_width"
         private const val ARG_SCREEN_HEIGHT = "screen_height"
+        private val SUPPORTED_TEXTURE_TYPES = arrayOf("image/png", "image/jpeg", "image/webp", "image/bmp")
 
         // DialogFragment 使用静态工厂方法创建实例
         fun newInstance(screenWidth: Int, screenHeight: Int): ControlEditDialogMD {
