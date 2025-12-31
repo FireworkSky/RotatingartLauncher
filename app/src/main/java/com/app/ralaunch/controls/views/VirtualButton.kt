@@ -30,7 +30,7 @@ import android.widget.TextView
 import com.app.ralaunch.RaLaunchApplication
 import com.app.ralaunch.activity.GameActivity
 import com.app.ralaunch.controls.ControlsSharedState
-import com.app.ralaunch.controls.configs.ControlData
+import com.app.ralaunch.controls.data.ControlData
 import com.app.ralaunch.controls.bridges.ControlInputBridge
 import com.app.ralaunch.controls.views.ControlView
 import com.app.ralaunch.controls.TouchPointerTracker

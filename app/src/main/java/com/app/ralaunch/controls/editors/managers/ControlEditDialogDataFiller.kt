@@ -7,7 +7,7 @@ import android.widget.TextView
 import androidx.appcompat.widget.SwitchCompat
 import com.app.ralaunch.R
 import com.app.ralaunch.controls.KeyMapper
-import com.app.ralaunch.controls.configs.ControlData
+import com.app.ralaunch.controls.data.ControlData
 import com.google.android.material.slider.Slider
 import kotlin.math.max
 import kotlin.math.min

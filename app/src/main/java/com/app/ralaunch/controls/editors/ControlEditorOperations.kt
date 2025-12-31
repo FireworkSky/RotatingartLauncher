@@ -6,11 +6,11 @@ import android.content.DialogInterface
 import android.widget.Toast
 import com.app.ralaunch.R
 import com.app.ralaunch.RaLaunchApplication
-import com.app.ralaunch.controls.configs.ControlConfig
-import com.app.ralaunch.controls.configs.ControlData
-import com.app.ralaunch.controls.configs.ControlData.Joystick
-import com.app.ralaunch.controls.configs.ControlData.KeyCode
-import com.app.ralaunch.controls.configs.ControlData.TouchPad
+import com.app.ralaunch.controls.data.ControlData
+import com.app.ralaunch.controls.data.ControlData.Joystick
+import com.app.ralaunch.controls.data.ControlData.KeyCode
+import com.app.ralaunch.controls.data.ControlData.TouchPad
+import com.app.ralaunch.controls.packs.ControlLayout
 
 /**
  * 控件编辑器操作类
@@ -19,8 +19,6 @@ import com.app.ralaunch.controls.configs.ControlData.TouchPad
  * - 添加按钮/摇杆/触摸板/文本
  * - 保存/加载布局
  * - 摇杆模式设置
- *
- * 使用新的 ControlConfig/ControlData 密封类 API
  */
 object ControlEditorOperations {
     val context: Context
@@ -28,13 +26,8 @@ object ControlEditorOperations {
 
     /**
      * 添加按钮到配置
-     *
-     * @param context 上下文
-     * @param config 控件配置
-     * @return 新创建的按钮数据
      */
-    fun addButton(config: ControlConfig): ControlData.Button {
-
+    fun addButton(layout: ControlLayout): ControlData.Button {
         val button = ControlData.Button()
         button.name = context.getString(R.string.editor_default_button_name)
         button.x = 0.5f
@@ -45,20 +38,15 @@ object ControlEditorOperations {
         button.isVisible = true
         button.keycode = KeyCode.KEYBOARD_SPACE
 
-        config.controls.add(button)
+        layout.controls.add(button)
         return button
     }
 
     /**
      * 添加摇杆到配置
-     *
-     * @param config 控件配置
-     * @param joystickMode 摇杆模式
-     * @param isRightStick 是否为右摇杆
-     * @return 新创建的摇杆数据
      */
     fun addJoystick(
-        config: ControlConfig, joystickMode: Joystick.Mode, isRightStick: Boolean
+        layout: ControlLayout, joystickMode: Joystick.Mode, isRightStick: Boolean
     ): Joystick {
         val joystick = Joystick()
         joystick.name = if (isRightStick) "右摇杆" else "左摇杆"
@@ -91,20 +79,14 @@ object ControlEditorOperations {
             )
         }
 
-        config.controls.add(joystick)
+        layout.controls.add(joystick)
         return joystick
     }
 
     /**
      * 添加触控板到配置
-     *
-     * @param context 上下文
-     * @param config 控件配置
-     * @param screenWidth 屏幕宽度
-     * @param screenHeight 屏幕高度
-     * @return 新创建的触控板数据
      */
-    fun addTouchPad(config: ControlConfig): TouchPad {
+    fun addTouchPad(layout: ControlLayout): TouchPad {
         val touchpad = TouchPad()
         touchpad.name = context.getString(R.string.editor_default_touchpad_name)
         touchpad.x = 0.5f
@@ -115,20 +97,14 @@ object ControlEditorOperations {
         touchpad.cornerRadius = 22.0f
         touchpad.isVisible = true
 
-        config.controls.add(touchpad)
+        layout.controls.add(touchpad)
         return touchpad
     }
 
     /**
      * 添加文本控件到配置
-     *
-     * @param context 上下文
-     * @param config 控件配置
-     * @param screenWidth 屏幕宽度
-     * @param screenHeight 屏幕高度
-     * @return 新创建的文本控件数据
      */
-    fun addText(config: ControlConfig): ControlData.Text {
+    fun addText(layout: ControlLayout): ControlData.Text {
         val defaultTextName = context.getString(R.string.editor_default_text_name)
         val text = ControlData.Text()
         text.name = defaultTextName
@@ -137,30 +113,26 @@ object ControlEditorOperations {
         text.width = 0.15f
         text.height = 0.15f
         text.opacity = 0.5f
-        text.bgColor = -0x7f7f80 // 灰色背景（更清晰可见）
+        text.bgColor = -0x7f7f80
         text.isVisible = true
-        text.shape = ControlData.Text.Shape.RECTANGLE // 默认方形
-        text.displayText = defaultTextName // 默认文本
+        text.shape = ControlData.Text.Shape.RECTANGLE
+        text.displayText = defaultTextName
 
-        config.controls.add(text)
+        layout.controls.add(text)
         return text
     }
 
     /**
      * 显示摇杆模式批量设置对话框
-     *
-     * @param context 上下文
-     * @param config 控件配置
-     * @param onLayoutUpdated 布局更新回调
      */
     fun showJoystickModeDialog(
-        context: Context, config: ControlConfig?, onLayoutUpdated: Runnable?
+        context: Context, layout: ControlLayout?, onLayoutUpdated: Runnable?
     ) {
-        if (config == null) return
+        if (layout == null) return
 
         // 统计当前布局中的摇杆数量
         var joystickCount = 0
-        for (control in config.controls) {
+        for (control in layout.controls) {
             if (control is Joystick) {
                 joystickCount++
             }
@@ -208,7 +180,7 @@ object ControlEditorOperations {
                 }
 
                 // 批量更新所有摇杆的模式
-                val updatedCount = updateJoystickModes(config, newMode)
+                val updatedCount = updateJoystickModes(layout, newMode)
 
                 // 通知布局已更新
                 onLayoutUpdated?.run()
@@ -222,16 +194,11 @@ object ControlEditorOperations {
 
     /**
      * 批量更新摇杆模式
-     *
-     * @param context 上下文
-     * @param config 控件配置
-     * @param newMode 新模式
-     * @return 更新的摇杆数量
      */
-    private fun updateJoystickModes(config: ControlConfig, newMode: Joystick.Mode): Int {
+    private fun updateJoystickModes(layout: ControlLayout, newMode: Joystick.Mode): Int {
         var updatedCount = 0
 
-        config.controls.mapNotNull { it as? Joystick }.forEach { joystick ->
+        layout.controls.mapNotNull { it as? Joystick }.forEach { joystick ->
             joystick.mode = newMode
             updatedCount++
         }
@@ -240,14 +207,10 @@ object ControlEditorOperations {
     }
 
     /**
-     * 保存布局到 ControlConfigManager
-     *
-     * @param context 上下文
-     * @param config 控件配置
-     * @return 是否保存成功
+     * 保存布局到 ControlPackManager
      */
-    fun saveLayout(context: Context, config: ControlConfig?): Boolean {
-        if (config == null) {
+    fun saveLayout(context: Context, layout: ControlLayout?): Boolean {
+        if (layout == null) {
             Toast.makeText(
                 context, context.getString(R.string.editor_no_layout_to_save), Toast.LENGTH_SHORT
             ).show()
@@ -255,13 +218,21 @@ object ControlEditorOperations {
         }
 
         try {
-            val manager = RaLaunchApplication.getControlConfigManager()
-            manager.saveConfig(config)
-
-            Toast.makeText(
-                context, context.getString(R.string.editor_layout_saved), Toast.LENGTH_SHORT
-            ).show()
-            return true
+            val packManager = RaLaunchApplication.getControlPackManager()
+            val packId = packManager.getSelectedPackId()
+            
+            if (packId != null) {
+                packManager.savePackLayout(packId, layout)
+                Toast.makeText(
+                    context, context.getString(R.string.editor_layout_saved), Toast.LENGTH_SHORT
+                ).show()
+                return true
+            } else {
+                Toast.makeText(
+                    context, context.getString(R.string.editor_no_layout_to_save), Toast.LENGTH_SHORT
+                ).show()
+                return false
+            }
         } catch (e: Exception) {
             Toast.makeText(
                 context,
@@ -273,28 +244,19 @@ object ControlEditorOperations {
     }
 
     /**
-     * 从 ControlConfigManager 加载布局
-     *
-     * @param layoutId 布局ID（null 表示使用当前选中的布局）
-     * @return 加载的配置，如果失败返回 null
+     * 从 ControlPackManager 加载布局
      */
-    fun loadLayout(layoutId: String?): ControlConfig? {
+    fun loadLayout(packId: String?): ControlLayout? {
         try {
-            val manager = RaLaunchApplication.getControlConfigManager()
+            val packManager = RaLaunchApplication.getControlPackManager()
 
-            if (layoutId != null) {
-                return manager.loadConfig(layoutId)
+            if (packId != null) {
+                return packManager.getPackLayout(packId)
             } else {
-                val selectedId = manager.getSelectedConfigId()
-                if (selectedId != null) {
-                    return manager.loadConfig(selectedId)
-                }
+                return packManager.getCurrentLayout()
             }
-
-            return null
         } catch (_: Exception) {
             return null
         }
     }
 }
-

@@ -4,7 +4,7 @@ import android.content.Context
 import android.view.View
 import android.widget.TextView
 import com.app.ralaunch.R
-import com.app.ralaunch.controls.configs.ControlData
+import com.app.ralaunch.controls.data.ControlData
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
 /**

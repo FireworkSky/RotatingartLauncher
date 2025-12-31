@@ -10,7 +10,7 @@ import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import com.app.ralaunch.RaLaunchApplication
-import com.app.ralaunch.controls.configs.ControlData
+import com.app.ralaunch.controls.data.ControlData
 import com.app.ralaunch.controls.bridges.ControlInputBridge
 import com.app.ralaunch.controls.bridges.SDLInputBridge
 import com.app.ralaunch.controls.TouchPointerTracker

@@ -8,7 +8,7 @@ import android.graphics.RectF
 import android.text.TextPaint
 import android.view.MotionEvent
 import android.view.View
-import com.app.ralaunch.controls.configs.ControlData
+import com.app.ralaunch.controls.data.ControlData
 import com.app.ralaunch.controls.bridges.ControlInputBridge
 import com.app.ralaunch.controls.views.ControlView
 import kotlin.math.max

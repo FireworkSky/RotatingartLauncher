@@ -16,8 +16,9 @@ import androidx.appcompat.app.AppCompatDelegate
 import com.app.ralaunch.R
 import com.app.ralaunch.RaLaunchApplication
 import com.app.ralaunch.controls.bridges.DummyInputBridge
-import com.app.ralaunch.controls.configs.ControlConfig
-import com.app.ralaunch.controls.views.ControlLayout
+import com.app.ralaunch.controls.packs.ControlLayout
+import com.app.ralaunch.controls.packs.ControlPackManager
+import com.app.ralaunch.controls.views.ControlLayout as ControlLayoutView
 import com.app.ralaunch.controls.views.GridOverlayView
 import com.app.ralaunch.data.SettingsManager
 import com.app.ralaunch.manager.DynamicColorManager
@@ -35,23 +36,20 @@ import kotlin.math.sqrt
  */
 class ControlEditorActivity : AppCompatActivity() {
 
-    private val controlConfigManager
-        get() = RaLaunchApplication.getControlConfigManager()
+    private val packManager: ControlPackManager
+        get() = RaLaunchApplication.getControlPackManager()
 
     private var mEditorContainer: FrameLayout? = null
-    private var mPreviewLayout: ControlLayout? = null
+    private var mPreviewLayout: ControlLayoutView? = null
     private var mGridOverlay: GridOverlayView? = null
 
     // 统一的控件编辑管理器
     private var mEditorManager: ControlEditorManager? = null
 
-    private var mCurrentConfig: ControlConfig? = null
-    private var mCurrentLayoutName: String? = null
+    private var mCurrentLayout: ControlLayout? = null
+    private var mCurrentPackId: String? = null
 
     private val mDummyBridge = DummyInputBridge()
-
-
-    // 布局管理
 
     override fun attachBaseContext(newBase: Context?) {
         // 应用语言设置
@@ -62,15 +60,15 @@ class ControlEditorActivity : AppCompatActivity() {
         DensityAdapter.adapt(this, true)
 
         // 应用动态颜色主题（必须在 super.onCreate 之前，避免闪烁）
-        val dynamicColorManager =
-            DynamicColorManager.getInstance()
-        val settingsManager =
-            SettingsManager.getInstance(this)
+        val dynamicColorManager = DynamicColorManager.getInstance()
+        val settingsManager = SettingsManager.getInstance(this)
         dynamicColorManager.applyCustomThemeColor(this, settingsManager.themeColor)
 
         // 应用其他主题设置（深色/浅色模式等）
         AppCompatDelegate.setDefaultNightMode(
-            if (settingsManager.themeMode == 0) AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM else if (settingsManager.themeMode == 1) AppCompatDelegate.MODE_NIGHT_YES else AppCompatDelegate.MODE_NIGHT_NO
+            if (settingsManager.themeMode == 0) AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM 
+            else if (settingsManager.themeMode == 1) AppCompatDelegate.MODE_NIGHT_YES 
+            else AppCompatDelegate.MODE_NIGHT_NO
         )
 
         super.onCreate(savedInstanceState)
@@ -93,17 +91,19 @@ class ControlEditorActivity : AppCompatActivity() {
 
         setContentView(R.layout.activity_control_editor)
 
-        // 获取要编辑的布局名称
-        val layoutId = intent.getStringExtra(EXTRA_LAYOUT_ID)
-        if (layoutId.isNullOrEmpty()) {
-            Log.e(TAG, "No layout ID provided to editor, finishing activity")
+        // 获取要编辑的布局ID
+        val packId = intent.getStringExtra(EXTRA_LAYOUT_ID)
+        if (packId.isNullOrEmpty()) {
+            Log.e(TAG, "No pack ID provided to editor, finishing activity")
             finish()
             return
         }
-        mCurrentLayoutName = layoutId
-        mCurrentConfig = controlConfigManager.loadConfig(layoutId)
-        if (mCurrentConfig == null) {
-            Log.e(TAG, "Failed to load layout config for ID: $layoutId, finishing activity")
+        
+        mCurrentPackId = packId
+        mCurrentLayout = packManager.getPackLayout(packId)
+        
+        if (mCurrentLayout == null) {
+            Log.e(TAG, "Failed to load layout for pack ID: $packId, finishing activity")
             finish()
             return
         }
@@ -111,7 +111,7 @@ class ControlEditorActivity : AppCompatActivity() {
         initUI()
 
         // 延迟加载布局
-        mEditorContainer!!.post { loadLayoutFromManager() }
+        mEditorContainer!!.post { loadLayout() }
     }
 
     private fun initUI() {
@@ -164,8 +164,7 @@ class ControlEditorActivity : AppCompatActivity() {
                     MotionEvent.ACTION_MOVE -> {
                         val deltaX = event.rawX - mLastX
                         val deltaY = event.rawY - mLastY
-                        val distance =
-                            sqrt((deltaX * deltaX + deltaY * deltaY).toDouble()).toFloat()
+                        val distance = sqrt((deltaX * deltaX + deltaY * deltaY).toDouble()).toFloat()
 
                         if (distance > DRAG_THRESHOLD) {
                             if (!mIsDragging) {
@@ -176,7 +175,7 @@ class ControlEditorActivity : AppCompatActivity() {
                             var newScreenX = mInitialButtonX + (event.rawX - mInitialTouchX)
                             var newScreenY = mInitialButtonY + (event.rawY - mInitialTouchY)
 
-                            val metrics = getResources().displayMetrics
+                            val metrics = resources.displayMetrics
                             val maxX = metrics.widthPixels - v.width
                             val maxY = metrics.heightPixels - v.height
                             newScreenX = max(0f, min(newScreenX, maxX.toFloat()))
@@ -219,9 +218,9 @@ class ControlEditorActivity : AppCompatActivity() {
     }
 
     /**
-     * 从 ControlLayoutManager 加载布局
+     * 加载布局
      */
-    private fun loadLayoutFromManager() {
+    private fun loadLayout() {
         displayLayout()
     }
 
@@ -239,9 +238,9 @@ class ControlEditorActivity : AppCompatActivity() {
         )
 
         // 创建预览布局
-        mPreviewLayout = ControlLayout(context = this)
+        mPreviewLayout = ControlLayoutView(context = this)
         mPreviewLayout!!.inputBridge = mDummyBridge
-        mPreviewLayout!!.loadLayout(mCurrentConfig)
+        mPreviewLayout!!.loadLayout(mCurrentLayout)
         mPreviewLayout!!.isControlsVisible = true
 
         // 禁用裁剪
@@ -315,7 +314,7 @@ class ControlEditorActivity : AppCompatActivity() {
                 .setTitle(getString(R.string.editor_exit_title))
                 .setMessage(getString(R.string.editor_exit_save_confirm))
                 .setPositiveButton(getString(R.string.editor_save_and_exit)) { _, _ ->
-                    editorManager.saveLayout(mCurrentLayoutName)
+                    editorManager.saveLayout(mCurrentPackId)
                     finish()
                 }
                 .setNegativeButton(getString(R.string.editor_exit)) { _, _ ->

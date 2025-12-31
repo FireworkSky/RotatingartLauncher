@@ -9,7 +9,7 @@ import android.widget.Spinner
 import android.widget.TextView
 import com.app.ralaunch.R
 import com.app.ralaunch.controls.KeyMapper
-import com.app.ralaunch.controls.configs.ControlData
+import com.app.ralaunch.controls.data.ControlData
 import com.app.ralaunch.utils.LocalizedAlertDialog
 
 /**

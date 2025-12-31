@@ -3,7 +3,7 @@ package com.app.ralaunch.controls.editors.managers
 import android.content.Context
 import android.widget.TextView
 import com.app.ralaunch.R
-import com.app.ralaunch.controls.configs.ControlData
+import com.app.ralaunch.controls.data.ControlData
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
 /**

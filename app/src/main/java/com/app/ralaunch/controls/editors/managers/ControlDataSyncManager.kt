@@ -2,7 +2,7 @@ package com.app.ralaunch.controls.editors.managers
 
 import android.view.View
 import android.widget.FrameLayout
-import com.app.ralaunch.controls.configs.ControlData
+import com.app.ralaunch.controls.data.ControlData
 import com.app.ralaunch.controls.views.ControlLayout
 import com.app.ralaunch.controls.views.ControlView
 

@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.plugin.serialization)
+    alias(libs.plugins.kotlin.compose)
 }
 
 android {
@@ -53,6 +54,7 @@ android {
     buildFeatures {
         viewBinding true
         prefab true
+        compose true
     }
 
     packagingOptions {
@@ -138,6 +140,20 @@ dependencies {
     implementation libs.constraintlayout
     implementation libs.activity
     implementation libs.core.ktx
+    
+    // Compose
+    implementation platform(libs.compose.bom)
+    implementation libs.compose.ui
+    implementation libs.compose.ui.graphics
+    implementation libs.compose.ui.tooling.preview
+    implementation libs.compose.material3
+    implementation libs.compose.material.icons
+    implementation libs.compose.runtime
+    implementation libs.activity.compose
+    implementation libs.lifecycle.runtime.compose
+    implementation libs.coil.compose
+    debugImplementation 'androidx.compose.ui:ui-tooling'
+    
     testImplementation libs.junit
     androidTestImplementation libs.ext.junit
     androidTestImplementation libs.espresso.core

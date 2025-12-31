@@ -1,6 +1,6 @@
 package com.app.ralaunch.controls
 
-import com.app.ralaunch.controls.configs.ControlData
+import com.app.ralaunch.controls.data.ControlData
 
 /**
  * 按键映射辅助类

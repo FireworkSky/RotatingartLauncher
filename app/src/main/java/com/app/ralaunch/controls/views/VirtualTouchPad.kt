@@ -13,7 +13,7 @@ import com.app.ralaunch.controls.ControlsSharedState
 import com.app.ralaunch.controls.TouchPointerTracker
 import com.app.ralaunch.controls.bridges.ControlInputBridge
 import com.app.ralaunch.controls.bridges.SDLInputBridge
-import com.app.ralaunch.controls.configs.ControlData
+import com.app.ralaunch.controls.data.ControlData
 import com.app.ralaunch.data.SettingsManager
 import kotlin.math.pow
 import kotlin.math.sqrt

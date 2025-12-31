@@ -10,7 +10,8 @@ import android.widget.TextView
 import androidx.appcompat.widget.PopupMenu
 import androidx.recyclerview.widget.RecyclerView
 import com.app.ralaunch.R
-import com.app.ralaunch.controls.configs.ControlConfig
+import com.app.ralaunch.RaLaunchApplication
+import com.app.ralaunch.controls.packs.ControlPackInfo
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.chip.Chip
 
@@ -27,20 +28,21 @@ import com.google.android.material.chip.Chip
  * 采用 Material 3 设计，使用 PopupMenu 替代显式按钮
  */
 class ControlLayoutAdapter(
-    private var layouts: List<ControlConfig>,
+    private var layouts: List<ControlPackInfo>,
     private val listener: OnLayoutClickListener?
 ) : RecyclerView.Adapter<ControlLayoutAdapter.ViewHolder>() {
 
+    private val packManager = RaLaunchApplication.getControlPackManager()
     private var defaultLayoutId: String? = null
 
     interface OnLayoutClickListener {
-        fun onLayoutClick(layout: ControlConfig)
-        fun onLayoutEdit(layout: ControlConfig)
-        fun onLayoutRename(layout: ControlConfig)
-        fun onLayoutDuplicate(layout: ControlConfig)
-        fun onLayoutSetDefault(layout: ControlConfig)
-        fun onLayoutExport(layout: ControlConfig)
-        fun onLayoutDelete(layout: ControlConfig)
+        fun onLayoutClick(pack: ControlPackInfo)
+        fun onLayoutEdit(pack: ControlPackInfo)
+        fun onLayoutRename(pack: ControlPackInfo)
+        fun onLayoutDuplicate(pack: ControlPackInfo)
+        fun onLayoutSetDefault(pack: ControlPackInfo)
+        fun onLayoutExport(pack: ControlPackInfo)
+        fun onLayoutDelete(pack: ControlPackInfo)
     }
 
     fun setDefaultLayoutId(defaultLayoutId: String?) {
@@ -55,15 +57,19 @@ class ControlLayoutAdapter(
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        val layout = layouts[position]
-        val isDefault = layout.id == defaultLayoutId
+        val pack = layouts[position]
+        val isDefault = pack.id == defaultLayoutId
 
         // 获取显示名称（如果是默认布局，显示本地化名称）
-        val displayName = getDisplayName(layout.name, holder.itemView.context)
+        val displayName = getDisplayName(pack.name, holder.itemView.context)
         holder.layoutName.text = displayName
+        
+        // 获取控件数量
+        val layout = packManager.getPackLayout(pack.id)
+        val controlCount = layout?.controls?.size ?: 0
         holder.layoutInfo.text = holder.itemView.context.getString(
             R.string.control_count,
-            layout.controls.size
+            controlCount
         )
 
         // 显示或隐藏默认标识
@@ -71,16 +77,16 @@ class ControlLayoutAdapter(
 
         // 点击卡片进入编辑
         holder.layoutCard.setOnClickListener {
-            listener?.onLayoutEdit(layout)
+            listener?.onLayoutEdit(pack)
         }
 
         // 菜单按钮
         holder.btnMenu.setOnClickListener {
-            showPopupMenu(holder.btnMenu, layout, isDefault)
+            showPopupMenu(holder.btnMenu, pack, isDefault)
         }
     }
 
-    private fun showPopupMenu(anchor: View, layout: ControlConfig, isDefault: Boolean) {
+    private fun showPopupMenu(anchor: View, pack: ControlPackInfo, isDefault: Boolean) {
         val popupMenu = PopupMenu(anchor.context, anchor)
         popupMenu.inflate(R.menu.menu_control_layout_item)
 
@@ -94,27 +100,27 @@ class ControlLayoutAdapter(
             listener?.let {
                 when (item.itemId) {
                     R.id.action_edit -> {
-                        it.onLayoutEdit(layout)
+                        it.onLayoutEdit(pack)
                         true
                     }
                     R.id.action_rename -> {
-                        it.onLayoutRename(layout)
+                        it.onLayoutRename(pack)
                         true
                     }
                     R.id.action_duplicate -> {
-                        it.onLayoutDuplicate(layout)
+                        it.onLayoutDuplicate(pack)
                         true
                     }
                     R.id.action_set_default -> {
-                        it.onLayoutSetDefault(layout)
+                        it.onLayoutSetDefault(pack)
                         true
                     }
                     R.id.action_export -> {
-                        it.onLayoutExport(layout)
+                        it.onLayoutExport(pack)
                         true
                     }
                     R.id.action_delete -> {
-                        it.onLayoutDelete(layout)
+                        it.onLayoutDelete(pack)
                         true
                     }
                     else -> false
@@ -127,7 +133,7 @@ class ControlLayoutAdapter(
 
     override fun getItemCount(): Int = layouts.size
 
-    fun updateLayouts(newLayouts: List<ControlConfig>) {
+    fun updateLayouts(newLayouts: List<ControlPackInfo>) {
         this.layouts = newLayouts
         notifyDataSetChanged()
     }

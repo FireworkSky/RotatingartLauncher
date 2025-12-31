@@ -1,4 +1,4 @@
-package com.app.ralaunch.controls.configs
+package com.app.ralaunch.controls.data
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable

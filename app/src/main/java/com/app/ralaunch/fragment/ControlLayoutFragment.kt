@@ -19,9 +19,9 @@ import com.app.ralaunch.R
 import com.app.ralaunch.RaLaunchApplication
 import com.app.ralaunch.adapter.ControlLayoutAdapter
 import com.app.ralaunch.adapter.ControlLayoutAdapter.OnLayoutClickListener
-import com.app.ralaunch.controls.configs.ControlConfig
-import com.app.ralaunch.controls.configs.ControlConfig.Companion.loadFromJson
-import com.app.ralaunch.controls.configs.ControlConfigManager
+import com.app.ralaunch.controls.packs.ControlLayout
+import com.app.ralaunch.controls.packs.ControlPackInfo
+import com.app.ralaunch.controls.packs.ControlPackManager
 import com.app.ralaunch.controls.editors.ControlEditorActivity
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -41,16 +41,18 @@ import java.nio.charset.StandardCharsets
  * - 导出和删除布局
  * - 跳转到布局编辑器
  *
- * 使用 ControlConfigManager 管理布局数据
+ * 使用 ControlPackManager 管理布局数据
  */
 class ControlLayoutFragment : Fragment(), OnLayoutClickListener {
-    private val configManager: ControlConfigManager
-        get() = RaLaunchApplication.getControlConfigManager()
-    private var layouts: List<ControlConfig> = configManager.loadAllConfigs()
+    
+    private val packManager: ControlPackManager
+        get() = RaLaunchApplication.getControlPackManager()
+    
+    private var layouts: List<ControlPackInfo> = emptyList()
     private var adapter: ControlLayoutAdapter? = null
     private var recyclerView: RecyclerView? = null
     private var emptyState: LinearLayout? = null
-    private var mExportingLayout: ControlConfig? = null // 保存要导出的布局
+    private var mExportingPackId: String? = null
 
     private var backListener: OnControlLayoutBackListener? = null
 
@@ -70,9 +72,20 @@ class ControlLayoutFragment : Fragment(), OnLayoutClickListener {
         val view = inflater.inflate(R.layout.fragment_control_layout, container, false)
 
         initUI(view)
+        loadLayouts()
         setupRecyclerView()
 
         return view
+    }
+
+    private var storeListener: OnControlStoreListener? = null
+
+    interface OnControlStoreListener {
+        fun onOpenControlStore()
+    }
+
+    fun setOnControlStoreListener(listener: OnControlStoreListener?) {
+        this.storeListener = listener
     }
 
     private fun initUI(view: View) {
@@ -81,6 +94,7 @@ class ControlLayoutFragment : Fragment(), OnLayoutClickListener {
         val fabAddLayout = view.findViewById<ExtendedFloatingActionButton>(R.id.fabAddLayout)
         val btnImportLayout = view.findViewById<MaterialButton>(R.id.btnImportLayout)
         val btnImportPreset = view.findViewById<MaterialButton>(R.id.btnImportPreset)
+        val btnControlStore = view.findViewById<MaterialButton>(R.id.btnControlStore)
         emptyState = view.findViewById<LinearLayout>(R.id.emptyState)
 
         toolbar.setNavigationOnClickListener { v: View? ->
@@ -91,23 +105,30 @@ class ControlLayoutFragment : Fragment(), OnLayoutClickListener {
 
         fabAddLayout.setOnClickListener { v: View? -> showAddLayoutDialog() }
 
+        // 控件商店按钮
+        btnControlStore?.setOnClickListener { 
+            storeListener?.onOpenControlStore()
+        }
 
         // 导入布局按钮
         btnImportLayout.setOnClickListener { v: View? -> importLayoutFromFile() }
 
-
         // 导入预设按钮
         btnImportPreset.setOnClickListener { v: View? -> showImportPresetDialog() }
+    }
 
-
-        updateEmptyState()
+    private fun loadLayouts() {
+        layouts = packManager.getInstalledPacks()
     }
 
     private fun setupRecyclerView() {
         adapter = ControlLayoutAdapter(layouts, this)
-        adapter!!.setDefaultLayoutId(configManager.getSelectedConfigId())
+        adapter!!.setDefaultLayoutId(packManager.getSelectedPackId())
         recyclerView!!.setLayoutManager(LinearLayoutManager(context))
         recyclerView!!.setAdapter(adapter)
+        
+        // 在设置完适配器后更新空状态
+        updateEmptyState()
     }
 
     private fun showAddLayoutDialog() {
@@ -145,37 +166,33 @@ class ControlLayoutFragment : Fragment(), OnLayoutClickListener {
 
     private fun createNewLayout(name: String) {
         // 检查名称是否已存在
-        for (layout in layouts) {
-            if (layout.name == name) {
-                Toast.makeText(
-                    context,
-                    getString(R.string.control_layout_name_exists),
-                    Toast.LENGTH_SHORT
-                ).show()
-                return
-            }
+        if (layoutExists(name)) {
+            Toast.makeText(
+                context,
+                getString(R.string.control_layout_name_exists),
+                Toast.LENGTH_SHORT
+            ).show()
+            return
         }
 
-        val newConfig = ControlConfig()
-        newConfig.name = name
-        configManager.saveConfig(newConfig)
+        val newPack = packManager.createPack(name)
 
         // 如果当前没有选中的布局，将新布局设为默认
-        if (configManager.getSelectedConfigId() == null) {
-            configManager.setSelectedConfigId(newConfig.id)
+        if (packManager.getSelectedPackId() == null) {
+            packManager.setSelectedPackId(newPack.id)
         }
 
-        layouts = configManager.loadAllConfigs()
+        loadLayouts()
         adapter!!.updateLayouts(layouts)
-        adapter!!.setDefaultLayoutId(configManager.getSelectedConfigId())
+        adapter!!.setDefaultLayoutId(packManager.getSelectedPackId())
         updateEmptyState()
 
         // 打开编辑界面
-        openLayoutEditor(newConfig)
+        openLayoutEditor(newPack.id)
     }
 
-    private fun openLayoutEditor(config: ControlConfig) {
-        ControlEditorActivity.start(requireContext(), config.id)
+    private fun openLayoutEditor(packId: String) {
+        ControlEditorActivity.start(requireContext(), packId)
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -190,9 +207,9 @@ class ControlLayoutFragment : Fragment(), OnLayoutClickListener {
             }
         } else if (requestCode == REQUEST_CODE_EXPORT_LAYOUT && resultCode == Activity.RESULT_OK) {
             // 处理导出布局
-            if (data != null && data.data != null && mExportingLayout != null) {
-                exportLayoutToFile(data.data!!, mExportingLayout!!)
-                mExportingLayout = null // 清除引用
+            if (data != null && data.data != null && mExportingPackId != null) {
+                exportLayoutToFile(data.data!!, mExportingPackId!!)
+                mExportingPackId = null
             }
         } else if (requestCode == REQUEST_CODE_IMPORT_LAYOUT && resultCode == Activity.RESULT_OK) {
             // 处理导入布局
@@ -205,9 +222,18 @@ class ControlLayoutFragment : Fragment(), OnLayoutClickListener {
     /**
      * 将布局导出到文件
      */
-    private fun exportLayoutToFile(uri: Uri, layout: ControlConfig) {
+    private fun exportLayoutToFile(uri: Uri, packId: String) {
         try {
-            // Convert ControlConfig to JSON directly
+            val layout = packManager.getPackLayout(packId)
+            if (layout == null) {
+                Toast.makeText(
+                    context,
+                    getString(R.string.control_export_failed_write),
+                    Toast.LENGTH_SHORT
+                ).show()
+                return
+            }
+            
             val json = layout.toJson()
 
             // 写入文件
@@ -238,11 +264,18 @@ class ControlLayoutFragment : Fragment(), OnLayoutClickListener {
 
     override fun onResume() {
         super.onResume()
-        // 从编辑器返回时刷新列表
-        layouts = configManager.loadAllConfigs()
+        // 从编辑器或控件商店返回时刷新列表
+        refreshLayoutList()
+    }
+    
+    /**
+     * 刷新布局列表
+     */
+    fun refreshLayoutList() {
+        loadLayouts()
         adapter?.updateLayouts(layouts)
-        // Update the default layout ID to ensure isDefault flags are correct
-        adapter?.setDefaultLayoutId(configManager.getSelectedConfigId())
+        adapter?.setDefaultLayoutId(packManager.getSelectedPackId())
+        updateEmptyState()
     }
 
     private fun updateEmptyState() {
@@ -255,18 +288,18 @@ class ControlLayoutFragment : Fragment(), OnLayoutClickListener {
         }
     }
 
-    override fun onLayoutClick(layout: ControlConfig) {
-        openLayoutEditor(layout)
+    override fun onLayoutClick(pack: ControlPackInfo) {
+        openLayoutEditor(pack.id)
     }
 
-    override fun onLayoutEdit(layout: ControlConfig) {
-        openLayoutEditor(layout)
+    override fun onLayoutEdit(pack: ControlPackInfo) {
+        openLayoutEditor(pack.id)
     }
 
-    override fun onLayoutRename(layout: ControlConfig) {
+    override fun onLayoutRename(pack: ControlPackInfo) {
         val dialogView = LayoutInflater.from(context).inflate(R.layout.dialog_new_layout, null)
         val editText = dialogView.findViewById<EditText>(R.id.layout_name_edit)
-        editText.setText(layout.name)
+        editText.setText(pack.name)
         editText.selectAll()
 
         MaterialAlertDialogBuilder(requireContext())
@@ -276,23 +309,21 @@ class ControlLayoutFragment : Fragment(), OnLayoutClickListener {
                 getString(R.string.ok)
             ) { dialog: DialogInterface?, which: Int ->
                 val newName = editText.text.toString().trim()
-                if (newName.isNotEmpty() && newName != layout.name) {
+                if (newName.isNotEmpty() && newName != pack.name) {
                     // 检查名称是否已存在
-                    for (l in layouts) {
-                        if (l.name == newName) {
-                            Toast.makeText(
-                                context,
-                                getString(R.string.control_layout_name_exists),
-                                Toast.LENGTH_SHORT
-                            ).show()
-                            return@setPositiveButton
-                        }
+                    if (layoutExists(newName)) {
+                        Toast.makeText(
+                            context,
+                            getString(R.string.control_layout_name_exists),
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        return@setPositiveButton
                     }
-                    layout.name = newName
-                    configManager.saveConfig(layout)
-                    layouts = configManager.loadAllConfigs()
+                    
+                    packManager.renamePack(pack.id, newName)
+                    loadLayouts()
                     adapter!!.updateLayouts(layouts)
-                    adapter!!.setDefaultLayoutId(configManager.getSelectedConfigId())
+                    adapter!!.setDefaultLayoutId(packManager.getSelectedPackId())
                     Toast.makeText(
                         context,
                         getString(R.string.control_layout_renamed),
@@ -304,22 +335,18 @@ class ControlLayoutFragment : Fragment(), OnLayoutClickListener {
             .show()
     }
 
-    override fun onLayoutDuplicate(layout: ControlConfig) {
-        var newName = layout.name + " " + getString(R.string.control_layout_copy_suffix)
+    override fun onLayoutDuplicate(pack: ControlPackInfo) {
+        var newName = pack.name + " " + getString(R.string.control_layout_copy_suffix)
         var counter = 1
         while (layoutExists(newName)) {
             counter++
-            newName =
-                layout.name + " " + getString(R.string.control_layout_copy_suffix_numbered, counter)
+            newName = pack.name + " " + getString(R.string.control_layout_copy_suffix_numbered, counter)
         }
 
-        val duplicate = layout.deepCopy()
-        duplicate.name = newName
-
-        configManager.saveConfig(duplicate)
-        layouts = configManager.loadAllConfigs()
+        packManager.duplicatePack(pack.id, newName)
+        loadLayouts()
         adapter!!.updateLayouts(layouts)
-        adapter!!.setDefaultLayoutId(configManager.getSelectedConfigId())
+        adapter!!.setDefaultLayoutId(packManager.getSelectedPackId())
         updateEmptyState()
         Toast.makeText(
             context,
@@ -328,22 +355,21 @@ class ControlLayoutFragment : Fragment(), OnLayoutClickListener {
         ).show()
     }
 
-    override fun onLayoutSetDefault(layout: ControlConfig) {
-        configManager.setSelectedConfigId(layout.id)
-        adapter!!.setDefaultLayoutId(layout.id)
+    override fun onLayoutSetDefault(pack: ControlPackInfo) {
+        packManager.setSelectedPackId(pack.id)
+        adapter!!.setDefaultLayoutId(pack.id)
         Toast.makeText(context, getString(R.string.control_set_as_default), Toast.LENGTH_SHORT)
             .show()
     }
 
-    override fun onLayoutExport(layout: ControlConfig) {
+    override fun onLayoutExport(pack: ControlPackInfo) {
         try {
-            // 保存要导出的布局
-            mExportingLayout = layout
+            mExportingPackId = pack.id
 
             val intent = Intent(Intent.ACTION_CREATE_DOCUMENT)
             intent.addCategory(Intent.CATEGORY_OPENABLE)
             intent.type = "application/json"
-            intent.putExtra(Intent.EXTRA_TITLE, layout.name + ".json")
+            intent.putExtra(Intent.EXTRA_TITLE, pack.name + ".json")
             startActivityForResult(intent, REQUEST_CODE_EXPORT_LAYOUT)
         } catch (e: Exception) {
             Toast.makeText(
@@ -354,9 +380,8 @@ class ControlLayoutFragment : Fragment(), OnLayoutClickListener {
         }
     }
 
-    override fun onLayoutDelete(layout: ControlConfig) {
-        val layoutName = layout.name
-
+    override fun onLayoutDelete(pack: ControlPackInfo) {
+        val layoutName = pack.name
 
         // 检查是否是默认布局，给出警告但允许删除
         val isDefaultLayout = getString(R.string.control_layout_keyboard_mode) == layoutName ||
@@ -372,8 +397,7 @@ class ControlLayoutFragment : Fragment(), OnLayoutClickListener {
             .setPositiveButton(
                 getString(R.string.control_delete)
             ) { _, _ ->
-                // Delete the config file
-                val deleted = configManager.deleteConfig(layout.id)
+                val deleted = packManager.deletePack(pack.id)
 
                 if (deleted) {
                     Toast.makeText(
@@ -389,11 +413,9 @@ class ControlLayoutFragment : Fragment(), OnLayoutClickListener {
                     ).show()
                 }
 
-                // Reload layouts
-                layouts = configManager.loadAllConfigs()
+                loadLayouts()
                 adapter!!.updateLayouts(layouts)
-                // Update the default layout ID in case it was cleared
-                adapter!!.setDefaultLayoutId(configManager.getSelectedConfigId())
+                adapter!!.setDefaultLayoutId(packManager.getSelectedPackId())
                 updateEmptyState()
             }
             .setNegativeButton(getString(R.string.cancel), null)
@@ -425,7 +447,6 @@ class ControlLayoutFragment : Fragment(), OnLayoutClickListener {
      */
     private fun importLayoutFromUri(uri: Uri) {
         try {
-            // 读取文件内容
             val inputStream = requireContext().contentResolver.openInputStream(uri)
             if (inputStream == null) {
                 Toast.makeText(
@@ -446,11 +467,11 @@ class ControlLayoutFragment : Fragment(), OnLayoutClickListener {
             inputStream.close()
 
             val json = jsonBuilder.toString()
-
+            
             // 解析 JSON 配置
-            val config = loadFromJson(json)
+            val layout = ControlLayout.loadFromJson(json)
 
-            if (config == null || config.controls.isEmpty()) {
+            if (layout == null || layout.controls.isEmpty()) {
                 Toast.makeText(
                     context,
                     getString(R.string.control_layout_file_invalid),
@@ -460,28 +481,35 @@ class ControlLayoutFragment : Fragment(), OnLayoutClickListener {
             }
 
             // 生成唯一的布局名称
-            var layoutName = config.name
+            var layoutName = layout.name
             var counter = 1
             while (layoutExists(layoutName)) {
                 counter++
-                layoutName = config.name + " " + counter
+                layoutName = layout.name + " " + counter
             }
 
-            // 设置新的ID和名称
-            config.id = System.currentTimeMillis().toString() + ""
-            config.name = layoutName
-
-            // 保存布局
-            configManager.saveConfig(config)
+            // 导入为新的控件包
+            val result = packManager.importFromJsonString(json, layoutName)
+            
+            if (result.isFailure) {
+                Toast.makeText(
+                    context,
+                    getString(R.string.control_import_failed, result.exceptionOrNull()?.message),
+                    Toast.LENGTH_SHORT
+                ).show()
+                return
+            }
+            
+            val newPack = result.getOrNull()!!
 
             // 如果当前没有默认布局，将导入的布局设为默认
-            if (configManager.getSelectedConfigId() == null) {
-                configManager.setSelectedConfigId(config.id)
+            if (packManager.getSelectedPackId() == null) {
+                packManager.setSelectedPackId(newPack.id)
             }
 
-            layouts = configManager.loadAllConfigs()
+            loadLayouts()
             adapter!!.updateLayouts(layouts)
-            adapter!!.setDefaultLayoutId(configManager.getSelectedConfigId())
+            adapter!!.setDefaultLayoutId(packManager.getSelectedPackId())
             updateEmptyState()
 
             Toast.makeText(
@@ -528,10 +556,10 @@ class ControlLayoutFragment : Fragment(), OnLayoutClickListener {
     private fun importPresetLayout(fileName: String?, presetName: String) {
         try {
             // 从 assets 读取配置文件
-            val `is` = requireContext().assets.open("controls/$fileName")
-            val buffer = ByteArray(`is`.available())
-            val bytesRead = `is`.read(buffer)
-            `is`.close()
+            val inputStream = requireContext().assets.open("controls/$fileName")
+            val buffer = ByteArray(inputStream.available())
+            val bytesRead = inputStream.read(buffer)
+            inputStream.close()
 
             if (bytesRead <= 0) {
                 Toast.makeText(
@@ -544,10 +572,10 @@ class ControlLayoutFragment : Fragment(), OnLayoutClickListener {
 
             val json = String(buffer, StandardCharsets.UTF_8)
 
-            // 解析 JSON 配置 - 直接使用 ControlConfig
-            val config = loadFromJson(json)
+            // 解析 JSON 配置
+            val layout = ControlLayout.loadFromJson(json)
 
-            if (config == null || config.controls.isEmpty()) {
+            if (layout == null || layout.controls.isEmpty()) {
                 Toast.makeText(
                     context,
                     getString(R.string.control_preset_file_invalid),
@@ -564,21 +592,28 @@ class ControlLayoutFragment : Fragment(), OnLayoutClickListener {
                 layoutName = "$presetName $counter"
             }
 
-            // 设置新的ID和名称
-            config.id = System.currentTimeMillis().toString() + ""
-            config.name = layoutName
-
-            // 保存布局
-            configManager.saveConfig(config)
+            // 导入为新的控件包
+            val result = packManager.importFromJsonString(json, layoutName)
+            
+            if (result.isFailure) {
+                Toast.makeText(
+                    context,
+                    getString(R.string.control_import_failed, result.exceptionOrNull()?.message),
+                    Toast.LENGTH_SHORT
+                ).show()
+                return
+            }
+            
+            val newPack = result.getOrNull()!!
 
             // 如果当前没有默认布局，将导入的布局设为默认
-            if (configManager.getSelectedConfigId() == null) {
-                configManager.setSelectedConfigId(config.id)
+            if (packManager.getSelectedPackId() == null) {
+                packManager.setSelectedPackId(newPack.id)
             }
 
-            layouts = configManager.loadAllConfigs()
+            loadLayouts()
             adapter!!.updateLayouts(layouts)
-            adapter!!.setDefaultLayoutId(configManager.getSelectedConfigId())
+            adapter!!.setDefaultLayoutId(packManager.getSelectedPackId())
             updateEmptyState()
 
             Toast.makeText(

@@ -13,7 +13,7 @@ import com.app.ralaunch.R
 import kotlin.math.max
 import kotlin.math.min
 import androidx.core.view.isVisible
-import com.app.ralaunch.controls.configs.ControlData
+import com.app.ralaunch.controls.data.ControlData
 import com.app.ralaunch.controls.bridges.ControlInputBridge
 
 /**

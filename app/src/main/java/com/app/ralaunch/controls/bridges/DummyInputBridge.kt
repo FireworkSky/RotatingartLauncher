@@ -1,6 +1,6 @@
 package com.app.ralaunch.controls.bridges
 
-import com.app.ralaunch.controls.configs.ControlData
+import com.app.ralaunch.controls.data.ControlData
 
 class DummyInputBridge : ControlInputBridge {
     override fun sendKey(

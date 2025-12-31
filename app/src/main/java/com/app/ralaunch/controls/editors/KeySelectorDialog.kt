@@ -11,7 +11,7 @@ import android.view.ViewGroup
 import android.view.Window
 import android.widget.LinearLayout
 import com.app.ralaunch.R
-import com.app.ralaunch.controls.configs.ControlData
+import com.app.ralaunch.controls.data.ControlData
 import com.app.ralaunch.utils.LocalizedDialog
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.button.MaterialButtonToggleGroup

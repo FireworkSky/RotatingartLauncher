@@ -4,7 +4,7 @@ import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import android.view.KeyEvent
-import com.app.ralaunch.controls.configs.ControlData
+import com.app.ralaunch.controls.data.ControlData
 import org.libsdl.app.SDLActivity
 import org.libsdl.app.SDLControllerManager
 import org.libsdl.app.VirtualXboxController

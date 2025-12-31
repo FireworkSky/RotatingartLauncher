@@ -108,6 +108,18 @@
         android:orientation="horizontal"
         android:gravity="center_vertical">
 
+        <!-- 控件商店按钮 -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnControlStore"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/pack_store"
+            android:contentDescription="@string/pack_store"
+            app:icon="@drawable/ic_store"
+            app:iconGravity="textStart"
+            android:layout_marginEnd="12dp"
+            style="@style/Widget.Material3.Button.TonalButton" />
+
         <!-- 导入布局按钮 -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnImportLayout"

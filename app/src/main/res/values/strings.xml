@@ -1100,4 +1100,45 @@
     <string name="patch_dialog_import_failed">补丁包导入失败，检查日志获取更多信息</string>
     <string name="patch_dialog_import_title">⚠️警告</string>
     <string name="patch_dialog_import_message">补丁包有装载可执行文件的能力。\n安装含有恶意代码的补丁包可能导致：\n- 个人数据和隐私信息泄露\n- 设备损坏\n安装前请确认：\n- 您信任此补丁包的来源\n- 您了解补丁包的具体功能\n- 您已备份重要数据\n继续安装表示您已了解并接受相关风险。</string>
+    
+    <!-- 控件包下载 -->
+    <string name="pack_store">控件商店</string>
+    <string name="pack_download_title">控件商店</string>
+    <string name="pack_search_hint">搜索控件包...</string>
+    <string name="pack_loading">正在加载控件包列表...</string>
+    <string name="pack_empty">暂无控件包</string>
+    <string name="pack_empty_hint">稍后再来查看或下拉刷新</string>
+    <string name="pack_load_failed">加载失败</string>
+    <string name="pack_retry">重试</string>
+    <string name="pack_author_format">作者: %s</string>
+    <string name="pack_version_format">版本: %s</string>
+    <string name="pack_download">下载</string>
+    <string name="pack_installed">已安装</string>
+    <string name="pack_update_available">可更新</string>
+    <string name="pack_downloading">下载中</string>
+    <string name="pack_installing">安装中</string>
+    <string name="pack_apply">应用</string>
+    <string name="pack_update">更新</string>
+    <string name="pack_delete">删除</string>
+    <string name="pack_delete_title">删除控件包</string>
+    <string name="pack_delete_confirm">确定要删除控件包 \"%s\" 吗？</string>
+    <string name="pack_author_label">作者</string>
+    <string name="pack_version_label">版本</string>
+    <string name="pack_installed_version">已安装版本</string>
+    <string name="pack_tags_label">标签</string>
+    <string name="pack_size_label">大小</string>
+    <string name="pack_download_failed">下载失败: %s</string>
+    <string name="pack_installed_success">控件包 \"%s\" 安装成功</string>
+    <string name="pack_applied_success">控件包 \"%s\" 已应用到布局</string>
+    <string name="pack_apply_failed">应用控件包失败</string>
+    <string name="pack_deleted_success">控件包 \"%s\" 已删除</string>
+    <string name="pack_delete_failed">删除控件包失败</string>
+    
+    <!-- 控件包导出 -->
+    <string name="pack_export_title">导出控件包</string>
+    <string name="pack_export_author">作者名称</string>
+    <string name="pack_export_description">控件包描述</string>
+    <string name="pack_export_version">版本号</string>
+    <string name="pack_export_success">控件包已导出</string>
+    <string name="pack_export_failed">导出失败: %s</string>
 </resources>

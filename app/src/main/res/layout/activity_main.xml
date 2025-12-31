@@ -419,6 +419,14 @@
                     android:background="@android:color/transparent"
                     android:visibility="gone" />
 
+                <!-- 控件商店页面 -->
+                <FrameLayout
+                    android:id="@+id/controlStorePage"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@android:color/transparent"
+                    android:visibility="gone" />
+
             </FrameLayout>
 
         </LinearLayout>

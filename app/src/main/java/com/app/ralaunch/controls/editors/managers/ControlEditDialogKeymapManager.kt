@@ -5,9 +5,9 @@ import android.widget.TextView
 import androidx.appcompat.widget.SwitchCompat
 import com.app.ralaunch.R
 import com.app.ralaunch.controls.KeyMapper
-import com.app.ralaunch.controls.configs.ControlData
-import com.app.ralaunch.controls.configs.ControlData.Joystick
-import com.app.ralaunch.controls.configs.ControlData.KeyCode
+import com.app.ralaunch.controls.data.ControlData
+import com.app.ralaunch.controls.data.ControlData.Joystick
+import com.app.ralaunch.controls.data.ControlData.KeyCode
 import com.app.ralaunch.controls.editors.ControlEditDialogMD
 import com.app.ralaunch.controls.editors.JoystickKeyMappingDialog
 import com.app.ralaunch.controls.editors.KeySelectorDialog

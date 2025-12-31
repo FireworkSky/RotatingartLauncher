@@ -2,7 +2,7 @@ package com.app.ralaunch.controls.editors.managers
 
 import android.view.View
 import android.widget.TextView
-import com.app.ralaunch.controls.configs.ControlData
+import com.app.ralaunch.controls.data.ControlData
 import com.google.android.material.slider.Slider
 import kotlin.math.max
 import kotlin.math.min

@@ -146,3 +146,5 @@ fabric.properties
 tools/assemblypatch/.vs/
 
 /app/release
+# Control packs repository (separate repo)
+control-packs-repo/

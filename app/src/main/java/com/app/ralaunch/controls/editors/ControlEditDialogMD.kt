@@ -15,7 +15,7 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.FragmentManager
 import com.app.ralaunch.R
-import com.app.ralaunch.controls.configs.ControlData
+import com.app.ralaunch.controls.data.ControlData
 import com.app.ralaunch.controls.editors.managers.ControlColorManager
 import com.app.ralaunch.controls.editors.managers.ControlColorManager.showColorPickerDialog
 import com.app.ralaunch.controls.editors.managers.ControlColorManager.updateColorView

@@ -1,6 +1,6 @@
 package com.app.ralaunch.controls.views
 
-import com.app.ralaunch.controls.configs.ControlData
+import com.app.ralaunch.controls.data.ControlData
 
 /**
  * 虚拟控制View接口

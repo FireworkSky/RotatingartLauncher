@@ -6,7 +6,7 @@ import android.util.TypedValue
 import android.view.ContextThemeWrapper
 import android.view.View
 import androidx.fragment.app.FragmentActivity
-import com.app.ralaunch.controls.configs.ControlData
+import com.app.ralaunch.controls.data.ControlData
 import com.app.ralib.dialog.ColorPickerDialog
 import com.google.android.material.R
 

@@ -4,6 +4,7 @@ import android.view.View;
 import androidx.fragment.app.FragmentManager;
 import com.app.ralaunch.R;
 import com.app.ralaunch.fragment.ControlLayoutFragment;
+import com.app.ralaunch.fragment.ControlPackFragment;
 import com.app.ralaunch.fragment.FileBrowserFragment;
 import com.app.ralaunch.fragment.ModManagerFragment;
 import com.app.ralaunch.fragment.SettingsFragment;
@@ -30,6 +31,7 @@ public class MainNavigationDelegate {
     private View downloadPage;
     private View settingsPage;
     private View importPage;
+    private View controlStorePage;
     
     // TopAppBar 引用
     private com.google.android.material.appbar.MaterialToolbar topAppBar;
@@ -52,6 +54,7 @@ public class MainNavigationDelegate {
         downloadPage = activity.findViewById(R.id.downloadPage);
         settingsPage = activity.findViewById(R.id.settingsPage);
         importPage = activity.findViewById(R.id.importPage);
+        controlStorePage = activity.findViewById(R.id.controlStorePage);
         topAppBar = activity.findViewById(R.id.topAppBar);
     }
 
@@ -103,7 +106,7 @@ public class MainNavigationDelegate {
      * 显示游戏页面
      */
     public void showGamePage() {
-        setPageVisibility(true, false, false, false, false, false);
+        setPageVisibility(true, false, false, false, false, false, false);
         updateTopAppBar();
     }
 
@@ -111,7 +114,7 @@ public class MainNavigationDelegate {
      * 显示文件管理器页面（模组管理器）
      */
     public void showFilePage() {
-        setPageVisibility(false, true, false, false, false, false);
+        setPageVisibility(false, true, false, false, false, false, false);
         updateTopAppBar();
         
         // 初始化模组管理器 Fragment（如果尚未初始化）
@@ -130,30 +133,62 @@ public class MainNavigationDelegate {
      * 显示控制布局页面
      */
     public void showControlPage() {
-        setPageVisibility(false, false, true, false, false, false);
+        setPageVisibility(false, false, true, false, false, false, false);
         updateTopAppBar();
         
+        // 获取已存在的 Fragment
+        ControlLayoutFragment existingFragment = (ControlLayoutFragment) 
+                fragmentManager.findFragmentByTag("control_layout");
+        
         // 初始化控制布局 Fragment（如果尚未初始化）
-        if (controlPage != null && fragmentManager.findFragmentById(R.id.controlPage) == null) {
+        if (existingFragment == null) {
             ControlLayoutFragment controlFragment = new ControlLayoutFragment();
             controlFragment.setOnControlLayoutBackListener(() -> {
                 // 控制布局返回时，切换到游戏页面
                 showGamePage();
             });
+            controlFragment.setOnControlStoreListener(() -> {
+                // 打开控件商店
+                showControlStorePage();
+            });
             
             fragmentManager.beginTransaction()
                     .replace(R.id.controlPage, controlFragment, "control_layout")
                     .commit();
+        } else {
+            // 已存在时刷新布局列表（从控件商店返回时）
+            existingFragment.refreshLayoutList();
         }
         
         hideFragmentTopBar(controlPage);
+    }
+    
+    /**
+     * 显示控件商店页面
+     */
+    public void showControlStorePage() {
+        setPageVisibility(false, false, false, false, false, false, true);
+        updateTopAppBar();
+        
+        // 初始化控件商店 Fragment（如果尚未初始化）
+        if (controlStorePage != null && fragmentManager.findFragmentById(R.id.controlStorePage) == null) {
+            ControlPackFragment packFragment = new ControlPackFragment();
+            packFragment.setOnControlPackBackListener(() -> {
+                // 返回控制布局页面
+                showControlPage();
+            });
+            
+            fragmentManager.beginTransaction()
+                    .replace(R.id.controlStorePage, packFragment, "control_store")
+                    .commit();
+        }
     }
 
     /**
      * 显示下载页面
      */
     public void showDownloadPage() {
-        setPageVisibility(false, false, false, true, false, false);
+        setPageVisibility(false, false, false, true, false, false, false);
         updateTopAppBar();
         
         // 初始化下载 Fragment（如果尚未初始化）
@@ -172,7 +207,7 @@ public class MainNavigationDelegate {
      * 显示设置页面
      */
     public void showSettingsPage() {
-        setPageVisibility(false, false, false, false, true, false);
+        setPageVisibility(false, false, false, false, true, false, false);
         updateTopAppBar();
         
         // 初始化设置 Fragment（如果尚未初始化）
@@ -193,7 +228,7 @@ public class MainNavigationDelegate {
      * 显示导入游戏页面（由 MainImportDelegate 调用）
      */
     public void showImportPage() {
-        setPageVisibility(false, false, false, false, false, true);
+        setPageVisibility(false, false, false, false, false, true, false);
         updateTopAppBar();
     }
 
@@ -201,13 +236,14 @@ public class MainNavigationDelegate {
      * 设置页面可见性
      */
     private void setPageVisibility(boolean game, boolean file, boolean control, 
-                                  boolean download, boolean settings, boolean importPage) {
+                                  boolean download, boolean settings, boolean importPage, boolean controlStore) {
         if (gameListPage != null) gameListPage.setVisibility(game ? View.VISIBLE : View.GONE);
         if (fileManagerPage != null) fileManagerPage.setVisibility(file ? View.VISIBLE : View.GONE);
         if (controlPage != null) controlPage.setVisibility(control ? View.VISIBLE : View.GONE);
         if (downloadPage != null) downloadPage.setVisibility(download ? View.VISIBLE : View.GONE);
         if (settingsPage != null) settingsPage.setVisibility(settings ? View.VISIBLE : View.GONE);
         if (this.importPage != null) this.importPage.setVisibility(importPage ? View.VISIBLE : View.GONE);
+        if (controlStorePage != null) controlStorePage.setVisibility(controlStore ? View.VISIBLE : View.GONE);
     }
 
     /**

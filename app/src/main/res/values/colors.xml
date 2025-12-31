@@ -95,4 +95,10 @@
     <!-- 按钮颜色 -->
     <color name="delete_button_bg">#F44336</color>
     <color name="ripple_error">#80F44336</color>
+    
+    <!-- 控件包状态颜色 -->
+    <color name="status_installed">#4CAF50</color>
+    <color name="status_update">#FF9800</color>
+    <color name="status_downloading">#2196F3</color>
+    <color name="status_installing">#9C27B0</color>
 </resources>

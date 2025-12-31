@@ -1,7 +1,7 @@
 package com.app.ralaunch.controls.editors.managers
 
 import android.view.View
-import com.app.ralaunch.controls.configs.ControlData
+import com.app.ralaunch.controls.data.ControlData
 
 /**
  * 控件编辑对话框可见性管理器

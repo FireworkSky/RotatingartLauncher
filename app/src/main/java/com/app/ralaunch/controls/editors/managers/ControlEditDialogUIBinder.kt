@@ -11,7 +11,7 @@ import android.widget.RadioGroup
 import android.widget.TextView
 import androidx.appcompat.widget.SwitchCompat
 import com.app.ralaunch.R
-import com.app.ralaunch.controls.configs.ControlData
+import com.app.ralaunch.controls.data.ControlData
 import com.app.ralaunch.controls.editors.ControlEditDialogMD
 import com.app.ralaunch.controls.editors.managers.ControlColorManager.updateColorView
 import com.app.ralaunch.controls.editors.managers.ControlEditDialogSeekBarManager.UpdateNotifier

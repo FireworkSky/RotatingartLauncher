@@ -8,10 +8,11 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.FragmentActivity
 import com.app.ralaunch.R
-import com.app.ralaunch.controls.configs.ControlConfig
-import com.app.ralaunch.controls.configs.ControlData
+import com.app.ralaunch.RaLaunchApplication
+import com.app.ralaunch.controls.data.ControlData
+import com.app.ralaunch.controls.packs.ControlLayout
 import com.app.ralaunch.controls.editors.managers.ControlDataSyncManager
-import com.app.ralaunch.controls.views.ControlLayout
+import com.app.ralaunch.controls.views.ControlLayout as ControlLayoutView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
 /**
@@ -22,7 +23,8 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
  * 2. MODE_IN_GAME (游戏内): 需要手动进入编辑模式，用于游戏运行时的编辑
  */
 class ControlEditorManager(
-    private val mContext: Context, private var mControlLayout: ControlLayout?,
+    private val mContext: Context, 
+    private var mControlLayout: ControlLayoutView?,
     private val mContentFrame: ViewGroup?,
     /**
      * 获取当前模式
@@ -31,6 +33,7 @@ class ControlEditorManager(
 ) {
     private val mScreenWidth: Int
     private val mScreenHeight: Int
+    private val packManager = RaLaunchApplication.getControlPackManager()
 
     private var mIsInEditor = false
     private var mHasUnsavedChanges = false
@@ -95,10 +98,6 @@ class ControlEditorManager(
 
     /**
      * 创建控件编辑管理器
-     * @param mContext 上下文
-     * @param mControlLayout 控件布局
-     * @param mContentFrame 内容容器（用于显示对话框）
-     * @param mode 模式：MODE_STANDALONE 或 MODE_IN_GAME
      */
     init {
         val metrics = mContext.resources.displayMetrics
@@ -111,79 +110,49 @@ class ControlEditorManager(
         }
     }
 
-    /**
-     * 设置编辑状态变化监听器
-     */
     fun setOnEditorStateChangedListener(listener: OnEditorStateChangedListener?) {
         mStateListener = listener
     }
 
-    /**
-     * 设置布局变化监听器
-     */
     fun setOnLayoutChangedListener(listener: OnLayoutChangedListener?) {
         mLayoutChangedListener = listener
     }
 
-    /**
-     * 设置 FPS 显示变化监听器
-     */
     fun setOnFPSDisplayChangedListener(listener: OnFPSDisplayChangedListener?) {
         mFPSDisplayListener = listener
     }
 
-    /**
-     * 设置隐藏控件监听器
-     */
     fun setOnHideControlsListener(listener: OnHideControlsListener?) {
         mOnHideControlsListener = listener
     }
 
-    /**
-     * 设置触摸事件传递变化监听器
-     */
     fun setOnToggleTouchEventChangedListener(listener: OnToggleTouchEventChangedListener?) {
         mToggleTouchEventListener = listener
     }
 
-    /**
-     * 设置退出游戏监听器
-     */
     fun setOnExitGameListener(listener: OnExitGameListener?) {
         mOnExitGameListener = listener
     }
 
-    /**
-     * 设置控件布局（用于布局重新创建后更新引用）
-     */
-    fun setControlLayout(controlLayout: ControlLayout?) {
+    fun setControlLayout(controlLayout: ControlLayoutView?) {
         mControlLayout = controlLayout
-        // 独立模式下始终自动进入编辑模式
         if (this.mode == Mode.STANDALONE) {
             setupEditMode()
         } else if (mIsInEditor) {
-            // 游戏内模式：只有在已进入编辑模式时才重新设置
             setupEditMode()
         }
     }
 
-    /**
-     * 配置编辑模式（设置监听器等）
-     */
     private fun setupEditMode() {
         if (mControlLayout == null) return
 
-        // 独立模式下自动设置为编辑状态
         if (this.mode == Mode.STANDALONE) {
             mIsInEditor = true
         }
 
         mControlLayout!!.isModifiable = true
-
-        // 初始化编辑对话框
         initControlEditDialog()
 
-        // 设置控件点击监听器
         mControlLayout!!.setEditControlListener { data: ControlData? ->
             if (mControlEditDialog != null && mContext is FragmentActivity) {
                 val activity = mContext
@@ -195,35 +164,23 @@ class ControlEditorManager(
             }
         }
 
-        // 设置控件修改监听器（拖动时）
         mControlLayout!!.setOnControlChangedListener {
             mHasUnsavedChanges = true
         }
 
-        // 禁用视图裁剪
         disableClippingRecursive(mControlLayout!!)
     }
 
-    /**
-     * 进入编辑模式（仅游戏内模式使用）
-     */
     fun enterEditMode() {
         if (mControlLayout == null) return
-        if (this.mode == Mode.STANDALONE) return  // 独立模式始终处于编辑状态
-
+        if (this.mode == Mode.STANDALONE) return
 
         mIsInEditor = true
         mHasUnsavedChanges = false
 
         setupEditMode()
-
-        // 初始化编辑器设置弹窗
         initEditorSettingsDialog()
-
-        // 设置编辑模式为启用状态
         mEditorSettingsDialog?.setEditModeEnabled(true)
-
-        // 确保控制可见
         mControlLayout!!.isControlsVisible = true
 
         Toast.makeText(mContext, R.string.editor_mode_on, Toast.LENGTH_SHORT).show()
@@ -233,21 +190,14 @@ class ControlEditorManager(
         }
     }
 
-    /**
-     * 退出编辑模式（仅游戏内模式使用）
-     */
     fun exitEditMode() {
-        if (this.mode == Mode.STANDALONE) return  // 独立模式不支持退出
+        if (this.mode == Mode.STANDALONE) return
 
-
-        // 如果有未保存的修改，弹出确认对话框
         if (mHasUnsavedChanges) {
             AlertDialog.Builder(mContext)
                 .setTitle(R.string.editor_exit_confirm)
                 .setMessage(R.string.editor_exit_message)
-                .setPositiveButton(
-                    R.string.game_menu_yes
-                ) { dialog: DialogInterface?, which: Int ->
+                .setPositiveButton(R.string.game_menu_yes) { dialog: DialogInterface?, which: Int ->
                     performExitEditMode()
                 }
                 .setNegativeButton(R.string.game_menu_no, null)
@@ -257,22 +207,13 @@ class ControlEditorManager(
         }
     }
 
-    /**
-     * 执行退出编辑模式
-     */
     private fun performExitEditMode() {
         if (mControlLayout == null) return
 
         mIsInEditor = false
         mControlLayout!!.isModifiable = false
-
-        // 设置编辑模式为禁用状态
         mEditorSettingsDialog?.setEditModeEnabled(false)
-
-        // 重新加载布局
-        mControlLayout!!.loadLayoutFromManager()
-
-        // 禁用视图裁剪
+        mControlLayout!!.loadLayoutFromPackManager()
         disableClippingRecursive(mControlLayout!!)
 
         Toast.makeText(mContext, R.string.editor_mode_off, Toast.LENGTH_SHORT).show()
@@ -282,9 +223,6 @@ class ControlEditorManager(
         }
     }
 
-    /**
-     * 切换编辑模式
-     */
     fun toggleEditMode() {
         if (this.mode == Mode.STANDALONE) return
 
@@ -295,16 +233,11 @@ class ControlEditorManager(
         }
     }
 
-    /**
-     * 初始化控件编辑对话框
-     */
     private fun initControlEditDialog() {
         if (mControlEditDialog != null) return
 
-        // 使用 DialogFragment 的静态工厂方法创建
         mControlEditDialog = ControlEditDialogMD.newInstance(mScreenWidth, mScreenHeight)
 
-        // 设置实时更新监听器
         mControlEditDialog?.setOnControlUpdatedListener(object : ControlEditDialogMD.OnControlUpdatedListener {
             override fun onControlUpdated(data: ControlData?) {
                 if (mControlLayout != null && data != null) {
@@ -314,20 +247,18 @@ class ControlEditorManager(
             }
         })
 
-        // 设置删除监听器
         mControlEditDialog?.setOnControlDeletedListener(object : ControlEditDialogMD.OnControlDeletedListener {
             override fun onControlDeleted(data: ControlData?) {
                 if (mControlLayout != null && data != null) {
-                    val config = mControlLayout!!.config
-                    if (config != null) {
-                        // 遍历列表找到相同的引用并删除
-                        for (i in config.controls.indices.reversed()) {
-                            if (config.controls[i] === data) {
-                                config.controls.removeAt(i)
+                    val layout = mControlLayout!!.currentLayout
+                    if (layout != null) {
+                        for (i in layout.controls.indices.reversed()) {
+                            if (layout.controls[i] === data) {
+                                layout.controls.removeAt(i)
                                 break
                             }
                         }
-                        mControlLayout!!.loadLayout(config)
+                        mControlLayout!!.loadLayout(layout)
                         disableClippingRecursive(mControlLayout!!)
                         mHasUnsavedChanges = true
 
@@ -337,14 +268,13 @@ class ControlEditorManager(
             }
         })
 
-        // 设置复制监听器
         mControlEditDialog?.setOnControlCopiedListener(object : ControlEditDialogMD.OnControlCopiedListener {
             override fun onControlCopied(data: ControlData?) {
                 if (mControlLayout != null && data != null) {
-                    val config = mControlLayout!!.config
-                    if (config != null) {
-                        config.controls.add(data)
-                        mControlLayout!!.loadLayout(config)
+                    val layout = mControlLayout!!.currentLayout
+                    if (layout != null) {
+                        layout.controls.add(data)
+                        mControlLayout!!.loadLayout(layout)
                         disableClippingRecursive(mControlLayout!!)
                         mHasUnsavedChanges = true
 
@@ -355,9 +285,6 @@ class ControlEditorManager(
         })
     }
 
-    /**
-     * 初始化编辑器设置弹窗
-     */
     fun initEditorSettingsDialog() {
         if (mEditorSettingsDialog != null) return
 
@@ -400,68 +327,55 @@ class ControlEditorManager(
             }
 
             override fun onFPSDisplayChanged(enabled: Boolean) {
-                // FPS 显示设置变化
                 mFPSDisplayListener?.onFPSDisplayChanged(enabled)
             }
 
             override fun onHideControls() {
-                // 隐藏控件
                 mOnHideControlsListener?.onHideControls()
             }
 
             override fun onToggleTouchEventChanged(enabled: Boolean) {
-                // 触摸事件传递切换
                 mToggleTouchEventListener?.onToggleTouchEventChanged(enabled)
             }
 
             override fun onExitGame() {
-                // 退出游戏
                 mOnExitGameListener?.onExitGame()
             }
         })
 
-        // 独立模式下设置编辑模式为启用状态
         if (this.mode == Mode.STANDALONE) {
             mEditorSettingsDialog?.setEditModeEnabled(true)
         }
     }
 
-    /**
-     * 显示设置对话框
-     */
     fun showSettingsDialog() {
         if (mEditorSettingsDialog == null) {
             initEditorSettingsDialog()
         }
-        // 独立模式下始终确保编辑模式为启用状态
         if (this.mode == Mode.STANDALONE) {
             mEditorSettingsDialog?.setEditModeEnabled(true)
         } else {
             mEditorSettingsDialog?.setEditModeEnabled(mIsInEditor)
         }
         mEditorSettingsDialog?.show()
-        // 对话框显示后再次确保状态正确（因为布局可能被重新创建）
         if (this.mode == Mode.STANDALONE) {
             mEditorSettingsDialog?.setEditModeEnabled(true)
         }
     }
 
-    /**
-     * 添加按钮
-     */
     fun addButton() {
         if (mControlLayout == null) return
 
-        var config = mControlLayout!!.config
-        if (config == null) {
-            config = ControlConfig()
-            config.controls = ArrayList()
-            mControlLayout!!.loadLayout(config)
+        var layout = mControlLayout!!.currentLayout
+        if (layout == null) {
+            layout = ControlLayout()
+            layout.controls = mutableListOf()
+            mControlLayout!!.loadLayout(layout)
         }
 
-        ControlEditorOperations.addButton(config)
+        ControlEditorOperations.addButton(layout)
 
-        mControlLayout!!.loadLayout(config)
+        mControlLayout!!.loadLayout(layout)
         disableClippingRecursive(mControlLayout!!)
         mHasUnsavedChanges = true
         Toast.makeText(
@@ -473,23 +387,19 @@ class ControlEditorManager(
         mLayoutChangedListener?.onLayoutChanged()
     }
 
-    /**
-     * 添加摇杆
-     */
     fun addJoystick() {
         if (mControlLayout == null) return
 
-        val config = mControlLayout!!.config
-        val finalConfig: ControlConfig
-        if (config == null) {
-            finalConfig = ControlConfig()
-            finalConfig.controls = ArrayList()
-            mControlLayout!!.loadLayout(finalConfig)
+        val layout = mControlLayout!!.currentLayout
+        val finalLayout: ControlLayout
+        if (layout == null) {
+            finalLayout = ControlLayout()
+            finalLayout.controls = mutableListOf()
+            mControlLayout!!.loadLayout(finalLayout)
         } else {
-            finalConfig = config
+            finalLayout = layout
         }
 
-        // 第一步：选择摇杆类型
         val joystickTypeOptions = arrayOf(
             mContext.getString(R.string.editor_joystick_type_move_aim),
             mContext.getString(R.string.editor_joystick_type_gamepad)
@@ -499,19 +409,18 @@ class ControlEditorManager(
             .setTitle(mContext.getString(R.string.editor_select_joystick_type))
             .setItems(joystickTypeOptions) { _, which ->
                 if (which == 0) {
-                    // 移动+瞄准摇杆：直接创建键盘左摇杆和鼠标右摇杆
                     ControlEditorOperations.addJoystick(
-                        finalConfig,
+                        finalLayout,
                         ControlData.Joystick.Mode.KEYBOARD,
                         false
                     )
                     ControlEditorOperations.addJoystick(
-                        finalConfig,
+                        finalLayout,
                         ControlData.Joystick.Mode.MOUSE,
                         true
                     )
 
-                    mControlLayout!!.loadLayout(finalConfig)
+                    mControlLayout!!.loadLayout(finalLayout)
                     disableClippingRecursive(mControlLayout!!)
                     mHasUnsavedChanges = true
                     Toast.makeText(
@@ -522,30 +431,26 @@ class ControlEditorManager(
 
                     mLayoutChangedListener?.onLayoutChanged()
                 } else {
-                    // 手柄摇杆模式：选择左摇杆还是右摇杆
                     val joystickMode = ControlData.Joystick.Mode.GAMEPAD
-                    showStickSideDialog(finalConfig, joystickMode)
+                    showStickSideDialog(finalLayout, joystickMode)
                 }
             }
             .show()
     }
 
-    /**
-     * 添加触控板
-     */
     fun addTouchPad() {
         if (mControlLayout == null) return
 
-        var config = mControlLayout!!.config
-        if (config == null) {
-            config = ControlConfig()
-            config.controls = ArrayList()
-            mControlLayout!!.loadLayout(config)
+        var layout = mControlLayout!!.currentLayout
+        if (layout == null) {
+            layout = ControlLayout()
+            layout.controls = mutableListOf()
+            mControlLayout!!.loadLayout(layout)
         }
 
-        ControlEditorOperations.addTouchPad(config)
+        ControlEditorOperations.addTouchPad(layout)
 
-        mControlLayout!!.loadLayout(config)
+        mControlLayout!!.loadLayout(layout)
         disableClippingRecursive(mControlLayout!!)
         mHasUnsavedChanges = true
         Toast.makeText(
@@ -557,10 +462,7 @@ class ControlEditorManager(
         mLayoutChangedListener?.onLayoutChanged()
     }
 
-    /**
-     * 显示选择摇杆位置的对话框
-     */
-    private fun showStickSideDialog(finalConfig: ControlConfig, joystickMode: ControlData.Joystick.Mode) {
+    private fun showStickSideDialog(finalLayout: ControlLayout, joystickMode: ControlData.Joystick.Mode) {
         val stickSideOptions = arrayOf(
             mContext.getString(R.string.editor_joystick_side_left),
             mContext.getString(R.string.editor_joystick_side_right)
@@ -570,12 +472,11 @@ class ControlEditorManager(
             .setTitle(mContext.getString(R.string.editor_select_joystick_side))
             .setItems(stickSideOptions) { _, which ->
                 val isRightStick = (which == 1)
-                // 创建摇杆
                 ControlEditorOperations.addJoystick(
-                    finalConfig, joystickMode, isRightStick
+                    finalLayout, joystickMode, isRightStick
                 )
 
-                mControlLayout!!.loadLayout(finalConfig)
+                mControlLayout!!.loadLayout(finalLayout)
                 disableClippingRecursive(mControlLayout!!)
                 mHasUnsavedChanges = true
                 Toast.makeText(
@@ -589,22 +490,19 @@ class ControlEditorManager(
             .show()
     }
 
-    /**
-     * 添加文本控件
-     */
     fun addText() {
         if (mControlLayout == null) return
 
-        var config = mControlLayout!!.config
-        if (config == null) {
-            config = ControlConfig()
-            config.controls = ArrayList()
-            mControlLayout!!.loadLayout(config)
+        var layout = mControlLayout!!.currentLayout
+        if (layout == null) {
+            layout = ControlLayout()
+            layout.controls = mutableListOf()
+            mControlLayout!!.loadLayout(layout)
         }
 
-        ControlEditorOperations.addText(config)
+        ControlEditorOperations.addText(layout)
 
-        mControlLayout!!.loadLayout(config)
+        mControlLayout!!.loadLayout(layout)
         disableClippingRecursive(mControlLayout!!)
         mHasUnsavedChanges = true
         Toast.makeText(
@@ -616,72 +514,50 @@ class ControlEditorManager(
         mLayoutChangedListener?.onLayoutChanged()
     }
 
-    /**
-     * 保存布局
-     */
     fun saveLayout() {
         if (mControlLayout == null) return
 
-        val config = mControlLayout!!.config
-        if (ControlEditorOperations.saveLayout(mContext, config)) {
+        val layout = mControlLayout!!.currentLayout
+        if (layout != null) {
+            val packId = packManager.getSelectedPackId()
+            if (packId != null) {
+                packManager.savePackLayout(packId, layout)
+                mHasUnsavedChanges = false
+            }
+        }
+    }
+
+    fun saveLayout(packId: String?) {
+        if (mControlLayout == null || packId == null) return
+
+        val layout = mControlLayout!!.currentLayout
+        if (layout != null) {
+            packManager.savePackLayout(packId, layout)
             mHasUnsavedChanges = false
         }
     }
 
-    /**
-     * 使用指定名称保存布局
-     */
-    fun saveLayout(layoutName: String?) {
-        if (mControlLayout == null) return
-
-        val config = mControlLayout!!.config
-        if (ControlEditorOperations.saveLayout(mContext, config)) {
-            mHasUnsavedChanges = false
-        }
-    }
-
-    /**
-     * 隐藏编辑器设置对话框
-     */
     fun hideSettingsDialog() {
         mEditorSettingsDialog?.hide()
     }
 
     val isSettingsDialogShowing: Boolean
-        /**
-         * 设置对话框是否正在显示
-         */
         get() = mEditorSettingsDialog?.isDisplaying ?: false
 
     val isEditDialogShowing: Boolean
-        /**
-         * 编辑对话框是否正在显示
-         */
         get() = mControlEditDialog?.isAdded ?: false
 
-    /**
-     * 关闭编辑对话框
-     */
     fun dismissEditDialog() {
         mControlEditDialog?.dismiss()
     }
 
     val isInEditor: Boolean
-        /**
-         * 是否处于编辑模式
-         */
         get() = this.mode == Mode.STANDALONE || mIsInEditor
 
-    /**
-     * 是否有未保存的修改
-     */
     fun hasUnsavedChanges(): Boolean {
         return mHasUnsavedChanges
     }
 
-    /**
-     * 递归禁用所有子视图的裁剪
-     */
     private fun disableClippingRecursive(view: View) {
         if (view is ViewGroup) {
             val viewGroup = view
@@ -701,4 +577,3 @@ class ControlEditorManager(
         private const val TAG = "ControlEditorManager"
     }
 }
-

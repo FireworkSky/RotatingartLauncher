@@ -32,7 +32,7 @@ public class GameVirtualControlsManager {
 
             controlLayout = new ControlLayout(activity);
             controlLayout.setInputBridge(inputBridge);
-            controlLayout.loadLayoutFromManager();
+            controlLayout.loadLayoutFromPackManager();
             disableClippingRecursive(controlLayout);
 
 
@@ -67,7 +67,7 @@ public class GameVirtualControlsManager {
 
     public void onActivityResultReload() {
         if (controlLayout != null) {
-            controlLayout.loadLayoutFromManager();
+            controlLayout.loadLayoutFromPackManager();
             disableClippingRecursive(controlLayout);
         }
     }
