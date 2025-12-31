@@ -146,74 +146,90 @@ class SponsorsActivity : AppCompatActivity() {
 
     /**
      * 使用 Konfetti 实现星空背景效果
-     * 持续发射缓慢下落的白色小粒子，模拟星空
+     * 静态闪烁的星星，不下落
      */
     private fun startStarfieldEffect() {
-        // 星空背景 - 缓慢飘落的小星星
+        // 初始化星空 - 填充固定星星
+        emitInitialStars()
+        
+        // 星星闪烁效果
         starfieldRunnable = object : Runnable {
             override fun run() {
-                emitStars()
-                handler.postDelayed(this, 3000) // 每3秒补充一波星星
+                emitTwinkle()
+                handler.postDelayed(this, 400) // 每0.4秒闪烁几颗星
             }
         }
-        handler.post(starfieldRunnable!!)
+        handler.postDelayed(starfieldRunnable!!, 300)
         
         // 偶尔的流星效果
         meteorRunnable = object : Runnable {
             override fun run() {
                 emitMeteor()
-                handler.postDelayed(this, 8000 + Random.nextLong(7000)) // 8-15秒一颗流星
+                handler.postDelayed(this, 10000 + Random.nextLong(10000)) // 10-20秒一颗流星
             }
         }
         handler.postDelayed(meteorRunnable!!, 5000)
     }
     
     /**
-     * 发射星星粒子 - 模拟静态星空
+     * 初始化星空 - 在随机位置放置静态星星
      */
-    private fun emitStars() {
+    private fun emitInitialStars() {
         val starColors = listOf(
             0xFFFFFFFF.toInt(),  // 白色
             0xFFE8E8FF.toInt(),  // 淡蓝白
             0xFFFFF8E8.toInt(),  // 淡黄白
-            0xFFFFE8F0.toInt()   // 淡粉白
         )
         
-        // 从顶部缓慢下落的星星
-        konfettiView.start(
-            Party(
-                angle = Angle.BOTTOM,
-                spread = 180,
-                speed = 0.5f,
-                maxSpeed = 2f,
-                damping = 1f,
-                colors = starColors,
-                shapes = listOf(Shape.Circle),
-                size = listOf(Size(2), Size(3), Size(4)),
-                timeToLive = 15000L,  // 15秒存活
-                fadeOutEnabled = true,
-                position = Position.Relative(0.0, 0.0).between(Position.Relative(1.0, 0.0)),
-                emitter = Emitter(duration = 2, TimeUnit.SECONDS).perSecond(8)
-            )
-        )
-        
-        // 随机位置闪烁的星星
-        repeat(3) {
+        // 在随机位置生成静态星星
+        repeat(80) {
             val xPos = Random.nextDouble()
-            val yPos = Random.nextDouble() * 0.7
+            val yPos = Random.nextDouble() * 0.95
             
             konfettiView.start(
                 Party(
                     speed = 0f,
-                    maxSpeed = 0.5f,
+                    maxSpeed = 0f,
                     damping = 1f,
                     colors = starColors,
                     shapes = listOf(Shape.Circle),
-                    size = listOf(Size(2), Size(3)),
-                    timeToLive = 4000L,
+                    size = listOf(Size(1), Size(2), Size(3)),
+                    timeToLive = 30000L,  // 30秒
+                    fadeOutEnabled = false,
+                    position = Position.Relative(xPos, yPos),
+                    emitter = Emitter(duration = 50, TimeUnit.MILLISECONDS).max(1)
+                )
+            )
+        }
+    }
+    
+    /**
+     * 星星闪烁效果 - 在随机位置短暂亮起
+     */
+    private fun emitTwinkle() {
+        val twinkleColors = listOf(
+            0xFFFFFFFF.toInt(),  // 亮白
+            0xFFFFFF99.toInt(),  // 亮黄
+            0xFFCCCCFF.toInt(),  // 淡蓝
+        )
+        
+        // 随机位置闪烁2-3颗星
+        repeat(Random.nextInt(2, 4)) {
+            val xPos = Random.nextDouble()
+            val yPos = Random.nextDouble() * 0.9
+            
+            konfettiView.start(
+                Party(
+                    speed = 0f,
+                    maxSpeed = 0f,
+                    damping = 1f,
+                    colors = twinkleColors,
+                    shapes = listOf(Shape.Circle),
+                    size = listOf(Size(3), Size(4), Size(5)),
+                    timeToLive = 800L,  // 短暂闪烁
                     fadeOutEnabled = true,
                     position = Position.Relative(xPos, yPos),
-                    emitter = Emitter(duration = 500, TimeUnit.MILLISECONDS).max(3)
+                    emitter = Emitter(duration = 50, TimeUnit.MILLISECONDS).max(1)
                 )
             )
         }
