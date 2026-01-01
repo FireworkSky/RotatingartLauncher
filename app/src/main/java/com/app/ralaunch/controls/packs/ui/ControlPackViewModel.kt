@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.app.ralaunch.R
 import com.app.ralaunch.controls.packs.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,7 +20,8 @@ import java.io.File
  */
 class ControlPackViewModel(
     private val packManager: ControlPackManager,
-    private val repoService: ControlPackRepositoryService
+    val repoService: ControlPackRepositoryService,
+    private val context: Context
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ControlPackUiState())
@@ -42,7 +44,7 @@ class ControlPackViewModel(
                     _uiState.update {
                         it.copy(
                             isLoading = false,
-                            error = repoResult.exceptionOrNull()?.message ?: "加载失败"
+                            error = repoResult.exceptionOrNull()?.message ?: context.getString(R.string.pack_load_failed)
                         )
                     }
                     return@launch
@@ -84,7 +86,7 @@ class ControlPackViewModel(
                 _uiState.update {
                     it.copy(
                         isLoading = false,
-                        error = e.message ?: "加载失败"
+                        error = e.message ?: context.getString(R.string.pack_load_failed)
                     )
                 }
             }
@@ -194,7 +196,7 @@ class ControlPackViewModel(
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             val packManager = ControlPackManager(context)
             val repoService = ControlPackRepositoryService(context)
-            return ControlPackViewModel(packManager, repoService) as T
+            return ControlPackViewModel(packManager, repoService, context.applicationContext) as T
         }
     }
 }

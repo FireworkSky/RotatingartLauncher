@@ -198,7 +198,7 @@ private fun LandscapeLayout(
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = info.author.ifEmpty { "未知作者" },
+                        text = info.author.ifEmpty { stringResource(R.string.pack_unknown_author) },
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -334,7 +334,7 @@ private fun PortraitLayout(
                 )
                 Spacer(modifier = Modifier.width(4.dp))
                 Text(
-                    text = info.author.ifEmpty { "未知作者" },
+                    text = info.author.ifEmpty { stringResource(R.string.pack_unknown_author) },
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -546,7 +546,7 @@ private fun PreviewImagePager(
                     .data(imageUrls[page])
                     .crossfade(true)
                     .build(),
-                contentDescription = "Preview ${page + 1}",
+                contentDescription = stringResource(R.string.pack_preview_image, page + 1),
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Fit
             )

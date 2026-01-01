@@ -308,16 +308,11 @@ class TextureSelectorDialog : DialogFragment() {
                 return
             }
             
-            // 获取 assets 目录
-            val assetsDir = RaLaunchApplication.getControlPackManager().getPackAssetsDir(packId)
+            // 获取或创建 assets 目录
+            val assetsDir = RaLaunchApplication.getControlPackManager().getOrCreatePackAssetsDir(packId)
             if (assetsDir == null) {
                 Toast.makeText(context, R.string.control_texture_import_failed, Toast.LENGTH_SHORT).show()
                 return
-            }
-            
-            // 确保目录存在
-            if (!assetsDir.exists()) {
-                assetsDir.mkdirs()
             }
             
             // 目标文件

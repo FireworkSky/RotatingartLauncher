@@ -56,7 +56,7 @@ object ControlTypeManager {
         listener: OnTypeSelectedListener?
     ) {
         // TODO: 类型转换逻辑复杂，需创建新实例
-        Toast.makeText(context, "类型转换功能待实现/Type Conversion is still WIP", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, context.getString(R.string.type_conversion_wip), Toast.LENGTH_SHORT).show()
         return
 
 //        if (data == null) {

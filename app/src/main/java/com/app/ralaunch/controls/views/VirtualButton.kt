@@ -276,6 +276,12 @@ class VirtualButton(
 
 
         // 绘制文字（名称 + 按键）
+        // 当有纹理背景时，隐藏文字
+        if (hasTexture) {
+            // 有纹理时不绘制文字，纹理本身已经代表了按钮功能
+            return
+        }
+        
         // 为特殊按键显示特殊符号
         val displayText = if (castedData.keycode == ControlData.KeyCode.SPECIAL_TOUCHPAD_RIGHT_BUTTON)
             if (ControlsSharedState.isTouchPadRightButton) "◑" else "◐"

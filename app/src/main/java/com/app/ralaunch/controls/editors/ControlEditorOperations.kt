@@ -46,10 +46,15 @@ object ControlEditorOperations {
      * 添加摇杆到配置
      */
     fun addJoystick(
-        layout: ControlLayout, joystickMode: Joystick.Mode, isRightStick: Boolean
+        layout: ControlLayout, joystickMode: Joystick.Mode, isRightStick: Boolean,
+        context: android.content.Context? = null
     ): Joystick {
         val joystick = Joystick()
-        joystick.name = if (isRightStick) "右摇杆" else "左摇杆"
+        joystick.name = if (context != null) {
+            if (isRightStick) context.getString(R.string.joystick_right) else context.getString(R.string.joystick_left)
+        } else {
+            if (isRightStick) "右摇杆" else "左摇杆"
+        }
         joystick.mode = joystickMode
         joystick.isRightStick = isRightStick
 

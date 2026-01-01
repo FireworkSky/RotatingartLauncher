@@ -360,6 +360,23 @@ class ControlEditorActivity : AppCompatActivity() {
     }
     
     /**
+     * 获取当前编辑的控件包ID
+     */
+    fun getCurrentPackId(): String? = mCurrentPackId
+    
+    /**
+     * 刷新控件包的 assets 目录
+     * 用于纹理导入后更新预览布局的资源目录
+     */
+    fun refreshPackAssetsDir() {
+        val packId = mCurrentPackId ?: return
+        // 使用 getOrCreatePackAssetsDir 确保目录存在
+        val assetsDir = packManager.getOrCreatePackAssetsDir(packId)
+        mPreviewLayout?.setPackAssetsDir(assetsDir)
+        Log.d(TAG, "refreshPackAssetsDir: ${assetsDir?.absolutePath}")
+    }
+    
+    /**
      * 复制控件数据
      */
     private fun copyControlData(target: com.app.ralaunch.controls.data.ControlData, source: com.app.ralaunch.controls.data.ControlData) {

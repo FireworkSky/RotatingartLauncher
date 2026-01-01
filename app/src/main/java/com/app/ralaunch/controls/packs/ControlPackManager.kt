@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.os.Environment
+import android.util.Log
 import com.app.ralaunch.utils.AppLogger
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -439,12 +440,33 @@ class ControlPackManager(private val context: Context) {
     // ========== 纹理资源管理 ==========
     
     /**
-     * 获取控件包的纹理资源目录
+     * 获取控件包的纹理资源目录（仅当存在时）
      */
     fun getPackAssetsDir(packId: String): File? {
         val packDir = File(packsDir, packId)
         val assetsDir = File(packDir, ControlPackInfo.ASSETS_DIR_NAME)
         return if (assetsDir.exists() && assetsDir.isDirectory) assetsDir else null
+    }
+    
+    /**
+     * 获取或创建控件包的纹理资源目录
+     * 用于导入纹理时，确保目录存在
+     */
+    fun getOrCreatePackAssetsDir(packId: String): File? {
+        val packDir = File(packsDir, packId)
+        if (!packDir.exists()) {
+            Log.w(TAG, "Pack directory does not exist: $packId")
+            return null
+        }
+        val assetsDir = File(packDir, ControlPackInfo.ASSETS_DIR_NAME)
+        if (!assetsDir.exists()) {
+            if (!assetsDir.mkdirs()) {
+                Log.e(TAG, "Failed to create assets directory: ${assetsDir.absolutePath}")
+                return null
+            }
+            Log.i(TAG, "Created assets directory: ${assetsDir.absolutePath}")
+        }
+        return assetsDir
     }
     
     /**

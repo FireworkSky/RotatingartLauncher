@@ -859,8 +859,8 @@ class ControlEditDialogMD : DialogFragment() {
     fun openTextureSelector() {
         if (this.currentData == null) return
         
-        val packManager = RaLaunchApplication.getControlPackManager()
-        val packId = packManager.getSelectedPackId()
+        // 从 ControlEditorActivity 获取当前编辑的包ID（而不是选中的包）
+        val packId = (activity as? ControlEditorActivity)?.getCurrentPackId()
         if (packId == null) {
             Toast.makeText(requireContext(), R.string.pack_apply_failed, Toast.LENGTH_SHORT).show()
             return
@@ -887,8 +887,9 @@ class ControlEditDialogMD : DialogFragment() {
             return
         }
         val packManager = RaLaunchApplication.getControlPackManager()
-        val packId = packManager.getSelectedPackId() ?: run {
-            Log.e(TAG, "PackId is null")
+        // 从 ControlEditorActivity 获取当前编辑的包ID（而不是选中的包）
+        val packId = (activity as? ControlEditorActivity)?.getCurrentPackId() ?: run {
+            Log.e(TAG, "PackId is null - not in ControlEditorActivity?")
             return
         }
         val data = currentData ?: run {
@@ -905,22 +906,20 @@ class ControlEditDialogMD : DialogFragment() {
             
             Log.d(TAG, "Importing texture: $fileName (extension: $extension)")
             
-            if (extension !in listOf("png", "jpg", "jpeg", "webp", "bmp")) {
+            if (extension !in listOf("png", "jpg", "jpeg", "webp", "bmp", "svg")) {
                 Log.e(TAG, "Unsupported format: $extension")
                 Toast.makeText(context, R.string.control_texture_unsupported_format, Toast.LENGTH_SHORT).show()
                 return
             }
             
-            // 获取 assets 目录
-            val assetsDir = packManager.getPackAssetsDir(packId) ?: run {
-                Log.e(TAG, "AssetsDir is null")
+            // 获取或创建 assets 目录
+            val assetsDir = packManager.getOrCreatePackAssetsDir(packId) ?: run {
+                Log.e(TAG, "AssetsDir is null - pack directory may not exist")
                 Toast.makeText(context, R.string.control_texture_import_failed, Toast.LENGTH_SHORT).show()
                 return
             }
             
             Log.d(TAG, "Assets directory: ${assetsDir.absolutePath}")
-            
-            if (!assetsDir.exists()) assetsDir.mkdirs()
             
             // 目标文件（避免重名）
             var targetFile = File(assetsDir, fileName)
@@ -980,6 +979,8 @@ class ControlEditDialogMD : DialogFragment() {
             // 纹理导入后必须立即保存到文件（因为 Activity 可能被重建，mHasUnsavedChanges 会丢失）
             Log.d(TAG, "Saving texture immediately to file...")
             (activity as? com.app.ralaunch.controls.editors.ControlEditorActivity)?.let { editorActivity ->
+                // 刷新控件包的 assets 目录（因为可能刚刚创建）
+                editorActivity.refreshPackAssetsDir()
                 editorActivity.updateControlData(data)
                 Log.i(TAG, "Texture saved successfully")
             } ?: run {
@@ -1056,7 +1057,7 @@ class ControlEditDialogMD : DialogFragment() {
         private const val TAG = "ControlEditDialogMD"
         private const val ARG_SCREEN_WIDTH = "screen_width"
         private const val ARG_SCREEN_HEIGHT = "screen_height"
-        private val SUPPORTED_TEXTURE_TYPES = arrayOf("image/png", "image/jpeg", "image/webp", "image/bmp")
+        private val SUPPORTED_TEXTURE_TYPES = arrayOf("image/png", "image/jpeg", "image/webp", "image/bmp", "image/svg+xml")
 
         // DialogFragment 使用静态工厂方法创建实例
         fun newInstance(screenWidth: Int, screenHeight: Int): ControlEditDialogMD {

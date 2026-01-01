@@ -73,6 +73,9 @@ data class ControlPackInfo(
     /** 预览截图列表 (相对路径) */
     val previewImagePaths: List<String> = emptyList(),
     
+    /** 纹理资源文件列表 (相对于 assets 目录的路径) */
+    val assetFiles: List<String> = emptyList(),
+    
     /** 创建时间戳 */
     val createdAt: Long = System.currentTimeMillis(),
     

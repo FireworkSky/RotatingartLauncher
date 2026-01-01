@@ -413,12 +413,14 @@ class ControlEditorManager(
                     ControlEditorOperations.addJoystick(
                         finalLayout,
                         ControlData.Joystick.Mode.KEYBOARD,
-                        false
+                        false,
+                        mContext
                     )
                     ControlEditorOperations.addJoystick(
                         finalLayout,
                         ControlData.Joystick.Mode.MOUSE,
-                        true
+                        true,
+                        mContext
                     )
 
                     mControlLayout!!.loadLayout(finalLayout)
@@ -474,7 +476,7 @@ class ControlEditorManager(
             .setItems(stickSideOptions) { _, which ->
                 val isRightStick = (which == 1)
                 ControlEditorOperations.addJoystick(
-                    finalLayout, joystickMode, isRightStick
+                    finalLayout, joystickMode, isRightStick, mContext
                 )
 
                 mControlLayout!!.loadLayout(finalLayout)

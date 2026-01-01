@@ -81,16 +81,16 @@ object ControlDataSyncManager {
                     // 重新设置 controlData 以触发 initPaints() 更新颜色/透明度
                     // 这是必须的，因为直接修改字段不会触发 Paint 重新初始化
                     child.controlData = viewData
-                    
+
                     // 刷新控件绘制
                     child.invalidate()
-                    
+
                     Log.i(TAG, "syncControlDataToView: SUCCESS for '${controlData.name}'")
                     return true
                 }
             }
         }
-        
+
         Log.w(TAG, "syncControlDataToView: FAILED - no matching control found for '${controlData.name}'")
         return false
     }

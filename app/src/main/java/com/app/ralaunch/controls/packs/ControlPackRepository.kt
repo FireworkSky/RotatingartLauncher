@@ -148,7 +148,39 @@ class ControlPackRepositoryService(private val context: Context) {
     }
     
     /**
-     * 下载控件包
+     * 下载单个文件
+     */
+    private suspend fun downloadFile(urlString: String, targetFile: File): Result<File> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val url = URL(urlString)
+                val connection = url.openConnection() as HttpURLConnection
+                connection.connectTimeout = CONNECT_TIMEOUT
+                connection.readTimeout = READ_TIMEOUT
+                
+                val responseCode = connection.responseCode
+                if (responseCode != HttpURLConnection.HTTP_OK) {
+                    return@withContext Result.failure(Exception("HTTP $responseCode"))
+                }
+                
+                targetFile.parentFile?.mkdirs()
+                
+                connection.inputStream.use { input ->
+                    FileOutputStream(targetFile).use { output ->
+                        input.copyTo(output)
+                    }
+                }
+                
+                Result.success(targetFile)
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+    }
+    
+    /**
+     * 下载控件包（从文件夹结构下载）
+     * 仓库结构：packs/{pack_id}/manifest.json, layout.json, assets/...
      */
     suspend fun downloadPack(
         packInfo: ControlPackInfo,
@@ -156,53 +188,82 @@ class ControlPackRepositoryService(private val context: Context) {
     ): Result<File> {
         return withContext(Dispatchers.IO) {
             try {
-                // 确定下载 URL
-                val downloadUrl = if (packInfo.downloadUrl.isNotEmpty()) {
-                    packInfo.downloadUrl
-                } else {
-                    "$repoUrl/packs/${packInfo.id}/${packInfo.id}${ControlPackManager.PACK_EXTENSION}"
-                }
-                
-                val url = URL(downloadUrl)
-                val connection = url.openConnection() as HttpURLConnection
-                connection.connectTimeout = CONNECT_TIMEOUT
-                connection.readTimeout = READ_TIMEOUT
-                
-                val responseCode = connection.responseCode
-                if (responseCode != HttpURLConnection.HTTP_OK) {
-                    listener?.onError("HTTP $responseCode")
-                    return@withContext Result.failure(Exception("HTTP $responseCode"))
-                }
-                
-                val totalSize = connection.contentLengthLong
-                
-                // 保存到下载目录
                 val packManager = ControlPackManager(context)
-                val downloadFile = File(packManager.downloadsDir, "${packInfo.id}${ControlPackManager.PACK_EXTENSION}")
+                val packDir = File(packManager.packsDir, packInfo.id)
                 
-                BufferedInputStream(connection.inputStream).use { input ->
-                    FileOutputStream(downloadFile).use { output ->
-                        val buffer = ByteArray(8192)
-                        var downloaded: Long = 0
-                        var bytesRead: Int
-                        
-                        while (input.read(buffer).also { bytesRead = it } != -1) {
-                            output.write(buffer, 0, bytesRead)
-                            downloaded += bytesRead
-                            
-                            val percent = if (totalSize > 0) {
-                                (downloaded * 100 / totalSize).toInt()
-                            } else {
-                                -1
-                            }
-                            listener?.onProgress(downloaded, totalSize, percent)
+                // 如果已存在，先删除
+                if (packDir.exists()) {
+                    packDir.deleteRecursively()
+                }
+                packDir.mkdirs()
+                
+                val baseUrl = "$repoUrl/packs/${packInfo.id}"
+                var downloadedSize = 0L
+                val totalSize = packInfo.fileSize.takeIf { it > 0 } ?: 100L
+                
+                // 1. 下载 manifest.json
+                AppLogger.info(TAG, "Downloading manifest.json...")
+                val manifestFile = File(packDir, ControlPackInfo.MANIFEST_FILE_NAME)
+                val manifestResult = downloadFile("$baseUrl/${ControlPackInfo.MANIFEST_FILE_NAME}", manifestFile)
+                if (manifestResult.isFailure) {
+                    packDir.deleteRecursively()
+                    listener?.onError("Failed to download manifest.json")
+                    return@withContext Result.failure(manifestResult.exceptionOrNull()!!)
+                }
+                downloadedSize += manifestFile.length()
+                listener?.onProgress(downloadedSize, totalSize, 30)
+                
+                // 2. 下载 layout.json
+                AppLogger.info(TAG, "Downloading layout.json...")
+                val layoutFile = File(packDir, ControlPackInfo.LAYOUT_FILE_NAME)
+                val layoutResult = downloadFile("$baseUrl/${ControlPackInfo.LAYOUT_FILE_NAME}", layoutFile)
+                if (layoutResult.isFailure) {
+                    packDir.deleteRecursively()
+                    listener?.onError("Failed to download layout.json")
+                    return@withContext Result.failure(layoutResult.exceptionOrNull()!!)
+                }
+                downloadedSize += layoutFile.length()
+                listener?.onProgress(downloadedSize, totalSize, 70)
+                
+                // 3. 尝试下载 icon.png（可选）
+                val iconFile = File(packDir, ControlPackInfo.ICON_FILE_NAME)
+                downloadFile("$baseUrl/${ControlPackInfo.ICON_FILE_NAME}", iconFile)
+                
+                // 4. 下载预览图（可选）
+                packInfo.previewImagePaths.forEach { previewPath ->
+                    val previewFile = File(packDir, previewPath)
+                    downloadFile("$baseUrl/$previewPath", previewFile)
+                }
+                
+                // 5. 下载 assets 纹理文件
+                AppLogger.info(TAG, "assetFiles count: ${packInfo.assetFiles.size}, list: ${packInfo.assetFiles.take(3)}")
+                if (packInfo.assetFiles.isNotEmpty()) {
+                    AppLogger.info(TAG, "Downloading ${packInfo.assetFiles.size} asset files...")
+                    val assetsDir = File(packDir, ControlPackInfo.ASSETS_DIR_NAME)
+                    assetsDir.mkdirs()
+                    
+                    packInfo.assetFiles.forEachIndexed { index, assetPath ->
+                        val assetFile = File(assetsDir, assetPath)
+                        assetFile.parentFile?.mkdirs()
+                        val assetUrl = "$baseUrl/${ControlPackInfo.ASSETS_DIR_NAME}/$assetPath"
+                        val result = downloadFile(assetUrl, assetFile)
+                        if (result.isSuccess) {
+                            AppLogger.info(TAG, "  Downloaded: $assetPath")
+                        } else {
+                            AppLogger.warn(TAG, "  Failed to download: $assetPath")
                         }
+                        
+                        // 更新进度 (70% - 100%)
+                        val assetProgress = 70 + (30 * (index + 1) / packInfo.assetFiles.size)
+                        listener?.onProgress(downloadedSize, totalSize, assetProgress)
                     }
                 }
                 
-                listener?.onComplete(downloadFile)
-                AppLogger.info(TAG, "Downloaded pack to: ${downloadFile.absolutePath}")
-                Result.success(downloadFile)
+                listener?.onProgress(totalSize, totalSize, 100)
+                listener?.onComplete(packDir)
+                
+                AppLogger.info(TAG, "Downloaded pack to folder: ${packDir.absolutePath}")
+                Result.success(packDir)
             } catch (e: Exception) {
                 AppLogger.error(TAG, "Failed to download pack: ${packInfo.id}", e)
                 listener?.onError(e.message ?: "Unknown error")
@@ -249,27 +310,27 @@ class ControlPackRepositoryService(private val context: Context) {
     
     /**
      * 下载并安装控件包
+     * 现在直接下载到安装目录，不需要额外安装步骤
      */
     suspend fun downloadAndInstall(
         packInfo: ControlPackInfo,
         packManager: ControlPackManager,
         listener: DownloadProgressListener? = null
     ): Result<ControlPackInfo> {
-        // 下载
+        // 下载（直接下载到 packs 目录）
         val downloadResult = downloadPack(packInfo, listener)
         if (downloadResult.isFailure) {
             return Result.failure(downloadResult.exceptionOrNull()!!)
         }
         
-        val packFile = downloadResult.getOrNull()!!
+        // 验证安装是否成功
+        val installedInfo = packManager.getPackInfo(packInfo.id)
+        if (installedInfo != null) {
+            AppLogger.info(TAG, "Pack installed successfully: ${installedInfo.name}")
+            return Result.success(installedInfo)
+        }
         
-        // 安装
-        val installResult = packManager.installPack(packFile)
-        
-        // 清理临时文件
-        packFile.delete()
-        
-        return installResult
+        return Result.failure(Exception("Installation verification failed"))
     }
     
     /**

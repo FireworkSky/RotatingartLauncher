@@ -994,7 +994,43 @@
     <string name="key_mouse_left">鼠标左键</string>
     <string name="key_mouse_middle">鼠标中键</string>
     <string name="key_mouse_right">鼠标右键</string>
+    <string name="key_mouse_wheel_up">滚轮↑</string>
+    <string name="key_mouse_wheel_down">滚轮↓</string>
     <string name="key_open_keyboard">打开键盘</string>
+    <string name="key_keyboard">键盘</string>
+    <string name="key_touchpad_buttons">触摸板左右键</string>
+    <string name="key_space">空格</string>
+    <string name="key_enter">回车</string>
+    <string name="key_arrow_up">↑ 上</string>
+    <string name="key_arrow_down">↓ 下</string>
+    <string name="key_arrow_left">← 左</string>
+    <string name="key_arrow_right">→ 右</string>
+    <string name="key_shift_left">Shift (左)</string>
+    <string name="key_shift_right">Shift (右)</string>
+    <string name="key_ctrl_left">Ctrl (左)</string>
+    <string name="key_ctrl_right">Ctrl (右)</string>
+    <string name="key_alt_left">Alt (左)</string>
+    <string name="key_alt_right">Alt (右)</string>
+    <string name="key_numpad_0">小键盘 0</string>
+    <string name="key_numpad_1">小键盘 1</string>
+    <string name="key_numpad_2">小键盘 2</string>
+    <string name="key_numpad_3">小键盘 3</string>
+    <string name="key_numpad_4">小键盘 4</string>
+    <string name="key_numpad_5">小键盘 5</string>
+    <string name="key_numpad_6">小键盘 6</string>
+    <string name="key_numpad_7">小键盘 7</string>
+    <string name="key_numpad_8">小键盘 8</string>
+    <string name="key_numpad_9">小键盘 9</string>
+    <string name="key_numpad_plus">小键盘 +</string>
+    <string name="key_numpad_minus">小键盘 -</string>
+    <string name="key_numpad_multiply">小键盘 *</string>
+    <string name="key_numpad_divide">小键盘 /</string>
+    <string name="key_numpad_period">小键盘 .</string>
+    <string name="key_numpad_enter">小键盘 Enter</string>
+    <string name="key_unknown">未知 (%s)</string>
+    <string name="joystick_right">右摇杆</string>
+    <string name="joystick_left">左摇杆</string>
+    <string name="type_conversion_wip">类型转换功能待实现</string>
     <string name="input_layout_name">输入布局名称</string>
     <string name="layout_name_hint">布局名称</string>
     <string name="layout_name_example">例如：我的布局</string>
@@ -1102,6 +1138,7 @@
     <string name="patch_dialog_import_message">补丁包有装载可执行文件的能力。\n安装含有恶意代码的补丁包可能导致：\n- 个人数据和隐私信息泄露\n- 设备损坏\n安装前请确认：\n- 您信任此补丁包的来源\n- 您了解补丁包的具体功能\n- 您已备份重要数据\n继续安装表示您已了解并接受相关风险。</string>
     
     <!-- 控件包下载 -->
+    <string name="pack_category_all">全部</string>
     <string name="pack_store">控件商店</string>
     <string name="pack_download_title">控件商店</string>
     <string name="pack_search_hint">搜索控件包...</string>
@@ -1135,6 +1172,8 @@
     <string name="pack_delete_failed">删除控件包失败</string>
     <string name="pack_no_preview">暂无预览图</string>
     <string name="pack_preview_title">控件包预览</string>
+    <string name="pack_unknown_author">未知作者</string>
+    <string name="pack_preview_image">预览图 %d</string>
     
     <!-- 控件包导出 -->
     <string name="pack_export_title">导出控件包</string>
