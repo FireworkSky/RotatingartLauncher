@@ -749,6 +749,8 @@
     <string name="editor_mouse_range_right">Right</string>
     <string name="editor_mouse_range_bottom">Bottom</string>
     <string name="editor_mouse_speed">Speed</string>
+    <string name="editor_double_click_joystick">Double-Click Joystick Simulation</string>
+    <string name="editor_double_click_joystick_desc">Simulate joystick movement when double-tapping touchpad</string>
     <string name="editor_combo_keys">Combo Key Mapping</string>
     <string name="editor_combo_keys_desc">Set combo gamepad buttons for joystick directions (e.g., R+B)</string>
     <string name="editor_combo_keys_not_set">Not Set</string>

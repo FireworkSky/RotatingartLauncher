@@ -34,7 +34,6 @@ class VirtualTouchPad(
         private const val TOUCHPAD_STATE_IDLE_TIMEOUT = 200L // 毫秒
         private const val TOUCHPAD_CLICK_TIMEOUT = 50L // 毫秒
         private const val TOUCHPAD_MOVE_THRESHOLD = 5 // dp, 移动超过这个距离视为移动操作, 应该用dpToPx转换
-        private const val TOUCHPAD_MOVE_RATIO = 2.0f // 移动距离放大倍数
 
         private fun triggerVibration(isPress: Boolean) {
             if (isPress) {
@@ -107,6 +106,9 @@ class VirtualTouchPad(
     private var currentMouseButton = if (ControlsSharedState.isTouchPadRightButton) MotionEvent.BUTTON_SECONDARY else MotionEvent.BUTTON_PRIMARY
 
     private val settingsManager = SettingsManager.getInstance(null)
+
+    private val mouseMoveRatio
+        get() = settingsManager.mouseRightStickSpeed.toFloat() / 100f // 移动距离放大倍数
 
     init {
         initPaints()
@@ -241,8 +243,8 @@ class VirtualTouchPad(
                     currentState = TouchPadState.MOVING
                     idleDelayHandler.removeCallbacksAndMessages(null)
                     // Send this move so that MOVE_THRESHOLD is not skipped
-                    val multipliedDeltaX: Float = (currentX - initialTouchX) * TOUCHPAD_MOVE_RATIO
-                    val multipliedDeltaY: Float = (currentY - initialTouchY) * TOUCHPAD_MOVE_RATIO
+                    val multipliedDeltaX: Float = (currentX - initialTouchX) * mouseMoveRatio
+                    val multipliedDeltaY: Float = (currentY - initialTouchY) * mouseMoveRatio
                     sdlOnNativeMouseDirect(0, MotionEvent.ACTION_MOVE, multipliedDeltaX, multipliedDeltaY, true) // in ACTION_MOVE, button value doesn't matter
                 }
             }
@@ -250,8 +252,8 @@ class VirtualTouchPad(
             TouchPadState.DOUBLE_CLICK -> {
                 // Double Click! Trigger centered movement and click!
                 // Calculate on-screen centered position
-                var onScreenMouseX: Float = (screenWidth / 2) + (centeredDeltaX * TOUCHPAD_MOVE_RATIO)
-                var onScreenMouseY: Float = (screenHeight / 2) + (centeredDeltaY * TOUCHPAD_MOVE_RATIO)
+                var onScreenMouseX: Float = (screenWidth / 2) + (centeredDeltaX * mouseMoveRatio)
+                var onScreenMouseY: Float = (screenHeight / 2) + (centeredDeltaY * mouseMoveRatio)
                 // Sanity check
                 var minRangeX = (0.5f - settingsManager.mouseRightStickRangeLeft / 2) * screenWidth
                 var maxRangeX = (0.5f + settingsManager.mouseRightStickRangeRight / 2) * screenWidth
@@ -274,15 +276,15 @@ class VirtualTouchPad(
 
             TouchPadState.MOVING -> {
                 // Send movement data
-                val multipliedDeltaX: Float = deltaX * TOUCHPAD_MOVE_RATIO
-                val multipliedDeltaY: Float = deltaY * TOUCHPAD_MOVE_RATIO
+                val multipliedDeltaX: Float = deltaX * mouseMoveRatio
+                val multipliedDeltaY: Float = deltaY * mouseMoveRatio
                 sdlOnNativeMouseDirect(0, MotionEvent.ACTION_MOVE, multipliedDeltaX, multipliedDeltaY, true) // in ACTION_MOVE, button value doesn't matter
             }
 
             TouchPadState.PRESS_MOVING -> {
                 // Send movement data
-                val multipliedDeltaX: Float = deltaX * TOUCHPAD_MOVE_RATIO
-                val multipliedDeltaY: Float = deltaY * TOUCHPAD_MOVE_RATIO
+                val multipliedDeltaX: Float = deltaX * mouseMoveRatio
+                val multipliedDeltaY: Float = deltaY * mouseMoveRatio
                 sdlOnNativeMouseDirect(0, MotionEvent.ACTION_MOVE, multipliedDeltaX, multipliedDeltaY, true) // in ACTION_MOVE, button value doesn't matter
             }
         }
@@ -315,6 +317,7 @@ class VirtualTouchPad(
                             sdlOnNativeMouseDirect(currentMouseButton, MotionEvent.ACTION_DOWN, 0f, 0f, true)
                             // the rest of the movements would be handled by handleMove()
                         } else {
+                            // when double click mode disabled, this wont be triggered as we go back to IDLE on release
                             // Single Press! Trigger left click!
                             clickDelayHandler.removeCallbacksAndMessages(null)
                             sdlOnNativeMouseDirect(currentMouseButton, MotionEvent.ACTION_UP, 0f, 0f, true)
@@ -329,32 +332,37 @@ class VirtualTouchPad(
             }
 
             TouchPadState.PENDING -> {
-                currentState = TouchPadState.DOUBLE_CLICK
-                idleDelayHandler.removeCallbacksAndMessages(null)
-                // Double Click! Trigger centered movement and click!
-                // Calculate on-screen centered position
-                var onScreenMouseX: Float = (screenWidth / 2) + (centeredDeltaX * TOUCHPAD_MOVE_RATIO)
-                var onScreenMouseY: Float = (screenHeight / 2) + (centeredDeltaY * TOUCHPAD_MOVE_RATIO)
-                // Sanity check
-                var minRangeX = (0.5f - settingsManager.mouseRightStickRangeLeft / 2) * screenWidth
-                var maxRangeX = (0.5f + settingsManager.mouseRightStickRangeRight / 2) * screenWidth
-                var minRangeY = (0.5f - settingsManager.mouseRightStickRangeTop / 2) * screenHeight
-                var maxRangeY = (0.5f + settingsManager.mouseRightStickRangeBottom / 2) * screenHeight
-                if (minRangeX >= maxRangeX || minRangeY >= maxRangeY) {
-                    minRangeX = screenWidth * 0.5f
-                    maxRangeX = screenWidth * 0.5f
-                    minRangeY = screenHeight * 0.5f
-                    maxRangeY = screenHeight * 0.5f
+                if (!castedData.isDoubleClickSimulateJoystick) {
+                    currentState = TouchPadState.IDLE
                 }
-                // Clamp to user settings bounds
-                onScreenMouseX = Math.clamp(onScreenMouseX, minRangeX, maxRangeX)
-                onScreenMouseY = Math.clamp(onScreenMouseY, minRangeY, maxRangeY)
-                // Clamp to screen bounds
-                onScreenMouseX = Math.clamp(onScreenMouseX, 0f, screenWidth - 1)
-                onScreenMouseY = Math.clamp(onScreenMouseY, 0f, screenHeight - 1)
-                // click left mouse button and send centered movement
-                sdlOnNativeMouseDirect(currentMouseButton, MotionEvent.ACTION_DOWN, onScreenMouseX, onScreenMouseY, false)
-                // The rest of the movements would be handled by handleMove()
+                else {
+                    currentState = TouchPadState.DOUBLE_CLICK
+                    idleDelayHandler.removeCallbacksAndMessages(null)
+                    // Double Click! Trigger centered movement and click!
+                    // Calculate on-screen centered position
+                    var onScreenMouseX: Float = (screenWidth / 2) + (centeredDeltaX * mouseMoveRatio)
+                    var onScreenMouseY: Float = (screenHeight / 2) + (centeredDeltaY * mouseMoveRatio)
+                    // Sanity check
+                    var minRangeX = (0.5f - settingsManager.mouseRightStickRangeLeft / 2) * screenWidth
+                    var maxRangeX = (0.5f + settingsManager.mouseRightStickRangeRight / 2) * screenWidth
+                    var minRangeY = (0.5f - settingsManager.mouseRightStickRangeTop / 2) * screenHeight
+                    var maxRangeY = (0.5f + settingsManager.mouseRightStickRangeBottom / 2) * screenHeight
+                    if (minRangeX >= maxRangeX || minRangeY >= maxRangeY) {
+                        minRangeX = screenWidth * 0.5f
+                        maxRangeX = screenWidth * 0.5f
+                        minRangeY = screenHeight * 0.5f
+                        maxRangeY = screenHeight * 0.5f
+                    }
+                    // Clamp to user settings bounds
+                    onScreenMouseX = Math.clamp(onScreenMouseX, minRangeX, maxRangeX)
+                    onScreenMouseY = Math.clamp(onScreenMouseY, minRangeY, maxRangeY)
+                    // Clamp to screen bounds
+                    onScreenMouseX = Math.clamp(onScreenMouseX, 0f, screenWidth - 1)
+                    onScreenMouseY = Math.clamp(onScreenMouseY, 0f, screenHeight - 1)
+                    // click left mouse button and send centered movement
+                    sdlOnNativeMouseDirect(currentMouseButton, MotionEvent.ACTION_DOWN, onScreenMouseX, onScreenMouseY, false)
+                    // The rest of the movements would be handled by handleMove()
+                }
             }
 
             TouchPadState.DOUBLE_CLICK -> {
@@ -382,7 +390,21 @@ class VirtualTouchPad(
             }
 
             TouchPadState.PENDING -> {
-                // Still pending, wait for timeout to confirm single click
+                if (castedData.isDoubleClickSimulateJoystick) {
+                    // Still pending, wait for timeout to confirm single click
+                }
+                else {
+                    // double click not enabled, go back to idle
+                    currentState = TouchPadState.IDLE
+                    idleDelayHandler.removeCallbacksAndMessages(null)
+                    // Single Press! Trigger left click!
+                    clickDelayHandler.removeCallbacksAndMessages(null)
+                    sdlOnNativeMouseDirect(currentMouseButton, MotionEvent.ACTION_UP, 0f, 0f, true)
+                    sdlOnNativeMouseDirect(currentMouseButton,MotionEvent.ACTION_DOWN,0f,0f,true)
+                    clickDelayHandler.postDelayed({
+                        sdlOnNativeMouseDirect(currentMouseButton, MotionEvent.ACTION_UP, 0f, 0f, true)
+                    }, TOUCHPAD_CLICK_TIMEOUT)
+                }
             }
 
             TouchPadState.DOUBLE_CLICK -> {

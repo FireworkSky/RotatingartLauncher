@@ -131,7 +131,7 @@ public class SettingsManager {
         // 触屏设置
         public static final boolean MOUSE_RIGHT_STICK_ENABLED = true; // 默认开启鼠标模式右摇杆（不可更改）
         public static final int MOUSE_RIGHT_STICK_ATTACK_MODE = 0; // 默认长按模式
-        public static final int MOUSE_RIGHT_STICK_SPEED = 80; // 默认速度80（范围60-200）
+        public static final int MOUSE_RIGHT_STICK_SPEED = 200; // 默认速度200（范围10-500）
         // 鼠标移动范围（从中心扩展模式）：0.0=中心点, 1.0=全屏（最大）
         public static final float MOUSE_RIGHT_STICK_RANGE_LEFT = 1.0f; // 默认100%（全屏）
         public static final float MOUSE_RIGHT_STICK_RANGE_TOP = 1.0f; // 默认100%（全屏）

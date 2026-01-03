@@ -159,6 +159,12 @@ object ControlEditDialogVisibilityManager {
             com.app.ralaunch.R.id.item_mouse_range
         )
 
+        // 双击模拟摇杆（仅触摸板显示）
+        addRule(
+            { it is ControlData.TouchPad },
+            com.app.ralaunch.R.id.layout_double_click_joystick
+        )
+
         // 摇杆左右选择（仅在手柄模式或鼠标模式时显示）
         addRule(
             {

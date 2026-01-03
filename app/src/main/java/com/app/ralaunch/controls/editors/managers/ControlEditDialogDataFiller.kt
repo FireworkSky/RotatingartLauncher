@@ -70,6 +70,12 @@ object ControlEditDialogDataFiller {
         // 触摸穿透开关
         val switchPassThrough = view.findViewById<SwitchCompat?>(R.id.switch_pass_through)
         switchPassThrough?.isChecked = data.isPassThrough
+
+        // 双击模拟摇杆开关（仅触摸板显示）
+        val switchDoubleClickJoystick = view.findViewById<SwitchCompat?>(R.id.switch_double_click_joystick)
+        if (switchDoubleClickJoystick != null && data is ControlData.TouchPad) {
+            switchDoubleClickJoystick.isChecked = data.isDoubleClickSimulateJoystick
+        }
     }
 
     /**

@@ -295,18 +295,18 @@ object ControlEditDialogUIBinder {
         }
 
 
-        // 鼠标移动速度滑块（使用全局设置，范围60-200，步进10）
+        // 鼠标移动速度滑块（使用全局设置，范围10-500，步进10）
         val sliderMouseSpeed = view.findViewById<Slider?>(R.id.seekbar_mouse_speed)
         val tvMouseSpeed = view.findViewById<TextView?>(R.id.tv_mouse_speed)
         if (sliderMouseSpeed != null) {
             val speedProgress = rangeSettingsManager.mouseRightStickSpeed
-            // 对齐到步进值（stepSize=10, valueFrom=60）
+            // 对齐到步进值（stepSize=10, valueFrom=10）
             val stepSize = 10.0f
-            val valueFrom = 60.0f
+            val valueFrom = 10.0f
             var alignedValue =
                 valueFrom + ((speedProgress - valueFrom) / stepSize).roundToInt() * stepSize
             // 确保在范围内
-            alignedValue = max(valueFrom, min(200.0f, alignedValue))
+            alignedValue = max(valueFrom, min(500.0f, alignedValue))
             sliderMouseSpeed.value = alignedValue
             val displayValue = alignedValue.toInt()
             tvMouseSpeed?.text = displayValue.toString()
@@ -318,6 +318,16 @@ object ControlEditDialogUIBinder {
                     rangeSettingsManager.mouseRightStickSpeed = progress
                     refs.notifyUpdate()
                 }
+            }
+        }
+
+        // 双击模拟摇杆开关（仅触摸板显示）
+        val switchDoubleClickJoystick = view.findViewById<SwitchCompat?>(R.id.switch_double_click_joystick)
+        switchDoubleClickJoystick?.setOnCheckedChangeListener { _, isChecked ->
+            val data = refs.currentData
+            if (data is ControlData.TouchPad) {
+                data.isDoubleClickSimulateJoystick = isChecked
+                refs.notifyUpdate()
             }
         }
     }

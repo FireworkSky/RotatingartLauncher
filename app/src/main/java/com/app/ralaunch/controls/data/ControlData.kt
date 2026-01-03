@@ -514,6 +514,7 @@ sealed class ControlData {
     @Serializable
     @SerialName("touchpad")
     class TouchPad : ControlData() {
+        var isDoubleClickSimulateJoystick = true // 触控板双指点击模拟摇杆移动（默认 true）
         /** 触控板纹理配置 */
         var texture: TouchPadTextureConfig = TouchPadTextureConfig()
     }

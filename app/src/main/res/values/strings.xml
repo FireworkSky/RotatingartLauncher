@@ -755,6 +755,8 @@
     <string name="editor_mouse_range_right">右</string>
     <string name="editor_mouse_range_bottom">下</string>
     <string name="editor_mouse_speed">速度</string>
+    <string name="editor_double_click_joystick">双击模拟摇杆</string>
+    <string name="editor_double_click_joystick_desc">双击触控板时模拟摇杆移动</string>
     <string name="editor_combo_keys">组合键映射</string>
     <string name="editor_combo_keys_desc">为摇杆方向设置组合手柄按钮（如R+B）</string>
     <string name="editor_combo_keys_not_set">未设置</string>
