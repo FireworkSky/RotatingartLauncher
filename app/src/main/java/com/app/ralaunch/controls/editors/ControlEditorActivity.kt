@@ -268,6 +268,7 @@ class ControlEditorActivity : AppCompatActivity() {
                 this, mPreviewLayout, mEditorContainer,
                 ControlEditorManager.Mode.STANDALONE
             )
+            mEditorManager?.setCurrentEditingPackId(mCurrentPackId) // Set the pack being edited
             mEditorManager?.setOnLayoutChangedListener(object : ControlEditorManager.OnLayoutChangedListener {
                 override fun onLayoutChanged() {
                     // Layout changed callback
@@ -276,6 +277,7 @@ class ControlEditorActivity : AppCompatActivity() {
         } else {
             // 布局重新创建后更新引用
             mEditorManager?.setControlLayout(mPreviewLayout)
+            mEditorManager?.setCurrentEditingPackId(mCurrentPackId) // Update the pack ID
         }
 
         // 初始化设置对话框

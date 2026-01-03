@@ -36,6 +36,7 @@ class ControlEditorManager(
     private val mScreenHeight: Int
     private val packManager = RaLaunchApplication.getControlPackManager()
 
+    private var mCurrentEditingPackId: String? = null // Track the pack being edited
     private var mIsInEditor = false
     private var mHasUnsavedChanges = false
 
@@ -142,6 +143,14 @@ class ControlEditorManager(
         } else if (mIsInEditor) {
             setupEditMode()
         }
+    }
+
+    /**
+     * Set the pack ID that is currently being edited.
+     * This ensures saves go to the correct pack, not the selected one.
+     */
+    fun setCurrentEditingPackId(packId: String?) {
+        mCurrentEditingPackId = packId
     }
 
     private fun setupEditMode() {
@@ -522,7 +531,8 @@ class ControlEditorManager(
 
         val layout = mControlLayout!!.currentLayout
         if (layout != null) {
-            val packId = packManager.getSelectedPackId()
+            // Use the currently editing pack ID, fallback to selected if not set
+            val packId = mCurrentEditingPackId ?: packManager.getSelectedPackId()
             if (packId != null) {
                 packManager.savePackLayout(packId, layout)
                 mHasUnsavedChanges = false

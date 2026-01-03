@@ -357,6 +357,11 @@ class UnifiedEditorSettingsDialog(
         if (mMode == DialogMode.EDITOR) {
             Log.i(TAG, "Hiding settings for EDITOR mode")
 
+            // 隐藏切换编辑模式按钮（独立编辑器始终处于编辑模式）
+            if (mItemToggleEditMode != null) {
+                mItemToggleEditMode!!.setVisibility(View.GONE)
+                Log.i(TAG, "Hidden: ToggleEditMode")
+            }
             // 隐藏 FPS 显示
             if (mItemFPSDisplay != null) {
                 mItemFPSDisplay!!.setVisibility(View.GONE)
