@@ -124,17 +124,15 @@ class VirtualTouchPad(
         strokePaint.color = castedData.strokeColor
         strokePaint.style = Paint.Style.STROKE
         strokePaint.strokeWidth = dpToPx(castedData.strokeWidth)
-        // 边框透明度完全独立，默认1.0（完全不透明）
-        val borderOpacity = if (castedData.borderOpacity != 0f) castedData.borderOpacity else 1.0f
-        strokePaint.alpha = (borderOpacity * 255).toInt()
+        // 边框透明度完全独立，默认1.0（完全不透明），0是有效值
+        strokePaint.alpha = (castedData.borderOpacity * 255).toInt()
 
         textPaint = TextPaint(Paint.ANTI_ALIAS_FLAG)
         textPaint.color = -0x1
         textPaint.textSize = dpToPx(16f)
         textPaint.textAlign = Paint.Align.CENTER
-        // 文本透明度完全独立，默认1.0（完全不透明）
-        val textOpacity = if (castedData.textOpacity != 0f) castedData.textOpacity else 1.0f
-        textPaint.alpha = (textOpacity * 255).toInt()
+        // 文本透明度完全独立，默认1.0（完全不透明），0是有效值
+        textPaint.alpha = (castedData.textOpacity * 255).toInt()
     }
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {

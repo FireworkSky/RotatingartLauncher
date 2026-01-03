@@ -141,9 +141,8 @@ class VirtualButton(
             mTextPaint?.color = textColor
             mTextPaint?.typeface = Typeface.DEFAULT_BOLD // 粗体
             mTextPaint?.textAlign = Paint.Align.CENTER
-            // 使用文本透明度（如果为0则默认不透明，确保文本可见）
-            val textOpacity = if (castedData.textOpacity != 0f) castedData.textOpacity else 1.0f
-            mTextPaint?.alpha = (textOpacity * 255).toInt()
+            // 使用文本透明度，0是有效值
+            mTextPaint?.alpha = (castedData.textOpacity * 255).toInt()
         } else {
             // 键盘模式保持原有逻辑
             mBackgroundPaint = Paint(Paint.ANTI_ALIAS_FLAG)
@@ -155,17 +154,15 @@ class VirtualButton(
             mStrokePaint?.color = castedData.strokeColor
             mStrokePaint?.style = Paint.Style.STROKE
             mStrokePaint?.strokeWidth = dpToPx(castedData.strokeWidth)
-            // 边框透明度完全独立，默认1.0（完全不透明）
-            val borderOpacity = if (castedData.borderOpacity != 0f) castedData.borderOpacity else 1.0f
-            mStrokePaint?.alpha = (borderOpacity * 255).toInt()
+            // 边框透明度完全独立，默认1.0（完全不透明），0是有效值
+            mStrokePaint?.alpha = (castedData.borderOpacity * 255).toInt()
 
             mTextPaint = TextPaint(Paint.ANTI_ALIAS_FLAG)
             mTextPaint?.color = -0x1
             mTextPaint?.textSize = dpToPx(16f)
             mTextPaint?.textAlign = Paint.Align.CENTER
-            // 文本透明度完全独立，默认1.0（完全不透明）
-            val textOpacity = if (castedData.textOpacity != 0f) castedData.textOpacity else 1.0f
-            mTextPaint?.alpha = (textOpacity * 255).toInt()
+            // 文本透明度完全独立，默认1.0（完全不透明），0是有效值
+            mTextPaint?.alpha = (castedData.textOpacity * 255).toInt()
         }
     }
 

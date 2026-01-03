@@ -520,8 +520,8 @@ object ControlEditDialogUIBinder {
                 refs.currentData!!,
                 object : ValueSetter {
                     override fun get(data: ControlData?): Float {
-                        // 如果为0则使用背景透明度作为兼容
-                        return if (data != null && data.borderOpacity != 0f) data.borderOpacity else (data?.opacity ?: 0.5f)
+                        // 边框透明度完全独立，默认1.0（完全不透明），0是有效值
+                        return data?.borderOpacity ?: 1.0f
                     }
 
                     override fun set(data: ControlData?, value: Float) {
@@ -548,8 +548,8 @@ object ControlEditDialogUIBinder {
                     refs.currentData!!,
                     object : ValueSetter {
                         override fun get(data: ControlData?): Float {
-                            // 如果为0则使用背景透明度作为兼容
-                            return if (data != null && data.textOpacity != 0f) data.textOpacity else (data?.opacity ?: 1.0f)
+                            // 文本透明度完全独立，默认1.0（完全不透明），0是有效值
+                            return data?.textOpacity ?: 1.0f
                         }
 
                         override fun set(data: ControlData?, value: Float) {
@@ -650,11 +650,8 @@ object ControlEditDialogUIBinder {
                     refs.currentData!!,
                     object : ValueSetter {
                         override fun get(data: ControlData?): Float {
-                            return if (data is ControlData.Joystick && data.stickOpacity != 0f) {
-                                data.stickOpacity
-                            } else {
-                                1.0f
-                            }
+                            // 摇杆圆心透明度，默认1.0（完全不透明），0是有效值
+                            return (data as? ControlData.Joystick)?.stickOpacity ?: 1.0f
                         }
 
                         override fun set(data: ControlData?, value: Float) {
@@ -684,11 +681,8 @@ object ControlEditDialogUIBinder {
                     refs.currentData!!,
                     object : ValueSetter {
                         override fun get(data: ControlData?): Float {
-                            return if (data is ControlData.Joystick && data.stickKnobSize != 0f) {
-                                data.stickKnobSize
-                            } else {
-                                0.4f
-                            }
+                            // 摇杆圆心大小比例，默认0.4，0是有效值（可以让摇杆圆心不可见）
+                            return (data as? ControlData.Joystick)?.stickKnobSize ?: 0.4f
                         }
 
                         override fun set(data: ControlData?, value: Float) {

@@ -41,8 +41,8 @@ class VirtualJoystick(
             initPaints()
             // 重新计算摇杆圆心大小（因为 stickKnobSize 可能已改变）
             if (mRadius > 0) {
-                val knobSizeRatio = if (castedData.stickKnobSize != 0f) castedData.stickKnobSize else 0.5f
-                mStickRadius = mRadius * knobSizeRatio
+                // 直接使用 stickKnobSize，0是有效值（可以让摇杆圆心不可见）
+                mStickRadius = mRadius * castedData.stickKnobSize
             }
             invalidate()
         }
@@ -294,10 +294,9 @@ class VirtualJoystick(
         mStickPaint = Paint(Paint.ANTI_ALIAS_FLAG)
         mStickPaint!!.setColor(-0x828283) // 不透明的灰色（RGB: 125, 125, 125）
         mStickPaint!!.setStyle(Paint.Style.FILL)
-        // 摇杆圆心透明度只使用 stickOpacity，如果没有设置则使用默认值 1.0（完全不透明），不受 opacity 影响
+        // 摇杆圆心透明度只使用 stickOpacity，0是有效值
         // 直接使用用户设置的 stickOpacity，让变化更明显（0.0-1.0 全范围）
-        val stickKnobAlpha = if (castedData.stickOpacity != 0f) castedData.stickOpacity else 1.0f
-        mStickPaint!!.setAlpha((stickKnobAlpha * 255).toInt())
+        mStickPaint!!.setAlpha((castedData.stickOpacity * 255).toInt())
 
 
         // 描边默认透明（RadialGamePad 风格）
@@ -305,9 +304,8 @@ class VirtualJoystick(
         mStrokePaint!!.setColor(0x00000000) // 透明
         mStrokePaint!!.setStyle(Paint.Style.STROKE)
         mStrokePaint!!.setStrokeWidth(0f)
-        // 边框透明度完全独立，默认1.0（完全不透明）
-        val borderOpacity = if (castedData.borderOpacity != 0f) castedData.borderOpacity else 1.0f
-        mStrokePaint!!.setAlpha((borderOpacity * 255).toInt())
+        // 边框透明度完全独立，默认1.0（完全不透明），0是有效值
+        mStrokePaint!!.setAlpha((castedData.borderOpacity * 255).toInt())
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
@@ -328,9 +326,8 @@ class VirtualJoystick(
 
 
         // RadialGamePad 风格：摇杆圆心是半径的 50%（0.5f * radius）
-        // 如果配置了 stickKnobSize，则使用配置值，否则使用 RadialGamePad 默认值 0.5
-        val knobSizeRatio = if (castedData.stickKnobSize != 0f) castedData.stickKnobSize else 0.5f
-        mStickRadius = mRadius * knobSizeRatio
+        // 直接使用 stickKnobSize，0是有效值（可以让摇杆圆心不可见）
+        mStickRadius = mRadius * castedData.stickKnobSize
         resetStick()
     }
 
@@ -392,8 +389,7 @@ class VirtualJoystick(
                 canvas.drawCircle(mCenterX, mCenterY, backgroundRadius, mBackgroundPaint!!)
             }
             if (!castedData.texture.knob.enabled) {
-                val stickKnobAlpha = if (castedData.stickOpacity != 0f) castedData.stickOpacity else 1.0f
-                mStickPaint!!.setAlpha((stickKnobAlpha * 255).toInt())
+                mStickPaint!!.setAlpha((castedData.stickOpacity * 255).toInt())
                 canvas.drawCircle(mStickX, mStickY, mStickRadius, mStickPaint!!)
             }
         } else {
@@ -403,10 +399,9 @@ class VirtualJoystick(
             canvas.drawCircle(mCenterX, mCenterY, backgroundRadius, mBackgroundPaint!!)
 
             // 更新摇杆圆心透明度（如果数据已更新）
-            // 摇杆圆心透明度只使用 stickOpacity，如果没有设置则使用默认值 1.0（完全不透明），不受 opacity 影响
+            // 摇杆圆心透明度只使用 stickOpacity，0是有效值
             // 直接使用用户设置的 stickOpacity，让变化更明显（0.0-1.0 全范围）
-            val stickKnobAlpha = if (castedData.stickOpacity != 0f) castedData.stickOpacity else 1.0f
-            mStickPaint!!.setAlpha((stickKnobAlpha * 255).toInt())
+            mStickPaint!!.setAlpha((castedData.stickOpacity * 255).toInt())
 
             // 绘制摇杆圆心（前景圆，根据触摸位置移动）
             // RadialGamePad 风格：摇杆圆心是背景半径的 50%（0.5f * radius）

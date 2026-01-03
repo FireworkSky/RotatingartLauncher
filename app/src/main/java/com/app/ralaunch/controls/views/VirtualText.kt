@@ -60,17 +60,15 @@ class VirtualText(
         mStrokePaint.setColor(controlData.strokeColor)
         mStrokePaint.setStyle(Paint.Style.STROKE)
         mStrokePaint.setStrokeWidth(dpToPx(controlData.strokeWidth))
-        // 边框透明度完全独立，默认1.0（完全不透明）
-        val borderOpacity = if (controlData.borderOpacity != 0f) controlData.borderOpacity else 1.0f
-        mStrokePaint.setAlpha((borderOpacity * 255).toInt())
+        // 边框透明度完全独立，默认1.0（完全不透明），0是有效值
+        mStrokePaint.setAlpha((controlData.borderOpacity * 255).toInt())
 
         mTextPaint = TextPaint(Paint.ANTI_ALIAS_FLAG)
         mTextPaint.setColor(-0x1)
         mTextPaint.setTextSize(dpToPx(16f))
         mTextPaint.setTextAlign(Paint.Align.CENTER)
-        // 文本透明度完全独立，默认1.0（完全不透明）
-        val textOpacity = if (controlData.textOpacity != 0f) controlData.textOpacity else 1.0f
-        mTextPaint.setAlpha((textOpacity * 255).toInt())
+        // 文本透明度完全独立，默认1.0（完全不透明），0是有效值
+        mTextPaint.setAlpha((controlData.textOpacity * 255).toInt())
     }
 
     private fun dpToPx(dp: Float): Float {
