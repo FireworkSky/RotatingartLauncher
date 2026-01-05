@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.Loader;
 
 namespace TModLoaderPatch;
 
@@ -111,9 +112,9 @@ public static class Patcher
         InstallVerifierBugMitigation(assembly);
         LoggingHooksHarmonyPatch(assembly);
         TMLContentManagerPatch(assembly);
+        SetResolveNativeLibraryHandler(assembly);
     }
 
-  
     public static void LoggingHooksHarmonyPatch(Assembly assembly)
     {
         // Get the type for LoggingHooks from the external assembly
@@ -282,5 +283,22 @@ public static class Patcher
         IsSteamUnsupported?.SetValue(null, false);
         
         Console.WriteLine("[TModLoaderPatch] InstallVerifier class mitigations applied successfully!");
+    }
+    
+    public static void SetResolveNativeLibraryHandler(Assembly assembly)
+    {
+	    AssemblyLoadContext.Default.ResolvingUnmanagedDll += ResolveNativeLibrary;
+    }
+
+    private static IntPtr ResolveNativeLibrary(Assembly assembly, string name)
+    {
+        // On some devices, dlopen cant be caught?????
+	    if (name.StartsWith("steam_api")) {
+		    Console.WriteLine("Handling steam_api.so loading, fast throw DllNotFoundException");
+		    throw new DllNotFoundException(
+			    $"Unable to load shared library \"{name}\" or one of its dependencies. Handled by TModLoaderPatch of RotatingArtLauncher");
+	    }
+
+	    return IntPtr.Zero;
     }
 }
