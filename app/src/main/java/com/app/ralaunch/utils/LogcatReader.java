@@ -55,6 +55,8 @@ public class LogcatReader {
         "Activity",
         "libc",
         "SplineOverScroller",
+        "BufferQueueProducer",
+        "BLASTBufferQueue",
         // OPlus
         "oplus.android.OplusFrameworkFactoryImpl",
         "DynamicFramerate",
