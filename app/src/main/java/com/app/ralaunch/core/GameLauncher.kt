@@ -1,204 +1,189 @@
-package com.app.ralaunch.core;
+package com.app.ralaunch.core
 
-import android.annotation.SuppressLint;
-import android.content.Context;
-import android.system.Os;
+import android.os.Environment
+import com.app.ralaunch.RaLaunchApplication
+import com.app.ralaunch.data.SettingsManager
+import com.app.ralaunch.dotnet.DotNetLauncher
+import com.app.ralaunch.utils.AppLogger
+import com.app.ralaunch.utils.NativeMethods
+import com.app.ralaunch.renderer.RendererConfig
+import com.app.ralib.patch.Patch
+import com.app.ralib.patch.PatchManager
+import kotlin.io.path.Path
+import kotlin.io.path.createDirectories
+import kotlin.io.path.createFile
+import kotlin.io.path.exists
 
-import com.app.ralaunch.game.AssemblyPatcher;
-import com.app.ralaunch.utils.AppLogger;
-import com.app.ralaunch.utils.RuntimeManager;
-import com.app.ralaunch.utils.RuntimePreference;
-import com.app.ralib.patch.Patch;
-import com.app.ralib.patch.PatchManager;
+object GameLauncher {
+    private const val TAG = "GameLauncher"
 
-import java.io.File;
-import java.util.List;
-
-
-public class GameLauncher {
-    private static final String TAG = "GameLauncher";
+    private const val DEFAULT_DATA_DIR_NAME = "RALauncher"
 
     // 静态加载 native 库
-    static {
+    init {
         try {
-            // [WARN] 重要：根据渲染器设置预加载正确的 GL 库
-            // 必须在 SDL2 之前加载，这样 SDL 才能找到正确的 EGL 实现
-            preloadRendererLibrary();
-
-            System.loadLibrary("netcorehost");
-            System.loadLibrary("FAudio");
-            System.loadLibrary("theorafile");
-            System.loadLibrary("SDL2");
-            System.loadLibrary("main");
-        } catch (UnsatisfiedLinkError e) {
-            AppLogger.error(TAG, "Failed to load native libraries: " + e.getMessage());
+            System.loadLibrary("netcorehost")
+            System.loadLibrary("FAudio")
+            System.loadLibrary("theorafile")
+            System.loadLibrary("SDL2")
+            System.loadLibrary("main")
+        } catch (e: UnsatisfiedLinkError) {
+            AppLogger.error(TAG, "Failed to load native libraries: " + e.message)
         }
     }
 
-    /**
-     * 根据用户设置预加载渲染器库
-     *
-     * 这个方法必须在 SDL2 加载之前调用，因为：
-     * 1. SDL 在初始化时会查找 EGL 库
-     * 2. 如果我们先加载了 gl4es 的 libGL.so，SDL 会优先使用它
-     * 3. 否则 SDL 会使用系统的 libEGL.so
-     */
-    private static void preloadRendererLibrary() {
-        try {
-
-            String renderer = System.getProperty("fna.renderer", "auto");
-
-            if ("opengl_gl4es".equals(renderer)) {
-                System.loadLibrary("main/GL");
-            }
-        } catch (UnsatisfiedLinkError e) {
-            // Fallback to system native renderer
-        }
+    fun getLastErrorMessage(): String {
+        // 未来可能扩展以包含更多错误来源
+        return DotNetLauncher.hostfxrLastErrorMsg
     }
 
     /**
-     * netcorehost API：设置启动参数（简化版 - 4个参数）
-     *
-     * @param appDir 应用程序目录
-     * @param mainAssembly 主程序集名称（如 "MyGame.dll"）
-     * @param dotnetRoot .NET 运行时根目录（可为 null）
-     * @param frameworkMajor 首选框架主版本号（0 = 自动选择最高版本）
-     * @return 0 成功，负数失败
+     * 启动 .NET 程序集
+     * 在这里只负责 **底层runtime环境变量外** 的游戏相关环境准备和调用底层启动器
+     * 如果需要设置底层 runtime 环境变量，请在 DotNetLauncher.hostfxrLaunch 中设置
+     * 不要在这里设置底层 runtime 环境变量，以免影响其他程序集的运行
+     * @param assemblyPath 程序集路径
+     * @param args 传递给程序集的参数
+     * @param enabledPatches 启用的补丁列表
+     * @return 程序集退出代码
      */
-    public static native int netcorehostSetParams(
-            String appDir,
-            String mainAssembly,
-            String dotnetRoot,
-            int frameworkMajor);
-
-    /**
-     * netcorehost API：设置启动参数（带命令行参数）
-     *
-     * @param appDir 应用程序目录
-     * @param mainAssembly 主程序集名称（如 "MyGame.dll"）
-     * @param dotnetRoot .NET 运行时根目录（可为 null）
-     * @param frameworkMajor 首选框架主版本号（0 = 自动选择最高版本）
-     * @param args 命令行参数数组
-     * @return 0 成功，负数失败
-     */
-    public static native int netcorehostSetParamsWithArgs(
-            String appDir,
-            String mainAssembly,
-            String dotnetRoot,
-            int frameworkMajor,
-            String[] args);
-    
-    /**
-     * netcorehost API：启动应用
-     * @return 应用退出码
-     */
-    public static native int netcorehostLaunch();
-
-
-    /**
-     * netcorehost API：设置 DOTNET_STARTUP_HOOKS 补丁路径
-     *
-     * @param startupHooksDll 补丁DLL的完整路径 (null 表示清除)
-     */
-    public static native void netcorehostSetStartupHooks(String startupHooksDll);
-
-    /**
-     * netcorehost API：设置是否启用 COREHOST_TRACE
-     *
-     * @param enabled true 启用详细日志, false 禁用
-     */
-    public static native void netcorehostSetCorehostTrace(boolean enabled);
-
-    /**
-     * netcorehost API：获取最后一次错误的详细消息
-     *
-     * @return 错误消息，如果没有错误则返回 null
-     */
-    public static native String netcorehostGetLastError();
-
-    /**
-     * netcorehost API：清理资源
-     * 应该在游戏退出时调用，确保 .NET runtime 资源被正确释放
-     */
-    public static native void netcorehostCleanup();
-
-
-
-
-    /**
-     * 直接启动 .NET 程序集（支持自定义补丁配置）
-     *
-     * <p>此方法直接启动指定的 .NET 程序集，并在启动前应用 MonoMod 补丁和启用的自定义补丁
-     *
-     * @param context Android 上下文
-     * @param assemblyPath 程序集完整路径
-     * @param enabledPatches 启用的补丁列表（如果为null则仅应用MonoMod补丁）
-     * @return 0 表示参数设置成功，-1 表示失败
-     */
-    @SuppressLint("UnsafeDynamicallyLoadedCode")
-    public static int launchAssemblyDirect(Context context, String assemblyPath, List<Patch> enabledPatches) {
+    fun launchDotNetAssembly(assemblyPath: String, args: Array<String>, enabledPatches: List<Patch>? = null): Int {
         try {
-            File assemblyFile = new File(assemblyPath);
+            AppLogger.info(TAG, "=== Starting .NET Assembly Launch ===")
+            AppLogger.info(TAG, "Assembly path: $assemblyPath")
+            AppLogger.info(TAG, "Arguments: ${args.joinToString(", ")}")
+            AppLogger.info(TAG, "Enabled patches: ${enabledPatches?.size ?: 0}")
 
-            if (!assemblyFile.exists()) {
-                AppLogger.error(TAG, "Assembly file not found: " + assemblyPath);
-                return -1;
+            // sanity check
+            if (!Path(assemblyPath).exists()) {
+                AppLogger.error(TAG, "Assembly file does not exist: $assemblyPath")
+                return -1
             }
-            String appDir = assemblyFile.getParent();
-            String mainAssembly = assemblyFile.getName();
+            AppLogger.debug(TAG, "Assembly file exists: OK")
 
-            AssemblyPatcher.applyMonoModPatches(context, appDir);
-            String dotnetRoot = RuntimePreference.getDotnetRootPath();
+            // 设置必要的环境变量, RaLaunchApplication 中已经设置过这部分变量，这里再设置一次以防万一
+            AppLogger.debug(TAG, "Setting up environment variables...")
+            EnvVarsManager.quickSetEnvVars(
+                "PACKAGE_NAME" to RaLaunchApplication.getAppContext().packageName,
+                "EXTERNAL_STORAGE_DIRECTORY" to Environment.getExternalStorageDirectory().path
+            )
 
-            String selectedVersion = RuntimeManager.getSelectedVersion(context);
-            int frameworkMajor = 0;
-            if (selectedVersion != null && !selectedVersion.isEmpty()) {
-                try {
-                    frameworkMajor = Integer.parseInt(selectedVersion.split("\\.")[0]);
-                } catch (Exception e) {
-                    AppLogger.error(TAG, "Failed to parse framework version: " + selectedVersion, e);
-                    frameworkMajor = 10;
-                }
+            // 切换工作目录到程序集所在目录
+            val workingDir = Path(assemblyPath).parent.toString()
+            AppLogger.debug(TAG, "Changing working directory to: $workingDir")
+            NativeMethods.chdir(workingDir)
+            AppLogger.debug(TAG, "Working directory changed: OK")
+
+            // 设置数据目录
+            AppLogger.debug(TAG, "Preparing data directory...")
+            val dataDir = prepareDataDirectory(assemblyPath)
+            val cacheDir = RaLaunchApplication.getAppContext().cacheDir.absolutePath
+            AppLogger.info(TAG, "Data directory: $dataDir")
+
+
+            EnvVarsManager.quickSetEnvVars(
+                "HOME" to dataDir,
+                "XDG_DATA_HOME" to dataDir,
+                "XDG_CONFIG_HOME" to dataDir,
+                "XDG_CACHE_HOME" to cacheDir
+
+            )
+            AppLogger.debug(TAG, "XDG environment variables set: OK")
+
+            val settings = SettingsManager.getInstance(null)
+
+            // Log settings configuration
+            AppLogger.debug(TAG, "Applying settings configuration...")
+            AppLogger.debug(TAG, "  - Big core affinity: ${settings.setThreadAffinityToBigCoreEnabled}")
+            AppLogger.debug(TAG, "  - Touch multitouch: ${settings.isTouchMultitouchEnabled}")
+            AppLogger.debug(TAG, "  - Mouse right stick: ${settings.isMouseRightStickEnabled}")
+
+            val startupHooks = if (enabledPatches != null && enabledPatches.isNotEmpty())
+                PatchManager.constructStartupHooksEnvVar(enabledPatches) else null
+
+            if (startupHooks != null) {
+                AppLogger.info(TAG, "DOTNET_STARTUP_HOOKS configured with ${enabledPatches!!.size} patch(es)")
             } else {
-                frameworkMajor = 10;
+                AppLogger.debug(TAG, "No startup hooks configured")
             }
 
-            if (!com.app.ralaunch.netcore.DotNetNativeLibraryLoader.loadAllLibraries(dotnetRoot, selectedVersion)) {
-                AppLogger.error(TAG, ".NET Native library loading failed! Network and crypto features may not work");
-            }
+            EnvVarsManager.quickSetEnvVars(
+                // 不再通过环境变量设置大核亲和性
+//                // 设置大核亲和性
+//                "SET_THREAD_AFFINITY_TO_BIG_CORE" to if (settings.setThreadAffinityToBigCoreEnabled) "1" else "0",
 
-            if (enabledPatches != null && !enabledPatches.isEmpty()) {
-                var startupHooksEnvVar = PatchManager.constructStartupHooksEnvVar(enabledPatches);
-                netcorehostSetStartupHooks(startupHooksEnvVar);
+                // 设置启动钩子
+                "DOTNET_STARTUP_HOOKS" to startupHooks,
+
+                // 触摸相关
+                "SDL_TOUCH_MOUSE_EVENTS" to "1",
+                "SDL_TOUCH_MOUSE_MULTITOUCH" to if (settings.isTouchMultitouchEnabled) "1" else "0",
+                "RALCORE_MOUSE_RIGHT_STICK" to if (settings.isMouseRightStickEnabled) "1" else null
+            )
+            AppLogger.debug(TAG, "Game settings environment variables set: OK")
+
+            AppLogger.debug(TAG, "Applying renderer environment...")
+            RendererConfig.applyRendererEnvironment(RaLaunchApplication.getAppContext())
+            AppLogger.debug(TAG, "Renderer environment applied: OK")
+
+            // 设置线程亲和性到大核
+            if (settings.setThreadAffinityToBigCoreEnabled) {
+                AppLogger.debug(TAG, "Setting thread affinity to big cores...")
+                val result = ThreadAffinityManager.setThreadAffinityToBigCores()
+                AppLogger.debug(TAG, "Thread affinity to big cores set: Result=$result")
             } else {
-                netcorehostSetStartupHooks("");
+                AppLogger.debug(TAG, "Thread affinity to big cores not enabled, skipping.")
             }
 
-            com.app.ralaunch.utils.CoreCLRConfig.applyConfig(context);
+            AppLogger.info(TAG, "Launching .NET runtime with hostfxr...")
+            val result = DotNetLauncher.hostfxrLaunch(assemblyPath, args)
 
-            com.app.ralaunch.data.SettingsManager settingsManager = com.app.ralaunch.data.SettingsManager.getInstance(context);
-            boolean enableVerboseLogging = settingsManager.isVerboseLogging();
-            netcorehostSetCorehostTrace(enableVerboseLogging);
+            AppLogger.info(TAG, "=== .NET Assembly Launch Completed ===")
+            AppLogger.info(TAG, "Exit code: $result")
 
-            com.app.ralaunch.data.SettingsManager dataSettingsManager = com.app.ralaunch.data.SettingsManager.getInstance(context);
-            if (dataSettingsManager.getSetThreadAffinityToBigCoreEnabled()) {
-                Os.setenv("SET_THREAD_AFFINITY_TO_BIG_CORE", "1", true);
-            } else {
-                Os.unsetenv("SET_THREAD_AFFINITY_TO_BIG_CORE");
-            }
-
-            int result = netcorehostSetParams(appDir, mainAssembly, dotnetRoot, frameworkMajor);
-
-            if (result != 0) {
-                AppLogger.error(TAG, "Failed to set launch parameters: " + result);
-                return -1;
-            }
-
-            return 0;
-
-        } catch (Exception e) {
-            AppLogger.error(TAG, "Failed to launch assembly", e);
-            return -1;
+            return result
+        } catch (e: Exception) {
+            AppLogger.error(TAG, "Failed to launch assembly: $assemblyPath", e)
+            e.printStackTrace()
+            return -1
         }
+    }
+
+    private fun prepareDataDirectory(assemblyPath: String): String {
+        var finalDataDir = Path(assemblyPath).parent
+        AppLogger.debug(TAG, "Initial data directory (assembly parent): $finalDataDir")
+
+        try {
+            val defaultDataDirPath = android.os.Environment.getExternalStorageDirectory()
+                .resolve(DEFAULT_DATA_DIR_NAME)
+                .toPath()
+
+            AppLogger.debug(TAG, "Target data directory: $defaultDataDirPath")
+
+            if (!defaultDataDirPath.exists()) {
+                AppLogger.debug(TAG, "Creating data directory: $defaultDataDirPath")
+                defaultDataDirPath.createDirectories()
+                AppLogger.debug(TAG, "Data directory created: OK")
+            } else {
+                AppLogger.debug(TAG, "Data directory already exists")
+            }
+
+            val nomediaFilePath = defaultDataDirPath.resolve(".nomedia")
+            if (!nomediaFilePath.exists()) {
+                AppLogger.debug(TAG, "Creating .nomedia file: $nomediaFilePath")
+                nomediaFilePath.createFile()
+                AppLogger.debug(TAG, ".nomedia file created: OK")
+            } else {
+                AppLogger.debug(TAG, ".nomedia file already exists")
+            }
+
+            finalDataDir = defaultDataDirPath
+            AppLogger.info(TAG, "Using default data directory: $finalDataDir")
+        } catch (e: Exception) {
+            AppLogger.warn(TAG, "Failed to access/create default data directory, using assembly directory instead.", e)
+            AppLogger.warn(TAG, "Fallback data directory: $finalDataDir")
+        }
+
+        return finalDataDir.toString()
     }
 }

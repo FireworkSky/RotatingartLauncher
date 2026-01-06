@@ -1,45 +1,37 @@
 package com.app.ralaunch.activity;
 
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
-import androidx.drawerlayout.widget.DrawerLayout;
 
-import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.content.pm.ActivityInfo;
-import android.content.res.Configuration;
 import android.content.Context;
 import android.view.KeyEvent;
-import android.view.View;
 import android.view.ViewGroup;
 import android.view.MotionEvent;
-import android.view.WindowManager;
 import android.widget.Toast;
 import android.os.Bundle;
-import android.util.Log;
+
 import com.app.ralaunch.R;
 import com.app.ralaunch.RaLaunchApplication;
+import com.app.ralaunch.dotnet.DotNetLauncher;
 import com.app.ralaunch.utils.AppLogger;
 import com.app.ralaunch.utils.RuntimePreference;
-import com.app.ralaunch.utils.RendererPreference;
 import com.app.ralaunch.manager.GameFullscreenManager;
 
 import com.app.ralaunch.core.GameLauncher;
 import com.app.ralib.patch.Patch;
 import com.app.ralib.patch.PatchManager;
-import com.app.ralaunch.renderer.OSMRenderer;
 import com.app.ralaunch.renderer.RendererConfig;
 import com.app.ralaunch.renderer.RendererLoader;
 import com.app.ralaunch.renderer.OSMSurface;
 
 import org.libsdl.app.SDLActivity;
-import android.view.Surface;
 
 import com.app.ralib.error.ErrorHandler;
+
+import java.io.File;
+import java.util.ArrayList;
 
 
 public class GameActivity extends SDLActivity {
@@ -51,52 +43,12 @@ public class GameActivity extends SDLActivity {
     private GameFullscreenManager mFullscreenManager;
     private GameVirtualControlsManager virtualControlsManager = new GameVirtualControlsManager();
     private GameMenuController gameMenuController = new GameMenuController();
-    private final GameLaunchDelegate launchDelegate = new GameLaunchDelegate();
     private final GameTouchBridge touchBridge = new GameTouchBridge();
 
     @Override
     protected void attachBaseContext(Context newBase) {
         // 应用语言设置
         super.attachBaseContext(com.app.ralaunch.utils.LocaleManager.applyLanguage(newBase));
-    }
-
-    @Override
-    public void loadLibraries() {
-        try {
-            RendererPreference.applyRendererEnvironment(this);
-
-            com.app.ralaunch.data.SettingsManager settingsManager =
-                    com.app.ralaunch.data.SettingsManager.getInstance(this);
-
-            // 设置 FNA 触屏相关环境变量
-            setupTouchEnvironment(settingsManager);
-
-        } catch (Exception e) {
-        }
-        super.loadLibraries();
-    }
-
-
-    private void setupTouchEnvironment(com.app.ralaunch.data.SettingsManager settingsManager) {
-        try {
-            android.system.Os.setenv("SDL_TOUCH_MOUSE_EVENTS", "1", true);
-
-            boolean multitouch = settingsManager.isTouchMultitouchEnabled();
-            if (multitouch) {
-                android.system.Os.setenv("SDL_TOUCH_MOUSE_MULTITOUCH", "1", true);
-            } else {
-                android.system.Os.setenv("SDL_TOUCH_MOUSE_MULTITOUCH", "0", true);
-            }
-
-            boolean mouseRightStick = settingsManager.isMouseRightStickEnabled();
-            if (mouseRightStick) {
-                android.system.Os.setenv("RALCORE_MOUSE_RIGHT_STICK", "1", true);
-            } else {
-                android.system.Os.unsetenv("RALCORE_MOUSE_RIGHT_STICK");
-            }
-
-        } catch (Exception e) {
-        }
     }
 
     /**
@@ -184,14 +136,7 @@ public class GameActivity extends SDLActivity {
             catch (Throwable t) {
             }
         }
-
-        setLaunchParams();
-
     }
-
-
-
-
 
     @Override
     public void setOrientationBis(int w, int h, boolean resizable, String hint) {
@@ -203,11 +148,59 @@ public class GameActivity extends SDLActivity {
         return "SDL_main";
     }
 
-    // 设置启动参数
-    private void setLaunchParams() {
-        int result = launchDelegate.apply(this, getIntent());
-        if (result != 0) {
-            finish();
+    @Override
+    protected void Main(String[] args) {
+        launchDotNetGame();
+    }
+
+    public int launchDotNetGame() {
+        try {
+            var intent = getIntent();
+
+            // 获取程序集路径
+            String assemblyPath = intent.getStringExtra("ASSEMBLY_PATH");
+            String gameName = intent.getStringExtra("GAME_NAME");
+            if (assemblyPath == null || assemblyPath.isEmpty()) {
+                AppLogger.error(TAG, "Assembly path is null or empty");
+                runOnUiThread(() ->
+                        ErrorHandler.showWarning(getString(R.string.game_launch_failed),
+                                getString(R.string.game_launch_assembly_path_empty)));
+                return -1;
+            }
+
+            // 验证程序集文件是否存在
+            File assemblyFile = new File(assemblyPath);
+            if (!assemblyFile.exists() || !assemblyFile.isFile()) {
+                AppLogger.error(TAG, "Assembly file not found: " + assemblyPath);
+                runOnUiThread(() ->
+                        ErrorHandler.showWarning(getString(R.string.game_launch_failed),
+                                getString(R.string.game_launch_assembly_not_exist, assemblyPath)));
+                return -2;
+            }
+
+            ArrayList<String> enabledPatchIds = intent.getStringArrayListExtra("ENABLED_PATCH_IDS");
+
+            @Nullable ArrayList<Patch> enabledPatches = null;
+            if (enabledPatchIds != null && !enabledPatchIds.isEmpty()) {
+                PatchManager patchManager = RaLaunchApplication.getPatchManager();
+                enabledPatches = patchManager.getPatchesByIds(enabledPatchIds);
+            }
+
+            int exitCode = GameLauncher.INSTANCE.launchDotNetAssembly(assemblyPath, new String[] {}, enabledPatches);
+
+            onGameExitWithMessage(exitCode, GameLauncher.INSTANCE.getLastErrorMessage());
+
+            if (exitCode == 0) {
+                AppLogger.info(TAG, "Dotnet game exited successfully.");
+            } else {
+                AppLogger.error(TAG, "Failed to launch dotnet game: " + exitCode);
+                return exitCode;
+            }
+            return 0;
+        } catch (Exception e) {
+            AppLogger.error(TAG, "Exception in launchDotNetGame: " + e.getMessage(), e);
+            runOnUiThread(() -> ErrorHandler.handleError(getString(R.string.game_launch_failed), e, false));
+            return -3;
         }
     }
 
@@ -247,9 +240,6 @@ public class GameActivity extends SDLActivity {
         gameMenuController.setup(this, (ViewGroup) mLayout, virtualControlsManager);
     }
 
-
-
-
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -274,14 +264,6 @@ public class GameActivity extends SDLActivity {
 
         // 清理虚拟控件
         virtualControlsManager.stop();
-
-        // 清理 .NET runtime 资源
-        try {
-            com.app.ralaunch.core.GameLauncher.netcorehostCleanup();
-            android.util.Log.d(TAG, "netcorehostCleanup() called successfully");
-        } catch (Exception e) {
-            android.util.Log.w(TAG, "Failed to cleanup netcorehost", e);
-        }
 
         super.onDestroy();
 
@@ -320,10 +302,6 @@ public class GameActivity extends SDLActivity {
         GameImeHelper.disableSDLTextInput();
     }
 
-    public static void onGameExit(int exitCode) {
-        onGameExitWithMessage(exitCode, null);
-    }
-
     /**
      * Native 退出回调(带错误消息)
      * 从 native 代码调用以通知游戏退出
@@ -348,7 +326,7 @@ public class GameActivity extends SDLActivity {
             // 从 C 层获取详细的错误信息
             String nativeError = null;
             try {
-                nativeError = com.app.ralaunch.core.GameLauncher.netcorehostGetLastError();
+                nativeError = GameLauncher.INSTANCE.getLastErrorMessage();
             } catch (Exception e) {
                 android.util.Log.w(TAG, "Failed to get native error", e);
             }

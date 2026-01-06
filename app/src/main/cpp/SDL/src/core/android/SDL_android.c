@@ -74,6 +74,12 @@ JNIEXPORT int JNICALL SDL_JAVA_INTERFACE(nativeRunMain)(
     JNIEnv *env, jclass cls,
     jstring library, jstring function, jobject array);
 
+JNIEXPORT int JNICALL SDL_JAVA_INTERFACE(nativeAndroidJNISetEnvCurrent)(
+        JNIEnv *env, jclass cls);
+
+JNIEXPORT int JNICALL SDL_JAVA_INTERFACE(nativeAndroidJNISetEnvNull)(
+        JNIEnv *env, jclass cls);
+
 JNIEXPORT void JNICALL SDL_JAVA_INTERFACE(onNativeDropFile)(
     JNIEnv *env, jclass jcls,
     jstring filename);
@@ -202,6 +208,8 @@ static JNINativeMethod SDLActivity_tab[] = {
     { "nativeGetVersion", "()Ljava/lang/String;", SDL_JAVA_INTERFACE(nativeGetVersion) },
     { "nativeSetupJNI", "()I", SDL_JAVA_INTERFACE(nativeSetupJNI) },
     { "nativeRunMain", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/Object;)I", SDL_JAVA_INTERFACE(nativeRunMain) },
+    {"nativeAndroidJNISetEnvCurrent", "()I", SDL_JAVA_INTERFACE(nativeAndroidJNISetEnvCurrent)},
+    {"nativeAndroidJNISetEnvNull", "()I", SDL_JAVA_INTERFACE(nativeAndroidJNISetEnvNull)},
     { "onNativeDropFile", "(Ljava/lang/String;)V", SDL_JAVA_INTERFACE(onNativeDropFile) },
     { "nativeSetScreenResolution", "(IIIIF)V", SDL_JAVA_INTERFACE(nativeSetScreenResolution) },
     { "onNativeResize", "()V", SDL_JAVA_INTERFACE(onNativeResize) },
@@ -864,6 +872,14 @@ JNIEXPORT int JNICALL SDL_JAVA_INTERFACE(nativeRunMain)(JNIEnv *env, jclass cls,
     /* exit(status); */
 
     return status;
+}
+
+JNIEXPORT int JNICALL SDL_JAVA_INTERFACE(nativeAndroidJNISetEnvCurrent)(JNIEnv *env, jclass cls) {
+    return Android_JNI_SetEnv(env);
+}
+
+JNIEXPORT int JNICALL SDL_JAVA_INTERFACE(nativeAndroidJNISetEnvNull)(JNIEnv *env, jclass cls) {
+    return Android_JNI_SetEnv(NULL);
 }
 
 /* Drop file */

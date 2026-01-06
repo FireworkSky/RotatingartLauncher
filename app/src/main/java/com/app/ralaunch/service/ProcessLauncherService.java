@@ -124,7 +124,7 @@ public class ProcessLauncherService extends Service {
         // 获取参数
         String assemblyPath = intent.getStringExtra(EXTRA_ASSEMBLY_PATH);
         String[] args = intent.getStringArrayExtra(EXTRA_ARGS);
-        String startupHooks = intent.getStringExtra(EXTRA_STARTUP_HOOKS);
+//        String startupHooks = intent.getStringExtra(EXTRA_STARTUP_HOOKS); // ignored, use auto setup
         
         if (assemblyPath == null) {
             AppLogger.error(TAG, "Assembly path is null");
@@ -133,12 +133,12 @@ public class ProcessLauncherService extends Service {
         }
         
         // 启动
-        launchAsync(assemblyPath, args, startupHooks, title);
+        launchAsync(assemblyPath, args, title);
         
         return START_STICKY;
     }
     
-    private void launchAsync(String assemblyPath, String[] args, String startupHooks, String title) {
+    private void launchAsync(String assemblyPath, String[] args, String title) {
         if (mRunning) {
             return;
         }
@@ -148,7 +148,7 @@ public class ProcessLauncherService extends Service {
                 mRunning = true;
                 updateNotification(title + " 正在运行");
                 
-                doLaunch(assemblyPath, args, startupHooks);
+                doLaunch(assemblyPath, args);
             } catch (Exception e) {
                 AppLogger.error(TAG, "Launch error: " + e.getMessage(), e);
             } finally {
@@ -160,86 +160,16 @@ public class ProcessLauncherService extends Service {
         mLauncherThread.start();
     }
     
-    private int doLaunch(String assemblyPath, String[] args, String startupHooks) {
+    private int doLaunch(String assemblyPath, String[] args) {
         try {
-            File assemblyFile = new File(assemblyPath);
-            String appDir = assemblyFile.getParent();
-            String mainAssembly = assemblyFile.getName();
-            String dotnetRoot = RuntimePreference.getDotnetRootPath();
-            
-            // 预加载加密库
-            preloadCryptoLibrary(dotnetRoot);
-            
-            // 设置启动钩子（如果提供）
-            if (startupHooks != null && !startupHooks.isEmpty()) {
-                GameLauncher.netcorehostSetStartupHooks(startupHooks);
-            } else {
-                // 自动加载补丁
-                setupStartupHooksAuto(assemblyPath);
-            }
-            
-            // 设置参数
-            int setResult;
-            if (args != null && args.length > 0) {
-                setResult = GameLauncher.netcorehostSetParamsWithArgs(
-                        appDir, mainAssembly, dotnetRoot, 10, args);
-            } else {
-                setResult = GameLauncher.netcorehostSetParams(
-                        appDir, mainAssembly, dotnetRoot, 10);
-            }
-            
-            if (setResult != 0) {
-                AppLogger.error(TAG, "Failed to set params: " + setResult);
-                return setResult;
-            }
-            
-            return GameLauncher.netcorehostLaunch();
-            
+            return GameLauncher.INSTANCE.launchDotNetAssembly(
+                    assemblyPath,
+                    args,
+                    RaLaunchApplication.getPatchManager().getEnabledPatches(Paths.get(assemblyPath)));
         } catch (Exception e) {
             AppLogger.error(TAG, "Launch failed: " + e.getMessage(), e);
+            AppLogger.error(TAG, "Last Error Msg: " + GameLauncher.INSTANCE.getLastErrorMessage());
             return -1;
-        }
-    }
-    
-    /**
-     * 预加载加密库
-     */
-    private void preloadCryptoLibrary(String dotnetRoot) {
-        try {
-            File sharedDir = new File(dotnetRoot, "shared/Microsoft.NETCore.App");
-            if (!sharedDir.exists()) return;
-            
-            String[] versions = sharedDir.list();
-            if (versions == null || versions.length == 0) return;
-            
-            String cryptoLibPath = dotnetRoot + "/shared/Microsoft.NETCore.App/" + versions[0] + 
-                                   "/libSystem.Security.Cryptography.Native.Android.so";
-            
-            File cryptoLib = new File(cryptoLibPath);
-            if (cryptoLib.exists()) {
-                System.load(cryptoLibPath);
-            }
-        } catch (Exception e) {
-            AppLogger.error(TAG, "Failed to preload crypto: " + e.getMessage());
-        }
-    }
-    
-    /**
-     * 自动设置启动钩子（根据程序集路径查找补丁）
-     */
-    private void setupStartupHooksAuto(String assemblyPath) {
-        try {
-
-            List<Patch> enabledPatches = RaLaunchApplication.getPatchManager().getEnabledPatches(Paths.get(assemblyPath));
-            
-            if (!enabledPatches.isEmpty()) {
-                String hooks = PatchManager.constructStartupHooksEnvVar(enabledPatches);
-                if (hooks != null && !hooks.isEmpty()) {
-                    GameLauncher.netcorehostSetStartupHooks(hooks);
-                }
-            }
-        } catch (Exception e) {
-            AppLogger.error(TAG, "Failed to setup auto hooks", e);
         }
     }
     

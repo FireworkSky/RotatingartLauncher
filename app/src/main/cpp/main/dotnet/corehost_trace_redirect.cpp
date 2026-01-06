@@ -5,6 +5,7 @@
 #include <cstdarg>
 #include <dlfcn.h>
 #include "And64InlineHook/And64InlineHook.hpp"
+#include <jni.h>
 
 #define LOG_TAG "COREHOST_TRACE"
 
@@ -88,4 +89,12 @@ extern "C" void init_corehost_trace_redirect() {
 
     dlclose(libc);
     __android_log_print(ANDROID_LOG_INFO, LOG_TAG, "COREHOST_TRACE redirect initialization complete");
+}
+
+// JNI接口函数
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_app_ralaunch_dotnet_CoreHostTrace_nativeInitCoreHostTraceRedirect(JNIEnv *env,
+                                                                           jobject thiz) {
+    init_corehost_trace_redirect();
 }

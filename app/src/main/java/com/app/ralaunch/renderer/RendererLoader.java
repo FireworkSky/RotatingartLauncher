@@ -1,8 +1,8 @@
 package com.app.ralaunch.renderer;
 
 import android.content.Context;
-import android.system.ErrnoException;
 import android.system.Os;
+import com.app.ralaunch.core.EnvVarsManager;
 import com.app.ralaunch.utils.AppLogger;
 
 import java.io.File;
@@ -43,19 +43,7 @@ public class RendererLoader {
             }
 
             Map<String, String> envMap = RendererConfig.getRendererEnv(context, rendererId);
-            for (Map.Entry<String, String> entry : envMap.entrySet()) {
-                String key = entry.getKey();
-                String value = entry.getValue();
-                try {
-                    if (value != null) {
-                        Os.setenv(key, value, true);
-                    } else {
-                        Os.unsetenv(key);
-                    }
-                } catch (ErrnoException e) {
-                    AppLogger.error(TAG, "Failed to set " + key + ": " + e.getMessage());
-                }
-            }
+            EnvVarsManager.INSTANCE.quickSetEnvVars(envMap);
 
             // 对于需要 preload 的渲染器，提前加载库文件并设置库路径
             if (renderer.needsPreload && renderer.eglLibrary != null) {
@@ -63,26 +51,20 @@ public class RendererLoader {
                     // 获取 EGL 库的完整路径
                     // 通过 FNA3D_OPENGL_LIBRARY 环境变量指定库路径
                     String eglLibPath = RendererConfig.getRendererLibraryPath(context, renderer.eglLibrary);
-                    Os.setenv("FNA3D_OPENGL_LIBRARY", eglLibPath, true);
+                    EnvVarsManager.INSTANCE.quickSetEnvVar("FNA3D_OPENGL_LIBRARY", eglLibPath);
                     if (RendererConfig.RENDERER_ZINK.equals(rendererId)) {
-                        Os.setenv("SDL_VIDEO_GL_DRIVER", eglLibPath, true);
+                        EnvVarsManager.INSTANCE.quickSetEnvVar("SDL_VIDEO_GL_DRIVER", eglLibPath);
                     }
 
                 } catch (UnsatisfiedLinkError e) {
                     AppLogger.error(TAG, "Failed to preload renderer library: " + e.getMessage());
-                } catch (ErrnoException e) {
-                    AppLogger.error(TAG, "Failed to set FNA3D_OPENGL_LIBRARY: " + e.getMessage());
                 }
             }
 
             // 设置 RALCORE_NATIVEDIR 环境变量（Turnip 加载需要）
-            try {
-                String nativeLibDir = context.getApplicationInfo().nativeLibraryDir;
-                Os.setenv("RALCORE_NATIVEDIR", nativeLibDir, true);
-            } catch (ErrnoException e) {
-                AppLogger.error(TAG, "Failed to set RALCORE_NATIVEDIR: " + e.getMessage());
-            }
-            
+            String nativeLibDir = context.getApplicationInfo().nativeLibraryDir;
+            EnvVarsManager.INSTANCE.quickSetEnvVar("RALCORE_NATIVEDIR", nativeLibDir);
+
             // 加载 Turnip Vulkan 驱动（如果启用且是 Adreno GPU）
             loadTurnipDriverIfNeeded(context);
             
@@ -103,7 +85,6 @@ public class RendererLoader {
                     
                     // 使用 TurnipLoader 在命名空间中加载 Turnip + libvulkan.so
                     // 这样 libvulkan.so 会在同一命名空间中找到 Turnip，而不是系统驱动
-                    String nativeLibDir = context.getApplicationInfo().nativeLibraryDir;
                     String cacheDir = context.getCacheDir().getAbsolutePath();
                     boolean turnipLoaded = TurnipLoader.loadTurnip(nativeLibDir, cacheDir);
                     if (!turnipLoaded) {
@@ -157,22 +138,18 @@ public class RendererLoader {
      * 清除渲染器环境变量
      */
     public static void clearRendererEnv() {
-        try {
-            Os.unsetenv("RALCORE_RENDERER");
-            Os.unsetenv("RALCORE_EGL");
-            Os.unsetenv("LIBGL_GLES");
-            Os.unsetenv("LIBGL_ES");
-            Os.unsetenv("LIBGL_MIPMAP");
-            Os.unsetenv("LIBGL_NORMALIZE");
-            Os.unsetenv("LIBGL_NOINTOVLHACK");
-            Os.unsetenv("LIBGL_NOERROR");
-            Os.unsetenv("GALLIUM_DRIVER");
-            Os.unsetenv("MESA_LOADER_DRIVER_OVERRIDE");
-            Os.unsetenv("MESA_GL_VERSION_OVERRIDE");
-            Os.unsetenv("MESA_GLSL_VERSION_OVERRIDE");
-        } catch (ErrnoException e) {
-            AppLogger.error(TAG, "Failed to clear env: " + e.getMessage());
-        }
+        EnvVarsManager.INSTANCE.quickSetEnvVar("RALCORE_RENDERER", null);
+        EnvVarsManager.INSTANCE.quickSetEnvVar("RALCORE_EGL", null);
+        EnvVarsManager.INSTANCE.quickSetEnvVar("LIBGL_GLES", null);
+        EnvVarsManager.INSTANCE.quickSetEnvVar("LIBGL_ES", null);
+        EnvVarsManager.INSTANCE.quickSetEnvVar("LIBGL_MIPMAP", null);
+        EnvVarsManager.INSTANCE.quickSetEnvVar("LIBGL_NORMALIZE", null);
+        EnvVarsManager.INSTANCE.quickSetEnvVar("LIBGL_NOINTOVLHACK", null);
+        EnvVarsManager.INSTANCE.quickSetEnvVar("LIBGL_NOERROR", null);
+        EnvVarsManager.INSTANCE.quickSetEnvVar("GALLIUM_DRIVER", null);
+        EnvVarsManager.INSTANCE.quickSetEnvVar("MESA_LOADER_DRIVER_OVERRIDE", null);
+        EnvVarsManager.INSTANCE.quickSetEnvVar("MESA_GL_VERSION_OVERRIDE", null);
+        EnvVarsManager.INSTANCE.quickSetEnvVar("MESA_GLSL_VERSION_OVERRIDE", null);
     }
     
     /**
@@ -222,18 +199,18 @@ public class RendererLoader {
             writer.close();
             
             // 设置 DXVK_CONFIG_FILE 环境变量指向配置文件
-            Os.setenv("DXVK_CONFIG_FILE", dxvkConf.getAbsolutePath(), true);
+            EnvVarsManager.INSTANCE.quickSetEnvVar("DXVK_CONFIG_FILE", dxvkConf.getAbsolutePath());
             AppLogger.info(TAG, "DXVK config created at: " + dxvkConf.getAbsolutePath());
             
             // 设置 DXVK 日志路径
-            Os.setenv("DXVK_LOG_PATH", configDir.getAbsolutePath(), true);
+            EnvVarsManager.INSTANCE.quickSetEnvVar("DXVK_LOG_PATH", configDir.getAbsolutePath());
             AppLogger.info(TAG, "DXVK log path set to: " + configDir.getAbsolutePath());
             
             // NOTE: VK_ICD_FILENAMES 不再设置，因为我们通过 TurnipLoader 预加载 Turnip
             // 并设置 TURNIP_HANDLE 环境变量供 DXVK 使用
             AppLogger.info(TAG, "DXVK will use pre-loaded Turnip via TURNIP_HANDLE");
             
-        } catch (IOException | ErrnoException e) {
+        } catch (IOException e) {
             AppLogger.error(TAG, "Failed to create DXVK config: " + e.getMessage());
         }
     }

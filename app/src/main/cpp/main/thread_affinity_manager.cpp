@@ -55,18 +55,18 @@ int getMaxFreqCPUIndex(int coreNum, int &numOfBigCore) {
     return index;
 }
 
-void setThreadAffinityToBigCores() {
+int setThreadAffinityToBigCores() {
     int coreNum = getCpuCoreNumber();
     if (coreNum <= 0) {
         LOGW(LOG_TAG, "Failed to get CPU core number.");
-        return;
+        return -1001;
     }
 
     int numOfBigCore = 0;
     int bigCoreIndex = getMaxFreqCPUIndex(coreNum, numOfBigCore);
     if (bigCoreIndex == -1) {
         LOGW(LOG_TAG, "Failed to determine big core index.");
-        return;
+        return -1002;
     }
 
     cpu_set_t cpuset;
@@ -82,7 +82,17 @@ void setThreadAffinityToBigCores() {
     int result = sched_setaffinity(0, sizeof(cpu_set_t), &cpuset);
     if (result != 0) {
         LOGW(LOG_TAG, "Failed to set thread affinity. Error code: %d", result);
+        LOGW(LOG_TAG, "This error can be safely ignored, failing to set thread affinity won't cause any harm", result);
     } else {
         LOGI(LOG_TAG, "Thread affinity set to big cores successfully.");
     }
+
+    return result;
+}
+
+extern "C"
+JNIEXPORT jint JNICALL
+Java_com_app_ralaunch_core_ThreadAffinityManager_nativeSetThreadAffinityToBigCores(JNIEnv *env,
+                                                                                   jobject thiz) {
+    return setThreadAffinityToBigCores();
 }

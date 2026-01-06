@@ -718,6 +718,13 @@ public class SDLActivity extends FragmentActivity implements View.OnSystemUiVisi
         }
     }
 
+    protected void Main(String[] args) {
+        String library = getMainSharedObject();
+        String function = getMainFunction();
+
+        nativeRunMain(library, function, args);
+    }
+
     // Messages from the SDLMain thread
     static final int COMMAND_CHANGE_TITLE = 1;
     static final int COMMAND_CHANGE_WINDOW_STYLE = 2;
@@ -894,6 +901,8 @@ public class SDLActivity extends FragmentActivity implements View.OnSystemUiVisi
     public static native String nativeGetVersion();
     public static native int nativeSetupJNI();
     public static native int nativeRunMain(String library, String function, Object arguments);
+    public static native int nativeAndroidJNISetEnvCurrent();
+    public static native int nativeAndroidJNISetEnvNull();
     public static native void nativeLowMemory();
     public static native void nativeSendQuit();
     public static native void nativeQuit();
@@ -1864,8 +1873,8 @@ class SDLMain implements Runnable {
     @Override
     public void run() {
         // Runs SDL_main()
-        String library = SDLActivity.mSingleton.getMainSharedObject();
-        String function = SDLActivity.mSingleton.getMainFunction();
+//        String library = SDLActivity.mSingleton.getMainSharedObject();
+//        String function = SDLActivity.mSingleton.getMainFunction();
         String[] arguments = SDLActivity.mSingleton.getArguments();
 
         try {
@@ -1880,7 +1889,10 @@ class SDLMain implements Runnable {
 
         }
 
-        SDLActivity.nativeRunMain(library, function, arguments);
+//        SDLActivity.nativeRunMain(library, function, arguments);
+        SDLActivity.nativeAndroidJNISetEnvCurrent();
+        SDLActivity.mSingleton.Main(arguments);
+        SDLActivity.nativeAndroidJNISetEnvNull();
 
         if (SDLActivity.mSingleton != null && !SDLActivity.mSingleton.isFinishing()) {
             // Let's finish the Activity

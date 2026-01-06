@@ -2,7 +2,6 @@
 
 #include <jni.h>
 #include <android/log.h>
-#include "netcorehost_launcher.h"
 #include "jni_bridge.h"
 #include "app_logger.h"
 #include "osmesa/osm_renderer.h"
@@ -34,20 +33,24 @@ JNIEXPORT void JNICALL JNI_OnUnload(JavaVM* vm, void* reserved) {
  * @brief SDL 主函数入口点
  */
 __attribute__((visibility("default"))) int SDL_main(int argc, char* argv[]) {
-    (void)argc;
-    (void)argv;
+//    (void)argc;
+//    (void)argv;
+//
+//    LOGI("SDL_main started (using netcorehost API)");
+//    int result = netcorehost_launch();
+//
+//    LOGI(".NET execution finished with result: %d", result);
+//
+//    const char* error_message = netcorehost_get_last_error();
+//
+//    netcorehost_cleanup();
+//    Bridge_NotifyGameExitWithMessage(result, error_message);
+//
+//    return result;
 
-    LOGI("SDL_main started (using netcorehost API)");
-    int result = netcorehost_launch();
-
-    LOGI(".NET execution finished with result: %d", result);
-
-    const char* error_message = netcorehost_get_last_error();
-
-    netcorehost_cleanup();
-    Bridge_NotifyGameExitWithMessage(result, error_message);
-
-    return result;
+    // Obsolete function
+    LOGE(LOG_TAG, "SDL_main is obsolete. Use GameActivity.Main instead.");
+    return -1;
 }
 
 

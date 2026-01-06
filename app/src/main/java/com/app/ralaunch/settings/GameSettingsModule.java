@@ -11,13 +11,11 @@ import com.app.ralaunch.R;
 import com.app.ralaunch.data.SettingsManager;
 import com.app.ralaunch.dialog.PatchManagementDialog;
 import com.app.ralaunch.renderer.RendererConfig;
-import com.app.ralaunch.utils.RendererPreference;
 import com.app.ralib.dialog.OptionSelectorDialog;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.materialswitch.MaterialSwitch;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -93,9 +91,9 @@ public class GameSettingsModule implements SettingsModule {
                     .setTitle(fragment.getString(R.string.renderer_title))
                     .setIcon(R.drawable.ic_game)
                     .setOptions(options)
-                    .setCurrentValue(RendererPreference.normalizeRendererValue(settingsManager.getFnaRenderer()))
+                    .setCurrentValue(RendererConfig.normalizeRendererValue(settingsManager.getFnaRenderer()))
                     .setOnOptionSelectedListener(value -> {
-                        settingsManager.setFnaRenderer(RendererPreference.normalizeRendererValue(value));
+                        settingsManager.setFnaRenderer(RendererConfig.normalizeRendererValue(value));
                         updateRendererDisplay(tvRendererValue);
                         Toast.makeText(fragment.requireContext(), fragment.getString(R.string.renderer_changed), Toast.LENGTH_SHORT).show();
                     })
@@ -151,10 +149,10 @@ public class GameSettingsModule implements SettingsModule {
     }
     
     private void updateRendererDisplay(TextView textView) {
-        String renderer = RendererPreference.normalizeRendererValue(settingsManager.getFnaRenderer());
+        String renderer = RendererConfig.normalizeRendererValue(settingsManager.getFnaRenderer());
         String display;
 
-        if (RendererPreference.RENDERER_AUTO.equals(renderer)) {
+        if (RendererConfig.RENDERER_AUTO.equals(renderer)) {
             display = fragment.getString(R.string.renderer_auto);
         } else {
             // 尝试从字符串资源获取

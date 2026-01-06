@@ -107,25 +107,12 @@ public class RaLaunchApplication extends Application {
             Os.setenv("PACKAGE_NAME", appContext.getPackageName(), true);
             
             // 设置外部存储目录环境变量
-            File externalStorageDir = appContext.getExternalFilesDir(null);
-            if (externalStorageDir != null) {
-                // 获取外部存储的根目录（去掉 /Android/data/com.app.ralaunch/files 部分）
-                String externalStoragePath = externalStorageDir.getAbsolutePath();
-                // 移除 /Android/data/包名/files 部分，获取外部存储根目录
-                if (externalStoragePath.contains("/Android/data/")) {
-                    externalStoragePath = externalStoragePath.substring(0, externalStoragePath.indexOf("/Android/data/"));
-                }
-                Os.setenv("EXTERNAL_STORAGE_DIRECTORY", externalStoragePath, true);
-                Log.d(TAG, "EXTERNAL_STORAGE_DIRECTORY set to: " + externalStoragePath);
+            File externalStorage = android.os.Environment.getExternalStorageDirectory();
+            if (externalStorage != null) {
+                Os.setenv("EXTERNAL_STORAGE_DIRECTORY", externalStorage.getAbsolutePath(), true);
+                Log.d(TAG, "EXTERNAL_STORAGE_DIRECTORY set to: " + externalStorage.getAbsolutePath());
             } else {
-                // 备用方案：使用 getExternalStorageDirectory()（已弃用但可用）
-                File externalStorage = android.os.Environment.getExternalStorageDirectory();
-                if (externalStorage != null) {
-                    Os.setenv("EXTERNAL_STORAGE_DIRECTORY", externalStorage.getAbsolutePath(), true);
-                    Log.d(TAG, "EXTERNAL_STORAGE_DIRECTORY set to (fallback): " + externalStorage.getAbsolutePath());
-                } else {
-                    Log.e(TAG, "Failed to get external storage directory");
-                }
+                Log.e(TAG, "Failed to get external storage directory");
             }
         } catch (ErrnoException e) {
             throw new RuntimeException(e);

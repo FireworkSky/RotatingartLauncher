@@ -3,8 +3,6 @@
 # 添加主程序源码
 add_library(${CMAKE_PROJECT_NAME} SHARED
         sdl_entry.c
-        netcorehost_launcher.cpp
-        corehost_trace_redirect.cpp
         jni_bridge.c
         app_logger.c
         app_logger_jni.c
@@ -22,6 +20,11 @@ add_library(${CMAKE_PROJECT_NAME} SHARED
         virtual_mouse_sdl.c
         sdl_text_bridge.c
         And64InlineHook/And64InlineHook.cpp
+        shared_envvars.cpp
+        dotnet/dotnet_launcher.cpp
+        dotnet/netcorehost_launcher.cpp
+        dotnet/corehost_trace_redirect.cpp
+        utils/native_methods.cpp
 )
 
 # 链接库

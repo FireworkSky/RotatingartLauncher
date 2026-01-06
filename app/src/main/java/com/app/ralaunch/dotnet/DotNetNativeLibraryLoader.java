@@ -1,4 +1,4 @@
-package com.app.ralaunch.netcore;
+package com.app.ralaunch.dotnet;
 
 import android.util.Log;
 import java.nio.file.Paths;
