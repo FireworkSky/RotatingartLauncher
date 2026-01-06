@@ -51,6 +51,7 @@ object ControlEditDialogKeymapManager {
         }
 
         switchToggleMode?.setOnCheckedChangeListener { _, isChecked ->
+            if (refs.isUpdating) return@setOnCheckedChangeListener
             val data = refs.currentData
             if (data is ControlData.Button) {
                 data.isToggle = isChecked
@@ -198,6 +199,7 @@ object ControlEditDialogKeymapManager {
      */
     interface UIReferences {
         val currentData: ControlData?
+        val isUpdating: Boolean
         fun notifyUpdate()
     }
 }

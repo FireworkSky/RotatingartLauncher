@@ -559,6 +559,9 @@ class ControlEditDialogMD : DialogFragment() {
             override val currentData: ControlData?
                 get() = this@ControlEditDialogMD.currentData
 
+            override val isUpdating: Boolean
+                get() = this@ControlEditDialogMD.isUpdating
+
             override fun notifyUpdate() {
                 this@ControlEditDialogMD.notifyUpdate()
             }

@@ -153,6 +153,7 @@ object ControlEditDialogUIBinder {
             view.findViewById<SwitchCompat?>(R.id.switch_joystick_stick_select)
         val tvJoystickStickSelect = view.findViewById<TextView?>(R.id.tv_joystick_stick_select)
         switchJoystickStickSelect?.setOnCheckedChangeListener { _, isChecked ->
+            if (refs.isUpdating) return@setOnCheckedChangeListener
             val data = refs.currentData
             if (data is ControlData.Joystick) {
                 data.isRightStick = isChecked
@@ -191,6 +192,7 @@ object ControlEditDialogUIBinder {
 
             // 监听选择变化，保存到全局设置
             rgAttackMode.setOnCheckedChangeListener { group: RadioGroup?, checkedId: Int ->
+                if (refs.isUpdating) return@setOnCheckedChangeListener
                 var mode = SettingsManager.ATTACK_MODE_HOLD
                 if (checkedId == R.id.rb_attack_mode_hold) {
                     mode = SettingsManager.ATTACK_MODE_HOLD
@@ -208,7 +210,8 @@ object ControlEditDialogUIBinder {
         // 触摸穿透开关
         val switchPassThrough = view.findViewById<SwitchCompat?>(R.id.switch_pass_through)
         switchPassThrough?.setOnCheckedChangeListener { _, isChecked ->
-             val data = refs.currentData
+            if (refs.isUpdating) return@setOnCheckedChangeListener
+            val data = refs.currentData
             data?.isPassThrough = isChecked
             refs.notifyUpdate()
         }
@@ -324,6 +327,7 @@ object ControlEditDialogUIBinder {
         // 双击模拟摇杆开关（仅触摸板显示）
         val switchDoubleClickJoystick = view.findViewById<SwitchCompat?>(R.id.switch_double_click_joystick)
         switchDoubleClickJoystick?.setOnCheckedChangeListener { _, isChecked ->
+            if (refs.isUpdating) return@setOnCheckedChangeListener
             val data = refs.currentData
             if (data is ControlData.TouchPad) {
                 data.isDoubleClickSimulateJoystick = isChecked
@@ -432,6 +436,7 @@ object ControlEditDialogUIBinder {
         }
 
         switchAutoSize?.setOnCheckedChangeListener { buttonView: CompoundButton?, isChecked: Boolean ->
+            if (refs.isUpdating) return@setOnCheckedChangeListener
             if (refs.currentData != null) {
                 refs.currentData!!.isSizeRatioLocked = isChecked
                 if (isChecked) {
@@ -566,6 +571,7 @@ object ControlEditDialogUIBinder {
         }
 
         switchVisible?.setOnCheckedChangeListener { _, isChecked ->
+            if (refs.isUpdating) return@setOnCheckedChangeListener
             refs.currentData?.let { it.isVisible = isChecked }
             refs.notifyUpdate()
         }
