@@ -29,6 +29,9 @@ object GameLauncher {
             System.loadLibrary("SDL2")
             System.loadLibrary("main")
             System.loadLibrary("openal32")
+            System.loadLibrary("SkiaSharp")
+
+
         } catch (e: UnsatisfiedLinkError) {
             AppLogger.error(TAG, "Failed to load native libraries: " + e.message)
         }
@@ -105,6 +108,10 @@ object GameLauncher {
 
             if (startupHooks != null) {
                 AppLogger.info(TAG, "DOTNET_STARTUP_HOOKS configured with ${enabledPatches!!.size} patch(es)")
+                AppLogger.debug(TAG, "DOTNET_STARTUP_HOOKS value: $startupHooks")
+                // Count actual hooks (split by ':')
+                val hookCount = startupHooks.split(":").filter { it.isNotEmpty() }.size
+                AppLogger.debug(TAG, "DOTNET_STARTUP_HOOKS actual hook count: $hookCount")
             } else {
                 AppLogger.debug(TAG, "No startup hooks configured")
             }

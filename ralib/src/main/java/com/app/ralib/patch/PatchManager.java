@@ -183,15 +183,36 @@ public class PatchManager {
     /**
      * Construct the environment variable string for startup hooks from a list of patches.
      * The absolute paths of the entry assemblies of the patches are joined with ':' as the separator.
+     * Duplicate patch IDs and paths are automatically filtered out.
      *
      * @param patches list of patches to construct the environment variable from
      * @return colon-separated environment variable string containing entry assembly absolute paths
      */
     public static String constructStartupHooksEnvVar(List<Patch> patches) {
-        return patches
+        // Log input patches for debugging
+        Log.d(TAG, "constructStartupHooksEnvVar: Input patches count = " + patches.size());
+        for (int i = 0; i < patches.size(); i++) {
+            Patch p = patches.get(i);
+            Log.d(TAG, "  [" + i + "] id=" + p.manifest.id + ", path=" + p.getEntryAssemblyAbsolutePath());
+        }
+        
+        // Use LinkedHashSet to preserve order while removing duplicates by patch ID
+        java.util.Set<String> seenPatchIds = new java.util.LinkedHashSet<>();
+        String result = patches
                 .stream()
+                .filter(p -> {
+                    boolean isNew = seenPatchIds.add(p.manifest.id);
+                    if (!isNew) {
+                        Log.w(TAG, "constructStartupHooksEnvVar: Duplicate patch ID filtered: " + p.manifest.id);
+                    }
+                    return isNew;
+                })
                 .map(p -> p.getEntryAssemblyAbsolutePath().toString())
+                .distinct() // Also deduplicate by path as a safeguard
                 .collect(Collectors.joining(":"));
+        
+        Log.d(TAG, "constructStartupHooksEnvVar: Result = " + result);
+        return result;
     }
 
     //endregion

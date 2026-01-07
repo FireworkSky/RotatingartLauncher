@@ -16,8 +16,9 @@ Write-Host "编译并打包补丁到 assets/patches" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 
 # 补丁列表和对应的输出名称
-# 注意: MonoGamePatch 需要最先加载 (priority: 50)，在 ConsolePatch (priority: 100) 和 PlatformFixPatch (priority: 100) 之前
+# 加载顺序按 priority 从小到大: TouchPatch(45) -> MonoGamePatch(50) -> ConsolePatch/PlatformFixPatch(100)
 $patches = @(
+    @{ Name = "TouchPatch"; OutputName = "com.app.ralaunch.smapi.touchfix" },
     @{ Name = "MonoGamePatch"; OutputName = "com.app.ralaunch.smapi.monogamefix" },
     @{ Name = "PlatformFixPatch"; OutputName = "com.app.ralaunch.smapi.platformfix" },
     @{ Name = "ConsolePatch"; OutputName = "com.app.ralaunch.tmodloader.consolepatch" },
