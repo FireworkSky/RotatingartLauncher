@@ -38,7 +38,6 @@ public class MainActivity extends AppCompatActivity implements
     private PermissionManager permissionManager;
     private FragmentNavigator fragmentNavigator;
     private RuntimeSelectorManager runtimeSelectorManager;
-    private GameImportManager gameImportManager;
     private GameDeletionManager gameDeletionManager;
     private UIManager uiManager;
     private ThemeManager themeManager;
@@ -126,7 +125,6 @@ public class MainActivity extends AppCompatActivity implements
         MainInitializationDelegate.InitAfterResult afterResult =
                 initDelegate.initAfterContent(this, mainLayout);
         fragmentNavigator = afterResult.fragmentNavigator;
-        gameImportManager = afterResult.gameImportManager;
         gameDeletionManager = afterResult.gameDeletionManager;
         gameLaunchManager = afterResult.gameLaunchManager;
         themeManager = afterResult.themeManager;
@@ -140,8 +138,7 @@ public class MainActivity extends AppCompatActivity implements
             }
         };
         navigationDelegate = new MainNavigationDelegate(this, getSupportFragmentManager(), permissionListener);
-        importDelegate = new MainImportDelegate(this, getSupportFragmentManager(), fragmentNavigator, 
-                gameListManager, permissionListener, navigationDelegate);
+        importDelegate = new MainImportDelegate(this, getSupportFragmentManager(), fragmentNavigator, navigationDelegate);
         importDelegate.setOnImportCompleteListener(this::onImportComplete);
         controlFragmentDelegate = new MainControlFragmentDelegate(this, fragmentNavigator, uiManager);
 
@@ -254,8 +251,6 @@ public class MainActivity extends AppCompatActivity implements
         });
         gameListManager.setOnGameDeleteListener(this);
 
-        // 初始化游戏导入管理器
-        gameImportManager.setOnImportCompleteListener(this::onImportComplete);
         
         // 初始化 UI 管理器（刷新和添加游戏按钮已移至 NavigationRail）
         // settingsButton 和 gogButton 已移至 NavigationRail，不再需要
@@ -379,10 +374,9 @@ public class MainActivity extends AppCompatActivity implements
     /**
      * 开始游戏导入（供其他类调用）
      */
-    public void startGameImport(String gameFilePath, String modLoaderFilePath, 
-                               String gameName, String gameVersion) {
+    public void startGameImport(String gameFilePath, String gameName, String gameVersion) {
         if (importDelegate != null) {
-            importDelegate.startGameImport(gameFilePath, modLoaderFilePath, gameName, gameVersion);
+            importDelegate.startGameImport(gameFilePath, gameName, gameVersion);
         }
     }
     
@@ -390,14 +384,17 @@ public class MainActivity extends AppCompatActivity implements
     // 实现 OnImportCompleteListener
     @Override
     public void onImportComplete(String gameType, GameItem newGame) {
+        onGameImportComplete(gameType, newGame);
+    }
+
+    /**
+     * 游戏导入完成回调（供 GamePluginImportFragment 和其他导入方式使用）
+     */
+    public void onGameImportComplete(String gameType, GameItem newGame) {
         // 导入完成后直接添加游戏到列表
         if (gameListManager != null) {
             gameListManager.addGame(newGame);
             showToast(getString(R.string.game_added_success));
-            // 隐藏导入 Fragment
-            if (fragmentNavigator != null) {
-                fragmentNavigator.hideFragment("local_import");
-            }
             // 切换到游戏页面
             showGamePage();
         }

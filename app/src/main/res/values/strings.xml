@@ -353,6 +353,7 @@
     <string name="import_select_game_first">请先选择游戏文件</string>
     <string name="import_cannot_read_info_failed">无法读取游戏信息，导入失败</string>
     <string name="import_reading_info">正在读取游戏信息...</string>
+    <string name="import_applying_patches">正在应用补丁...</string>
     <string name="import_complete_exclamation">导入完成！</string>
     <string name="import_failed_colon">导入失败: %s</string>
     <string name="import_unknown_game">未知游戏</string>
@@ -1227,4 +1228,76 @@
     <string name="retry">重试</string>
     <string name="view">查看</string>
     <string name="sponsors_tip_gesture">双击重置视图 · 捏合缩放 · 拖动探索</string>
+    
+    <!-- Plugin Manager -->
+    <string name="plugin_manager_title">插件管理</string>
+    <string name="plugin_manager_subtitle">管理游戏安装插件，添加或删除外部插件</string>
+    <string name="manage_plugins">管理插件</string>
+    <string name="add_plugin">添加插件</string>
+    <string name="installed_plugins">已安装插件</string>
+    <string name="available_plugins">可用插件</string>
+    <string name="plugin_count">已安装 %d 个插件</string>
+    <string name="no_plugins_available">暂无可用插件</string>
+    <string name="no_plugins_installed">暂无已安装插件</string>
+    <string name="no_plugins_hint">点击上方按钮添加插件</string>
+    <string name="plugin_source_builtin">内置</string>
+    <string name="plugin_source_external">外部</string>
+    <string name="plugin_import_success">插件导入成功: %s</string>
+    <string name="plugin_import_failed">插件导入失败</string>
+    <string name="plugin_restart_required_title">需要重启</string>
+    <string name="plugin_restart_required_message">新导入的插件需要重启应用后才能生效</string>
+    <string name="restart_now">立即重启</string>
+    <string name="plugin_delete_title">删除插件</string>
+    <string name="plugin_delete_message">确定要删除插件 %s 吗？</string>
+    <string name="plugin_delete_success">插件已删除</string>
+    <string name="plugin_delete_failed">插件删除失败</string>
+    <string name="plugin_delete_not_found">未找到对应的插件文件</string>
+    <string name="plugin_cannot_delete_builtin">内置插件不可删除</string>
+    <string name="plugin_id_label">插件ID: %s</string>
+    <string name="plugin_games_label">支持的游戏:</string>
+    <string name="plugin_source_label">来源: </string>
+    <string name="delete">删除</string>
+    
+    <!-- Game Import -->
+    <string name="select_game_file">选择游戏文件</string>
+    <string name="select_game_file_simple_hint">支持 ZIP 格式（游戏本体或模组加载器）</string>
+    <string name="select_gog_sh_hint">选择 GOG 安装脚本 (.sh)</string>
+    <string name="game_name_input_hint">游戏名称（自动检测）</string>
+    <string name="start_import">开始导入</string>
+    <string name="import_game_simple_subtitle">选择游戏 ZIP 文件即可开始导入</string>
+    <string name="import_game_sh_subtitle">选择 GOG 安装脚本即可开始导入，游戏名称将自动检测</string>
+    <string name="import_hint_zip">• 支持 ZIP 格式的游戏文件</string>
+    <string name="import_hint_sh_file">• 支持 GOG .sh 安装脚本</string>
+    <string name="import_hint_auto_detect">• 自动识别游戏类型和名称</string>
+    <string name="import_hint_examples">• 如 tModLoader、Stardew Valley、Celeste 等</string>
+    <string name="import_hint_gog_examples">• 如 Terraria、Celeste、Hollow Knight 等</string>
+    <string name="import_select_plugin_hint">选择一个游戏插件开始导入流程</string>
+    <string name="import_select_modloader_first">请先选择 ModLoader 文件</string>
+    <string name="import_select_mod_loader_first">请先选择模组加载器文件</string>
+    <string name="select_files">选择文件</string>
+    <string name="select_file">选择文件</string>
+    <string name="import_no_plugin_available">没有可用的安装插件</string>
+    <string name="import_no_plugin_selected">未选择插件</string>
+    <string name="import_plugin_not_match">所选插件不匹配当前文件</string>
+    <string name="import_cancelled">导入已取消</string>
+    <string name="import_install_method">安装方式</string>
+    <string name="import_required">必需</string>
+    
+    <!-- Import Steps -->
+    <string name="import_step1_title">选择游戏本体</string>
+    <string name="import_step2_title">选择模组加载器</string>
+    <string name="import_step3_title">确认导入</string>
+    <string name="next_step">下一步</string>
+    <string name="import_select_game_body">选择游戏本体文件</string>
+    <string name="import_click_to_select_sh">点击选择已下载的 .sh 安装文件</string>
+    <string name="import_game_detected_label">检测到游戏</string>
+    <string name="import_mod_loader">模组加载器</string>
+    <string name="import_select_sh_file">请选择游戏安装文件 (.sh)</string>
+    <string name="import_select_zip_file">请选择模组加载器文件 (.zip)</string>
+    <string name="import_local_select">本地选择</string>
+    <string name="import_local_select_hint">从设备中选择已下载的 ZIP 文件</string>
+    <string name="import_online_download">在线下载</string>
+    <string name="import_online_download_hint">从网络下载模组加载器</string>
+    <string name="import_summary">导入摘要</string>
+    <string name="import_progress_title">导入进度</string>
 </resources>

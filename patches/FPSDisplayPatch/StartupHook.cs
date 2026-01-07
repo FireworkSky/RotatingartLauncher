@@ -16,18 +16,18 @@ internal class StartupHook
     /// </summary>
     public static void Initialize()
     {
-        Console.WriteLine("[StartupHook] FNAMultiTouchPatch DOTNET_STARTUP_HOOKS executing...");
+        Console.WriteLine("[StartupHook] FPSDisplayPatch DOTNET_STARTUP_HOOKS executing...");
         
-        // 注册程序集解析器,从补丁 DLL 同目录加载依赖
+        // 注册程序集解析器,从 monomod 目录加载依赖
         AppDomain.CurrentDomain.AssemblyResolve += OnAssemblyResolve;
 
         // 调用原有的补丁初始化方法
         int result = FPSDisplayPatch.FPSDisplayPatcher.Initialize(IntPtr.Zero, 0);
-        Console.WriteLine($"[StartupHook] MultiTouchPatcher.Initialize returned: {result}");
+        Console.WriteLine($"[StartupHook] FPSDisplayPatcher.Initialize returned: {result}");
     }
 
     /// <summary>
-    /// 程序集解析器 - 从 patches 根目录加载共享依赖程序集
+    /// 程序集解析器 - 从 MONOMOD_PATH 环境变量指定的目录加载依赖程序集
     /// </summary>
     private static Assembly? OnAssemblyResolve(object? sender, ResolveEventArgs args)
     {
@@ -36,25 +36,24 @@ internal class StartupHook
             // 获取请求的程序集名称(不含版本等信息)
             string assemblyName = new AssemblyName(args.Name).Name ?? "";
 
-            // 获取当前补丁 DLL 所在目录
-            string patchDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? "";
-
-            // 获取 patches 根目录 (补丁 DLL 的父目录)
-            string patchesRootDir = Path.GetDirectoryName(patchDir) ?? "";
-
-            // 优先从 patches 根目录加载共享依赖
-            string sharedAssemblyPath = Path.Combine(patchesRootDir, assemblyName + ".dll");
-            if (File.Exists(sharedAssemblyPath))
+            // 优先从 MONOMOD_PATH 环境变量指定的目录加载
+            string? monoModPath = Environment.GetEnvironmentVariable("MONOMOD_PATH");
+            if (!string.IsNullOrEmpty(monoModPath))
             {
-                Console.WriteLine($"[StartupHook] Loading shared dependency: {assemblyName} from {sharedAssemblyPath}");
-                return Assembly.LoadFrom(sharedAssemblyPath);
+                string monoModAssemblyPath = Path.Combine(monoModPath, assemblyName + ".dll");
+                if (File.Exists(monoModAssemblyPath))
+                {
+                    Console.WriteLine($"[StartupHook] Loading dependency from MONOMOD_PATH: {assemblyName}");
+                    return Assembly.LoadFrom(monoModAssemblyPath);
+                }
             }
 
             // 备选: 从补丁自己的目录加载
+            string patchDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? "";
             string localAssemblyPath = Path.Combine(patchDir, assemblyName + ".dll");
             if (File.Exists(localAssemblyPath))
             {
-                Console.WriteLine($"[StartupHook] Loading local dependency: {assemblyName} from {localAssemblyPath}");
+                Console.WriteLine($"[StartupHook] Loading local dependency: {assemblyName}");
                 return Assembly.LoadFrom(localAssemblyPath);
             }
         }
@@ -66,4 +65,3 @@ internal class StartupHook
         return null;
     }
 }
-

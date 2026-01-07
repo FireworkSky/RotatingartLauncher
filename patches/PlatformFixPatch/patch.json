@@ -1,0 +1,19 @@
+{
+  "id": "smapi_platform_fix_android",
+  "name": "SMAPI Android 平台检测修复补丁",
+  "description": "修复 SMAPI 在 Android 上的平台检测问题，阻止 PressAnyKeyToExit 调用导致的异常退出。仅适用于星露谷物语/SMAPI。",
+  "version": "1.0.0",
+  "author": "RA Launcher Team",
+  "dllFileName": "PlatformFixPatch.dll",
+  "entryPoint": {
+    "typeName": "PlatformFixPatch.PlatformFixPatcher",
+    "methodName": "Initialize"
+  },
+  "targetGames": [
+    "StardewValley",
+    "SMAPI"
+  ],
+  "priority": 100,
+  "enabled": true
+}
+

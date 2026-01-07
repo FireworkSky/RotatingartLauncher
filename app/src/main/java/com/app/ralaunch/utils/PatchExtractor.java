@@ -3,19 +3,14 @@ package com.app.ralaunch.utils;
 import android.content.Context;
 import android.content.SharedPreferences;
 
-import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
-import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
-import org.apache.commons.compress.compressors.xz.XZCompressorInputStream;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStream;
-import java.nio.charset.Charset;
 
 /**
  * 补丁提取工具
@@ -184,33 +179,18 @@ public class PatchExtractor {
         }
         monoModDir.mkdirs();
         
-        File monoModTarXz = new File(context.getCacheDir(), "MonoMod_Patch.tar.xz");
-        try (InputStream is = context.getAssets().open("MonoMod_Patch.tar.xz");
-             FileOutputStream fos = new FileOutputStream(monoModTarXz)) {
-            byte[] buffer = new byte[8192];
-            int read;
-            while ((read = is.read(buffer)) != -1) {
-                fos.write(buffer, 0, read);
-            }
-        }
-        
-        try (FileInputStream fis = new FileInputStream(monoModTarXz);
-             BufferedInputStream bis = new BufferedInputStream(fis);
-             XZCompressorInputStream xzIn = new XZCompressorInputStream(bis);
-             TarArchiveInputStream tarIn = new TarArchiveInputStream(xzIn)) {
+        // 使用 Apache Commons Compress 解压 MonoMod.zip
+        try (InputStream is = context.getAssets().open("MonoMod.zip");
+             BufferedInputStream bis = new BufferedInputStream(is, 16384);
+             ZipArchiveInputStream zis = new ZipArchiveInputStream(bis, "UTF-8", true, true)) {
             
-            TarArchiveEntry entry;
-            while ((entry = tarIn.getNextTarEntry()) != null) {
-                if (!tarIn.canReadEntryData(entry)) {
-                    continue;
-                }
-                
+            ZipArchiveEntry entry;
+            while ((entry = zis.getNextZipEntry()) != null) {
                 String entryName = entry.getName();
-                if (entryName.contains("/")) {
-                    String[] parts = entryName.split("/", 2);
-                    if (parts.length > 1 && (parts[0].equals("MonoMod") || parts[0].equals("MonoMod_Patch"))) {
-                        entryName = parts[1];
-                    }
+                
+                // 跳过顶层 MonoMod 目录（如果存在）
+                if (entryName.startsWith("MonoMod/") || entryName.startsWith("MonoMod\\")) {
+                    entryName = entryName.substring(8);
                 }
                 
                 if (entryName.isEmpty()) {
@@ -238,7 +218,7 @@ public class PatchExtractor {
                          BufferedOutputStream bos = new BufferedOutputStream(tfos)) {
                         byte[] buffer = new byte[8192];
                         int bytesRead;
-                        while ((bytesRead = tarIn.read(buffer)) != -1) {
+                        while ((bytesRead = zis.read(buffer)) != -1) {
                             bos.write(buffer, 0, bytesRead);
                         }
                     }
@@ -246,7 +226,6 @@ public class PatchExtractor {
             }
         }
         
-        monoModTarXz.delete();
         applyMonoModToAllGames(context, monoModDir);
     }
     

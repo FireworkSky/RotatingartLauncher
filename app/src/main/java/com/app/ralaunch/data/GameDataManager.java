@@ -31,38 +31,7 @@ public class GameDataManager {
         this.context = context;
     }
 
-    // 获取游戏安装基础目录
-    public File getGamesBaseDirectory() {
-        File externalDir = context.getExternalFilesDir(null);
-        File gamesDir = new File(externalDir, "games");
-        if (!gamesDir.exists()) {
-            gamesDir.mkdirs();
-        }
-        return gamesDir;
-    }
 
-    // 为特定游戏创建安装目录
-    public File createGameDirectory(String gameId, String gameName) {
-        File baseDir = getGamesBaseDirectory();
-        String dirName = gameId + "_" + System.currentTimeMillis();
-        File gameDir = new File(baseDir, dirName);
-        if (!gameDir.exists()) {
-            gameDir.mkdirs();
-        }
-        return gameDir;
-    }
-
-    // 获取游戏程序集路径
-    public String getGameAssemblyPath(String gameId, File gameDir) {
-        // 默认返回 Game.dll，如果需要特定程序集名称，可以从 GameItem 中获取
-        return new File(gameDir, "Game.dll").getAbsolutePath();
-    }
-
-    // 获取游戏工作目录
-    public String getGameWorkingDirectory(String gameId, File gameDir) {
-        // 默认返回游戏目录本身
-        return gameDir.getAbsolutePath();
-    }
 
     // 保存和加载游戏列表
     public void saveGameList(List<GameItem> gameList) {
@@ -110,7 +79,4 @@ public class GameDataManager {
         }
     }
 
-    public void updateGameList(List<GameItem> gameList) {
-        saveGameList(gameList);
-    }
 }

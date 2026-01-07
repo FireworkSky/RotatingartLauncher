@@ -37,7 +37,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Material Design 3 风格的补丁管理对话框
  * 左侧游戏列表,右侧补丁列表
  */
 public class PatchManagementDialog {

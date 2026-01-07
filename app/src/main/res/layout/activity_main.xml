@@ -251,35 +251,6 @@
                                             android:textColor="?attr/textSecondary"
                                             android:textSize="13sp" />
 
-                                        <!-- ModLoader 开关 -->
-                                        <LinearLayout
-                                            android:id="@+id/modLoaderSwitchContainer"
-                                            android:layout_width="match_parent"
-                                            android:layout_height="wrap_content"
-                                            android:layout_marginTop="16dp"
-                                            android:orientation="horizontal"
-                                            android:gravity="center_vertical"
-                                            android:padding="12dp"
-                                            android:background="@drawable/bg_rounded_transparent"
-                                            android:backgroundTint="?attr/colorSurface"
-                                            android:visibility="gone">
-
-                                            <TextView
-                                                android:layout_width="0dp"
-                                                android:layout_height="wrap_content"
-                                                android:layout_weight="1"
-                                                android:text="@string/main_enable_modloader"
-                                                android:textColor="?attr/textPrimary"
-                                                android:textSize="14sp"
-                                                android:textStyle="bold" />
-
-                                            <com.google.android.material.materialswitch.MaterialSwitch
-                                                android:id="@+id/modLoaderSwitch"
-                                                android:layout_width="wrap_content"
-                                                android:layout_height="wrap_content"
-                                                android:checked="true" />
-
-                                        </LinearLayout>
 
                                     </LinearLayout>
 

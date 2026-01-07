@@ -55,6 +55,20 @@ public class PatchManifest {
     @SerializedName("enabled")
     public boolean enabled = true;
 
+    @SerializedName("dependencies")
+    public Dependencies dependencies = null;
+
+    /**
+     * 补丁依赖配置
+     */
+    public static class Dependencies {
+        /**
+         * 补丁特定的库文件列表（相对于补丁目录）
+         */
+        @SerializedName("libs")
+        public List<String> libs = null;
+    }
+
     // 为了向后兼容，entryAssemblyFile 指向 dllFileName
     public String getEntryAssemblyFile() {
         return dllFileName != null && !dllFileName.isEmpty() ? dllFileName : "";

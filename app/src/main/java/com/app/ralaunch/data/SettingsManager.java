@@ -47,9 +47,7 @@ public class SettingsManager {
         public static final String BACKGROUND_OPACITY = "background_opacity"; // 背景透明度 (0-100)
         public static final String VIDEO_PLAYBACK_SPEED = "video_playback_speed"; // 视频播放速度 (0.5-2.0)
 
-        // 运行时设置
-        public static final String DOTNET_FRAMEWORK = "dotnet_framework";
-        public static final String RUNTIME_ARCHITECTURE = "runtime_architecture";
+
 
         // 控制设置
         public static final String CONTROLS_VIBRATION_ENABLED = "controls_vibration_enabled";
@@ -73,9 +71,7 @@ public class SettingsManager {
         public static final String ENABLE_LOG_SYSTEM = "enable_log_system";
         public static final String VERBOSE_LOGGING = "verbose_logging";
         public static final String SET_THREAD_AFFINITY_TO_BIG_CORE_ENABLED = "set_thread_affinity_to_big_core_enabled";
-        public static final String DISABLE_VSYNC = "disable_vsync"; // 禁用垂直同步
-        public static final String UNLOCK_FPS = "unlock_fps"; // 解锁帧率限制
-        // FNA设置
+
         public static final String FNA_RENDERER = "fna_renderer";
         public static final String FNA_ENABLE_MAP_BUFFER_RANGE_OPTIMIZATION_IF_AVAILABLE = "fna_enable_map_buffer_range_optimization_if_available"; // 启用 MapBufferRange 优化（如果支持）
 
@@ -98,7 +94,6 @@ public class SettingsManager {
     // 默认值
     public static class Defaults {
         public static final int THEME_MODE = 2; // 亮色主题
-        public static final int APP_LANGUAGE = 0; // 跟随系统
         public static final int THEME_COLOR = 0xFF6750A4; // Material 3 默认紫色（动态主题种子色）
         public static final String BACKGROUND_TYPE = "default"; // 默认背景
         public static final int BACKGROUND_COLOR = 0xFFFFFFFF; // 默认白色
@@ -106,13 +101,11 @@ public class SettingsManager {
         public static final String BACKGROUND_VIDEO_PATH = ""; // 默认无视频
         public static final int BACKGROUND_OPACITY = 0; // 默认透明度0%（无背景时）
         public static final float VIDEO_PLAYBACK_SPEED = 1.0f; // 默认播放速度 1.0x
-        public static final String DOTNET_FRAMEWORK = "auto";
-        public static final String RUNTIME_ARCHITECTURE = "auto";
+
         public static final boolean ENABLE_LOG_SYSTEM = true;
         public static final boolean VERBOSE_LOGGING = false;
         public static final boolean SET_THREAD_AFFINITY_TO_BIG_CORE_ENABLED = true;
-        public static final boolean DISABLE_VSYNC = false; // 默认不禁用 VSync
-        public static final boolean UNLOCK_FPS = false; // 默认不解锁帧率
+
         public static final String FNA_RENDERER = "auto";
         public static final boolean FNA_ENABLE_MAP_BUFFER_RANGE_OPTIMIZATION_IF_AVAILABLE = true; // 默认启用 MapBufferRange 优化
 
@@ -308,13 +301,6 @@ public class SettingsManager {
         putInt(Keys.THEME_MODE, mode);
     }
     
-    public int getAppLanguage() {
-        return getInt(Keys.APP_LANGUAGE, Defaults.APP_LANGUAGE);
-    }
-    
-    public void setAppLanguage(int language) {
-        putInt(Keys.APP_LANGUAGE, language);
-    }
 
     public int getThemeColor() {
         return getInt(Keys.THEME_COLOR, Defaults.THEME_COLOR);
@@ -337,9 +323,6 @@ public class SettingsManager {
         return getInt(Keys.BACKGROUND_COLOR, Defaults.BACKGROUND_COLOR);
     }
 
-    public void setBackgroundColor(int color) {
-        putInt(Keys.BACKGROUND_COLOR, color);
-    }
 
     public String getBackgroundImagePath() {
         return getString(Keys.BACKGROUND_IMAGE_PATH, Defaults.BACKGROUND_IMAGE_PATH);
@@ -373,22 +356,6 @@ public class SettingsManager {
         putDouble(Keys.VIDEO_PLAYBACK_SPEED, speed);
     }
 
-    // 运行时设置
-    public String getDotnetFramework() {
-        return getString(Keys.DOTNET_FRAMEWORK, Defaults.DOTNET_FRAMEWORK);
-    }
-    
-    public void setDotnetFramework(String framework) {
-        putString(Keys.DOTNET_FRAMEWORK, framework);
-    }
-    
-    public String getRuntimeArchitecture() {
-        return getString(Keys.RUNTIME_ARCHITECTURE, Defaults.RUNTIME_ARCHITECTURE);
-    }
-    
-    public void setRuntimeArchitecture(String architecture) {
-        putString(Keys.RUNTIME_ARCHITECTURE, architecture);
-    }
 
     // 控制设置
     public boolean getVibrationEnabled() {
@@ -410,9 +377,7 @@ public class SettingsManager {
         return getBoolean(Keys.TOUCH_MULTITOUCH_ENABLED, Defaults.TOUCH_MULTITOUCH_ENABLED);
     }
     
-    public void setTouchMultitouchEnabled(boolean enabled) {
-        putBoolean(Keys.TOUCH_MULTITOUCH_ENABLED, enabled);
-    }
+
     
     
     // FNA 触屏设置
@@ -425,10 +390,7 @@ public class SettingsManager {
         return getBoolean(Keys.MOUSE_RIGHT_STICK_ENABLED, Defaults.MOUSE_RIGHT_STICK_ENABLED);
     }
     
-    public void setMouseRightStickEnabled(boolean enabled) {
-        putBoolean(Keys.MOUSE_RIGHT_STICK_ENABLED, enabled);
-    }
-    
+
     /**
      * 右摇杆攻击模式
      * 0 = 长按模式（默认）：按住鼠标左键不放
@@ -518,23 +480,9 @@ public class SettingsManager {
         putBoolean(Keys.SET_THREAD_AFFINITY_TO_BIG_CORE_ENABLED, enabled);
     }
 
-    public boolean isDisableVSyncEnabled() {
-        return getBoolean(Keys.DISABLE_VSYNC, Defaults.DISABLE_VSYNC);
-    }
 
-    public void setDisableVSyncEnabled(boolean enabled) {
-        putBoolean(Keys.DISABLE_VSYNC, enabled);
-    }
 
-    public boolean isUnlockFPSEnabled() {
-        return getBoolean(Keys.UNLOCK_FPS, Defaults.UNLOCK_FPS);
-    }
 
-    public void setUnlockFPSEnabled(boolean enabled) {
-        putBoolean(Keys.UNLOCK_FPS, enabled);
-    }
-
-    // FNA设置
     public String getFnaRenderer() {
         return getString(Keys.FNA_RENDERER, Defaults.FNA_RENDERER);
     }
@@ -581,17 +529,11 @@ public class SettingsManager {
         return getString(Keys.CORECLR_GC_HEAP_COUNT, Defaults.CORECLR_GC_HEAP_COUNT);
     }
 
-    public void setGCHeapCount(String count) {
-        putString(Keys.CORECLR_GC_HEAP_COUNT, count);
-    }
 
     public boolean isRetainVM() {
         return getBoolean(Keys.CORECLR_RETAIN_VM, Defaults.CORECLR_RETAIN_VM);
     }
 
-    public void setRetainVM(boolean enabled) {
-        putBoolean(Keys.CORECLR_RETAIN_VM, enabled);
-    }
 
     // CoreCLR JIT 设置
     public boolean isTieredCompilation() {
@@ -606,17 +548,11 @@ public class SettingsManager {
         return getBoolean(Keys.CORECLR_QUICK_JIT, Defaults.CORECLR_QUICK_JIT);
     }
 
-    public void setQuickJIT(boolean enabled) {
-        putBoolean(Keys.CORECLR_QUICK_JIT, enabled);
-    }
 
     public int getJitOptimizeType() {
         return getInt(Keys.CORECLR_JIT_OPTIMIZE_TYPE, Defaults.CORECLR_JIT_OPTIMIZE_TYPE);
     }
 
-    public void setJitOptimizeType(int type) {
-        putInt(Keys.CORECLR_JIT_OPTIMIZE_TYPE, type);
-    }
 
     /**
      * 是否显示 FPS
@@ -660,12 +596,6 @@ public class SettingsManager {
         putFloat(Keys.FPS_DISPLAY_Y, y);
     }
 
-    /**
-     * 获取设置文件路径（用于调试）
-     */
-    public String getSettingsFilePath() {
-        return settingsFile.getAbsolutePath();
-    }
 
     // 键盘类型设置
     public String getKeyboardType() {
@@ -676,9 +606,6 @@ public class SettingsManager {
         putString(Keys.KEYBOARD_TYPE, type);
     }
     
-    public boolean isVirtualKeyboard() {
-        return "virtual".equals(getKeyboardType());
-    }
 
     /**
      * 是否传递触摸事件

@@ -45,6 +45,9 @@ public class PatchManager {
         }
         configFilePath = patchStoragePath.resolve(PatchManagerConfig.CONFIG_FILE_NAME);
         loadConfig();
+        
+        // 清理旧的共享 DLL 文件 (MonoMod/Harmony 现在在游戏目录中按版本管理)
+        cleanLegacySharedDlls();
 
         // 如果指定立即安装，则在当前线程安装补丁（用于向后兼容）
         // 否则，应该由调用者在后台线程调用 installBuiltInPatches
@@ -350,22 +353,7 @@ public class PatchManager {
             )
                     .extract();
 
-            // 安装共享依赖库（如 0Harmony.dll）
-            try (var pathsStream = Files.list(extractedPatches)) {
-                var dlls = pathsStream
-                        .filter(path -> Files.isRegularFile(path) && path.toString().endsWith(".dll"))
-                        .collect(Collectors.toList());
-                for (var dll : dlls) {
-                    Path targetPath = patchManager.patchStoragePath.resolve(dll.getFileName());
-                    if (!Files.exists(targetPath)) {
-                        Log.i(TAG, "正在安装补丁依赖库: " + dll.getFileName());
-                        Files.copy(dll, targetPath);
-                    }
-                }
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-
+           
             // 获取已安装补丁的 ID 列表
             var installedPatchIds = patchManager.getInstalledPatches().stream()
                     .map(p -> p.manifest.id)
@@ -396,5 +384,37 @@ public class PatchManager {
     }
 
     //endregion
+
+    //region Legacy Cleanup
+    
+    /**
+     * 旧的共享 DLL 文件列表 (这些文件现在应该在游戏目录中，不在 patches 目录)
+     */
+    private static final String[] LEGACY_SHARED_DLLS = {
+        "0Harmony.dll",
+        "MonoMod.Common.dll",
+        "Mono.Cecil.dll"
+    };
+    
+    /**
+     * 清理 patches 目录中遗留的共享 DLL 文件
+     * MonoMod/Harmony 现在按游戏版本分别安装到各游戏目录中
+     */
+    private void cleanLegacySharedDlls() {
+        for (String dllName : LEGACY_SHARED_DLLS) {
+            Path dllPath = patchStoragePath.resolve(dllName);
+            try {
+                if (Files.exists(dllPath)) {
+                    Files.delete(dllPath);
+                    Log.i(TAG, "已清理旧的共享 DLL: " + dllName);
+                }
+            } catch (IOException e) {
+                Log.w(TAG, "清理 " + dllName + " 失败: " + e.getMessage());
+            }
+        }
+    }
+    
+    //endregion
+    
 }
 

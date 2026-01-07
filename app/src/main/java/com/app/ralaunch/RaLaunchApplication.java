@@ -10,7 +10,6 @@ import android.util.Log;
 import com.app.ralaunch.controls.packs.ControlPackManager;
 import com.app.ralaunch.data.GameDataManager;
 import com.app.ralaunch.manager.VibrationManager;
-import com.app.ralaunch.utils.GamePathResolver;
 import com.app.ralaunch.utils.LocaleManager;
 import com.app.ralib.patch.PatchManager;
 import com.kyant.fishnet.Fishnet;
@@ -99,8 +98,8 @@ public class RaLaunchApplication extends Application {
         // 初始化控件包管理器
         controlPackManager = new ControlPackManager(appContext);
 
-        // 初始化 GamePathResolver
-        GamePathResolver.initialize(appContext);
+
+
 
         // 设置环境变量
         try {

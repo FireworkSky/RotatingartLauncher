@@ -217,7 +217,7 @@ public class InitializationFragment extends Fragment {
         componentList.add(new ComponentItem(
             "MonoMod",
             getString(R.string.init_component_monomod_desc),
-            "MonoMod_Patch.tar.xz",
+            "MonoMod.zip",
             false  // 不在初始化时解压
         ));
 

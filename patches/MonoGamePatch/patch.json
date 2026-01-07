@@ -1,0 +1,19 @@
+{
+  "id": "smapi_monogame_android_fix",
+  "name": "星露谷 MonoGame Android 兼容性修复补丁",
+  "description": "修复星露谷物语的 MonoGame.Framework 在 Android 上的原生库加载问题。将 Linux 库名 (libdl.so.2, libSDL2-2.0.so.0, libopenal.so.1) 转换为 Android 兼容格式。仅适用于星露谷物语/SMAPI。",
+  "version": "1.0.0",
+  "author": "RA Launcher Team",
+  "dllFileName": "MonoGamePatch.dll",
+  "entryPoint": {
+    "typeName": "MonoGamePatch.MonoGamePatcher",
+    "methodName": "Initialize"
+  },
+  "targetGames": [
+    "StardewValley",
+    "SMAPI"
+  ],
+  "priority": 50,
+  "enabled": true
+}
+

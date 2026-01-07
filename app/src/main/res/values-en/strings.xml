@@ -354,6 +354,7 @@
     <string name="import_select_game_first">Please select a game file first</string>
     <string name="import_cannot_read_info_failed">Cannot read game info, import failed</string>
     <string name="import_reading_info">Reading game info...</string>
+    <string name="import_applying_patches">Applying patches...</string>
     <string name="import_complete_exclamation">Import complete!</string>
     <string name="import_failed_colon">Import failed: %s</string>
     <string name="import_unknown_game">Unknown Game</string>

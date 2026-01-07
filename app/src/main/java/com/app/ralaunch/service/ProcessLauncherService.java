@@ -148,7 +148,7 @@ public class ProcessLauncherService extends Service {
                 mRunning = true;
                 updateNotification(title + " 正在运行");
                 
-                doLaunch(assemblyPath, args);
+                doLaunch(assemblyPath, args, title);
             } catch (Exception e) {
                 AppLogger.error(TAG, "Launch error: " + e.getMessage(), e);
             } finally {
@@ -160,12 +160,15 @@ public class ProcessLauncherService extends Service {
         mLauncherThread.start();
     }
     
-    private int doLaunch(String assemblyPath, String[] args) {
+    private int doLaunch(String assemblyPath, String[] args, String gameId) {
         try {
-            return GameLauncher.INSTANCE.launchDotNetAssembly(
-                    assemblyPath,
-                    args,
-                    RaLaunchApplication.getPatchManager().getEnabledPatches(Paths.get(assemblyPath)));
+            // 使用 getApplicableAndEnabledPatches 来正确过滤只适用于该游戏的补丁
+            // gameId 使用游戏名称/title，补丁的 targetGames 字段会匹配
+            List<Patch> patches = RaLaunchApplication.getPatchManager()
+                    .getApplicableAndEnabledPatches(gameId, Paths.get(assemblyPath));
+            AppLogger.info(TAG, "Game: " + gameId + ", Applicable patches: " + patches.size());
+            
+            return GameLauncher.INSTANCE.launchDotNetAssembly(assemblyPath, args, patches);
         } catch (Exception e) {
             AppLogger.error(TAG, "Launch failed: " + e.getMessage(), e);
             AppLogger.error(TAG, "Last Error Msg: " + GameLauncher.INSTANCE.getLastErrorMessage());

@@ -1,23 +1,19 @@
 package com.app.ralaunch.activity;
 
-import android.os.Bundle;
 import android.view.View;
 import androidx.fragment.app.FragmentManager;
 import com.app.ralaunch.R;
-import com.app.ralaunch.fragment.FileBrowserFragment;
 import com.app.ralaunch.fragment.GameImportFragment;
-import com.app.ralaunch.fragment.LocalImportFragment;
 import com.app.ralaunch.model.GameItem;
-import com.app.ralaunch.manager.GameListManager;
 import com.app.ralaunch.manager.FragmentNavigator;
-import com.app.ralaunch.utils.AppLogger;
-import java.io.File;
-import java.util.List;
-import java.util.ArrayList;
 
 /**
  * 负责 MainActivity 的游戏导入相关逻辑。
- * 包括手动导入、从文件浏览器添加程序集、导入完成处理等。
+ * 
+ * 简化的导入流程：
+ * - 选择游戏本体 ZIP 文件
+ * - 可选选择模组加载器 ZIP 文件
+ * - 使用 Python 脚本处理安装
  */
 public class MainImportDelegate {
 
@@ -26,34 +22,36 @@ public class MainImportDelegate {
     private final MainActivity activity;
     private final FragmentManager fragmentManager;
     private final FragmentNavigator fragmentNavigator;
-    private final GameListManager gameListManager;
-    private final FileBrowserFragment.OnPermissionRequestListener permissionRequestListener;
     private final MainNavigationDelegate navigationDelegate;
     
     // 导入完成回调
-    private LocalImportFragment.OnImportCompleteListener onImportCompleteListener;
+    private OnImportCompleteListener onImportCompleteListener;
+
+    /**
+     * 导入完成回调接口
+     */
+    public interface OnImportCompleteListener {
+        void onImportComplete(String gameType, GameItem newGame);
+    }
 
     public MainImportDelegate(MainActivity activity, FragmentManager fragmentManager,
-                             FragmentNavigator fragmentNavigator, GameListManager gameListManager,
-                             FileBrowserFragment.OnPermissionRequestListener permissionRequestListener, 
+                             FragmentNavigator fragmentNavigator,
                              MainNavigationDelegate navigationDelegate) {
         this.activity = activity;
         this.fragmentManager = fragmentManager;
         this.fragmentNavigator = fragmentNavigator;
-        this.gameListManager = gameListManager;
-        this.permissionRequestListener = permissionRequestListener;
         this.navigationDelegate = navigationDelegate;
     }
 
     /**
      * 设置导入完成监听器
      */
-    public void setOnImportCompleteListener(LocalImportFragment.OnImportCompleteListener listener) {
+    public void setOnImportCompleteListener(OnImportCompleteListener listener) {
         this.onImportCompleteListener = listener;
     }
 
     /**
-     * 显示导入游戏页面
+     * 显示游戏导入页面
      */
     public void showAddGameFragment() {
         View importPage = navigationDelegate.getImportPage();
@@ -63,17 +61,23 @@ public class MainImportDelegate {
         
         navigationDelegate.showImportPage();
         
-        // 初始化导入 Fragment（如果尚未初始化）
+        // 检查是否已有导入 Fragment
         if (fragmentManager.findFragmentById(R.id.importPage) == null) {
             GameImportFragment importFragment = new GameImportFragment();
-            importFragment.setOnImportStartListener((gameFilePath, modLoaderFilePath, gameName, gameVersion) -> {
-                // 开始导入，切换到 LocalImportFragment
-                startGameImport(gameFilePath, modLoaderFilePath, gameName, gameVersion);
-            });
-            importFragment.setOnBackListener(() -> {
-                // 导入返回时，切换到游戏页面
+            
+            // 设置导入完成监听
+            importFragment.setOnImportCompleteListener((gameType, newGame) -> {
+                if (onImportCompleteListener != null) {
+                    onImportCompleteListener.onImportComplete(gameType, newGame);
+                }
+                // 导入完成后返回游戏页面
                 navigationDelegate.showGamePage();
             });
+            
+            // 设置返回监听
+            importFragment.setOnBackListener(() -> 
+                navigationDelegate.showGamePage()
+            );
             
             fragmentManager.beginTransaction()
                     .replace(R.id.importPage, importFragment, "game_import")
@@ -82,40 +86,48 @@ public class MainImportDelegate {
     }
 
     /**
-     * 开始游戏导入
+     * 刷新导入页面
      */
-    public void startGameImport(String gameFilePath, String modLoaderFilePath, 
-                                String gameName, String gameVersion) {
+    public void refreshImportPage() {
+        // 不再需要刷新插件列表
+    }
+
+    /**
+     * 开始游戏导入（从外部调用，如 GOG 下载完成后）
+     */
+    public void startGameImport(String gameFilePath, String gameName, String gameVersion) {
         View importPage = navigationDelegate.getImportPage();
-        if (importPage == null) return;
+        if (importPage == null) {
+            return;
+        }
         
-        LocalImportFragment localImportFragment = new LocalImportFragment();
-        localImportFragment.setOnImportCompleteListener((gameType, newGame) -> {
+        navigationDelegate.showImportPage();
+        
+        // 创建带参数的 LocalImportFragment
+        com.app.ralaunch.fragment.LocalImportFragment importFragment = 
+            new com.app.ralaunch.fragment.LocalImportFragment();
+        
+        android.os.Bundle args = new android.os.Bundle();
+        args.putString("gameFilePath", gameFilePath);
+        args.putString("gameName", gameName);
+        args.putString("gameVersion", gameVersion);
+        importFragment.setArguments(args);
+        
+        // 设置导入完成监听
+        importFragment.setOnImportCompleteListener((gameType, newGame) -> {
             if (onImportCompleteListener != null) {
                 onImportCompleteListener.onImportComplete(gameType, newGame);
             }
-        });
-        localImportFragment.setOnBackListener(() -> {
-            // 导入完成或取消后，切换到游戏页面
             navigationDelegate.showGamePage();
         });
         
-        // 传递文件路径给Fragment
-        Bundle args = new Bundle();
-        args.putString("gameFilePath", gameFilePath);
-        args.putString("modLoaderFilePath", modLoaderFilePath);
-        args.putString("gameName", gameName);
-        args.putString("gameVersion", gameVersion);
-        localImportFragment.setArguments(args);
+        // 设置返回监听
+        importFragment.setOnBackListener(() -> 
+            navigationDelegate.showGamePage()
+        );
         
         fragmentManager.beginTransaction()
-                .replace(R.id.importPage, localImportFragment, "local_import")
-                .addToBackStack("game_import")
+                .replace(R.id.importPage, importFragment, "local_import")
                 .commit();
     }
-
-   
-
-
 }
-

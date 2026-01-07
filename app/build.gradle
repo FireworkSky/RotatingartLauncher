@@ -20,7 +20,7 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
         // 只编译 arm64-v8a 架构
-        // 保持默认 ABI 配置，依赖 splits 中的筛选
+        // 使用 splits 配置
 
         externalNativeBuild {
             cmake {
@@ -66,7 +66,7 @@ android {
         }
     }
 
-    // 临时只针对真机arm64-v8a编译，避免Gradle打包重复资源
+    // 临时只针对真机arm64-v8a编译
     splits {
         abi {
             enable true
@@ -97,7 +97,6 @@ android {
 }
 
 dependencies {
-
 
    implementation files('../app/libs/libSystem.Security.Cryptography.Native.Android.jar')
 

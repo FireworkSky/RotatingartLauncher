@@ -7,7 +7,6 @@ import com.app.ralaunch.R;
 import com.app.ralaunch.fragment.InitializationFragment;
 import com.app.ralaunch.manager.FragmentNavigator;
 import com.app.ralaunch.manager.GameDeletionManager;
-import com.app.ralaunch.manager.GameImportManager;
 import com.app.ralaunch.manager.GameLaunchManager;
 import com.app.ralaunch.manager.GameListManager;
 import com.app.ralaunch.manager.PermissionManager;
@@ -28,7 +27,6 @@ public class MainInitializationDelegate {
 
     public static class InitAfterResult {
         public FragmentNavigator fragmentNavigator;
-        public GameImportManager gameImportManager;
         public GameDeletionManager gameDeletionManager;
         public GameLaunchManager gameLaunchManager;
         public ThemeManager themeManager;
@@ -49,7 +47,6 @@ public class MainInitializationDelegate {
         InitAfterResult result = new InitAfterResult();
         result.fragmentNavigator = new FragmentNavigator(activity.getSupportFragmentManager(),
                 R.id.fragmentContainer, mainLayout);
-        result.gameImportManager = new GameImportManager(activity, result.fragmentNavigator);
         result.gameDeletionManager = new GameDeletionManager(activity);
         result.gameLaunchManager = new GameLaunchManager(activity);
         result.themeManager = new ThemeManager(activity);

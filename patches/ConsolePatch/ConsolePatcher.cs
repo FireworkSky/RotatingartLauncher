@@ -1,6 +1,7 @@
 using System;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Text;
 using HarmonyLib;
 
 namespace ConsolePatch;
@@ -13,6 +14,14 @@ public static class ConsolePatcher
 {
     private static Harmony? _harmony;
     private static bool _initialized = false;
+    
+    // 存储模拟的控制台颜色状态
+    private static ConsoleColor _foregroundColor = ConsoleColor.Gray;
+    private static ConsoleColor _backgroundColor = ConsoleColor.Black;
+    
+    // 存储模拟的控制台编码状态
+    private static Encoding _inputEncoding = Encoding.UTF8;
+    private static Encoding _outputEncoding = Encoding.UTF8;
 
     /// <summary>
     /// 补丁初始化方法
@@ -38,17 +47,29 @@ public static class ConsolePatcher
             // Patch Console.Title setter
             PatchConsoleTitleSetter();
 
-            // Patch Console.ForegroundColor setter
-            PatchConsoleForegroundColorSetter();
+            // Patch Console.ForegroundColor getter and setter
+            PatchConsoleForegroundColor();
 
-            // Patch Console.BackgroundColor setter (also not supported)
-            PatchConsoleBackgroundColorSetter();
+            // Patch Console.BackgroundColor getter and setter
+            PatchConsoleBackgroundColor();
 
             // Patch Console.ResetColor (also not supported)
             PatchConsoleResetColor();
 
             // Patch Console.Clear (also not supported)
             PatchConsoleClear();
+            
+            // Patch Console.ReadKey (not supported on Android)
+            PatchConsoleReadKey();
+            
+            // Patch Console.ReadLine (not supported on Android)
+            PatchConsoleReadLine();
+            
+            // Patch Console.InputEncoding (not supported on Android)
+            PatchConsoleInputEncoding();
+            
+            // Patch Console.OutputEncoding (not supported on Android)
+            PatchConsoleOutputEncoding();
 
             // Patch PosixSignalRegistration.Create (not supported on Android)
             PatchPosixSignalRegistration();
@@ -95,18 +116,32 @@ public static class ConsolePatcher
     }
 
     /// <summary>
-    /// Patch Console.ForegroundColor setter
+    /// Patch Console.ForegroundColor getter and setter
     /// </summary>
-    private static void PatchConsoleForegroundColorSetter()
+    private static void PatchConsoleForegroundColor()
     {
         try
         {
             var colorProperty = typeof(Console).GetProperty("ForegroundColor", BindingFlags.Public | BindingFlags.Static);
+            
+            // Patch getter
+            var getMethod = colorProperty?.GetGetMethod();
+            if (getMethod != null)
+            {
+                var prefix = new HarmonyMethod(typeof(ConsolePatcher), nameof(Console_GetForegroundColor_Prefix));
+                _harmony!.Patch(getMethod, prefix: prefix);
+                Console.WriteLine("[ConsolePatch] Console.ForegroundColor getter patched!");
+            }
+            else
+            {
+                Console.WriteLine("[ConsolePatch] Console.ForegroundColor getter not found");
+            }
+            
+            // Patch setter
             var setMethod = colorProperty?.GetSetMethod();
-
             if (setMethod != null)
             {
-                var prefix = new HarmonyMethod(typeof(ConsolePatcher), nameof(Console_SetColor_Prefix));
+                var prefix = new HarmonyMethod(typeof(ConsolePatcher), nameof(Console_SetForegroundColor_Prefix));
                 _harmony!.Patch(setMethod, prefix: prefix);
                 Console.WriteLine("[ConsolePatch] Console.ForegroundColor setter patched!");
             }
@@ -122,18 +157,32 @@ public static class ConsolePatcher
     }
 
     /// <summary>
-    /// Patch Console.BackgroundColor setter
+    /// Patch Console.BackgroundColor getter and setter
     /// </summary>
-    private static void PatchConsoleBackgroundColorSetter()
+    private static void PatchConsoleBackgroundColor()
     {
         try
         {
             var colorProperty = typeof(Console).GetProperty("BackgroundColor", BindingFlags.Public | BindingFlags.Static);
+            
+            // Patch getter
+            var getMethod = colorProperty?.GetGetMethod();
+            if (getMethod != null)
+            {
+                var prefix = new HarmonyMethod(typeof(ConsolePatcher), nameof(Console_GetBackgroundColor_Prefix));
+                _harmony!.Patch(getMethod, prefix: prefix);
+                Console.WriteLine("[ConsolePatch] Console.BackgroundColor getter patched!");
+            }
+            else
+            {
+                Console.WriteLine("[ConsolePatch] Console.BackgroundColor getter not found");
+            }
+            
+            // Patch setter
             var setMethod = colorProperty?.GetSetMethod();
-
             if (setMethod != null)
             {
-                var prefix = new HarmonyMethod(typeof(ConsolePatcher), nameof(Console_SetColor_Prefix));
+                var prefix = new HarmonyMethod(typeof(ConsolePatcher), nameof(Console_SetBackgroundColor_Prefix));
                 _harmony!.Patch(setMethod, prefix: prefix);
                 Console.WriteLine("[ConsolePatch] Console.BackgroundColor setter patched!");
             }
@@ -185,12 +234,38 @@ public static class ConsolePatcher
     }
 
     /// <summary>
-    /// Prefix for Console.ForegroundColor/BackgroundColor setters - skip the original method
+    /// Prefix for Console.ForegroundColor getter - return stored value
     /// </summary>
-    public static bool Console_SetColor_Prefix()
+    public static bool Console_GetForegroundColor_Prefix(ref ConsoleColor __result)
     {
-        // Do nothing - Android doesn't support console colors
-        // Just silently ignore the call
+        __result = _foregroundColor;
+        return false; // Skip original method
+    }
+    
+    /// <summary>
+    /// Prefix for Console.ForegroundColor setter - store value but don't actually set
+    /// </summary>
+    public static bool Console_SetForegroundColor_Prefix(ConsoleColor value)
+    {
+        _foregroundColor = value;
+        return false; // Skip original method
+    }
+    
+    /// <summary>
+    /// Prefix for Console.BackgroundColor getter - return stored value
+    /// </summary>
+    public static bool Console_GetBackgroundColor_Prefix(ref ConsoleColor __result)
+    {
+        __result = _backgroundColor;
+        return false; // Skip original method
+    }
+    
+    /// <summary>
+    /// Prefix for Console.BackgroundColor setter - store value but don't actually set
+    /// </summary>
+    public static bool Console_SetBackgroundColor_Prefix(ConsoleColor value)
+    {
+        _backgroundColor = value;
         return false; // Skip original method
     }
 
@@ -199,8 +274,9 @@ public static class ConsolePatcher
     /// </summary>
     public static bool Console_ResetColor_Prefix()
     {
-        // Do nothing - Android doesn't support console colors
-        // Just silently ignore the call
+        // Reset to default colors
+        _foregroundColor = ConsoleColor.Gray;
+        _backgroundColor = ConsoleColor.Black;
         return false; // Skip original method
     }
 
@@ -237,6 +313,224 @@ public static class ConsolePatcher
     {
         // Do nothing - Android doesn't support console clear
         // Just silently ignore the call
+        return false; // Skip original method
+    }
+    
+    /// <summary>
+    /// Patch Console.ReadKey - not supported on Android
+    /// </summary>
+    private static void PatchConsoleReadKey()
+    {
+        try
+        {
+            // Patch ReadKey() - no parameters
+            var readKeyMethod = typeof(Console).GetMethod("ReadKey", BindingFlags.Public | BindingFlags.Static, null, Type.EmptyTypes, null);
+            if (readKeyMethod != null)
+            {
+                var prefix = new HarmonyMethod(typeof(ConsolePatcher), nameof(Console_ReadKey_Prefix));
+                _harmony!.Patch(readKeyMethod, prefix: prefix);
+                Console.WriteLine("[ConsolePatch] Console.ReadKey() patched!");
+            }
+            else
+            {
+                Console.WriteLine("[ConsolePatch] Console.ReadKey() not found");
+            }
+            
+            // Patch ReadKey(bool intercept)
+            var readKeyInterceptMethod = typeof(Console).GetMethod("ReadKey", BindingFlags.Public | BindingFlags.Static, null, new[] { typeof(bool) }, null);
+            if (readKeyInterceptMethod != null)
+            {
+                var prefix = new HarmonyMethod(typeof(ConsolePatcher), nameof(Console_ReadKey_Prefix));
+                _harmony!.Patch(readKeyInterceptMethod, prefix: prefix);
+                Console.WriteLine("[ConsolePatch] Console.ReadKey(bool) patched!");
+            }
+            else
+            {
+                Console.WriteLine("[ConsolePatch] Console.ReadKey(bool) not found");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[ConsolePatch] Failed to patch Console.ReadKey: {ex.Message}");
+        }
+    }
+    
+    /// <summary>
+    /// Prefix for Console.ReadKey - return Enter key instead of blocking/throwing
+    /// </summary>
+    public static bool Console_ReadKey_Prefix(ref ConsoleKeyInfo __result)
+    {
+        // Return Enter key as a dummy result - Android doesn't support ReadKey
+        // This prevents blocking or throwing PlatformNotSupportedException
+        __result = new ConsoleKeyInfo('\r', ConsoleKey.Enter, false, false, false);
+        return false; // Skip original method
+    }
+    
+    /// <summary>
+    /// Patch Console.ReadLine - not supported on Android
+    /// </summary>
+    private static void PatchConsoleReadLine()
+    {
+        try
+        {
+            // Patch ReadLine()
+            var readLineMethod = typeof(Console).GetMethod("ReadLine", BindingFlags.Public | BindingFlags.Static, null, Type.EmptyTypes, null);
+            if (readLineMethod != null)
+            {
+                var prefix = new HarmonyMethod(typeof(ConsolePatcher), nameof(Console_ReadLine_Prefix));
+                _harmony!.Patch(readLineMethod, prefix: prefix);
+                Console.WriteLine("[ConsolePatch] Console.ReadLine() patched!");
+            }
+            else
+            {
+                Console.WriteLine("[ConsolePatch] Console.ReadLine() not found");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[ConsolePatch] Failed to patch Console.ReadLine: {ex.Message}");
+        }
+    }
+    
+    /// <summary>
+    /// Prefix for Console.ReadLine - block indefinitely instead of throwing (SMAPI runs this in a background thread)
+    /// </summary>
+    public static bool Console_ReadLine_Prefix(ref string? __result)
+    {
+        // Block indefinitely - SMAPI's console input loop runs in a background thread
+        // We can't throw an exception here because it would crash the app
+        // Instead, we just wait forever (the thread will be abandoned when the app exits)
+        try
+        {
+            // Use a long sleep in a loop - this keeps the thread alive but idle
+            while (true)
+            {
+                System.Threading.Thread.Sleep(int.MaxValue);
+            }
+        }
+        catch (System.Threading.ThreadInterruptedException)
+        {
+            // Thread was interrupted, return null
+            __result = null;
+            return false;
+        }
+    }
+    
+    /// <summary>
+    /// Patch Console.InputEncoding getter and setter - not supported on Android
+    /// </summary>
+    private static void PatchConsoleInputEncoding()
+    {
+        try
+        {
+            var encodingProperty = typeof(Console).GetProperty("InputEncoding", BindingFlags.Public | BindingFlags.Static);
+            
+            // Patch getter
+            var getMethod = encodingProperty?.GetGetMethod();
+            if (getMethod != null)
+            {
+                var prefix = new HarmonyMethod(typeof(ConsolePatcher), nameof(Console_GetInputEncoding_Prefix));
+                _harmony!.Patch(getMethod, prefix: prefix);
+                Console.WriteLine("[ConsolePatch] Console.InputEncoding getter patched!");
+            }
+            else
+            {
+                Console.WriteLine("[ConsolePatch] Console.InputEncoding getter not found");
+            }
+            
+            // Patch setter
+            var setMethod = encodingProperty?.GetSetMethod();
+            if (setMethod != null)
+            {
+                var prefix = new HarmonyMethod(typeof(ConsolePatcher), nameof(Console_SetInputEncoding_Prefix));
+                _harmony!.Patch(setMethod, prefix: prefix);
+                Console.WriteLine("[ConsolePatch] Console.InputEncoding setter patched!");
+            }
+            else
+            {
+                Console.WriteLine("[ConsolePatch] Console.InputEncoding setter not found");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[ConsolePatch] Failed to patch Console.InputEncoding: {ex.Message}");
+        }
+    }
+    
+    /// <summary>
+    /// Prefix for Console.InputEncoding getter - return stored value
+    /// </summary>
+    public static bool Console_GetInputEncoding_Prefix(ref Encoding __result)
+    {
+        __result = _inputEncoding;
+        return false; // Skip original method
+    }
+    
+    /// <summary>
+    /// Prefix for Console.InputEncoding setter - store value but don't actually set
+    /// </summary>
+    public static bool Console_SetInputEncoding_Prefix(Encoding value)
+    {
+        _inputEncoding = value;
+        return false; // Skip original method
+    }
+    
+    /// <summary>
+    /// Patch Console.OutputEncoding getter and setter - not supported on Android
+    /// </summary>
+    private static void PatchConsoleOutputEncoding()
+    {
+        try
+        {
+            var encodingProperty = typeof(Console).GetProperty("OutputEncoding", BindingFlags.Public | BindingFlags.Static);
+            
+            // Patch getter
+            var getMethod = encodingProperty?.GetGetMethod();
+            if (getMethod != null)
+            {
+                var prefix = new HarmonyMethod(typeof(ConsolePatcher), nameof(Console_GetOutputEncoding_Prefix));
+                _harmony!.Patch(getMethod, prefix: prefix);
+                Console.WriteLine("[ConsolePatch] Console.OutputEncoding getter patched!");
+            }
+            else
+            {
+                Console.WriteLine("[ConsolePatch] Console.OutputEncoding getter not found");
+            }
+            
+            // Patch setter
+            var setMethod = encodingProperty?.GetSetMethod();
+            if (setMethod != null)
+            {
+                var prefix = new HarmonyMethod(typeof(ConsolePatcher), nameof(Console_SetOutputEncoding_Prefix));
+                _harmony!.Patch(setMethod, prefix: prefix);
+                Console.WriteLine("[ConsolePatch] Console.OutputEncoding setter patched!");
+            }
+            else
+            {
+                Console.WriteLine("[ConsolePatch] Console.OutputEncoding setter not found");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[ConsolePatch] Failed to patch Console.OutputEncoding: {ex.Message}");
+        }
+    }
+    
+    /// <summary>
+    /// Prefix for Console.OutputEncoding getter - return stored value
+    /// </summary>
+    public static bool Console_GetOutputEncoding_Prefix(ref Encoding __result)
+    {
+        __result = _outputEncoding;
+        return false; // Skip original method
+    }
+    
+    /// <summary>
+    /// Prefix for Console.OutputEncoding setter - store value but don't actually set
+    /// </summary>
+    public static bool Console_SetOutputEncoding_Prefix(Encoding value)
+    {
+        _outputEncoding = value;
         return false; // Skip original method
     }
 

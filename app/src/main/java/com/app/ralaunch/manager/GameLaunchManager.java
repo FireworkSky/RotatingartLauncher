@@ -42,7 +42,11 @@ public class GameLaunchManager {
         }
         
         PatchManager patchManager = RaLaunchApplication.getPatchManager();
-        List<Patch> enabledPatches = patchManager.getEnabledPatches(assemblyFile.toPath());
+        // 使用 getApplicableAndEnabledPatches 来正确过滤只适用于该游戏的补丁
+        // gameId 使用游戏名称，补丁的 targetGames 字段会匹配
+        String gameId = game.getGameName();
+        List<Patch> enabledPatches = patchManager.getApplicableAndEnabledPatches(gameId, assemblyFile.toPath());
+        AppLogger.info(TAG, "Game: " + gameId + ", Applicable patches: " + enabledPatches.size());
         
         // 创建启动 Intent
         Intent intent = new Intent(context, GameActivity.class);

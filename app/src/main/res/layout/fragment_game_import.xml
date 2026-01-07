@@ -19,7 +19,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/import_game_title"
+            android:text="导入游戏"
             android:textColor="?attr/colorOnSurface"
             android:textSize="32sp"
             android:textStyle="bold"
@@ -30,10 +30,124 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
-            android:text="@string/import_game_subtitle"
+            android:text="选择游戏本体和模组加载器文件开始导入"
             android:textColor="?attr/colorOnSurfaceVariant"
             android:textSize="15sp"
             android:lineSpacingExtra="4dp" />
+
+        <!-- 检测结果卡片 -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/detectResultCard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:visibility="gone"
+            style="@style/Widget.App.CardView.Outlined">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:padding="16dp"
+                android:gravity="center_vertical">
+
+                <ImageView
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:src="@drawable/ic_check_circle"
+                    app:tint="?attr/colorPrimary" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="12dp"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/import_game_detected_label"
+                        android:textColor="?attr/colorOnSurfaceVariant"
+                        android:textSize="12sp" />
+
+                    <TextView
+                        android:id="@+id/detectedGameName"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textColor="?attr/colorOnSurface"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- 导入进度卡片 -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/importProgressCard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:visibility="gone"
+            style="@style/Widget.App.CardView.Outlined">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="20dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/import_progress_title"
+                    android:textColor="?attr/colorOnSurface"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="16dp" />
+
+                <com.google.android.material.progressindicator.LinearProgressIndicator
+                    android:id="@+id/importProgress"
+                    android:layout_width="match_parent"
+                    android:layout_height="8dp"
+                    android:indeterminate="false"
+                    app:indicatorColor="?attr/colorPrimary"
+                    app:trackColor="?attr/colorSurfaceVariant"
+                    app:trackCornerRadius="4dp"
+                    android:max="100"
+                    android:progress="0" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginTop="12dp">
+
+                    <ImageView
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
+                        android:src="@drawable/ic_info"
+                        app:tint="?attr/colorOnSurfaceVariant"
+                        android:layout_marginEnd="6dp" />
+
+                    <TextView
+                        android:id="@+id/importStatus"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/import_preparing"
+                        android:textColor="?attr/colorOnSurfaceVariant"
+                        android:textSize="12sp" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
 
     </LinearLayout>
 
@@ -104,7 +218,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="4dp"
-                        android:text="@string/import_no_file_selected"
+                        android:text="@string/import_click_to_select_sh"
                         android:textColor="?attr/colorOnSurfaceVariant"
                         android:textSize="13sp"
                         android:ellipsize="middle"
@@ -120,7 +234,7 @@
                     android:minWidth="0dp"
                     android:paddingStart="16dp"
                     android:paddingEnd="16dp"
-                    android:text="@string/import_select_button"
+                    android:text="@string/select_file"
                     android:textSize="14sp"
                     app:icon="@drawable/ic_folder"
                     app:iconSize="18dp"
@@ -187,7 +301,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="ModLoader"
+                            android:text="@string/import_mod_loader"
                             android:textColor="?attr/colorOnSurface"
                             android:textSize="16sp"
                             android:textStyle="bold"
@@ -214,7 +328,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="4dp"
-                        android:text="@string/import_no_file_selected"
+                        android:text="@string/import_local_select_hint"
                         android:textColor="?attr/colorOnSurfaceVariant"
                         android:textSize="13sp"
                         android:ellipsize="middle"
@@ -230,7 +344,7 @@
                     android:minWidth="0dp"
                     android:paddingStart="16dp"
                     android:paddingEnd="16dp"
-                    android:text="@string/import_select_button"
+                    android:text="@string/select_file"
                     android:textSize="14sp"
                     app:icon="@drawable/ic_folder"
                     app:iconSize="18dp"
@@ -257,7 +371,7 @@
             app:iconGravity="textStart"
             app:iconPadding="8dp"
             app:cornerRadius="16dp"
-            style="@style/Widget.App.Button.Filled" />
+            style="@style/Widget.Material3.Button" />
 
     </LinearLayout>
 

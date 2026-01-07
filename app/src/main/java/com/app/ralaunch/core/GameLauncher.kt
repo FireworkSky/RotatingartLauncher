@@ -9,6 +9,7 @@ import com.app.ralaunch.utils.NativeMethods
 import com.app.ralaunch.renderer.RendererConfig
 import com.app.ralib.patch.Patch
 import com.app.ralib.patch.PatchManager
+import com.app.ralaunch.game.AssemblyPatcher
 import kotlin.io.path.Path
 import kotlin.io.path.createDirectories
 import kotlin.io.path.createFile
@@ -27,6 +28,7 @@ object GameLauncher {
             System.loadLibrary("theorafile")
             System.loadLibrary("SDL2")
             System.loadLibrary("main")
+            System.loadLibrary("openal32")
         } catch (e: UnsatisfiedLinkError) {
             AppLogger.error(TAG, "Failed to load native libraries: " + e.message)
         }
@@ -107,6 +109,10 @@ object GameLauncher {
                 AppLogger.debug(TAG, "No startup hooks configured")
             }
 
+            // 设置 MonoMod 路径环境变量，供补丁的 AssemblyResolve 使用
+            val monoModPath = AssemblyPatcher.getMonoModInstallPath().toString()
+            AppLogger.info(TAG, "MonoMod path: $monoModPath")
+
             EnvVarsManager.quickSetEnvVars(
                 // 不再通过环境变量设置大核亲和性
 //                // 设置大核亲和性
@@ -114,6 +120,9 @@ object GameLauncher {
 
                 // 设置启动钩子
                 "DOTNET_STARTUP_HOOKS" to startupHooks,
+                
+                // MonoMod 路径，供补丁的 AssemblyResolve 使用
+                "MONOMOD_PATH" to monoModPath,
 
                 // 触摸相关
                 "SDL_TOUCH_MOUSE_EVENTS" to "1",
