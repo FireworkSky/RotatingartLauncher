@@ -2,11 +2,14 @@ package com.app.ralaunch.renderer
 
 import android.content.Context
 import android.os.Build
+import android.os.Environment
 import android.util.Log
+import com.app.ralaunch.RaLaunchApplication
 import com.app.ralaunch.core.EnvVarsManager
 import com.app.ralaunch.data.SettingsManager
 import com.app.ralaunch.utils.GLInfoUtils
 import java.io.File
+import kotlin.io.path.Path
 
 /**
  * 渲染器配置类 - 统一的渲染器管理
@@ -27,7 +30,7 @@ object RendererConfig {
     const val RENDERER_NATIVE_GLES: String = "native" // 系统原生 EGL/GLES
     const val RENDERER_GL4ES: String = "gl4es" // GL4ES
     const val RENDERER_GL4ES_ANGLE: String = "gl4es+angle" // GL4ES + ANGLE
-    const val RENDERER_MOBILEGL: String = "mobilegl" // MobileGlues
+    const val RENDERER_MOBILEGLUES: String = "mobileglues" // MobileGlues
     const val RENDERER_ANGLE: String = "angle" // ANGLE
     const val RENDERER_ZINK: String = "zink" // Zink (Mesa)
     const val RENDERER_ZINK_25: String = "zink25" // Zink (Mesa 25)
@@ -135,11 +138,11 @@ object RendererConfig {
         ),
         // MobileGlues 渲染器
         RendererInfo(
-            RENDERER_MOBILEGL,
-            "MobileGl",
+            RENDERER_MOBILEGLUES,
+            "MobileGlues 1.3.3",
             "OpenGL 4.6 翻译至 OpenGL ES 3.2（现代化翻译层）",
-            "libMobileGL.so",
-            "libMobileGL.so",
+            "libmobileglues.so",
+            "libmobileglues.so",
             true,
             0
         ),
@@ -317,7 +320,7 @@ object RendererConfig {
         when (rendererId) {
             RENDERER_GL4ES -> addGl4esEnv(envMap)
             RENDERER_GL4ES_ANGLE -> addGl4esAngleEnv(envMap)
-            RENDERER_MOBILEGL -> addMobileGlEnv(envMap)
+            RENDERER_MOBILEGLUES -> addMobileGluesEnv(envMap)
             RENDERER_ANGLE -> addAngleEnv(envMap)
             RENDERER_ZINK -> addZinkEnv(context, envMap)
             RENDERER_ZINK_25 -> addZink25Env(context, envMap)
@@ -355,10 +358,13 @@ object RendererConfig {
         }
     }
 
-    private fun addMobileGlEnv(envMap: MutableMap<String?, String?>) {
+    private fun addMobileGluesEnv(envMap: MutableMap<String?, String?>) {
         envMap.apply {
-            put("RALCORE_RENDERER", "mobilegl")
+            put("RALCORE_RENDERER", "mobileglues")
+            put("FNA3D_OPENGL_DRIVER", "mobileglues")
             put("MOBILEGLUES_GLES_VERSION", "3.2")
+            put("FNA3D_MOJOSHADER_PROFILE", "glsles3")
+            put("MG_DIR_PATH", Path(Environment.getExternalStorageDirectory().absolutePath).resolve("MG").toString())
         }
     }
 

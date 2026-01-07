@@ -806,34 +806,34 @@ static int SDL_EGL_PrivateChooseConfig(_THIS, SDL_bool set_config_caveat_none)
         attribs[i++] = EGL_PBUFFER_BIT;
     }
 
-// /* Skip EGL_RENDERABLE_TYPE for OSMesa/Zink compatibility (similar to gl4es fix)
-//  * Set SDL_EGL_SKIP_RENDERABLE_TYPE=1 to skip this attribute */
-// const char* skip_renderable_type = SDL_getenv("SDL_EGL_SKIP_RENDERABLE_TYPE");
-// if (!skip_renderable_type || SDL_strcmp(skip_renderable_type, "1") != 0) {
-//     attribs[i++] = EGL_RENDERABLE_TYPE;
-//     if (_this->gl_config.profile_mask == SDL_GL_CONTEXT_PROFILE_ES) {
-//def EGL_KHR_create_context
-//         if (_this->gl_config.major_version >= 3 &&
-//             SDL_EGL_HasExtension(_this, SDL_EGL_DISPLAY_EXTENSION, "EGL_KHR_create_context")) {
-//             attribs[i++] = EGL_OPENGL_ES3_BIT_KHR;
-//         } else
-//dif
-//         if (_this->gl_config.major_version >= 2) {
-//             attribs[i++] = EGL_OPENGL_ES2_BIT;
-//         } else {
-//             attribs[i++] = EGL_OPENGL_ES_BIT;
-//         }
-//         _this->egl_data->eglBindAPI(EGL_OPENGL_ES_API);
-//     } else {
-//         attribs[i++] = EGL_OPENGL_BIT;
-//         _this->egl_data->eglBindAPI(EGL_OPENGL_API);
-//     }
-// }
+//    /* Skip EGL_RENDERABLE_TYPE for OSMesa/Zink compatibility (similar to gl4es fix)
+//    * Set SDL_EGL_SKIP_RENDERABLE_TYPE=1 to skip this attribute */
+//    const char* skip_renderable_type = SDL_getenv("SDL_EGL_SKIP_RENDERABLE_TYPE");
+//    if (!skip_renderable_type || SDL_strcmp(skip_renderable_type, "1") != 0) {
+//        attribs[i++] = EGL_RENDERABLE_TYPE;
+//        if (_this->gl_config.profile_mask == SDL_GL_CONTEXT_PROFILE_ES) {
+//#ifdef EGL_KHR_create_context
+//            if (_this->gl_config.major_version >= 3 &&
+//                SDL_EGL_HasExtension(_this, SDL_EGL_DISPLAY_EXTENSION, "EGL_KHR_create_context")) {
+//                attribs[i++] = EGL_OPENGL_ES3_BIT_KHR;
+//            } else
+//#endif
+//            if (_this->gl_config.major_version >= 2) {
+//                attribs[i++] = EGL_OPENGL_ES2_BIT;
+//            } else {
+//                attribs[i++] = EGL_OPENGL_ES_BIT;
+//            }
+//            _this->egl_data->eglBindAPI(EGL_OPENGL_ES_API);
+//        } else {
+//            attribs[i++] = EGL_OPENGL_BIT;
+//            _this->egl_data->eglBindAPI(EGL_OPENGL_API);
+//        }
+//    }
 //
-// if (_this->egl_data->egl_surfacetype) {
-//     attribs[i++] = EGL_SURFACE_TYPE;
-//     attribs[i++] = _this->egl_data->egl_surfacetype;
-// }
+//    if (_this->egl_data->egl_surfacetype) {
+//        attribs[i++] = EGL_SURFACE_TYPE;
+//        attribs[i++] = _this->egl_data->egl_surfacetype;
+//    }
 
     attribs[i++] = EGL_NONE;
 

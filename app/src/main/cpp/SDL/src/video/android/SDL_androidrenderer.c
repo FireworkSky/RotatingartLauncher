@@ -57,6 +57,14 @@ static const SDL_RendererBackend RENDERER_BACKENDS[] = {
         .need_preload = SDL_TRUE
     },
 
+    /* MobileGlues */
+    {
+        .name = "mobileglues",
+        .egl_library = "libmobileglues.so",
+        .gles_library = "libmobileglues.so",
+        .need_preload = SDL_TRUE
+    },
+
     /* Zink (OpenGL over Vulkan via OSMesa) */
     {
         .name = "zink",
