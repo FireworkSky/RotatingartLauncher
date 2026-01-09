@@ -12,7 +12,7 @@
     <string name="language_english">English</string>
     <string name="language_chinese">中文</string>
     <string name="app_info">应用信息</string>
-    <string name="app_version">版本 1.1.1-beta</string>
+    <string name="app_version">版本 1.2.0-beta</string>
     <string name="app_description">Rotating art Launcher - 游戏启动器</string>
     <string name="app_authors">作者:</string>
     <string name="restart_required">重启应用</string>
