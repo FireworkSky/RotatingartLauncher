@@ -178,7 +178,7 @@ object ControlEditDialogUIBinder {
         val rgAttackMode = view.findViewById<RadioGroup?>(R.id.rg_attack_mode)
         if (rgAttackMode != null) {
             // 从全局设置读取攻击模式
-            val settingsManager = SettingsManager.getInstance(dialog.context)
+            val settingsManager = SettingsManager.getInstance()
             val attackMode = settingsManager.mouseRightStickAttackMode
 
 
@@ -218,7 +218,7 @@ object ControlEditDialogUIBinder {
 
 
         // 鼠标移动范围设置（使用全局设置）
-        val rangeSettingsManager = SettingsManager.getInstance(dialog.context)
+        val rangeSettingsManager = SettingsManager.getInstance()
 
         val sliderMouseRangeLeft = view.findViewById<Slider?>(R.id.seekbar_mouse_range_left)
         val tvMouseRangeLeft = view.findViewById<TextView?>(R.id.tv_mouse_range_left)

@@ -281,7 +281,7 @@ public class MainActivity extends AppCompatActivity implements
                 GameItem selectedGame = gameListManager.getSelectedGame();
                 if (selectedGame != null) {
                     var isSuccess = gameLaunchManager.launchGame(selectedGame);
-                    var settingsManager = com.app.ralaunch.data.SettingsManager.getInstance(this);
+                    var settingsManager = com.app.ralaunch.data.SettingsManager.getInstance();
                     if (isSuccess && settingsManager.isKillLauncherUIAfterLaunch()) {
                         // Force kill this ui process after launching to save memory
                         System.exit(0);
@@ -623,7 +623,7 @@ public class MainActivity extends AppCompatActivity implements
      */
     private boolean hasBackgroundSet() {
         com.app.ralaunch.data.SettingsManager settingsManager = 
-            com.app.ralaunch.data.SettingsManager.getInstance(this);
+            com.app.ralaunch.data.SettingsManager.getInstance();
         String imagePath = settingsManager.getBackgroundImagePath();
         String videoPath = settingsManager.getBackgroundVideoPath();
         return (imagePath != null && !imagePath.isEmpty()) || 

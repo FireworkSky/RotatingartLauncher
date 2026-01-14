@@ -10,7 +10,6 @@ import com.app.ralaunch.utils.NativeMethods
 import com.app.ralaunch.renderer.RendererConfig
 import com.app.ralib.patch.Patch
 import com.app.ralib.patch.PatchManager
-import com.app.ralaunch.game.AssemblyPatcher
 import com.app.ralaunch.box64.Box64Helper
 import com.app.ralaunch.box64.NativeBridge
 import org.libsdl.app.SDL
@@ -192,7 +191,7 @@ object GameLauncher {
             )
             AppLogger.debug(TAG, "XDG environment variables set: OK")
 
-            val settings = SettingsManager.getInstance(null)
+            val settings = SettingsManager.getInstance()
 
             // Log settings configuration
             AppLogger.debug(TAG, "Applying settings configuration...")

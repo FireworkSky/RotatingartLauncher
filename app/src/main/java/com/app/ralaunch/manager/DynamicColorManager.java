@@ -45,7 +45,7 @@ public class DynamicColorManager {
      */
     public void applyDynamicColors(@NonNull Activity activity) {
         try {
-            SettingsManager settingsManager = SettingsManager.getInstance(activity);
+            SettingsManager settingsManager = SettingsManager.getInstance();
             
             // Android 12+ 支持系统级动态颜色
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -134,7 +134,7 @@ public class DynamicColorManager {
     private boolean shouldUseSystemDynamicColors(@NonNull Context context) {
         // 这里可以添加一个用户设置选项
         // 目前默认使用自定义颜色
-        SettingsManager settingsManager = SettingsManager.getInstance(context);
+        SettingsManager settingsManager = SettingsManager.getInstance();
         // 如果主题颜色是默认值（例如 0xFF6750A4 Material 3 默认紫色），则使用系统颜色
         int themeColor = settingsManager.getThemeColor();
         int defaultColor = 0xFF6750A4; // Material 3 默认主色

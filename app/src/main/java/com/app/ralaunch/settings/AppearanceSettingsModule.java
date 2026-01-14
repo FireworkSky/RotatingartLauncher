@@ -41,8 +41,8 @@ public class AppearanceSettingsModule implements SettingsModule {
     public void setup(Fragment fragment, View rootView) {
         this.fragment = fragment;
         this.rootView = rootView;
-        this.settingsManager = SettingsManager.getInstance(fragment.requireContext());
-        
+        this.settingsManager = SettingsManager.getInstance();
+
         if (fragment instanceof BaseFragment) {
             BaseFragment baseFragment = (BaseFragment) fragment;
             imagePickerLauncher = baseFragment.registerForActivityResult(
@@ -410,7 +410,7 @@ public class AppearanceSettingsModule implements SettingsModule {
         Activity activity = fragment.getActivity();
         if (activity instanceof androidx.appcompat.app.AppCompatActivity) {
             com.app.ralaunch.data.SettingsManager settingsManager = 
-                com.app.ralaunch.data.SettingsManager.getInstance(activity);
+                com.app.ralaunch.data.SettingsManager.getInstance();
             String imagePath = settingsManager.getBackgroundImagePath();
             String videoPath = settingsManager.getBackgroundVideoPath();
             boolean hasBackground = (imagePath != null && !imagePath.isEmpty()) || 

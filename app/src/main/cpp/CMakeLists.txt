@@ -19,7 +19,13 @@ set(GL4ES_SOURCE_DIR ${CMAKE_SOURCE_DIR}/gl4es)
 # 找到 Android log 库供 gl4es 使用
 find_library(log-lib log)
 
+# 添加编译标志以允许 gl4es 的 GLX stubs 编译通过（NDK 28+ 更严格的类型检查）
+add_compile_options(-Wno-return-mismatch -Wno-int-conversion)
+
 add_subdirectory(${GL4ES_SOURCE_DIR})
+
+# 恢复编译标志（只对 gl4es 应用宽松的类型检查）
+remove_definitions(-Wno-return-mismatch -Wno-int-conversion)
 
 
 # 配置SDL：同时支持原生GLES和gl4es两种渲染器
@@ -95,7 +101,7 @@ set(CMAKE_CXX_STANDARD 20)
 # Box64 位于项目根目录的 box64 文件夹
 # CMAKE_SOURCE_DIR = D:\RotatingartLauncher\app\src\main\cpp
 # box64 位置 = D:\RotatingartLauncher\box64
-set(BOX64_ROOT ${CMAKE_SOURCE_DIR}/../../../../box64)
+set(BOX64_ROOT ${CMAKE_SOURCE_DIR}/box64)
 get_filename_component(BOX64_ROOT ${BOX64_ROOT} ABSOLUTE)
 message(STATUS "Box64 root: ${BOX64_ROOT}")
 

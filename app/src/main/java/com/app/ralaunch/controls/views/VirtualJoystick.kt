@@ -174,7 +174,7 @@ class VirtualJoystick(
         // 读取全局设置（攻击模式、鼠标速度、鼠标范围）
         try {
             val settingsManager =
-                SettingsManager.getInstance(context)
+                SettingsManager.getInstance()
             mAttackMode = settingsManager.getMouseRightStickAttackMode()
             mGlobalMouseSpeed = settingsManager.getMouseRightStickSpeed().toFloat()
             mGlobalMouseRangeLeft = settingsManager.getMouseRightStickRangeLeft()
@@ -1079,7 +1079,7 @@ class VirtualJoystick(
             // 从全局设置实时读取最新的范围值（而不是使用缓存的变量）
             try {
                 val settingsManager =
-                    SettingsManager.getInstance(getContext())
+                    SettingsManager.getInstance()
                 var left = settingsManager.getMouseRightStickRangeLeft()
                 var top = settingsManager.getMouseRightStickRangeTop()
                 var right = settingsManager.getMouseRightStickRangeRight()

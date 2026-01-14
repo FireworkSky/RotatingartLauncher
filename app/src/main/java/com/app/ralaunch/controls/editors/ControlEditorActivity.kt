@@ -62,7 +62,7 @@ class ControlEditorActivity : AppCompatActivity() {
 
         // 应用动态颜色主题（必须在 super.onCreate 之前，避免闪烁）
         val dynamicColorManager = DynamicColorManager.getInstance()
-        val settingsManager = SettingsManager.getInstance(this)
+        val settingsManager = SettingsManager.getInstance()
         dynamicColorManager.applyCustomThemeColor(this, settingsManager.themeColor)
 
         // 应用其他主题设置（深色/浅色模式等）

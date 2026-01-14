@@ -34,7 +34,7 @@ public class DeveloperSettingsModule implements SettingsModule {
     public void setup(Fragment fragment, View rootView) {
         this.fragment = fragment;
         this.rootView = rootView;
-        this.settingsManager = SettingsManager.getInstance(fragment.requireContext());
+        this.settingsManager = SettingsManager.getInstance();
 
         setupEnableLogSystem();
         setupVerboseLogging();

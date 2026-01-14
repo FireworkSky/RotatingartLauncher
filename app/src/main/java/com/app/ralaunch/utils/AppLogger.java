@@ -61,7 +61,7 @@ public class AppLogger {
 
             // Start LogcatReader to capture all logs
             logcatReader = LogcatReader.getInstance();
-            var settingsManager = SettingsManager.getInstance(RaLaunchApplication.getAppContext());
+            var settingsManager = SettingsManager.getInstance();
             if (settingsManager.isLogSystemEnabled()) {
                 logcatReader.start(logDir);
                 Log.i(TAG, "LogcatReader started");

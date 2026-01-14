@@ -9,7 +9,7 @@ import com.app.ralaunch.R;
 import com.app.ralaunch.controls.views.ControlLayout;
 import com.app.ralaunch.controls.bridges.SDLInputBridge;
 import com.app.ralaunch.data.SettingsManager;
-import com.app.ralaunch.ui.FPSDisplayView;
+import com.app.ralaunch.view.FPSDisplayView;
 import com.app.ralaunch.utils.AppLogger;
 
 /**
@@ -24,7 +24,7 @@ public class GameVirtualControlsManager {
 
     public void initialize(GameActivity activity, ViewGroup sdlLayout, SDLSurface sdlSurface, Runnable disableSDLTextInput) {
         try {
-            settingsManager = SettingsManager.getInstance(activity);
+            settingsManager = SettingsManager.getInstance();
             inputBridge = new SDLInputBridge();
 
             android.util.DisplayMetrics metrics = activity.getResources().getDisplayMetrics();

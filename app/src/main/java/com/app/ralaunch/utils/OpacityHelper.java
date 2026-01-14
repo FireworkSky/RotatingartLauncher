@@ -74,7 +74,7 @@ public class OpacityHelper {
      * @return UI透明度
      */
     public static float getUiAlphaFromSettings(Context context, boolean hasBackground) {
-        SettingsManager settingsManager = SettingsManager.getInstance(context);
+        SettingsManager settingsManager = SettingsManager.getInstance();
         int opacity = settingsManager.getBackgroundOpacity();
         return getUiAlpha(opacity, hasBackground);
     }
@@ -85,7 +85,7 @@ public class OpacityHelper {
      * @return 对话框透明度
      */
     public static float getDialogAlphaFromSettings(Context context) {
-        SettingsManager settingsManager = SettingsManager.getInstance(context);
+        SettingsManager settingsManager = SettingsManager.getInstance();
         int opacity = settingsManager.getBackgroundOpacity();
         return getDialogAlpha(opacity);
     }
@@ -96,7 +96,7 @@ public class OpacityHelper {
      * @return 背景透明度
      */
     public static float getBackgroundAlphaFromSettings(Context context) {
-        SettingsManager settingsManager = SettingsManager.getInstance(context);
+        SettingsManager settingsManager = SettingsManager.getInstance();
         int opacity = settingsManager.getBackgroundOpacity();
         return getBackgroundAlpha(opacity);
     }
@@ -107,7 +107,7 @@ public class OpacityHelper {
      * @return 遮罩透明度 (0-255)
      */
     public static int getOverlayAlphaFromSettings(Context context) {
-        SettingsManager settingsManager = SettingsManager.getInstance(context);
+        SettingsManager settingsManager = SettingsManager.getInstance();
         int opacity = settingsManager.getBackgroundOpacity();
         return getOverlayAlpha(opacity);
     }

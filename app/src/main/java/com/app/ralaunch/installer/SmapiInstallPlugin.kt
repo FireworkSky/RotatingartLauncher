@@ -1,7 +1,7 @@
 package com.app.ralaunch.installer
 
 import com.app.ralib.icon.IconExtractor
-import com.app.ralaunch.RaLaunchApplication
+import com.app.ralaunch.core.AssemblyPatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -521,14 +521,14 @@ class SmapiInstallPlugin : GameInstallPlugin {
             val context = com.app.ralaunch.RaLaunchApplication.getAppContext()
             
             // 解压 MonoMod 到目录
-            val extractSuccess = com.app.ralaunch.game.AssemblyPatcher.extractMonoMod(context)
+            val extractSuccess = AssemblyPatcher.extractMonoMod(context)
             if (!extractSuccess) {
                 android.util.Log.w("SmapiInstallPlugin", "MonoMod 解压失败")
                 return
             }
             
             // 从 MonoMod 目录应用补丁到游戏目录
-            val patchedCount = com.app.ralaunch.game.AssemblyPatcher.applyMonoModPatches(
+            val patchedCount = AssemblyPatcher.applyMonoModPatches(
                 context, gameDir.absolutePath, true)
             
             if (patchedCount >= 0) {

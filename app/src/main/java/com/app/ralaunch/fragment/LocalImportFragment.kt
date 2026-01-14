@@ -9,7 +9,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import com.app.ralaunch.R
 import com.app.ralaunch.activity.MainActivity
-import com.app.ralaunch.game.AssemblyPatcher
+import com.app.ralaunch.core.AssemblyPatcher
 import com.app.ralaunch.installer.GameInstaller
 import com.app.ralaunch.installer.InstallCallback
 import com.app.ralaunch.model.GameItem
@@ -18,7 +18,6 @@ import com.app.ralib.error.ErrorHandler
 import com.app.ralib.extractors.GogShFileExtractor
 import com.app.ralib.icon.IconExtractor
 import java.io.File
-import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Paths
 

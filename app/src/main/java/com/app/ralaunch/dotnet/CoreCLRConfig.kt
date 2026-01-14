@@ -25,7 +25,7 @@ object CoreCLRConfig {
      * @param context Android Context
      */
     fun applyConfigAndInitHooking() {
-        val settings = SettingsManager.getInstance(RaLaunchApplication.getAppContext())
+        val settings = SettingsManager.getInstance()
         val context = RaLaunchApplication.getAppContext()
         EnvVarsManager.quickSetEnvVars(
             // 应用 GC 配置
@@ -66,7 +66,7 @@ object CoreCLRConfig {
      * @return 配置摘要字符串
      */
     fun getConfigSummary(context: Context?): String {
-        val settings = SettingsManager.getInstance(context)
+        val settings = SettingsManager.getInstance()
         val sb = StringBuilder()
 
         sb.append("CoreCLR 配置摘要:\n")

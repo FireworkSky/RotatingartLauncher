@@ -26,11 +26,11 @@ public final class RuntimePreference {
     }
 
     public static void setVerboseLogging(Context context, boolean enabled) {
-        SettingsManager.getInstance(context).setVerboseLogging(enabled);
+        SettingsManager.getInstance().setVerboseLogging(enabled);
     }
 
     public static boolean isVerboseLogging(Context context) {
-        return SettingsManager.getInstance(context).isVerboseLogging();
+        return SettingsManager.getInstance().isVerboseLogging();
     }
     public static String getDotnetRootPath() {
         try {

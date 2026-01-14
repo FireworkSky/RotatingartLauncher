@@ -33,13 +33,15 @@ public class RaLaunchApplication extends Application {
     public void onCreate() {
         super.onCreate();
         
+        // 设置全局 Context，必须在最开始，因为其他单例类（如 SettingsManager）会依赖它
+        appContext = getApplicationContext();
 
         // 必须在最开始初始化，确保所有Activity都能正确适配
         com.app.ralaunch.utils.DensityAdapter.init(this);
         
         // 在应用启动时应用主题设置，确保所有Activity都使用正确的主题
         com.app.ralaunch.data.SettingsManager settingsManager = 
-            com.app.ralaunch.data.SettingsManager.getInstance(this);
+            com.app.ralaunch.data.SettingsManager.getInstance();
         int themeMode = settingsManager.getThemeMode();
         
         switch (themeMode) {
@@ -56,7 +58,6 @@ public class RaLaunchApplication extends Application {
                     androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_NO);
                 break;
         }
-        appContext = getApplicationContext();
 
         // 初始化 Fishnet 崩溃捕捉
         File logDir = new File(getFilesDir(), "crash_logs");

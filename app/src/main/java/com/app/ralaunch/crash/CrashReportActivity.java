@@ -36,7 +36,7 @@ public class CrashReportActivity extends AppCompatActivity {
             com.app.ralaunch.manager.DynamicColorManager dynamicColorManager = 
                 com.app.ralaunch.manager.DynamicColorManager.getInstance();
             com.app.ralaunch.data.SettingsManager settingsManager = 
-                com.app.ralaunch.data.SettingsManager.getInstance(this);
+                com.app.ralaunch.data.SettingsManager.getInstance();
             dynamicColorManager.applyCustomThemeColor(this, settingsManager.getThemeColor());
         } catch (Exception e) {
             // 忽略错误，使用默认主题

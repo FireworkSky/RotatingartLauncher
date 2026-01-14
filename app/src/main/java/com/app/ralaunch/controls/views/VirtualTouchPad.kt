@@ -105,7 +105,7 @@ class VirtualTouchPad(
 
     private var currentMouseButton = if (ControlsSharedState.isTouchPadRightButton) MotionEvent.BUTTON_SECONDARY else MotionEvent.BUTTON_PRIMARY
 
-    private val settingsManager = SettingsManager.getInstance(null)
+    private val settingsManager = SettingsManager.getInstance()
 
     private val mouseMoveRatio
         get() = settingsManager.mouseRightStickSpeed.toFloat() / 100f // 移动距离放大倍数

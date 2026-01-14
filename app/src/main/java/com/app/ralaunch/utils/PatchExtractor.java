@@ -3,6 +3,8 @@ package com.app.ralaunch.utils;
 import android.content.Context;
 import android.content.SharedPreferences;
 
+import com.app.ralaunch.core.AssemblyPatcher;
+
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
 
@@ -253,7 +255,7 @@ public class PatchExtractor {
                     continue;
                 }
                 
-                com.app.ralaunch.game.AssemblyPatcher.applyMonoModPatches(context, gameDir, false);
+                AssemblyPatcher.applyMonoModPatches(context, gameDir, false);
             }
         } catch (Exception e) {
             AppLogger.error(TAG, "应用 MonoMod 补丁失败", e);

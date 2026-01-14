@@ -26,8 +26,8 @@ public class MainUiDelegate {
                 return;
             }
             
-            SettingsManager settingsManager = SettingsManager.getInstance(activity);
-            
+            SettingsManager settingsManager = SettingsManager.getInstance();
+
             if (themeManager != null && themeManager.isVideoBackground()) {
                 String videoPath = themeManager.getVideoBackgroundPath();
                 if (videoPath != null && !videoPath.isEmpty()) {

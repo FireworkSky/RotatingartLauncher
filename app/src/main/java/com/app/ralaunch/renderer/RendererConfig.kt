@@ -57,7 +57,7 @@ object RendererConfig {
     @JvmStatic
     fun setRenderer(context: Context?, renderer: String?) {
         if (renderer == null) return
-        SettingsManager.getInstance(context).fnaRenderer = renderer
+        SettingsManager.getInstance().fnaRenderer = renderer
     }
 
     /**
@@ -65,7 +65,7 @@ object RendererConfig {
      */
     @JvmStatic
     fun getRenderer(context: Context?): String {
-        val manager = SettingsManager.getInstance(context)
+        val manager = SettingsManager.getInstance()
         val raw = manager.fnaRenderer
         val normalized = normalizeRendererValue(raw)
         if (normalized != raw) {
@@ -306,7 +306,7 @@ object RendererConfig {
     private fun addTurnipSettingsIfNeeded(context: Context, envMap: MutableMap<String?, String?>) {
         val glInfo = GLInfoUtils.getGlInfo()
         if (glInfo.isAdreno) {
-            val settingsManager = SettingsManager.getInstance(context)
+            val settingsManager = SettingsManager.getInstance()
             if (settingsManager.isVulkanDriverTurnip) {
                 envMap["RALCORE_LOAD_TURNIP"] = "1"
             }
@@ -562,7 +562,7 @@ object RendererConfig {
         return when {
             rendererId in vulkanTranslatedRenderers -> "0"
             else -> {
-                val settings = SettingsManager.getInstance(context)
+                val settings = SettingsManager.getInstance()
                 if (settings.isFnaEnableMapBufferRangeOptimization) null else "0"
             }
         }

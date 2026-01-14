@@ -1,4 +1,4 @@
-package com.app.ralaunch.game;
+package com.app.ralaunch.core;
 
 import android.content.Context;
 

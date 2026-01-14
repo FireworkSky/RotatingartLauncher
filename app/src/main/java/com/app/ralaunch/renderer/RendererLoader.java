@@ -166,7 +166,7 @@ public class RendererLoader {
             
             // 检查设置
             com.app.ralaunch.data.SettingsManager settingsManager = 
-                com.app.ralaunch.data.SettingsManager.getInstance(context);
+                com.app.ralaunch.data.SettingsManager.getInstance();
             boolean useTurnip = settingsManager.isVulkanDriverTurnip();
             
         } catch (Exception e) {

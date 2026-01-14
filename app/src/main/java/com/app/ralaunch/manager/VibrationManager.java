@@ -21,7 +21,7 @@ public class VibrationManager {
     }
 
     public void vibrateClick() {
-        if (vibrator != null && vibrator.hasVibrator() && SettingsManager.getInstance(RaLaunchApplication.getAppContext()).getVibrationEnabled()) {
+        if (vibrator != null && vibrator.hasVibrator() && SettingsManager.getInstance().getVibrationEnabled()) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 vibrator.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK));
             }
@@ -32,7 +32,7 @@ public class VibrationManager {
     }
 
     public void vibrateHeavyClick() {
-        if (vibrator != null && vibrator.hasVibrator() && SettingsManager.getInstance(RaLaunchApplication.getAppContext()).getVibrationEnabled()) {
+        if (vibrator != null && vibrator.hasVibrator() && SettingsManager.getInstance().getVibrationEnabled()) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 vibrator.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_HEAVY_CLICK));
             }
@@ -43,7 +43,7 @@ public class VibrationManager {
     }
 
     public void vibrateTick() {
-        if (vibrator != null && vibrator.hasVibrator() && SettingsManager.getInstance(RaLaunchApplication.getAppContext()).getVibrationEnabled()) {
+        if (vibrator != null && vibrator.hasVibrator() && SettingsManager.getInstance().getVibrationEnabled()) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 vibrator.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_TICK));
             }
@@ -54,7 +54,7 @@ public class VibrationManager {
     }
 
     public void vibrateOneShot(long milliseconds, int amplitude) {
-        if (vibrator != null && vibrator.hasVibrator() && SettingsManager.getInstance(RaLaunchApplication.getAppContext()).getVibrationEnabled()) {
+        if (vibrator != null && vibrator.hasVibrator() && SettingsManager.getInstance().getVibrationEnabled()) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 vibrator.vibrate(VibrationEffect.createOneShot(milliseconds, amplitude));
             }

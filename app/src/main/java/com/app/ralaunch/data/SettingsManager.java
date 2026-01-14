@@ -2,6 +2,7 @@ package com.app.ralaunch.data;
 
 import android.content.Context;
 
+import com.app.ralaunch.RaLaunchApplication;
 import com.app.ralaunch.utils.AppLogger;
 
 import org.json.JSONException;
@@ -27,7 +28,6 @@ public class SettingsManager {
     private static final String TAG = "SettingsManager";
     private static final String SETTINGS_FILE = "settings.json";
     
-    private final Context context;
     private JSONObject settings;
     private final File settingsFile;
     
@@ -152,18 +152,18 @@ public class SettingsManager {
         public static final String BOX64_GAME_PATH = ""; // 默认无游戏路径
     }
     
-    private SettingsManager(Context context) {
-        this.context = context.getApplicationContext();
-        this.settingsFile = new File(this.context.getFilesDir(), SETTINGS_FILE);
+    private SettingsManager() {
+        Context context = RaLaunchApplication.getAppContext();
+        this.settingsFile = new File(context.getFilesDir(), SETTINGS_FILE);
         loadSettings();
     }
     
     /**
      * 获取单例实例
      */
-    public static synchronized SettingsManager getInstance(Context context) {
+    public static synchronized SettingsManager getInstance() {
         if (instance == null) {
-            instance = new SettingsManager(context);
+            instance = new SettingsManager();
         }
         return instance;
     }

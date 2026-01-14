@@ -27,7 +27,7 @@ public class ThemeManager {
     
     public ThemeManager(AppCompatActivity activity) {
         this.activity = activity;
-        this.settingsManager = SettingsManager.getInstance(activity);
+        this.settingsManager = SettingsManager.getInstance();
         this.dynamicColorManager = DynamicColorManager.getInstance();
     }
     

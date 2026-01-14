@@ -34,7 +34,7 @@ public class GameSettingsModule implements SettingsModule {
     public void setup(Fragment fragment, View rootView) {
         this.fragment = fragment;
         this.rootView = rootView;
-        this.settingsManager = SettingsManager.getInstance(fragment.requireContext());
+        this.settingsManager = SettingsManager.getInstance();
 
         this.patchFilePickerLauncher = fragment.registerForActivityResult(
                 new ActivityResultContracts.OpenDocument(),

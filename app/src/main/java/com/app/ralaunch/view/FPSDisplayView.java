@@ -1,4 +1,4 @@
-package com.app.ralaunch.ui;
+package com.app.ralaunch.view;
 
 import android.content.Context;
 import android.graphics.Canvas;
@@ -85,8 +85,8 @@ public class FPSDisplayView extends View {
         setVisibility(GONE);
         
         // 初始化设置管理器
-        mSettingsManager = SettingsManager.getInstance(getContext());
-        
+        mSettingsManager = SettingsManager.getInstance();
+
         // 加载保存的位置
         mFixedX = mSettingsManager.getFPSDisplayX();
         mFixedY = mSettingsManager.getFPSDisplayY();

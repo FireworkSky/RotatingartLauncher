@@ -439,7 +439,7 @@ class UnifiedEditorSettingsDialog(
             if (mSwitchFPSDisplay != null) {
                 // 加载当前设置
                 val settingsManager =
-                    SettingsManager.getInstance(mContext)
+                    SettingsManager.getInstance()
                 val fpsDisplayEnabled = settingsManager.isFPSDisplayEnabled()
                 mSwitchFPSDisplay!!.setChecked(fpsDisplayEnabled)
 
@@ -465,7 +465,7 @@ class UnifiedEditorSettingsDialog(
             if (mSwitchToggleTouch != null) {
                 // 加载当前设置
                 val settingsManager =
-                    SettingsManager.getInstance(mContext)
+                    SettingsManager.getInstance()
                 val isTouchEventEnabled = settingsManager.isTouchEventEnabled()
                 mSwitchToggleTouch!!.setChecked(isTouchEventEnabled)
 

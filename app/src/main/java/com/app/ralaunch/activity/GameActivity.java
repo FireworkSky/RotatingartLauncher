@@ -79,7 +79,7 @@ public class GameActivity extends SDLActivity {
         // 应用主题设置（必须在 super.onCreate 之前）
         // GameActivity 继承自 SDLActivity，不是 AppCompatActivity，所以直接应用主题
         com.app.ralaunch.data.SettingsManager settingsManager =
-                com.app.ralaunch.data.SettingsManager.getInstance(this);
+                com.app.ralaunch.data.SettingsManager.getInstance();
         int themeMode = settingsManager.getThemeMode();
 
         switch (themeMode) {

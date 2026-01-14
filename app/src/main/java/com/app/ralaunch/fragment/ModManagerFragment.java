@@ -122,8 +122,8 @@ public class ModManagerFragment extends BaseFragment implements FileBrowserAdapt
         emptyText = view.findViewById(R.id.emptyText);
         
         // 初始化设置管理器
-        settingsManager = SettingsManager.getInstance(requireContext());
-        
+        settingsManager = SettingsManager.getInstance();
+
         // 加载保存的视图模式
         currentViewMode = settingsManager.getString(KEY_VIEW_MODE, VIEW_MODE_GRID);
         
