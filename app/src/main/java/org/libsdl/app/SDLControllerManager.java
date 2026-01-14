@@ -1,7 +1,6 @@
 package org.libsdl.app;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -11,7 +10,6 @@ import android.os.Build;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
 import android.os.VibratorManager;
-import android.util.Log;
 import android.view.InputDevice;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
@@ -650,7 +648,12 @@ class SDLJoyStickHandler_API19_VirtualJoystick extends SDLJoystickHandler_API19 
 
         // Register virtual Xbox controller on first poll
         // Well we do this because some game only recognize first controller connected
+        registerVirtualControllerOnce();
+    }
+
+    private void registerVirtualControllerOnce() {
         if (!virtualJoystickAdded) {
+            virtualJoystickAdded = true;
             mJoysticks.add(virtualJoystick);
 
             /* Check VIBRATOR_SERVICE */
@@ -674,7 +677,6 @@ class SDLJoyStickHandler_API19_VirtualJoystick extends SDLJoystickHandler_API19 
                     0,   // nballs
                     can_rumble
             );
-            virtualJoystickAdded = true;
         }
     }
 }
@@ -690,6 +692,34 @@ class SDLHapticHandler_API31 extends SDLHapticHandler {
 
     @Override
     public void rumble(int device_id, float low_frequency_intensity, float high_frequency_intensity, int length) {
+        // Check VIBRATOR_SERVICE
+        if (device_id == deviceId_VIBRATOR_SERVICE) {
+            var settings = com.app.ralaunch.data.SettingsManager.getInstance();
+
+            if (!settings.isVirtualControllerVibrationEnabled())
+                return;
+
+            low_frequency_intensity *= settings.getVirtualControllerVibrationIntensity();
+            high_frequency_intensity *= settings.getVirtualControllerVibrationIntensity();
+
+            if (Build.VERSION.SDK_INT < 31 /* Android 12.0 (S) */) {
+                Vibrator vibrator = (Vibrator) SDL.getContext().getSystemService(Context.VIBRATOR_SERVICE);
+                float intensity = (low_frequency_intensity * 0.6f) + (high_frequency_intensity * 0.4f);
+                vibrate(vibrator, intensity, length);
+            } else {
+                VibratorManager manager = (VibratorManager) SDL.getContext().getSystemService(Context.VIBRATOR_MANAGER_SERVICE);
+                int[] vibrators = manager.getVibratorIds();
+                if (vibrators.length >= 2) {
+                    vibrate(manager.getVibrator(vibrators[0]), low_frequency_intensity, length);
+                    vibrate(manager.getVibrator(vibrators[1]), high_frequency_intensity, length);
+                } else if (vibrators.length == 1) {
+                    float intensity = (low_frequency_intensity * 0.6f) + (high_frequency_intensity * 0.4f);
+                    vibrate(manager.getVibrator(vibrators[0]), intensity, length);
+                }
+            }
+            return;
+        }
+
         InputDevice device = InputDevice.getDevice(device_id);
         if (device == null) {
             return;
@@ -776,6 +806,8 @@ class SDLHapticHandler_API26 extends SDLHapticHandler {
 
 class SDLHapticHandler {
 
+    public final int deviceId_VIBRATOR_SERVICE = 999999;
+
     static class SDLHaptic {
         public int device_id;
         public String name;
@@ -807,8 +839,6 @@ class SDLHapticHandler {
     }
 
     public void pollHapticDevices() {
-
-        final int deviceId_VIBRATOR_SERVICE = 999999;
         boolean hasVibratorService = false;
 
         int[] deviceIds = InputDevice.getDeviceIds();

@@ -50,7 +50,10 @@ public class SettingsManager {
 
 
         // 控制设置
+        public static final String CONTROLS_OPACITY = "controls_opacity";
         public static final String CONTROLS_VIBRATION_ENABLED = "controls_vibration_enabled";
+        public static final String VIRTUAL_CONTROLLER_VIBRATION_ENABLED = "virtual_controller_vibration_enabled";
+        public static final String VIRTUAL_CONTROLLER_VIBRATION_INTENSITY = "virtual_controller_vibration_intensity";
         public static final String TOUCH_MULTITOUCH_ENABLED = "touch_multitouch_enabled"; // 多点触控模拟鼠标
         public static final String FPS_DISPLAY_ENABLED = "fps_display_enabled"; // FPS 显示开关
         public static final String FPS_DISPLAY_X = "fps_display_x"; // FPS 显示位置 X
@@ -117,7 +120,10 @@ public class SettingsManager {
         public static final boolean VULKAN_DRIVER_TURNIP = true; // 默认启用 Turnip（如果支持）
 
         // 控制设置
+        public static final float CONTROLS_OPACITY = 0.7f; // 默认控件透明度70%
         public static final boolean CONTROLS_VIBRATION_ENABLED = true; // 默认开启振动反馈
+        public static final boolean VIRTUAL_CONTROLLER_VIBRATION_ENABLED = false; // 默认关闭虚拟手柄振动
+        public static final float VIRTUAL_CONTROLLER_VIBRATION_INTENSITY = 1.0f; // 默认振动强度100%
         public static final boolean TOUCH_MULTITOUCH_ENABLED = true; // 默认开启多点触控（不可更改）
         public static final boolean FPS_DISPLAY_ENABLED = false; // 默认关闭 FPS 显示
         public static final float FPS_DISPLAY_X = -1f; // 默认自动位置（跟随鼠标）
@@ -366,6 +372,16 @@ public class SettingsManager {
 
 
     // 控制设置
+    public float getControlsOpacity() {
+        return getFloat(Keys.CONTROLS_OPACITY, Defaults.CONTROLS_OPACITY);
+    }
+
+    public void setControlsOpacity(float opacity) {
+        // Clamp opacity between 0.0 and 1.0
+        float clampedOpacity = Math.max(0.0f, Math.min(1.0f, opacity));
+        putFloat(Keys.CONTROLS_OPACITY, clampedOpacity);
+    }
+
     public boolean getVibrationEnabled() {
         return getBoolean(Keys.CONTROLS_VIBRATION_ENABLED, Defaults.CONTROLS_VIBRATION_ENABLED);
     }
@@ -373,7 +389,25 @@ public class SettingsManager {
     public void setVibrationEnabled(boolean enabled) {
         putBoolean(Keys.CONTROLS_VIBRATION_ENABLED, enabled);
     }
-    
+
+    public boolean isVirtualControllerVibrationEnabled() {
+        return getBoolean(Keys.VIRTUAL_CONTROLLER_VIBRATION_ENABLED, Defaults.VIRTUAL_CONTROLLER_VIBRATION_ENABLED);
+    }
+
+    public void setVirtualControllerVibrationEnabled(boolean enabled) {
+        putBoolean(Keys.VIRTUAL_CONTROLLER_VIBRATION_ENABLED, enabled);
+    }
+
+    public float getVirtualControllerVibrationIntensity() {
+        return getFloat(Keys.VIRTUAL_CONTROLLER_VIBRATION_INTENSITY, Defaults.VIRTUAL_CONTROLLER_VIBRATION_INTENSITY);
+    }
+
+    public void setVirtualControllerVibrationIntensity(float intensity) {
+        // Clamp intensity between 0.0 and 1.0
+        float clampedIntensity = Math.max(0.0f, Math.min(1.0f, intensity));
+        putFloat(Keys.VIRTUAL_CONTROLLER_VIBRATION_INTENSITY, clampedIntensity);
+    }
+
     /**
      * 是否启用多点触控鼠标模拟
      * 启用后：
