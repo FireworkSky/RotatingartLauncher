@@ -29,9 +29,9 @@
 #include <android/log.h>
 #endif
 
-#include "../include/glibc_bridge_wrappers.h"
-#include "../include/glibc_bridge_private.h"  /* For GLIBC_BRIDGE_LOG */
-#include "wrapper_common.h"  /* Common wrapper utilities */
+#include "../include/wrappers.h"
+#include "../include/private.h"  /* GLIBC_BRIDGE_LOG */
+#include "wrapper_path.h"  /* Common wrapper utilities */
 
 /* ============================================================================
  * stat() family wrappers
@@ -205,6 +205,9 @@ int fstatvfs64_wrapper(int fd, struct statvfs* buf) {
 
 static __thread char reverse_translated_path[PATH_MAX];
 
+/* External reference to current ELF path from wrapper_libc.c */
+extern char* __progname_full;
+
 char* realpath_wrapper(const char* path, char* resolved_path) {
     /* Intercept /proc/self/exe to return the glibc ELF path instead of app_process64 */
     if (path && __progname_full && 
@@ -236,9 +239,6 @@ char* realpath_wrapper(const char* path, char* resolved_path) {
     }
     return result;
 }
-
-/* External reference to current ELF path from wrapper_libc.c */
-extern char* __progname_full;
 
 ssize_t readlink_wrapper(const char* path, char* buf, size_t bufsiz) {
     /* Intercept /proc/self/exe to return the glibc ELF path instead of app_process64 */
@@ -450,13 +450,7 @@ int dup3_wrapper(int oldfd, int newfd, int flags) {
     return dup3(oldfd, newfd, flags);
 }
 
-int fcntl_wrapper(int fd, int cmd, ...) {
-    va_list ap;
-    va_start(ap, cmd);
-    long arg = va_arg(ap, long);
-    va_end(ap);
-    return fcntl(fd, cmd, arg);
-}
+/* fcntl_wrapper 定义在 wrapper_fs.c 中 */
 
 int ftruncate_wrapper(int fd, off_t length) {
     return ftruncate(fd, length);

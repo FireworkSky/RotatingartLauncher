@@ -1,3 +1,0 @@
-com.antutu.ABenchMark
-com.primatelabs.geekbench6
-com.ludashi.benchmark

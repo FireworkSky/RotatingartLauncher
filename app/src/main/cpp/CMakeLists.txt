@@ -33,6 +33,7 @@ set(SDL_VIDEO_OPENGL ON CACHE BOOL "Enable OpenGL support (for gl4es)" FORCE)
 set(SDL_VIDEO_OPENGL_ES ON CACHE BOOL "Enable OpenGL ES (native renderer)" FORCE)
 set(SDL_VIDEO_OPENGL_EGL ON CACHE BOOL "Enable EGL" FORCE)
 set(SDL_OPENGLES ON CACHE BOOL "Enable OpenGL ES" FORCE)
+# 注意：SDL_DYNAMIC_API 在 Android 上自动关闭（SDL_dynapi.h 第48-49行）
 
 # 添加gl4es编译定义，让SDL知道我们支持gl4es渲染器
 add_compile_definitions(SDL_VIDEO_OPENGL_GL4ES)

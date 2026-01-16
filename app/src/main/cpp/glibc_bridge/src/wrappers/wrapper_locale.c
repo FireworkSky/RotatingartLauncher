@@ -17,8 +17,8 @@
 #include <android/log.h>
 #endif
 
-#include "../include/glibc_bridge_wrappers.h"
-#include "../glibc_bridge_tls.h"
+#include "../include/wrappers.h"
+#include "../compat/tls.h"
 
 /* ============================================================================
  * glibc locale structure (must match glibc's __locale_struct)
@@ -61,11 +61,7 @@ static void init_c_locale(void) {
     
     g_locale_initialized = 1;
     
-#ifdef __ANDROID__
-    __android_log_print(ANDROID_LOG_INFO, "glibc-bridge",
-        "[locale] C locale initialized: ctype_b=%p tolower=%p toupper=%p",
-        g_c_locale.__ctype_b, g_c_locale.__ctype_tolower, g_c_locale.__ctype_toupper);
-#endif
+
 }
 
 /* ============================================================================
@@ -84,7 +80,7 @@ static char* my_nl_langinfo(int item) {
  * Create proper locale structures with ctype tables
  * ============================================================================ */
 
-locale_t_compat newlocale_wrapper(int mask, const char* locale, locale_t_compat base) {
+locale_t newlocale_wrapper(int mask, const char* locale, locale_t base) {
     (void)mask;
     (void)locale;
     (void)base;
@@ -93,41 +89,41 @@ locale_t_compat newlocale_wrapper(int mask, const char* locale, locale_t_compat 
     init_c_locale();
     
     /* Return pointer to our global C locale */
-    return (locale_t_compat)&g_c_locale;
+    return (locale_t)&g_c_locale;
 }
 
-void freelocale_wrapper(locale_t_compat loc) {
+void freelocale_wrapper(locale_t loc) {
     /* Don't free our global C locale */
     (void)loc;
 }
 
-locale_t_compat duplocale_wrapper(locale_t_compat loc) {
+locale_t duplocale_wrapper(locale_t loc) {
     (void)loc;
     init_c_locale();
-    return (locale_t_compat)&g_c_locale;
+    return (locale_t)&g_c_locale;
 }
 
-locale_t_compat uselocale_wrapper(locale_t_compat loc) {
+locale_t uselocale_wrapper(locale_t loc) {
     (void)loc;
     init_c_locale();
-    return (locale_t_compat)&g_c_locale;
+    return (locale_t)&g_c_locale;
 }
 
 /* ============================================================================
  * String/Number Conversion with Locale
  * ============================================================================ */
 
-double strtod_l_wrapper(const char* str, char** endptr, locale_t_compat loc) {
+double strtod_l_wrapper(const char* str, char** endptr, locale_t loc) {
     (void)loc;
     return strtod(str, endptr);
 }
 
-float strtof_l_wrapper(const char* str, char** endptr, locale_t_compat loc) {
+float strtof_l_wrapper(const char* str, char** endptr, locale_t loc) {
     (void)loc;
     return strtof(str, endptr);
 }
 
-long double strtold_l_wrapper(const char* str, char** endptr, locale_t_compat loc) {
+long double strtold_l_wrapper(const char* str, char** endptr, locale_t loc) {
     (void)loc;
     return strtold(str, endptr);
 }
@@ -136,22 +132,22 @@ long double strtold_l_wrapper(const char* str, char** endptr, locale_t_compat lo
  * String Comparison with Locale
  * ============================================================================ */
 
-int strcoll_l_wrapper(const char* s1, const char* s2, locale_t_compat loc) {
+int strcoll_l_wrapper(const char* s1, const char* s2, locale_t loc) {
     (void)loc;
     return strcoll(s1, s2);
 }
 
-size_t strxfrm_l_wrapper(char* dest, const char* src, size_t n, locale_t_compat loc) {
+size_t strxfrm_l_wrapper(char* dest, const char* src, size_t n, locale_t loc) {
     (void)loc;
     return strxfrm(dest, src, n);
 }
 
-int wcscoll_l_wrapper(const wchar_t* s1, const wchar_t* s2, locale_t_compat loc) {
+int wcscoll_l_wrapper(const wchar_t* s1, const wchar_t* s2, locale_t loc) {
     (void)loc;
     return wcscoll(s1, s2);
 }
 
-size_t wcsxfrm_l_wrapper(wchar_t* dest, const wchar_t* src, size_t n, locale_t_compat loc) {
+size_t wcsxfrm_l_wrapper(wchar_t* dest, const wchar_t* src, size_t n, locale_t loc) {
     (void)loc;
     return wcsxfrm(dest, src, n);
 }
@@ -163,73 +159,73 @@ size_t wcsxfrm_l_wrapper(wchar_t* dest, const wchar_t* src, size_t n, locale_t_c
 #include <ctype.h>
 
 /* Character classification _l functions */
-int isalpha_l_wrapper(int c, locale_t_compat loc) {
+int isalpha_l_wrapper(int c, locale_t loc) {
     (void)loc;
     return isalpha(c);
 }
 
-int isdigit_l_wrapper(int c, locale_t_compat loc) {
+int isdigit_l_wrapper(int c, locale_t loc) {
     (void)loc;
     return isdigit(c);
 }
 
-int isalnum_l_wrapper(int c, locale_t_compat loc) {
+int isalnum_l_wrapper(int c, locale_t loc) {
     (void)loc;
     return isalnum(c);
 }
 
-int isspace_l_wrapper(int c, locale_t_compat loc) {
+int isspace_l_wrapper(int c, locale_t loc) {
     (void)loc;
     return isspace(c);
 }
 
-int isupper_l_wrapper(int c, locale_t_compat loc) {
+int isupper_l_wrapper(int c, locale_t loc) {
     (void)loc;
     return isupper(c);
 }
 
-int islower_l_wrapper(int c, locale_t_compat loc) {
+int islower_l_wrapper(int c, locale_t loc) {
     (void)loc;
     return islower(c);
 }
 
-int isprint_l_wrapper(int c, locale_t_compat loc) {
+int isprint_l_wrapper(int c, locale_t loc) {
     (void)loc;
     return isprint(c);
 }
 
-int ispunct_l_wrapper(int c, locale_t_compat loc) {
+int ispunct_l_wrapper(int c, locale_t loc) {
     (void)loc;
     return ispunct(c);
 }
 
-int isgraph_l_wrapper(int c, locale_t_compat loc) {
+int isgraph_l_wrapper(int c, locale_t loc) {
     (void)loc;
     return isgraph(c);
 }
 
-int iscntrl_l_wrapper(int c, locale_t_compat loc) {
+int iscntrl_l_wrapper(int c, locale_t loc) {
     (void)loc;
     return iscntrl(c);
 }
 
-int isxdigit_l_wrapper(int c, locale_t_compat loc) {
+int isxdigit_l_wrapper(int c, locale_t loc) {
     (void)loc;
     return isxdigit(c);
 }
 
-int isblank_l_wrapper(int c, locale_t_compat loc) {
+int isblank_l_wrapper(int c, locale_t loc) {
     (void)loc;
     return isblank(c);
 }
 
 /* Character conversion _l functions */
-int tolower_l_wrapper(int c, locale_t_compat loc) {
+int tolower_l_wrapper(int c, locale_t loc) {
     (void)loc;
     return tolower(c);
 }
 
-int toupper_l_wrapper(int c, locale_t_compat loc) {
+int toupper_l_wrapper(int c, locale_t loc) {
     (void)loc;
     return toupper(c);
 }
@@ -238,52 +234,52 @@ int toupper_l_wrapper(int c, locale_t_compat loc) {
  * Wide Character Classification with Locale (wctype _l functions)
  * ============================================================================ */
 
-wint_t towlower_l_wrapper(wint_t wc, locale_t_compat loc) {
+wint_t towlower_l_wrapper(wint_t wc, locale_t loc) {
     (void)loc;
     return towlower(wc);
 }
 
-wint_t towupper_l_wrapper(wint_t wc, locale_t_compat loc) {
+wint_t towupper_l_wrapper(wint_t wc, locale_t loc) {
     (void)loc;
     return towupper(wc);
 }
 
-wctype_t wctype_l_wrapper(const char* name, locale_t_compat loc) {
+wctype_t wctype_l_wrapper(const char* name, locale_t loc) {
     (void)loc;
     return wctype(name);
 }
 
-int iswctype_l_wrapper(wint_t wc, wctype_t desc, locale_t_compat loc) {
+int iswctype_l_wrapper(wint_t wc, wctype_t desc, locale_t loc) {
     (void)loc;
     return iswctype(wc, desc);
 }
 
-int iswalpha_l_wrapper(wint_t wc, locale_t_compat loc) {
+int iswalpha_l_wrapper(wint_t wc, locale_t loc) {
     (void)loc;
     return iswalpha(wc);
 }
 
-int iswdigit_l_wrapper(wint_t wc, locale_t_compat loc) {
+int iswdigit_l_wrapper(wint_t wc, locale_t loc) {
     (void)loc;
     return iswdigit(wc);
 }
 
-int iswspace_l_wrapper(wint_t wc, locale_t_compat loc) {
+int iswspace_l_wrapper(wint_t wc, locale_t loc) {
     (void)loc;
     return iswspace(wc);
 }
 
-int iswupper_l_wrapper(wint_t wc, locale_t_compat loc) {
+int iswupper_l_wrapper(wint_t wc, locale_t loc) {
     (void)loc;
     return iswupper(wc);
 }
 
-int iswlower_l_wrapper(wint_t wc, locale_t_compat loc) {
+int iswlower_l_wrapper(wint_t wc, locale_t loc) {
     (void)loc;
     return iswlower(wc);
 }
 
-int iswprint_l_wrapper(wint_t wc, locale_t_compat loc) {
+int iswprint_l_wrapper(wint_t wc, locale_t loc) {
     (void)loc;
     return iswprint(wc);
 }
@@ -293,13 +289,13 @@ int iswprint_l_wrapper(wint_t wc, locale_t_compat loc) {
  * ============================================================================ */
 
 size_t strftime_l_wrapper(char* s, size_t max, const char* fmt, 
-                          const struct tm* tm, locale_t_compat loc) {
+                          const struct tm* tm, locale_t loc) {
     (void)loc;
     return strftime(s, max, fmt, tm);
 }
 
 size_t wcsftime_l_wrapper(wchar_t* s, size_t max, const wchar_t* fmt, 
-                          const struct tm* tm, locale_t_compat loc) {
+                          const struct tm* tm, locale_t loc) {
     (void)loc;
     return wcsftime(s, max, fmt, tm);
 }
@@ -308,7 +304,7 @@ size_t wcsftime_l_wrapper(wchar_t* s, size_t max, const wchar_t* fmt,
  * Language Info
  * ============================================================================ */
 
-char* nl_langinfo_l_wrapper(int item, locale_t_compat loc) {
+char* nl_langinfo_l_wrapper(int item, locale_t loc) {
     (void)loc;
     return my_nl_langinfo(item);
 }
@@ -326,7 +322,7 @@ char* strerror_wrapper(int errnum) {
     return strerror(errnum);
 }
 
-char* strerror_l_wrapper(int errnum, locale_t_compat loc) {
+char* strerror_l_wrapper(int errnum, locale_t loc) {
     (void)loc;
     return strerror(errnum);
 }
@@ -353,22 +349,22 @@ char* strerror_r_wrapper(int errnum, char* buf, size_t buflen) {
 }
 
 /* strtol/strtoul with locale */
-long strtol_l_wrapper(const char* str, char** endptr, int base, locale_t_compat loc) {
+long strtol_l_wrapper(const char* str, char** endptr, int base, locale_t loc) {
     (void)loc;
     return strtol(str, endptr, base);
 }
 
-long long strtoll_l_wrapper(const char* str, char** endptr, int base, locale_t_compat loc) {
+long long strtoll_l_wrapper(const char* str, char** endptr, int base, locale_t loc) {
     (void)loc;
     return strtoll(str, endptr, base);
 }
 
-unsigned long strtoul_l_wrapper(const char* str, char** endptr, int base, locale_t_compat loc) {
+unsigned long strtoul_l_wrapper(const char* str, char** endptr, int base, locale_t loc) {
     (void)loc;
     return strtoul(str, endptr, base);
 }
 
-unsigned long long strtoull_l_wrapper(const char* str, char** endptr, int base, locale_t_compat loc) {
+unsigned long long strtoull_l_wrapper(const char* str, char** endptr, int base, locale_t loc) {
     (void)loc;
     return strtoull(str, endptr, base);
 }

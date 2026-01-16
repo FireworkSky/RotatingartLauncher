@@ -261,20 +261,7 @@ int sched_setaffinity_wrapper(pid_t pid, size_t cpusetsize, const cpu_set_t* mas
     return ret;
 }
 
-/* ============================================================================
- * pthread_mutex_init wrapper with debugging
- * ============================================================================ */
-
-#include <pthread.h>
-
-int pthread_mutex_init_wrapper(pthread_mutex_t* mutex, const pthread_mutexattr_t* attr) {
-    LOGD("pthread_mutex_init(%p, %p)", mutex, attr);
-    int ret = pthread_mutex_init(mutex, attr);
-    if (ret != 0) {
-        LOGW("pthread_mutex_init failed: %s", strerror(ret));
-    }
-    return ret;
-}
+/* pthread_mutex_init_wrapper 定义在 wrapper_thread.c 中 */
 
 /* ============================================================================
  * syscall wrapper

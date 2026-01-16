@@ -18,7 +18,7 @@
 #include <setjmp.h>
 #include <sys/select.h>
 
-#include "../include/glibc_bridge_wrappers.h"
+#include "../include/wrappers.h"
 
 /* ============================================================================
  * Wide Character Memory Functions
@@ -209,9 +209,7 @@ wchar_t* wcsncpy_chk_wrapper(wchar_t* dest, const wchar_t* src, size_t n, size_t
     return wcsncpy(dest, src, n);
 }
 
-/* ============================================================================
- * String Functions
- * ============================================================================ */
+
 
 int asprintf_chk_wrapper(char** strp, int flag, const char* fmt, ...) {
     (void)flag;
@@ -237,53 +235,7 @@ char* stpncpy_chk_wrapper(char* dest, const char* src, size_t n, size_t destlen)
     return stpncpy(dest, src, n);
 }
 
-char* strcat_chk_wrapper(char* dest, const char* src, size_t destlen) {
-    (void)destlen;
-    return strcat(dest, src);
-}
 
-char* strcpy_chk_wrapper(char* dest, const char* src, size_t destlen) {
-    (void)destlen;
-    return strcpy(dest, src);
-}
-
-char* strncat_chk_wrapper(char* dest, const char* src, size_t n, size_t destlen) {
-    (void)destlen;
-    return strncat(dest, src, n);
-}
-
-char* strncpy_chk_wrapper(char* dest, const char* src, size_t n, size_t destlen) {
-    (void)destlen;
-    return strncpy(dest, src, n);
-}
-
-/* ============================================================================
- * Memory Functions
- * ============================================================================ */
-
-void* memcpy_chk_wrapper(void* dest, const void* src, size_t n, size_t destlen) {
-    (void)destlen;
-    return memcpy(dest, src, n);
-}
-
-void* memmove_chk_wrapper(void* dest, const void* src, size_t n, size_t destlen) {
-    (void)destlen;
-    return memmove(dest, src, n);
-}
-
-void* memset_chk_wrapper(void* s, int c, size_t n, size_t destlen) {
-    (void)destlen;
-    return memset(s, c, n);
-}
-
-/* ============================================================================
- * fd_set FORTIFY check
- * ============================================================================ */
-
-/* __fdelt_chk - FORTIFY check for FD_SET/FD_CLR/FD_ISSET macros
- * Checks that fd is within bounds of fd_set (0 to FD_SETSIZE-1)
- * Returns fd / NFDBITS (the index into the fd_set array)
- */
 #ifndef NFDBITS
 #define NFDBITS (8 * sizeof(unsigned long))
 #endif

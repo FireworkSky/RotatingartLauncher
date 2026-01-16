@@ -10,7 +10,7 @@
 #define _GNU_SOURCE
 #include <stddef.h>
 
-#include "../include/glibc_bridge_wrappers.h"
+#include "../include/wrappers.h"
 
 /* ============================================================================
  * gettext Functions

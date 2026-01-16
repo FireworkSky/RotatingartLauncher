@@ -72,18 +72,7 @@ int shm_unlink_wrapper(const char* name) {
     return -1;
 }
 
-/* ============================================================================
- * Dynamic linker extensions
- * ============================================================================ */
-
-int dlinfo_wrapper(void* handle, int request, void* info) {
-    (void)handle;
-    (void)request;
-    (void)info;
-    /* Limited support on Android */
-    errno = ENOSYS;
-    return -1;
-}
+/* dlinfo_wrapper 定义在 wrapper_dl.c 中 */
 
 /* ============================================================================
  * FTS64 (file tree walk) - 64-bit version

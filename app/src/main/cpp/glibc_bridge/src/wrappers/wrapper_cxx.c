@@ -13,15 +13,10 @@
 #include <stdarg.h>
 #include <unistd.h>
 
-#include "../include/glibc_bridge_wrappers.h"
-#include "wrapper_common.h"  /* Common wrapper utilities */
+#include "../include/wrappers.h"
+#include "wrapper_path.h"  /* Common wrapper utilities */
 
-/* ============================================================================
- * C++ iostream Initialization
- * 
- * glibc's std::ios_base::Init manages iostream object initialization.
- * We provide a no-op wrapper since bionic's libc++ already initializes streams.
- * ============================================================================ */
+
 
 static int g_ios_init_count = 0;
 
@@ -50,13 +45,6 @@ void terminate_wrapper(void) {
     abort();
 }
 
-/* ============================================================================
- * Exception Throwing Wrappers
- * 
- * These are glibc-specific functions that throw C++ exceptions.
- * Since we can't easily throw C++ exceptions from C, we abort.
- * In a more complete implementation, these would need C++ linkage.
- * ============================================================================ */
 
 void throw_logic_error_wrapper(const char* what) {
     wrapper_error_abort("std::logic_error", what);
@@ -83,8 +71,45 @@ void throw_bad_cast_wrapper(void) {
     wrapper_error_abort("std::bad_cast", NULL);
 }
 
+/* ============================================================================
+ * TM/profiling stubs - 这些符号可能被弱引用
+ * ============================================================================ */
 
+void __gmon_start___stub(void) {
+    /* Profiling stub - no-op */
+}
 
+void _ITM_deregisterTMCloneTable_stub(void) {
+    /* TM stub - no-op */
+}
+
+void _ITM_registerTMCloneTable_stub(void) {
+    /* TM stub - no-op */
+}
+
+/* ============================================================================
+ * LTTng stubs (用于 .NET CoreCLR 跟踪)
+ * ============================================================================ */
+
+int lttng_probe_register_stub(void* probe) {
+    (void)probe;
+    return 0;  /* Success */
+}
+
+void lttng_probe_unregister_stub(void* probe) {
+    (void)probe;
+}
+
+/* ============================================================================
+ * Java/GCJ 兼容
+ * ============================================================================ */
+
+void _Jv_RegisterClasses_stub(void* classes) {
+    (void)classes;
+    /* Stub - not used in modern systems */
+}
+
+/* CXA 函数定义在 wrapper_process.c 中 */
 
 
 

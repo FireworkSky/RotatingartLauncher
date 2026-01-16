@@ -49,11 +49,11 @@ extern "C" {
  * Set up Box64 environment variables
  */
 static void setup_box64_environment(const char* rootfs_path, const char* game_dir) {
-    // Box64 settings - 关闭调试日志
-    setenv("BOX64_LOG", "0", 1);
-    setenv("BOX64_SHOWSEGV", "0", 1);
-    setenv("BOX64_SHOWBT", "0", 1);
-    setenv("BOX64_SHOWSIGNALS", "0", 1);
+    // Box64 settings - 启用调试日志
+    setenv("BOX64_LOG", "1", 1);
+    setenv("BOX64_SHOWSEGV", "1", 1);
+    setenv("BOX64_SHOWBT", "1", 1);
+    setenv("BOX64_SHOWSIGNALS", "1", 1);
     setenv("BOX64_ALLOWMISSINGLIBS", "1", 1);
     setenv("BOX64_DYNAREC", "1", 1);
     setenv("BOX64_TRACE", "0", 1);
