@@ -98,7 +98,7 @@ class GameImportFragment : BaseFragment() {
         importStatus = view.findViewById(R.id.importStatus)
 
         selectGameFileButton.setOnClickListener {
-            selectFile("game", arrayOf(".sh")) { path ->
+            selectFile("game", arrayOf(".sh", ".zip")) { path ->
                 gameFilePath = path
                 val file = File(path)
                 gameFileText?.text = file.name

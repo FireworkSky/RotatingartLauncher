@@ -1,5 +1,10 @@
 package com.app.ralaunch.installer
 
+import com.app.ralaunch.installer.plugins.CelesteInstallPlugin
+import com.app.ralaunch.installer.plugins.DontStarveInstallPlugin
+import com.app.ralaunch.installer.plugins.SmapiInstallPlugin
+import com.app.ralaunch.installer.plugins.StarboundInstallPlugin
+import com.app.ralaunch.installer.plugins.TerrariaInstallPlugin
 import java.io.File
 
 /**
@@ -14,6 +19,7 @@ object InstallPluginRegistry {
         // 注册内置插件
         registerPlugin(TerrariaInstallPlugin())
         registerPlugin(SmapiInstallPlugin())
+        registerPlugin(CelesteInstallPlugin())
         registerPlugin(StarboundInstallPlugin()) // Box64 x86_64 Linux游戏
         registerPlugin(DontStarveInstallPlugin()) // 饥荒 - Box64 x86_64 Linux游戏
     }

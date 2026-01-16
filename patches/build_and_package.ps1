@@ -19,13 +19,14 @@ Write-Host "========================================" -ForegroundColor Cyan
 # 补丁列表和对应的输出名称
 # 加载顺序按 priority 从小到大: TouchPatch(45) -> MonoGamePatch(50) -> ConsolePatch/PlatformFixPatch(100)
 $patches = @(
-    @{ Name = "TouchPatch"; OutputName = "com.app.ralaunch.smapi.touchfix" },
     @{ Name = "MonoGamePatch"; OutputName = "com.app.ralaunch.smapi.monogamefix" },
     @{ Name = "PlatformFixPatch"; OutputName = "com.app.ralaunch.smapi.platformfix" },
     @{ Name = "ConsolePatch"; OutputName = "com.app.ralaunch.tmodloader.consolepatch" },
     @{ Name = "FPSDisplayPatch"; OutputName = "com.app.ralaunch.tmodloader.fpsdisplaypatch" },
     @{ Name = "HostAndPlayPatch"; OutputName = "com.app.ralaunch.tmodloader.hostandplaypatch" },
-    @{ Name = "TModLoaderPatch"; OutputName = "com.app.ralaunch.tmodloader.androidfix" }
+    @{ Name = "TModLoaderPatch"; OutputName = "com.app.ralaunch.tmodloader.androidfix" },
+    @{ Name = "EverestMiniInstallerPatch"; OutputName = "com.app.ralaunch.everest.miniinstaller.fix" },
+    @{ Name = "EverestPatch"; OutputName = "com.app.ralaunch.everest.fix" }
 )
 
 foreach ($patch in $patches) {

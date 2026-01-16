@@ -1,7 +1,14 @@
-package com.app.ralaunch.installer
+package com.app.ralaunch.installer.plugins
 
+import android.util.Log
+import com.app.ralaunch.RaLaunchApplication
 import com.app.ralib.icon.IconExtractor
 import com.app.ralaunch.core.AssemblyPatcher
+import com.app.ralaunch.installer.GameDetectResult
+import com.app.ralaunch.installer.GameExtractorUtils
+import com.app.ralaunch.installer.GameInstallPlugin
+import com.app.ralaunch.installer.InstallCallback
+import com.app.ralaunch.installer.ModLoaderDetectResult
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -9,6 +16,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileInputStream
+import java.io.RandomAccessFile
+import java.text.SimpleDateFormat
+import java.util.Date
 import java.util.zip.ZipInputStream
 
 /**
@@ -518,12 +528,12 @@ class SmapiInstallPlugin : GameInstallPlugin {
      */
     private fun applyMonoModPatches(gameDir: File) {
         try {
-            val context = com.app.ralaunch.RaLaunchApplication.getAppContext()
+            val context = RaLaunchApplication.getAppContext()
             
             // 解压 MonoMod 到目录
             val extractSuccess = AssemblyPatcher.extractMonoMod(context)
             if (!extractSuccess) {
-                android.util.Log.w("SmapiInstallPlugin", "MonoMod 解压失败")
+                Log.w("SmapiInstallPlugin", "MonoMod 解压失败")
                 return
             }
             
@@ -532,12 +542,12 @@ class SmapiInstallPlugin : GameInstallPlugin {
                 context, gameDir.absolutePath, true)
             
             if (patchedCount >= 0) {
-                android.util.Log.i("SmapiInstallPlugin", "MonoMod 已应用，替换了 $patchedCount 个文件")
+                Log.i("SmapiInstallPlugin", "MonoMod 已应用，替换了 $patchedCount 个文件")
             } else {
-                android.util.Log.w("SmapiInstallPlugin", "MonoMod 应用失败")
+                Log.w("SmapiInstallPlugin", "MonoMod 应用失败")
             }
         } catch (e: Exception) {
-            android.util.Log.e("SmapiInstallPlugin", "MonoMod 安装异常", e)
+            Log.e("SmapiInstallPlugin", "MonoMod 安装异常", e)
         }
     }
     
@@ -597,7 +607,7 @@ class SmapiInstallPlugin : GameInstallPlugin {
         try {
             val archPos = 0x85  // 架构字节位置 (133 decimal)
             
-            java.io.RandomAccessFile(file, "rw").use { raf ->
+            RandomAccessFile(file, "rw").use { raf ->
                 // 读取架构字节
                 raf.seek(archPos.toLong())
                 val archByte = raf.readByte().toInt() and 0xFF
@@ -708,7 +718,7 @@ class SmapiInstallPlugin : GameInstallPlugin {
   "game_name": "$gameName",
   "game_type": "${if (gameName == "SMAPI") "smapi" else "stardew_valley"}",
   "launch_target": "$launchTarget",
-  "install_time": "${java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(java.util.Date())}"$iconField
+  "install_time": "${SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(Date())}"$iconField
 }
         """.trimIndent()
         infoFile.writeText(json)

@@ -1,0 +1,17 @@
+{
+  "id": "com.app.ralaunch.everest.miniinstaller.fix",
+  "name": "Everest MiniInstaller Android 修复补丁",
+  "description": "修复 Everest MiniInstaller 在 Android 平台上因创建符号链接造成的错误",
+  "version": "1.0.0",
+  "author": "RA Launcher Team",
+  "dllFileName": "EverestMiniInstallerPatch.dll",
+  "entryPoint": {
+    "typeName": "EverestMiniInstallerPatch.Patcher",
+    "methodName": "Initialize"
+  },
+  "targetGames": [
+    "Everest.MiniInstaller"
+  ],
+  "priority": 200,
+  "enabled": false
+}

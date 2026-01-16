@@ -245,9 +245,6 @@ object GameLauncher {
                 "SDL_TOUCH_MOUSE_EVENTS" to "1",
                 "SDL_TOUCH_MOUSE_MULTITOUCH" to if (settings.isTouchMultitouchEnabled) "1" else "0",
                 "RALCORE_MOUSE_RIGHT_STICK" to if (settings.isMouseRightStickEnabled) "1" else null,
-
-                // Celeste needs this
-                "LD_LIBRARY_PATH" to "/storage/emulated/0/Android/data/com.app.ralaunch/files/games/Everest/lib64-linux:${Os.getenv("LD_LIBRARY_PATH")}"
             )
             AppLogger.debug(TAG, "Game settings environment variables set: OK")
 

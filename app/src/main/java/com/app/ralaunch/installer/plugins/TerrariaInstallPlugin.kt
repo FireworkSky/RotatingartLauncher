@@ -1,14 +1,22 @@
-package com.app.ralaunch.installer
+package com.app.ralaunch.installer.plugins
 
+import android.util.Log
 import com.app.ralib.icon.IconExtractor
 import com.app.ralaunch.RaLaunchApplication
 import com.app.ralaunch.core.AssemblyPatcher
+import com.app.ralaunch.installer.GameDetectResult
+import com.app.ralaunch.installer.GameExtractorUtils
+import com.app.ralaunch.installer.GameInstallPlugin
+import com.app.ralaunch.installer.InstallCallback
+import com.app.ralaunch.installer.ModLoaderDetectResult
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Date
 
 /**
  * Terraria/tModLoader 安装插件
@@ -371,7 +379,7 @@ class TerrariaInstallPlugin : GameInstallPlugin {
             // 1. 解压 MonoMod 到目录
             val extractSuccess = AssemblyPatcher.extractMonoMod(context)
             if (!extractSuccess) {
-                android.util.Log.w("TerrariaInstallPlugin", "MonoMod 解压失败")
+                Log.w("TerrariaInstallPlugin", "MonoMod 解压失败")
                 return
             }
             
@@ -380,13 +388,13 @@ class TerrariaInstallPlugin : GameInstallPlugin {
                 context, gameDir.absolutePath, true)
             
             if (patchedCount >= 0) {
-                android.util.Log.i("TerrariaInstallPlugin", 
+                Log.i("TerrariaInstallPlugin",
                     "MonoMod 已应用，替换了 $patchedCount 个文件")
             } else {
-                android.util.Log.w("TerrariaInstallPlugin", "MonoMod 应用失败")
+                Log.w("TerrariaInstallPlugin", "MonoMod 应用失败")
             }
         } catch (e: Exception) {
-            android.util.Log.e("TerrariaInstallPlugin", "MonoMod 安装异常", e)
+            Log.e("TerrariaInstallPlugin", "MonoMod 安装异常", e)
         }
     }
     
@@ -402,7 +410,7 @@ class TerrariaInstallPlugin : GameInstallPlugin {
   "game_name": "$gameName",
   "game_type": "${if (gameName == "tModLoader") "tmodloader" else "terraria"}",
   "launch_target": "$launchTarget",
-  "install_time": "${java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(java.util.Date())}"$iconField
+  "install_time": "${SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(Date())}"$iconField
 }
         """.trimIndent()
         infoFile.writeText(json)

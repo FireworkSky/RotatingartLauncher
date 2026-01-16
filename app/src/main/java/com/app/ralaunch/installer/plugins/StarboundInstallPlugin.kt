@@ -1,13 +1,20 @@
-package com.app.ralaunch.installer
+package com.app.ralaunch.installer.plugins
 
 import com.app.ralaunch.RaLaunchApplication
 import com.app.ralaunch.core.GameLauncher
+import com.app.ralaunch.installer.GameDetectResult
+import com.app.ralaunch.installer.GameExtractorUtils
+import com.app.ralaunch.installer.GameInstallPlugin
+import com.app.ralaunch.installer.InstallCallback
+import com.app.ralaunch.installer.ModLoaderDetectResult
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Date
 
 /**
  * Starbound 安装插件
@@ -228,7 +235,7 @@ class StarboundInstallPlugin : GameInstallPlugin {
   "game_type": "starbound",
   "launch_target": "$launchTarget",
   "runtime": "box64",
-  "install_time": "${java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(java.util.Date())}"$iconField
+  "install_time": "${SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(Date())}"$iconField
 }
         """.trimIndent()
         infoFile.writeText(json)

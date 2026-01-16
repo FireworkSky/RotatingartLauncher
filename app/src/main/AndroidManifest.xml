@@ -57,7 +57,8 @@
             android:screenOrientation="sensorLandscape"
             android:theme="@style/GameTheme"
             android:hardwareAccelerated="true"
-            android:windowSoftInputMode="adjustPan">
+            android:windowSoftInputMode="adjustPan"
+            android:process=":game">
             <!-- 启用硬件加速以支持 RippleDrawable 等 Material 组件动画 -->
             <!-- 强制 SDL 使用横屏方向 -->
             <meta-data android:name="SDL_ORIENTATION" android:value="Landscape" />

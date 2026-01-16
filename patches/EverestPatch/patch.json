@@ -1,0 +1,17 @@
+{
+  "id": "com.app.ralaunch.everest.fix",
+  "name": "Everest Android 修复补丁",
+  "description": "修复 Everest 在 Android 平台上因尝试重启造成的崩溃",
+  "version": "1.0.0",
+  "author": "RA Launcher Team",
+  "dllFileName": "EverestPatch.dll",
+  "entryPoint": {
+    "typeName": "EverestPatch.Patcher",
+    "methodName": "Initialize"
+  },
+  "targetGames": [
+    "Everest"
+  ],
+  "priority": 200,
+  "enabled": true
+}
