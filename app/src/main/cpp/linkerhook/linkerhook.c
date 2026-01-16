@@ -85,10 +85,9 @@ void* dlopen(const char* filename, int flags) {
     return loader_dlopen(filename, flags, __builtin_return_address(0));
 }
 
-// Hook dlsym: pass through to real implementation
 __attribute__((visibility("default"), used))
 void* dlsym(void* handle, const char* sym_name) {
-    LOGD("dlsym(handle=%p, name=%s)", handle, sym_name ? sym_name : "NULL");
+
     return loader_dlsym(handle, sym_name, __builtin_return_address(0));
 }
 

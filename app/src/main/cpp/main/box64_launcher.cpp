@@ -35,6 +35,9 @@ extern "C" {
     // glibc_bridge 提供的 dlopen/dlsym 函数 (定义在 wrapper_libc.c 中)
     void* glibc_bridge_dlopen_for_box64(const char* filename, int flags);
     void* glibc_bridge_dlsym_for_box64(void* handle, const char* symbol);
+    
+    // glibc_bridge 的 rootfs 路径 (定义在 glibc_bridge_sharedlib.c 中)
+    extern char g_glibc_root[512];
 }
 
 #define LOG_TAG "Box64Launcher"
@@ -46,69 +49,54 @@ extern "C" {
  * Set up Box64 environment variables
  */
 static void setup_box64_environment(const char* rootfs_path, const char* game_dir) {
-    // Basic Box64 settings
-    setenv("BOX64_LOG", "1", 1);
-    setenv("BOX64_SHOWSEGV", "1", 1);
-    setenv("BOX64_SHOWBT", "1", 1);     // Show backtrace on crash
-    setenv("BOX64_SHOWSIGNALS", "1", 1);// Show all signal info
+    // Box64 settings - 关闭调试日志
+    setenv("BOX64_LOG", "0", 1);
+    setenv("BOX64_SHOWSEGV", "0", 1);
+    setenv("BOX64_SHOWBT", "0", 1);
+    setenv("BOX64_SHOWSIGNALS", "0", 1);
     setenv("BOX64_ALLOWMISSINGLIBS", "1", 1);
     setenv("BOX64_DYNAREC", "1", 1);
     setenv("BOX64_TRACE", "0", 1);
-    setenv("BOX64_DUMP", "0", 1);
     
     // Library search path
-    // Get parent directory of rootfs to find x64lib
     std::string rootfs_str(rootfs_path);
-    std::string files_dir = rootfs_str.substr(0, rootfs_str.rfind('/'));  // Remove /rootfs
+    std::string files_dir = rootfs_str.substr(0, rootfs_str.rfind('/'));
     
-    // Set TMPDIR for temporary files (Android doesn't have /tmp)
-    // Use rootfs/tmp as the temp directory
+    // Set TMPDIR
     std::string tmp_dir = rootfs_str + "/tmp";
-    mkdir(tmp_dir.c_str(), 0755);  // Ensure directory exists
+    mkdir(tmp_dir.c_str(), 0755);
     setenv("TMPDIR", tmp_dir.c_str(), 1);
     setenv("TMP", tmp_dir.c_str(), 1);
     setenv("TEMP", tmp_dir.c_str(), 1);
-    LOGI("  TMPDIR=%s", tmp_dir.c_str());
-    std::string x64lib_path = files_dir + "/x64lib";
     
+    std::string x64lib_path = files_dir + "/x64lib";
     std::string ld_library_path = std::string(rootfs_path) + "/usr/lib/x86_64-linux-gnu";
-    ld_library_path += ":";
-    ld_library_path += x64lib_path;  // Add x64lib for libstdc++.so.6, etc.
+    ld_library_path += ":" + x64lib_path;
     if (game_dir) {
         ld_library_path += ":";
         ld_library_path += game_dir;
     }
     setenv("BOX64_LD_LIBRARY_PATH", ld_library_path.c_str(), 1);
     
-    // OpenGL settings for gl4es (匹配 dotnet 的 RendererConfig.addGl4esEnv)
-    setenv("LIBGL_ES", "3", 1);         // 使用 ES3 后端（和 dotnet 一样）
-    setenv("LIBGL_GL", "21", 1);        // 模拟 OpenGL 2.1
-    setenv("LIBGL_MIPMAP", "3", 1);
-    setenv("LIBGL_NORMALIZE", "1", 1);
-    setenv("LIBGL_NOINTOVLHACK", "1", 1);
-    setenv("LIBGL_NOERROR", "1", 1);    // 忽略 GL 错误，避免崩溃
-    setenv("LIBGL_FB", "1", 1);         // 调试：显示帧缓冲信息
+    // SDL Audio - 强制使用 Android 音频驱动，禁用 ALSA
+    setenv("SDL_AUDIODRIVER", "android", 1);
+    setenv("SDL_AUDIO_ALSA", "0", 1);  // 禁用 ALSA
     
-    // Tell Box64 to use gl4es for OpenGL
-    setenv("BOX64_LIBGL", "libGL_gl4es.so", 1);
+    // SDL 输入设置 - 确保触摸事件正确转换为鼠标事件
+    setenv("SDL_MOUSE_TOUCH_EVENTS", "1", 1);
+    setenv("SDL_TOUCH_MOUSE_EVENTS", "1", 1);
+    setenv("SDL_VIDEO_X11_MOUSEACCEL", "0", 1);
     
-    // Tell SDL/FNA3D to use gl4es renderer (和 dotnet 一样使用 RALCORE_RENDERER)
-    setenv("RALCORE_RENDERER", "gl4es", 1);
-    setenv("SDL_RENDERER", "gl4es", 1);
-    setenv("FNA3D_OPENGL_DRIVER", "gl4es", 1);
+    // FMOD 音频 - 禁用 ALSA，使用 SDL
+    setenv("FMOD_FORCEFMOD_AUDIOAPI", "0", 1);
     
-    // Locale settings - 使用 C locale 避免问题
-    setlocale(LC_ALL, "C");
-    setenv("LC_ALL", "C", 1);
-    setenv("LANG", "C", 1);
+    // Locale - UTF-8 支持中文
+    setlocale(LC_ALL, "C.UTF-8");
+    setenv("LC_ALL", "C.UTF-8", 1);
+    setenv("LANG", "C.UTF-8", 1);
+    setenv("LC_CTYPE", "C.UTF-8", 1);
     
-    LOGI("Box64 environment configured:");
-    LOGI("  BOX64_LD_LIBRARY_PATH=%s", ld_library_path.c_str());
-    LOGI("  LIBGL_ES=%s", getenv("LIBGL_ES"));
-    LOGI("  LIBGL_GL=%s", getenv("LIBGL_GL"));
-    LOGI("  LIBGL_NOERROR=%s", getenv("LIBGL_NOERROR"));
-    LOGI("  RALCORE_RENDERER=%s", getenv("RALCORE_RENDERER"));
-    LOGI("  BOX64_LIBGL=%s", getenv("BOX64_LIBGL"));
+    LOGI("Box64 environment configured");
 }
 
 /**
@@ -122,14 +110,15 @@ Java_com_app_ralaunch_box64_Box64Helper_runBox64InProcess(
     jobjectArray jargs,
     jstring jworkDir
 ) {
-    // ===== 设置 C++ 全局 locale =====
+    // 设置 C++ locale
     try {
-        std::locale::global(std::locale::classic());
+        try {
+            std::locale::global(std::locale("C.UTF-8"));
+        } catch (...) {
+            std::locale::global(std::locale::classic());
+        }
         std::ios::sync_with_stdio(false);
-        LOGI("C++ global locale set to classic (\"C\")");
-    } catch (...) {
-        LOGW("Failed to set C++ global locale, continuing anyway...");
-    }
+    } catch (...) {}
     
     int argc = env->GetArrayLength(jargs);
     if (argc == 0) {
@@ -144,18 +133,14 @@ Java_com_app_ralaunch_box64_Box64Helper_runBox64InProcess(
         env->ReleaseStringUTFChars(jworkDir, workDirCStr);
     }
     
-    LOGI("========================================");
-    LOGI("Box64 Direct Launcher (based on box64droid)");
-    LOGI("========================================");
-    LOGI("Running Box64 in process with %d game arguments", argc);
+    LOGI("Box64 Launcher starting");
     
     // 切换工作目录
     if (!workDir.empty()) {
         if (chdir(workDir.c_str()) != 0) {
-            LOGE("Failed to change directory to: %s, error: %s", workDir.c_str(), strerror(errno));
+            LOGE("Failed to chdir: %s", workDir.c_str());
             return -1;
         }
-        LOGI("Working directory: %s", workDir.c_str());
     }
     
     // Get rootfs path
@@ -178,7 +163,6 @@ Java_com_app_ralaunch_box64_Box64Helper_runBox64InProcess(
         const char* str = env->GetStringUTFChars(jstr, nullptr);
         game_args.push_back(str);
         total_len += game_args[i].length() + 1;
-        LOGI("Game arg[%d] = %s", i, game_args[i].c_str());
         env->ReleaseStringUTFChars(jstr, str);
         env->DeleteLocalRef(jstr);
     }
@@ -215,29 +199,16 @@ Java_com_app_ralaunch_box64_Box64Helper_runBox64InProcess(
     }
     filtered_env.push_back(nullptr);
     
-    LOGI("Running Box64 with %d arguments:", argc + 1);
-    for (int i = 0; i <= argc; i++) {
-        if (argv[i]) {
-            LOGI("  argv[%d] = %s", i, argv[i]);
-        }
-    }
-    LOGI("Filtered env count: %zu", filtered_env.size() - 1);
     
-    // ===== 设置 glibc_bridge 钩子 =====
-    // 这样 Box64 的包装库就能使用 glibc_bridge 来重定向原生库加载
-    // (SDL2 -> libSDL2.so, libGL.so -> libGL_gl4es.so, etc.)
-    LOGI("Setting up glibc_bridge hooks for Box64...");
+    // 设置 glibc_bridge rootfs 路径
+    strncpy(g_glibc_root, rootfs_path, sizeof(g_glibc_root) - 1);
+    g_glibc_root[sizeof(g_glibc_root) - 1] = '\0';
+    
+    // 设置 glibc_bridge 钩子
     box64_set_glibc_bridge_hooks(glibc_bridge_dlopen_for_box64, glibc_bridge_dlsym_for_box64);
-    LOGI("glibc_bridge hooks installed");
     
-    LOGI("========================================");
-    LOGI("Calling Box64 main function...");
-    LOGI("========================================");
-    
-    // 直接调用 Box64 的 main 函数
+    // 调用 Box64 main
     int result = main(argc + 1, argv, filtered_env.data());
-    
-    LOGI("Box64 main returned: %d", result);
     
     // 清理内存
     delete[] string_block;

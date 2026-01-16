@@ -77,6 +77,16 @@ public class SDLAudioManager {
         int frameSize;
 
         Log.v(TAG, "Opening " + (isCapture ? "capture" : "playback") + ", requested " + desiredFrames + " frames of " + desiredChannels + " channel " + getAudioFormatString(audioFormat) + " audio at " + sampleRate + " Hz");
+        
+        // Get native sample rate for better audio quality
+        if (!isCapture && mContext != null && Build.VERSION.SDK_INT >= 17 /* Android 4.2 (JELLY_BEAN_MR1) */) {
+            AudioManager am = (AudioManager) mContext.getSystemService(Context.AUDIO_SERVICE);
+            String nativeSampleRateStr = am.getProperty(AudioManager.PROPERTY_OUTPUT_SAMPLE_RATE);
+            if (nativeSampleRateStr != null) {
+                int nativeSampleRate = Integer.parseInt(nativeSampleRateStr);
+                Log.v(TAG, "Device native sample rate: " + nativeSampleRate + " Hz, requested: " + sampleRate + " Hz");
+            }
+        }
 
         /* On older devices let's use known good settings */
         if (Build.VERSION.SDK_INT < 21 /* Android 5.0 (LOLLIPOP) */) {
@@ -221,6 +231,11 @@ public class SDLAudioManager {
             minBufferSize = AudioTrack.getMinBufferSize(sampleRate, channelConfig, audioFormat);
         }
         desiredFrames = Math.max(desiredFrames, (minBufferSize + frameSize - 1) / frameSize);
+        
+        // Increase buffer size to reduce audio glitches/crackling on Android
+        // Especially important for emulated games that may have timing variations
+        desiredFrames = Math.max(desiredFrames, 4096);
+        Log.v(TAG, "Using buffer size: " + desiredFrames + " frames (min was " + ((minBufferSize + frameSize - 1) / frameSize) + ")");
 
         int[] results = new int[4];
 
@@ -250,7 +265,42 @@ public class SDLAudioManager {
 
         } else {
             if (mAudioTrack == null) {
-                mAudioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, sampleRate, channelConfig, audioFormat, desiredFrames * frameSize, AudioTrack.MODE_STREAM);
+                int bufferSizeInBytes = desiredFrames * frameSize;
+                
+                // Use modern AudioTrack.Builder API for better performance on Android 5.0+
+                if (Build.VERSION.SDK_INT >= 21 /* Android 5.0 (LOLLIPOP) */) {
+                    try {
+                        android.media.AudioAttributes audioAttributes = new android.media.AudioAttributes.Builder()
+                                .setUsage(android.media.AudioAttributes.USAGE_GAME)
+                                .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                                .build();
+                        
+                        AudioFormat audioFormatObj = new AudioFormat.Builder()
+                                .setSampleRate(sampleRate)
+                                .setEncoding(audioFormat)
+                                .setChannelMask(channelConfig)
+                                .build();
+                        
+                        AudioTrack.Builder builder = new AudioTrack.Builder()
+                                .setAudioAttributes(audioAttributes)
+                                .setAudioFormat(audioFormatObj)
+                                .setBufferSizeInBytes(bufferSizeInBytes)
+                                .setTransferMode(AudioTrack.MODE_STREAM);
+                        
+                        // Set performance mode for lower latency on Android 8.0+
+                        if (Build.VERSION.SDK_INT >= 26 /* Android 8.0 (O) */) {
+                            builder.setPerformanceMode(AudioTrack.PERFORMANCE_MODE_LOW_LATENCY);
+                        }
+                        
+                        mAudioTrack = builder.build();
+                        Log.v(TAG, "Created AudioTrack using Builder API (SDK " + Build.VERSION.SDK_INT + ")");
+                    } catch (Exception e) {
+                        Log.e(TAG, "Failed to create AudioTrack with Builder, falling back to legacy: " + e.getMessage());
+                        mAudioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, sampleRate, channelConfig, audioFormat, bufferSizeInBytes, AudioTrack.MODE_STREAM);
+                    }
+                } else {
+                    mAudioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, sampleRate, channelConfig, audioFormat, bufferSizeInBytes, AudioTrack.MODE_STREAM);
+                }
 
                 // Instantiating AudioTrack can "succeed" without an exception and the track may still be invalid
                 // Ref: https://android.googlesource.com/platform/frameworks/base/+/refs/heads/master/media/java/android/media/AudioTrack.java

@@ -49,10 +49,15 @@ class GameInstaller(private val context: Context) {
         
         // 检测游戏类型
         val detectResult = plugin.detectGame(gameFile)
-        val isBox64Game = detectResult?.gameType == "starbound" || plugin.pluginId == "starbound"
+        
+        // Box64 游戏列表 - 需要安装到内部存储以获得执行权限和避免 SELinux 限制
+        val box64GameTypes = setOf("starbound", "dontstarve", "dont_starve")
+        val box64PluginIds = setOf("starbound", "dontstarve")
+        
+        val isBox64Game = detectResult?.gameType in box64GameTypes || plugin.pluginId in box64PluginIds
         
         // 创建游戏目录
-        // Box64 游戏需要安装到内部存储以获得执行权限
+        // Box64 游戏需要安装到内部存储以获得执行权限和避免 FMOD/ALSA 的 SELinux 限制
         val gamesDir = if (isBox64Game) {
             File(context.filesDir, GAMES_DIR)
         } else {

@@ -19,6 +19,9 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <elf.h>
+#ifdef __ANDROID__
+#include <android/log.h>
+#endif
 
 #include "glibc_bridge_private.h"
 
@@ -939,18 +942,20 @@ static int load_elf_shlib(const char* path, shared_lib_t* lib) {
     if (fd < 0) {
         snprintf(buf, sizeof(buf), "[SHLIB] Cannot open: %s\n", path);
         shlib_log(buf);
+
         return -1;
     }
-    
+
     /* Read ELF header */
     Elf64_Ehdr ehdr;
     if (read(fd, &ehdr, sizeof(ehdr)) != sizeof(ehdr)) {
         snprintf(buf, sizeof(buf), "[SHLIB] Failed to read ELF header: %s\n", path);
         shlib_log(buf);
+
         close(fd);
         return -1;
     }
-    
+
     /* Verify ELF */
     if (memcmp(ehdr.e_ident, ELFMAG, SELFMAG) != 0 ||
         ehdr.e_ident[EI_CLASS] != ELFCLASS64 ||
@@ -958,6 +963,7 @@ static int load_elf_shlib(const char* path, shared_lib_t* lib) {
         ehdr.e_type != ET_DYN) {
         snprintf(buf, sizeof(buf), "[SHLIB] Not a valid ARM64 shared library: %s\n", path);
         shlib_log(buf);
+
         close(fd);
         return -1;
     }
@@ -1588,11 +1594,19 @@ static int find_library_path(const char* name, char* out_path, size_t out_size) 
 int glibc_bridge_load_shared_lib(const char* name, const char* search_path) {
     char buf[256];
     
+
+    
     /* Skip stub libraries - they use wrappers */
-    if (is_stub_library(name)) return 0;
+    if (is_stub_library(name)) {
+
+        return 0;
+    }
     
     /* Check if already loaded */
-    if (find_shared_lib(name)) return 0;
+    if (find_shared_lib(name)) {
+
+        return 0;
+    }
     
     /* Check ICU redirects */
     const char* basename = strrchr(name, '/');
@@ -1605,6 +1619,7 @@ int glibc_bridge_load_shared_lib(const char* name, const char* search_path) {
     
     if (g_shared_lib_count >= MAX_SHARED_LIBS) {
         shlib_log("[SHLIB] Too many shared libraries\n");
+
         return -1;
     }
     
@@ -1613,15 +1628,20 @@ int glibc_bridge_load_shared_lib(const char* name, const char* search_path) {
     if (!find_library_path_ex(name, search_path, full_path, sizeof(full_path))) {
         snprintf(buf, sizeof(buf), "[SHLIB] Library not found: %s\n", name);
         shlib_log(buf);
+
         return -1;
     }
+    
+
     
     shared_lib_t* lib = &g_shared_libs[g_shared_lib_count];
     memset(lib, 0, sizeof(*lib));
     
-    if (load_elf_shlib(full_path, lib) != 0) {
+    int elf_result = load_elf_shlib(full_path, lib);
+    if (elf_result != 0) {
         snprintf(buf, sizeof(buf), "[SHLIB] Failed to load: %s\n", full_path);
         shlib_log(buf);
+
         return -1;
     }
     
@@ -1718,6 +1738,7 @@ void* glibc_bridge_dlopen_glibc_lib(const char* path) {
     const char* libname = strrchr(path, '/');
     libname = libname ? libname + 1 : path;
 
+
     /* Check if this is a stub library FIRST
      * Stub libraries are provided by glibc-bridge wrappers, no need to load ELF */
     if (is_stub_library(libname)) {
@@ -1748,11 +1769,15 @@ void* glibc_bridge_dlopen_glibc_lib(const char* path) {
         }
     }
 
+
+
     snprintf(buf, sizeof(buf), "[DLOPEN] Loading %s\n", libname);
     shlib_log(buf);
 
     /* 加载库及其依赖项 */
-    if (glibc_bridge_load_shared_lib(libname, search_path) != 0) {
+    int load_result = glibc_bridge_load_shared_lib(libname, search_path);
+
+    if (load_result != 0) {
         snprintf(buf, sizeof(buf), "[DLOPEN] Failed to load %s\n", libname);
         shlib_log(buf);
         return NULL;

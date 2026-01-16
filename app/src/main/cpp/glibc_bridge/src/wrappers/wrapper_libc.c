@@ -1781,13 +1781,52 @@ void* dlopen_wrapper(const char* filename, int flags) {
         char full_path[512];
         const char* path_to_load = filename;
         
+#ifdef __ANDROID__
+        /* Debug: print g_glibc_root and search attempts */
+        __android_log_print(ANDROID_LOG_INFO, "GLIBC_BRIDGE_DLOPEN", 
+            "Searching for '%s', g_glibc_root='%s'", filename, g_glibc_root);
+#endif
+        
         if (filename[0] != '/') {
-            /* Relative path - search in glibc root */
+            /* Relative path - search in glibc root subdirectories */
             if (g_glibc_root[0]) {
-                snprintf(full_path, sizeof(full_path), "%s/lib/%s", g_glibc_root, filename);
-                if (access(full_path, R_OK) == 0) {
-                    path_to_load = full_path;
+                /* Search in multiple library directories (multiarch support) */
+                static const char* lib_subdirs[] = {
+                    "usr/lib/aarch64-linux-gnu",  /* Debian multiarch - primary for ARM64 native libs */
+                    "lib/aarch64-linux-gnu",      /* Debian multiarch /lib */
+                    "lib",                        /* Standard /lib */
+                    "usr/lib",                    /* Standard /usr/lib */
+                    NULL
+                };
+                int found = 0;
+                for (const char** subdir = lib_subdirs; *subdir; subdir++) {
+                    snprintf(full_path, sizeof(full_path), "%s/%s/%s", g_glibc_root, *subdir, filename);
+                    int acc_result = access(full_path, R_OK);
+#ifdef __ANDROID__
+                    __android_log_print(ANDROID_LOG_DEBUG, "GLIBC_BRIDGE_DLOPEN", 
+                        "Trying path: %s -> access=%d", full_path, acc_result);
+#endif
+                    if (acc_result == 0) {
+                        path_to_load = full_path;
+                        found = 1;
+#ifdef __ANDROID__
+                        __android_log_print(ANDROID_LOG_INFO, "GLIBC_BRIDGE_DLOPEN", 
+                            "Found lib in %s: %s", *subdir, full_path);
+#endif
+                        break;
+                    }
                 }
+#ifdef __ANDROID__
+                if (!found) {
+                    __android_log_print(ANDROID_LOG_WARN, "GLIBC_BRIDGE_DLOPEN", 
+                        "Library %s not found in any rootfs subdirectory", filename);
+                }
+#endif
+            } else {
+#ifdef __ANDROID__
+                __android_log_print(ANDROID_LOG_WARN, "GLIBC_BRIDGE_DLOPEN", 
+                    "g_glibc_root is empty, cannot search for %s", filename);
+#endif
             }
         } else if (g_glibc_root[0]) {
             /* Absolute path - translate paths like /tmp, /usr, /lib to glibc_root */
@@ -1816,7 +1855,15 @@ void* dlopen_wrapper(const char* filename, int flags) {
         }
         
         /* Try to load as glibc library with full dlopen support */
+#ifdef __ANDROID__
+        __android_log_print(ANDROID_LOG_INFO, "GLIBC_BRIDGE_DLOPEN", 
+            "Calling glibc_bridge_dlopen_glibc_lib('%s')", path_to_load);
+#endif
         void* handle = glibc_bridge_dlopen_glibc_lib(path_to_load);
+#ifdef __ANDROID__
+        __android_log_print(ANDROID_LOG_INFO, "GLIBC_BRIDGE_DLOPEN", 
+            "glibc_bridge_dlopen_glibc_lib returned: %p", handle);
+#endif
         if (handle) {
             /* Log the returned handle to stderr for debugging */
             {
@@ -1826,13 +1873,16 @@ void* dlopen_wrapper(const char* filename, int flags) {
                 write(STDERR_FILENO, buf, strlen(buf));
             }
 #ifdef __ANDROID__
-            if (glibc_bridge_dl_get_log_level() >= GLIBC_BRIDGE_DL_LOG_DEBUG) {
-                __android_log_print(ANDROID_LOG_DEBUG, "GLIBC_BRIDGE_DLOPEN",
-                    "Loaded as glibc lib: %s -> handle %p", path_to_load, handle);
-            }
+            __android_log_print(ANDROID_LOG_INFO, "GLIBC_BRIDGE_DLOPEN",
+                "Successfully loaded as glibc lib: %s -> handle %p", path_to_load, handle);
 #endif
             CLEAR_WRAPPER();
             return handle;
+        } else {
+#ifdef __ANDROID__
+            __android_log_print(ANDROID_LOG_WARN, "GLIBC_BRIDGE_DLOPEN", 
+                "glibc_bridge_dlopen_glibc_lib failed for '%s'", path_to_load);
+#endif
         }
     }
     
@@ -1993,10 +2043,7 @@ void* dlsym_wrapper(void* handle, const char* symbol) {
         write(STDERR_FILENO, buf, strlen(buf));
     }
 
-#ifdef __ANDROID__
-    __android_log_print(ANDROID_LOG_DEBUG, "GLIBC_BRIDGE_DLSYM",
-        "dlsym(handle=%p, symbol='%s')", handle, symbol ? symbol : "(null)");
-#endif
+
 
     /* Check if handle is glibc's RTLD_DEFAULT or RTLD_NEXT or dlopen(NULL) result */
     int is_default = (handle == GLIBC_RTLD_DEFAULT || handle == RTLD_DEFAULT || handle == NULL);
@@ -2034,10 +2081,7 @@ void* dlsym_wrapper(void* handle, const char* symbol) {
             write(STDERR_FILENO, buf, strlen(buf));
         }
 
-#ifdef __ANDROID__
-        __android_log_print(ANDROID_LOG_DEBUG, "GLIBC_BRIDGE_DLSYM",
-            "  glibc handle -> %p", result);
-#endif
+
         CLEAR_WRAPPER();
         return result;
     }

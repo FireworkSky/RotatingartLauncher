@@ -65,6 +65,11 @@ object GameLauncher {
                 return -1
             }
             
+            // 应用渲染器环境变量（必须在 Box64 启动前设置）
+            AppLogger.debug(TAG, "Applying renderer environment...")
+            RendererConfig.applyRendererEnvironment(context)
+            AppLogger.debug(TAG, "Renderer environment applied: OK")
+            
             // 初始化 SDL JNI 环境（传入 Context 给 SDL 音频系统使用）
             initializeSDLJNI(context)
             

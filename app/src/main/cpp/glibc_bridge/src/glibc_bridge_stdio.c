@@ -207,13 +207,12 @@ FILE* glibc_bridge_get_bionic_fp(void* glibc_fp) {
     pthread_mutex_unlock(&g_file_mutex);
     
     /* For pointers not in our mapping, check if address looks valid before dereferencing */
-    /* On Android/ARM64, user space is typically 0x0000007... range */
+    /* On Android/ARM64, MTE (Memory Tagging Extension) uses high bits as memory tags */
+    /* Real address is in lower 48 bits, high 8 bits may be MTE tags (e.g., 0xb4...) */
     uintptr_t addr = (uintptr_t)glibc_fp;
-    if (addr < 0x100000 || addr > 0x7FFFFFFFFFFFULL) {
-#ifdef __ANDROID__
-        __android_log_print(ANDROID_LOG_WARN, "GLIBC_BRIDGE_STDIO", 
-            "Suspicious FILE* %p (out of range), returning as-is", glibc_fp);
-#endif
+    uintptr_t real_addr = addr & 0x0000FFFFFFFFFFFFULL;  /* Mask off top 16 bits for MTE tags */
+    if (real_addr < 0x100000) {
+        /* Address too low - likely invalid */
         return (FILE*)glibc_fp;
     }
     

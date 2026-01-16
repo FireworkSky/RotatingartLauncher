@@ -15,6 +15,7 @@ object InstallPluginRegistry {
         registerPlugin(TerrariaInstallPlugin())
         registerPlugin(SmapiInstallPlugin())
         registerPlugin(StarboundInstallPlugin()) // Box64 x86_64 Linux游戏
+        registerPlugin(DontStarveInstallPlugin()) // 饥荒 - Box64 x86_64 Linux游戏
     }
     
     /**

@@ -248,12 +248,12 @@ SDL_bool Android_LoadRenderer(const char *renderer_name)
         setenv("LIBGL_MIPMAP", "3", 0);     /* 启用 mipmap (不覆盖) */
         setenv("LIBGL_NPOT", "1", 0);       /* 支持非 2 的幂次纹理 (不覆盖) */
         setenv("LIBGL_SHRINKPOP", "0", 0);  /* 禁用纹理缩小 (不覆盖) */
-        LOGI("  ✓ gl4es environment configured (LIBGL_ES=%s)", 
+        LOGI("  ✓ gl4es environment configured (LIBGL_ES=%s)",
              SDL_getenv("LIBGL_ES") ? SDL_getenv("LIBGL_ES") : "not set");
     }
 
     current_renderer = backend;
-    LOGI("✅ Renderer '%s' loaded successfully", backend->name);
+    LOGI(" Renderer '%s' loaded successfully", backend->name);
     LOGI("================================================================");
 
     return SDL_TRUE;
@@ -281,8 +281,6 @@ SDL_bool Android_SetupGLFunctions(SDL_VideoDevice *device)
 
 
 
-    /* 其他渲染器使用标准 EGL 接口 */
-    LOGI("🎨 Using standard EGL interface");
     device->GL_LoadLibrary = Android_GLES_LoadLibrary;
     device->GL_GetProcAddress = Android_GLES_GetProcAddress;
     device->GL_UnloadLibrary = Android_GLES_UnloadLibrary;

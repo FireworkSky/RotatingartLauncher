@@ -334,14 +334,12 @@ object RendererConfig {
     private fun addGl4esEnv(envMap: MutableMap<String?, String?>) {
         envMap.apply {
             put("RALCORE_RENDERER", "gl4es")
-            // NG-GL4ES defaults to ES3 backend for better compatibility
             put("LIBGL_ES", "3")
             put("LIBGL_MIPMAP", "3")
             put("LIBGL_NORMALIZE", "1")
             put("LIBGL_NOINTOVLHACK", "1")
             put("LIBGL_NOERROR", "1")
-            put("LIBGL_EGL", null) // Unset to avoid conflicts
-            put("LIBGL_GLES", null) // Unset to avoid conflicts
+           
         }
     }
 
@@ -353,8 +351,7 @@ object RendererConfig {
             put("LIBGL_NORMALIZE", "1")
             put("LIBGL_NOINTOVLHACK", "1")
             put("LIBGL_NOERROR", "1")
-            put("LIBGL_EGL", "libEGL_angle.so")
-            put("LIBGL_GLES", "libGLESv2_angle.so")
+           
         }
     }
 

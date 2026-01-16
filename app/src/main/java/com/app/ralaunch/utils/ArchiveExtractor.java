@@ -72,6 +72,35 @@ public class ArchiveExtractor {
                     if (!targetFile.exists()) {
                         targetFile.mkdirs();
                     }
+                } else if (entry.isSymbolicLink()) {
+                    // 处理符号链接
+                    File parent = targetFile.getParentFile();
+                    if (parent != null && !parent.exists()) {
+                        parent.mkdirs();
+                    }
+                    
+                    // 删除已存在的文件/链接
+                    if (targetFile.exists()) {
+                        targetFile.delete();
+                    }
+                    
+                    // 创建符号链接
+                    String linkTarget = entry.getLinkName();
+                    try {
+                        android.system.Os.symlink(linkTarget, targetFile.getAbsolutePath());
+                    } catch (Exception e) {
+                        // 如果符号链接创建失败，尝试复制目标文件
+                        AppLogger.warn(TAG, "Failed to create symlink: " + e.getMessage());
+                        File linkTargetFile = new File(parent, linkTarget);
+                        if (linkTargetFile.exists()) {
+                            try {
+                                java.nio.file.Files.copy(linkTargetFile.toPath(), targetFile.toPath(), 
+                                    java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                            } catch (Exception copyEx) {
+                                AppLogger.warn(TAG, "Failed to copy symlink target: " + copyEx.getMessage());
+                            }
+                        }
+                    }
                 } else {
                     // 创建父目录
                     File parent = targetFile.getParentFile();
