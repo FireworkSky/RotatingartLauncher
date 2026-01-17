@@ -320,6 +320,12 @@
     <string name="fna_map_buffer_range_opt_enabled">MapBufferRange optimization enabled</string>
     <string name="fna_map_buffer_range_opt_disabled">MapBufferRange optimization disabled</string>
 
+    <!-- Audio Settings -->
+    <string name="low_latency_audio">Low Latency Audio</string>
+    <string name="low_latency_audio_desc">Enable AAudio low latency mode (may reduce audio latency, but may increase power consumption. Warning: This option may cause audio to stop working)</string>
+    <string name="low_latency_audio_enabled">Low latency audio enabled</string>
+    <string name="low_latency_audio_disabled">Low latency audio disabled</string>
+
     <!-- Control Edit Dialog -->
     <string name="control_edit_close">Close</string>
     <string name="control_edit_save">Save</string>
@@ -806,6 +812,10 @@
     <string name="settings_control_opacity_desc">Adjust the opacity of on-screen gamepad (Not Implemented)</string>
     <string name="settings_vibration">Vibration Feedback</string>
     <string name="settings_vibration_desc">Provide vibration feedback when pressing keys</string>
+
+    <string name="virtual_controller_as_first">Virtual Controller as First Controller</string>
+    <string name="virtual_controller_as_first_desc">Register virtual controller as the first controller (some games only recognize the first controller)</string>
+
     <string name="settings_virtual_controller_vibration">Virtual Controller Vibration</string>
     <string name="settings_virtual_controller_vibration_desc">Enable vibration feedback for virtual controller</string>
     <string name="settings_virtual_controller_vibration_intensity">Virtual Controller Vibration Intensity</string>

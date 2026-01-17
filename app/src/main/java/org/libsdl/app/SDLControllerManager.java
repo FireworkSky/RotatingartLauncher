@@ -554,6 +554,22 @@ class SDLJoyStickHandler_API19_VirtualJoystick extends SDLJoystickHandler_API19 
 
     @Override
     public void pollInputDevices() {
+        // Check if virtual controller should be registered as first controller
+        boolean asFirst = false; // default to false
+        try {
+            com.app.ralaunch.data.SettingsManager settingsManager = 
+                com.app.ralaunch.data.SettingsManager.getInstance();
+            asFirst = settingsManager.isVirtualControllerAsFirst();
+        } catch (Exception e) {
+            // If SettingsManager is not available, use default
+        }
+        
+        // Register virtual Xbox controller first if setting is enabled
+        // Well we do this because some game only recognize first controller connected
+        if (asFirst) {
+            registerVirtualControllerOnce();
+        }
+        
         // Process physical joysticks
         int[] deviceIds = InputDevice.getDeviceIds();
         for (int device_id : deviceIds) {
@@ -646,9 +662,10 @@ class SDLJoyStickHandler_API19_VirtualJoystick extends SDLJoystickHandler_API19 
             }
         }
 
-        // Register virtual Xbox controller on first poll
-        // Well we do this because some game only recognize first controller connected
-        registerVirtualControllerOnce();
+        // Register virtual Xbox controller after physical controllers if setting is disabled
+        if (!asFirst) {
+            registerVirtualControllerOnce();
+        }
     }
 
     private void registerVirtualControllerOnce() {

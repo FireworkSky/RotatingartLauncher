@@ -319,6 +319,12 @@
     <string name="fna_map_buffer_range_opt_enabled">MapBufferRange 优化已启用</string>
     <string name="fna_map_buffer_range_opt_disabled">MapBufferRange 优化已禁用</string>
 
+    <!-- 音频设置 -->
+    <string name="low_latency_audio">低延迟音频</string>
+    <string name="low_latency_audio_desc">启用 AAudio 低延迟模式（可能改善音频延迟，但可能增加功耗。警告：此选项可能导致音频无法正常工作）</string>
+    <string name="low_latency_audio_enabled">低延迟音频已启用</string>
+    <string name="low_latency_audio_disabled">低延迟音频已禁用</string>
+
     <!-- 控件编辑对话框 -->
     <string name="control_edit_close">关闭</string>
     <string name="control_edit_save">保存</string>
@@ -812,6 +818,9 @@
     <string name="settings_control_opacity_desc">调整屏幕手柄的透明度(未实现)</string>
     <string name="settings_vibration">振动反馈</string>
     <string name="settings_vibration_desc">按键时提供振动反馈</string>
+
+    <string name="virtual_controller_as_first">虚拟手柄作为第一个控制器</string>
+    <string name="virtual_controller_as_first_desc">将虚拟手柄注册为第一个控制器（某些游戏只识别第一个控制器）</string>
     <string name="settings_virtual_controller_vibration">虚拟手柄振动</string>
     <string name="settings_virtual_controller_vibration_desc">启用虚拟手柄的振动反馈</string>
     <string name="settings_virtual_controller_vibration_intensity">虚拟手柄振动强度</string>

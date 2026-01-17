@@ -116,7 +116,15 @@ static int aaudio_OpenDevice(_THIS, const char *devname)
     }
 
     ctx.AAudioStreamBuilder_setErrorCallback(ctx.builder, aaudio_errorCallback, private);
-//    ctx.AAudioStreamBuilder_setPerformanceMode(ctx.builder, AAUDIO_PERFORMANCE_MODE_LOW_LATENCY);
+
+    /* Check environment variable for low latency mode */
+    {
+        const char *lowLatencyEnv = SDL_getenv("SDL_AAUDIO_LOW_LATENCY");
+        if (lowLatencyEnv && SDL_strcmp(lowLatencyEnv, "1") == 0) {
+            ctx.AAudioStreamBuilder_setPerformanceMode(ctx.builder, AAUDIO_PERFORMANCE_MODE_LOW_LATENCY);
+            LOGI("AAudio low latency mode enabled via SDL_AAUDIO_LOW_LATENCY");
+        }
+    }
 
     LOGI("AAudio Try to open %u hz %u bit chan %u %s samples %u",
          this->spec.freq, SDL_AUDIO_BITSIZE(this->spec.format),
@@ -239,7 +247,15 @@ static int RebuildAAudioStream(SDL_AudioDevice *device)
     }
 
     ctx.AAudioStreamBuilder_setErrorCallback(ctx.builder, aaudio_errorCallback, hidden);
-//    ctx.AAudioStreamBuilder_setPerformanceMode(ctx.builder, AAUDIO_PERFORMANCE_MODE_LOW_LATENCY);
+
+    /* Check environment variable for low latency mode */
+    {
+        const char *lowLatencyEnv = SDL_getenv("SDL_AAUDIO_LOW_LATENCY");
+        if (lowLatencyEnv && SDL_strcmp(lowLatencyEnv, "1") == 0) {
+            ctx.AAudioStreamBuilder_setPerformanceMode(ctx.builder, AAUDIO_PERFORMANCE_MODE_LOW_LATENCY);
+            LOGI("AAudio low latency mode enabled via SDL_AAUDIO_LOW_LATENCY");
+        }
+    }
 
     LOGI("AAudio Try to reopen %u hz %u bit chan %u %s samples %u",
          device->spec.freq, SDL_AUDIO_BITSIZE(device->spec.format),

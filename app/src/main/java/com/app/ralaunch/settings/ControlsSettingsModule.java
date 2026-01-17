@@ -27,6 +27,7 @@ public class ControlsSettingsModule implements SettingsModule {
 
         setupControlOpacitySettings();
         setupVibrationSettings();
+        setupVirtualControllerAsFirstSettings();
         setupVirtualControllerVibrationSettings();
     }
 
@@ -62,6 +63,17 @@ public class ControlsSettingsModule implements SettingsModule {
             switchVibration.setChecked(vibrationEnabled);
             switchVibration.setOnCheckedChangeListener((buttonView, isChecked) -> {
                 settingsManager.setVibrationEnabled(isChecked);
+            });
+        }
+    }
+
+    private void setupVirtualControllerAsFirstSettings() {
+        MaterialSwitch switchVirtualControllerAsFirst = rootView.findViewById(R.id.switchVirtualControllerAsFirst);
+        if (switchVirtualControllerAsFirst != null) {
+            boolean asFirst = settingsManager.isVirtualControllerAsFirst();
+            switchVirtualControllerAsFirst.setChecked(asFirst);
+            switchVirtualControllerAsFirst.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                settingsManager.setVirtualControllerAsFirst(isChecked);
             });
         }
     }

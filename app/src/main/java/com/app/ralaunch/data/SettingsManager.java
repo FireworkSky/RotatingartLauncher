@@ -54,6 +54,7 @@ public class SettingsManager {
         public static final String CONTROLS_VIBRATION_ENABLED = "controls_vibration_enabled";
         public static final String VIRTUAL_CONTROLLER_VIBRATION_ENABLED = "virtual_controller_vibration_enabled";
         public static final String VIRTUAL_CONTROLLER_VIBRATION_INTENSITY = "virtual_controller_vibration_intensity";
+        public static final String VIRTUAL_CONTROLLER_AS_FIRST = "virtual_controller_as_first"; // 虚拟手柄作为第一个控制器
         public static final String TOUCH_MULTITOUCH_ENABLED = "touch_multitouch_enabled"; // 多点触控模拟鼠标
         public static final String FPS_DISPLAY_ENABLED = "fps_display_enabled"; // FPS 显示开关
         public static final String FPS_DISPLAY_X = "fps_display_x"; // FPS 显示位置 X
@@ -93,6 +94,9 @@ public class SettingsManager {
         // 内存优化设置
         public static final String KILL_LAUNCHER_UI_AFTER_LAUNCH = "kill_launcher_ui_after_launch";
         
+        // 音频设置
+        public static final String SDL_AAUDIO_LOW_LATENCY = "sdl_aaudio_low_latency"; // 启用低延迟音频
+        
         // Box64设置 (用于运行x86_64 Linux游戏如Starbound)
         public static final String BOX64_ENABLED = "box64_enabled"; // 是否启用Box64模式
         public static final String BOX64_GAME_PATH = "box64_game_path"; // 游戏可执行文件路径
@@ -124,6 +128,7 @@ public class SettingsManager {
         public static final boolean CONTROLS_VIBRATION_ENABLED = true; // 默认开启振动反馈
         public static final boolean VIRTUAL_CONTROLLER_VIBRATION_ENABLED = false; // 默认关闭虚拟手柄振动
         public static final float VIRTUAL_CONTROLLER_VIBRATION_INTENSITY = 1.0f; // 默认振动强度100%
+        public static final boolean VIRTUAL_CONTROLLER_AS_FIRST = false; // 默认虚拟手柄不作为第一个控制器
         public static final boolean TOUCH_MULTITOUCH_ENABLED = true; // 默认开启多点触控（不可更改）
         public static final boolean FPS_DISPLAY_ENABLED = false; // 默认关闭 FPS 显示
         public static final float FPS_DISPLAY_X = -1f; // 默认自动位置（跟随鼠标）
@@ -152,6 +157,9 @@ public class SettingsManager {
 
         // 内存优化默认值
         public static final boolean KILL_LAUNCHER_UI_AFTER_LAUNCH = false; // 默认不杀死启动器UI进程
+        
+        // 音频默认值
+        public static final boolean SDL_AAUDIO_LOW_LATENCY = false; // 默认关闭低延迟音频
         
         // Box64默认值
         public static final boolean BOX64_ENABLED = false; // 默认关闭Box64模式
@@ -406,6 +414,19 @@ public class SettingsManager {
         // Clamp intensity between 0.0 and 1.0
         float clampedIntensity = Math.max(0.0f, Math.min(1.0f, intensity));
         putFloat(Keys.VIRTUAL_CONTROLLER_VIBRATION_INTENSITY, clampedIntensity);
+    }
+
+    /**
+     * 是否将虚拟手柄作为第一个控制器
+     * 启用后：虚拟手柄将作为第一个控制器注册（某些游戏只识别第一个控制器）
+     * 禁用后：虚拟手柄将在物理控制器之后注册
+     */
+    public boolean isVirtualControllerAsFirst() {
+        return getBoolean(Keys.VIRTUAL_CONTROLLER_AS_FIRST, Defaults.VIRTUAL_CONTROLLER_AS_FIRST);
+    }
+
+    public void setVirtualControllerAsFirst(boolean enabled) {
+        putBoolean(Keys.VIRTUAL_CONTROLLER_AS_FIRST, enabled);
     }
 
     /**
@@ -670,6 +691,15 @@ public class SettingsManager {
 
     public void setKillLauncherUIAfterLaunch(boolean enabled) {
         putBoolean(Keys.KILL_LAUNCHER_UI_AFTER_LAUNCH, enabled);
+    }
+
+    // 音频设置
+    public boolean isSdlAaudioLowLatency() {
+        return getBoolean(Keys.SDL_AAUDIO_LOW_LATENCY, Defaults.SDL_AAUDIO_LOW_LATENCY);
+    }
+
+    public void setSdlAaudioLowLatency(boolean enabled) {
+        putBoolean(Keys.SDL_AAUDIO_LOW_LATENCY, enabled);
     }
 
     // ==================== Box64设置 ====================

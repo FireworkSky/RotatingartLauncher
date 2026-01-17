@@ -78,6 +78,12 @@ object GameLauncher {
             RendererConfig.applyRendererEnvironment(context)
             AppLogger.debug(TAG, "Renderer environment applied: OK")
             
+            // 设置音频环境变量
+            val settings = SettingsManager.getInstance()
+            EnvVarsManager.quickSetEnvVars(
+                "SDL_AAUDIO_LOW_LATENCY" to if (settings.isSdlAaudioLowLatency()) "1" else "0",
+            )
+            
             // 初始化 SDL JNI 环境（传入 Context 给 SDL 音频系统使用）
             initializeSDLJNI(context)
             
@@ -245,6 +251,9 @@ object GameLauncher {
                 "SDL_TOUCH_MOUSE_EVENTS" to "1",
                 "SDL_TOUCH_MOUSE_MULTITOUCH" to if (settings.isTouchMultitouchEnabled) "1" else "0",
                 "RALCORE_MOUSE_RIGHT_STICK" to if (settings.isMouseRightStickEnabled) "1" else null,
+
+                // 音频设置
+                "SDL_AAUDIO_LOW_LATENCY" to if (settings.isSdlAaudioLowLatency()) "1" else "0",
             )
             AppLogger.debug(TAG, "Game settings environment variables set: OK")
 

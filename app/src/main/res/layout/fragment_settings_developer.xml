@@ -702,6 +702,69 @@
 
             </com.google.android.material.card.MaterialCardView>
 
+            <!-- Low Latency Audio -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/lowLatencyAudioCard"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                app:cardCornerRadius="15dp"
+                app:cardElevation="2dp"
+                app:strokeWidth="0.5dp"
+                app:strokeColor="?attr/colorOutlineVariant"
+                app:cardBackgroundColor="?attr/colorSurfaceContainer"
+                style="@style/Widget.App.CardView.Standard">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:paddingHorizontal="16dp"
+                    android:paddingVertical="14dp">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_audio"
+                        app:tint="?attr/textPrimary"
+                        android:layout_marginEnd="16dp"
+                        android:contentDescription="@string/low_latency_audio" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/low_latency_audio"
+                            android:textColor="?attr/textPrimary"
+                            android:textSize="15sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/low_latency_audio_desc"
+                            android:textColor="?attr/textSecondary"
+                            android:textSize="12sp"
+                            android:layout_marginTop="2dp" />
+
+                    </LinearLayout>
+
+                    <com.google.android.material.materialswitch.MaterialSwitch
+                        android:id="@+id/switchLowLatencyAudio"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="16dp" />
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
             <!-- SteamCMD and Box64 removed -->
 
         </LinearLayout>

@@ -45,6 +45,7 @@ public class DeveloperSettingsModule implements SettingsModule {
         setupConcurrentGC();
         setupTieredCompilation();
         setupFnaMapBufferRangeOptimization();
+        setupLowLatencyAudio();
         setupForceReinstallPatches();
     }
     
@@ -284,6 +285,20 @@ public class DeveloperSettingsModule implements SettingsModule {
                 String message = isChecked ?
                         fragment.getString(R.string.fna_map_buffer_range_opt_enabled) :
                         fragment.getString(R.string.fna_map_buffer_range_opt_disabled);
+                Toast.makeText(fragment.requireContext(), message, Toast.LENGTH_SHORT).show();
+            });
+        }
+    }
+
+    private void setupLowLatencyAudio() {
+        MaterialSwitch switchLowLatencyAudio = rootView.findViewById(R.id.switchLowLatencyAudio);
+        if (switchLowLatencyAudio != null) {
+            switchLowLatencyAudio.setChecked(settingsManager.isSdlAaudioLowLatency());
+            switchLowLatencyAudio.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                settingsManager.setSdlAaudioLowLatency(isChecked);
+                String message = isChecked ?
+                        fragment.getString(R.string.low_latency_audio_enabled) :
+                        fragment.getString(R.string.low_latency_audio_disabled);
                 Toast.makeText(fragment.requireContext(), message, Toast.LENGTH_SHORT).show();
             });
         }
