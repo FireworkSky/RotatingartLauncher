@@ -47,6 +47,13 @@
                     android:paddingHorizontal="16dp"
                     android:paddingVertical="14dp">
 
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_palette"
+                        app:tint="?attr/textPrimary"
+                        android:layout_marginEnd="16dp" />
+
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
@@ -107,6 +114,13 @@
                     android:gravity="center_vertical"
                     android:paddingHorizontal="16dp"
                     android:paddingVertical="14dp">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_palette"
+                        app:tint="?attr/textPrimary"
+                        android:layout_marginEnd="16dp" />
 
                     <LinearLayout
                         android:layout_width="0dp"
@@ -178,6 +192,13 @@
                         android:background="?attr/selectableItemBackground"
                         android:paddingVertical="8dp">
 
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:src="@drawable/ic_wallpaper"
+                            app:tint="?attr/textPrimary"
+                            android:layout_marginEnd="16dp" />
+
                         <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
@@ -218,33 +239,33 @@
                         android:id="@+id/backgroundOpacityLayout"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="vertical"
                         android:layout_marginTop="16dp"
+                        android:orientation="vertical"
                         android:visibility="gone">
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:layout_marginBottom="4dp"
                             android:text="@string/settings_background_opacity"
                             android:textColor="?attr/textPrimary"
-                            android:textSize="13sp"
-                            android:layout_marginBottom="4dp" />
+                            android:textSize="13sp" />
 
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:orientation="horizontal"
-                            android:gravity="center_vertical">
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
 
                             <com.google.android.material.slider.Slider
                                 android:id="@+id/sliderBackgroundOpacity"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:valueFrom="0"
-                                android:valueTo="100"
                                 android:stepSize="1"
                                 android:value="75"
+                                android:valueFrom="0"
+                                android:valueTo="100"
                                 app:labelBehavior="gone" />
 
                             <TextView
@@ -252,12 +273,12 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginStart="12dp"
+                                android:gravity="end"
+                                android:minWidth="48dp"
                                 android:text="75%"
                                 android:textColor="?attr/colorPrimary"
                                 android:textSize="13sp"
-                                android:textStyle="bold"
-                                android:minWidth="48dp"
-                                android:gravity="end" />
+                                android:textStyle="bold" />
 
                         </LinearLayout>
 
@@ -269,15 +290,15 @@
                         android:id="@+id/videoSpeedLayout"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="vertical"
                         android:layout_marginTop="8dp"
+                        android:orientation="vertical"
                         android:visibility="gone">
 
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:orientation="horizontal"
-                            android:gravity="center_vertical">
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
 
                             <TextView
                                 android:layout_width="0dp"
@@ -291,12 +312,12 @@
                                 android:id="@+id/tvVideoSpeedValue"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
+                                android:gravity="end"
+                                android:minWidth="48dp"
                                 android:text="1.0x"
                                 android:textColor="?attr/colorPrimary"
                                 android:textSize="13sp"
-                                android:textStyle="bold"
-                                android:minWidth="48dp"
-                                android:gravity="end" />
+                                android:textStyle="bold" />
 
                         </LinearLayout>
 
@@ -304,10 +325,10 @@
                             android:id="@+id/sliderVideoSpeed"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:valueFrom="0.5"
-                            android:valueTo="2.0"
                             android:stepSize="0.1"
                             android:value="1.0"
+                            android:valueFrom="0.5"
+                            android:valueTo="2.0"
                             app:labelBehavior="gone" />
 
                     </LinearLayout>
@@ -339,6 +360,13 @@
                     android:gravity="center_vertical"
                     android:paddingHorizontal="16dp"
                     android:paddingVertical="14dp">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_refresh"
+                        app:tint="?attr/textPrimary"
+                        android:layout_marginEnd="16dp" />
 
                     <LinearLayout
                         android:layout_width="0dp"
@@ -391,6 +419,13 @@
                     android:gravity="center_vertical"
                     android:paddingHorizontal="16dp"
                     android:paddingVertical="14dp">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_language"
+                        app:tint="?attr/textPrimary"
+                        android:layout_marginEnd="16dp" />
 
                     <LinearLayout
                         android:layout_width="0dp"

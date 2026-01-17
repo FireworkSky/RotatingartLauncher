@@ -49,7 +49,7 @@
             android:padding="0dp"
             android:visibility="visible">
 
-            <include layout="@layout/fragment_settings_misc" />
+            <include layout="@layout/fragment_settings_appearance" />
 
         </androidx.core.widget.NestedScrollView>
 

@@ -47,6 +47,13 @@
                     android:paddingHorizontal="16dp"
                     android:paddingVertical="14dp">
 
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_3d"
+                        app:tint="?attr/textPrimary"
+                        android:layout_marginEnd="16dp" />
+
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
@@ -87,24 +94,31 @@
             <!-- Turnip Vulkan 驱动设置卡片（仅 Adreno GPU 显示） -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/turnipDriverCard"
+                style="@style/Widget.App.CardView.Standard"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="12dp"
                 android:visibility="gone"
+                app:cardBackgroundColor="?attr/colorSurfaceContainer"
                 app:cardCornerRadius="15dp"
                 app:cardElevation="2dp"
-                app:strokeWidth="0.5dp"
                 app:strokeColor="?attr/colorOutlineVariant"
-                app:cardBackgroundColor="?attr/colorSurfaceContainer"
-                style="@style/Widget.App.CardView.Standard">
+                app:strokeWidth="0.5dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
                     android:gravity="center_vertical"
+                    android:orientation="horizontal"
                     android:paddingHorizontal="16dp"
                     android:paddingVertical="14dp">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:layout_marginEnd="16dp"
+                        android:src="@drawable/ic_build"
+                        app:tint="?attr/textPrimary" />
 
                     <LinearLayout
                         android:layout_width="0dp"
@@ -123,10 +137,10 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
                             android:text="@string/vulkan_driver_turnip_desc"
                             android:textColor="?attr/textSecondary"
-                            android:textSize="12sp"
-                            android:layout_marginTop="2dp" />
+                            android:textSize="12sp" />
 
                     </LinearLayout>
 
@@ -163,6 +177,13 @@
                     android:gravity="center_vertical"
                     android:paddingHorizontal="16dp"
                     android:paddingVertical="14dp">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_keyboard"
+                        app:tint="?attr/textPrimary"
+                        android:layout_marginEnd="16dp" />
 
                     <LinearLayout
                         android:layout_width="0dp"
@@ -225,6 +246,13 @@
                     android:paddingHorizontal="16dp"
                     android:paddingVertical="14dp">
 
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_extension"
+                        app:tint="?attr/textPrimary"
+                        android:layout_marginEnd="16dp" />
+
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
@@ -249,12 +277,6 @@
 
                     </LinearLayout>
 
-                    <ImageView
-                        android:layout_width="20dp"
-                        android:layout_height="20dp"
-                        android:src="@drawable/ic_arrow_down"
-                        android:rotation="270"
-                        app:tint="?attr/textSecondary" />
 
                 </LinearLayout>
 
