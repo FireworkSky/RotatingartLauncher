@@ -537,7 +537,7 @@ public class AppearanceSettingsModule implements SettingsModule {
             rootView.findViewById(R.id.btnAfdian);
         if (btnAfdian != null) {
             btnAfdian.setOnClickListener(v -> {
-                openUrl("https://afdian.com/@rotatingart");
+                openUrl("https://afdian.com/a/RotatingartLauncher");
             });
         }
         
@@ -546,7 +546,7 @@ public class AppearanceSettingsModule implements SettingsModule {
             rootView.findViewById(R.id.btnPatreon);
         if (btnPatreon != null) {
             btnPatreon.setOnClickListener(v -> {
-                openUrl("https://patreon.com/rotatingart");
+                openUrl("https://www.patreon.com/cw/RotatingArtLauncher");
             });
         }
         
@@ -555,7 +555,7 @@ public class AppearanceSettingsModule implements SettingsModule {
             rootView.findViewById(R.id.btnDiscord);
         if (btnDiscord != null) {
             btnDiscord.setOnClickListener(v -> {
-                openUrl("https://discord.gg/rotatingart");
+                openUrl("https://discord.gg/DKrVtJ7CmG");
             });
         }
         
@@ -565,7 +565,7 @@ public class AppearanceSettingsModule implements SettingsModule {
         if (btnQQGroup != null) {
             btnQQGroup.setOnClickListener(v -> {
                 // QQ 群一键加群链接
-                openUrl("https://qm.qq.com/q/your_qq_group_key");
+                openUrl("https://qm.qq.com/cgi-bin/qm/qr?k=eYo8c3MoPtsPaF9GvsTHBGfkp_vtfun6&jump_from=webapi&authKey=HjTJ+pbFYwiUFuxhFeU/vNDQEszJ4KMcNxoAVICOm9UAkgw1IJpIvturitLKGtfN");
             });
         }
         
