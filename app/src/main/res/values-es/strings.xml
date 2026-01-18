@@ -1,0 +1,1348 @@
+<resources>
+    <string name="app_name">Rotating art Launcher</string>
+
+    <!-- Pantalla Principal -->
+    <string name="main_no_game_selected">No hay juego seleccionado</string>
+    <string name="main_select_game">Por favor selecciona un juego</string>
+    <string name="main_launch_game">Iniciar juego</string>
+    <string name="main_add_game">Añadir juego</string>
+    <string name="main_refresh">Actualizar</string>
+    <string name="main_settings">Configuración</string>
+    <string name="main_control_layout">Diseño de controles</string>
+    <string name="main_game_list_mode">Modo de lista de juegos</string>
+    <string name="main_refresh_complete">Lista de juegos actualizada</string>
+
+    <!-- Información del Juego -->
+    <string name="game_name">Nombre del juego</string>
+    <string name="game_description">Descripción</string>
+    <string name="game_path">Ruta del ensamblado</string>
+    <string name="game_save_path">Ruta de guardado</string>
+    <string name="game_path_saved">Ruta del ensamblado guardada</string>
+    <string name="game_path_empty">La ruta del ensamblado no puede estar vacía</string>
+    <string name="game_path_not_exist">Advertencia: El archivo no existe, pero la ruta se ha guardado</string>
+    <string name="game_file_not_exist">Archivo de ensamblado no encontrado: %s</string>
+    <string name="game_added_success">¡Juego añadido con éxito!</string>
+    <string name="game_deleted_with_files">Juego y archivos eliminados</string>
+    <string name="game_deleted_partial">Juego eliminado de la lista, pero algunos archivos pueden permanecer</string>
+
+    <!-- Eliminación de Juego -->
+    <string name="delete_game_title">Eliminar juego</string>
+    <string name="delete_game_message">¿Eliminar %s?\n\nNota: Esto también eliminará los archivos del juego</string>
+    <string name="delete_confirm">Eliminar</string>
+    <string name="delete_cancel">Cancelar</string>
+    <string name="confirm">Confirmar</string>
+    <string name="close">Cerrar</string>
+
+    <!-- Diálogo de Error -->
+    <string name="error_title_default">Error</string>
+    <string name="error_message_default">Ocurrió un error</string>
+    <string name="error_operation_failed">Operación fallida</string>
+    <string name="error_details_title">Detalles del error</string>
+    <string name="error_show_details">Mostrar detalles</string>
+    <string name="error_hide_details">Ocultar detalles</string>
+    <string name="error_copy">Copiar</string>
+    <string name="error_copy_success">Copiado al portapapeles</string>
+    <string name="error_icon_desc">Icono de error</string>
+    <string name="error_crash_title">Fallo de la aplicación</string>
+    <string name="error_fatal_title">Error fatal</string>
+
+    <!-- Importar Juego -->
+    <string name="import_select_game_file">Seleccionar archivo de juego</string>
+    <string name="import_select_modloader">Seleccionar ModLoader</string>
+    <string name="import_game_file">Archivo de juego</string>
+    <string name="import_modloader_file">Archivo ModLoader</string>
+    <string name="import_optional">(Opcional)</string>
+    <string name="import_start">Iniciar importación</string>
+    <string name="import_extracting">Extrayendo archivos del juego...</string>
+    <string name="import_extracting_file">Extrayendo: %s</string>
+    <string name="import_extraction_complete">Extracción completa</string>
+    <string name="import_extraction_failed">Extracción fallida</string>
+    <string name="import_installing_modloader">Instalando ModLoader...</string>
+    <string name="import_complete">Importación completa</string>
+    <string name="import_error">Importación fallida: %s</string>
+    <string name="import_install_failed">Instalación fallida: %s</string>
+    <string name="import_error_game_import_failed">Error al importar el juego</string>
+    <string name="import_storage_insufficient">¡Almacenamiento insuficiente!\nRequerido: %1$.1f GB\nDisponible: %2$.1f GB\n\nPor favor libera espacio e intenta de nuevo</string>
+    <string name="import_game_file_not_exist">El archivo de juego no existe: %s</string>
+    <string name="import_modloader_file_not_exist">El archivo ModLoader no existe: %s</string>
+
+    <!-- Configuración -->
+    <string name="settings">Configuración</string>
+    <string name="theme_settings">Configuración de tema</string>
+    <string name="theme_system">Seguir sistema</string>
+    <string name="theme_dark">Tema oscuro</string>
+    <string name="theme_light">Tema claro</string>
+    <string name="theme_color">Color del tema</string>
+    <string name="theme_color_desc">Personalizar el color del tema de la aplicación</string>
+    <string name="theme_color_changed">Color del tema cambiado, reinicia la aplicación para aplicar</string>
+    <string name="background_settings">Configuración de fondo</string>
+    <string name="background_settings_desc">Personalizar el fondo de la aplicación</string>
+    <string name="background_default">Predeterminado</string>
+    <string name="background_color">Color sólido</string>
+    <string name="background_image">Imagen</string>
+    <string name="language_settings">Configuración de idioma</string>
+    <string name="language_system">Seguir sistema</string>
+    <string name="language_english">English</string>
+    <string name="language_chinese">简体中文</string>
+    <string name="language_russian">Русский</string>
+    <string name="language_spanish">Español</string>
+    <string name="language_changed">Idioma cambiado a %s</string>
+    <string name="app_info">Información de la aplicación</string>
+    <string name="app_version">Versión 1.2.0-beta</string>
+    <string name="app_description">Rotating art Launcher - Lanzador de juegos</string>
+    <string name="app_authors">Autores:</string>
+    <string name="restart_required">Reinicio requerido</string>
+    <string name="restart_app_message">La configuración de idioma ha cambiado. Por favor reinicia la aplicación para aplicar.</string>
+    <string name="ok">Aceptar</string>
+    <string name="later">Más tarde</string>
+    <string name="cancel">Cancelar</string>
+
+    <!-- Runtime -->
+    <string name="runtime_selector_title">Versión de .NET Runtime</string>
+    <string name="runtime_version_latest">Última - Recomendada</string>
+    <string name="runtime_version_lts">Soporte a largo plazo (LTS)</string>
+    <string name="runtime_changed">Cambiado a .NET %s</string>
+    
+    <!-- Menú en el Juego -->
+    <string-array name="game_menu_items">
+        <item>Alternar controles</item>
+        <item>Editar diseño de controles</item>
+        <item>Configuración rápida</item>
+        <item>Salir del juego</item>
+    </string-array>
+    
+    <!-- Menú del Editor -->
+    <string-array name="editor_menu_items">
+        <item>Añadir botón</item>
+        <item>Añadir joystick</item>
+        <item>Guardar diseño</item>
+        <item>Cargar diseño</item>
+        <item>Restablecer a predeterminado</item>
+        <item>Salir del editor</item>
+    </string-array>
+    
+    <string name="game_menu_toggle_controls">Alternar controles</string>
+    <string name="game_menu_edit_controls">Editar diseño de controles</string>
+    <string name="game_menu_quick_settings">Configuración rápida</string>
+    <string name="game_menu_exit">Salir del juego</string>
+    <string name="game_menu_controls_on">Controles mostrados</string>
+    <string name="game_menu_controls_off">Controles ocultos</string>
+    <string name="game_menu_exit_confirm">Confirmar salida</string>
+    <string name="game_menu_exit_message">¿Salir del juego?</string>
+    <string name="game_menu_yes">Sí</string>
+    <string name="game_menu_no">No</string>
+    
+    <string name="editor_add_button">Añadir botón</string>
+    <string name="editor_add_joystick">Añadir joystick</string>
+    <string name="editor_add_touchpad_text">Añadir panel táctil</string>
+    <string name="editor_save">Guardar diseño</string>
+    <string name="editor_load">Cargar diseño</string>
+    <string name="editor_reset">Restablecer a predeterminado</string>
+    <string name="editor_exit">Salir del editor</string>
+    <string name="editor_mode_on">Modo editor habilitado</string>
+    <string name="editor_mode_off">Modo editor deshabilitado</string>
+    <string name="editor_exit_confirm">Salir del editor</string>
+    <string name="editor_exit_message">¿Salir del modo editor? Los cambios no guardados se perderán.</string>
+
+    <!-- Mensajes Generales -->
+    <string name="msg_loading">Cargando...</string>
+    <string name="msg_processing">Procesando...</string>
+    <string name="msg_please_wait">Por favor espera...</string>
+    <string name="msg_success">Éxito</string>
+    <string name="msg_failed">Fallido</string>
+    <string name="msg_error">Error</string>
+    <string name="msg_warning">Advertencia</string>
+
+    <!-- Categorías de Configuración -->
+    <string name="settings_appearance">Apariencia</string>
+    <string name="settings_control">Controles</string>
+    <string name="settings_game">Juego</string>
+    <string name="settings_launcher">Lanzador</string>
+    <string name="settings_developer">Configuración avanzada</string>
+    <string name="settings_about">Acerca de</string>
+
+    <!-- Elementos de Configuración -->
+    <string name="settings_theme_desc_auto">Seguir configuración del sistema</string>
+    <string name="settings_theme_desc_dark">Siempre usar tema oscuro</string>
+    <string name="settings_theme_desc_light">Siempre usar tema claro</string>
+    <string name="settings_language_desc_auto">Usar idioma del sistema</string>
+    <string name="settings_language_desc_en">Usar inglés</string>
+    <string name="settings_language_desc_zh">使用简体中文</string>
+    <string name="settings_language_desc_ru">Использовать русский (машинный перевод)</string>
+    <string name="settings_language_desc_es">Usar español (traducción automática)</string>
+
+    <!-- Configuración del Renderizador -->
+    <string name="renderer_title">Renderizador</string>
+    <string name="renderer_auto">Automático (Recomendado)</string>
+    <string name="renderer_auto_desc">Seleccionar automáticamente el mejor renderizador</string>
+    <string name="renderer_native">Native OpenGL ES 3</string>
+    <string name="renderer_native_desc">Aceleración de hardware nativa, mejor rendimiento. Funciones limitadas, algunos juegos pueden tener problemas de compatibilidad</string>
+    <string name="renderer_gl4es">GL4ES</string>
+    <string name="renderer_gl4es_desc">Capa de traducción OpenGL, fuerte compatibilidad. Ligera sobrecarga de rendimiento por la traducción</string>
+    <string name="renderer_gl4es_angle">GL4ES + ANGLE</string>
+    <string name="renderer_gl4es_angle_desc">Traduce al backend Vulkan, mejor equilibrio entre compatibilidad y rendimiento (Recomendado)</string>
+    <string name="renderer_angle">ANGLE (Vulkan)</string>
+    <string name="renderer_angle_desc">OpenGL ES sobre Vulkan (oficial de Google, requiere Android 7.0+)</string>
+    <string name="renderer_zink">Zink (Mesa)</string>
+    <string name="renderer_zink_desc">OpenGL 4.6 sobre Vulkan (Mesa Zink, requiere Android 7.0+)</string>
+    <string name="renderer_virgl">VirGL Renderer</string>
+    <string name="renderer_virgl_desc">Gallium3D VirGL (OpenGL 4.3, requiere Android 7.0+)</string>
+    <string name="renderer_freedreno">Freedreno (Adreno)</string>
+    <string name="renderer_freedreno_desc">Mesa Freedreno para GPU Qualcomm Adreno (requiere Android 7.0+)</string>
+    
+    <!-- Configuración del Controlador Vulkan -->
+    <string name="vulkan_driver_turnip">Controlador Vulkan Turnip</string>
+    <string name="vulkan_driver_turnip_desc">Usar controlador Vulkan de código abierto Mesa Turnip (solo GPU Adreno, generalmente mejor rendimiento)</string>
+    <string name="renderer_opengl">OpenGL (gl4es+)</string>
+    <string name="renderer_opengl_desc">A través de la capa de traducción gl4es+</string>
+    <string name="renderer_opengles3">OpenGL ES 3 (Nativo)</string>
+    <string name="renderer_opengles3_desc">Usar OpenGL ES 3 nativo</string>
+    <string name="renderer_vulkan">Vulkan (Experimental)</string>
+    <string name="renderer_vulkan_desc">Usar API Vulkan</string>
+    <string name="renderer_changed">Renderizador cambiado</string>
+
+    <!-- Configuración del Desarrollador -->
+    <string name="developer_console">Consola del desarrollador</string>
+    <string name="developer_console_on">Habilitado</string>
+    <string name="developer_console_off">Deshabilitado</string>
+    <string name="developer_console_desc_on">Mostrar salida e interfaz de entrada de C# Console</string>
+    <string name="developer_console_desc_off">Deshabilitar consola del desarrollador</string>
+    <string name="developer_console_enabled">Consola del desarrollador habilitada, tendrá efecto en el próximo inicio del juego</string>
+    <string name="developer_console_disabled">Consola del desarrollador deshabilitada</string>
+
+    <string name="enable_log_system">Habilitar sistema de registro</string>
+    <string name="enable_log_system_desc">Habilitar registro para depuración, no se recomienda deshabilitar</string>
+    <string name="enable_log_system_enabled">Sistema de registro habilitado, reinicia la aplicación para aplicar</string>
+    <string name="enable_log_system_disabled">Sistema de registro deshabilitado, reinicia la aplicación para aplicar</string>
+
+    <string name="verbose_logging">Registro detallado</string>
+    <string name="verbose_logging_on">Habilitado</string>
+    <string name="verbose_logging_off">Deshabilitado</string>
+    <string name="verbose_logging_desc_on">Mostrar información detallada de depuración de CoreCLR</string>
+    <string name="verbose_logging_desc_off">Mostrar solo información básica</string>
+    <string name="verbose_logging_enabled">Registro detallado habilitado, reinicia la aplicación para aplicar</string>
+    <string name="verbose_logging_disabled">Registro detallado deshabilitado</string>
+
+    <string name="export_share_log">Exportar y compartir archivo de registro</string>
+    <string name="export_share_log_desc">Exportar registros de la aplicación a un archivo y compartir con otras aplicaciones</string>
+    <string name="export">Exportar</string>
+    <string name="exporting_log">Exportando registro…</string>
+    <string name="log_exported">Registro exportado</string>
+    <string name="log_export_failed">Error al exportar registro: %s</string>
+    <string name="log_system_disabled_title">Sistema de registro no habilitado</string>
+    <string name="log_system_disabled_message">El sistema de registro actualmente no está habilitado y no puede exportar archivos de registro. Por favor habilita primero la opción \"Habilitar sistema de registro\", luego reinicia la aplicación para comenzar a registrar.</string>
+
+    <string name="thread_affinity_big_core">Afinidad de hilo - Núcleo grande</string>
+    <string name="thread_affinity_big_core_desc">Vincular el hilo principal a núcleos grandes para mejor rendimiento</string>
+    <string name="thread_affinity_big_core_enabled">Afinidad de hilo a núcleo grande habilitada</string>
+    <string name="thread_affinity_big_core_disabled">Afinidad de hilo a núcleo grande deshabilitada</string>
+
+    <string name="kill_launcher_ui_after_launch">Terminar UI del lanzador después del inicio</string>
+    <string name="kill_launcher_ui_after_launch_desc">Terminar el proceso de UI del lanzador después de que el juego inicie para liberar memoria</string>
+    <string name="kill_launcher_ui_enabled">Terminación de UI del lanzador habilitada</string>
+    <string name="kill_launcher_ui_disabled">Terminación de UI del lanzador deshabilitada</string>
+
+    <!-- Gestión de Parches -->
+    <string name="patch_management">Gestión de parches</string>
+    <string name="patch_management_desc">Gestionar el estado de habilitación/deshabilitación de parches del juego</string>
+    <string name="patch_dialog_title">Gestión de parches</string>
+    <string name="patch_dialog_desc">Selecciona un juego, luego habilita/deshabilita parches para él a la derecha</string>
+    <string name="patch_enabled">Habilitado</string>
+    <string name="patch_disabled">Deshabilitado</string>
+    <string name="patch_no_games">Sin juegos</string>
+    <string name="patch_assembly_patch">Parche de ensamblado</string>
+    <string name="patch_tmodloader_only">Solo funciona para tModLoader</string>
+    <string name="patch_status_changed">Estado del parche actualizado</string>
+    <string name="game_list_title">Lista de juegos</string>
+    <string name="patch_list_title">Lista de parches</string>
+    <string name="no_game_selected">Por favor selecciona un juego primero</string>
+    <string name="no_patches_for_game">No hay parches disponibles para este juego</string>
+
+    <!-- Varios -->
+    <string name="miscellaneous">Varios</string>
+
+    <!-- Gestión de Parches -->
+    <string name="force_reinstall_patches">Forzar reinstalación de parches integrados</string>
+    <string name="force_reinstall_patches_desc">Limpiar y reinstalar todos los parches integrados (usar cuando se encuentren problemas con parches)</string>
+    <string name="reinstall">Reinstalar</string>
+    <string name="reinstalling_patches">Reinstalando parches…</string>
+    <string name="patches_reinstalled">Parches reinstalados con éxito</string>
+    <string name="patches_reinstall_failed">Error al reinstalar parches: %s</string>
+
+    <!-- Configuración del Runtime CoreCLR -->
+    <string name="coreclr_settings">Configuración del Runtime CoreCLR</string>
+    <string name="coreclr_gc_settings">Configuración de Recolección de Basura (GC)</string>
+    <string name="coreclr_jit_settings">Configuración de Compilación Justo a Tiempo (JIT)</string>
+
+    <!-- Configuración GC de CoreCLR -->
+    <string name="coreclr_server_gc">Server GC</string>
+    <string name="coreclr_server_gc_desc">Habilitar recolección de basura del servidor (optimizado para múltiples núcleos, mayor rendimiento, mayor uso de memoria)</string>
+    <string name="coreclr_server_gc_on">Habilitado</string>
+    <string name="coreclr_server_gc_off">Deshabilitado (recomendado para móviles)</string>
+
+    <string name="coreclr_concurrent_gc">Concurrent GC</string>
+    <string name="coreclr_concurrent_gc_desc">Habilitar recolección de basura concurrente (reduce el tiempo de pausa, recomendado)</string>
+    <string name="coreclr_concurrent_gc_on">Habilitado (recomendado)</string>
+    <string name="coreclr_concurrent_gc_off">Deshabilitado</string>
+
+    <string name="coreclr_gc_heap_count">Cantidad de montones GC</string>
+    <string name="coreclr_gc_heap_count_desc">Número de montones de recolección de basura (solo efectivo para Server GC)</string>
+    <string name="coreclr_gc_heap_count_auto">Detección automática</string>
+    <string name="coreclr_gc_heap_count_1">1 montón</string>
+    <string name="coreclr_gc_heap_count_2">2 montones</string>
+    <string name="coreclr_gc_heap_count_4">4 montones</string>
+
+    <string name="coreclr_retain_vm">Retain VM</string>
+    <string name="coreclr_retain_vm_desc">Retener segmentos de memoria virtual (reduce la sobrecarga de asignación de memoria, aumenta el uso de memoria)</string>
+    <string name="coreclr_retain_vm_on">Habilitado</string>
+    <string name="coreclr_retain_vm_off">Deshabilitado (recomendado)</string>
+
+    <!-- Configuración JIT de CoreCLR -->
+    <string name="coreclr_tiered_compilation">Compilación por niveles</string>
+    <string name="coreclr_tiered_compilation_desc">Habilitar compilación por niveles (inicio más rápido, recomendado)</string>
+    <string name="coreclr_tiered_compilation_on">Habilitado (recomendado)</string>
+    <string name="coreclr_tiered_compilation_off">Deshabilitado</string>
+
+    <string name="coreclr_quick_jit">Quick JIT</string>
+    <string name="coreclr_quick_jit_desc">Habilitar JIT rápido (Nivel 0, compilación inicial más rápida)</string>
+    <string name="coreclr_quick_jit_on">Habilitado (recomendado)</string>
+    <string name="coreclr_quick_jit_off">Deshabilitado</string>
+
+    <string name="coreclr_jit_optimize_type">Tipo de optimización JIT</string>
+    <string name="coreclr_jit_optimize_type_desc">Estrategia de optimización para compilación justo a tiempo</string>
+    <string name="coreclr_jit_optimize_blended">Mixto (recomendado)</string>
+    <string name="coreclr_jit_optimize_size">Prioridad de tamaño</string>
+    <string name="coreclr_jit_optimize_speed">Prioridad de velocidad</string>
+
+    <!-- Consejos de Configuración CoreCLR -->
+    <string name="coreclr_settings_warning">Modificar estas configuraciones puede afectar el rendimiento y la estabilidad del juego</string>
+    <string name="coreclr_settings_restart">Las configuraciones tendrán efecto en el próximo inicio del juego</string>
+
+    <!-- Configuración FNA -->
+    <string name="fna_map_buffer_range_opt">Habilitar optimización MapBufferRange</string>
+    <string name="fna_map_buffer_range_opt_desc">Habilitar optimización OpenGL MapBufferRange si está disponible (puede mejorar el rendimiento)</string>
+    <string name="fna_map_buffer_range_opt_enabled">Optimización MapBufferRange habilitada</string>
+    <string name="fna_map_buffer_range_opt_disabled">Optimización MapBufferRange deshabilitada</string>
+
+    <!-- Configuración de Audio -->
+    <string name="low_latency_audio">Audio de baja latencia</string>
+    <string name="low_latency_audio_desc">Habilitar modo de baja latencia AAudio (puede reducir la latencia de audio, pero puede aumentar el consumo de energía. Advertencia: Esta opción puede causar que el audio deje de funcionar)</string>
+    <string name="low_latency_audio_enabled">Audio de baja latencia habilitado</string>
+    <string name="low_latency_audio_disabled">Audio de baja latencia deshabilitado</string>
+
+    <!-- Diálogo de Edición de Control -->
+    <string name="control_edit_close">Cerrar</string>
+    <string name="control_edit_save">Guardar</string>
+    <string name="control_edit_delete">Eliminar</string>
+
+    <!-- Mensajes de MainActivity -->
+    <string name="main_runtime_switched">Cambiado a .NET %s</string>
+    <string name="main_select_game_first">Por favor selecciona un juego primero</string>
+    <string name="main_shortcut_removed">Acceso directo eliminado de la lista</string>
+    <string name="main_game_deleted">Juego y archivos eliminados</string>
+    <string name="main_game_deleted_partial">Juego eliminado de la lista, pero algunos archivos pueden permanecer</string>
+
+    <!-- Mensajes de MainImportDelegate -->
+    <string name="import_added_to_list">Añadido a la lista de juegos</string>
+    <string name="import_file_not_exist">El archivo seleccionado no existe</string>
+    <string name="import_assembly_desc">Ensamblado: %s</string>
+    <string name="import_game_added">Juego añadido: %s</string>
+    <string name="import_add_failed">Error al añadir juego: %s</string>
+    <string name="import_add_to_list">Añadir a la lista de juegos</string>
+    <string name="import_add_to_list_desc">Añadir este ensamblado a la lista de juegos para inicio rápido</string>
+    <string name="import_file_action">Acción de archivo: %s</string>
+
+    <!-- Mensajes de GameActivity -->
+    <string name="game_completed_successfully">Juego completado con éxito</string>
+    <string name="game_exit_code">Código de salida: %d</string>
+    <string name="game_run_failed">Error al ejecutar el juego</string>
+
+    <!-- Mensajes de LocalImportFragment -->
+    <string name="import_file_selected">Seleccionado: %s</string>
+    <string name="import_game_detected">Juego detectado: %1$s %2$s</string>
+    <string name="import_cannot_read_info">No se puede leer la información del juego, usando nombre predeterminado</string>
+    <string name="import_select_game_first">Por favor selecciona un archivo de juego primero</string>
+    <string name="import_cannot_read_info_failed">No se puede leer la información del juego, importación fallida</string>
+    <string name="import_reading_info">Leyendo información del juego...</string>
+    <string name="import_applying_patches">Aplicando parches...</string>
+    <string name="import_complete_exclamation">¡Importación completa!</string>
+    <string name="import_failed_colon">Importación fallida: %s</string>
+    <string name="import_unknown_game">Juego desconocido</string>
+
+    <!-- Mensajes de InitializationFragment -->
+    <string name="init_grant_permissions">Conceder permisos</string>
+    <string name="init_cannot_open_browser">No se puede abrir el navegador</string>
+    <string name="init_permission_manager_failed">Error al inicializar el gestor de permisos</string>
+    <string name="init_requesting_permissions">Solicitando permisos...</string>
+    <string name="init_permissions_granted">Permisos concedidos con éxito</string>
+    <string name="init_permissions_denied">Permisos denegados, algunas funciones pueden no funcionar</string>
+    <string name="init_permissions_granted_check">✓ Permisos concedidos</string>
+    <string name="init_continue">Continuar</string>
+    <string name="init_installing">Instalando...</string>
+    <string name="init_retry_install">Reintentar instalación</string>
+    <string name="init_extraction_failed">Extracción fallida: %s</string>
+    <string name="init_installed_runtime_versions">Versiones de runtime .NET instaladas: %s</string>
+    <string name="init_dotnet_install_success">¡Entorno .NET instalado con éxito!</string>
+    <string name="init_click_to_start">Haz clic en [Aceptar e instalar] para comenzar</string>
+    <string name="init_start_extracting">Iniciando extracción...</string>
+    <string name="init_extracting">Extrayendo...</string>
+    <string name="init_extracting_files">Extrayendo (%d archivos)...</string>
+    <string name="init_extraction_complete">Extracción completa</string>
+    <string name="init_no_extraction_needed">No se necesita extracción</string>
+    <string name="init_preparing_file">Preparando archivo...</string>
+    <string name="init_file_ready">Archivo listo</string>
+    <string name="init_complete">Completo</string>
+    <string name="init_extraction_failed_status">Extracción fallida</string>
+    <string name="init_install_complete">Instalación completa</string>
+    <string name="init_skip_permissions_title">Omitir concesión de permisos</string>
+    <string name="init_skip_permissions_message">Omitir la concesión de permisos puede impedir que la aplicación acceda normalmente a los archivos del juego. ¿Estás seguro de que quieres omitir?</string>
+    <string name="init_skip_continue">Continuar omitiendo</string>
+    <string name="init_skip_back">Atrás</string>
+    <string name="init_extraction_failed_component">Error al extraer %s</string>
+
+    <!-- Mensajes de FileBrowserFragment -->
+    <string name="filebrowser_folder_empty">La carpeta actual está vacía</string>
+    <string name="filebrowser_directory_empty">El directorio actual está vacío</string>
+    <string name="filebrowser_confirm_select">Confirmar selección: %s</string>
+    <string name="filebrowser_select_file">Seleccionar archivo</string>
+    <string name="filebrowser_select_this_file">Seleccionar este archivo</string>
+    <string name="filebrowser_select_this_file_desc">Confirmar selección de este archivo</string>
+    <string name="filebrowser_file_action">Acción de archivo: %s</string>
+    <string name="filebrowser_sort_by">Ordenar por</string>
+    <string name="filebrowser_sort_by_name">Ordenar por nombre</string>
+    <string name="filebrowser_sort_by_name_desc">Orden alfabético A-Z</string>
+    <string name="filebrowser_sort_by_size">Ordenar por tamaño</string>
+    <string name="filebrowser_sort_by_size_desc">De mayor a menor</string>
+    <string name="filebrowser_sort_by_time">Ordenar por tiempo</string>
+    <string name="filebrowser_sort_by_time_desc">Modificados más recientemente primero</string>
+    <string name="filebrowser_sorted_by">Ordenado por %s</string>
+    <string name="filebrowser_sort_name">Nombre</string>
+    <string name="filebrowser_sort_size">Tamaño</string>
+    <string name="filebrowser_sort_time">Tiempo</string>
+    <string name="filebrowser_parent_directory">Subir nivel</string>
+    <string name="filebrowser_folder">Carpeta</string>
+    <string name="filebrowser_file">Archivo</string>
+
+    <!-- Mensajes de ControlEditorOperations -->
+    <string name="editor_no_joystick">No hay joysticks en el diseño actual</string>
+    <string name="editor_joystick_mode_keyboard">Modo de teclas de teclado\nUsar teclas WASD para movimiento</string>
+    <string name="editor_joystick_mode_mouse">Modo de movimiento del ratón\nControlar el movimiento del puntero del ratón (para apuntar)</string>
+    <string name="editor_joystick_mode_sdl">Modo de controlador SDL\nSimular joystick de mando de juego real</string>
+    <string name="editor_joystick_mode_settings">Configuración del modo de joystick</string>
+    <string name="editor_joystick_mode_message">Establecer modo unificado para todos los %d joysticks</string>
+    <string name="editor_mode_keyboard_detailed">Modo de teclas de teclado</string>
+    <string name="editor_mode_mouse_detailed">Modo de movimiento del ratón</string>
+    <string name="editor_mode_xbox_detailed">Modo de controlador XBOX</string>
+    <string name="editor_joysticks_set">Establecer %1$d joysticks a %2$s</string>
+    <string name="editor_no_layout_to_save">No hay diseño para guardar</string>
+    <string name="editor_layout_saved">Diseño guardado</string>
+    <string name="editor_save_failed">Error al guardar: %s</string>
+    <string name="editor_reset_default">Restablecer a diseño predeterminado</string>
+    <string name="editor_reset_confirm">¿Estás seguro de que quieres restablecer al diseño predeterminado?</string>
+    <string name="editor_reset_complete">Restablecido a diseño predeterminado</string>
+    <string name="editor_button_added">Botón añadido</string>
+    <string name="editor_joystick_added">Joystick añadido</string>
+    <string name="editor_touchpad_added">Panel táctil añadido</string>
+    <string name="editor_text_added">Texto añadido</string>
+    <string name="editor_select_joystick_type">Seleccionar tipo de joystick</string>
+    <string name="editor_joystick_type_move_aim">Joystick de movimiento + apuntar</string>
+    <string name="editor_joystick_type_gamepad">Joystick de mando</string>
+    <string name="editor_select_joystick_side">Seleccionar lado del joystick</string>
+    <string name="editor_joystick_side_left">Joystick izquierdo</string>
+    <string name="editor_joystick_side_right">Joystick derecho</string>
+
+    <!-- Mensajes de GogClientFragment -->
+    <string name="gog_email_verification">Verificación de correo electrónico</string>
+    <string name="gog_email_code_prompt">Por favor ingresa el código de 4 dígitos enviado a tu correo electrónico</string>
+    <string name="gog_4_digit_code">Código de 4 dígitos</string>
+    <string name="gog_authenticator">Autenticador</string>
+    <string name="gog_totp_code_prompt">Por favor ingresa el código de 6 dígitos de tu autenticador TOTP</string>
+    <string name="gog_6_digit_code">Código de 6 dígitos</string>
+    <string name="gog_games_count">%d juegos</string>
+    <string name="gog_logged_in">Sesión iniciada</string>
+    <string name="gog_enter_email">Por favor ingresa la dirección de correo electrónico</string>
+    <string name="gog_enter_password">Por favor ingresa la contraseña</string>
+    <string name="gog_login_success">Inicio de sesión exitoso</string>
+    <string name="gog_login_failed">Inicio de sesión fallido, por favor verifica el correo electrónico y la contraseña</string>
+    <string name="gog_login_error">Error de inicio de sesión: %s</string>
+    <string name="gog_library_empty">Tu biblioteca de juegos está vacía</string>
+    <string name="gog_load_failed">Error al cargar: %s</string>
+    <string name="gog_logged_out">Sesión cerrada</string>
+    <string name="gog_one_click_not_supported">Este juego no admite instalación con un clic</string>
+    <string name="gog_no_game_version">No hay versión de juego disponible</string>
+    <string name="gog_no_modloader_version">No hay versión de ModLoader disponible</string>
+    <string name="gog_install_game">Instalar %s</string>
+    <string name="gog_modloader_version">Versión %s</string>
+    <string name="gog_cannot_access_storage">No se puede acceder al almacenamiento externo</string>
+    <string name="gog_cannot_get_download_link">No se puede obtener el enlace de descarga del instalador</string>
+    <string name="gog_modloader_link_invalid">Enlace ModLoader inválido</string>
+    <string name="gog_download_failed">Error al descargar: %s</string>
+    <string name="gog_download_game">Descargar juego</string>
+
+    <!-- Mensajes de LocalImportDialog -->
+    <string name="dialog_modloader_zip">Cargador de mods (.zip)</string>
+
+    <!-- Mensajes de AppearanceSettingsModule -->
+    <string name="appearance_cannot_open_image_picker">No se puede abrir el selector de imágenes</string>
+    <string name="appearance_cannot_open_video_picker">No se puede abrir el selector de videos</string>
+    <string name="appearance_background_restored">Fondo predeterminado restaurado</string>
+    <string name="appearance_not_set">No establecido</string>
+    <string name="appearance_no_file_selected">No se seleccionó ningún archivo</string>
+    <string name="appearance_ui_not_initialized">UI no inicializada</string>
+    <string name="appearance_file_not_exist">El archivo no existe: %s</string>
+    <string name="appearance_background_image">Fondo de imagen</string>
+    <string name="appearance_background_video">Fondo de video</string>
+    <string name="appearance_select_background_type">Seleccionar tipo de fondo</string>
+    <string name="appearance_select_image">Seleccionar imagen</string>
+    <string name="appearance_select_image_desc">Seleccionar imagen de la galería como fondo</string>
+    <string name="appearance_select_video">Seleccionar video</string>
+    <string name="appearance_select_video_desc">Seleccionar video de la galería como fondo</string>
+    <string name="appearance_cannot_read_image">No se puede leer la imagen</string>
+    <string name="appearance_set_background_failed">Error al establecer el fondo: %s</string>
+    <string name="appearance_cannot_get_file_path">No se puede obtener la ruta del archivo, por favor intenta de nuevo</string>
+    <string name="appearance_background_video_set">Fondo de video establecido</string>
+
+    <!-- Mensajes de UnifiedEditorSettingsDialog -->
+    <string name="editor_exit_edit_mode">Salir del modo de edición</string>
+    <string name="editor_enter_edit_mode">Entrar al modo de edición</string>
+    <string name="editor_game_settings">Configuración del juego</string>
+
+    <!-- Mensajes de ControlEditDialogMD -->
+    <string name="editor_delete_control">Eliminar control</string>
+    <string name="editor_delete_control_confirm">¿Estás seguro de que quieres eliminar este control?</string>
+
+    <!-- Mensajes adicionales de GogClientFragment -->
+    <string name="gog_logout_confirm_title">Confirmar cierre de sesión</string>
+    <string name="gog_logout_confirm_message">¿Estás seguro de que quieres cerrar sesión de la cuenta GOG?</string>
+    <string name="gog_loading_user_info">Cargando información del usuario...</string>
+    <string name="gog_logging_in">Iniciando sesión...</string>
+    <string name="gog_loading_games">Cargando lista de juegos...</string>
+    <string name="gog_loading_version_info">Cargando información de versión para %s...</string>
+    <string name="gog_load_failed_title">Error al cargar</string>
+    <string name="gog_network_abort">Conexión de red interrumpida, por favor verifica la red e intenta de nuevo</string>
+    <string name="gog_network_timeout">Tiempo de espera de conexión agotado, por favor verifica la red o intenta más tarde</string>
+    <string name="gog_network_dns">No se puede conectar al servidor GOG, por favor verifica la red o usa VPN</string>
+    <string name="gog_get_details_failed">Error al obtener detalles del juego, por favor intenta de nuevo</string>
+    <string name="gog_error_details">Detalles del error: %s</string>
+    <string name="gog_retry">Reintentar</string>
+    <string name="gog_load_games_failed">Error al cargar la lista de juegos: %s</string>
+    <string name="gog_games_loaded">%d juegos cargados</string>
+
+    <!-- Mensajes de ControlEditorActivity -->
+    <string name="editor_exit_title">Salir del editor</string>
+    <string name="editor_exit_save_confirm">¿Guardar el diseño actual?</string>
+    <string name="editor_save_and_exit">Guardar y salir</string>
+
+    <!-- Mensajes de ControlJoystickModeManager -->
+    <string name="editor_select_joystick_mode">Seleccionar modo de joystick</string>
+
+    <!-- Mensajes de RuntimeSelectorManager -->
+    <string name="runtime_dotnet_version">.NET %s</string>
+    <string name="runtime_already_selected">Ya es .NET %s</string>
+
+    <!-- Mensajes de ControlEditDialogDataFiller -->
+    <string name="editor_right_stick">Palanca derecha</string>
+    <string name="editor_left_stick">Palanca izquierda</string>
+    <string name="editor_joystick_bg_opacity">Opacidad del fondo del joystick</string>
+    <string name="editor_joystick_bg_opacity_desc">Establecer la opacidad del fondo del joystick</string>
+    <string name="editor_opacity">Opacidad</string>
+
+    <!-- Mensajes de KeySelectorDialog -->
+    <string name="editor_select_gamepad_key">Seleccionar tecla del mando</string>
+    <string name="editor_select_key">Seleccionar tecla</string>
+
+    <!-- Mensajes de ControlJoystickComboKeysManager -->
+    <string name="editor_select_combo_keys">Seleccionar teclas combinadas (todas las direcciones)</string>
+
+    <!-- Mensajes de ControlColorManager -->
+    <string name="editor_select_bg_color">Seleccionar color de fondo</string>
+    <string name="editor_select_border_color">Seleccionar color del borde</string>
+
+    <!-- Mensajes de ControlTypeManager -->
+    <string name="editor_select_control_type">Seleccionar tipo de control</string>
+
+    <!-- Mensajes de ControlLayoutFragment -->
+    <string name="control_create_layout">Crear diseño de control</string>
+    <string name="control_layout_name_exists">El nombre del diseño ya existe</string>
+    <string name="control_create">Crear</string>
+    <string name="control_new_layout">Nuevo diseño</string>
+    <string name="control_rename_layout">Renombrar diseño</string>
+    <string name="control_layout_renamed">Diseño renombrado</string>
+    <string name="control_layout_duplicated">Diseño duplicado</string>
+    <string name="control_set_as_default">Establecer como diseño predeterminado</string>
+    <string name="control_export_failed">Error al exportar: %s</string>
+    <string name="control_export_success">Diseño exportado</string>
+    <string name="control_export_failed_write">Error al exportar: No se puede escribir el archivo</string>
+    <string name="control_delete_layout">Eliminar diseño</string>
+    <string name="control_delete_default_layout_confirm">¿Estás seguro de que quieres eliminar el diseño predeterminado \"%s\"?\nNecesitarás crear manualmente un nuevo diseño después de la eliminación.</string>
+    <string name="control_delete_layout_confirm">¿Estás seguro de que quieres eliminar el diseño \"%s\"?</string>
+    <string name="control_delete">Eliminar</string>
+    <string name="control_layout_deleted">Diseño eliminado</string>
+    <string name="control_cannot_read_file">No se puede leer el archivo</string>
+    <string name="control_layout_file_invalid">El formato del archivo de diseño es incorrecto o está vacío</string>
+    <string name="control_clear">Limpiar</string>
+    <string name="control_unknown">Desconocido</string>
+    <string name="control_none">Ninguno</string>
+    <string name="control_direction_up">Arriba</string>
+    <string name="control_direction_up_right">Arriba derecha</string>
+    <string name="control_direction_right">Derecha</string>
+    <string name="control_direction_down_right">Abajo derecha</string>
+    <string name="control_direction_down">Abajo</string>
+    <string name="control_direction_down_left">Abajo izquierda</string>
+    <string name="control_direction_left">Izquierda</string>
+    <string name="control_direction_up_left">Arriba izquierda</string>
+    <string name="control_type_button_keyboard">Botón (Teclado)</string>
+    <string name="control_type_button_gamepad">Botón (Mando)</string>
+    <string name="control_type_joystick">Joystick</string>
+    <string name="control_type_touchpad">Panel táctil</string>
+    <string name="control_type_text">Texto</string>
+    <string name="control_type_button">Botón</string>
+    <string name="control_import_success">Diseño importado: %s</string>
+    <string name="control_import_failed">Error al importar: %s</string>
+    <string name="control_select_preset">Seleccionar configuración preestablecida</string>
+    <string name="control_preset_file_invalid">El formato del archivo de configuración preestablecida es incorrecto o está vacío</string>
+    <string name="control_preset_imported">Configuración preestablecida importada: %s</string>
+    <string name="control_select_shape">Seleccionar forma del control</string>
+    <string name="control_count">%d controles</string>
+    <string name="editor_toggle_button_press_hold">Botón de alternancia (presionar y mantener)</string>
+    <string name="editor_edit_control_properties">Editar propiedades del control</string>
+
+    <!-- Mensajes de RuntimeSelectorDialog -->
+    <string name="runtime_version_latest_desc">Última - Recomendada</string>
+    <string name="runtime_version_stable_desc">Estable - Recomendada</string>
+    <string name="runtime_version_lts_desc">Soporte a largo plazo (LTS)</string>
+    <string name="runtime_version_old_desc">Versión antigua - Buena compatibilidad</string>
+    <string name="runtime_version_compat_desc">Versión compatible</string>
+
+    <!-- Mensajes de FileBrowserAdapter -->
+    <string name="filebrowser_file_type">Archivo</string>
+
+    <!-- Estado de descarga de GogClientFragment -->
+    <string name="gog_download_status_getting_link">Obteniendo enlace</string>
+    <string name="gog_download_status_downloading">Descargando</string>
+    <string name="gog_download_status_completed">Completado</string>
+    <string name="gog_installed_and_added">Instalado y añadido a inicio: %s</string>
+
+    <!-- Mensajes de ControlEditDialogMD -->
+    <string name="editor_copy_suffix">Copia</string>
+    <string name="editor_control_copy">Copia de control</string>
+
+    <!-- Descripciones de componentes de InitializationFragment -->
+    <string name="init_component_gl4es_desc">Capa de compatibilidad OpenGL 2.0 a OpenGL ES</string>
+    <string name="init_component_sdl_desc">Biblioteca multiplataforma de multimedia y manejo de entrada</string>
+    <string name="init_component_netcorehost_desc">Host de runtime de .NET Core</string>
+    <string name="init_component_dotnet_desc">Entorno de runtime .NET 10</string>
+    <string name="init_component_monomod_desc">MonoMod es una herramienta universal de modificación de ensamblados .NET</string>
+    <string name="init_component_patches_desc">Parches de corrección de juegos</string>
+
+    <!-- Mensajes de EditControlDialog -->
+    <string name="editor_control_name_label">Nombre del control:</string>
+    <string name="editor_control_type_label">Tipo:</string>
+    <string name="editor_control_type_button">Botón</string>
+    <string name="editor_control_type_joystick">Joystick</string>
+    <string name="editor_position_x_label">X:</string>
+    <string name="editor_position_y_label">Y:</string>
+    <string name="editor_size_width_label">Ancho:</string>
+    <string name="editor_size_height_label">Alto:</string>
+    <string name="editor_keycode_sdl">Código de tecla (SDL):</string>
+    <string name="editor_opacity_label">Opacidad: %d%%</string>
+    <string name="editor_joystick_keys">Teclas del joystick [Arriba,Derecha,Abajo,Izquierda]:</string>
+    <string name="editor_joystick_key_mapping">Mapeo de teclas del joystick</string>
+    <string name="editor_joystick_key_mapping_desc">Establecer valores de tecla para las cuatro direcciones del joystick (predeterminado: WASD)</string>
+    <string name="editor_joystick_key_mapping_value">%1$s, %2$s, %3$s, %4$s</string>
+    <string name="editor_joystick_key_up">Dirección arriba</string>
+    <string name="editor_joystick_key_right">Dirección derecha</string>
+    <string name="editor_joystick_key_down">Dirección abajo</string>
+    <string name="editor_joystick_key_left">Dirección izquierda</string>
+    <string name="editor_joystick_key_reset_wasd">Restablecer a WASD</string>
+    <string name="editor_save_button_label">Guardar</string>
+
+    <!-- Mensajes de ControlShapeManager -->
+    <string name="control_shape_rectangle">Rectángulo</string>
+    <string name="control_shape_circle">Círculo</string>
+
+    <!-- Mensajes de ControlJoystickModeManager -->
+    <string name="editor_mode_keyboard">Modo teclado</string>
+    <string name="editor_mode_mouse">Modo ratón</string>
+    <string name="editor_mode_xbox_controller">Modo controlador XBOX</string>
+
+    <!-- Mensajes de RuntimeSelectorManager -->
+    <string name="runtime_version_latest_recommended">Última - Recomendada</string>
+    <string name="runtime_version_stable_recommended">Estable - Recomendada</string>
+    <string name="runtime_version_stable">Versión estable</string>
+
+    <!-- Mensajes de GameDeletionManager -->
+    <string name="delete_shortcut_message">¿Eliminar %s de la lista?\n\nNota: Esto solo elimina el acceso directo, los archivos no se eliminarán</string>
+    <string name="delete_game_message_full">¿Eliminar %s?\n\nNota: Esto también eliminará los archivos del juego</string>
+
+    <!-- Mensajes de ControlLayoutFragment -->
+    <string name="control_layout_copy_suffix">(Copia)</string>
+    <string name="control_layout_copy_suffix_numbered">(Copia %d)</string>
+    <string name="control_layout_keyboard_mode">Modo teclado</string>
+    <string name="control_layout_gamepad_mode">Modo mando</string>
+    <string name="control_layout_imported">Diseño importado</string>
+    <string name="control_layout_preset_keyboard">Diseño de modo teclado</string>
+    <string name="control_layout_preset_gamepad">Diseño de modo mando</string>
+    <string name="control_layout_default_name">Diseño predeterminado</string>
+
+    <!-- Mensajes de FileBrowserFragment -->
+    <string name="filebrowser_select_file_generic">Seleccionar archivo</string>
+    <string name="filebrowser_select_game_file">Seleccionar archivo de juego</string>
+    <string name="filebrowser_select_modloader_file">Seleccionar archivo ModLoader</string>
+
+    <!-- Mensajes de KeySelectorDialog -->
+    <string name="editor_keyboard">Teclado</string>
+
+    <!-- Mensajes de GameAdapter -->
+    <string name="game_shortcut">Acceso directo</string>
+    <string name="game_shortcut_with_desc">🔗 %s (Acceso directo)</string>
+
+    <!-- Mensajes de ControlEditorOperations -->
+    <string name="editor_default_button_name">Botón</string>
+    <string name="editor_default_touchpad_name">Panel táctil</string>
+    <string name="editor_default_text_name">Texto</string>
+    <string name="editor_stick_right">Derecha</string>
+    <string name="editor_stick_left">Izquierda</string>
+
+    <!-- Mensajes de GameLaunchDelegate -->
+    <string name="game_launch_failed">Error al iniciar</string>
+    <string name="game_launch_assembly_path_empty">La ruta del ensamblado está vacía</string>
+    <string name="game_launch_assembly_not_exist">Archivo de ensamblado no encontrado: %s</string>
+    <string name="game_launch_set_params_failed">Error al establecer parámetros de inicio: %s</string>
+
+    <!-- Mensajes XML de UnifiedEditorSettingsDialog -->
+    <string name="editor_game_settings_title">Configuración del juego</string>
+    <string name="editor_enter_edit_mode_text">Entrar al modo de edición</string>
+    <string name="editor_add_controls_section">Añadir controles</string>
+    <string name="editor_add_button_text">Añadir botón</string>
+    <string name="editor_add_joystick_text">Añadir joystick</string>
+    <string name="editor_add_text_text">Añadir texto</string>
+    <string name="editor_save_layout_text">Guardar diseño</string>
+    <string name="editor_fps_display">Mostrar FPS</string>
+    <string name="editor_hide_controls">Ocultar controles</string>
+    <string name="editor_exit_game">Salir del juego</string>
+
+    <!-- Mensajes XML de KeySelectorDialog -->
+    <string name="editor_select_key_title">Seleccionar tecla</string>
+    <string name="editor_keyboard_keys">Mapeo de teclado</string>
+    <string name="editor_gamepad_keys">Mapeo de mando</string>
+
+    <!-- Etiquetas de categoría de ControlEditDialogMD -->
+    <string name="editor_category_basic">Información básica</string>
+    <string name="editor_category_position">Posición y tamaño</string>
+    <string name="editor_category_appearance">Apariencia</string>
+    <string name="editor_category_keymap">Configuración de teclas</string>
+    <string name="editor_category_basic_desc">Información básica</string>
+    <string name="editor_category_position_desc">Posición y tamaño</string>
+    <string name="editor_category_appearance_desc">Apariencia</string>
+    <string name="editor_category_keymap_desc">Configuración de teclas</string>
+    
+    <!-- Botones de ControlEditDialogMD -->
+    <string name="editor_delete">Eliminar</string>
+    <string name="editor_copy">Copiar</string>
+    <string name="editor_save_button">Guardar</string>
+    <string name="editor_close">Cerrar</string>
+    
+    <!-- Contenido Información Básica -->
+    <string name="editor_control_name">Nombre del control</string>
+    <string name="editor_control_name_desc">Establecer el nombre para mostrar del control</string>
+    <string name="editor_control_name_hint">Nombre del control</string>
+    <string name="editor_text_content">Contenido del texto</string>
+    <string name="editor_text_content_desc">Establecer el contenido de texto mostrado por el control de texto</string>
+    <string name="editor_text_content_hint">Contenido del texto</string>
+    <string name="editor_control_type">Tipo de control</string>
+    <string name="editor_control_type_desc">Seleccionar tipo de control (botón, joystick o control de mando)</string>
+    <string name="editor_control_shape">Forma del control</string>
+    <string name="editor_control_shape_desc">Seleccionar forma del control (rectángulo o círculo)</string>
+    <string name="editor_joystick_mode">Modo de joystick</string>
+    <string name="editor_joystick_mode_desc">Seleccionar modo de funcionamiento del joystick</string>
+    <string name="editor_joystick_stick_select">Selección de joystick</string>
+    <string name="editor_attack_mode">Modo de ataque</string>
+    <string name="editor_attack_mode_hold">Mantener - Mantener presionado el botón izquierdo del ratón</string>
+    <string name="editor_attack_mode_click">Clic - Clics continuos rápidos</string>
+    <string name="editor_attack_mode_continuous">Continuo - Mantener estado presionado</string>
+    <string name="editor_mouse_range">Rango de movimiento del ratón</string>
+    <string name="editor_mouse_range_left">Izquierda</string>
+    <string name="editor_mouse_range_top">Arriba</string>
+    <string name="editor_mouse_range_right">Derecha</string>
+    <string name="editor_mouse_range_bottom">Abajo</string>
+    <string name="editor_mouse_speed">Velocidad</string>
+    <string name="editor_double_click_joystick">Simulación de doble clic del joystick</string>
+    <string name="editor_double_click_joystick_desc">Simular movimiento del joystick al hacer doble toque en el panel táctil</string>
+    <string name="editor_combo_keys">Mapeo de teclas combinadas</string>
+    <string name="editor_combo_keys_desc">Establecer botones combinados del mando para direcciones del joystick (ej: R+B)</string>
+    <string name="editor_combo_keys_not_set">No establecido</string>
+    <string name="editor_pass_through">Paso de toque</string>
+    <string name="editor_pass_through_desc">Cuando está habilitado, tocar este control también activará clics del juego</string>
+    
+    <!-- Contenido Posición Tamaño -->
+    <string name="editor_position_x">Posición X</string>
+    <string name="editor_position_x_desc">Establecer la posición X del control</string>
+    <string name="editor_position_y">Posición Y</string>
+    <string name="editor_position_y_desc">Establecer la posición Y del control</string>
+    <string name="editor_joystick_size">Tamaño</string>
+    <string name="editor_joystick_size_desc">Establecer el tamaño del joystick (ancho y alto son iguales)</string>
+    <string name="editor_width">Ancho</string>
+    <string name="editor_width_desc">Establecer el ancho del control</string>
+    <string name="editor_height">Alto</string>
+    <string name="editor_height_desc">Establecer la altura del control</string>
+    <string name="editor_auto_size">Tamaño automático</string>
+    <string name="editor_auto_size_desc">Bloquear relación de aspecto, la altura coincide automáticamente al ajustar el ancho</string>
+    
+    <!-- Contenido Apariencia -->
+    <string name="editor_opacity_title">Opacidad del fondo</string>
+    <string name="editor_opacity_desc">Establecer la opacidad del fondo del control</string>
+    <string name="editor_border_opacity">Opacidad del borde</string>
+    <string name="editor_border_opacity_desc">Establecer la opacidad del borde del control</string>
+    <string name="editor_text_opacity">Opacidad del texto</string>
+    <string name="editor_text_opacity_desc">Establecer la opacidad del texto del control</string>
+    <string name="editor_stick_opacity">Opacidad del centro del joystick</string>
+    <string name="editor_stick_opacity_desc">Establecer la opacidad del centro del joystick</string>
+    <string name="editor_stick_knob_size">Tamaño del centro del joystick</string>
+    <string name="editor_stick_knob_size_desc">Establecer la proporción de tamaño del centro del joystick</string>
+    <string name="editor_visible_in_game">Visible en el juego</string>
+    <string name="editor_visible_in_game_desc">Controlar la visibilidad del control en el juego</string>
+    <string name="editor_bg_color">Color de fondo</string>
+    <string name="editor_bg_color_desc">Establecer el color de fondo del control</string>
+    <string name="editor_corner_radius">Radio de esquina</string>
+    <string name="editor_corner_radius_desc">Establecer el radio de esquina del control</string>
+    <string name="editor_stroke_color">Color del borde</string>
+    <string name="editor_stroke_color_desc">Establecer el color del borde del control</string>
+    <string name="editor_rotation">Ángulo de rotación</string>
+    <string name="editor_rotation_desc">Establecer el ángulo de rotación del control (0-360 grados)</string>
+    
+    <!-- Contenido Mapeo de teclas -->
+    <string name="editor_key_mapping">Mapeo de teclas</string>
+    <string name="editor_key_mapping_desc">Establecer la tecla correspondiente al control</string>
+    <string name="editor_key_not_bound">No vinculado</string>
+    <string name="editor_toggle_mode">Modo de alternancia</string>
+    <string name="editor_toggle_mode_desc">Presionar una vez para encender, presionar de nuevo para apagar</string>
+    
+    <!-- Configuración de Controles -->
+    <string name="settings_control_opacity">Opacidad del mando virtual</string>
+    <string name="settings_control_opacity_desc">Ajustar la opacidad del mando en pantalla (No implementado)</string>
+    <string name="settings_vibration">Retroalimentación de vibración</string>
+    <string name="settings_vibration_desc">Proporcionar retroalimentación de vibración al presionar teclas</string>
+
+    <string name="virtual_controller_as_first">Controlador virtual como primer controlador</string>
+    <string name="virtual_controller_as_first_desc">Registrar controlador virtual como el primer controlador (algunos juegos solo reconocen el primer controlador)</string>
+    <string name="settings_virtual_controller_vibration">Vibración del controlador virtual</string>
+    <string name="settings_virtual_controller_vibration_desc">Habilitar retroalimentación de vibración para el controlador virtual</string>
+    <string name="settings_virtual_controller_vibration_intensity">Intensidad de vibración del controlador virtual</string>
+    <string name="settings_virtual_controller_vibration_intensity_desc">Ajustar la intensidad de vibración del controlador virtual</string>
+    <string name="settings_keyboard_type">Tipo de teclado</string>
+    <string name="settings_keyboard_type_desc">Seleccionar usar teclado virtual o teclado del sistema</string>
+    <string name="keyboard_type_virtual">Teclado virtual</string>
+    <string name="keyboard_type_system">Teclado del sistema</string>
+    <string name="settings_joystick_mouse_mode_info">Las configuraciones de velocidad, rango y modo de ataque del modo de ratón de la palanca derecha se han movido al editor de controles, mantén presionado un control para entrar al modo de edición.</string>
+    
+    <!-- Configuración del Lanzador -->
+    <string name="settings_auto_import">Importar juegos automáticamente</string>
+    <string name="settings_auto_import_desc">Escanear e importar juegos automáticamente al iniciar</string>
+    <string name="settings_show_hidden">Mostrar juegos ocultos</string>
+    <string name="settings_show_hidden_desc">Mostrar juegos ocultos en la lista de juegos</string>
+    <string name="settings_off">Desactivado</string>
+    
+    <!-- Cliente GOG -->
+    <string name="gog_login_title">Iniciar sesión en GOG</string>
+    <string name="gog_login_subtitle">Acceder a tu biblioteca de juegos sin DRM</string>
+    <string name="gog_email_hint">Dirección de correo electrónico</string>
+    <string name="gog_password_hint">Contraseña</string>
+    <string name="gog_visit_website">Visitar sitio web</string>
+    <string name="gog_login_button">Iniciar sesión</string>
+    <string name="gog_user">Usuario GOG</string>
+    <string name="gog_library">Biblioteca</string>
+    <string name="gog_search_hint">Buscar juegos</string>
+    <string name="gog_logout_button">Cerrar sesión</string>
+    <string name="gog_no_games_found">No se encontraron juegos</string>
+    <string name="gog_no_games_message">Tu biblioteca GOG está vacía</string>
+    <string name="gog_loading">Cargando...</string>
+    
+    <!-- Importación Local -->
+    <string name="import_game_title">Importar juego</string>
+    <string name="import_processing">Procesando...</string>
+    <string name="import_progress">Progreso</string>
+    <string name="import_step">Paso</string>
+    <string name="import_preparing">Preparando...</string>
+    
+    <!-- Configuración del Desarrollador -->
+    <string name="settings_debug_options">Opciones de depuración</string>
+    
+    <!-- Configuración del Juego -->
+    <string name="renderer_desc">Seleccionar backend de renderizado gráfico</string>
+    
+    <!-- Configuración Varios -->
+    <string name="settings_theme_switch">Alternar apariencia del tema de la aplicación</string>
+    <string name="background_custom">Configuración de fondo personalizado</string>
+    <string name="background_custom_desc">Seleccionar imagen o video como fondo del lanzador</string>
+    <string name="background_video">Fondo de video</string>
+    <string name="background_video_desc">Seleccionar archivo de video como fondo dinámico</string>
+    <string name="background_restore_default">Restaurar fondo predeterminado</string>
+    <string name="background_restore_default_desc">Restaurar al fondo predeterminado del sistema</string>
+    <string name="language_select">Seleccionar idioma de la interfaz de la aplicación</string>
+    
+    <!-- Fragmento de Inicialización -->
+    <string name="init_legal_title">Aviso legal</string>
+    <string name="init_legal_subtitle">Por favor lee cuidadosamente los siguientes términos</string>
+    <string name="init_legal_important">⚠ Aviso importante</string>
+    <string name="init_legal_important_message">¡Este software es completamente gratuito y de código abierto! Si pagaste por él, por favor solicita un reembolso inmediatamente y reporta al vendedor. Cualquier reventa o redistribución de este software es ilegal, y el desarrollador se reserva el derecho de emprender acciones legales.</string>
+    <string name="init_legal_official_download">Descarga oficial: https://github.com/FireworkSky/RotatingartLauncher</string>
+    <string name="init_legal_terms">1. Naturaleza del software: Este lanzador es una herramienta de código abierto de terceros que requiere que los usuarios proporcionen archivos de juegos legalmente autorizados.\n\n2. Aviso de derechos de autor: Debes poseer una copia legalmente autorizada del juego que estás ejecutando. El desarrollador no está afiliado con los titulares de derechos de autor de los juegos.\n\n3. Restricciones de uso: Solo para fines de aprendizaje e investigación personal, no para fines comerciales o ingeniería inversa.\n\n4. Descargo de responsabilidad: El software se proporciona tal cual, el desarrollador no es responsable de ninguna pérdida causada por el uso.\n\n5. Protección de privacidad: No se recopila información personal, todos los datos se almacenan solo localmente.\n\n6. Aviso de permisos: Se requiere permiso de almacenamiento para acceder a archivos de juegos, solo se accede a archivos relacionados con juegos.\n\n7. Responsabilidad legal: Los usuarios son responsables de su propio uso ilegal.\n\n8. Cambios en los términos: El desarrollador se reserva el derecho de modificar este aviso en cualquier momento.</string>
+    <string name="init_legal_accept_hint">Hacer clic en [Aceptar y continuar] significa que aceptas los términos anteriores</string>
+    <string name="init_exit">Salir</string>
+    <string name="init_accept_and_continue">Aceptar y continuar</string>
+    <string name="init_permission_desc">El lanzador necesita permiso de almacenamiento para leer y gestionar archivos de juegos</string>
+    <string name="init_skip">Omitir</string>
+    <string name="permission_grant">Conceder permiso</string>
+    
+    <!-- Fragmento de Diseño de Control -->
+    <string name="control_no_layout">Sin diseño de control</string>
+    <string name="control_no_layout_hint">Haz clic en el botón en la esquina inferior derecha para crear un nuevo diseño</string>
+    <string name="control_new_layout_button">Nuevo diseño</string>
+    
+    <!-- Actividad Principal -->
+    <string name="main_select_game_hint">Por favor selecciona un juego</string>
+    <string name="main_select_game_instruction">Haz clic en un juego a la izquierda para comenzar</string>
+    <string name="main_enable_modloader">Habilitar ModLoader</string>
+    <string name="main_runtime_title">.NET Runtime</string>
+    
+    <!-- Diálogo Selector de Runtime -->
+    <string name="runtime_selector_title_text">Versión de .NET Runtime</string>
+    <string name="runtime_current_version">Versión actual</string>
+    <string name="runtime_select_version">Seleccionar versión</string>
+    
+    <!-- Diálogo de Dos Factores -->
+    <string name="two_factor_email_title">Verificación de correo electrónico</string>
+    <string name="two_factor_email_message">Por favor ingresa el código de 4 dígitos enviado a tu correo electrónico</string>
+    <string name="two_factor_case_sensitive">El código distingue entre mayúsculas y minúsculas</string>
+    
+    <!-- Diálogo de Selección de Versión -->
+    <string name="version_select_title">Seleccionar versión</string>
+    <string name="version_game_version">Versión del juego</string>
+    <string name="version_modloader_version">Versión de ModLoader</string>
+    <string name="version_start_install">Iniciar instalación</string>
+    
+    <!-- Diálogo de Progreso de Descarga GOG -->
+    <string name="gog_download_title">Descargar juego</string>
+    <string name="gog_download_game_main">Juego principal</string>
+    <string name="gog_download_waiting">Esperando</string>
+    <string name="gog_download_modloader">Cargador de mods</string>
+    <string name="gog_download_game_progress">Progreso del juego</string>
+    <string name="gog_download_modloader_progress">Progreso de mods</string>
+    <string name="gog_download_background">Ejecutar en segundo plano</string>
+    
+    <!-- Mensajes de error de la API GOG -->
+    <string name="gog_error_retry_interrupted">Reintento interrumpido</string>
+    <string name="gog_error_dns_failed">No se puede conectar al servidor GOG - Error de resolución DNS. Por favor verifica tu conexión de red o intenta usar VPN</string>
+    <string name="gog_error_connection_timeout">Tiempo de espera de conexión al servidor GOG agotado. Por favor verifica tu conexión de red</string>
+    <string name="gog_error_network_failed">Error en la solicitud de red</string>
+    <string name="gog_error_invalid_target_file">Archivo objetivo inválido</string>
+    <string name="gog_error_cannot_create_download_dir">No se puede crear el directorio de descarga: %s</string>
+    <string name="gog_error_download_failed">Error al descargar, HTTP %d</string>
+    <string name="gog_error_login_failed_check_credentials">Error al iniciar sesión - Por favor verifica el nombre de usuario y la contraseña</string>
+    <string name="gog_error_login_failed_wrong_credentials">Error al iniciar sesión - Nombre de usuario o contraseña incorrectos</string>
+    <string name="gog_error_login_failed_response_code">Error al iniciar sesión - Código de respuesta: %d</string>
+    <string name="gog_error_two_factor_redirect">Página de autenticación de dos factores redirigida, la sesión puede haber expirado</string>
+    <string name="gog_error_cannot_access_two_factor">No se puede acceder a la página de autenticación de dos factores</string>
+    <string name="gog_error_cannot_get_game_info">No se puede obtener información del juego</string>
+    <string name="gog_error_not_logged_in">No se ha iniciado sesión</string>
+    
+    <!-- Mensajes de error de tarea de importación -->
+    <string name="import_error_game_file_path_empty">La ruta del archivo de juego no puede estar vacía</string>
+    <string name="import_error_output_directory_empty">El directorio de salida no puede estar vacío</string>
+    
+    <!-- Marcadores de posición de diseño -->
+    <string name="gog_game_title_placeholder">Título del juego</string>
+    <string name="gog_games_count_placeholder">%d juegos</string>
+    <string name="component_name_placeholder">Nombre del componente</string>
+    <string name="component_description_placeholder">Descripción del componente</string>
+    <string name="component_management">Gestión de componentes</string>
+    <string name="about_runtime_environment">Acerca del entorno de runtime</string>
+    <string name="installation_instructions">Instrucciones de instalación</string>
+    <string name="installation_description">Estos componentes son necesarios para ejecutar juegos. La primera instalación requiere extraer archivos al directorio de la aplicación, y el proceso de instalación puede tomar 10-30 segundos, dependiendo del rendimiento del dispositivo.</string>
+    <string name="agree_and_install">Aceptar e instalar</string>
+    <string name="import_game_subtitle">Seleccionar archivo de juego y ModLoader (opcional) para importar</string>
+    <string name="import_game_body">Juego principal</string>
+    <string name="import_no_file_selected">No se seleccionó ningún archivo</string>
+    <string name="import_select_button">Seleccionar</string>
+    <string name="game_name_placeholder">Nombre del juego</string>
+    
+    <!-- Navegador de archivos -->
+    <string name="filebrowser_title">Navegador de archivos</string>
+    <string name="filebrowser_search_hint">Buscar archivos...</string>
+    <string name="filebrowser_sort">Ordenar</string>
+    <string name="filebrowser_select_file_button">Seleccionar archivo</string>
+    <string name="filebrowser_storage_permission_required">Permiso de almacenamiento requerido</string>
+    <string name="filebrowser_storage_permission_desc">Por favor concede permiso de almacenamiento para navegar archivos</string>
+    
+    <!-- Panel Editar Control -->
+    <string name="panel_edit_control_layout">Editar diseño de control</string>
+    <string name="panel_display_text">Texto mostrado</string>
+    <string name="panel_input_hint">Entrada</string>
+    <string name="panel_x_coordinate">Coordenada X</string>
+    <string name="panel_y_coordinate">Coordenada Y</string>
+    <string name="panel_size">Tamaño</string>
+    <string name="panel_button_opacity">Opacidad del botón</string>
+    <string name="panel_visible_in_game">Visible en el juego</string>
+    <string name="panel_apply_changes">Aplicar cambios</string>
+    <string name="panel_copy_control">Copiar control</string>
+    <string name="panel_delete_control">Eliminar control</string>
+    
+    <!-- Descripciones de contenido -->
+    <string name="content_desc_delete_game">Eliminar juego</string>
+    <string name="content_desc_game_icon">Icono del juego</string>
+    <string name="content_desc_game_description">Descripción del juego</string>
+    <string name="content_desc_component_list">Lista de componentes a instalar</string>
+    <string name="content_desc_agree_install_button">Botón de aceptar e instalar componentes</string>
+    <string name="content_desc_component_progress">Progreso de instalación de componentes</string>
+    <string name="content_desc_layout_settings">Configuración de diseño</string>
+    <string name="content_desc_add_layout">Añadir diseño</string>
+    <string name="content_desc_exit_app_button">Botón de salir de la aplicación</string>
+    <string name="content_desc_accept_legal_button">Botón de aceptar aviso legal y continuar</string>
+    <string name="content_desc_skip_permission_button">Botón de omitir concesión de permisos</string>
+    <string name="content_desc_grant_permission_button">Botón de conceder permiso</string>
+    <string name="content_desc_settings">Configuración</string>
+    <string name="content_desc_edit_settings">Editar configuración</string>
+    <string name="content_desc_close">Cerrar</string>
+    <string name="content_desc_back">Atrás</string>
+    <string name="dialog_title_placeholder">Diálogo</string>
+    <string name="layout_settings_title">Configuración de diseño</string>
+    <string name="import_layout">Importar diseño</string>
+    <string name="import_preset">Importar preestablecido</string>
+    <string name="quick_settings_title">Configuración rápida</string>
+    <string name="game_settings_title">Configuración del juego</string>
+    <string name="more_settings_developing">Más funciones de configuración en desarrollo...</string>
+    <string name="key_mouse_left">Botón izquierdo del ratón</string>
+    <string name="key_mouse_middle">Botón central del ratón</string>
+    <string name="key_mouse_right">Botón derecho del ratón</string>
+    <string name="key_mouse_wheel_up">Rueda ↑</string>
+    <string name="key_mouse_wheel_down">Rueda ↓</string>
+    <string name="key_open_keyboard">Abrir teclado</string>
+    <string name="key_keyboard">Teclado</string>
+    <string name="key_touchpad_buttons">Botones del panel táctil</string>
+    <string name="key_space">Espacio</string>
+    <string name="key_enter">Intro</string>
+    <string name="key_arrow_up">↑ Arriba</string>
+    <string name="key_arrow_down">↓ Abajo</string>
+    <string name="key_arrow_left">← Izquierda</string>
+    <string name="key_arrow_right">→ Derecha</string>
+    <string name="key_shift_left">Shift (Izquierda)</string>
+    <string name="key_shift_right">Shift (Derecha)</string>
+    <string name="key_ctrl_left">Ctrl (Izquierda)</string>
+    <string name="key_ctrl_right">Ctrl (Derecha)</string>
+    <string name="key_alt_left">Alt (Izquierda)</string>
+    <string name="key_alt_right">Alt (Derecha)</string>
+    <string name="key_numpad_0">Teclado numérico 0</string>
+    <string name="key_numpad_1">Teclado numérico 1</string>
+    <string name="key_numpad_2">Teclado numérico 2</string>
+    <string name="key_numpad_3">Teclado numérico 3</string>
+    <string name="key_numpad_4">Teclado numérico 4</string>
+    <string name="key_numpad_5">Teclado numérico 5</string>
+    <string name="key_numpad_6">Teclado numérico 6</string>
+    <string name="key_numpad_7">Teclado numérico 7</string>
+    <string name="key_numpad_8">Teclado numérico 8</string>
+    <string name="key_numpad_9">Teclado numérico 9</string>
+    <string name="key_numpad_plus">Teclado numérico +</string>
+    <string name="key_numpad_minus">Teclado numérico -</string>
+    <string name="key_numpad_multiply">Teclado numérico *</string>
+    <string name="key_numpad_divide">Teclado numérico /</string>
+    <string name="key_numpad_period">Teclado numérico .</string>
+    <string name="key_numpad_enter">Teclado numérico Intro</string>
+    <string name="key_unknown">Desconocido (%s)</string>
+    <string name="joystick_right">Palanca derecha</string>
+    <string name="joystick_left">Palanca izquierda</string>
+    <string name="type_conversion_wip">La función de conversión de tipos aún está en desarrollo</string>
+    <string name="input_layout_name">Ingresar nombre del diseño</string>
+    <string name="layout_name_hint">Nombre del diseño</string>
+    <string name="layout_name_example">ej: Mi diseño</string>
+    
+    <!-- Elemento de archivo -->
+    <string name="file_name_placeholder">Nombre del archivo</string>
+    <string name="file_type_placeholder">Tipo de archivo</string>
+    
+    <!-- Versión de Runtime -->
+    <string name="runtime_recommended_version">Versión recomendada</string>
+    
+    <!-- Parche -->
+    <string name="patch_name_placeholder">Nombre del parche</string>
+    <string name="patch_description_placeholder">Descripción del parche</string>
+    
+    <!-- Menú del Editor -->
+    <string name="menu_item_placeholder">Elemento del menú</string>
+    
+    <!-- Diseño de Control -->
+    <string name="layout_name_placeholder">Nombre del diseño</string>
+    <string name="layout_default_tag">Predeterminado</string>
+    <string name="layout_controls_count">5 controles</string>
+    <string name="content_desc_more_options">Más opciones</string>
+    
+    <!-- Tarjeta de selección de archivo -->
+    <string name="file_optional_tag">Opcional</string>
+    <string name="file_select_button">Seleccionar</string>
+    
+    <!-- Estado vacío -->
+    <string name="empty_directory_message">El directorio actual está vacío</string>
+    
+    <!-- Consola flotante -->
+    <string name="developer_console_title">Consola del desarrollador</string>
+    <string name="content_desc_minimize">Minimizar</string>
+    <string name="content_desc_clear">Limpiar</string>
+    <string name="console_message_count">Mensajes: %d</string>
+    <string name="console_error_count">Errores: %d</string>
+    <string name="console_warning_count">Advertencias: %d</string>
+    <string name="console_ready">Consola lista...\n</string>
+    <string name="console_input_hint">Ingresar comando...</string>
+    <string name="console_send_button">Enviar</string>
+    
+    <!-- Menú de navegación -->
+    <string name="nav_game">Juegos</string>
+    <string name="nav_file">Archivos</string>
+    <string name="nav_control">Controles</string>
+    <string name="nav_download">Descargas</string>
+    <string name="nav_add_game">Añadir juego</string>
+    <string name="nav_settings">Configuración</string>
+    
+    <!-- Menú de diseño de control -->
+    <string name="action_edit_layout">Editar diseño</string>
+    <string name="action_rename">Renombrar</string>
+    <string name="action_duplicate_layout">Duplicar diseño</string>
+    <string name="action_set_default">Establecer como predeterminado</string>
+    <string name="action_export_layout">Exportar diseño</string>
+    
+    <!-- Menú del editor de control -->
+    <string name="menu_add_cross">Añadir D-Pad</string>
+    <string name="menu_load_default_layout">Cargar diseño predeterminado</string>
+    <string name="menu_clear_all_controls">Limpiar todos los controles</string>
+    
+    <!-- Navegador de archivos del juego -->
+    <string name="mod_manager_title">Navegador de archivos del juego</string>
+    <string name="mod_manager_path">Ruta</string>
+    <string name="mod_manager_new_folder">Nueva carpeta</string>
+    <string name="mod_manager_refresh">Actualizar</string>
+    <string name="mod_manager_copy">Copiar</string>
+    <string name="mod_manager_move">Mover</string>
+    <string name="mod_manager_paste">Pegar</string>
+    <string name="mod_manager_delete">Eliminar</string>
+    <string name="mod_manager_empty">La carpeta está vacía</string>
+    <string name="mod_manager_file_selected">Seleccionado: %s</string>
+    <string name="mod_manager_no_selection">Por favor selecciona un archivo o carpeta primero</string>
+    <string name="mod_manager_copied">Copiado: %s</string>
+    <string name="mod_manager_moved">Movido: %s</string>
+    <string name="mod_manager_copied_success">Copia exitosa: %s</string>
+    <string name="mod_manager_moved_success">Movimiento exitoso: %s</string>
+    <string name="mod_manager_deleted">Eliminado: %s</string>
+    <string name="mod_manager_refreshed">Actualizado</string>
+    <string name="mod_manager_folder_created">Carpeta creada con éxito</string>
+    <string name="mod_manager_folder_create_failed">Error al crear la carpeta</string>
+    <string name="mod_manager_delete_title">Eliminar</string>
+    <string name="mod_manager_delete_message">¿Estás seguro de que quieres eliminar %s?</string>
+    <string name="mod_manager_delete_failed">Error al eliminar</string>
+    <string name="mod_manager_overwrite_title">Sobrescribir archivo</string>
+    <string name="mod_manager_overwrite_message">El archivo %s ya existe. ¿Sobrescribir?</string>
+    <string name="mod_manager_overwrite">Sobrescribir</string>
+    <string name="mod_manager_no_file_to_paste">No hay archivo para pegar</string>
+    <string name="mod_manager_paste_failed">Error al pegar: %s</string>
+    <string name="mod_manager_enter_folder_name">Ingresa el nombre de la carpeta</string>
+    <string name="mod_manager_create">Crear</string>
+    <string name="mod_manager_invalid_path">Ruta inválida</string>
+    <string name="mod_manager_grid_view">Vista de cuadrícula</string>
+    <string name="mod_manager_list_view">Vista de lista</string>
+    <string name="mod_manager_view_mode_grid">Cambiado a vista de cuadrícula</string>
+    <string name="mod_manager_view_mode_list">Cambiado a vista de lista</string>
+    <string name="mod_manager_home">Inicio</string>
+    <string name="editor_toggle_touch">Habilitar evento táctil</string>
+    <string name="patch_dialog_import">Importar parche</string>
+    <string name="patch_dialog_import_successful">Paquete de parches importado con éxito</string>
+    <string name="patch_dialog_import_failed">Error al importar paquete de parches, revisa los registros para más información</string>
+    <string name="patch_dialog_import_title">⚠️ Advertencia</string>
+    <string name="patch_dialog_import_message">Los paquetes de parches tienen la capacidad de cargar archivos ejecutables.\nInstalar paquetes de parches con código malicioso puede resultar en:\n- Fuga de datos personales e información de privacidad\n- Daño al dispositivo\nAntes de la instalación, por favor confirma que:\n- Confías en la fuente de este paquete de parches\n- Entiendes la funcionalidad específica del paquete de parches\n- Has respaldado datos importantes\nContinuar con la instalación indica que entiendes y aceptas los riesgos asociados.</string>
+    
+    <!-- Descarga de paquetes de control -->
+    <string name="pack_category_all">Todos</string>
+    <string name="pack_store">Tienda de controles</string>
+    <string name="pack_download_title">Tienda de controles</string>
+    <string name="pack_search_hint">Buscar paquetes de control...</string>
+    <string name="pack_loading">Cargando lista de paquetes de control...</string>
+    <string name="pack_empty">Sin paquetes de control</string>
+    <string name="pack_empty_hint">Vuelve más tarde o desliza hacia abajo para actualizar</string>
+    <string name="pack_load_failed">Error al cargar</string>
+    <string name="pack_retry">Reintentar</string>
+    <string name="pack_author_format">Autor: %s</string>
+    <string name="pack_version_format">Versión: %s</string>
+    <string name="pack_download">Descargar</string>
+    <string name="pack_installed">Instalado</string>
+    <string name="pack_update_available">Actualización disponible</string>
+    <string name="pack_downloading">Descargando</string>
+    <string name="pack_installing">Instalando</string>
+    <string name="pack_apply">Aplicar</string>
+    <string name="pack_update">Actualizar</string>
+    <string name="pack_delete">Eliminar</string>
+    <string name="pack_delete_title">Eliminar paquete de control</string>
+    <string name="pack_delete_confirm">¿Estás seguro de que quieres eliminar el paquete de control \"%s\"?</string>
+    <string name="pack_author_label">Autor</string>
+    <string name="pack_version_label">Versión</string>
+    <string name="pack_installed_version">Versión instalada</string>
+    <string name="pack_tags_label">Etiquetas</string>
+    <string name="pack_size_label">Tamaño</string>
+    <string name="pack_download_failed">Error al descargar: %s</string>
+    <string name="pack_installed_success">Paquete de control \"%s\" instalado con éxito</string>
+    <string name="pack_applied_success">Paquete de control \"%s\" aplicado al diseño</string>
+    <string name="pack_apply_failed">Error al aplicar paquete de control</string>
+    <string name="pack_deleted_success">Paquete de control \"%s\" eliminado</string>
+    <string name="pack_delete_failed">Error al eliminar paquete de control</string>
+    <string name="pack_no_preview">Sin vista previa disponible</string>
+    <string name="pack_preview_title">Vista previa del paquete de control</string>
+    <string name="pack_unknown_author">Autor desconocido</string>
+    <string name="pack_preview_image">Vista previa %d</string>
+    
+    <!-- Exportación de paquetes de control -->
+    <string name="pack_export_title">Exportar paquete de control</string>
+    <string name="pack_export_author">Nombre del autor</string>
+    <string name="pack_export_description">Descripción del paquete</string>
+    <string name="pack_export_version">Versión</string>
+    <string name="pack_export_success">Paquete de control exportado</string>
+    <string name="pack_export_failed">Error al exportar: %s</string>
+    
+    <!-- Textura de control -->
+    <string name="control_texture_selector_title">Selección de textura</string>
+    <string name="control_texture_select_hint">Seleccionar archivo de textura para aplicar al control</string>
+    <string name="control_texture_clear">Limpiar textura</string>
+    <string name="control_texture_empty">Sin archivos de textura</string>
+    <string name="control_texture_empty_hint">Haz clic en el botón de abajo para importar archivos de textura</string>
+    <string name="control_texture_applied">Textura aplicada</string>
+    <string name="control_texture_cleared">Textura limpiada</string>
+    <string name="control_texture_import">Importar textura</string>
+    <string name="control_texture_imported">Importado: %s</string>
+    <string name="control_texture_import_failed">Error al importar</string>
+    <string name="control_texture_unsupported_format">Formato no soportado, soporta PNG, JPG, WebP, SVG</string>
+    <string name="control_texture_normal">Estado normal</string>
+    <string name="control_texture_pressed">Estado presionado</string>
+    <string name="control_texture_toggled">Estado alternado</string>
+    <string name="control_texture_background">Fondo</string>
+    <string name="control_texture_knob">Núcleo del joystick</string>
+    <string name="control_texture_not_supported">Textura no soportada</string>
+    <string name="control_texture_enabled">Textura configurada</string>
+    <string name="control_texture_disabled">Textura no configurada</string>
+    <string name="editor_texture">Configuración de textura</string>
+    <string name="editor_texture_desc">Establecer imágenes de textura personalizadas para controles</string>
+
+    <!-- Relacionado con desarrollador -->
+    <string name="future_version_contributor">Contribuidor de la rama Future</string>
+    
+    <!-- Relacionado con patrocinadores -->
+    <string name="sponsors_title">Galaxia de honor</string>
+    <string name="sponsors_wall_title">Galaxia de honor</string>
+    <string name="sponsors_wall_desc">Tributo a cada guardián de estrellas</string>
+    <string name="sponsors_loading">Cargando lista de patrocinadores...</string>
+    <string name="sponsors_error">Error al cargar</string>
+    <string name="sponsors_empty">Sin patrocinadores aún</string>
+    <string name="sponsors_count_format">%d personas</string>
+    <string name="sponsors_count_total">%d patrocinadores</string>
+    <string name="sponsors_join_date_format">Se unió %s</string>
+    <string name="become_sponsor">Convertirse en patrocinador</string>
+    <string name="error_open_browser">No se puede abrir el navegador</string>
+    <string name="back">Atrás</string>
+    <string name="retry">Reintentar</string>
+    <string name="view">Ver</string>
+    <string name="sponsors_tip_gesture">Doble toque para restablecer · Pellizcar para zoom · Arrastrar para explorar</string>
+    
+    <!-- Gestor de plugins -->
+    <string name="plugin_manager_title">Gestión de plugins</string>
+    <string name="plugin_manager_subtitle">Gestionar plugins de instalación de juegos, añadir o eliminar plugins externos</string>
+    <string name="manage_plugins">Gestionar plugins</string>
+    <string name="add_plugin">Añadir plugin</string>
+    <string name="installed_plugins">Plugins instalados</string>
+    <string name="available_plugins">Plugins disponibles</string>
+    <string name="plugin_count">%d plugins instalados</string>
+    <string name="no_plugins_available">Sin plugins disponibles</string>
+    <string name="no_plugins_installed">Sin plugins instalados</string>
+    <string name="no_plugins_hint">Haz clic en el botón de arriba para añadir plugins</string>
+    <string name="plugin_source_builtin">Integrado</string>
+    <string name="plugin_source_external">Externo</string>
+    <string name="plugin_import_success">Plugin importado con éxito: %s</string>
+    <string name="plugin_import_failed">Error al importar plugin</string>
+    <string name="plugin_restart_required_title">Reinicio requerido</string>
+    <string name="plugin_restart_required_message">Los plugins recién importados requieren reiniciar la aplicación para tener efecto</string>
+    <string name="restart_now">Reiniciar ahora</string>
+    <string name="plugin_delete_title">Eliminar plugin</string>
+    <string name="plugin_delete_message">¿Estás seguro de que quieres eliminar el plugin %s?</string>
+    <string name="plugin_delete_success">Plugin eliminado</string>
+    <string name="plugin_delete_failed">Error al eliminar plugin</string>
+    <string name="plugin_delete_not_found">Archivo de plugin correspondiente no encontrado</string>
+    <string name="plugin_cannot_delete_builtin">Los plugins integrados no se pueden eliminar</string>
+    <string name="plugin_id_label">ID del plugin: %s</string>
+    <string name="plugin_games_label">Juegos soportados:</string>
+    <string name="plugin_source_label">Fuente: </string>
+    <string name="delete">Eliminar</string>
+    
+    <!-- Importación de juego -->
+    <string name="select_game_file">Seleccionar archivo de juego</string>
+    <string name="select_game_file_simple_hint">Soporta formato ZIP (cuerpo del juego o cargador de mods)</string>
+    <string name="select_gog_sh_hint">Seleccionar script de instalación GOG (.sh)</string>
+    <string name="game_name_input_hint">Nombre del juego (detección automática)</string>
+    <string name="start_import">Iniciar importación</string>
+    <string name="import_game_simple_subtitle">Selecciona el archivo ZIP del juego para comenzar la importación</string>
+    <string name="import_game_sh_subtitle">Selecciona el script de instalación GOG para comenzar la importación, el nombre del juego se detectará automáticamente</string>
+    <string name="import_hint_zip">• Soporta archivos de juego en formato ZIP</string>
+    <string name="import_hint_sh_file">• Soporta scripts de instalación GOG .sh</string>
+    <string name="import_hint_auto_detect">• Detección automática del tipo y nombre del juego</string>
+    <string name="import_hint_examples">• Como tModLoader, Stardew Valley, Celeste, etc.</string>
+    <string name="import_hint_gog_examples">• Como Terraria, Celeste, Hollow Knight, etc.</string>
+    <string name="import_select_plugin_hint">Selecciona un plugin de juego para comenzar el proceso de importación</string>
+    <string name="import_select_modloader_first">Por favor selecciona primero el archivo ModLoader</string>
+    <string name="import_select_mod_loader_first">Por favor selecciona primero el archivo del cargador de mods</string>
+    <string name="select_files">Seleccionar archivos</string>
+    <string name="select_file">Seleccionar archivo</string>
+    <string name="import_no_plugin_available">Sin plugins de instalación disponibles</string>
+    <string name="import_no_plugin_selected">Sin plugin seleccionado</string>
+    <string name="import_plugin_not_match">El plugin seleccionado no coincide con el archivo actual</string>
+    <string name="import_cancelled">Importación cancelada</string>
+    <string name="import_install_method">Método de instalación</string>
+    <string name="import_required">Requerido</string>
+    
+    <!-- Pasos de importación -->
+    <string name="import_step1_title">Seleccionar cuerpo del juego</string>
+    <string name="import_step2_title">Seleccionar cargador de mods</string>
+    <string name="import_step3_title">Confirmar importación</string>
+    <string name="next_step">Siguiente paso</string>
+    <string name="import_select_game_body">Seleccionar archivo del cuerpo del juego</string>
+    <string name="import_click_to_select_sh">Haz clic para seleccionar el archivo de instalación .sh descargado</string>
+    <string name="import_game_detected_label">Juego detectado</string>
+    <string name="import_mod_loader">Cargador de mods</string>
+    <string name="import_select_sh_file">Por favor selecciona el archivo de instalación del juego (.sh)</string>
+    <string name="import_select_zip_file">Por favor selecciona el archivo del cargador de mods (.zip)</string>
+    <string name="import_local_select">Selección local</string>
+    <string name="import_local_select_hint">Seleccionar archivo ZIP descargado del dispositivo</string>
+    <string name="import_online_download">Descarga en línea</string>
+    <string name="import_online_download_hint">Descargar cargador de mods desde la red</string>
+    <string name="import_summary">Resumen de importación</string>
+    <string name="import_progress_title">Progreso de importación</string>
+    <string name="init_component_rootfs_desc">Box64 y Debian rootfs</string>
+    <string name="init_component_x64lib_desc">Bibliotecas Box64 x86_64 (libstdc++, libssl, etc.)</string>
+    
+    <!-- Configuración del Desarrollador -->
+    <string name="settings_experimental_features">Funciones experimentales</string>
+    
+    <!-- Configuración Varios -->
+    <string name="settings_custom_background">Fondo personalizado</string>
+    <string name="settings_custom_background_desc">Seleccionar imagen o video como fondo</string>
+    <string name="settings_background_opacity">Opacidad del fondo</string>
+    <string name="settings_video_playback_speed">Velocidad de reproducción de video</string>
+    
+    <!-- Importación de juego -->
+    <string name="import_game_title_text">Importar juego</string>
+    <string name="import_game_subtitle_text">Selecciona archivos del cuerpo del juego y del cargador de mods para comenzar la importación</string>
+    
+    <!-- Configuración Acerca de -->
+    <string name="about_version_label">Versión</string>
+    <string name="about_afdian_sponsor">Patrocinador Aifadian</string>
+    <string name="about_patreon_sponsor">Patrocinador Patreon</string>
+    <string name="about_sponsor_button">Patrocinar</string>
+    <string name="about_discord_community">Comunidad Discord</string>
+    <string name="about_qq_group">Grupo QQ</string>
+    <string name="about_join_button">Unirse</string>
+    <string name="about_project_team">Equipo del proyecto</string>
+    <string name="about_project_author">Autor del proyecto</string>
+    <string name="about_developer">Desarrollador</string>
+    <string name="about_github">GitHub</string>
+</resources>

@@ -85,6 +85,7 @@
     <string name="language_english">English</string>
     <string name="language_chinese">简体中文</string>
     <string name="language_russian">Русский</string>
+    <string name="language_spanish">Español</string>
     <string name="language_changed">语言已切换到 %s</string>
     <string name="app_info">应用信息</string>
     <string name="app_version">版本 1.2.0-beta</string>
@@ -166,7 +167,8 @@
     <string name="settings_language_desc_auto">使用系统语言设置</string>
     <string name="settings_language_desc_en">Use English</string>
     <string name="settings_language_desc_zh">使用简体中文</string>
-    <string name="settings_language_desc_ru">Использовать русский</string>
+    <string name="settings_language_desc_ru">Использовать русский (машинный перевод)</string>
+    <string name="settings_language_desc_es">Usar español (traducción automática)</string>
 
     <!-- 渲染器设置 -->
     <string name="renderer_title">渲染器</string>

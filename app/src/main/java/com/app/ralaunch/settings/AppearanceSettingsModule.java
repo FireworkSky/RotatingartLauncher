@@ -472,14 +472,17 @@ public class AppearanceSettingsModule implements SettingsModule {
                         fragment.getString(R.string.language_system),
                         fragment.getString(R.string.settings_language_desc_auto)),
                     new OptionSelectorDialog.Option(LocaleManager.LANGUAGE_EN,
-                        fragment.getString(R.string.language_english),
-                        fragment.getString(R.string.settings_language_desc_en)),
+                        "English",  // Always show in native language
+                        "Use English"),  // Always show in native language
                     new OptionSelectorDialog.Option(LocaleManager.LANGUAGE_ZH,
-                        fragment.getString(R.string.language_chinese),
-                        fragment.getString(R.string.settings_language_desc_zh)),
+                        "简体中文",  // Always show in native language
+                        "使用简体中文"),  // Always show in native language
                     new OptionSelectorDialog.Option(LocaleManager.LANGUAGE_RU,
-                        fragment.getString(R.string.language_russian),
-                        fragment.getString(R.string.settings_language_desc_ru))
+                        "Русский",  // Always show in native language
+                        "Использовать русский (машинный перевод)"),  // Always show in native language
+                    new OptionSelectorDialog.Option(LocaleManager.LANGUAGE_ES,
+                        "Español",  // Always show in native language
+                        "Usar español (traducción automática)")  // Always show in native language
                 );
 
                 String currentLanguage = LocaleManager.getLanguage(fragment.requireContext());

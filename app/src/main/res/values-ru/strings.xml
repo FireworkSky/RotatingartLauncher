@@ -85,6 +85,7 @@
     <string name="language_english">English</string>
     <string name="language_chinese">简体中文</string>
     <string name="language_russian">Русский</string>
+    <string name="language_spanish">Español</string>
     <string name="language_changed">Язык изменен на %s</string>
     <string name="app_info">Информация о приложении</string>
     <string name="app_version">Версия 1.2.0-beta</string>
@@ -167,7 +168,8 @@
     <string name="settings_language_desc_auto">Использовать язык системы</string>
     <string name="settings_language_desc_en">Использовать английский</string>
     <string name="settings_language_desc_zh">使用简体中文</string>
-    <string name="settings_language_desc_ru">Использовать русский</string>
+    <string name="settings_language_desc_ru">Использовать русский (машинный перевод)</string>
+    <string name="settings_language_desc_es">Использовать испанский (машинный перевод)</string>
 
     <!-- AppearanceSettingsModule Messages -->
     <string name="appearance_cannot_open_image_picker">Не удалось открыть выбор изображения</string>
