@@ -834,6 +834,8 @@
     <string name="settings_virtual_controller_vibration_desc">Enable vibration feedback for virtual controller</string>
     <string name="settings_virtual_controller_vibration_intensity">Virtual Controller Vibration Intensity</string>
     <string name="settings_virtual_controller_vibration_intensity_desc">Adjust the vibration intensity for virtual controller</string>
+    <string name="settings_back_button_open_menu">Back Button Opens Game Menu</string>
+    <string name="settings_back_button_open_menu_desc">Open in-game menu when back button is pressed</string>
     <string name="settings_joystick_mouse_mode_info">Right stick mouse mode speed, range, and attack mode settings have been moved to the control editor. Long press a control to enter edit mode.</string>
     <string name="settings_keyboard_type">Keyboard Type</string>
     <string name="settings_keyboard_type_desc">Select to use virtual keyboard or system keyboard</string>

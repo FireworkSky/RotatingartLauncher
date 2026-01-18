@@ -830,6 +830,8 @@
     <string name="settings_virtual_controller_vibration_desc">Habilitar retroalimentación de vibración para el controlador virtual</string>
     <string name="settings_virtual_controller_vibration_intensity">Intensidad de vibración del controlador virtual</string>
     <string name="settings_virtual_controller_vibration_intensity_desc">Ajustar la intensidad de vibración del controlador virtual</string>
+    <string name="settings_back_button_open_menu">Botón Atrás abre el menú del juego</string>
+    <string name="settings_back_button_open_menu_desc">Abrir el menú del juego al presionar el botón Atrás</string>
     <string name="settings_keyboard_type">Tipo de teclado</string>
     <string name="settings_keyboard_type_desc">Seleccionar usar teclado virtual o teclado del sistema</string>
     <string name="keyboard_type_virtual">Teclado virtual</string>

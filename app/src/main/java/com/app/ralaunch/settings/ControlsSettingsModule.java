@@ -29,6 +29,7 @@ public class ControlsSettingsModule implements SettingsModule {
         setupVibrationSettings();
         setupVirtualControllerAsFirstSettings();
         setupVirtualControllerVibrationSettings();
+        setupBackButtonOpenMenuSettings();
     }
 
     private void setupControlOpacitySettings() {
@@ -123,6 +124,17 @@ public class ControlsSettingsModule implements SettingsModule {
     private void updateIntensityDisplay(TextView textView, float intensity) {
         int percentage = Math.round(intensity * 100);
         textView.setText(percentage + "%");
+    }
+
+    private void setupBackButtonOpenMenuSettings() {
+        MaterialSwitch switchBackButtonOpenMenu = rootView.findViewById(R.id.switchBackButtonOpenMenu);
+        if (switchBackButtonOpenMenu != null) {
+            boolean enabled = settingsManager.isBackButtonOpenMenuEnabled();
+            switchBackButtonOpenMenu.setChecked(enabled);
+            switchBackButtonOpenMenu.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                settingsManager.setBackButtonOpenMenuEnabled(isChecked);
+            });
+        }
     }
 }
 

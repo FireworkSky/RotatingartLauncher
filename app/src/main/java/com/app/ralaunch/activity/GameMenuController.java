@@ -10,6 +10,7 @@ import androidx.drawerlayout.widget.DrawerLayout;
 
 import com.app.ralaunch.R;
 import com.app.ralaunch.controls.editors.ControlEditorManager;
+import com.app.ralaunch.data.SettingsManager;
 import com.app.ralaunch.manager.GameMenuManager;
 import com.app.ralaunch.utils.AppLogger;
 
@@ -64,7 +65,11 @@ public class GameMenuController {
                     controlEditorManager.showSettingsDialog();
                 }
             });
-            drawerButton.postDelayed(() -> drawerButton.setVisibility(View.VISIBLE), 500);
+            drawerButton.postDelayed(
+                    () -> drawerButton.setVisibility(SettingsManager.getInstance().isBackButtonOpenMenuEnabled()
+                            ? View.GONE
+                            : View.VISIBLE),
+                    500);
 
             initializeControlEditorManager(activity, controlsManager);
 
@@ -188,6 +193,13 @@ public class GameMenuController {
     }
 
     public void handleBack(GameVirtualControlsManager controlsManager) {
+        // 如果启用了返回键打开菜单功能，则打开菜单
+        if (SettingsManager.getInstance().isBackButtonOpenMenuEnabled() &&
+                controlEditorManager != null &&
+                !controlEditorManager.isSettingsDialogShowing()) {
+            controlEditorManager.showSettingsDialog();
+            return;
+        }
         if (menuManager != null && menuManager.isMenuOpen()) {
             menuManager.closeMenu();
             return;
@@ -195,6 +207,10 @@ public class GameMenuController {
         if (controlEditorManager != null && controlEditorManager.isInEditor()) {
             controlEditorManager.exitEditMode();
             return;
+        }
+        // 如果没有其他界面打开，则关闭菜单
+        if (controlEditorManager != null && controlEditorManager.isSettingsDialogShowing()) {
+            controlEditorManager.hideSettingsDialog();
         }
         // 返回键不再隐藏控件，用户可以通过游戏设置中的"隐藏控件"按钮来隐藏
     }

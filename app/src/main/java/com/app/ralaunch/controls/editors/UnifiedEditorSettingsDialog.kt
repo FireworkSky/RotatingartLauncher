@@ -402,8 +402,9 @@ class UnifiedEditorSettingsDialog(
             // 切换编辑模式
             if (mItemToggleEditMode != null) {
                 mItemToggleEditMode!!.setOnClickListener { v: View? ->
-                    mIsEditModeEnabled = !mIsEditModeEnabled
-                    updateEditModeUI()
+                    // handled in onToggleEditMode
+//                    mIsEditModeEnabled = !mIsEditModeEnabled
+//                    updateEditModeUI()
                     mListener!!.onToggleEditMode()
                 }
             }

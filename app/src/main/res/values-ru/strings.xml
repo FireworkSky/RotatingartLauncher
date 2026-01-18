@@ -833,6 +833,8 @@
     <string name="settings_virtual_controller_vibration_desc">Включить тактильную отдачу виртуального контроллера</string>
     <string name="settings_virtual_controller_vibration_intensity">Интенсивность вибрации виртуального контроллера</string>
     <string name="settings_virtual_controller_vibration_intensity_desc">Настроить интенсивность вибрации виртуального контроллера</string>
+    <string name="settings_back_button_open_menu">Кнопка "Назад" открывает меню игры</string>
+    <string name="settings_back_button_open_menu_desc">Открыть меню игры при нажатии кнопки "Назад"</string>
     <string name="settings_keyboard_type">Тип клавиатуры</string>
     <string name="settings_keyboard_type_desc">Выбрать использование виртуальной клавиатуры или системной клавиатуры</string>
     <string name="keyboard_type_virtual">Виртуальная клавиатура</string>

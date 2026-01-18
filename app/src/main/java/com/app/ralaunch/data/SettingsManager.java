@@ -55,6 +55,7 @@ public class SettingsManager {
         public static final String VIRTUAL_CONTROLLER_VIBRATION_ENABLED = "virtual_controller_vibration_enabled";
         public static final String VIRTUAL_CONTROLLER_VIBRATION_INTENSITY = "virtual_controller_vibration_intensity";
         public static final String VIRTUAL_CONTROLLER_AS_FIRST = "virtual_controller_as_first"; // 虚拟手柄作为第一个控制器
+        public static final String BACK_BUTTON_OPEN_MENU = "back_button_open_menu"; // 返回键打开游戏菜单
         public static final String TOUCH_MULTITOUCH_ENABLED = "touch_multitouch_enabled"; // 多点触控模拟鼠标
         public static final String FPS_DISPLAY_ENABLED = "fps_display_enabled"; // FPS 显示开关
         public static final String FPS_DISPLAY_X = "fps_display_x"; // FPS 显示位置 X
@@ -129,6 +130,7 @@ public class SettingsManager {
         public static final boolean VIRTUAL_CONTROLLER_VIBRATION_ENABLED = false; // 默认关闭虚拟手柄振动
         public static final float VIRTUAL_CONTROLLER_VIBRATION_INTENSITY = 1.0f; // 默认振动强度100%
         public static final boolean VIRTUAL_CONTROLLER_AS_FIRST = false; // 默认虚拟手柄不作为第一个控制器
+        public static final boolean BACK_BUTTON_OPEN_MENU = false; // 默认返回键不打开游戏菜单
         public static final boolean TOUCH_MULTITOUCH_ENABLED = true; // 默认开启多点触控（不可更改）
         public static final boolean FPS_DISPLAY_ENABLED = false; // 默认关闭 FPS 显示
         public static final float FPS_DISPLAY_X = -1f; // 默认自动位置（跟随鼠标）
@@ -427,6 +429,19 @@ public class SettingsManager {
 
     public void setVirtualControllerAsFirst(boolean enabled) {
         putBoolean(Keys.VIRTUAL_CONTROLLER_AS_FIRST, enabled);
+    }
+
+    /**
+     * 是否使用返回键打开游戏菜单
+     * 启用后：按返回键将打开游戏内菜单
+     * 禁用后：按返回键不会打开菜单（仅关闭菜单/退出编辑器）
+     */
+    public boolean isBackButtonOpenMenuEnabled() {
+        return getBoolean(Keys.BACK_BUTTON_OPEN_MENU, Defaults.BACK_BUTTON_OPEN_MENU);
+    }
+
+    public void setBackButtonOpenMenuEnabled(boolean enabled) {
+        putBoolean(Keys.BACK_BUTTON_OPEN_MENU, enabled);
     }
 
     /**

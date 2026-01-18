@@ -829,6 +829,8 @@
     <string name="settings_virtual_controller_vibration_desc">启用虚拟手柄的振动反馈</string>
     <string name="settings_virtual_controller_vibration_intensity">虚拟手柄振动强度</string>
     <string name="settings_virtual_controller_vibration_intensity_desc">调整虚拟手柄的振动强度</string>
+    <string name="settings_back_button_open_menu">返回键打开游戏菜单</string>
+    <string name="settings_back_button_open_menu_desc">按返回键时打开游戏内菜单</string>
     <string name="settings_keyboard_type">键盘类型</string>
     <string name="settings_keyboard_type_desc">选择使用虚拟键盘或系统键盘</string>
     <string name="keyboard_type_virtual">虚拟键盘</string>
