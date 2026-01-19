@@ -439,6 +439,7 @@
     <string name="editor_touchpad_added">已添加触控板</string>
     <string name="editor_mousewheel_added">已添加鼠标滚轮</string>
     <string name="editor_text_added">已添加文本</string>
+    <string name="editor_dpad_added">已添加方向键</string>
     <string name="editor_select_joystick_type">选择摇杆类型</string>
     <string name="editor_joystick_type_move_aim">移动+瞄准摇杆</string>
     <string name="editor_joystick_type_gamepad">手柄摇杆</string>
@@ -592,6 +593,7 @@
     <string name="control_type_touchpad">触控板</string>
     <string name="control_type_mousewheel">鼠标滚轮</string>
     <string name="control_type_text">文本</string>
+    <string name="control_type_dpad">方向键</string>
     <string name="control_type_button">按钮</string>
     <string name="control_import_success">已导入布局：%s</string>
     <string name="control_import_failed">导入失败：%s</string>
@@ -653,6 +655,11 @@
     <string name="editor_joystick_key_reset_wasd">重置为 WASD</string>
     <string name="editor_save_button_label">保存</string>
 
+    <!-- DPad key mapping -->
+    <string name="editor_dpad_key_mapping">D-Pad键值映射</string>
+    <string name="editor_dpad_key_mapping_desc">为D-Pad的四个方向分别设置键值（默认：WASD）</string>
+    <string name="editor_dpad_key_reset_arrows">重置为方向键</string>
+
     <!-- ControlShapeManager 消息 -->
     <string name="control_shape_rectangle">矩形</string>
     <string name="control_shape_circle">圆形</string>
@@ -698,6 +705,7 @@
     <string name="editor_default_touchpad_name">触控板</string>
     <string name="editor_default_mousewheel_name">鼠标滚轮</string>
     <string name="editor_default_text_name">文本</string>
+    <string name="editor_default_dpad_name">方向键</string>
     <string name="editor_stick_right">右</string>
     <string name="editor_stick_left">左</string>
 
@@ -714,6 +722,7 @@
     <string name="editor_add_button_text">添加按键</string>
     <string name="editor_add_joystick_text">添加摇杆</string>
     <string name="editor_add_text_text">添加文本</string>
+    <string name="editor_add_dpad_text">添加方向键</string>
     <string name="editor_save_layout_text">保存布局</string>
     <string name="editor_fps_display">FPS 显示</string>
     <string name="editor_hide_controls">隐藏控件</string>

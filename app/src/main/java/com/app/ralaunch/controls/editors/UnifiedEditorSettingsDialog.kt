@@ -50,6 +50,7 @@ class UnifiedEditorSettingsDialog(
     private var mItemAddTouchPad: View? = null
     private var mItemAddMouseWheel: View? = null
     private var mItemAddText: View? = null
+    private var mItemAddDPad: View? = null
     private val mItemAddTextGroup: View? = null
     private var mAddControlsSection: ViewGroup? = null // 添加控件区域
     private var mItemSaveLayout: View? = null // 保存布局
@@ -91,6 +92,7 @@ class UnifiedEditorSettingsDialog(
         fun onAddTouchPad()
         fun onAddMouseWheel()
         fun onAddText()
+        fun onAddDPad()
         fun onSaveLayout() // 保存布局
         fun onFPSDisplayChanged(enabled: Boolean) // FPS 显示选项变化
         fun onHideControls() // 隐藏控件
@@ -323,6 +325,7 @@ class UnifiedEditorSettingsDialog(
         mItemAddTouchPad = mDialogLayout!!.findViewById<View>(R.id.item_add_touchpad)
         mItemAddMouseWheel = mDialogLayout!!.findViewById<View>(R.id.item_add_mousewheel)
         mItemAddText = mDialogLayout!!.findViewById<View>(R.id.item_add_text)
+        mItemAddDPad = mDialogLayout!!.findViewById<View>(R.id.item_add_dpad)
         mAddControlsSection = mDialogLayout!!.findViewById<ViewGroup?>(R.id.section_add_controls)
         mItemSaveLayout = mDialogLayout!!.findViewById<View?>(R.id.item_save_layout)
         mItemFPSDisplay = mDialogLayout!!.findViewById<View?>(R.id.item_fps_display)
@@ -434,6 +437,11 @@ class UnifiedEditorSettingsDialog(
 
             mItemAddText!!.setOnClickListener { v: View? ->
                 mListener!!.onAddText()
+                hide()
+            }
+
+            mItemAddDPad!!.setOnClickListener { v: View? ->
+                mListener!!.onAddDPad()
                 hide()
             }
 

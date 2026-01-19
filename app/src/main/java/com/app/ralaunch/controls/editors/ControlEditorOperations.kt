@@ -142,6 +142,35 @@ object ControlEditorOperations {
     }
 
     /**
+     * 添加D-Pad到配置
+     */
+    fun addDPad(layout: ControlLayout): ControlData.DPad {
+        val dpad = ControlData.DPad()
+        dpad.name = context.getString(R.string.editor_default_dpad_name)
+        dpad.x = 0.15f
+        dpad.y = 0.65f
+        dpad.width = 0.35f
+        dpad.height = 0.35f
+        dpad.opacity = 0.5f
+        dpad.bgColor = -0x7f7f80
+        dpad.strokeColor = 0x66FFFFFF
+        dpad.strokeWidth = 1f
+        dpad.cornerRadius = 8f
+        dpad.isVisible = true
+
+        // 默认WASD键位映射
+        dpad.dpadKeys = arrayOf(
+            KeyCode.KEYBOARD_W,  // 上
+            KeyCode.KEYBOARD_D,  // 右
+            KeyCode.KEYBOARD_S,  // 下
+            KeyCode.KEYBOARD_A   // 左
+        )
+
+        layout.controls.add(dpad)
+        return dpad
+    }
+
+    /**
      * 显示摇杆模式批量设置对话框
      */
     fun showJoystickModeDialog(

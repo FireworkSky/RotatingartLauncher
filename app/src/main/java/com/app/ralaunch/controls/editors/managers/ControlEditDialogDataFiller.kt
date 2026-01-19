@@ -365,6 +365,12 @@ object ControlEditDialogDataFiller {
 
         // 填充按钮键值数据
         fillButtonKeymap(view, data)
+
+        // 填充摇杆键值数据
+        fillJoystickKeymap(view, data)
+
+        // 填充DPad键值数据
+        fillDPadKeymap(view, data)
     }
 
     /**
@@ -380,6 +386,42 @@ object ControlEditDialogDataFiller {
         val switchToggleMode = view.findViewById<SwitchCompat?>(R.id.switch_toggle_mode)
         if (switchToggleMode != null && data is ControlData.Button) {
             switchToggleMode.isChecked = data.isToggle
+        }
+    }
+
+    /**
+     * 填充摇杆键值数据
+     */
+    private fun fillJoystickKeymap(view: View, data: ControlData) {
+        val tvJoystickKeyMappingValue = view.findViewById<TextView?>(R.id.tv_joystick_key_mapping_value)
+        if (tvJoystickKeyMappingValue != null && data is ControlData.Joystick) {
+            val keys = data.joystickKeys
+            if (keys.size >= 4) {
+                val keyMapper = KeyMapper
+                val up = keyMapper.getKeyName(keys[0])
+                val right = keyMapper.getKeyName(keys[1])
+                val down = keyMapper.getKeyName(keys[2])
+                val left = keyMapper.getKeyName(keys[3])
+                tvJoystickKeyMappingValue.text = "↑$up ↓$down ←$left →$right"
+            }
+        }
+    }
+
+    /**
+     * 填充DPad键值数据
+     */
+    private fun fillDPadKeymap(view: View, data: ControlData) {
+        val tvDPadKeyMappingValue = view.findViewById<TextView?>(R.id.tv_dpad_key_mapping_value)
+        if (tvDPadKeyMappingValue != null && data is ControlData.DPad) {
+            val keys = data.dpadKeys
+            if (keys.size >= 4) {
+                val keyMapper = KeyMapper
+                val up = keyMapper.getKeyName(keys[0])
+                val right = keyMapper.getKeyName(keys[1])
+                val down = keyMapper.getKeyName(keys[2])
+                val left = keyMapper.getKeyName(keys[3])
+                tvDPadKeyMappingValue.text = "↑$up ↓$down ←$left →$right"
+            }
         }
     }
 

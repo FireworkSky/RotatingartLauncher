@@ -440,6 +440,7 @@
     <string name="editor_touchpad_added">Panel táctil añadido</string>
     <string name="editor_mousewheel_added">Rueda del ratón añadida</string>
     <string name="editor_text_added">Texto añadido</string>
+    <string name="editor_dpad_added">D-Pad añadido</string>
     <string name="editor_select_joystick_type">Seleccionar tipo de joystick</string>
     <string name="editor_joystick_type_move_aim">Joystick de movimiento + apuntar</string>
     <string name="editor_joystick_type_gamepad">Joystick de mando</string>
@@ -593,6 +594,7 @@
     <string name="control_type_touchpad">Panel táctil</string>
     <string name="control_type_mousewheel">Rueda del ratón</string>
     <string name="control_type_text">Texto</string>
+    <string name="control_type_dpad">D-Pad</string>
     <string name="control_type_button">Botón</string>
     <string name="control_import_success">Diseño importado: %s</string>
     <string name="control_import_failed">Error al importar: %s</string>
@@ -654,6 +656,11 @@
     <string name="editor_joystick_key_reset_wasd">Restablecer a WASD</string>
     <string name="editor_save_button_label">Guardar</string>
 
+    <!-- Mapeo de teclas D-Pad -->
+    <string name="editor_dpad_key_mapping">Mapeo de teclas D-Pad</string>
+    <string name="editor_dpad_key_mapping_desc">Establecer valores de tecla para las cuatro direcciones del D-Pad (predeterminado: WASD)</string>
+    <string name="editor_dpad_key_reset_arrows">Restablecer a teclas de flechas</string>
+
     <!-- Mensajes de ControlShapeManager -->
     <string name="control_shape_rectangle">Rectángulo</string>
     <string name="control_shape_circle">Círculo</string>
@@ -699,6 +706,7 @@
     <string name="editor_default_touchpad_name">Panel táctil</string>
     <string name="editor_default_mousewheel_name">Rueda del ratón</string>
     <string name="editor_default_text_name">Texto</string>
+    <string name="editor_default_dpad_name">D-Pad</string>
     <string name="editor_stick_right">Derecha</string>
     <string name="editor_stick_left">Izquierda</string>
 
@@ -715,6 +723,7 @@
     <string name="editor_add_button_text">Añadir botón</string>
     <string name="editor_add_joystick_text">Añadir joystick</string>
     <string name="editor_add_text_text">Añadir texto</string>
+    <string name="editor_add_dpad_text">Añadir D-Pad</string>
     <string name="editor_save_layout_text">Guardar diseño</string>
     <string name="editor_fps_display">Mostrar FPS</string>
     <string name="editor_hide_controls">Ocultar controles</string>

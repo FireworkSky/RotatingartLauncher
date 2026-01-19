@@ -9,6 +9,7 @@ import com.app.ralaunch.controls.data.ControlData
 import com.app.ralaunch.controls.data.ControlData.Joystick
 import com.app.ralaunch.controls.data.ControlData.KeyCode
 import com.app.ralaunch.controls.editors.ControlEditDialogMD
+import com.app.ralaunch.controls.editors.DPadKeyMappingDialog
 import com.app.ralaunch.controls.editors.JoystickKeyMappingDialog
 import com.app.ralaunch.controls.editors.KeySelectorDialog
 
@@ -47,6 +48,18 @@ object ControlEditDialogKeymapManager {
                 dialog,
                 refs,
                 tvJoystickKeyMappingValue
+            )
+        }
+
+        // DPad的键值映射
+        val itemDPadKeyMapping = view.findViewById<View?>(R.id.item_dpad_key_mapping)
+        val tvDPadKeyMappingValue =
+            view.findViewById<TextView?>(R.id.tv_dpad_key_mapping_value)
+        itemDPadKeyMapping?.setOnClickListener {
+            showDPadKeyMappingDialog(
+                dialog,
+                refs,
+                tvDPadKeyMappingValue
             )
         }
 
@@ -104,6 +117,49 @@ object ControlEditDialogKeymapManager {
     }
 
     /**
+     * 显示DPad键值映射对话框
+     */
+    private fun showDPadKeyMappingDialog(
+        dialog: ControlEditDialogMD,
+        refs: UIReferences,
+        tvDPadKeyMappingValue: TextView?
+    ) {
+        val data = refs.currentData
+
+        if (data !is ControlData.DPad) {
+            return
+        }
+
+        val dpadData = data
+
+        // 确保DPad键值数组已初始化
+        if (dpadData.dpadKeys.isEmpty()) {
+            dpadData.dpadKeys = arrayOf(
+                KeyCode.KEYBOARD_W,  // up
+                KeyCode.KEYBOARD_D,  // right
+                KeyCode.KEYBOARD_S,  // down
+                KeyCode.KEYBOARD_A   // left
+            )
+        }
+
+        val keyMappingDialog = DPadKeyMappingDialog(
+            dialog.requireContext(), dpadData,
+            object : DPadKeyMappingDialog.OnSaveListener {
+                override fun onSave(data: ControlData?) {
+                    // 更新键值数据
+                    if (data is ControlData.DPad) {
+                        dpadData.dpadKeys = data.dpadKeys
+
+                        // 更新显示
+                        updateDPadKeyMappingDisplay(tvDPadKeyMappingValue, dpadData)
+                        refs.notifyUpdate()
+                    }
+                }
+            })
+        keyMappingDialog.show()
+    }
+
+    /**
      * 更新摇杆键值映射显示
      */
     private fun updateJoystickKeyMappingDisplay(tv: TextView?, data: ControlData?) {
@@ -113,6 +169,29 @@ object ControlEditDialogKeymapManager {
 
         val joystickData = data
         val keys: Array<KeyCode> = joystickData.joystickKeys
+
+        if (keys.size < 4) {
+            return
+        }
+
+        val keyMapper = KeyMapper
+        val up = keyMapper.getKeyName(keys[0])
+        val right = keyMapper.getKeyName(keys[1])
+        val down = keyMapper.getKeyName(keys[2])
+        val left = keyMapper.getKeyName(keys[3])
+        tv.text = "↑$up ↓$down ←$left →$right"
+    }
+
+    /**
+     * 更新DPad键值映射显示
+     */
+    private fun updateDPadKeyMappingDisplay(tv: TextView?, data: ControlData?) {
+        if (tv == null || data !is ControlData.DPad) {
+            return
+        }
+
+        val dpadData = data
+        val keys: Array<KeyCode> = dpadData.dpadKeys
 
         if (keys.size < 4) {
             return
@@ -171,12 +250,14 @@ object ControlEditDialogKeymapManager {
     fun updateKeymapVisibility(keymapView: View, data: ControlData) {
         val itemKeyMapping = keymapView.findViewById<View?>(R.id.item_key_mapping)
         val itemJoystickKeyMapping = keymapView.findViewById<View?>(R.id.item_joystick_key_mapping)
+        val itemDPadKeyMapping = keymapView.findViewById<View?>(R.id.item_dpad_key_mapping)
         val itemToggleMode = keymapView.findViewById<View?>(R.id.item_toggle_mode)
 
         // 按钮和文本控件显示普通键值设置
         val isButton = data is ControlData.Button
         val isText = data is ControlData.Text
         val isJoystick = data is Joystick
+        val isDPad = data is ControlData.DPad
 
         // 普通键值设置（仅按钮和文本控件显示）
         itemKeyMapping?.visibility = if (isButton || isText) View.VISIBLE else View.GONE
@@ -189,6 +270,9 @@ object ControlEditDialogKeymapManager {
         }
 
         itemJoystickKeyMapping?.visibility = if (showJoystickKeyMapping) View.VISIBLE else View.GONE
+
+        // DPad键值设置（仅DPad显示）
+        itemDPadKeyMapping?.visibility = if (isDPad) View.VISIBLE else View.GONE
 
         // 切换模式（仅按钮显示）
         itemToggleMode?.visibility = if (isButton) View.VISIBLE else View.GONE

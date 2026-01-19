@@ -189,10 +189,7 @@
     <string name="appearance_select_video_desc">Выбрать видео из галереи в качестве фона</string>
     <string name="appearance_cannot_read_image">Не удалось прочитать изображение</string>
     <string name="appearance_set_background_failed">Не удалось установить фон: %s</string>
-    <string name="appearance_image_background_set">Фоновое изображение установлено, прозрачность автоматически настроена на 90%%</string>
-    <string name="appearance_background_image_set">Фоновое изображение установлено</string>
     <string name="appearance_cannot_get_file_path">Не удалось получить путь к файлу, попробуйте снова</string>
-    <string name="appearance_video_background_set">Фоновое видео установлено, прозрачность автоматически настроена на 90%%</string>
     <string name="appearance_background_video_set">Фоновое видео установлено</string>
 
     <!-- Renderer Settings -->
@@ -463,6 +460,7 @@
     <string name="editor_touchpad_added">Сенсорная панель добавлена</string>
     <string name="editor_mousewheel_added">Колесо мыши добавлено</string>
     <string name="editor_text_added">Текст добавлен</string>
+    <string name="editor_dpad_added">D-Pad добавлен</string>
     <string name="editor_select_joystick_type">Выбрать тип джойстика</string>
     <string name="editor_joystick_type_move_aim">Джойстик движения+прицеливания</string>
     <string name="editor_joystick_type_gamepad">Джойстик контроллера</string>
@@ -596,6 +594,7 @@
     <string name="control_type_touchpad">Сенсорная панель</string>
     <string name="control_type_mousewheel">Колесо мыши</string>
     <string name="control_type_text">Текст</string>
+    <string name="control_type_dpad">D-Pad</string>
     <string name="control_type_button">Кнопка</string>
     <string name="control_import_success">Раскладка импортирована: %s</string>
     <string name="control_import_failed">Импорт не удался: %s</string>
@@ -657,6 +656,11 @@
     <string name="editor_joystick_key_reset_wasd">Сбросить на WASD</string>
     <string name="editor_save_button_label">Сохранить</string>
 
+    <!-- DPad key mapping -->
+    <string name="editor_dpad_key_mapping">Настройка клавиш D-Pad</string>
+    <string name="editor_dpad_key_mapping_desc">Установить значения клавиш для четырёх направлений D-Pad (по умолчанию: WASD)</string>
+    <string name="editor_dpad_key_reset_arrows">Сбросить на клавиши-стрелки</string>
+
     <!-- ControlShapeManager Messages -->
     <string name="control_shape_rectangle">Прямоугольник</string>
     <string name="control_shape_circle">Круг</string>
@@ -702,6 +706,7 @@
     <string name="editor_default_touchpad_name">Сенсорная панель</string>
     <string name="editor_default_mousewheel_name">Колесо мыши</string>
     <string name="editor_default_text_name">Текст</string>
+    <string name="editor_default_dpad_name">D-Pad</string>
     <string name="editor_stick_right">Правый</string>
     <string name="editor_stick_left">Левый</string>
 
@@ -718,6 +723,7 @@
     <string name="editor_add_button_text">Добавить клавишу</string>
     <string name="editor_add_joystick_text">Добавить джойстик</string>
     <string name="editor_add_text_text">Добавить текст</string>
+    <string name="editor_add_dpad_text">Добавить D-Pad</string>
     <string name="editor_save_layout_text">Сохранить раскладку</string>
     <string name="editor_fps_display">Отображение FPS</string>
     <string name="editor_hide_controls">Скрыть элементы управления</string>

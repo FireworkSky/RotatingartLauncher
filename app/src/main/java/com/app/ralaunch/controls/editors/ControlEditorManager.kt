@@ -327,6 +327,10 @@ class ControlEditorManager(
                 addText()
             }
 
+            override fun onAddDPad() {
+                addDPad()
+            }
+
             override fun onToggleEditMode() {
                 toggleEditMode()
             }
@@ -546,6 +550,30 @@ class ControlEditorManager(
         Toast.makeText(
             mContext,
             mContext.getString(R.string.editor_text_added),
+            Toast.LENGTH_SHORT
+        ).show()
+
+        mLayoutChangedListener?.onLayoutChanged()
+    }
+
+    fun addDPad() {
+        if (mControlLayout == null) return
+
+        var layout = mControlLayout!!.currentLayout
+        if (layout == null) {
+            layout = ControlLayout()
+            layout.controls = mutableListOf()
+            mControlLayout!!.loadLayout(layout)
+        }
+
+        ControlEditorOperations.addDPad(layout)
+
+        mControlLayout!!.loadLayout(layout)
+        disableClippingRecursive(mControlLayout!!)
+        mHasUnsavedChanges = true
+        Toast.makeText(
+            mContext,
+            mContext.getString(R.string.editor_dpad_added),
             Toast.LENGTH_SHORT
         ).show()
 

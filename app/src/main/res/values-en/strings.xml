@@ -440,6 +440,7 @@
     <string name="editor_touchpad_added">Touch Pad added</string>
     <string name="editor_mousewheel_added">Mouse Wheel added</string>
     <string name="editor_text_added">Text added</string>
+    <string name="editor_dpad_added">D-Pad added</string>
     <string name="editor_select_joystick_type">Select Joystick Type</string>
     <string name="editor_joystick_type_move_aim">Move + Aim Joystick</string>
     <string name="editor_joystick_type_gamepad">Gamepad Joystick</string>
@@ -495,10 +496,7 @@
     <string name="appearance_select_video_desc">Select video from gallery as background</string>
     <string name="appearance_cannot_read_image">Cannot read image</string>
     <string name="appearance_set_background_failed">Failed to set background: %s</string>
-    <string name="appearance_image_background_set">Image background set, opacity automatically adjusted to 90%%</string>
-    <string name="appearance_background_image_set">Background image set</string>
     <string name="appearance_cannot_get_file_path">Cannot get file path, please try again</string>
-    <string name="appearance_video_background_set">Video background set, opacity automatically adjusted to 90%%</string>
     <string name="appearance_background_video_set">Video background set</string>
 
     <!-- UnifiedEditorSettingsDialog Messages -->
@@ -596,6 +594,7 @@
     <string name="control_type_touchpad">Touch Pad</string>
     <string name="control_type_mousewheel">Mouse Wheel</string>
     <string name="control_type_text">Text</string>
+    <string name="control_type_dpad">D-Pad</string>
     <string name="control_type_button">Button</string>
     <string name="control_import_success">Imported layout: %s</string>
     <string name="control_import_failed">Import failed: %s</string>
@@ -657,6 +656,11 @@
     <string name="editor_joystick_key_reset_wasd">Reset to WASD</string>
     <string name="editor_save_button_label">Save</string>
 
+    <!-- DPad key mapping -->
+    <string name="editor_dpad_key_mapping">D-Pad Key Mapping</string>
+    <string name="editor_dpad_key_mapping_desc">Set key values for the four directions of the D-Pad (default: WASD)</string>
+    <string name="editor_dpad_key_reset_arrows">Reset to Arrow Keys</string>
+
     <!-- ControlShapeManager Messages -->
     <string name="control_shape_rectangle">Rectangle</string>
     <string name="control_shape_circle">Circle</string>
@@ -702,6 +706,7 @@
     <string name="editor_default_touchpad_name">Touch Pad</string>
     <string name="editor_default_mousewheel_name">Mouse Wheel</string>
     <string name="editor_default_text_name">Text</string>
+    <string name="editor_default_dpad_name">D-Pad</string>
     <string name="editor_stick_right">Right</string>
     <string name="editor_stick_left">Left</string>
 
@@ -718,6 +723,7 @@
     <string name="editor_add_button_text">Add Button</string>
     <string name="editor_add_joystick_text">Add Joystick</string>
     <string name="editor_add_text_text">Add Text</string>
+    <string name="editor_add_dpad_text">Add D-Pad</string>
     <string name="editor_save_layout_text">Save Layout</string>
     <string name="editor_fps_display">FPS Display</string>
     <string name="editor_hide_controls">Hide Controls</string>

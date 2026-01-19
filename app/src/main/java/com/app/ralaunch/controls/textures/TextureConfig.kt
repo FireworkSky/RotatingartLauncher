@@ -194,3 +194,69 @@ data class TextControlTextureConfig(
     }
 }
 
+/**
+ * D-Pad纹理配置
+ *
+ * D-Pad由背景和8个方向按钮组成（上、右、下、左、左上、右上、右下、左下）
+ */
+@Serializable
+data class DPadTextureConfig(
+    /** 背景纹理 */
+    val background: TextureConfig = TextureConfig(),
+
+    /** 上按钮普通状态 */
+    val upNormal: TextureConfig = TextureConfig(),
+    /** 上按钮按下状态 */
+    val upPressed: TextureConfig = TextureConfig(),
+
+    /** 右按钮普通状态 */
+    val rightNormal: TextureConfig = TextureConfig(),
+    /** 右按钮按下状态 */
+    val rightPressed: TextureConfig = TextureConfig(),
+
+    /** 下按钮普通状态 */
+    val downNormal: TextureConfig = TextureConfig(),
+    /** 下按钮按下状态 */
+    val downPressed: TextureConfig = TextureConfig(),
+
+    /** 左按钮普通状态 */
+    val leftNormal: TextureConfig = TextureConfig(),
+    /** 左按钮按下状态 */
+    val leftPressed: TextureConfig = TextureConfig(),
+
+    /** 左上按钮普通状态 */
+    val upLeftNormal: TextureConfig = TextureConfig(),
+    /** 左上按钮按下状态 */
+    val upLeftPressed: TextureConfig = TextureConfig(),
+
+    /** 右上按钮普通状态 */
+    val upRightNormal: TextureConfig = TextureConfig(),
+    /** 右上按钮按下状态 */
+    val upRightPressed: TextureConfig = TextureConfig(),
+
+    /** 右下按钮普通状态 */
+    val downRightNormal: TextureConfig = TextureConfig(),
+    /** 右下按钮按下状态 */
+    val downRightPressed: TextureConfig = TextureConfig(),
+
+    /** 左下按钮普通状态 */
+    val downLeftNormal: TextureConfig = TextureConfig(),
+    /** 左下按钮按下状态 */
+    val downLeftPressed: TextureConfig = TextureConfig()
+) {
+    val hasAnyTexture: Boolean
+        get() = background.enabled ||
+                upNormal.enabled || upPressed.enabled ||
+                rightNormal.enabled || rightPressed.enabled ||
+                downNormal.enabled || downPressed.enabled ||
+                leftNormal.enabled || leftPressed.enabled ||
+                upLeftNormal.enabled || upLeftPressed.enabled ||
+                upRightNormal.enabled || upRightPressed.enabled ||
+                downRightNormal.enabled || downRightPressed.enabled ||
+                downLeftNormal.enabled || downLeftPressed.enabled
+
+    companion object {
+        fun empty() = DPadTextureConfig()
+    }
+}
+

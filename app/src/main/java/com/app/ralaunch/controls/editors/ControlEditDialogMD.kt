@@ -281,6 +281,7 @@ class ControlEditDialogMD : DialogFragment() {
                 val canShowKeymap = when (this.currentData) {
                     is ControlData.Button -> true
                     is ControlData.Joystick -> (this.currentData as ControlData.Joystick).mode == ControlData.Joystick.Mode.KEYBOARD
+                    is ControlData.DPad -> true
                     else -> false
                 }
 
@@ -677,10 +678,11 @@ class ControlEditDialogMD : DialogFragment() {
     private fun updateKeymapCategoryVisibility() {
         if (this.currentData == null || mCategoryKeymap == null) return
 
-        // 显示键值设置分类：按钮控件 或 键盘模式的摇杆
+        // 显示键值设置分类：按钮控件、DPad控件 或 键盘模式的摇杆
         val shouldShowKeymap = when (currentData) {
             is ControlData.Button -> true
             is ControlData.Joystick -> (currentData as ControlData.Joystick).mode == ControlData.Joystick.Mode.KEYBOARD
+            is ControlData.DPad -> true
             else -> false
         }
 
@@ -983,7 +985,16 @@ class ControlEditDialogMD : DialogFragment() {
                         background = data.texture.background.copy(path = relativePath, enabled = true)
                     )
                 }
-                else -> {}
+                is ControlData.DPad -> {
+                    data.texture = data.texture.copy(
+                        background = data.texture.background.copy(path = relativePath, enabled = true)
+                    )
+                }
+                is ControlData.MouseWheel -> {
+                    data.texture = data.texture.copy(
+                        background = data.texture.background.copy(path = relativePath, enabled = true)
+                    )
+                }
             }
             
             Log.i(TAG, "Texture applied: $relativePath")

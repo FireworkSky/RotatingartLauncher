@@ -71,7 +71,8 @@ object ControlTextureManager {
                data is ControlData.Joystick ||
                data is ControlData.TouchPad ||
                data is ControlData.MouseWheel ||
-               data is ControlData.Text
+               data is ControlData.Text ||
+               data is ControlData.DPad
     }
     
     /**
@@ -84,6 +85,7 @@ object ControlTextureManager {
             is ControlData.TouchPad -> data.texture.hasAnyTexture
             is ControlData.MouseWheel -> data.texture.hasAnyTexture
             is ControlData.Text -> data.texture.hasAnyTexture
+            is ControlData.DPad -> data.texture.hasAnyTexture
             else -> false
         }
     }
@@ -145,7 +147,10 @@ object ControlTextureManager {
             is ControlData.Text -> {
                 data.texture = TextControlTextureConfig()
             }
-            else -> {}
+            is ControlData.DPad -> {
+                data.texture = DPadTextureConfig()
+            }
+            null -> {} // 数据为空时不做任何操作
         }
     }
     

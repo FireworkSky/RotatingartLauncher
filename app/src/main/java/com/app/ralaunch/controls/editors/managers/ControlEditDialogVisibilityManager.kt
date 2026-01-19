@@ -82,6 +82,7 @@ object ControlEditDialogVisibilityManager {
                     is ControlData.Text -> it.shape == ControlData.Text.Shape.RECTANGLE
                     is ControlData.TouchPad -> true
                     is ControlData.MouseWheel -> true
+                    is ControlData.DPad -> true
                     else -> false
                 }
             },
@@ -130,6 +131,12 @@ object ControlEditDialogVisibilityManager {
                 it is ControlData.Joystick && it.mode == ControlData.Joystick.Mode.KEYBOARD
             },
             com.app.ralaunch.R.id.item_joystick_key_mapping
+        )
+
+        // DPad键值设置（仅DPad显示）
+        addRule(
+            { it is ControlData.DPad },
+            com.app.ralaunch.R.id.item_dpad_key_mapping
         )
 
         // 切换模式（仅按钮显示）

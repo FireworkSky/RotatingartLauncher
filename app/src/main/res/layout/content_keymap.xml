@@ -132,6 +132,66 @@
 
     </com.google.android.material.card.MaterialCardView>
 
+    <!-- DPad键值映射卡片（仅DPad类型显示） -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/item_dpad_key_mapping"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="12dp"
+        android:clickable="true"
+        android:focusable="true"
+        android:foreground="?attr/selectableItemBackground"
+        android:visibility="gone"
+        app:cardCornerRadius="15dp"
+        app:cardElevation="2dp"
+        app:strokeWidth="0.5dp"
+        app:cardBackgroundColor="?attr/colorSurfaceContainer"
+        style="@style/Widget.App.CardView.Standard">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="14dp">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/editor_dpad_key_mapping"
+                    android:textColor="?attr/textPrimary"
+                    android:textSize="15sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tv_dpad_key_mapping_value"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/editor_dpad_key_mapping_desc"
+                    android:textColor="?attr/textSecondary"
+                    android:textSize="12sp"
+                    android:layout_marginTop="2dp" />
+
+            </LinearLayout>
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginStart="16dp"
+                android:src="@drawable/ic_chevron_right"
+                app:tint="?attr/textSecondary" />
+
+        </LinearLayout>
+
+    </com.google.android.material.card.MaterialCardView>
+
     <!-- 切换模式卡片 -->
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/item_toggle_mode"

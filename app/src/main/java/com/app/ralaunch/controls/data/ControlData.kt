@@ -1,6 +1,7 @@
 package com.app.ralaunch.controls.data
 
 import com.app.ralaunch.controls.textures.ButtonTextureConfig
+import com.app.ralaunch.controls.textures.DPadTextureConfig
 import com.app.ralaunch.controls.textures.JoystickTextureConfig
 import com.app.ralaunch.controls.textures.MouseWheelTextureConfig
 import com.app.ralaunch.controls.textures.TextControlTextureConfig
@@ -553,5 +554,20 @@ sealed class ControlData {
         
         /** 文本控件纹理配置 */
         var texture: TextControlTextureConfig = TextControlTextureConfig()
+    }
+
+    @Serializable
+    @SerialName("dpad")
+    class DPad : ControlData() {
+        /** D-Pad按键映射 [上, 右, 下, 左] */
+        var dpadKeys: Array<KeyCode> = arrayOf(
+            KeyCode.KEYBOARD_W,      // 上
+            KeyCode.KEYBOARD_D,      // 右
+            KeyCode.KEYBOARD_S,      // 下
+            KeyCode.KEYBOARD_A       // 左
+        )
+
+        /** D-Pad纹理配置 */
+        var texture: DPadTextureConfig = DPadTextureConfig()
     }
 }

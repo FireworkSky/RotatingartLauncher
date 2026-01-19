@@ -14,15 +14,15 @@ import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
 /**
- * 摇杆键值映射设置对话框
- * 允许用户为摇杆的四个方向（上、右、下、左）分别设置键值
+ * D-Pad键值映射设置对话框
+ * 允许用户为D-Pad的四个方向（上、右、下、左）分别设置键值
  */
-class JoystickKeyMappingDialog(
+class DPadKeyMappingDialog(
     private val context: Context,
     controlData: ControlData?,
     private val listener: OnSaveListener?
 ) {
-    private val mControlData: ControlData.Joystick
+    private val mControlData: ControlData.DPad
 
     private var mUpKeyButton: MaterialButton? = null
     private var mRightKeyButton: MaterialButton? = null
@@ -39,17 +39,17 @@ class JoystickKeyMappingDialog(
     }
 
     init {
-        // 确保传入的是Joystick类型
-        if (controlData !is ControlData.Joystick) {
-            throw IllegalArgumentException("ControlData must be of type Joystick")
+        // 确保传入的是DPad类型
+        if (controlData !is ControlData.DPad) {
+            throw IllegalArgumentException("ControlData must be of type DPad")
         }
         mControlData = controlData
 
-        val joystickKeys = mControlData.joystickKeys
-        mUpKey = if (joystickKeys.isNotEmpty()) joystickKeys[0] else ControlData.KeyCode.KEYBOARD_W
-        mRightKey = if (joystickKeys.size > 1) joystickKeys[1] else ControlData.KeyCode.KEYBOARD_D
-        mDownKey = if (joystickKeys.size > 2) joystickKeys[2] else ControlData.KeyCode.KEYBOARD_S
-        mLeftKey = if (joystickKeys.size > 3) joystickKeys[3] else ControlData.KeyCode.KEYBOARD_A
+        val dpadKeys = mControlData.dpadKeys
+        mUpKey = if (dpadKeys.isNotEmpty()) dpadKeys[0] else ControlData.KeyCode.KEYBOARD_W
+        mRightKey = if (dpadKeys.size > 1) dpadKeys[1] else ControlData.KeyCode.KEYBOARD_D
+        mDownKey = if (dpadKeys.size > 2) dpadKeys[2] else ControlData.KeyCode.KEYBOARD_S
+        mLeftKey = if (dpadKeys.size > 3) dpadKeys[3] else ControlData.KeyCode.KEYBOARD_A
     }
 
     fun show() {
@@ -66,7 +66,7 @@ class JoystickKeyMappingDialog(
 
         // 标题说明
         val titleDesc = TextView(context)
-        titleDesc.text = localizedContext.getString(R.string.editor_joystick_key_mapping_desc)
+        titleDesc.text = localizedContext.getString(R.string.editor_dpad_key_mapping_desc)
         titleDesc.textSize = 14f
         val typedValue = TypedValue()
         context.theme.resolveAttribute(android.R.attr.textColorSecondary, typedValue, true)
@@ -109,10 +109,21 @@ class JoystickKeyMappingDialog(
         }
         layout.addView(btnWASD)
 
+        // 快速设置按钮（方向键）
+        val btnArrows = Button(context)
+        btnArrows.text = localizedContext.getString(R.string.editor_dpad_key_reset_arrows)
+        btnArrows.setOnClickListener {
+            setKey(0, ControlData.KeyCode.KEYBOARD_UP)
+            setKey(1, ControlData.KeyCode.KEYBOARD_RIGHT)
+            setKey(2, ControlData.KeyCode.KEYBOARD_DOWN)
+            setKey(3, ControlData.KeyCode.KEYBOARD_LEFT)
+        }
+        layout.addView(btnArrows)
+
         scrollView.addView(layout)
 
         MaterialAlertDialogBuilder(context)
-            .setTitle(localizedContext.getString(R.string.editor_joystick_key_mapping))
+            .setTitle(localizedContext.getString(R.string.editor_dpad_key_mapping))
             .setView(scrollView)
             .setPositiveButton(localizedContext.getString(R.string.editor_save_button_label)) { _, _ ->
                 saveChanges()
@@ -171,13 +182,8 @@ class JoystickKeyMappingDialog(
     }
 
     private fun saveChanges() {
-        // 更新摇杆键值
-        mControlData.joystickKeys = arrayOf(mUpKey, mRightKey, mDownKey, mLeftKey)
-
-        // 确保摇杆模式为键盘模式
-        if (mControlData.mode != ControlData.Joystick.Mode.KEYBOARD) {
-            mControlData.mode = ControlData.Joystick.Mode.KEYBOARD
-        }
+        // 更新D-Pad键值
+        mControlData.dpadKeys = arrayOf(mUpKey, mRightKey, mDownKey, mLeftKey)
 
         // 回调保存监听器
         listener?.onSave(mControlData)
