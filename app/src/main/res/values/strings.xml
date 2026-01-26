@@ -88,7 +88,7 @@
     <string name="language_spanish">Español</string>
     <string name="language_changed">语言已切换到 %s</string>
     <string name="app_info">应用信息</string>
-    <string name="app_version">版本 1.2.0-beta</string>
+    <string name="app_version">版本 1.2.1-beta</string>
     <string name="app_description">Rotating art Launcher - 游戏启动器</string>
     <string name="app_authors">作者:</string>
     <string name="restart_required">需要重启</string>
