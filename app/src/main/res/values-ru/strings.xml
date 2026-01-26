@@ -5,23 +5,23 @@
     <string name="main_no_game_selected">Игра не выбрана</string>
     <string name="main_select_game">Пожалуйста, выберите игру</string>
     <string name="main_launch_game">Запустить игру</string>
-    <string name="main_add_game">Добавить игру</string>
+    <string name="main_add_game">Добавить</string>
     <string name="main_refresh">Обновить</string>
     <string name="main_settings">Настройки</string>
-    <string name="main_control_layout">Раскладка управления</string>
-    <string name="main_game_list_mode">Режим списка игр</string>
+    <string name="main_control_layout">Тач</string>
+    <string name="main_game_list_mode">Режим отображения игр</string>
     <string name="main_refresh_complete">Список игр обновлен</string>
 
     <!-- Game Info -->
     <string name="game_name">Название игры</string>
-    <string name="game_description">Описание</string>
-    <string name="game_path">Путь к сборке</string>
+    <string name="game_description">Описание игры</string>
+    <string name="game_path">Путь к игре</string>
     <string name="game_save_path">Путь сохранения</string>
-    <string name="game_path_saved">Путь к сборке сохранен</string>
-    <string name="game_path_empty">Путь к сборке не может быть пустым</string>
-    <string name="game_path_not_exist">Предупреждение: Файл не существует, но путь сохранен</string>
+    <string name="game_path_saved">Путь к сохранениям игр</string>
+    <string name="game_path_empty">Путь к игре пуст</string>
+    <string name="game_path_not_exist">Путь к игре не существует</string>
     <string name="game_file_not_exist">Файл сборки не найден: %s</string>
-    <string name="game_added_success">Игра успешно добавлена!</string>
+    <string name="game_added_success">Игра успешно добавлена</string>
     <string name="game_deleted_with_files">Игра и файлы удалены</string>
     <string name="game_deleted_partial">Игра удалена из списка, но некоторые файлы могут остаться</string>
 
@@ -56,7 +56,7 @@
     <string name="import_extracting">Извлечение файлов игры...</string>
     <string name="import_extracting_file">Извлечение: %s</string>
     <string name="import_extraction_complete">Извлечение завершено</string>
-    <string name="import_extraction_failed">Извлечение не удалось</string>
+    <string name="import_extraction_failed">Ошибка извлечения!</string>
     <string name="import_installing_modloader">Установка ModLoader...</string>
     <string name="import_complete">Импорт завершен</string>
     <string name="import_error">Импорт не удался: %s</string>
@@ -89,7 +89,7 @@
     <string name="language_changed">Язык изменен на %s</string>
     <string name="app_info">Информация о приложении</string>
     <string name="app_version">Версия 1.2.0-beta</string>
-    <string name="app_description">Rotating art Launcher - Запускатель игр</string>
+    <string name="app_description">Rotating art Launcher - Лаунчер игр</string>
     <string name="app_authors">Авторы:</string>
     <string name="restart_required">Требуется перезапуск</string>
     <string name="restart_app_message">Настройки языка изменены. Пожалуйста, перезапустите приложение для применения.</string>
@@ -110,7 +110,7 @@
         <item>Быстрые настройки</item>
         <item>Выйти из игры</item>
     </string-array>
-    
+
     <!-- Editor Menu -->
     <string-array name="editor_menu_items">
         <item>Добавить кнопку</item>
@@ -120,7 +120,7 @@
         <item>Сбросить по умолчанию</item>
         <item>Выйти из редактора</item>
     </string-array>
-    
+
     <string name="game_menu_toggle_controls">Переключить элементы управления</string>
     <string name="game_menu_edit_controls">Редактировать раскладку управления</string>
     <string name="game_menu_quick_settings">Быстрые настройки</string>
@@ -131,11 +131,12 @@
     <string name="game_menu_exit_message">Выйти из игры?</string>
     <string name="game_menu_yes">Да</string>
     <string name="game_menu_no">Нет</string>
-    
+
     <string name="editor_add_button">Добавить кнопку</string>
     <string name="editor_add_joystick">Добавить джойстик</string>
     <string name="editor_add_touchpad_text">Добавить сенсорную панель</string>
     <string name="editor_add_mousewheel_text">Добавить колесо мыши</string>
+    <string name="editor_add_dpad_text">Добавить D-Pad</string>
     <string name="editor_save">Сохранить раскладку</string>
     <string name="editor_load">Загрузить раскладку</string>
     <string name="editor_reset">Сбросить по умолчанию</string>
@@ -158,7 +159,7 @@
     <string name="settings_appearance">Внешний вид</string>
     <string name="settings_control">Управление</string>
     <string name="settings_game">Игра</string>
-    <string name="settings_launcher">Запускатель</string>
+    <string name="settings_launcher">Лаунчер</string>
     <string name="settings_developer">Расширенные настройки</string>
     <string name="settings_about">О программе</string>
 
@@ -169,7 +170,7 @@
     <string name="settings_language_desc_auto">Использовать язык системы</string>
     <string name="settings_language_desc_en">Использовать английский</string>
     <string name="settings_language_desc_zh">使用简体中文</string>
-    <string name="settings_language_desc_ru">Использовать русский (машинный перевод)</string>
+    <string name="settings_language_desc_ru">Использовать русский</string>
     <string name="settings_language_desc_es">Использовать испанский (машинный перевод)</string>
 
     <!-- AppearanceSettingsModule Messages -->
@@ -204,10 +205,10 @@
     <string name="renderer_gl4es_angle_desc">Перевод на Vulkan бэкенд, лучший баланс совместимости и производительности (рекомендуется)</string>
     <string name="renderer_angle">ANGLE (Vulkan)</string>
     <string name="renderer_angle_desc">OpenGL ES over Vulkan (официальный от Google, требуется Android 7.0+)</string>
-    
+
     <!-- Vulkan Driver Settings -->
     <string name="vulkan_driver_turnip">Драйвер Turnip Vulkan</string>
-    <string name="vulkan_driver_turnip_desc">Использовать открытый драйвер Turnip Vulkan (только Adreno GPU, обычно лучшая производительность)</string>
+    <string name="vulkan_driver_turnip_desc">Использовать открытый драйвер Mesa Turnip Vulkan (только Adreno GPU, обычно лучшая производительность)</string>
     <string name="renderer_opengl">OpenGL (gl4es+)</string>
     <string name="renderer_opengl_desc">Через слой перевода gl4es+</string>
     <string name="renderer_opengles3">OpenGL ES 3 (Native)</string>
@@ -272,7 +273,7 @@
     <string name="patch_list_title">Список патчей</string>
     <string name="no_game_selected">Пожалуйста, сначала выберите игру</string>
     <string name="no_patches_for_game">Для этой игры нет доступных патчей</string>
-    
+
     <!-- Miscellaneous -->
     <string name="miscellaneous">Разное</string>
 
@@ -459,8 +460,8 @@
     <string name="editor_joystick_added">Джойстик добавлен</string>
     <string name="editor_touchpad_added">Сенсорная панель добавлена</string>
     <string name="editor_mousewheel_added">Колесо мыши добавлено</string>
-    <string name="editor_text_added">Текст добавлен</string>
     <string name="editor_dpad_added">D-Pad добавлен</string>
+    <string name="editor_text_added">Текст добавлен</string>
     <string name="editor_select_joystick_type">Выбрать тип джойстика</string>
     <string name="editor_joystick_type_move_aim">Джойстик движения+прицеливания</string>
     <string name="editor_joystick_type_gamepad">Джойстик контроллера</string>
@@ -593,8 +594,8 @@
     <string name="control_type_joystick">Джойстик</string>
     <string name="control_type_touchpad">Сенсорная панель</string>
     <string name="control_type_mousewheel">Колесо мыши</string>
-    <string name="control_type_text">Текст</string>
     <string name="control_type_dpad">D-Pad</string>
+    <string name="control_type_text">Текст</string>
     <string name="control_type_button">Кнопка</string>
     <string name="control_import_success">Раскладка импортирована: %s</string>
     <string name="control_import_failed">Импорт не удался: %s</string>
@@ -654,12 +655,10 @@
     <string name="editor_joystick_key_down">Направление вниз</string>
     <string name="editor_joystick_key_left">Направление влево</string>
     <string name="editor_joystick_key_reset_wasd">Сбросить на WASD</string>
-    <string name="editor_save_button_label">Сохранить</string>
-
-    <!-- DPad key mapping -->
     <string name="editor_dpad_key_mapping">Настройка клавиш D-Pad</string>
     <string name="editor_dpad_key_mapping_desc">Установить значения клавиш для четырёх направлений D-Pad (по умолчанию: WASD)</string>
     <string name="editor_dpad_key_reset_arrows">Сбросить на клавиши-стрелки</string>
+    <string name="editor_save_button_label">Сохранить</string>
 
     <!-- ControlShapeManager Messages -->
     <string name="control_shape_rectangle">Прямоугольник</string>
@@ -705,8 +704,8 @@
     <string name="editor_default_button_name">Кнопка</string>
     <string name="editor_default_touchpad_name">Сенсорная панель</string>
     <string name="editor_default_mousewheel_name">Колесо мыши</string>
-    <string name="editor_default_text_name">Текст</string>
     <string name="editor_default_dpad_name">D-Pad</string>
+    <string name="editor_default_text_name">Текст</string>
     <string name="editor_stick_right">Правый</string>
     <string name="editor_stick_left">Левый</string>
 
@@ -723,7 +722,6 @@
     <string name="editor_add_button_text">Добавить клавишу</string>
     <string name="editor_add_joystick_text">Добавить джойстик</string>
     <string name="editor_add_text_text">Добавить текст</string>
-    <string name="editor_add_dpad_text">Добавить D-Pad</string>
     <string name="editor_save_layout_text">Сохранить раскладку</string>
     <string name="editor_fps_display">Отображение FPS</string>
     <string name="editor_hide_controls">Скрыть элементы управления</string>
@@ -743,13 +741,13 @@
     <string name="editor_category_position_desc">Позиция и размер</string>
     <string name="editor_category_appearance_desc">Стиль внешнего вида</string>
     <string name="editor_category_keymap_desc">Настройки клавиш</string>
-    
+
     <!-- ControlEditDialogMD Buttons -->
     <string name="editor_delete">Удалить</string>
     <string name="editor_copy">Копировать</string>
     <string name="editor_save_button">Сохранить</string>
     <string name="editor_close">Закрыть</string>
-    
+
     <!-- Content Basic Info -->
     <string name="editor_control_name">Имя элемента управления</string>
     <string name="editor_control_name_desc">Установить отображаемое имя элемента управления</string>
@@ -773,9 +771,14 @@
     <string name="editor_mouse_range_top">Сверху</string>
     <string name="editor_mouse_range_right">Справа</string>
     <string name="editor_mouse_range_bottom">Снизу</string>
-    <string name="editor_mouse_speed">Скорость</string>
+    <string name="editor_mouse_speed">Скорость курсора</string>
     <string name="editor_double_click_joystick">Двойной клик для имитации джойстика</string>
-    <string name="editor_double_click_joystick_desc">Имитировать движение джойстика при двойном клике на сенсорной панели</string>
+    <string name="editor_double_click_joystick_desc">Имитировать движение джойстика при двойном клике на ТачПаде</string>
+    <string name="editor_combo_keys">Сопоставление комбинации клавиш</string>
+    <string name="editor_combo_keys_desc">Установить комбинацию кнопок контроллера для направления джойстика (например, R+B)</string>
+    <string name="editor_combo_keys_not_set">Кнопка не установлено</string>
+    <string name="editor_pass_through">Сквозное касание</string>
+    <string name="editor_pass_through_desc">После включения касание этого элемента управления также будет вызывать касание в игре</string>
     <string name="editor_mousewheel_orientation">Горизонтальная прокрутка</string>
     <string name="editor_mousewheel_orientation_desc">Использовать свайп влево-вправо для управления колесом мыши</string>
     <string name="editor_mousewheel_reverse">Обратное направление</string>
@@ -784,12 +787,7 @@
     <string name="editor_mousewheel_sensitivity_desc">Пикселей для перемещения перед событием колеса</string>
     <string name="editor_mousewheel_ratio">Множитель скорости колеса</string>
     <string name="editor_mousewheel_ratio_desc">Множитель для силы события колеса</string>
-    <string name="editor_combo_keys">Сопоставление комбинации клавиш</string>
-    <string name="editor_combo_keys_desc">Установить комбинацию кнопок контроллера для направления джойстика (например, R+B)</string>
-    <string name="editor_combo_keys_not_set">Не установлено</string>
-    <string name="editor_pass_through">Сквозное касание</string>
-    <string name="editor_pass_through_desc">После включения касание этого элемента управления также будет вызывать клик в игре</string>
-    
+
     <!-- Content Position Size -->
     <string name="editor_position_x">Позиция X</string>
     <string name="editor_position_x_desc">Установить позицию X элемента управления</string>
@@ -802,8 +800,8 @@
     <string name="editor_height">Высота</string>
     <string name="editor_height_desc">Установить высоту элемента управления</string>
     <string name="editor_auto_size">Адаптивный размер</string>
-    <string name="editor_auto_size_desc">Заблокировать соотношение сторон, высота автоматически подстраивается при изменении ширины</string>
-    
+    <string name="editor_auto_size_desc">Блокирует соотношение сторон, высота автоматически подстраивается при изменении ширины</string>
+
     <!-- Content Appearance -->
     <string name="editor_opacity_title">Прозрачность фона</string>
     <string name="editor_opacity_desc">Установить прозрачность фона элемента управления</string>
@@ -815,7 +813,7 @@
     <string name="editor_stick_opacity_desc">Установить прозрачность центра джойстика</string>
     <string name="editor_stick_knob_size">Размер центра джойстика</string>
     <string name="editor_stick_knob_size_desc">Установить пропорцию размера центра джойстика</string>
-    <string name="editor_visible_in_game">Видим в игре</string>
+    <string name="editor_visible_in_game">Редактор видим в игре</string>
     <string name="editor_visible_in_game_desc">Управлять видимостью элемента управления в игре</string>
     <string name="editor_bg_color">Цвет фона</string>
     <string name="editor_bg_color_desc">Установить цвет фона элемента управления</string>
@@ -825,14 +823,14 @@
     <string name="editor_stroke_color_desc">Установить цвет границы элемента управления</string>
     <string name="editor_rotation">Угол поворота</string>
     <string name="editor_rotation_desc">Установить угол поворота элемента управления (0-360 градусов)</string>
-    
+
     <!-- Content Keymap -->
     <string name="editor_key_mapping">Сопоставление клавиш</string>
     <string name="editor_key_mapping_desc">Установить соответствующие клавиши для элемента управления</string>
-    <string name="editor_key_not_bound">Не привязано</string>
+    <string name="editor_key_not_bound">Нет привязки</string>
     <string name="editor_toggle_mode">Режим переключения</string>
     <string name="editor_toggle_mode_desc">Нажать один раз для включения, еще раз для выключения</string>
-    
+
     <!-- Settings Controls -->
     <string name="settings_control_opacity">Прозрачность виртуального контроллера</string>
     <string name="settings_control_opacity_desc">Настроить прозрачность экранного контроллера (не реализовано)</string>
@@ -845,21 +843,19 @@
     <string name="settings_virtual_controller_vibration_desc">Включить тактильную отдачу виртуального контроллера</string>
     <string name="settings_virtual_controller_vibration_intensity">Интенсивность вибрации виртуального контроллера</string>
     <string name="settings_virtual_controller_vibration_intensity_desc">Настроить интенсивность вибрации виртуального контроллера</string>
-    <string name="settings_back_button_open_menu">Кнопка "Назад" открывает меню игры</string>
-    <string name="settings_back_button_open_menu_desc">Открыть меню игры при нажатии кнопки "Назад"</string>
     <string name="settings_keyboard_type">Тип клавиатуры</string>
     <string name="settings_keyboard_type_desc">Выбрать использование виртуальной клавиатуры или системной клавиатуры</string>
     <string name="keyboard_type_virtual">Виртуальная клавиатура</string>
     <string name="keyboard_type_system">Системная клавиатура</string>
     <string name="settings_joystick_mouse_mode_info">Настройки скорости, диапазона и режима атаки для режима мыши правого джойстика перенесены в редактор элементов управления, длительное нажатие на элемент управления для входа в режим редактирования.</string>
-    
+
     <!-- Settings Launcher -->
     <string name="settings_auto_import">Автоматический импорт игр</string>
     <string name="settings_auto_import_desc">Автоматически сканировать и импортировать игры при запуске</string>
     <string name="settings_show_hidden">Показать скрытые игры</string>
     <string name="settings_show_hidden_desc">Показать скрытые игры в списке игр</string>
     <string name="settings_off">Выключить</string>
-    
+
     <!-- GOG Client -->
     <string name="gog_login_title">Вход в GOG</string>
     <string name="gog_login_subtitle">Доступ к вашей библиотеке игр без DRM</string>
@@ -874,71 +870,71 @@
     <string name="gog_no_games_found">Игры не найдены</string>
     <string name="gog_no_games_message">В вашей библиотеке GOG пока нет игр</string>
     <string name="gog_loading">Загрузка...</string>
-    
+
     <!-- Local Import -->
     <string name="import_game_title">Импорт игры</string>
     <string name="import_processing">Обработка...</string>
     <string name="import_progress">Прогресс</string>
     <string name="import_step">Шаг</string>
     <string name="import_preparing">Подготовка к началу...</string>
-    
+
     <!-- Settings Developer -->
     <string name="settings_debug_options">Опции отладки</string>
-    
+
     <!-- Settings Game -->
     <string name="renderer_desc">Выбрать графический рендерер</string>
-    
+
     <!-- Settings Misc -->
     <string name="settings_theme_switch">Переключить внешний вид темы приложения</string>
     <string name="background_custom">Настройки пользовательского фона</string>
-    <string name="background_custom_desc">Выбрать изображение или видео в качестве фона запускателя</string>
+    <string name="background_custom_desc">Выбрать изображение или видео в качестве фона меню лаунчера</string>
     <string name="background_video">Видео фон</string>
     <string name="background_video_desc">Выбрать видеофайл в качестве динамического фона</string>
-    <string name="background_restore_default">Восстановить фон по умолчанию</string>
-    <string name="background_restore_default_desc">Восстановить системный фон по умолчанию</string>
-    <string name="language_select">Выбрать язык интерфейса приложения</string>
-    
+    <string name="background_restore_default">Сброс фона до заволских</string>
+    <string name="background_restore_default_desc">Восстаналивает фон, который был по умолчанию.</string>
+    <string name="language_select">Выбрать язык интерфейса</string>
+
     <!-- Initialization Fragment -->
     <string name="init_legal_title">Юридическое заявление</string>
     <string name="init_legal_subtitle">Пожалуйста, внимательно прочитайте следующие условия</string>
     <string name="init_legal_important">⚠ Важное заявление</string>
     <string name="init_legal_important_message">Это программное обеспечение полностью бесплатно и с открытым исходным кодом! Если вы заплатили за него, немедленно запросите возврат средств и сообщите о продавце. Любая перепродажа или перепродажа этого программного обеспечения является незаконной, разработчики оставляют за собой право привлечения к юридической ответственности.</string>
-    <string name="init_legal_official_download">Официальная загрузка: https://github.com/FireworkSky/RotatingartLauncher</string>
-    <string name="init_legal_terms">1. Характер программного обеспечения: Этот запускатель является сторонним инструментом с открытым исходным кодом, пользователь должен предоставить законно авторизованные файлы игр.\n\n2. Заявление об авторских правах: Вы должны иметь законно авторизованную копию запускаемой игры, разработчики не связаны с правообладателями игр.\n\n3. Ограничения использования: Только для личного обучения и исследований, не для коммерческих целей или обратной инженерии.\n\n4. Отказ от ответственности: Программное обеспечение предоставляется как есть, разработчики не несут ответственности за любые убытки, вызванные использованием.\n\n5. Защита конфиденциальности: Не собирает никакой личной информации, все данные хранятся только локально.\n\n6. Объяснение разрешений: Требуется разрешение на хранение для доступа к файлам игр, доступ только к файлам, связанным с играми.\n\n7. Юридическая ответственность: Пользователь несет ответственность за незаконное использование.\n\n8. Изменение условий: Разработчики оставляют за собой право изменять это заявление в любое время.</string>
+    <string name="init_legal_official_download">Официальный репозиторий лаунчера: https://github.com/FireworkSky/RotatingartLauncher</string>
+    <string name="init_legal_terms">1. Характер программного обеспечения: Этот игровой лаунчер является сторонним инструментом с открытым исходным кодом, пользователь должен предоставить законно авторизованные файлы игр.\n\n2. Заявление об авторских правах: Вы должны иметь законно лицензионную копию запускаемой игры, разработчики не связаны с правообладателями игр.\n\n3. Ограничения использования: Только для личного обучения и исследований, не для коммерческих целей или обратной инженерии.\n\n4. Отказ от ответственности: Программное обеспечение предоставляется как есть, разработчики не несут ответственности за любые убытки, вызванные использованием.\n\n5. Защита конфиденциальности: Не собирает никакой личной информации, все данные хранятся только локально.\n\n6. Объяснение разрешений: Требуется разрешение на хранение для доступа к файлам игр, доступ только к файлам, связанным с играми.\n\n7. Юридическая ответственность: Пользователь несет ответственность за незаконное использование.\n\n8. Изменение условий: Разработчики оставляют за собой право изменять это заявление в любое время.</string>
     <string name="init_legal_accept_hint">Нажатие [Принять и продолжить] означает согласие с вышеуказанными условиями</string>
     <string name="init_exit">Выход</string>
-    <string name="init_accept_and_continue">Принять и продолжить</string>
+    <string name="init_accept_and_continue">Согласен</string>
     <string name="init_permission_desc">Запускателю требуется разрешение на хранение для чтения и управления файлами игр</string>
     <string name="init_skip">Пропустить</string>
     <string name="permission_grant">Предоставить разрешение</string>
-    
+
     <!-- Control Layout Fragment -->
     <string name="control_no_layout">Нет раскладки управления</string>
     <string name="control_no_layout_hint">Нажмите кнопку в правом нижнем углу, чтобы создать новую раскладку</string>
     <string name="control_new_layout_button">Новая раскладка</string>
-    
+
     <!-- Main Activity -->
     <string name="main_select_game_hint">Пожалуйста, выберите игру</string>
     <string name="main_select_game_instruction">Нажмите на игру слева, чтобы начать</string>
     <string name="main_enable_modloader">Включить ModLoader</string>
     <string name="main_runtime_title">.NET Runtime</string>
-    
+
     <!-- Runtime Selector Dialog -->
     <string name="runtime_selector_title_text">Версия .NET Runtime</string>
     <string name="runtime_current_version">Текущая версия</string>
     <string name="runtime_select_version">Выбрать версию</string>
-    
+
     <!-- Two Factor Dialog -->
     <string name="two_factor_email_title">Проверка электронной почты</string>
     <string name="two_factor_email_message">Пожалуйста, введите 4-значный код подтверждения, отправленный на вашу электронную почту</string>
     <string name="two_factor_case_sensitive">Код подтверждения чувствителен к регистру</string>
-    
+
     <!-- Version Selection Dialog -->
     <string name="version_select_title">Выбрать версию</string>
     <string name="version_game_version">Версия игры</string>
     <string name="version_modloader_version">Версия ModLoader</string>
     <string name="version_start_install">Начать установку</string>
-    
+
     <!-- GOG Download Progress Dialog -->
     <string name="gog_download_title">Загрузка игры</string>
     <string name="gog_download_game_main">Основная игра</string>
@@ -947,7 +943,7 @@
     <string name="gog_download_game_progress">Прогресс игры</string>
     <string name="gog_download_modloader_progress">Прогресс модов</string>
     <string name="gog_download_background">Фоновый режим</string>
-    
+
     <!-- GOG API Error Messages -->
     <string name="gog_error_retry_interrupted">Повторная попытка прервана</string>
     <string name="gog_error_dns_failed">Не удалось подключиться к серверу GOG - сбой разрешения DNS. Пожалуйста, проверьте сетевое соединение или попробуйте использовать VPN</string>
@@ -963,11 +959,11 @@
     <string name="gog_error_cannot_access_two_factor">Не удалось получить доступ к странице двухфакторной аутентификации</string>
     <string name="gog_error_cannot_get_game_info">Не удалось получить информацию об игре</string>
     <string name="gog_error_not_logged_in">Не выполнен вход</string>
-    
+
     <!-- Import Task Error Messages -->
     <string name="import_error_game_file_path_empty">Путь к файлу игры не может быть пустым</string>
     <string name="import_error_output_directory_empty">Выходной каталог не может быть пустым</string>
-    
+
     <!-- Layout Placeholders -->
     <string name="gog_game_title_placeholder">Название игры</string>
     <string name="gog_games_count_placeholder">%d игр</string>
@@ -983,7 +979,7 @@
     <string name="import_no_file_selected">Файл не выбран</string>
     <string name="import_select_button">Выбрать</string>
     <string name="game_name_placeholder">Название игры</string>
-    
+
     <!-- File Browser -->
     <string name="filebrowser_title">Файловый браузер</string>
     <string name="filebrowser_search_hint">Поиск файлов...</string>
@@ -991,7 +987,7 @@
     <string name="filebrowser_select_file_button">Выбрать файл</string>
     <string name="filebrowser_storage_permission_required">Требуется разрешение на хранение</string>
     <string name="filebrowser_storage_permission_desc">Пожалуйста, предоставьте разрешение на хранение для просмотра файлов</string>
-    
+
     <!-- Panel Edit Control -->
     <string name="panel_edit_control_layout">Редактировать раскладку управления</string>
     <string name="panel_display_text">Отображаемый текст</string>
@@ -1004,7 +1000,7 @@
     <string name="panel_apply_changes">Применить изменения</string>
     <string name="panel_copy_control">Копировать элемент управления</string>
     <string name="panel_delete_control">Удалить элемент управления</string>
-    
+
     <!-- Content Descriptions -->
     <string name="content_desc_delete_game">Удалить игру</string>
     <string name="content_desc_game_icon">Иконка игры</string>
@@ -1014,31 +1010,37 @@
     <string name="content_desc_component_progress">Прогресс установки компонентов</string>
     <string name="content_desc_layout_settings">Настройки раскладки</string>
     <string name="content_desc_add_layout">Добавить раскладку</string>
-    <string name="content_desc_exit_app_button">Кнопка выхода из приложения</string>
-    <string name="content_desc_accept_legal_button">Кнопка принятия юридического заявления и продолжения</string>
-    <string name="content_desc_skip_permission_button">Кнопка временного пропуска предоставления разрешений</string>
-    <string name="content_desc_grant_permission_button">Кнопка предоставления разрешения</string>
+
+    <!-- Buttons & Accessibility -->
+    <string name="content_desc_exit_app_button">Выход из приложения</string>
+    <string name="content_desc_accept_legal_button">Принять юридическое заявление</string>
+    <string name="content_desc_skip_permission_button">Отказать</string>
+    <string name="content_desc_grant_permission_button">Разрешить</string>
     <string name="content_desc_settings">Настройки</string>
     <string name="content_desc_edit_settings">Редактировать настройки</string>
     <string name="content_desc_close">Закрыть</string>
     <string name="content_desc_back">Назад</string>
+
+    <!-- Dialogs & Layout -->
     <string name="dialog_title_placeholder">Диалог</string>
-    <string name="layout_settings_title">Настройки раскладки</string>
-    <string name="import_layout">Импортировать раскладку</string>
-    <string name="import_preset">Импортировать предустановку</string>
+    <string name="layout_settings_title">Настройки тача</string>
+    <string name="import_layout">Тач</string>
+    <string name="import_preset">Пресет</string>
     <string name="quick_settings_title">Быстрые настройки</string>
     <string name="game_settings_title">Настройки игры</string>
-    <string name="more_settings_developing">Дополнительные функции настроек в разработке...</string>
+    <string name="more_settings_developing">В разработке...</string>
+
+    <!-- Keyboard & Mouse -->
     <string name="key_mouse_left">Левая кнопка мыши</string>
     <string name="key_mouse_middle">Средняя кнопка мыши</string>
     <string name="key_mouse_right">Правая кнопка мыши</string>
-    <string name="key_mouse_wheel_up">Колесо прокрутки ↑</string>
-    <string name="key_mouse_wheel_down">Колесо прокрутки ↓</string>
+    <string name="key_mouse_wheel_up">Колесо ↑</string>
+    <string name="key_mouse_wheel_down">Колесо ↓</string>
     <string name="key_open_keyboard">Открыть клавиатуру</string>
     <string name="key_keyboard">Клавиатура</string>
-    <string name="key_touchpad_buttons">Левая и правая кнопки сенсорной панели</string>
+    <string name="key_touchpad_buttons">Кнопки сенсорной панели</string>
     <string name="key_space">Пробел</string>
-    <string name="key_enter">Ввод</string>
+    <string name="key_enter">Enter</string>
     <string name="key_arrow_up">↑ Вверх</string>
     <string name="key_arrow_down">↓ Вниз</string>
     <string name="key_arrow_left">← Влево</string>
@@ -1049,90 +1051,74 @@
     <string name="key_ctrl_right">Ctrl (правая)</string>
     <string name="key_alt_left">Alt (левая)</string>
     <string name="key_alt_right">Alt (правая)</string>
-    <string name="key_numpad_0">Цифровая клавиатура 0</string>
-    <string name="key_numpad_1">Цифровая клавиатура 1</string>
-    <string name="key_numpad_2">Цифровая клавиатура 2</string>
-    <string name="key_numpad_3">Цифровая клавиатура 3</string>
-    <string name="key_numpad_4">Цифровая клавиатура 4</string>
-    <string name="key_numpad_5">Цифровая клавиатура 5</string>
-    <string name="key_numpad_6">Цифровая клавиатура 6</string>
-    <string name="key_numpad_7">Цифровая клавиатура 7</string>
-    <string name="key_numpad_8">Цифровая клавиатура 8</string>
-    <string name="key_numpad_9">Цифровая клавиатура 9</string>
-    <string name="key_numpad_plus">Цифровая клавиатура +</string>
-    <string name="key_numpad_minus">Цифровая клавиатура -</string>
-    <string name="key_numpad_multiply">Цифровая клавиатура *</string>
-    <string name="key_numpad_divide">Цифровая клавиатура /</string>
-    <string name="key_numpad_period">Цифровая клавиатура .</string>
-    <string name="key_numpad_enter">Цифровая клавиатура Enter</string>
+
+    <!-- Numpad -->
+    <string name="key_numpad_0">Num 0</string>
+    <string name="key_numpad_1">Num 1</string>
+    <string name="key_numpad_2">Num 2</string>
+    <string name="key_numpad_3">Num 3</string>
+    <string name="key_numpad_4">Num 4</string>
+    <string name="key_numpad_5">Num 5</string>
+    <string name="key_numpad_6">Num 6</string>
+    <string name="key_numpad_7">Num 7</string>
+    <string name="key_numpad_8">Num 8</string>
+    <string name="key_numpad_9">Num 9</string>
+    <string name="key_numpad_plus">Num +</string>
+    <string name="key_numpad_minus">Num -</string>
+    <string name="key_numpad_multiply">Num *</string>
+    <string name="key_numpad_divide">Num /</string>
+    <string name="key_numpad_period">Num .</string>
+    <string name="key_numpad_enter">Num Enter</string>
     <string name="key_unknown">Неизвестно (%s)</string>
+
+    <!-- Joystick -->
     <string name="joystick_right">Правый джойстик</string>
     <string name="joystick_left">Левый джойстик</string>
-    <string name="type_conversion_wip">Функция преобразования типов в разработке</string>
-    <string name="input_layout_name">Введите название раскладки</string>
+
+    <!-- Layout & Editor -->
+    <string name="type_conversion_wip">Преобразование типов в разработке</string>
+    <string name="input_layout_name">Название раскладки</string>
     <string name="layout_name_hint">Название раскладки</string>
     <string name="layout_name_example">Например: Моя раскладка</string>
-    
-    <!-- File Item -->
+
+    <!-- Files -->
     <string name="file_name_placeholder">Имя файла</string>
     <string name="file_type_placeholder">Тип файла</string>
-    
-    <!-- Runtime Version -->
-    <string name="runtime_recommended_version">Рекомендуемая версия</string>
-    
-    <!-- Patch -->
-    <string name="patch_name_placeholder">Название патча</string>
-    <string name="patch_description_placeholder">Описание патча</string>
-    
-    <!-- Editor Menu -->
-    <string name="menu_item_placeholder">Элемент меню</string>
-    
-    <!-- Control Layout -->
-    <string name="layout_name_placeholder">Название раскладки</string>
-    <string name="layout_default_tag">По умолчанию</string>
-    <string name="layout_controls_count">5 элементов управления</string>
-    <string name="content_desc_more_options">Дополнительные опции</string>
-    
-    <!-- File Selection Card -->
     <string name="file_optional_tag">Необязательно</string>
     <string name="file_select_button">Выбрать</string>
-    
-    <!-- Empty State -->
-    <string name="empty_directory_message">Текущий каталог пуст</string>
-    
-    <!-- Floating Console -->
+    <string name="empty_directory_message">Каталог пуст</string>
+
+    <!-- Developer Console -->
     <string name="developer_console_title">Консоль разработчика</string>
     <string name="content_desc_minimize">Свернуть</string>
     <string name="content_desc_clear">Очистить</string>
     <string name="console_message_count">Сообщения: %d</string>
     <string name="console_error_count">Ошибки: %d</string>
     <string name="console_warning_count">Предупреждения: %d</string>
-    <string name="console_ready">Консоль готова...\n</string>
-    <string name="console_input_hint">Введите команду...</string>
+    <string name="console_ready">Консоль готова...</string>
+    <string name="console_input_hint">Введите команду</string>
     <string name="console_send_button">Отправить</string>
-    
-    <!-- Navigation Menu -->
+
+    <!-- Navigation -->
     <string name="nav_game">Игра</string>
     <string name="nav_file">Файл</string>
     <string name="nav_control">Управление</string>
     <string name="nav_download">Загрузка</string>
     <string name="nav_add_game">Добавить игру</string>
     <string name="nav_settings">Настройки</string>
-    
-    <!-- Control Layout Menu -->
+
+    <!-- Layout & Control Editor -->
     <string name="action_edit_layout">Редактировать раскладку</string>
     <string name="action_rename">Переименовать</string>
     <string name="action_duplicate_layout">Копировать раскладку</string>
-    <string name="action_set_default">Установить по умолчанию</string>
+    <string name="action_set_default">По умолчанию</string>
     <string name="action_export_layout">Экспортировать раскладку</string>
-    
-    <!-- Control Editor Menu -->
     <string name="menu_add_cross">Добавить направляющие клавиши</string>
     <string name="menu_load_default_layout">Загрузить раскладку по умолчанию</string>
-    <string name="menu_clear_all_controls">Очистить все элементы управления</string>
-    
-    <!-- Game File Browser -->
-    <string name="mod_manager_title">Файловый браузер игры</string>
+    <string name="menu_clear_all_controls">Очистить элементы управления</string>
+
+    <!-- File Browser -->
+    <string name="mod_manager_title">Файловый браузер</string>
     <string name="mod_manager_path">Путь</string>
     <string name="mod_manager_new_folder">Новая папка</string>
     <string name="mod_manager_refresh">Обновить</string>
@@ -1142,14 +1128,14 @@
     <string name="mod_manager_delete">Удалить</string>
     <string name="mod_manager_empty">Папка пуста</string>
     <string name="mod_manager_file_selected">Выбрано: %s</string>
-    <string name="mod_manager_no_selection">Пожалуйста, сначала выберите файл или папку</string>
+    <string name="mod_manager_no_selection">Выберите файл или папку</string>
     <string name="mod_manager_copied">Скопировано: %s</string>
-    <string name="mod_manager_moved">Перемещено: %s</string>
     <string name="mod_manager_copied_success">Копирование успешно: %s</string>
+    <string name="mod_manager_moved">Перемещено: %s</string>
     <string name="mod_manager_moved_success">Перемещение успешно: %s</string>
     <string name="mod_manager_deleted">Удалено: %s</string>
     <string name="mod_manager_refreshed">Обновлено</string>
-    <string name="mod_manager_folder_created">Папка успешно создана</string>
+    <string name="mod_manager_folder_created">Папка создана</string>
     <string name="mod_manager_folder_create_failed">Не удалось создать папку</string>
     <string name="mod_manager_delete_title">Удалить</string>
     <string name="mod_manager_delete_message">Вы уверены, что хотите удалить %s?</string>
@@ -1163,18 +1149,123 @@
     <string name="mod_manager_create">Создать</string>
     <string name="mod_manager_invalid_path">Неверный путь</string>
     <string name="mod_manager_grid_view">Вид сетки</string>
-    <string name="mod_manager_list_view">Вид списка</string>
     <string name="mod_manager_view_mode_grid">Переключено на вид сетки</string>
+    <string name="mod_manager_list_view">Вид списка</string>
     <string name="mod_manager_view_mode_list">Переключено на вид списка</string>
     <string name="mod_manager_home">Главная папка</string>
+
+    <!-- Patches -->
+    <string name="patch_dialog_import">Импорт патча</string>
+    <string name="patch_dialog_import_successful">Пакет патчей импортирован</string>
+    <string name="patch_dialog_import_failed">Не удалось импортировать патч</string>
+    <string name="patch_dialog_import_title">⚠️ Внимание</string>
+    <string name="patch_dialog_import_message">Пакет патчей может содержать исполняемые файлы. Убедитесь в безопасности перед установкой.</string>
+
+    <!-- Plugin Manager -->
+    <string name="plugin_manager_title">Управление плагинами</string>
+    <string name="plugin_manager_subtitle">Добавление, удаление и управление плагинами игр</string>
+    <string name="manage_plugins">Управление плагинами</string>
+    <string name="add_plugin">Добавить плагин</string>
+    <string name="installed_plugins">Установленные плагины</string>
+    <string name="available_plugins">Доступные плагины</string>
+    <string name="plugin_count">Установлено %d плагинов</string>
+    <string name="no_plugins_available">Нет доступных плагинов</string>
+    <string name="no_plugins_installed">Нет установленных плагинов</string>
+    <string name="no_plugins_hint">Нажмите «Добавить плагин» для установки</string>
+    <string name="plugin_source_builtin">Встроенный</string>
+    <string name="plugin_source_external">Внешний</string>
+    <string name="plugin_import_success">Плагин импортирован: %s</string>
+    <string name="plugin_import_failed">Не удалось импортировать плагин</string>
+    <string name="plugin_restart_required_title">Требуется перезапуск</string>
+    <string name="plugin_restart_required_message">Перезапустите приложение для применения изменений</string>
+    <string name="restart_now">Перезапустить</string>
+    <string name="plugin_delete_title">Удалить плагин</string>
+    <string name="plugin_delete_message">Удалить плагин %s?</string>
+    <string name="plugin_delete_success">Плагин удален</string>
+    <string name="plugin_delete_failed">Не удалось удалить плагин</string>
+    <string name="plugin_delete_not_found">Файл плагина не найден</string>
+    <string name="plugin_cannot_delete_builtin">Встроенные плагины нельзя удалить</string>
+    <string name="plugin_id_label">ID: %s</string>
+    <string name="plugin_games_label">Поддерживаемые игры:</string>
+    <string name="plugin_source_label">Источник:</string>
+    <string name="delete">Удалить</string>
+
+    <!-- Game Import -->
+    <string name="select_game_file">Выбрать файл игры</string>
+    <string name="select_game_file_simple_hint">Поддерживаются ZIP-файлы (игра или загрузчик модов)</string>
+    <string name="select_gog_sh_hint">Выбрать скрипт установки GOG (.sh)</string>
+    <string name="game_name_input_hint">Название игры (определяется автоматически)</string>
+    <string name="start_import">Начать импорт</string>
+    <string name="import_game_simple_subtitle">Выберите ZIP-файл для импорта</string>
+    <string name="import_game_sh_subtitle">Выберите скрипт GOG для импорта (название игры определится автоматически)</string>
+    <string name="import_hint_zip">• Поддерживаются ZIP-файлы игр</string>
+    <string name="import_hint_sh_file">• Поддерживаются скрипты GOG .sh</string>
+    <string name="import_hint_auto_detect">• Автоматическое определение типа и названия игры</string>
+    <string name="import_hint_examples">• Например: tModLoader, Stardew Valley, Celeste</string>
+    <string name="import_hint_gog_examples">• Например: Terraria, Celeste, Hollow Knight</string>
+    <string name="import_select_plugin_hint">Выберите плагин для импорта</string>
+    <string name="import_select_modloader_first">Сначала выберите файл ModLoader</string>
+    <string name="import_select_mod_loader_first">Сначала выберите файл загрузчика модов</string>
+    <string name="select_files">Выбрать файлы</string>
+    <string name="select_file">Выбрать файл</string>
+    <string name="import_no_plugin_available">Нет доступных плагинов</string>
+    <string name="import_no_plugin_selected">Плагин не выбран</string>
+    <string name="import_plugin_not_match">Плагин не подходит к выбранному файлу</string>
+    <string name="import_cancelled">Импорт отменен</string>
+    <string name="import_install_method">Способ установки</string>
+    <string name="import_required">Обязательно</string>
+
+    <!-- Import Steps -->
+    <string name="import_step1_title">Выбрать игру</string>
+    <string name="import_step2_title">Выбрать загрузчик модов</string>
+    <string name="import_step3_title">Подтвердить импорт</string>
+    <string name="next_step">Следующий шаг</string>
+    <string name="import_select_game_body">Выберите файл игры</string>
+    <string name="import_click_to_select_sh">Нажмите для выбора файла установки (.sh)</string>
+    <string name="import_game_detected_label">Игра обнаружена</string>
+    <string name="import_mod_loader">Загрузчик модов</string>
+    <string name="import_select_sh_file">Выберите файл установки (.sh)</string>
+    <string name="import_select_zip_file">Выберите файл загрузчика модов (.zip)</string>
+    <string name="import_local_select">Выбор с устройства</string>
+    <string name="import_local_select_hint">Выберите ZIP-файл с устройства</string>
+    <string name="import_online_download">Загрузить из сети</string>
+    <string name="import_online_download_hint">Файл игры будет загружен из сети</string>
+    <string name="import_summary">Сводка импорта</string>
+    <string name="import_progress_title">Импорт...</string>
+    <string name="init_component_rootfs_desc">Box64 и Debian Rootfs</string>
+    <string name="init_component_x64lib_desc">Библиотеки Box64 x86_64 (libstdc++, libssl и др.)</string>
+
+    <!-- Settings Misc -->
+    <string name="settings_custom_background">Пользовательский фон</string>
+    <string name="settings_custom_background_desc">Выбрать изображение или видео в качестве фона</string>
+    <string name="settings_background_opacity">Прозрачность фона</string>
+    <string name="settings_video_playback_speed">Скорость воспроизведения видео</string>
+    <string name="settings_back_button_open_menu">Кнопка "Назад" открывает меню игры</string>
+    <string name="settings_back_button_open_menu_desc">Открыть меню игры при нажатии кнопки "Назад"</string>
+    <string name="settings_experimental_features">Экспериментальные функции</string>
+
+    <!-- Runtime -->
+    <string name="runtime_recommended_version">Рекомендуемая версия</string>
+
+    <!-- Patch -->
+    <string name="patch_name_placeholder">Название патча</string>
+    <string name="patch_description_placeholder">Описание патча</string>
+
+    <!-- Menu -->
+    <string name="menu_item_placeholder">Элемент меню</string>
+
+    <!-- Layout -->
+    <string name="layout_name_placeholder">Название раскладки</string>
+    <string name="layout_default_tag">По умолчанию</string>
+    <string name="layout_controls_count">5 элементов управления</string>
+
+    <!-- Content Description -->
+    <string name="content_desc_more_options">Дополнительные опции</string>
+
+    <!-- Editor Toggle Touch -->
     <string name="editor_toggle_touch">Включить события касания</string>
-    <string name="patch_dialog_import">Импортировать патч</string>
-    <string name="patch_dialog_import_successful">Пакет патчей успешно импортирован</string>
-    <string name="patch_dialog_import_failed">Импорт пакета патчей не удался, проверьте логи для получения дополнительной информации</string>
-    <string name="patch_dialog_import_title">⚠️ Предупреждение</string>
-    <string name="patch_dialog_import_message">Пакет патчей имеет возможность загружать исполняемые файлы.\nУстановка пакета патчей, содержащего вредоносный код, может привести к:\n- Утечке личных данных и конфиденциальной информации\n- Повреждению устройства\nПеред установкой убедитесь, что:\n- Вы доверяете источнику этого пакета патчей\n- Вы понимаете конкретные функции пакета патчей\n- Вы создали резервную копию важных данных\nПродолжение установки означает, что вы понимаете и принимаете связанные риски.</string>
-    
-    <!-- Control Pack Download -->
+
+    <!-- Control Pack Store -->
     <string name="pack_category_all">Все</string>
     <string name="pack_store">Магазин элементов управления</string>
     <string name="pack_download_title">Магазин элементов управления</string>
@@ -1185,9 +1276,12 @@
     <string name="pack_load_failed">Загрузка не удалась</string>
     <string name="pack_retry">Повторить</string>
     <string name="pack_author_format">Автор: %s</string>
+    <string name="pack_author_label">Автор</string>
     <string name="pack_version_format">Версия: %s</string>
+    <string name="pack_version_label">Версия</string>
     <string name="pack_download">Загрузить</string>
     <string name="pack_installed">Установлено</string>
+    <string name="pack_installed_version">Установленная версия</string>
     <string name="pack_update_available">Доступно обновление</string>
     <string name="pack_downloading">Загрузка</string>
     <string name="pack_installing">Установка</string>
@@ -1196,9 +1290,6 @@
     <string name="pack_delete">Удалить</string>
     <string name="pack_delete_title">Удалить пакет элементов управления</string>
     <string name="pack_delete_confirm">Вы уверены, что хотите удалить пакет элементов управления \"%s\"?</string>
-    <string name="pack_author_label">Автор</string>
-    <string name="pack_version_label">Версия</string>
-    <string name="pack_installed_version">Установленная версия</string>
     <string name="pack_tags_label">Теги</string>
     <string name="pack_size_label">Размер</string>
     <string name="pack_download_failed">Загрузка не удалась: %s</string>
@@ -1211,7 +1302,7 @@
     <string name="pack_preview_title">Превью пакета элементов управления</string>
     <string name="pack_unknown_author">Неизвестный автор</string>
     <string name="pack_preview_image">Превью %d</string>
-    
+
     <!-- Control Pack Export -->
     <string name="pack_export_title">Экспортировать пакет элементов управления</string>
     <string name="pack_export_author">Имя автора</string>
@@ -1219,7 +1310,7 @@
     <string name="pack_export_version">Номер версии</string>
     <string name="pack_export_success">Пакет элементов управления экспортирован</string>
     <string name="pack_export_failed">Экспорт не удался: %s</string>
-    
+
     <!-- Control Texture -->
     <string name="control_texture_selector_title">Выбор текстуры</string>
     <string name="control_texture_select_hint">Выбрать файл текстуры для применения к элементу управления</string>
@@ -1245,7 +1336,7 @@
 
     <!-- Developer Related -->
     <string name="future_version_contributor">Участник версии Future</string>
-    
+
     <!-- Sponsor Related -->
     <string name="sponsors_title">Звездная галерея</string>
     <string name="sponsors_wall_title">Звездная галерея</string>
@@ -1262,94 +1353,11 @@
     <string name="retry">Повторить</string>
     <string name="view">Просмотр</string>
     <string name="sponsors_tip_gesture">Двойной тап для сброса вида · Сжатие для масштабирования · Перетаскивание для исследования</string>
-    
-    <!-- Plugin Manager -->
-    <string name="plugin_manager_title">Управление плагинами</string>
-    <string name="plugin_manager_subtitle">Управление плагинами установки игр, добавление или удаление внешних плагинов</string>
-    <string name="manage_plugins">Управление плагинами</string>
-    <string name="add_plugin">Добавить плагин</string>
-    <string name="installed_plugins">Установленные плагины</string>
-    <string name="available_plugins">Доступные плагины</string>
-    <string name="plugin_count">Установлено %d плагинов</string>
-    <string name="no_plugins_available">Нет доступных плагинов</string>
-    <string name="no_plugins_installed">Нет установленных плагинов</string>
-    <string name="no_plugins_hint">Нажмите кнопку выше, чтобы добавить плагин</string>
-    <string name="plugin_source_builtin">Встроенный</string>
-    <string name="plugin_source_external">Внешний</string>
-    <string name="plugin_import_success">Плагин успешно импортирован: %s</string>
-    <string name="plugin_import_failed">Импорт плагина не удался</string>
-    <string name="plugin_restart_required_title">Требуется перезапуск</string>
-    <string name="plugin_restart_required_message">Ново импортированные плагины требуют перезапуска приложения для вступления в силу</string>
-    <string name="restart_now">Перезапустить сейчас</string>
-    <string name="plugin_delete_title">Удалить плагин</string>
-    <string name="plugin_delete_message">Вы уверены, что хотите удалить плагин %s?</string>
-    <string name="plugin_delete_success">Плагин удален</string>
-    <string name="plugin_delete_failed">Не удалось удалить плагин</string>
-    <string name="plugin_delete_not_found">Не найден соответствующий файл плагина</string>
-    <string name="plugin_cannot_delete_builtin">Встроенные плагины нельзя удалить</string>
-    <string name="plugin_id_label">ID плагина: %s</string>
-    <string name="plugin_games_label">Поддерживаемые игры:</string>
-    <string name="plugin_source_label">Источник: </string>
-    <string name="delete">Удалить</string>
-    
-    <!-- Game Import -->
-    <string name="select_game_file">Выбрать файл игры</string>
-    <string name="select_game_file_simple_hint">Поддерживается формат ZIP (основная игра или загрузчик модов)</string>
-    <string name="select_gog_sh_hint">Выбрать скрипт установки GOG (.sh)</string>
-    <string name="game_name_input_hint">Название игры (автоматическое определение)</string>
-    <string name="start_import">Начать импорт</string>
-    <string name="import_game_simple_subtitle">Выберите ZIP-файл игры для начала импорта</string>
-    <string name="import_game_sh_subtitle">Выберите скрипт установки GOG для начала импорта, название игры будет определено автоматически</string>
-    <string name="import_hint_zip">• Поддерживаются ZIP-файлы игр</string>
-    <string name="import_hint_sh_file">• Поддерживаются скрипты установки GOG .sh</string>
-    <string name="import_hint_auto_detect">• Автоматическое распознавание типа и названия игры</string>
-    <string name="import_hint_examples">• Например, tModLoader, Stardew Valley, Celeste и т.д.</string>
-    <string name="import_hint_gog_examples">• Например, Terraria, Celeste, Hollow Knight и т.д.</string>
-    <string name="import_select_plugin_hint">Выберите плагин игры для начала процесса импорта</string>
-    <string name="import_select_modloader_first">Пожалуйста, сначала выберите файл ModLoader</string>
-    <string name="import_select_mod_loader_first">Пожалуйста, сначала выберите файл загрузчика модов</string>
-    <string name="select_files">Выбрать файлы</string>
-    <string name="select_file">Выбрать файл</string>
-    <string name="import_no_plugin_available">Нет доступных плагинов установки</string>
-    <string name="import_no_plugin_selected">Плагин не выбран</string>
-    <string name="import_plugin_not_match">Выбранный плагин не соответствует текущему файлу</string>
-    <string name="import_cancelled">Импорт отменен</string>
-    <string name="import_install_method">Способ установки</string>
-    <string name="import_required">Обязательно</string>
-    
-    <!-- Import Steps -->
-    <string name="import_step1_title">Выбрать основную игру</string>
-    <string name="import_step2_title">Выбрать загрузчик модов</string>
-    <string name="import_step3_title">Подтвердить импорт</string>
-    <string name="next_step">Следующий шаг</string>
-    <string name="import_select_game_body">Выбрать файл основной игры</string>
-    <string name="import_click_to_select_sh">Нажмите, чтобы выбрать загруженный файл установки .sh</string>
-    <string name="import_game_detected_label">Обнаружена игра</string>
-    <string name="import_mod_loader">Загрузчик модов</string>
-    <string name="import_select_sh_file">Пожалуйста, выберите файл установки игры (.sh)</string>
-    <string name="import_select_zip_file">Пожалуйста, выберите файл загрузчика модов (.zip)</string>
-    <string name="import_local_select">Локальный выбор</string>
-    <string name="import_local_select_hint">Выбрать загруженный ZIP-файл с устройства</string>
-    <string name="import_online_download">Онлайн-загрузка</string>
-    <string name="import_online_download_hint">Загрузить загрузчик модов из сети</string>
-    <string name="import_summary">Сводка импорта</string>
-    <string name="import_progress_title">Прогресс импорта</string>
-    <string name="init_component_rootfs_desc">Box64 и Debian rootfs</string>
-    <string name="init_component_x64lib_desc">Библиотеки Box64 x86_64 (libstdc++, libssl и т.д.)</string>
-    
-    <!-- Settings Developer -->
-    <string name="settings_experimental_features">Экспериментальные функции</string>
-    
-    <!-- Settings Misc -->
-    <string name="settings_custom_background">Пользовательский фон</string>
-    <string name="settings_custom_background_desc">Выбрать изображение или видео в качестве фона</string>
-    <string name="settings_background_opacity">Прозрачность фона</string>
-    <string name="settings_video_playback_speed">Скорость воспроизведения видео</string>
-    
+
     <!-- Game Import -->
     <string name="import_game_title_text">Импорт игры</string>
     <string name="import_game_subtitle_text">Выберите файлы основной игры и загрузчика модов для начала импорта</string>
-    
+
     <!-- Settings About -->
     <string name="about_version_label">Версия</string>
     <string name="about_afdian_sponsor">Спонсорство Afdian</string>
