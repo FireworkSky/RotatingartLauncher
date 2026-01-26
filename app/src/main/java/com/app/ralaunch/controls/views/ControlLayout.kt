@@ -40,8 +40,9 @@ class ControlLayout : FrameLayout {
     /**
      * 触摸点 ID 到控件的映射
      * 用于集中管理哪些触摸点被哪些控件占用
+     * 使用 ConcurrentHashMap 防止并发修改异常
      */
-    private val mPointerToControl: MutableMap<Int, ControlView> = HashMap()
+    private val mPointerToControl: MutableMap<Int, ControlView> = java.util.concurrent.ConcurrentHashMap()
 
     /**
      * 获取当前布局
@@ -191,11 +192,14 @@ class ControlLayout : FrameLayout {
 
             if (controlView.tryAcquireTouch(pointerId, localX, localY)) {
                 AppLogger.debug(TAG, "  Control ${controlView.javaClass.simpleName} accepted pointer $pointerId")
-                mPointerToControl[pointerId] = controlView
 
+                // 重要：先标记为已消费，再添加到映射，确保 SDL 转发时能正确识别
+                // 这样可以避免竞态条件：控件接受触摸 -> 标记消费 -> SDL转发
                 if (!controlView.controlData.isPassThrough) {
                     TouchPointerTracker.consumePointer(pointerId)
                 }
+
+                mPointerToControl[pointerId] = controlView
                 return true
             }
         }
@@ -238,12 +242,19 @@ class ControlLayout : FrameLayout {
     private fun handlePointerUp(event: MotionEvent, pointerId: Int): Boolean {
         AppLogger.debug(TAG, "handlePointerUp: pointerId=$pointerId")
 
-        mPointerToControl.remove(pointerId)?.let { controlView ->
+        mPointerToControl[pointerId]?.let { controlView ->
             AppLogger.debug(TAG, "  Releasing pointer $pointerId from ${controlView.javaClass.simpleName}")
+
+            // 重要：先通知控件释放，再从 tracker 移除，最后从映射移除
+            // 这样确保在整个释放过程中，映射关系保持一致
+            controlView.releaseTouch(pointerId)
+
             if (!controlView.controlData.isPassThrough) {
                 TouchPointerTracker.releasePointer(pointerId)
             }
-            controlView.releaseTouch(pointerId)
+
+            // 最后才从映射中移除，避免在释放过程中出现状态不一致
+            mPointerToControl.remove(pointerId)
         }
 
         mSDLSurface?.dispatchTouchEvent(event)
@@ -257,12 +268,17 @@ class ControlLayout : FrameLayout {
     private fun handleCancel(event: MotionEvent): Boolean {
         AppLogger.debug(TAG, "handleCancel: clearing ${mPointerToControl.size} pointers")
 
-        mPointerToControl.forEach { (pointerId, controlView) ->
+        // 创建副本以避免在迭代时修改（虽然使用 ConcurrentHashMap，但为了确保一致性）
+        val pointersToCancel = mPointerToControl.toList()
+
+        pointersToCancel.forEach { (pointerId, controlView) ->
+            controlView.cancelAllTouches()
+
             if (!controlView.controlData.isPassThrough) {
                 TouchPointerTracker.releasePointer(pointerId)
             }
-            controlView.cancelAllTouches()
         }
+
         mPointerToControl.clear()
 
         mSDLSurface?.dispatchTouchEvent(event)
@@ -481,13 +497,18 @@ class ControlLayout : FrameLayout {
      * 清除所有控制元素
      */
     fun clearControls() {
-        // 清除所有触摸点映射并通知 SDL
-        mPointerToControl.forEach { (pointerId, controlView) ->
+        // 创建副本以避免在迭代时修改
+        val pointersToCancel = mPointerToControl.toList()
+
+        // 清除所有触摸点映射并通知控件和 SDL
+        pointersToCancel.forEach { (pointerId, controlView) ->
+            controlView.cancelAllTouches()
+
             if (!controlView.controlData.isPassThrough) {
                 TouchPointerTracker.releasePointer(pointerId)
             }
-            controlView.cancelAllTouches()
         }
+
         mPointerToControl.clear()
 
         removeAllViews()
