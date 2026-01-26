@@ -248,15 +248,15 @@
     <string name="log_system_disabled_title">Система логирования не включена</string>
     <string name="log_system_disabled_message">Система логирования в настоящее время не включена, невозможно экспортировать файл логов. Пожалуйста, сначала включите опцию \"Включить систему логирования\", затем перезапустите приложение для начала записи логов.</string>
 
-    <string name="thread_affinity_big_core">Привязка потока - Большое ядро</string>
+    <string name="thread_affinity_big_core">Привязка потока к Большое ядру</string>
     <string name="thread_affinity_big_core_desc">Привязать главный поток к большому ядру для повышения производительности</string>
     <string name="thread_affinity_big_core_enabled">Привязка потока к большому ядру включена</string>
     <string name="thread_affinity_big_core_disabled">Привязка потока к большому ядру отключена</string>
 
-    <string name="kill_launcher_ui_after_launch">Завершить UI запускателя после запуска игры</string>
-    <string name="kill_launcher_ui_after_launch_desc">Завершить процесс UI запускателя после запуска игры для освобождения памяти</string>
-    <string name="kill_launcher_ui_enabled">Завершение UI запускателя включено</string>
-    <string name="kill_launcher_ui_disabled">Завершение UI запускателя отключено</string>
+    <string name="kill_launcher_ui_after_launch">Завершить UI Лаунчера после запуска игры</string>
+    <string name="kill_launcher_ui_after_launch_desc">Завершить процесс UI Лаунчера после запуска игры для освобождения оперативной памяти</string>
+    <string name="kill_launcher_ui_enabled">Завершение UI Лаунчера включено</string>
+    <string name="kill_launcher_ui_disabled">Завершение UI Лаунчера отключено</string>
 
     <!-- Patch Management -->
     <string name="patch_management">Управление патчами</string>
@@ -386,7 +386,7 @@
     <string name="import_unknown_game">Неизвестная игра</string>
 
     <!-- InitializationFragment Messages -->
-    <string name="init_grant_permissions">Предоставить разрешения</string>
+    <string name="init_grant_permissions">Да</string>
     <string name="init_cannot_open_browser">Не удалось открыть браузер</string>
     <string name="init_permission_manager_failed">Не удалось инициализировать менеджер разрешений</string>
     <string name="init_requesting_permissions">Запрос разрешений...</string>
@@ -458,7 +458,7 @@
     <string name="editor_reset_complete">Сброшено на раскладку по умолчанию</string>
     <string name="editor_button_added">Кнопка добавлена</string>
     <string name="editor_joystick_added">Джойстик добавлен</string>
-    <string name="editor_touchpad_added">Сенсорная панель добавлена</string>
+    <string name="editor_touchpad_added">Тач пад добавлена</string>
     <string name="editor_mousewheel_added">Колесо мыши добавлено</string>
     <string name="editor_dpad_added">D-Pad добавлен</string>
     <string name="editor_text_added">Текст добавлен</string>
@@ -592,7 +592,7 @@
     <string name="control_type_button_keyboard">Кнопка (клавиатура)</string>
     <string name="control_type_button_gamepad">Кнопка (контроллер)</string>
     <string name="control_type_joystick">Джойстик</string>
-    <string name="control_type_touchpad">Сенсорная панель</string>
+    <string name="control_type_touchpad">Тач пад</string>
     <string name="control_type_mousewheel">Колесо мыши</string>
     <string name="control_type_dpad">D-Pad</string>
     <string name="control_type_text">Текст</string>
@@ -702,7 +702,7 @@
 
     <!-- ControlEditorOperations Messages -->
     <string name="editor_default_button_name">Кнопка</string>
-    <string name="editor_default_touchpad_name">Сенсорная панель</string>
+    <string name="editor_default_touchpad_name">Тач пад</string>
     <string name="editor_default_mousewheel_name">Колесо мыши</string>
     <string name="editor_default_dpad_name">D-Pad</string>
     <string name="editor_default_text_name">Текст</string>
@@ -890,9 +890,9 @@
     <string name="background_custom_desc">Выбрать изображение или видео в качестве фона меню лаунчера</string>
     <string name="background_video">Видео фон</string>
     <string name="background_video_desc">Выбрать видеофайл в качестве динамического фона</string>
-    <string name="background_restore_default">Сброс фона до заволских</string>
+    <string name="background_restore_default">Сброс фона до заводских</string>
     <string name="background_restore_default_desc">Восстаналивает фон, который был по умолчанию.</string>
-    <string name="language_select">Выбрать язык интерфейса</string>
+    <string name="language_select">Выбрать язык</string>
 
     <!-- Initialization Fragment -->
     <string name="init_legal_title">Юридическое заявление</string>
@@ -900,18 +900,18 @@
     <string name="init_legal_important">⚠ Важное заявление</string>
     <string name="init_legal_important_message">Это программное обеспечение полностью бесплатно и с открытым исходным кодом! Если вы заплатили за него, немедленно запросите возврат средств и сообщите о продавце. Любая перепродажа или перепродажа этого программного обеспечения является незаконной, разработчики оставляют за собой право привлечения к юридической ответственности.</string>
     <string name="init_legal_official_download">Официальный репозиторий лаунчера: https://github.com/FireworkSky/RotatingartLauncher</string>
-    <string name="init_legal_terms">1. Характер программного обеспечения: Этот игровой лаунчер является сторонним инструментом с открытым исходным кодом, пользователь должен предоставить законно авторизованные файлы игр.\n\n2. Заявление об авторских правах: Вы должны иметь законно лицензионную копию запускаемой игры, разработчики не связаны с правообладателями игр.\n\n3. Ограничения использования: Только для личного обучения и исследований, не для коммерческих целей или обратной инженерии.\n\n4. Отказ от ответственности: Программное обеспечение предоставляется как есть, разработчики не несут ответственности за любые убытки, вызванные использованием.\n\n5. Защита конфиденциальности: Не собирает никакой личной информации, все данные хранятся только локально.\n\n6. Объяснение разрешений: Требуется разрешение на хранение для доступа к файлам игр, доступ только к файлам, связанным с играми.\n\n7. Юридическая ответственность: Пользователь несет ответственность за незаконное использование.\n\n8. Изменение условий: Разработчики оставляют за собой право изменять это заявление в любое время.</string>
+    <string name="init_legal_terms">1. Характер программного обеспечения: Этот игровой лаунчер является сторонним инструментом с открытым исходным кодом, пользователь должен предоставить законно авторизованные файлы игр.\n\n2. Заявление об авторских правах: Вы должны иметь законно лицензионную копию запускаемой игры, разработчики не связаны с правообладателями игр.\n\n3. Ограничения использования: Только для личного использования и исследований, не для коммерческих целей или обратной инженерии.\n\n4. Отказ от ответственности: Программное обеспечение предоставляется как есть, разработчики не несут ответственности за любые убытки, вызванные использованием.\n\n5. Защита конфиденциальности: Не собирает никакой личной информации, все данные хранятся только локально.\n\n6. Объяснение разрешений: Требуется разрешение на хранение для доступа к файлам игр, доступ только к файлам, связанным с играми.\n\n7. Юридическая ответственность: Пользователь несет ответственность за незаконное использование.\n\n8. Изменение условий: Разработчики оставляют за собой право изменять это заявление в любое время.</string>
     <string name="init_legal_accept_hint">Нажатие [Принять и продолжить] означает согласие с вышеуказанными условиями</string>
-    <string name="init_exit">Выход</string>
-    <string name="init_accept_and_continue">Согласен</string>
+    <string name="init_exit">Выйти</string>
+    <string name="init_accept_and_continue">Принимаю</string>
     <string name="init_permission_desc">Запускателю требуется разрешение на хранение для чтения и управления файлами игр</string>
-    <string name="init_skip">Пропустить</string>
-    <string name="permission_grant">Предоставить разрешение</string>
+    <string name="init_skip">Нет</string>
+    <string name="permission_grant">Дать разрешение на чтение?</string>
 
     <!-- Control Layout Fragment -->
     <string name="control_no_layout">Нет раскладки управления</string>
     <string name="control_no_layout_hint">Нажмите кнопку в правом нижнем углу, чтобы создать новую раскладку</string>
-    <string name="control_new_layout_button">Новая раскладка</string>
+    <string name="control_new_layout_button">Создать</string>
 
     <!-- Main Activity -->
     <string name="main_select_game_hint">Пожалуйста, выберите игру</string>
@@ -1024,11 +1024,11 @@
     <!-- Dialogs & Layout -->
     <string name="dialog_title_placeholder">Диалог</string>
     <string name="layout_settings_title">Настройки тача</string>
-    <string name="import_layout">Тач</string>
-    <string name="import_preset">Пресет</string>
+    <string name="import_layout">Импорт</string>
+    <string name="import_preset">Пресеты</string>
     <string name="quick_settings_title">Быстрые настройки</string>
     <string name="game_settings_title">Настройки игры</string>
-    <string name="more_settings_developing">В разработке...</string>
+    <string name="more_settings_developing">В разработке..</string>
 
     <!-- Keyboard & Mouse -->
     <string name="key_mouse_left">Левая кнопка мыши</string>
@@ -1038,7 +1038,7 @@
     <string name="key_mouse_wheel_down">Колесо ↓</string>
     <string name="key_open_keyboard">Открыть клавиатуру</string>
     <string name="key_keyboard">Клавиатура</string>
-    <string name="key_touchpad_buttons">Кнопки сенсорной панели</string>
+    <string name="key_touchpad_buttons">Кнопки тачпада</string>
     <string name="key_space">Пробел</string>
     <string name="key_enter">Enter</string>
     <string name="key_arrow_up">↑ Вверх</string>
@@ -1076,9 +1076,9 @@
     <string name="joystick_left">Левый джойстик</string>
 
     <!-- Layout & Editor -->
-    <string name="type_conversion_wip">Преобразование типов в разработке</string>
+    <string name="type_conversion_wip">Это в разработке..</string>
     <string name="input_layout_name">Название раскладки</string>
-    <string name="layout_name_hint">Название раскладки</string>
+    <string name="layout_name_hint">Введите название раскладки</string>
     <string name="layout_name_example">Например: Моя раскладка</string>
 
     <!-- Files -->
@@ -1103,8 +1103,8 @@
     <string name="nav_game">Игра</string>
     <string name="nav_file">Файл</string>
     <string name="nav_control">Управление</string>
-    <string name="nav_download">Загрузка</string>
-    <string name="nav_add_game">Добавить игру</string>
+    <string name="nav_download">Библиотека</string>
+    <string name="nav_add_game">Добавить</string>
     <string name="nav_settings">Настройки</string>
 
     <!-- Layout & Control Editor -->
@@ -1240,8 +1240,8 @@
     <string name="settings_custom_background_desc">Выбрать изображение или видео в качестве фона</string>
     <string name="settings_background_opacity">Прозрачность фона</string>
     <string name="settings_video_playback_speed">Скорость воспроизведения видео</string>
-    <string name="settings_back_button_open_menu">Кнопка "Назад" открывает меню игры</string>
-    <string name="settings_back_button_open_menu_desc">Открыть меню игры при нажатии кнопки "Назад"</string>
+    <string name="settings_back_button_open_menu">Жест/Нажатия кнопки "Назад" открывает боковое меню</string>
+    <string name="settings_back_button_open_menu_desc">Отключает шестерёнку-кнопку, взамен на открытие бокового меню жестом/кнопкой "назад" </string>
     <string name="settings_experimental_features">Экспериментальные функции</string>
 
     <!-- Runtime -->
@@ -1267,10 +1267,10 @@
 
     <!-- Control Pack Store -->
     <string name="pack_category_all">Все</string>
-    <string name="pack_store">Магазин элементов управления</string>
-    <string name="pack_download_title">Магазин элементов управления</string>
-    <string name="pack_search_hint">Поиск пакетов элементов управления...</string>
-    <string name="pack_loading">Загрузка списка пакетов элементов управления...</string>
+    <string name="pack_store">Магазин раскладки</string>
+    <string name="pack_download_title">Магазин раскладок</string>
+    <string name="pack_search_hint">Поиск пакетов управления...</string>
+    <string name="pack_loading">Загрузка списка пакетов раскладок...</string>
     <string name="pack_empty">Нет пакетов элементов управления</string>
     <string name="pack_empty_hint">Проверьте позже или потяните вниз для обновления</string>
     <string name="pack_load_failed">Загрузка не удалась</string>
@@ -1328,14 +1328,14 @@
     <string name="control_texture_toggled">Состояние переключения</string>
     <string name="control_texture_background">Фон</string>
     <string name="control_texture_knob">Головка джойстика</string>
-    <string name="control_texture_not_supported">Текстуры не поддерживаются</string>
-    <string name="control_texture_enabled">Текстура настроена</string>
-    <string name="control_texture_disabled">Текстура не настроена</string>
-    <string name="editor_texture">Настройки текстуры</string>
-    <string name="editor_texture_desc">Установить пользовательское текстурированное изображение для элемента управления</string>
+    <string name="control_texture_not_supported">Фото не поддерживается</string>
+    <string name="control_texture_enabled">Фото установлено</string>
+    <string name="control_texture_disabled">Фото не установлена</string>
+    <string name="editor_texture">Фото на элемент управления</string>
+    <string name="editor_texture_desc">Установить пользовательское изображение для элемента управления</string>
 
     <!-- Developer Related -->
-    <string name="future_version_contributor">Участник версии Future</string>
+    <string name="future_version_contributor">Будущий разработчик</string>
 
     <!-- Sponsor Related -->
     <string name="sponsors_title">Звездная галерея</string>
