@@ -1,0 +1,116 @@
+diff --git a/D:/RotatingartLauncher/app/src/main/cpp/SDL_original_2301/android-project/app/src/main/java/org/libsdl/app/SDLAudioManager.java b/D:/RotatingartLauncher/app/src/main/java/org/libsdl/app/SDLAudioManager.java
+index 7c821a409..adb3701f1 100644
+--- a/D:/RotatingartLauncher/app/src/main/cpp/SDL_original_2301/android-project/app/src/main/java/org/libsdl/app/SDLAudioManager.java
++++ b/D:/RotatingartLauncher/app/src/main/java/org/libsdl/app/SDLAudioManager.java
+@@ -76,8 +76,6 @@ public class SDLAudioManager {
+         int sampleSize;
+         int frameSize;
+ 
+-        Log.v(TAG, "Opening " + (isCapture ? "capture" : "playback") + ", requested " + desiredFrames + " frames of " + desiredChannels + " channel " + getAudioFormatString(audioFormat) + " audio at " + sampleRate + " Hz");
+-
+         /* On older devices let's use known good settings */
+         if (Build.VERSION.SDK_INT < 21 /* Android 5.0 (LOLLIPOP) */) {
+             if (desiredChannels > 2) {
+@@ -112,7 +110,7 @@ public class SDLAudioManager {
+             sampleSize = 4;
+             break;
+         default:
+-            Log.v(TAG, "Requested format " + audioFormat + ", getting ENCODING_PCM_16BIT");
++
+             audioFormat = AudioFormat.ENCODING_PCM_16BIT;
+             sampleSize = 2;
+             break;
+@@ -127,7 +125,7 @@ public class SDLAudioManager {
+                 channelConfig = AudioFormat.CHANNEL_IN_STEREO;
+                 break;
+             default:
+-                Log.v(TAG, "Requested " + desiredChannels + " channels, getting stereo");
++
+                 desiredChannels = 2;
+                 channelConfig = AudioFormat.CHANNEL_IN_STEREO;
+                 break;
+@@ -159,53 +157,52 @@ public class SDLAudioManager {
+                 if (Build.VERSION.SDK_INT >= 23 /* Android 6.0 (M) */) {
+                     channelConfig = AudioFormat.CHANNEL_OUT_7POINT1_SURROUND;
+                 } else {
+-                    Log.v(TAG, "Requested " + desiredChannels + " channels, getting 5.1 surround");
++
+                     desiredChannels = 6;
+                     channelConfig = AudioFormat.CHANNEL_OUT_5POINT1;
+                 }
+                 break;
+             default:
+-                Log.v(TAG, "Requested " + desiredChannels + " channels, getting stereo");
++
+                 desiredChannels = 2;
+                 channelConfig = AudioFormat.CHANNEL_OUT_STEREO;
+                 break;
+             }
+ 
+ /*
+-            Log.v(TAG, "Speaker configuration (and order of channels):");
+ 
+             if ((channelConfig & 0x00000004) != 0) {
+-                Log.v(TAG, "   CHANNEL_OUT_FRONT_LEFT");
++
+             }
+             if ((channelConfig & 0x00000008) != 0) {
+-                Log.v(TAG, "   CHANNEL_OUT_FRONT_RIGHT");
++
+             }
+             if ((channelConfig & 0x00000010) != 0) {
+-                Log.v(TAG, "   CHANNEL_OUT_FRONT_CENTER");
++
+             }
+             if ((channelConfig & 0x00000020) != 0) {
+-                Log.v(TAG, "   CHANNEL_OUT_LOW_FREQUENCY");
++
+             }
+             if ((channelConfig & 0x00000040) != 0) {
+-                Log.v(TAG, "   CHANNEL_OUT_BACK_LEFT");
++
+             }
+             if ((channelConfig & 0x00000080) != 0) {
+-                Log.v(TAG, "   CHANNEL_OUT_BACK_RIGHT");
++
+             }
+             if ((channelConfig & 0x00000100) != 0) {
+-                Log.v(TAG, "   CHANNEL_OUT_FRONT_LEFT_OF_CENTER");
++
+             }
+             if ((channelConfig & 0x00000200) != 0) {
+-                Log.v(TAG, "   CHANNEL_OUT_FRONT_RIGHT_OF_CENTER");
++
+             }
+             if ((channelConfig & 0x00000400) != 0) {
+-                Log.v(TAG, "   CHANNEL_OUT_BACK_CENTER");
++
+             }
+             if ((channelConfig & 0x00000800) != 0) {
+-                Log.v(TAG, "   CHANNEL_OUT_SIDE_LEFT");
++
+             }
+             if ((channelConfig & 0x00001000) != 0) {
+-                Log.v(TAG, "   CHANNEL_OUT_SIDE_RIGHT");
++
+             }
+ */
+         }
+@@ -277,8 +274,6 @@ public class SDLAudioManager {
+         }
+         results[3] = desiredFrames;
+ 
+-        Log.v(TAG, "Opening " + (isCapture ? "capture" : "playback") + ", got " + results[3] + " frames of " + results[2] + " channel " + getAudioFormatString(results[1]) + " audio at " + results[0] + " Hz");
+-
+         return results;
+     }
+ 
+@@ -501,7 +496,7 @@ public class SDLAudioManager {
+             android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_AUDIO);
+ 
+         } catch (Exception e) {
+-            Log.v(TAG, "modify thread properties failed " + e.toString());
++
+         }
+     }
+ 

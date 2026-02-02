@@ -17,6 +17,7 @@ package com.app.ralaunch.core
 
 import android.content.Context
 import android.os.Environment
+import com.app.ralaunch.BuildConfig
 import com.app.ralaunch.data.SettingsManager
 import org.koin.java.KoinJavaComponent
 import com.app.ralaunch.dotnet.DotNetLauncher
@@ -101,7 +102,7 @@ object GameLauncher {
             System.loadLibrary("netcorehost")
             System.loadLibrary("FAudio")
             System.loadLibrary("theorafile")
-            System.loadLibrary("SDL2")
+            System.loadLibrary(BuildConfig.SDL_LIBRARY_NAME)
             System.loadLibrary("main")
             System.loadLibrary("openal32")
             
@@ -313,6 +314,12 @@ object GameLauncher {
                 // Everest 使用 XDG_DATA_HOME/Everest/Mods，已在上方设置 XDG_DATA_HOME
                 // Everest mods path (Celeste) - auto-configured via XDG_DATA_HOME
                 // Everest uses XDG_DATA_HOME/Everest/Mods, XDG_DATA_HOME is set above
+
+                // FNA 平台后端配置 - 强制使用 SDL3
+                // FNA platform backend - force SDL3 (not "SDL2")
+                // 当 FNA_PLATFORM_BACKEND != "SDL2" 时，FNA 使用 SDL3
+                // When FNA_PLATFORM_BACKEND != "SDL2", FNA uses SDL3
+                "FNA_PLATFORM_BACKEND" to "SDL3",
 
                 // 触摸输入配置
                 // Touch input configuration

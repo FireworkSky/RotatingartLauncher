@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <OutputType>Library</OutputType>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Lib.Harmony.Thin" Version="2.3.3">
+      <Private>False</Private>
+    </PackageReference>
+  </ItemGroup>
+
+  <!-- tModLoader 引用 - 仅用于编译，不打包 -->
+  <ItemGroup>
+    <Reference Include="tModLoader">
+      <HintPath>C:\GOG Games\tModLoader\tModLoader.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+  </ItemGroup>
+
+</Project>

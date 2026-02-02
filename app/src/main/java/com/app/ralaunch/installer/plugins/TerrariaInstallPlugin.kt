@@ -1,10 +1,13 @@
 package com.app.ralaunch.installer.plugins
 
+import android.content.Context
+import android.util.Log
 import com.app.ralaunch.installer.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.koin.java.KoinJavaComponent
 import java.io.File
 
 /**
@@ -211,10 +214,47 @@ class TerrariaInstallPlugin : BaseInstallPlugin() {
                         callback.onProgress("复制 tModLoader 文件...", 88)
                     }
                     copyDirectory(sourceDir, outputDir)
+                    
+                    // 替换 FNA.dll
+                    withContext(Dispatchers.Main) {
+                        callback.onProgress("替换 FNA.dll...", 89)
+                    }
+                    installFNA(outputDir)
                 }
             }
         } finally {
             tempDir.deleteRecursively()
+        }
+    }
+    
+    /**
+     * 从 assets 安装自定义 FNA.dll 到游戏目录
+     * tModLoader 的 FNA.dll 位于 Libraries/FNA/1.0.0/FNA.dll
+     * @param gameDir 游戏目录
+     * @return 是否成功
+     */
+    private fun installFNA(gameDir: File): Boolean {
+        return try {
+            val context: Context = KoinJavaComponent.get(Context::class.java)
+            
+            // tModLoader 的 FNA.dll 位于 Libraries/FNA/1.0.0/ 目录
+            val fnaDir = File(gameDir, "Libraries/FNA/1.0.0")
+            if (!fnaDir.exists()) {
+                fnaDir.mkdirs()
+            }
+            val targetFile = File(fnaDir, "FNA.dll")
+            
+            context.assets.open("patches/FNA.dll").use { input ->
+                targetFile.outputStream().use { output ->
+                    input.copyTo(output)
+                }
+            }
+            
+            Log.i(TAG, "FNA.dll 已替换: ${targetFile.absolutePath}")
+            true
+        } catch (e: Exception) {
+            Log.e(TAG, "FNA.dll 替换失败: ${e.message}")
+            false
         }
     }
     
@@ -228,5 +268,9 @@ class TerrariaInstallPlugin : BaseInstallPlugin() {
         }
         
         return if (subdirs.size == 1) subdirs[0] else extractedDir
+    }
+    
+    companion object {
+        private const val TAG = "TerrariaInstallPlugin"
     }
 }

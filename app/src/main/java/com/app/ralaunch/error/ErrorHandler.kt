@@ -34,6 +34,13 @@ class ErrorHandler private constructor() {
 
     private fun setupUncaughtExceptionHandler() {
         Thread.setDefaultUncaughtExceptionHandler { _, throwable ->
+            // 始终打印崩溃日志到 logcat，确保可以调试
+            Log.e(TAG, "==================== FATAL CRASH ====================")
+            Log.e(TAG, "Exception: ${throwable.javaClass.name}")
+            Log.e(TAG, "Message: ${throwable.message}")
+            Log.e(TAG, "Stack trace:", throwable)
+            Log.e(TAG, "=====================================================")
+            
             val activity = getActivity()
             val context: Context? = activity ?: getApplicationContext()
 
@@ -49,6 +56,9 @@ class ErrorHandler private constructor() {
             try {
                 val stackTrace = getStackTrace(throwable)
                 val errorDetails = buildErrorDetails(context, throwable, stackTrace)
+                
+                // 同时打印详细信息到 logcat
+                Log.e(TAG, "Error Details:\n$errorDetails")
 
                 val errorActivityClass = getErrorActivityClass(context) ?: return@setDefaultUncaughtExceptionHandler
 

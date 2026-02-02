@@ -1,0 +1,11 @@
+{
+  "id": "com.app.ralaunch.tmodloader.sdl3patch",
+  "name": "tModLoader SDL3 Patch",
+  "description": "Redirects SDL2 native library calls to SDL3 for Android compatibility (实验性，默认禁用)",
+  "version": "1.0.0",
+  "author": "RALauncher",
+  "target_games": ["tmodloader"],
+  "priority": 100,
+  "entry_assembly": "SDL3Patch.dll",
+  "enabled": false
+}

@@ -1,0 +1,236 @@
+diff --git a/../../SDL_original_2301/src/video/SDL_egl.c b/../../SDL/src/video/SDL_egl.c
+index a89c0e812..0483004b1 100644
+--- a/../../SDL_original_2301/src/video/SDL_egl.c
++++ b/../../SDL/src/video/SDL_egl.c
+@@ -249,6 +249,36 @@ void *SDL_EGL_GetProcAddress(_THIS, const char *proc)
+         const Uint32 eglver = (((Uint32)_this->egl_data->egl_version_major) << 16) | ((Uint32)_this->egl_data->egl_version_minor);
+         const SDL_bool is_egl_15_or_later = eglver >= ((((Uint32)1) << 16) | 5);
+ 
++        /* For OSMesa, try OSMesaGetProcAddress first (if available and context is ready)
++         * This ensures we get zink's glGetString instead of system EGL's
++         * IMPORTANT: Only use OSMesaGetProcAddress after OSMesa context is created and made current
++         * Otherwise, the returned function pointers may not work correctly
++         */
++#ifdef __ANDROID__
++        const char *fna3d_gl_lib = SDL_getenv("FNA3D_OPENGL_LIBRARY");
++        SDL_bool is_osmesa = (fna3d_gl_lib && SDL_strcasestr(fna3d_gl_lib, "osmesa"));
++        if (is_osmesa && _this->egl_data->opengl_dll_handle) {
++            /* Check if OSMesa context is already initialized
++             * We can check this by trying to get OSMesaGetCurrentContext
++             * If it returns non-NULL, the context is ready
++             */
++            void* (*OSMesaGetCurrentContext)(void) = (void* (*)(void))
++                SDL_LoadFunction(_this->egl_data->opengl_dll_handle, "OSMesaGetCurrentContext");
++            if (OSMesaGetCurrentContext && OSMesaGetCurrentContext() != NULL) {
++                /* OSMesa context is ready, use OSMesaGetProcAddress */
++                void* (*OSMesaGetProcAddress)(const char*) = (void* (*)(const char*))
++                    SDL_LoadFunction(_this->egl_data->opengl_dll_handle, "OSMesaGetProcAddress");
++                if (OSMesaGetProcAddress) {
++                    retval = OSMesaGetProcAddress(proc);
++                    if (retval) {
++                        SDL_Log("SDL_EGL: Using OSMesaGetProcAddress for %s (context ready)", proc);
++                    }
++                }
++            }
++            /* If OSMesa context is not ready yet, fall through to EGL methods */
++        }
++#endif
++
+         /* EGL 1.5 can use eglGetProcAddress() for any symbol. 1.4 and earlier can't use it for core entry points. */
+         if (!retval && is_egl_15_or_later && _this->egl_data->eglGetProcAddress) {
+             retval = _this->egl_data->eglGetProcAddress(proc);
+@@ -776,29 +806,34 @@ static int SDL_EGL_PrivateChooseConfig(_THIS, SDL_bool set_config_caveat_none)
+         attribs[i++] = EGL_PBUFFER_BIT;
+     }
+ 
+-    attribs[i++] = EGL_RENDERABLE_TYPE;
+-    if (_this->gl_config.profile_mask == SDL_GL_CONTEXT_PROFILE_ES) {
+-#ifdef EGL_KHR_create_context
+-        if (_this->gl_config.major_version >= 3 &&
+-            SDL_EGL_HasExtension(_this, SDL_EGL_DISPLAY_EXTENSION, "EGL_KHR_create_context")) {
+-            attribs[i++] = EGL_OPENGL_ES3_BIT_KHR;
+-        } else
+-#endif
+-            if (_this->gl_config.major_version >= 2) {
+-            attribs[i++] = EGL_OPENGL_ES2_BIT;
+-        } else {
+-            attribs[i++] = EGL_OPENGL_ES_BIT;
+-        }
+-        _this->egl_data->eglBindAPI(EGL_OPENGL_ES_API);
+-    } else {
+-        attribs[i++] = EGL_OPENGL_BIT;
+-        _this->egl_data->eglBindAPI(EGL_OPENGL_API);
+-    }
+-
+-    if (_this->egl_data->egl_surfacetype) {
+-        attribs[i++] = EGL_SURFACE_TYPE;
+-        attribs[i++] = _this->egl_data->egl_surfacetype;
+-    }
++//    /* Skip EGL_RENDERABLE_TYPE for OSMesa/Zink compatibility (similar to gl4es fix)
++//    * Set SDL_EGL_SKIP_RENDERABLE_TYPE=1 to skip this attribute */
++//    const char* skip_renderable_type = SDL_getenv("SDL_EGL_SKIP_RENDERABLE_TYPE");
++//    if (!skip_renderable_type || SDL_strcmp(skip_renderable_type, "1") != 0) {
++//        attribs[i++] = EGL_RENDERABLE_TYPE;
++//        if (_this->gl_config.profile_mask == SDL_GL_CONTEXT_PROFILE_ES) {
++//#ifdef EGL_KHR_create_context
++//            if (_this->gl_config.major_version >= 3 &&
++//                SDL_EGL_HasExtension(_this, SDL_EGL_DISPLAY_EXTENSION, "EGL_KHR_create_context")) {
++//                attribs[i++] = EGL_OPENGL_ES3_BIT_KHR;
++//            } else
++//#endif
++//            if (_this->gl_config.major_version >= 2) {
++//                attribs[i++] = EGL_OPENGL_ES2_BIT;
++//            } else {
++//                attribs[i++] = EGL_OPENGL_ES_BIT;
++//            }
++//            _this->egl_data->eglBindAPI(EGL_OPENGL_ES_API);
++//        } else {
++//            attribs[i++] = EGL_OPENGL_BIT;
++//            _this->egl_data->eglBindAPI(EGL_OPENGL_API);
++//        }
++//    }
++//
++//    if (_this->egl_data->egl_surfacetype) {
++//        attribs[i++] = EGL_SURFACE_TYPE;
++//        attribs[i++] = _this->egl_data->egl_surfacetype;
++//    }
+ 
+     attribs[i++] = EGL_NONE;
+ 
+@@ -973,6 +1008,63 @@ SDL_GLContext SDL_EGL_CreateContext(_THIS, EGLSurface egl_surface)
+ #endif
+ 
+     /* Set the context version and other attributes. */
++#ifdef __ANDROID__
++    /* Special handling for gl4es/zink on Android:
++     * - gl4es needs GLES context (translates desktop GL to ES)
++     * - Native zink needs GLES context (on Android without OSMesa)
++     * - OSMesa zink provides true desktop GL and needs desktop GL context
++     */
++    const char *fna3d_driver_attr = SDL_getenv("FNA3D_OPENGL_DRIVER");
++    const char *gl_driver = SDL_getenv("SDL_VIDEO_GL_DRIVER");
++    const char *fna3d_gl_lib = SDL_getenv("FNA3D_OPENGL_LIBRARY");
++
++    /* Detect OSMesa (library path contains "OSMesa" or "osmesa") */
++    SDL_bool is_osmesa = (gl_driver && SDL_strcasestr(gl_driver, "osmesa")) ||
++                         (fna3d_gl_lib && SDL_strcasestr(fna3d_gl_lib, "osmesa"));
++
++    SDL_bool is_gl4es = (fna3d_driver_attr && SDL_strcasecmp(fna3d_driver_attr, "gl4es") == 0);
++    SDL_bool is_zink = (fna3d_driver_attr &&
++                        (SDL_strcasecmp(fna3d_driver_attr, "zink") == 0 ||
++                         SDL_strcasecmp(fna3d_driver_attr, "zink25") == 0));
++
++    /* Only gl4es and native zink (without OSMesa) need GLES context */
++    if (is_gl4es || (is_zink && !is_osmesa)) {
++        /* Use GLES context attributes */
++        int gles_version = 3;
++
++        /* Check LIBGL_ES env var to override gl4es backend version */
++        if (is_gl4es) {
++            const char *libgl_es = SDL_getenv("LIBGL_ES");
++            if (libgl_es && SDL_strcmp(libgl_es, "2") == 0) {
++                gles_version = 2;
++                SDL_Log("SDL_EGL: LIBGL_ES=2 detected, using GLES 2.0 backend for gl4es");
++            }
++        }
++
++        attribs[attr++] = EGL_CONTEXT_CLIENT_VERSION;
++        attribs[attr++] = gles_version;
++
++        SDL_Log("SDL_EGL: Creating GLES %d context for %s (using ES API)",
++                gles_version, fna3d_driver_attr);
++    } else if (is_osmesa && is_zink) {
++        /* OSMesa zink: On Android, we still need to use ES API for context creation
++         * OSMesa will handle desktop OpenGL calls internally, even with an ES context
++         * This is because Android EGL only supports EGL_OPENGL_ES_API */
++#ifdef __ANDROID__
++        /* On Android, use ES context (OSMesa handles desktop GL internally) */
++        int gles_version = 3;  /* Use GLES 3.0 for OSMesa zink on Android */
++        SDL_Log("SDL_EGL: OSMesa zink detected on Android, using ES context (OSMesa handles desktop GL internally)");
++        attribs[attr++] = EGL_CONTEXT_CLIENT_VERSION;
++        attribs[attr++] = gles_version;
++        SDL_Log("SDL_EGL: Creating GLES %d context for OSMesa zink (using ES API)", gles_version);
++        /* Continue with ES context creation */
++#else
++        /* On non-Android platforms, use desktop GL context */
++        SDL_Log("SDL_EGL: OSMesa zink detected, using desktop GL context (not forcing GLES)");
++        /* Fall through to normal desktop GL context creation below */
++#endif
++    } else
++#endif
+     if ((major_version < 3 || (minor_version == 0 && profile_es)) &&
+         _this->gl_config.flags == 0 &&
+         (profile_mask == 0 || profile_es)) {
+@@ -1028,12 +1120,71 @@ SDL_GLContext SDL_EGL_CreateContext(_THIS, EGLSurface egl_surface)
+     attribs[attr++] = EGL_NONE;
+ 
+     /* Bind the API */
++#ifdef __ANDROID__
++    /* API binding strategy on Android:
++     * - Android EGL only supports EGL_OPENGL_ES_API, not EGL_OPENGL_API
++     * - Even with OSMesa zink, we must use EGL_OPENGL_ES_API to create the context
++     * - OSMesa will handle desktop OpenGL calls internally, even with an ES context
++     * - gl4es: Use EGL_OPENGL_ES_API (translates desktop GL to ES)
++     * - zink (with or without OSMesa): Use EGL_OPENGL_ES_API (OSMesa handles desktop GL internally)
++     */
++    const char *fna3d_driver = SDL_getenv("FNA3D_OPENGL_DRIVER");
++    const char *gl_driver_bind = SDL_getenv("SDL_VIDEO_GL_DRIVER");
++    const char *fna3d_gl_lib_bind = SDL_getenv("FNA3D_OPENGL_LIBRARY");
++    int force_es_api = 0;
++
++    /* Detect OSMesa */
++    SDL_bool is_osmesa_bind = (gl_driver_bind && SDL_strcasestr(gl_driver_bind, "osmesa")) ||
++                              (fna3d_gl_lib_bind && SDL_strcasestr(fna3d_gl_lib_bind, "osmesa"));
++
++    /* On Android, always use EGL_OPENGL_ES_API (even for OSMesa zink) */
++    if (fna3d_driver) {
++        if (SDL_strcasecmp(fna3d_driver, "gl4es") == 0) {
++            force_es_api = 1;
++            SDL_Log("SDL_EGL: gl4es detected, using EGL_OPENGL_ES_API");
++        } else if ((SDL_strcasecmp(fna3d_driver, "zink") == 0 ||
++                    SDL_strcasecmp(fna3d_driver, "zink25") == 0)) {
++            /* On Android, always use ES API (OSMesa handles desktop GL internally) */
++            force_es_api = 1;
++            if (is_osmesa_bind) {
++                SDL_Log("SDL_EGL: OSMesa zink detected, using EGL_OPENGL_ES_API (OSMesa handles desktop GL internally)");
++            } else {
++                SDL_Log("SDL_EGL: Native zink detected, using EGL_OPENGL_ES_API");
++            }
++        }
++    }
++
++    if (profile_es || force_es_api) {
++        _this->egl_data->apitype = EGL_OPENGL_ES_API;
++    } else {
++        _this->egl_data->apitype = EGL_OPENGL_API;
++    }
++
++    SDL_Log("SDL_EGL: Attempting to bind API: %s (profile_mask=%d, major=%d, minor=%d, force_es_api=%d)",
++            _this->egl_data->apitype == EGL_OPENGL_ES_API ? "EGL_OPENGL_ES_API" : "EGL_OPENGL_API",
++            _this->gl_config.profile_mask,
++            _this->gl_config.major_version,
++            _this->gl_config.minor_version,
++            force_es_api);
++#else
+     if (profile_es) {
+         _this->egl_data->apitype = EGL_OPENGL_ES_API;
+     } else {
+         _this->egl_data->apitype = EGL_OPENGL_API;
+     }
+-    _this->egl_data->eglBindAPI(_this->egl_data->apitype);
++#endif
++
++    if (_this->egl_data->eglBindAPI(_this->egl_data->apitype) == EGL_FALSE) {
++        EGLint error = _this->egl_data->eglGetError();
++#ifdef __ANDROID__
++        SDL_Log("SDL_EGL: eglBindAPI failed with error 0x%x", error);
++        if (!profile_es && !force_es_api) {
++            SDL_Log("SDL_EGL: Desktop OpenGL API not supported on Android");
++        }
++#endif
++        SDL_EGL_SetError("Could not bind EGL API", "eglBindAPI");
++        return NULL;
++    }
+ 
+     egl_context = _this->egl_data->eglCreateContext(_this->egl_data->egl_display,
+                                                     _this->egl_data->egl_config,

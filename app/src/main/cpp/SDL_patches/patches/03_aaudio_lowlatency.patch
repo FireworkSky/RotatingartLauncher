@@ -1,0 +1,56 @@
+diff --git a/SDL_original_2301/src/audio/aaudio/SDL_aaudio.c b/SDL/src/audio/aaudio/SDL_aaudio.c
+index 401fef6a8..d4a4f0044 100644
+--- a/SDL_original_2301/src/audio/aaudio/SDL_aaudio.c
++++ b/SDL/src/audio/aaudio/SDL_aaudio.c
+@@ -78,7 +78,7 @@ static int aaudio_OpenDevice(_THIS, const char *devname)
+     LOGI(__func__);
+ 
+     SDL_assert((captureDevice == NULL) || !iscapture);
+-    SDL_assert((audioDevice == NULL) || iscapture);
++//666    SDL_assert((audioDevice == NULL) || iscapture);
+ 
+     if (iscapture) {
+         if (!Android_JNI_RequestPermission("android.permission.RECORD_AUDIO")) {
+@@ -116,7 +116,15 @@ static int aaudio_OpenDevice(_THIS, const char *devname)
+     }
+ 
+     ctx.AAudioStreamBuilder_setErrorCallback(ctx.builder, aaudio_errorCallback, private);
+-    ctx.AAudioStreamBuilder_setPerformanceMode(ctx.builder, AAUDIO_PERFORMANCE_MODE_LOW_LATENCY);
++
++    /* Check environment variable for low latency mode */
++    {
++        const char *lowLatencyEnv = SDL_getenv("SDL_AAUDIO_LOW_LATENCY");
++        if (lowLatencyEnv && SDL_strcmp(lowLatencyEnv, "1") == 0) {
++            ctx.AAudioStreamBuilder_setPerformanceMode(ctx.builder, AAUDIO_PERFORMANCE_MODE_LOW_LATENCY);
++            LOGI("AAudio low latency mode enabled via SDL_AAUDIO_LOW_LATENCY");
++        }
++    }
+ 
+     LOGI("AAudio Try to open %u hz %u bit chan %u %s samples %u",
+          this->spec.freq, SDL_AUDIO_BITSIZE(this->spec.format),
+@@ -193,7 +201,7 @@ static void aaudio_CloseDevice(_THIS)
+         SDL_assert(captureDevice == this);
+         captureDevice = NULL;
+     } else {
+-        SDL_assert(audioDevice == this);
++      //666   SDL_assert(audioDevice == this);
+         audioDevice = NULL;
+     }
+ 
+@@ -239,7 +247,15 @@ static int RebuildAAudioStream(SDL_AudioDevice *device)
+     }
+ 
+     ctx.AAudioStreamBuilder_setErrorCallback(ctx.builder, aaudio_errorCallback, hidden);
+-    ctx.AAudioStreamBuilder_setPerformanceMode(ctx.builder, AAUDIO_PERFORMANCE_MODE_LOW_LATENCY);
++
++    /* Check environment variable for low latency mode */
++    {
++        const char *lowLatencyEnv = SDL_getenv("SDL_AAUDIO_LOW_LATENCY");
++        if (lowLatencyEnv && SDL_strcmp(lowLatencyEnv, "1") == 0) {
++            ctx.AAudioStreamBuilder_setPerformanceMode(ctx.builder, AAUDIO_PERFORMANCE_MODE_LOW_LATENCY);
++            LOGI("AAudio low latency mode enabled via SDL_AAUDIO_LOW_LATENCY");
++        }
++    }
+ 
+     LOGI("AAudio Try to reopen %u hz %u bit chan %u %s samples %u",
+          device->spec.freq, SDL_AUDIO_BITSIZE(device->spec.format),

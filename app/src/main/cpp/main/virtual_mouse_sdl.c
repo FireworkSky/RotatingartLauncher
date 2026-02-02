@@ -1,20 +1,34 @@
 
-
 #include <jni.h>
 #include <android/log.h>
 #include <stdlib.h>
+
+/* SDL2/SDL3 兼容层 */
+#ifdef USE_SDL3
+#include <SDL3/SDL.h>
+/* SDL3 类型兼容 - 只在没有定义时才定义 */
+#ifndef SDL_bool
+#define SDL_bool bool
+#endif
+#ifndef SDL_TRUE
+#define SDL_TRUE true
+#endif
+#ifndef SDL_FALSE
+#define SDL_FALSE false
+#endif
+#else
 #include "SDL.h"
+/* SDL2: 使用 RAL 自定义的虚拟鼠标范围限制函数 */
+extern DECLSPEC void SDLCALL SDL_SetVirtualMouseRangeEnabled(SDL_bool enabled);
+extern DECLSPEC void SDLCALL SDL_SetVirtualMouseScreenSize(int width, int height);
+extern DECLSPEC void SDLCALL SDL_SetVirtualMouseRange(float left, float top, float right, float bottom);
+extern DECLSPEC void SDLCALL SDL_ApplyVirtualMouseRangeLimit(int *mouseX, int *mouseY);
+#endif
 
 #define TAG "VirtualMouseSDL"
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, TAG, __VA_ARGS__)
 #define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, TAG, __VA_ARGS__)
 #define LOGW(...) __android_log_print(ANDROID_LOG_WARN, TAG, __VA_ARGS__)
-
-/* External SDL functions for virtual mouse range limit */
-extern DECLSPEC void SDLCALL SDL_SetVirtualMouseRangeEnabled(SDL_bool enabled);
-extern DECLSPEC void SDLCALL SDL_SetVirtualMouseScreenSize(int width, int height);
-extern DECLSPEC void SDLCALL SDL_SetVirtualMouseRange(float left, float top, float right, float bottom);
-extern DECLSPEC void SDLCALL SDL_ApplyVirtualMouseRangeLimit(int *mouseX, int *mouseY);
 
 // 虚拟鼠标状态（右摇杆使用，自动初始化）
 static int g_vm_initialized = 0;
@@ -102,8 +116,10 @@ Java_com_app_ralaunch_controls_bridges_SDLInputBridge_nativeInitVirtualMouseSDL(
     // 不要重置 g_vm_saved_x, g_vm_saved_y, g_vm_has_saved_position
     // 保持右摇杆的位置记忆
     
-    /* 设置SDL的虚拟鼠标屏幕尺寸 */
+#ifndef USE_SDL3
+    /* 设置SDL的虚拟鼠标屏幕尺寸（仅 SDL2 RAL 自定义功能）*/
     SDL_SetVirtualMouseScreenSize(g_vm_screen_width, g_vm_screen_height);
+#endif
     
     LOGI("Virtual mouse initialized with real screen: %dx%d, pos=(%.0f,%.0f)", 
         g_vm_screen_width, g_vm_screen_height, g_vm_x, g_vm_y);
@@ -160,9 +176,11 @@ Java_com_app_ralaunch_controls_bridges_SDLInputBridge_nativeSetVirtualMouseRange
     g_vm_range_right = right;
     g_vm_range_bottom = bottom;
     
-    /* 启用SDL的虚拟鼠标范围限制 */
+#ifndef USE_SDL3
+    /* 启用SDL的虚拟鼠标范围限制（仅 SDL2 RAL 自定义功能）*/
     SDL_SetVirtualMouseRangeEnabled(SDL_TRUE);
     SDL_SetVirtualMouseRange(left, top, right, bottom);
+#endif
     
     LOGI("Virtual mouse range (center-based, max 100%%): left=%.0f%%, top=%.0f%%, right=%.0f%%, bottom=%.0f%%",
         left * 100, top * 100, right * 100, bottom * 100);
@@ -311,15 +329,23 @@ Java_com_app_ralaunch_controls_bridges_SDLInputBridge_nativeSendMouseWheelSDL(
     // 创建 SDL 鼠标滚轮事件
     SDL_Event event;
     SDL_zero(event);
+#ifdef USE_SDL3
+    event.type = SDL_EVENT_MOUSE_WHEEL;
+    event.wheel.x = 0;               // 水平滚动（通常为0）
+    event.wheel.y = (int)scrollY;    // 垂直滚动（正数=向上，负数=向下）
+    event.wheel.direction = SDL_MOUSEWHEEL_NORMAL;  // 正常方向（非翻转）
+    SDL_Window* window = get_sdl_window();
+    event.wheel.windowID = window ? SDL_GetWindowID(window) : 0;
+#else
     event.type = SDL_MOUSEWHEEL;
     event.wheel.x = 0;               // 水平滚动（通常为0）
     event.wheel.y = (int)scrollY;    // 垂直滚动（正数=向上，负数=向下）
     event.wheel.direction = SDL_MOUSEWHEEL_NORMAL;  // 正常方向（非翻转）
     event.wheel.windowID = SDL_GetWindowID(get_sdl_window());
+#endif
     
     // 推送事件到 SDL 事件队列
     SDL_PushEvent(&event);
     
     LOGD("Mouse wheel: scrollY=%d", (int)scrollY);
 }
-

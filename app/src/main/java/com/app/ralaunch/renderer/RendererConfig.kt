@@ -4,6 +4,7 @@ import android.content.Context
 import android.os.Build
 import android.os.Environment
 import android.util.Log
+import com.app.ralaunch.BuildConfig
 import com.app.ralaunch.core.EnvVarsManager
 import com.app.ralaunch.data.SettingsManager
 import com.app.ralaunch.utils.GLInfoUtils
@@ -331,7 +332,7 @@ object RendererConfig {
         envMap.apply {
             put("RALCORE_RENDERER", "dxvk")
             put("FNA3D_FORCE_DRIVER", "D3D11")
-            put("DXVK_WSI_DRIVER", "SDL2")
+            put("DXVK_WSI_DRIVER", BuildConfig.SDL_LIBRARY_NAME)
             put("DXVK_LOG_LEVEL", "info")
         }
     }

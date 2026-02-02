@@ -1,11 +1,26 @@
 package com.app.ralaunch.game.controls
 
 import android.app.Activity
+import android.content.Intent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.activity.OnBackPressedDispatcher
+import androidx.activity.OnBackPressedDispatcherOwner
+import androidx.activity.result.ActivityResultRegistry
+import androidx.activity.result.ActivityResultRegistryOwner
+import androidx.activity.result.contract.ActivityResultContract
+import androidx.activity.setViewTreeOnBackPressedDispatcherOwner
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.ComposeView
+import androidx.core.app.ActivityCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.LifecycleRegistry
 import androidx.lifecycle.setViewTreeLifecycleOwner
+import androidx.savedstate.SavedStateRegistry
+import androidx.savedstate.SavedStateRegistryController
+import androidx.savedstate.SavedStateRegistryOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import com.app.ralaunch.R
 import com.app.ralaunch.controls.bridges.SDLInputBridge
@@ -19,10 +34,78 @@ import org.koin.java.KoinJavaComponent
 import org.libsdl.app.SDLSurface
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.material3.MaterialTheme
+import androidx.activity.compose.LocalActivityResultRegistryOwner
 import com.app.ralaunch.manager.DynamicColorManager
 import com.app.ralaunch.shared.ui.theme.RaLaunchTheme
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import java.util.concurrent.atomic.AtomicInteger
+
+/**
+ * 完整的 LifecycleOwner/SavedStateRegistryOwner/ActivityResultRegistryOwner/OnBackPressedDispatcherOwner 实现
+ * 用于支持非 ComponentActivity 的 Activity 使用 Compose（包括 ActivityResultLauncher）
+ */
+private class ActivityLifecycleOwner(
+    private val activity: Activity
+) : LifecycleOwner, SavedStateRegistryOwner, ActivityResultRegistryOwner, OnBackPressedDispatcherOwner {
+    
+    private val lifecycleRegistry = LifecycleRegistry(this)
+    private val savedStateRegistryController = SavedStateRegistryController.create(this)
+    private val backPressedDispatcher = OnBackPressedDispatcher { activity.onBackPressed() }
+    
+    // 简单的 ActivityResultRegistry 实现，将请求转发到 Activity
+    private val resultRegistry = object : ActivityResultRegistry() {
+        private val nextKey = AtomicInteger(0)
+        
+        override fun <I, O> onLaunch(
+            requestCode: Int,
+            contract: ActivityResultContract<I, O>,
+            input: I,
+            options: androidx.core.app.ActivityOptionsCompat?
+        ) {
+            val intent = contract.createIntent(activity, input)
+            ActivityCompat.startActivityForResult(activity, intent, requestCode, options?.toBundle())
+        }
+    }
+    
+    override val lifecycle: Lifecycle get() = lifecycleRegistry
+    override val savedStateRegistry: SavedStateRegistry get() = savedStateRegistryController.savedStateRegistry
+    override val activityResultRegistry: ActivityResultRegistry get() = resultRegistry
+    override val onBackPressedDispatcher: OnBackPressedDispatcher get() = backPressedDispatcher
+    
+    fun onCreate() {
+        savedStateRegistryController.performAttach()
+        savedStateRegistryController.performRestore(null)
+        lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_CREATE)
+    }
+    
+    fun onStart() {
+        lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_START)
+    }
+    
+    fun onResume() {
+        lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_RESUME)
+    }
+    
+    fun onPause() {
+        lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_PAUSE)
+    }
+    
+    fun onStop() {
+        lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_STOP)
+    }
+    
+    fun onDestroy() {
+        lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_DESTROY)
+    }
+    
+    /**
+     * 处理 Activity 结果回调
+     */
+    fun dispatchResult(requestCode: Int, resultCode: Int, data: Intent?): Boolean {
+        return resultRegistry.dispatchResult(requestCode, resultCode, data)
+    }
+}
 
 /**
  * 负责虚拟按键和 FPS 叠层的初始化与显示控制
@@ -38,6 +121,9 @@ class GameVirtualControlsManager {
     private var settingsManager: SettingsManager? = null
     private var composeOverlay: ComposeView? = null
     private var onExitGameCallback: (() -> Unit)? = null
+    
+    // 用于非 AppCompatActivity 的 Compose 支持
+    private var activityLifecycleOwner: ActivityLifecycleOwner? = null
     
     // 悬浮球可见性切换事件流
     private val _toggleFloatingBallEvent = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
@@ -77,6 +163,23 @@ class GameVirtualControlsManager {
             )
 
             sdlLayout?.let { layout ->
+                // 为 SDL 的根布局设置 ViewTree Owners（Compose 必需）
+                if (activity is AppCompatActivity) {
+                    layout.setViewTreeLifecycleOwner(activity)
+                    layout.setViewTreeSavedStateRegistryOwner(activity)
+                    layout.setViewTreeOnBackPressedDispatcherOwner(activity)
+                } else {
+                    // 对于非 AppCompatActivity（如 SDLActivity），创建自定义的 Owner
+                    activityLifecycleOwner = ActivityLifecycleOwner(activity).also { owner ->
+                        owner.onCreate()
+                        owner.onStart()
+                        owner.onResume()
+                        layout.setViewTreeLifecycleOwner(owner)
+                        layout.setViewTreeSavedStateRegistryOwner(owner)
+                        layout.setViewTreeOnBackPressedDispatcherOwner(owner)
+                    }
+                }
+                
                 // 添加 ControlLayout
                 layout.addView(controlLayout, params)
 
@@ -114,16 +217,20 @@ class GameVirtualControlsManager {
         // Compose 活跃触摸区域（菜单展开、属性面板显示时的边界）
         var composeActiveRect: android.graphics.RectF? = null
 
+        // 获取 ActivityResultRegistryOwner
+        val registryOwner: ActivityResultRegistryOwner = activityLifecycleOwner 
+            ?: (activity as? ActivityResultRegistryOwner) 
+            ?: throw IllegalStateException("Activity must provide ActivityResultRegistryOwner")
+        
         composeOverlay = ComposeView(activity).apply {
-            // 设置 ViewTree owners (必须，否则 Compose 不工作)
-            if (activity is AppCompatActivity) {
-                setViewTreeLifecycleOwner(activity)
-                setViewTreeSavedStateRegistryOwner(activity)
-            }
-
+            // ViewTreeLifecycleOwner 已在 sdlLayout 上设置，ComposeView 会自动继承
             setContent {
-                RaLaunchTheme {
-                    GameControlsOverlay(
+                // 为非 AppCompatActivity 提供 ActivityResultRegistryOwner
+                CompositionLocalProvider(
+                    LocalActivityResultRegistryOwner provides registryOwner
+                ) {
+                    RaLaunchTheme {
+                        GameControlsOverlay(
                         controlLayoutView = control,
                         packManager = packManager,
                         settingsManager = settings,
@@ -137,6 +244,7 @@ class GameVirtualControlsManager {
                             composeActiveRect = rect
                         }
                     )
+                    }
                 }
             }
         }

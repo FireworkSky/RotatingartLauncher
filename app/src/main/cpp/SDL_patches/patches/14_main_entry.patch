@@ -1,0 +1,27 @@
+diff --git a/../../SDL_original_2301/src/main/android/SDL_android_main.c b/../../SDL/src/main/android/SDL_android_main.c
+index 054738a9a..c4585afcd 100644
+--- a/../../SDL_original_2301/src/main/android/SDL_android_main.c
++++ b/../../SDL/src/main/android/SDL_android_main.c
+@@ -5,3 +5,22 @@
+ */
+ 
+ /* vi: set ts=4 sw=4 expandtab: */
++
++
++#define SDL_MAIN_HANDLED
++
++#include "../../SDL_internal.h"
++
++
++
++typedef void (*Main)();
++Main CurrentMain;
++
++__attribute__ ((visibility("default"))) void SetMain(Main main) {
++    CurrentMain = main;
++}
++
++__attribute__ ((visibility("default"))) int SDL_main(int argc, char* argv[]) {
++    CurrentMain();
++    return 0;
++}

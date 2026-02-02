@@ -1,0 +1,476 @@
+diff --git a/D:/RotatingartLauncher/app/src/main/cpp/SDL_original_2301/android-project/app/src/main/java/org/libsdl/app/SDLControllerManager.java b/D:/RotatingartLauncher/app/src/main/java/org/libsdl/app/SDLControllerManager.java
+index d6913f157..1a1c983aa 100644
+--- a/D:/RotatingartLauncher/app/src/main/cpp/SDL_original_2301/android-project/app/src/main/java/org/libsdl/app/SDLControllerManager.java
++++ b/D:/RotatingartLauncher/app/src/main/java/org/libsdl/app/SDLControllerManager.java
+@@ -9,12 +9,13 @@ import android.content.Context;
+ import android.os.Build;
+ import android.os.VibrationEffect;
+ import android.os.Vibrator;
+-import android.util.Log;
++import android.os.VibratorManager;
+ import android.view.InputDevice;
+ import android.view.KeyEvent;
+ import android.view.MotionEvent;
+ import android.view.View;
+ 
++import androidx.annotation.Nullable;
+ 
+ public class SDLControllerManager
+ {
+@@ -24,7 +25,7 @@ public class SDLControllerManager
+     public static native int nativeAddJoystick(int device_id, String name, String desc,
+                                                int vendor_id, int product_id,
+                                                boolean is_accelerometer, int button_mask,
+-                                               int naxes, int axis_mask, int nhats, int nballs);
++                                               int naxes, int axis_mask, int nhats, int nballs, boolean can_rumble);
+     public static native int nativeRemoveJoystick(int device_id);
+     public static native int nativeAddHaptic(int device_id, String name);
+     public static native int nativeRemoveHaptic(int device_id);
+@@ -38,19 +39,24 @@ public class SDLControllerManager
+     protected static SDLJoystickHandler mJoystickHandler;
+     protected static SDLHapticHandler mHapticHandler;
+ 
++    protected static VirtualXboxController virtualXboxController = null;
++
+     private static final String TAG = "SDLControllerManager";
+ 
+     public static void initialize() {
+         if (mJoystickHandler == null) {
+             if (Build.VERSION.SDK_INT >= 19 /* Android 4.4 (KITKAT) */) {
+-                mJoystickHandler = new SDLJoystickHandler_API19();
++                mJoystickHandler = new SDLJoyStickHandler_API19_VirtualJoystick();
++                virtualXboxController = ((SDLJoyStickHandler_API19_VirtualJoystick)mJoystickHandler).getController();
+             } else {
+                 mJoystickHandler = new SDLJoystickHandler_API16();
+             }
+         }
+ 
+         if (mHapticHandler == null) {
+-            if (Build.VERSION.SDK_INT >= 26 /* Android 8.0 (O) */) {
++            if (Build.VERSION.SDK_INT >= 31 /* Android 12.0 (S) */) {
++                mHapticHandler = new SDLHapticHandler_API31();
++            } else if (Build.VERSION.SDK_INT >= 26 /* Android 8.0 (O) */) {
+                 mHapticHandler = new SDLHapticHandler_API26();
+             } else {
+                 mHapticHandler = new SDLHapticHandler();
+@@ -58,6 +64,11 @@ public class SDLControllerManager
+         }
+     }
+ 
++    @Nullable
++    public static VirtualXboxController getVirtualController() {
++        return virtualXboxController;
++    }
++
+     // Joystick glue code, just a series of stubs that redirect to the SDLJoystickHandler instance
+     public static boolean handleJoystickMotionEvent(MotionEvent event) {
+         return mJoystickHandler.handleMotionEvent(event);
+@@ -84,6 +95,13 @@ public class SDLControllerManager
+         mHapticHandler.run(device_id, intensity, length);
+     }
+ 
++    /**
++     * This method is called by SDL using JNI.
++     */
++    static void hapticRumble(int device_id, float low_frequency_intensity, float high_frequency_intensity, int length) {
++        mHapticHandler.rumble(device_id, low_frequency_intensity, high_frequency_intensity, length);
++    }
++
+     /**
+      * This method is called by SDL using JNI.
+      */
+@@ -105,13 +123,13 @@ public class SDLControllerManager
+         /* This is called for every button press, so let's not spam the logs */
+         /*
+         if ((sources & InputDevice.SOURCE_CLASS_JOYSTICK) != 0) {
+-            Log.v(TAG, "Input device " + device.getName() + " has class joystick.");
++
+         }
+         if ((sources & InputDevice.SOURCE_DPAD) == InputDevice.SOURCE_DPAD) {
+-            Log.v(TAG, "Input device " + device.getName() + " is a dpad.");
++
+         }
+         if ((sources & InputDevice.SOURCE_GAMEPAD) == InputDevice.SOURCE_GAMEPAD) {
+-            Log.v(TAG, "Input device " + device.getName() + " is a gamepad.");
++
+         }
+         */
+ 
+@@ -176,10 +194,8 @@ class SDLJoystickHandler_API16 extends SDLJoystickHandler {
+             // This sorts the axes in the above order, which tends to be correct
+             // for Xbox-ish game pads that have the right stick on RX/RY and the
+             // triggers on Z/RZ.
+-            //
+             // Gamepads that don't have AXIS_Z/AXIS_RZ but use
+             // AXIS_LTRIGGER/AXIS_RTRIGGER are unaffected by this.
+-            //
+             // References:
+             // - https://developer.android.com/develop/ui/views/touch-and-input/game-controllers/controller-input
+             // - https://www.kernel.org/doc/html/latest/input/gamepad.html
+@@ -198,7 +214,7 @@ class SDLJoystickHandler_API16 extends SDLJoystickHandler {
+         }
+     }
+ 
+-    private final ArrayList<SDLJoystick> mJoysticks;
++    protected final ArrayList<SDLJoystick> mJoysticks;
+ 
+     public SDLJoystickHandler_API16() {
+ 
+@@ -233,10 +249,19 @@ class SDLJoystickHandler_API16 extends SDLJoystickHandler {
+                         }
+                     }
+ 
++                    boolean can_rumble = false;
++                    if (Build.VERSION.SDK_INT >= 31 /* Android 12.0 (S) */) {
++                        VibratorManager vibratorManager = joystickDevice.getVibratorManager();
++                        int[] vibrators = vibratorManager.getVibratorIds();
++                        if (vibrators.length > 0) {
++                            can_rumble = true;
++                        }
++                    }
++
+                     mJoysticks.add(joystick);
+                     SDLControllerManager.nativeAddJoystick(joystick.device_id, joystick.name, joystick.desc,
+                             getVendorId(joystickDevice), getProductId(joystickDevice), false,
+-                            getButtonMask(joystickDevice), joystick.axes.size(), getAxisMask(joystick.axes), joystick.hats.size()/2, 0);
++                            getButtonMask(joystickDevice), joystick.axes.size(), getAxisMask(joystick.axes), joystick.hats.size()/2, 0, can_rumble);
+                 }
+             }
+         }
+@@ -470,12 +495,306 @@ class SDLJoystickHandler_API19 extends SDLJoystickHandler_API16 {
+     }
+ }
+ 
++class SDLJoyStickHandler_API19_VirtualJoystick extends SDLJoystickHandler_API19 {
++    // SDL integration for virtual Xbox controller
++
++    private final VirtualXboxController controller;
++    private final SDLJoystick virtualJoystick;
++    private boolean virtualJoystickAdded = false;
++
++    public SDLJoyStickHandler_API19_VirtualJoystick() {
++        super();
++
++        // Create the virtual controller
++        controller = new VirtualXboxController();
++
++        // Set up SDL joystick representation
++        virtualJoystick = new SDLJoystick();
++        virtualJoystick.device_id = VirtualXboxController.VIRTUAL_DEVICE_ID;
++        virtualJoystick.name = VirtualXboxController.CONTROLLER_NAME;
++        virtualJoystick.desc = VirtualXboxController.CONTROLLER_DESC;
++        virtualJoystick.axes = new ArrayList<>();
++        virtualJoystick.hats = new ArrayList<>();
++
++        // Set up event listener to forward controller events to SDL
++        controller.setEventListener(new VirtualXboxController.ControllerEventListener() {
++            @Override
++            public void onAxisChanged(int axis, float value) {
++                SDLControllerManager.onNativeJoy(VirtualXboxController.VIRTUAL_DEVICE_ID, axis, value);
++            }
++
++            @Override
++            public void onButtonChanged(int button, boolean pressed) {
++                int keycode = VirtualXboxController.mapButtonToKeycode(button);
++                if (keycode != -1) {
++                    if (pressed) {
++                        SDLControllerManager.onNativePadDown(VirtualXboxController.VIRTUAL_DEVICE_ID, keycode);
++                    } else {
++                        SDLControllerManager.onNativePadUp(VirtualXboxController.VIRTUAL_DEVICE_ID, keycode);
++                    }
++                }
++            }
++        });
++    }
++
++    /**
++     * Get the virtual Xbox controller instance
++     */
++    public VirtualXboxController getController() {
++        return controller;
++    }
++
++    @Override
++    protected SDLJoystick getJoystick(int device_id) {
++        if (device_id == VirtualXboxController.VIRTUAL_DEVICE_ID) {
++            return virtualJoystick;
++        }
++        return super.getJoystick(device_id);
++    }
++
++    @Override
++    public void pollInputDevices() {
++        // Check if virtual controller should be registered as first controller
++        boolean asFirst = false; // default to false
++        try {
++            com.app.ralaunch.data.SettingsManager settingsManager = 
++                com.app.ralaunch.data.SettingsManager.getInstance();
++            asFirst = settingsManager.isVirtualControllerAsFirst();
++        } catch (Exception e) {
++            // If SettingsManager is not available, use default
++        }
++        
++        // Register virtual Xbox controller first if setting is enabled
++        // Well we do this because some game only recognize first controller connected
++        if (asFirst) {
++            registerVirtualControllerOnce();
++        }
++        
++        // Process physical joysticks
++        int[] deviceIds = InputDevice.getDeviceIds();
++        for (int device_id : deviceIds) {
++            if (SDLControllerManager.isDeviceSDLJoystick(device_id)) {
++                SDLJoystick joystick = getJoystick(device_id);
++                if (joystick == null) {
++                    InputDevice joystickDevice = InputDevice.getDevice(device_id);
++                    if (joystickDevice == null) {
++                        continue;
++                    }
++
++                    joystick = new SDLJoystick();
++                    joystick.device_id = device_id;
++                    joystick.name = joystickDevice.getName();
++                    joystick.desc = getJoystickDescriptor(joystickDevice);
++                    joystick.axes = new ArrayList<>();
++                    joystick.hats = new ArrayList<>();
++
++                    List<InputDevice.MotionRange> ranges = joystickDevice.getMotionRanges();
++                    Collections.sort(ranges, new RangeComparator());
++                    for (InputDevice.MotionRange range : ranges) {
++                        if ((range.getSource() & InputDevice.SOURCE_CLASS_JOYSTICK) != 0) {
++                            if (range.getAxis() == MotionEvent.AXIS_HAT_X || range.getAxis() == MotionEvent.AXIS_HAT_Y) {
++                                joystick.hats.add(range);
++                            } else {
++                                joystick.axes.add(range);
++                            }
++                        }
++                    }
++
++                    boolean can_rumble = false;
++                    if (Build.VERSION.SDK_INT >= 31 /* Android 12.0 (S) */) {
++                        VibratorManager vibratorManager = joystickDevice.getVibratorManager();
++                        int[] vibrators = vibratorManager.getVibratorIds();
++                        if (vibrators.length > 0) {
++                            can_rumble = true;
++                        }
++                    }
++
++                    mJoysticks.add(joystick);
++                    SDLControllerManager.nativeAddJoystick(
++                        joystick.device_id,
++                        joystick.name,
++                        joystick.desc,
++                        getVendorId(joystickDevice),
++                        getProductId(joystickDevice),
++                        false,
++                        getButtonMask(joystickDevice),
++                        joystick.axes.size(),
++                        getAxisMask(joystick.axes),
++                        joystick.hats.size() / 2,
++                        0,
++                        can_rumble
++                    );
++                }
++            }
++        }
++
++        /* Check removed devices (never remove virtual joystick) */
++        ArrayList<Integer> removedDevices = null;
++        for (SDLJoystick joystick : mJoysticks) {
++            int device_id = joystick.device_id;
++
++            // Never remove virtual joystick
++            if (device_id == VirtualXboxController.VIRTUAL_DEVICE_ID) {
++                continue;
++            }
++
++            int i;
++            for (i = 0; i < deviceIds.length; i++) {
++                if (device_id == deviceIds[i]) break;
++            }
++            if (i == deviceIds.length) {
++                if (removedDevices == null) {
++                    removedDevices = new ArrayList<>();
++                }
++                removedDevices.add(device_id);
++            }
++        }
++
++        if (removedDevices != null) {
++            for (int device_id : removedDevices) {
++                SDLControllerManager.nativeRemoveJoystick(device_id);
++                for (int i = 0; i < mJoysticks.size(); i++) {
++                    if (mJoysticks.get(i).device_id == device_id) {
++                        mJoysticks.remove(i);
++                        break;
++                    }
++                }
++            }
++        }
++
++        // Register virtual Xbox controller after physical controllers if setting is disabled
++        if (!asFirst) {
++            registerVirtualControllerOnce();
++        }
++    }
++
++    private void registerVirtualControllerOnce() {
++        if (!virtualJoystickAdded) {
++            virtualJoystickAdded = true;
++            mJoysticks.add(virtualJoystick);
++
++            /* Check VIBRATOR_SERVICE */
++            Vibrator vib = (Vibrator) SDL.getContext().getSystemService(Context.VIBRATOR_SERVICE);
++            boolean can_rumble = false;
++            if (vib != null) {
++                can_rumble = vib.hasVibrator();
++            }
++
++            SDLControllerManager.nativeAddJoystick(
++                    virtualJoystick.device_id,
++                    virtualJoystick.name,
++                    virtualJoystick.desc,
++                    VirtualXboxController.XBOX_VENDOR_ID,
++                    VirtualXboxController.XBOX_PRODUCT_ID,
++                    false,  // is_accelerometer
++                    controller.getButtonMask(),
++                    VirtualXboxController.NUM_AXES,
++                    controller.getAxisMask(),
++                    0,  // nhats (we use buttons for dpad)
++                    0,   // nballs
++                    can_rumble
++            );
++        }
++    }
++}
++
++class SDLHapticHandler_API31 extends SDLHapticHandler {
++    @Override
++    public void run(int device_id, float intensity, int length) {
++        SDLHaptic haptic = getHaptic(device_id);
++        if (haptic != null) {
++            vibrate(haptic.vib, intensity, length);
++        }
++    }
++
++    @Override
++    public void rumble(int device_id, float low_frequency_intensity, float high_frequency_intensity, int length) {
++        // Check VIBRATOR_SERVICE
++        if (device_id == deviceId_VIBRATOR_SERVICE) {
++            var settings = com.app.ralaunch.data.SettingsManager.getInstance();
++
++            if (!settings.isVirtualControllerVibrationEnabled())
++                return;
++
++            low_frequency_intensity *= settings.getVirtualControllerVibrationIntensity();
++            high_frequency_intensity *= settings.getVirtualControllerVibrationIntensity();
++
++            if (Build.VERSION.SDK_INT < 31 /* Android 12.0 (S) */) {
++                Vibrator vibrator = (Vibrator) SDL.getContext().getSystemService(Context.VIBRATOR_SERVICE);
++                float intensity = (low_frequency_intensity * 0.6f) + (high_frequency_intensity * 0.4f);
++                vibrate(vibrator, intensity, length);
++            } else {
++                VibratorManager manager = (VibratorManager) SDL.getContext().getSystemService(Context.VIBRATOR_MANAGER_SERVICE);
++                int[] vibrators = manager.getVibratorIds();
++                if (vibrators.length >= 2) {
++                    vibrate(manager.getVibrator(vibrators[0]), low_frequency_intensity, length);
++                    vibrate(manager.getVibrator(vibrators[1]), high_frequency_intensity, length);
++                } else if (vibrators.length == 1) {
++                    float intensity = (low_frequency_intensity * 0.6f) + (high_frequency_intensity * 0.4f);
++                    vibrate(manager.getVibrator(vibrators[0]), intensity, length);
++                }
++            }
++            return;
++        }
++
++        InputDevice device = InputDevice.getDevice(device_id);
++        if (device == null) {
++            return;
++        }
++
++        if (Build.VERSION.SDK_INT < 31 /* Android 12.0 (S) */) {
++            /* Silence 'lint' warning */
++            return;
++        }
++
++        VibratorManager manager = device.getVibratorManager();
++        int[] vibrators = manager.getVibratorIds();
++        if (vibrators.length >= 2) {
++            vibrate(manager.getVibrator(vibrators[0]), low_frequency_intensity, length);
++            vibrate(manager.getVibrator(vibrators[1]), high_frequency_intensity, length);
++        } else if (vibrators.length == 1) {
++            float intensity = (low_frequency_intensity * 0.6f) + (high_frequency_intensity * 0.4f);
++            vibrate(manager.getVibrator(vibrators[0]), intensity, length);
++        }
++    }
++
++    private void vibrate(Vibrator vibrator, float intensity, int length) {
++
++        if (Build.VERSION.SDK_INT < 31 /* Android 12.0 (S) */) {
++            /* Silence 'lint' warning */
++            return;
++        }
++
++        if (intensity == 0.0f) {
++            vibrator.cancel();
++            return;
++        }
++
++        int value = Math.round(intensity * 255);
++        if (value > 255) {
++            value = 255;
++        }
++        if (value < 1) {
++            vibrator.cancel();
++            return;
++        }
++        try {
++            vibrator.vibrate(VibrationEffect.createOneShot(length, value));
++        }
++        catch (Exception e) {
++            // Fall back to the generic method, which uses DEFAULT_AMPLITUDE, but works even if
++            // something went horribly wrong with the Android 8.0 APIs.
++            vibrator.vibrate(length);
++        }
++    }
++}
++
+ class SDLHapticHandler_API26 extends SDLHapticHandler {
+     @Override
+     public void run(int device_id, float intensity, int length) {
+         SDLHaptic haptic = getHaptic(device_id);
+         if (haptic != null) {
+-            Log.d("SDL", "Rtest: Vibe with intensity " + intensity + " for " + length);
++
+             if (intensity == 0.0f) {
+                 stop(device_id);
+                 return;
+@@ -504,6 +823,8 @@ class SDLHapticHandler_API26 extends SDLHapticHandler {
+ 
+ class SDLHapticHandler {
+ 
++    public final int deviceId_VIBRATOR_SERVICE = 999999;
++
+     static class SDLHaptic {
+         public int device_id;
+         public String name;
+@@ -523,6 +844,10 @@ class SDLHapticHandler {
+         }
+     }
+ 
++    void rumble(int device_id, float low_frequency_intensity, float high_frequency_intensity, int length) {
++        // Not supported in older APIs
++    }
++
+     public void stop(int device_id) {
+         SDLHaptic haptic = getHaptic(device_id);
+         if (haptic != null) {
+@@ -531,8 +856,6 @@ class SDLHapticHandler {
+     }
+ 
+     public void pollHapticDevices() {
+-
+-        final int deviceId_VIBRATOR_SERVICE = 999999;
+         boolean hasVibratorService = false;
+ 
+         int[] deviceIds = InputDevice.getDeviceIds();

@@ -24,20 +24,37 @@ set(MAIN_SOURCES
 
 add_library(${CMAKE_PROJECT_NAME} SHARED ${MAIN_SOURCES})
 
-# 链接库 - FNA3D .NET 游戏所需
-target_link_libraries(${CMAKE_PROJECT_NAME}
-        android
-        log
-        SDL2
-        dl
-        FAudio-shared
-        FNA3D
-        mojoshader
-        netcorehost
-        linkernsbypass
-        c++_shared
-        ${CXX_SHARED_LIB}
-)
+# 根据 SDL 版本链接不同的库
+if(USE_SDL3)
+    target_link_libraries(${CMAKE_PROJECT_NAME}
+            android
+            log
+            SDL3-shared
+            dl
+            FAudio-shared
+            FNA3D
+            mojoshader
+            netcorehost
+            linkernsbypass
+            c++_shared
+            ${CXX_SHARED_LIB}
+    )
+    target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE USE_SDL3)
+else()
+    target_link_libraries(${CMAKE_PROJECT_NAME}
+            android
+            log
+            SDL2
+            dl
+            FAudio-shared
+            FNA3D
+            mojoshader
+            netcorehost
+            linkernsbypass
+            c++_shared
+            ${CXX_SHARED_LIB}
+    )
+endif()
 
 # 包含头文件
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE

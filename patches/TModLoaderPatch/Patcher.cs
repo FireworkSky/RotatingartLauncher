@@ -277,7 +277,10 @@ public static class Patcher
         steamAPIPath?.SetValue(null, "libsteam_api.so");
         steamAPIHash?.SetValue(null, Convert.FromHexString("4b7a8cabaa354fcd25743aabfb4b1366"));
         vanillaSteamAPI?.SetValue(null, "libsteam_api.so");
-        gogHash?.SetValue(null, Convert.FromHexString("9db40ef7cd4b37794cfe29e8866bb6b4"));
+        // 支持多个 Terraria 版本的哈希值:
+        // 1.4.4.9 GOG Linux: 9db40ef7cd4b37794cfe29e8866bb6b4
+        // 1.4.5.x GOG Linux: c60b2ab7b63114be09765227e12875b0
+        gogHash?.SetValue(null, Convert.FromHexString("c60b2ab7b63114be09765227e12875b0")); // Terraria 1.4.5
         steamHash?.SetValue(null, Convert.FromHexString("2ff21c600897a9485ca5ae645a06202d"));
         
         IsSteamUnsupported?.SetValue(null, false);

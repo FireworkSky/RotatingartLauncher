@@ -22,9 +22,17 @@ android {
         // 只编译 arm64-v8a 架构
         // 使用 splits 配置
 
+        // SDL 版本选择: 通过 gradle.properties 设置 useSDL3=true
+        def useSDL3Build = project.hasProperty('useSDL3') ? project.useSDL3.toBoolean() : false
+        buildConfigField "boolean", "USE_SDL3", "${useSDL3Build}"
+        buildConfigField "String", "SDL_LIBRARY_NAME", useSDL3Build ? "\"SDL3\"" : "\"SDL2\""
+
         externalNativeBuild {
             cmake {
-
+                // SDL 版本选择: 
+                // - USE_SDL3=OFF (默认): 使用 SDL2 (稳定)
+                // - USE_SDL3=ON: 使用 SDL3 + SDL_GPU (实验性)
+                arguments "-DUSE_SDL3=${useSDL3Build ? 'ON' : 'OFF'}"
             }
         }
     }
@@ -65,6 +73,7 @@ android {
         viewBinding true
         prefab true
         compose true
+        buildConfig true
     }
 
     // 禁止 AAPT 压缩这些文件类型，确保 AssetManager 能正确读取
@@ -107,10 +116,21 @@ android {
     }
 
     // 使用预编译的 System.Security.Cryptography jar，实现官方托管绑定
+    // 根据 useSDL3 选择 SDL Java 源文件
+    // SDL2 文件位于: src/main/java_sdl2/org/libsdl/app/
+    // SDL3 文件位于: src/main/cpp/SDL3/android-project/app/src/main/java/org/libsdl/app/
+    def useSDL3forSrc = project.hasProperty('useSDL3') ? project.useSDL3.toBoolean() : false
     sourceSets {
         main {
             java {
                 exclude 'net/dot/android/crypto/**'
+                if (useSDL3forSrc) {
+                    // SDL3 模式: 使用 SDL3 的 Java 源文件
+                    srcDir 'src/main/cpp/SDL3/android-project/app/src/main/java'
+                } else {
+                    // SDL2 模式: 使用 SDL2 的 Java 源文件
+                    srcDir 'src/main/java_sdl2'
+                }
             }
         }
     }
