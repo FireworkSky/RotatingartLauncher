@@ -9,7 +9,8 @@
 	url = https://github.com/FNA-XNA/Theorafile.git
 [submodule "app/src/main/cpp/SDL3"]
 	path = app/src/main/cpp/SDL3
-	url = https://github.com/libsdl-org/SDL.git
+	url = https://github.com/RotatingArtDev/SDL.git
+	branch = ral-android-sdl3
 [submodule "app/src/main/cpp/box64"]
 	path = app/src/main/cpp/box64
 	url = https://github.com/RotatingArtDev/box64.git
