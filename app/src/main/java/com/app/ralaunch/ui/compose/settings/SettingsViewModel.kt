@@ -85,6 +85,7 @@ class SettingsViewModel(
             // 画质
             is SettingsEvent.SetQualityLevel -> setQualityLevel(event.level)
             is SettingsEvent.SetShaderLowPrecision -> setShaderLowPrecision(event.enabled)
+            is SettingsEvent.SetTargetFps -> setTargetFps(event.fps)
             
             is SettingsEvent.ViewLogs -> sendEffect(SettingsEffect.ViewLogsPage)
             is SettingsEvent.ClearCache -> sendEffect(SettingsEffect.ClearCacheComplete)
@@ -154,6 +155,7 @@ class SettingsViewModel(
                     // 画质
                     qualityLevel = settingsManager.fnaQualityLevel,
                     shaderLowPrecision = settingsManager.isFnaShaderLowPrecision,
+                    targetFps = settingsManager.fnaTargetFps,
 
                     // 关于
                     appVersion = packageInfo?.versionName ?: "Unknown",
@@ -335,6 +337,16 @@ class SettingsViewModel(
         settingsManager.isFnaShaderLowPrecision = enabled
         _uiState.update { it.copy(shaderLowPrecision = enabled) }
         sendEffect(SettingsEffect.ShowToast("重启游戏后生效"))
+    }
+
+    private fun setTargetFps(fps: Int) {
+        settingsManager.fnaTargetFps = fps
+        _uiState.update { it.copy(targetFps = fps) }
+        val fpsName = when (fps) {
+            0 -> "无限制"
+            else -> "$fps FPS"
+        }
+        sendEffect(SettingsEffect.ShowToast("帧率限制已设置为${fpsName}，重启游戏后生效"))
     }
 
     // ==================== 工具方法 ====================

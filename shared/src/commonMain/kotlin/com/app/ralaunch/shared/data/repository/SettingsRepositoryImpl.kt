@@ -386,6 +386,14 @@ class SettingsRepositoryImpl(
         dataStore.edit { it[PreferencesKeys.FNA_SHADER_LOW_PRECISION] = enabled }
     }
 
+    override suspend fun getTargetFps(): Int {
+        return dataStore.data.first()[PreferencesKeys.FNA_TARGET_FPS] ?: 0
+    }
+
+    override suspend fun setTargetFps(fps: Int) {
+        dataStore.edit { it[PreferencesKeys.FNA_TARGET_FPS] = fps }
+    }
+
     // ==================== 内存优化 ====================
 
     override fun isKillLauncherUIAfterLaunch(): Flow<Boolean> = dataStore.data.map { prefs ->

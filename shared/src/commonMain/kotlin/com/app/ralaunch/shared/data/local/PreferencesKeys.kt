@@ -53,6 +53,7 @@ object PreferencesKeys {
     // ==================== 画质设置 ====================
     val FNA_QUALITY_LEVEL = intPreferencesKey("fna_quality_level") // 0=高, 1=中, 2=低
     val FNA_SHADER_LOW_PRECISION = booleanPreferencesKey("fna_shader_low_precision")
+    val FNA_TARGET_FPS = intPreferencesKey("fna_target_fps") // 0=无限制, 30, 45, 60
 
     // ==================== CoreCLR 设置 ====================
     val SERVER_GC = booleanPreferencesKey("server_gc")

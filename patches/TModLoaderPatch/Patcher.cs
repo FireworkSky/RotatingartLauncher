@@ -110,7 +110,6 @@ public static class Patcher
     private static void ApplyPatchesInternal(Assembly assembly)
     {
         InstallVerifierBugMitigation(assembly);
-        CheckGoGHarmonyPatch(assembly);
         LoggingHooksHarmonyPatch(assembly);
         TMLContentManagerPatch(assembly);
         SetResolveNativeLibraryHandler(assembly);
@@ -265,124 +264,56 @@ public static class Patcher
             return;
         }
 
-        // Get the fields which are not properly initialized
-        var steamAPIPath = installVerifierType.GetField("steamAPIPath", BindingFlags.Static |  BindingFlags.NonPublic);
-        var steamAPIHash = installVerifierType.GetField("steamAPIHash", BindingFlags.Static |  BindingFlags.NonPublic);
-        var vanillaSteamAPI = installVerifierType.GetField("vanillaSteamAPI", BindingFlags.Static | BindingFlags.NonPublic);
-        var gogHash =  installVerifierType.GetField("gogHash", BindingFlags.Static | BindingFlags.NonPublic);
-        var steamHash =  installVerifierType.GetField("steamHash", BindingFlags.Static | BindingFlags.NonPublic);
+        // Get the fields which are not properly initialized on Linux ARM64
+        var steamAPIPathField = installVerifierType.GetField("steamAPIPath", BindingFlags.Static | BindingFlags.NonPublic);
+        var steamAPIHashField = installVerifierType.GetField("steamAPIHash", BindingFlags.Static | BindingFlags.NonPublic);
+        var vanillaSteamAPIField = installVerifierType.GetField("vanillaSteamAPI", BindingFlags.Static | BindingFlags.NonPublic);
+        var gogHashField = installVerifierType.GetField("gogHash", BindingFlags.Static | BindingFlags.NonPublic);
+        var steamHashField = installVerifierType.GetField("steamHash", BindingFlags.Static | BindingFlags.NonPublic);
+        var isSteamUnsupportedField = installVerifierType.GetField("IsSteamUnsupported", BindingFlags.Static | BindingFlags.NonPublic);
 
-        var IsSteamUnsupported =
-            installVerifierType.GetProperty("IsSteamUnsupported", BindingFlags.Static | BindingFlags.NonPublic);
+        // Debug: print field info
+        Console.WriteLine($"[TModLoaderPatch] Found fields: steamAPIPath={steamAPIPathField != null}, steamAPIHash={steamAPIHashField != null}, " +
+                          $"vanillaSteamAPI={vanillaSteamAPIField != null}, gogHash={gogHashField != null}, steamHash={steamHashField != null}, " +
+                          $"IsSteamUnsupported={isSteamUnsupportedField != null}");
 
-        steamAPIPath?.SetValue(null, "libsteam_api.so");
-        steamAPIHash?.SetValue(null, Convert.FromHexString("4b7a8cabaa354fcd25743aabfb4b1366"));
-        vanillaSteamAPI?.SetValue(null, "libsteam_api.so");
-        gogHash?.SetValue(null, Convert.FromHexString("9db40ef7cd4b37794cfe29e8866bb6b4"));
-        steamHash?.SetValue(null, Convert.FromHexString("2ff21c600897a9485ca5ae645a06202d"));
+        // Debug: print current values before modification
+        var gogHashBefore = gogHashField?.GetValue(null) as byte[];
+        var steamHashBefore = steamHashField?.GetValue(null) as byte[];
+        var isSteamUnsupportedBefore = isSteamUnsupportedField?.GetValue(null);
+        Console.WriteLine($"[TModLoaderPatch] Before: gogHash={gogHashBefore?.Length ?? -1} bytes, steamHash={steamHashBefore?.Length ?? -1} bytes, IsSteamUnsupported={isSteamUnsupportedBefore}");
+
+        // Set the correct hash values for GOG Terraria 1.4.4.9
+        // These are the same hashes used for Linux x86-64 GOG version
+        byte[] gogHashValue = Convert.FromHexString("9db40ef7cd4b37794cfe29e8866bb6b4");
+        byte[] steamHashValue = Convert.FromHexString("2ff21c600897a9485ca5ae645a06202d");
+        byte[] steamAPIHashValue = Convert.FromHexString("4b7a8cabaa354fcd25743aabfb4b1366");
+
+        steamAPIPathField?.SetValue(null, "libsteam_api.so");
+        steamAPIHashField?.SetValue(null, steamAPIHashValue);
+        vanillaSteamAPIField?.SetValue(null, "libsteam_api.so");
+        gogHashField?.SetValue(null, gogHashValue);
+        steamHashField?.SetValue(null, steamHashValue);
+        isSteamUnsupportedField?.SetValue(null, false);
+
+        // Debug: verify values after modification
+        var gogHashAfter = gogHashField?.GetValue(null) as byte[];
+        var steamHashAfter = steamHashField?.GetValue(null) as byte[];
+        var isSteamUnsupportedAfter = isSteamUnsupportedField?.GetValue(null);
         
-        IsSteamUnsupported?.SetValue(null, false);
+        string gogHashHex = gogHashAfter != null ? Convert.ToHexString(gogHashAfter).ToLower() : "null";
+        string steamHashHex = steamHashAfter != null ? Convert.ToHexString(steamHashAfter).ToLower() : "null";
         
-        Console.WriteLine("[TModLoaderPatch] InstallVerifier class mitigations applied successfully!");
-    }
-    
-    // 支持多个 GOG 哈希值的列表
-    private static readonly byte[][] _gogHashes = {
-        Convert.FromHexString("9db40ef7cd4b37794cfe29e8866bb6b4"),
-        Convert.FromHexString("c60b2ab7b63114be09765227e12875b0")
-    };
-    
-    private static readonly byte[][] _steamHashes = {
-        Convert.FromHexString("2ff21c600897a9485ca5ae645a06202d")
-    };
-    
-    /// <summary>
-    /// 应用 CheckGoG 的 Harmony 补丁，支持多个哈希值
-    /// </summary>
-    public static void CheckGoGHarmonyPatch(Assembly assembly)
-    {
-        Type? installVerifierType = assembly.GetType("Terraria.ModLoader.Engine.InstallVerifier");
+        Console.WriteLine($"[TModLoaderPatch] After: gogHash={gogHashHex}, steamHash={steamHashHex}, IsSteamUnsupported={isSteamUnsupportedAfter}");
+        Console.WriteLine($"[TModLoaderPatch] Expected gogHash=9db40ef7cd4b37794cfe29e8866bb6b4");
         
-        if (installVerifierType == null)
+        if (gogHashHex == "9db40ef7cd4b37794cfe29e8866bb6b4")
         {
-            Console.WriteLine("[TModLoaderPatch] InstallVerifier class not found for CheckGoG patch.");
-            return;
+            Console.WriteLine("[TModLoaderPatch] InstallVerifier class mitigations applied successfully!");
         }
-        
-        MethodInfo? originalMethod = installVerifierType.GetMethod("CheckGoG", BindingFlags.Static | BindingFlags.NonPublic);
-        
-        if (originalMethod == null)
+        else
         {
-            Console.WriteLine("[TModLoaderPatch] CheckGoG method not found");
-            return;
-        }
-        
-        // 保存 InstallVerifier 类型的引用供 Prefix 使用
-        _installVerifierType = installVerifierType;
-        
-        Harmony harmony = _harmony!;
-        HarmonyMethod prefix = new HarmonyMethod(typeof(Patcher), nameof(CheckGoG_Prefix));
-        harmony.Patch(originalMethod, prefix: prefix);
-        
-        Console.WriteLine("[TModLoaderPatch] CheckGoG patch applied successfully! (supports multiple GOG hashes)");
-    }
-    
-    private static Type? _installVerifierType;
-    
-    /// <summary>
-    /// CheckGoG 的前缀补丁，支持多个 GOG 和 Steam 哈希值
-    /// </summary>
-    public static bool CheckGoG_Prefix()
-    {
-        try
-        {
-            // 获取 vanillaExePath 字段值
-            var vanillaExePathField = _installVerifierType?.GetField("vanillaExePath", BindingFlags.Static | BindingFlags.NonPublic);
-            string? vanillaExePath = vanillaExePathField?.GetValue(null) as string;
-            
-            if (string.IsNullOrEmpty(vanillaExePath) || !File.Exists(vanillaExePath))
-            {
-                Console.WriteLine($"[TModLoaderPatch] CheckGoG: vanillaExePath is invalid: {vanillaExePath}");
-                return true; // 继续执行原方法
-            }
-            
-            // 计算文件哈希
-            byte[] fileHash;
-            using (var md5 = System.Security.Cryptography.MD5.Create())
-            using (var stream = File.OpenRead(vanillaExePath))
-            {
-                fileHash = md5.ComputeHash(stream);
-            }
-            
-            // 检查是否匹配任何已知的 GOG 哈希
-            foreach (var gogHash in _gogHashes)
-            {
-                if (fileHash.SequenceEqual(gogHash))
-                {
-                    Console.WriteLine($"[TModLoaderPatch] CheckGoG: GOG hash matched! ({BitConverter.ToString(gogHash).Replace("-", "").ToLower()})");
-                    return false; // 跳过原方法
-                }
-            }
-            
-            // 检查是否匹配任何已知的 Steam 哈希
-            foreach (var steamHash in _steamHashes)
-            {
-                if (fileHash.SequenceEqual(steamHash))
-                {
-                    Console.WriteLine($"[TModLoaderPatch] CheckGoG: Steam hash matched! ({BitConverter.ToString(steamHash).Replace("-", "").ToLower()})");
-                    return false; // 跳过原方法
-                }
-            }
-            
-            // 没有匹配，输出实际哈希值以便调试
-            Console.WriteLine($"[TModLoaderPatch] CheckGoG: No hash matched. File hash: {BitConverter.ToString(fileHash).Replace("-", "").ToLower()}");
-            Console.WriteLine("[TModLoaderPatch] CheckGoG: Falling back to original method...");
-            return true; // 继续执行原方法
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"[TModLoaderPatch] CheckGoG_Prefix error: {ex.Message}");
-            return true; // 出错时继续执行原方法
+            Console.WriteLine("[TModLoaderPatch] WARNING: gogHash was not set correctly!");
         }
     }
     

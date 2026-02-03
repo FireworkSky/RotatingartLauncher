@@ -419,6 +419,12 @@ object RendererConfig {
             }
         }
 
+        // 帧率限制 (独立于画质预设)
+        val targetFps = settings.fnaTargetFps
+        if (targetFps > 0) {
+            envVars["FNA3D_TARGET_FPS"] = targetFps.toString()
+        }
+
         return envVars
     }
 

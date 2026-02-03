@@ -131,6 +131,9 @@ interface SettingsRepository {
     suspend fun isShaderLowPrecision(): Boolean
     suspend fun setShaderLowPrecision(enabled: Boolean)
 
+    suspend fun getTargetFps(): Int
+    suspend fun setTargetFps(fps: Int)
+
     // ==================== 内存优化 ====================
 
     fun isKillLauncherUIAfterLaunch(): Flow<Boolean>

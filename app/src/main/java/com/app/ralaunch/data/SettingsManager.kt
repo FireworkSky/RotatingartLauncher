@@ -276,6 +276,9 @@ class SettingsManager private constructor() {
         get() = getBoolean(Keys.FNA_SHADER_LOW_PRECISION, Defaults.FNA_SHADER_LOW_PRECISION)
         set(value) = putBoolean(Keys.FNA_SHADER_LOW_PRECISION, value)
 
+    var fnaTargetFps: Int
+        get() = getInt(Keys.FNA_TARGET_FPS, Defaults.FNA_TARGET_FPS)
+        set(value) = putInt(Keys.FNA_TARGET_FPS, value)
 
     // CoreCLR GC 设置
     var isServerGC: Boolean
@@ -389,6 +392,7 @@ class SettingsManager private constructor() {
         const val FNA_MAX_ANISOTROPY = "fna_max_anisotropy" // 各向异性过滤 (1, 2, 4, 8, 16)
         const val FNA_RENDER_SCALE = "fna_render_scale" // 渲染分辨率缩放 (0.5, 0.75, 1.0)
         const val FNA_SHADER_LOW_PRECISION = "fna_shader_low_precision" // 低精度 shader
+        const val FNA_TARGET_FPS = "fna_target_fps" // 目标帧率 (0=无限制, 30, 45, 60)
 
         const val CORECLR_SERVER_GC = "coreclr_server_gc"
         const val CORECLR_CONCURRENT_GC = "coreclr_concurrent_gc"
@@ -431,6 +435,7 @@ class SettingsManager private constructor() {
         const val FNA_MAX_ANISOTROPY = 4 // 中等各向异性
         const val FNA_RENDER_SCALE = 1.0f // 原生分辨率
         const val FNA_SHADER_LOW_PRECISION = false // 默认高精度 shader
+        const val FNA_TARGET_FPS = 0 // 无限制
 
         const val CONTROLS_OPACITY = 0.7f
         const val CONTROLS_VIBRATION_ENABLED = true

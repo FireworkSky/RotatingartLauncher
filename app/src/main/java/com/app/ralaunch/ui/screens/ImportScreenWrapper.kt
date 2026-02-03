@@ -1,5 +1,7 @@
 package com.app.ralaunch.ui.screens
 
+import android.os.Handler
+import android.os.Looper
 import android.widget.Toast
 import androidx.compose.animation.*
 import androidx.compose.foundation.background
@@ -27,13 +29,18 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.app.ralaunch.data.model.GameItem
+import com.app.ralaunch.data.repository.GameRepository
 import com.app.ralaunch.installer.GameInstaller
 import com.app.ralaunch.installer.InstallCallback
 import com.app.ralaunch.installer.InstallPluginRegistry
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.koin.java.KoinJavaComponent
 import java.io.File
+
+// 主线程 Handler，用于在页面切换后仍能执行回调
+private val mainHandler = Handler(Looper.getMainLooper())
 
 /**
  * 游戏导入 Screen - 现代化双栏布局
@@ -77,37 +84,52 @@ fun ImportScreenWrapper(
 
         installer = GameInstaller(context)
 
+        // 获取 GameRepository 用于直接保存游戏（避免页面切换导致回调失效）
+        val gameRepository: GameRepository? = try {
+            KoinJavaComponent.getOrNull(GameRepository::class.java)
+        } catch (_: Exception) { null }
+
         installer?.install(
             gameFilePath = gamePath ?: "",
             modLoaderFilePath = modLoaderFilePath,
             gameName = modLoaderName ?: gameName,
             callback = object : InstallCallback {
                 override fun onProgress(message: String, progress: Int) {
-                    scope.launch(Dispatchers.Main) {
+                    // 使用 mainHandler 确保即使页面切换也能更新 UI
+                    mainHandler.post {
                         importStatus = message
                         importProgress = progress
                     }
                 }
 
                 override fun onComplete(gameItem: GameItem) {
-                    scope.launch(Dispatchers.Main) {
+                    // 直接保存到仓库，确保游戏被添加（即使页面已切换）
+                    gameRepository?.addGame(gameItem)
+                    
+                    mainHandler.post {
                         isImporting = false
                         importStatus = "导入完成！"
                         importProgress = 100
-                        onImportComplete("game", gameItem)
+                        // 尝试调用回调（如果页面还在可能有效）
+                        try {
+                            onImportComplete("game", gameItem)
+                        } catch (_: Exception) {
+                            // 页面已切换，忽略回调错误
+                        }
                         Toast.makeText(context, "游戏导入成功", Toast.LENGTH_SHORT).show()
                     }
                 }
 
                 override fun onError(error: String) {
-                    scope.launch(Dispatchers.Main) {
+                    mainHandler.post {
                         isImporting = false
                         errorMessage = error
+                        Toast.makeText(context, "导入失败: $error", Toast.LENGTH_SHORT).show()
                     }
                 }
 
                 override fun onCancelled() {
-                    scope.launch(Dispatchers.Main) {
+                    mainHandler.post {
                         isImporting = false
                         errorMessage = "导入已取消"
                     }
@@ -116,14 +138,9 @@ fun ImportScreenWrapper(
         )
     }
 
-    // 清理
-    DisposableEffect(Unit) {
-        onDispose {
-            if (isImporting) {
-                installer?.cancel()
-            }
-        }
-    }
+    // 注意：不在页面切换时自动取消安装
+    // 安装任务会在后台继续运行直到完成
+    // 用户需要明确点击取消按钮才会取消安装
 
     // UI
     ModernImportScreen(

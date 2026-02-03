@@ -210,7 +210,10 @@ fun SettingsScreenWrapper(
                     qualityLevel = uiState.qualityLevel,
                     onQualityLevelChange = { viewModel.onEvent(SettingsEvent.SetQualityLevel(it)) },
                     shaderLowPrecision = uiState.shaderLowPrecision,
-                    onShaderLowPrecisionChange = { viewModel.onEvent(SettingsEvent.SetShaderLowPrecision(it)) }
+                    onShaderLowPrecisionChange = { viewModel.onEvent(SettingsEvent.SetShaderLowPrecision(it)) },
+                    // 帧率设置
+                    targetFps = uiState.targetFps,
+                    onTargetFpsChange = { viewModel.onEvent(SettingsEvent.SetTargetFps(it)) }
                 )
             }
             SettingsCategory.LAUNCHER -> {

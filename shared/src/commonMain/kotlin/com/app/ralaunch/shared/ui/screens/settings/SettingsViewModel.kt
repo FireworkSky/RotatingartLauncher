@@ -37,6 +37,7 @@ data class SettingsUiState(
     // 画质设置
     val qualityLevel: Int = 0, // 0=高, 1=中, 2=低
     val shaderLowPrecision: Boolean = false,
+    val targetFps: Int = 0, // 0=无限制, 30, 45, 60
 
     // 开发者设置
     val loggingEnabled: Boolean = false,
@@ -81,6 +82,7 @@ sealed class SettingsEvent {
     // 画质
     data class SetQualityLevel(val level: Int) : SettingsEvent()
     data class SetShaderLowPrecision(val enabled: Boolean) : SettingsEvent()
+    data class SetTargetFps(val fps: Int) : SettingsEvent()
 
     // 启动器
     data object OpenPatchManagement : SettingsEvent()
@@ -186,6 +188,7 @@ class SettingsViewModel(
             // 画质
             is SettingsEvent.SetQualityLevel -> setQualityLevel(event.level)
             is SettingsEvent.SetShaderLowPrecision -> setShaderLowPrecision(event.enabled)
+            is SettingsEvent.SetTargetFps -> setTargetFps(event.fps)
 
             // 启动器
             is SettingsEvent.OpenPatchManagement -> sendEffect(SettingsEffect.OpenPatchManagementDialog)
@@ -396,6 +399,15 @@ class SettingsViewModel(
             settingsRepository.setShaderLowPrecision(enabled)
             _uiState.update { it.copy(shaderLowPrecision = enabled) }
             sendEffect(SettingsEffect.ShowToast("重启游戏后生效"))
+        }
+    }
+
+    private fun setTargetFps(fps: Int) {
+        viewModelScope.launch {
+            settingsRepository.setTargetFps(fps)
+            _uiState.update { it.copy(targetFps = fps) }
+            val fpsName = if (fps == 0) "无限制" else "$fps FPS"
+            sendEffect(SettingsEffect.ShowToast("帧率限制已设置为${fpsName}，重启游戏后生效"))
         }
     }
 

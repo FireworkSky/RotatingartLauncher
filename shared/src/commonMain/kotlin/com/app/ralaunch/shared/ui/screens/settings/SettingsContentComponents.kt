@@ -224,6 +224,9 @@ fun GameSettingsContent(
     onQualityLevelChange: (Int) -> Unit = {},
     shaderLowPrecision: Boolean = false,
     onShaderLowPrecisionChange: (Boolean) -> Unit = {},
+    // 帧率设置
+    targetFps: Int = 0,
+    onTargetFpsChange: (Int) -> Unit = {},
     modifier: Modifier = Modifier,
     // 可本地化文本
     performanceTitle: String = "性能",
@@ -239,7 +242,10 @@ fun GameSettingsContent(
     qualityLevelTitle: String = "画质预设",
     qualityLevelSubtitle: String = "选择画质等级，低画质可提高性能",
     shaderPrecisionTitle: String = "低精度着色器",
-    shaderPrecisionSubtitle: String = "降低 Shader 精度以提升性能"
+    shaderPrecisionSubtitle: String = "降低 Shader 精度以提升性能",
+    // 帧率设置文本
+    fpsLimitTitle: String = "帧率限制",
+    fpsLimitSubtitle: String = "限制游戏最大帧率，可节省电量"
 ) {
     LazyColumn(
         modifier = modifier
@@ -286,6 +292,9 @@ fun GameSettingsContent(
         // 画质设置
         item {
             val qualityNames = listOf("高画质", "中画质", "低画质")
+            val fpsOptions = listOf(0 to "无限制", 30 to "30 FPS", 45 to "45 FPS", 60 to "60 FPS")
+            val currentFpsName = fpsOptions.find { it.first == targetFps }?.second ?: "无限制"
+            
             SettingsSection(title = qualityTitle) {
                 ClickableSettingItem(
                     title = qualityLevelTitle,
@@ -306,6 +315,21 @@ fun GameSettingsContent(
                     icon = Icons.Default.FilterAlt,
                     checked = shaderLowPrecision,
                     onCheckedChange = onShaderLowPrecisionChange
+                )
+
+                SettingsDivider()
+
+                ClickableSettingItem(
+                    title = fpsLimitTitle,
+                    subtitle = fpsLimitSubtitle,
+                    value = currentFpsName,
+                    icon = Icons.Default.Speed,
+                    onClick = {
+                        // 循环切换帧率: 无限制 -> 30 -> 45 -> 60 -> 无限制
+                        val currentIndex = fpsOptions.indexOfFirst { it.first == targetFps }
+                        val nextIndex = (currentIndex + 1) % fpsOptions.size
+                        onTargetFpsChange(fpsOptions[nextIndex].first)
+                    }
                 )
             }
         }

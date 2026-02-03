@@ -416,7 +416,7 @@ private fun LegalPage(
 }
 
 /**
- * 初始化页面 - 横屏双栏布局
+ * 初始化页面 - Material3 横屏左右分栏布局
  */
 @Composable
 private fun SetupPage(
@@ -429,213 +429,286 @@ private fun SetupPage(
     Row(
         modifier = Modifier
             .fillMaxSize()
-            .padding(32.dp)
+            .padding(24.dp),
+        horizontalArrangement = Arrangement.spacedBy(24.dp)
     ) {
-        // 左侧品牌区域
-        Column(
+        // ========== 左侧：进度展示区 ==========
+        Surface(
             modifier = Modifier
                 .weight(0.4f)
                 .fillMaxHeight(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+            shape = RoundedCornerShape(24.dp),
+            color = MaterialTheme.colorScheme.surface,
+            tonalElevation = 2.dp
         ) {
-            // Logo 带动画
-            val infiniteTransition = rememberInfiniteTransition(label = "logo_anim")
-            val scale by infiniteTransition.animateFloat(
-                initialValue = 1f,
-                targetValue = 1.05f,
-                animationSpec = infiniteRepeatable(
-                    animation = tween(2000, easing = FastOutSlowInEasing),
-                    repeatMode = RepeatMode.Reverse
-                ),
-                label = "scale"
-            )
-            
-            Box(
+            Column(
                 modifier = Modifier
-                    .size(120.dp)
-                    .scale(if (uiState.isExtracting) scale else 1f)
-                    .clip(RoundedCornerShape(24.dp))
-                    .background(MaterialTheme.colorScheme.surfaceVariant)
-                    .border(2.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(24.dp)),
-                contentAlignment = Alignment.Center
+                    .fillMaxSize()
+                    .padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
             ) {
-                Image(
-                    painter = painterResource(R.mipmap.ic_launcher_foreground),
-                    contentDescription = "Logo",
-                    modifier = Modifier.size(80.dp),
-                    contentScale = ContentScale.Fit
-                )
-            }
-            
-            Spacer(modifier = Modifier.height(24.dp))
-            
-            Text(
-                text = "RaLaunch",
-                style = MaterialTheme.typography.headlineLarge,
-                fontWeight = FontWeight.Bold,
-                color = Color.White
-            )
-            
-            Text(
-                text = if (uiState.isExtracting) stringResource(R.string.init_installing) 
-                       else stringResource(R.string.init_click_to_start),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            
-            Spacer(modifier = Modifier.height(48.dp))
-            
-            // 步骤指示器
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                StepDot(isActive = false, isPassed = true, label = "1")
+                // 大进度环 + Logo
                 Box(
-                    modifier = Modifier
-                        .width(40.dp)
-                        .height(2.dp)
-                        .background(MaterialTheme.colorScheme.primary)
-                )
-                StepDot(isActive = true, isPassed = false, label = "2")
-            }
-            
-            Spacer(modifier = Modifier.height(8.dp))
-            
-            Text(
-                text = if (uiState.isExtracting) stringResource(R.string.init_installing) else "组件安装",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.tertiary
-            )
-            
-            // 总进度
-            if (uiState.isExtracting) {
+                    modifier = Modifier.size(180.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    // 进度轨道（始终显示）
+                    CircularProgressIndicator(
+                        progress = { 1f },
+                        modifier = Modifier.size(180.dp),
+                        strokeWidth = 12.dp,
+                        color = MaterialTheme.colorScheme.surfaceVariant,
+                        trackColor = Color.Transparent
+                    )
+                    
+                    // 进度条
+                    if (uiState.isExtracting) {
+                        CircularProgressIndicator(
+                            progress = { uiState.overallProgress / 100f },
+                            modifier = Modifier.size(180.dp),
+                            strokeWidth = 12.dp,
+                            color = MaterialTheme.colorScheme.primary,
+                            trackColor = Color.Transparent
+                        )
+                    }
+                    
+                    // 中心内容
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        if (uiState.isExtracting) {
+                            // 安装中：显示百分比
+                            Text(
+                                text = "${uiState.overallProgress}",
+                                style = MaterialTheme.typography.displayMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            Text(
+                                text = "%",
+                                style = MaterialTheme.typography.titleLarge,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        } else {
+                            // 未开始：显示 Logo
+                            Box(
+                                modifier = Modifier
+                                    .size(80.dp)
+                                    .clip(RoundedCornerShape(16.dp))
+                                    .background(MaterialTheme.colorScheme.primaryContainer),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Image(
+                                    painter = painterResource(R.mipmap.ic_launcher_foreground),
+                                    contentDescription = "Logo",
+                                    modifier = Modifier.size(56.dp),
+                                    contentScale = ContentScale.Fit
+                                )
+                            }
+                        }
+                    }
+                }
+                
                 Spacer(modifier = Modifier.height(24.dp))
                 
+                // 品牌名
                 Text(
-                    text = "${uiState.overallProgress}%",
+                    text = "RaLaunch",
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.tertiary
+                    color = MaterialTheme.colorScheme.onSurface
                 )
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                // 状态文字
+                Text(
+                    text = if (uiState.isExtracting) 
+                        stringResource(R.string.init_installing) 
+                    else 
+                        stringResource(R.string.init_click_to_start),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                
+                // 当前操作状态
+                if (uiState.isExtracting && uiState.statusMessage.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+                    ) {
+                        Text(
+                            text = uiState.statusMessage,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                            maxLines = 1
+                        )
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(32.dp))
+                
+                // 步骤指示器
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    StepDot(isActive = false, isPassed = true, label = "1")
+                    Box(
+                        modifier = Modifier
+                            .width(32.dp)
+                            .height(2.dp)
+                            .background(
+                                MaterialTheme.colorScheme.primary,
+                                RoundedCornerShape(1.dp)
+                            )
+                    )
+                    StepDot(isActive = true, isPassed = false, label = "2")
+                }
             }
         }
         
-        Spacer(modifier = Modifier.width(32.dp))
-        
-        // 右侧内容区域
+        // ========== 右侧：组件与操作区 ==========
         Column(
             modifier = Modifier
                 .weight(0.6f)
-                .fillMaxHeight()
+                .fillMaxHeight(),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // 权限状态卡片
+            // 权限卡片
             if (!uiState.hasPermissions) {
                 PermissionCard(
                     hasPermissions = uiState.hasPermissions,
                     onRequestPermissions = onRequestPermissions
                 )
-                Spacer(modifier = Modifier.height(16.dp))
             }
             
-            // 组件列表标题
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Inventory,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.tertiary,
-                    modifier = Modifier.size(24.dp)
-                )
-                Spacer(modifier = Modifier.width(12.dp))
-                Text(
-                    text = "组件列表",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = Color.White
-                )
-            }
-            
-            Spacer(modifier = Modifier.height(12.dp))
-            
-            // 组件列表
-            LazyColumn(
+            // 组件区域
+            Surface(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                shape = RoundedCornerShape(20.dp),
+                color = MaterialTheme.colorScheme.surface,
+                tonalElevation = 1.dp
             ) {
-                items(uiState.components) { component ->
-                    ComponentCard(component)
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(20.dp)
+                ) {
+                    // 标题
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = MaterialTheme.colorScheme.primaryContainer
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Inventory,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                modifier = Modifier
+                                    .padding(8.dp)
+                                    .size(20.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column {
+                            Text(
+                                text = "运行环境组件",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                text = "安装游戏所需的运行时组件",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                    
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    // 组件列表
+                    LazyColumn(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        items(uiState.components) { component ->
+                            ComponentCard(component)
+                        }
+                    }
                 }
             }
             
-            // 状态信息
-            if (uiState.isExtracting && uiState.statusMessage.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(12.dp))
+            // 功能说明卡片
+            Surface(
+                shape = RoundedCornerShape(16.dp),
+                color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f)
+            ) {
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = uiState.statusMessage,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.weight(1f)
-                    )
-                    Text(
-                        text = "${uiState.overallProgress}%",
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-                LinearProgressIndicator(
-                    progress = { uiState.overallProgress / 100f },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(6.dp)
-                        .clip(RoundedCornerShape(3.dp)),
-                    color = MaterialTheme.colorScheme.primary,
-                    trackColor = MaterialTheme.colorScheme.surfaceVariant
-                )
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Info,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.secondary,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        text = "首次运行需要解压运行环境，仅需几分钟",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
             }
-            
-            Spacer(modifier = Modifier.height(20.dp))
             
             // 开始按钮
             Button(
                 onClick = onStartExtraction,
                 enabled = !uiState.isExtracting && uiState.hasPermissions,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.primary,
                     disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant
                 ),
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(16.dp)
             ) {
                 if (uiState.isExtracting) {
                     CircularProgressIndicator(
-                        modifier = Modifier.size(20.dp),
-                        strokeWidth = 2.dp,
-                        color = Color.White
+                        modifier = Modifier.size(24.dp),
+                        strokeWidth = 3.dp,
+                        color = MaterialTheme.colorScheme.onPrimary
                     )
                     Spacer(modifier = Modifier.width(12.dp))
-                    Text(stringResource(R.string.init_installing))
+                    Text(
+                        text = stringResource(R.string.init_installing),
+                        style = MaterialTheme.typography.titleMedium
+                    )
                 } else {
                     Icon(
                         imageVector = Icons.Default.PlayArrow,
                         contentDescription = null,
-                        modifier = Modifier.size(20.dp)
+                        modifier = Modifier.size(24.dp)
                     )
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
                         text = if (uiState.hasPermissions) 
-                            stringResource(R.string.init_accept_and_continue)
+                            "开始安装"
                         else 
-                            stringResource(R.string.init_grant_permissions)
+                            stringResource(R.string.init_grant_permissions),
+                        style = MaterialTheme.typography.titleMedium
                     )
                 }
             }
