@@ -91,11 +91,6 @@ interface SettingsRepository {
     suspend fun getRendererType(): String
     suspend fun setRendererType(renderer: String)
 
-    suspend fun isVulkanTurnipEnabled(): Boolean
-    suspend fun setVulkanTurnipEnabled(enabled: Boolean)
-
-    suspend fun isAdrenoGpu(): Boolean
-
     // ==================== 开发者设置 ====================
 
     fun isLogSystemEnabledFlow(): Flow<Boolean>

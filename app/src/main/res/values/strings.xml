@@ -184,9 +184,6 @@
     <string name="renderer_angle">ANGLE (Vulkan)</string>
     <string name="renderer_angle_desc">OpenGL ES over Vulkan（Google官方，需要 Android 7.0+）</string>
     
-    <!-- Vulkan 驱动设置 -->
-    <string name="vulkan_driver_turnip">Turnip Vulkan 驱动</string>
-    <string name="vulkan_driver_turnip_desc">使用 Turnip 开源 Vulkan 驱动（仅 Adreno GPU，通常性能更好）</string>
     <string name="renderer_opengl">OpenGL (gl4es+)</string>
     <string name="renderer_opengl_desc">通过 gl4es+ 翻译层</string>
     <string name="renderer_opengles3">OpenGL ES 3 (Native)</string>

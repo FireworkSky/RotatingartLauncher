@@ -108,9 +108,6 @@ data class AppSettings(
     val fnaRenderer: FnaRenderer = FnaRenderer.AUTO,
     val fnaMapBufferRangeOptimization: Boolean = true,
 
-    // Vulkan 设置
-    val vulkanDriverTurnip: Boolean = true,
-
     // CoreCLR 设置
     val serverGC: Boolean = false,
     val concurrentGC: Boolean = true,

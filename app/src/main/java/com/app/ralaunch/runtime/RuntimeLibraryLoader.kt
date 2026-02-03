@@ -17,7 +17,6 @@ import java.io.FileOutputStream
  * 这些库在编译时不链接到主程序，而是在运行时按需加载。
  * 
  * 支持的库：
- * - libvulkan_freedreno.so (10 MB) - Turnip Vulkan 驱动
  * - libmobileglues.so (8 MB) - GLES 转换层
  * - libSkiaSharp.so (7 MB) - Skia 图形库
  * - libGLESv2_angle.so (5 MB) - ANGLE OpenGL ES
@@ -44,7 +43,6 @@ object RuntimeLibraryLoader {
      * 运行时库枚举
      */
     enum class RuntimeLib(val fileName: String, val description: String) {
-        TURNIP("libvulkan_freedreno.so", "Turnip Vulkan 驱动"),
         MOBILEGLUES("libmobileglues.so", "MobileGlues 翻译层"),
         SKIASHARP("libSkiaSharp.so", "Skia 图形库"),
         ANGLE_EGL("libEGL_angle.so", "ANGLE EGL"),
@@ -317,7 +315,7 @@ object RuntimeLibraryLoader {
      * 加载所有渲染器相关的库
      * 用于游戏启动前预加载
      */
-    fun loadRendererLibraries(context: Context, useAngle: Boolean, useTurnip: Boolean): Boolean {
+    fun loadRendererLibraries(context: Context, useAngle: Boolean): Boolean {
         var success = true
         
         // GL4ES 通常需要
@@ -333,17 +331,6 @@ object RuntimeLibraryLoader {
             if (!loadLibrary(context, RuntimeLib.ANGLE_GLES)) {
                 AppLogger.warn(TAG, "ANGLE GLES load failed")
                 success = false
-            }
-        }
-        
-        // Turnip Vulkan (可选)
-        if (useTurnip) {
-            if (!loadLibrary(context, RuntimeLib.TURNIP)) {
-                AppLogger.warn(TAG, "Turnip load failed")
-                success = false
-            }
-            if (!loadLibrary(context, RuntimeLib.MOBILEGLUES)) {
-                AppLogger.warn(TAG, "MobileGLUES load failed")
             }
         }
         

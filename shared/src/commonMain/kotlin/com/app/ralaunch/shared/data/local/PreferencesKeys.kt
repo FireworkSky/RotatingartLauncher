@@ -54,9 +54,6 @@ object PreferencesKeys {
     val FNA_QUALITY_LEVEL = intPreferencesKey("fna_quality_level") // 0=高, 1=中, 2=低
     val FNA_SHADER_LOW_PRECISION = booleanPreferencesKey("fna_shader_low_precision")
 
-    // ==================== Vulkan 设置 ====================
-    val VULKAN_DRIVER_TURNIP = booleanPreferencesKey("vulkan_driver_turnip")
-
     // ==================== CoreCLR 设置 ====================
     val SERVER_GC = booleanPreferencesKey("server_gc")
     val CONCURRENT_GC = booleanPreferencesKey("concurrent_gc")

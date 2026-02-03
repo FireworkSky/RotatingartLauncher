@@ -51,20 +51,12 @@ add_subdirectory(${NETCOREHOST_SOURCE_DIR})
 
 # liblinkernsbypass（绕过 Android 命名空间限制）
 add_subdirectory(${CMAKE_SOURCE_DIR}/liblinkernsbypass)
-add_subdirectory(${CMAKE_SOURCE_DIR}/linkerhook)
 
 # FNA3D 图形库
 set(BUILD_SDL3 OFF CACHE BOOL "Build against SDL 2.0" FORCE)
 set(BUILD_SHARED_LIBS ON CACHE BOOL "Build shared library" FORCE)
 set(TRACING_SUPPORT OFF CACHE BOOL "Disable tracing" FORCE)
-set(BUILD_NATIVE_VULKAN ON CACHE BOOL "Enable native Vulkan driver" FORCE)
-set(BUILD_DXVK_NATIVE ON CACHE BOOL "Enable DXVK Native for D3D11 support" FORCE)
-set(DXVK_NATIVE_INCLUDE_DIRS
-    ${CMAKE_SOURCE_DIR}/dxvk/include/native/directx
-    ${CMAKE_SOURCE_DIR}/dxvk/include/native/windows
-    ${CMAKE_SOURCE_DIR}/dxvk/include/native/wsi
-    ${CMAKE_SOURCE_DIR}/dxvk/include/native
-)
+set(BUILD_DXVK_NATIVE OFF CACHE BOOL "Disable DXVK Native / D3D11 support" FORCE)
 set(SDL2_INCLUDE_DIRS ${SDL_SOURCE_DIR}/include)
 set(SDL2_LIBRARIES SDL2)
 set(_OLD_CMAKE_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX})

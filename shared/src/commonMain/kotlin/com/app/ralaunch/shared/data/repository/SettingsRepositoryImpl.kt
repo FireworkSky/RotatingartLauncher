@@ -53,7 +53,6 @@ class SettingsRepositoryImpl(
             setThreadAffinityToBigCore = prefs[PreferencesKeys.SET_THREAD_AFFINITY_TO_BIG_CORE] ?: true,
             fnaRenderer = FnaRenderer.fromValue(prefs[PreferencesKeys.FNA_RENDERER] ?: FnaRenderer.AUTO.value),
             fnaMapBufferRangeOptimization = prefs[PreferencesKeys.FNA_MAP_BUFFER_RANGE_OPTIMIZATION] ?: true,
-            vulkanDriverTurnip = prefs[PreferencesKeys.VULKAN_DRIVER_TURNIP] ?: true,
             serverGC = prefs[PreferencesKeys.SERVER_GC] ?: false,
             concurrentGC = prefs[PreferencesKeys.CONCURRENT_GC] ?: true,
             gcHeapCount = prefs[PreferencesKeys.GC_HEAP_COUNT] ?: "auto",
@@ -289,20 +288,6 @@ class SettingsRepositoryImpl(
             else -> "auto"
         }
         dataStore.edit { it[PreferencesKeys.FNA_RENDERER] = value }
-    }
-
-    override suspend fun isVulkanTurnipEnabled(): Boolean {
-        return dataStore.data.first()[PreferencesKeys.VULKAN_DRIVER_TURNIP] ?: false
-    }
-
-    override suspend fun setVulkanTurnipEnabled(enabled: Boolean) {
-        dataStore.edit { it[PreferencesKeys.VULKAN_DRIVER_TURNIP] = enabled }
-    }
-
-    override suspend fun isAdrenoGpu(): Boolean {
-        // 这是平台特定的，需要在 App 层覆盖或通过 expect/actual 实现
-        // 默认返回 false，由 App 层提供实际实现
-        return false
     }
 
     // ==================== 开发者设置 ====================

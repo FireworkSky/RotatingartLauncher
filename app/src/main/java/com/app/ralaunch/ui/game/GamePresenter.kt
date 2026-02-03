@@ -219,7 +219,7 @@ class GamePresenter : GameContract.Presenter {
                 // 核心组件
                 "GameLauncher", "GamePresenter", "RuntimeLibLoader", "RuntimeLibraryLoader",
                 // 渲染器
-                "RendererConfig", "RendererLoader", "TurnipLoader", "DXVK",
+                "RendererConfig", "RendererLoader",
                 // .NET 运行时
                 "NetCoreHost", "DotNetLauncher", "CoreCLR", "MonoGame",
                 // SDL 和音频

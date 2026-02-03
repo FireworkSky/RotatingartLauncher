@@ -69,7 +69,6 @@ class SettingsViewModel(
             is SettingsEvent.SetLowLatencyAudio -> setLowLatencyAudio(event.enabled)
             is SettingsEvent.SetRenderer -> setRenderer(event.renderer)
             is SettingsEvent.OpenRendererSelector -> sendEffect(SettingsEffect.OpenRendererDialog)
-            is SettingsEvent.SetVulkanTurnip -> setVulkanTurnip(event.enabled)
 
             // 启动器
             is SettingsEvent.OpenPatchManagement -> sendEffect(SettingsEffect.OpenPatchManagementDialog)
@@ -142,8 +141,6 @@ class SettingsViewModel(
                     bigCoreAffinityEnabled = settingsManager.setThreadAffinityToBigCoreEnabled,
                     lowLatencyAudioEnabled = settingsManager.isSdlAaudioLowLatency,
                     rendererType = getRendererDisplayName(settingsManager.fnaRenderer),
-                    vulkanTurnipEnabled = settingsManager.isVulkanDriverTurnip,
-                    isAdrenoGpu = com.app.ralaunch.utils.GLInfoUtils.getGlInfo().isAdreno,
 
                     // 开发者
                     loggingEnabled = settingsManager.isLogSystemEnabled,
@@ -280,13 +277,6 @@ class SettingsViewModel(
         _uiState.update { it.copy(rendererType = getRendererDisplayName(rendererId)) }
     }
 
-    private fun setVulkanTurnip(enabled: Boolean) {
-        settingsManager.isVulkanDriverTurnip = enabled
-        _uiState.update { it.copy(vulkanTurnipEnabled = enabled) }
-        val message = if (enabled) "已启用 Turnip 驱动" else "已禁用 Turnip 驱动（使用系统驱动）"
-        sendEffect(SettingsEffect.ShowToast(message))
-    }
-
     // ==================== 开发者设置 ====================
 
     fun setLoggingEnabled(enabled: Boolean) {
@@ -366,7 +356,6 @@ class SettingsViewModel(
             "gl4es+angle" -> "GL4ES + ANGLE"
             "mobileglues" -> "MobileGlues"
             "angle" -> "ANGLE"
-            "dxvk" -> "DXVK"
             else -> "自动选择"
         }
     }

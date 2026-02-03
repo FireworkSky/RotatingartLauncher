@@ -108,7 +108,6 @@ object GameLauncher {
             // 大型运行时库按需加载:
             // Large runtime libraries loaded on-demand:
             // - libSkiaSharp.so (7 MB) - 通过 RuntimeLibraryLoader.loadSkiaSharp() 加载
-            // - libvulkan_freedreno.so (10 MB) - 通过 RuntimeLibraryLoader.loadRendererLibraries() 加载
             // - libGL_gl4es.so (4 MB) - 通过 RuntimeLibraryLoader.loadRendererLibraries() 加载
             // - lib7-Zip-JBinding.so (3 MB) - 通过 RuntimeLibraryLoader.load7Zip() 加载
         } catch (e: UnsatisfiedLinkError) {

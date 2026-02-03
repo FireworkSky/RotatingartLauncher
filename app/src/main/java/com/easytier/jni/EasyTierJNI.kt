@@ -23,7 +23,7 @@ object EasyTierJNI {
     external fun retainNetworkInstance(instanceNames: Array<String>?): Int
 
     @JvmStatic
-    external fun collectNetworkInfos(): String?
+    external fun collectNetworkInfos(maxLength: Int): String?
 
     @JvmStatic
     external fun getLastError(): String?

@@ -64,7 +64,7 @@ class EasyTierManager {
         
         // 房主固定 IP（参考 Terracotta 使用 10.144.144.1）
         const val HOST_IP = "10.126.126.1"
-        const val HOST_IP_CIDR = "10.126.126.1/24"  // CIDR 格式，用于配置
+        const val HOST_IP_CIDR = "10.126.126.1/24"  // CIDR 格式，EasyTier 配置需要
         
         // 多个公共服务器，提高连接成功率（参考 Terracotta）
         private val PUBLIC_SERVERS = listOf(
@@ -318,16 +318,22 @@ class EasyTierManager {
             }
             
             // 如果 VPN 已初始化，设置 TUN fd
+            // #region agent log - 假设P: 检查 VPN/TUN 状态
+            Log.w("DEBUG_MULTIPLAYER", "VPN status: initialized=${_vpnInitialized.value}, tunFd=$tunFd, no_tun=true (NoTun mode)")
+            // #endregion
             if (_vpnInitialized.value && tunFd >= 0) {
                 Log.d(TAG, "Setting TUN fd: $tunFd")
                 val fdResult = EasyTierJNI.setTunFd(instanceName, tunFd)
                 if (fdResult != 0) {
                     Log.w(TAG, "Failed to set TUN fd: ${EasyTierJNI.getLastError()}")
+                    Log.w("DEBUG_MULTIPLAYER", "setTunFd FAILED: ${EasyTierJNI.getLastError()}")
                 } else {
                     Log.i(TAG, "TUN fd set successfully: $tunFd")
+                    Log.w("DEBUG_MULTIPLAYER", "setTunFd SUCCESS: tunFd=$tunFd")
                 }
             } else {
                 Log.w(TAG, "VPN not initialized or tunFd invalid: initialized=${_vpnInitialized.value}, tunFd=$tunFd")
+                Log.w("DEBUG_MULTIPLAYER", "VPN NOT READY - port forward may not work without TUN")
             }
             
             // 启动监控
@@ -471,60 +477,76 @@ uri = "$server"
             """.trim()
         }
         
-        // 构建端口配置
+        // portConfig 现在只用于日志显示
         val portConfig = if (isHost) {
-            // 房主：使用固定 IP，暴露游戏端口（白名单）
-            val tcpWhitelist = gamePorts.joinToString(", ") { "\"$it\"" }
-            val udpWhitelist = gamePorts.joinToString(", ") { "\"$it\"" }
-            """
-# 房主配置：固定 IP（CIDR格式），暴露游戏端口
-ipv4 = "$HOST_IP_CIDR"
-dhcp = false
-tcp_whitelist = [$tcpWhitelist]
-udp_whitelist = [$udpWhitelist]
-            """.trim()
+            "# 房主配置：ipv4=$HOST_IP_CIDR (顶层字段)"
         } else if (withPortForward) {
-            // 加入者（发现房主后）：DHCP + 端口转发
-            val portForwards = gamePorts.joinToString("\n") { port ->
-                """
-[[port_forward]]
-bind_addr = "0.0.0.0:$port"
-dst_addr = "$HOST_IP:$port"
-proto = "tcp"
-
-[[port_forward]]
-bind_addr = "0.0.0.0:$port"
-dst_addr = "$HOST_IP:$port"
-proto = "udp"
-                """.trim()
-            }
-            """
-# 加入者配置：DHCP + 端口转发到房主
-dhcp = true
-
-$portForwards
-            """.trim()
+            "# 加入者配置：端口转发到 $HOST_IP"
         } else {
-            // 加入者（初始连接）：仅 DHCP，不配置端口转发
-            // 等待发现房主后再重新配置
-            """
-# 加入者配置：仅 DHCP（等待发现房主）
-dhcp = true
-            """.trim()
+            "# 加入者配置：等待发现房主"
         }
         
         // NoTun 模式：不使用 VPN TUN 接口（参考 Terracotta）
         // 这样加入者只需连接本地端口 127.0.0.1:7777，自动转发到房主
         // 必须添加 TCP/UDP listener，否则其他玩家无法直接连接
+        // #region agent log - 假设E: 记录完整端口配置
+        Log.w("DEBUG_MULTIPLAYER", "=== buildConfig: isHost=$isHost, withPortForward=$withPortForward ===")
+        Log.w("DEBUG_MULTIPLAYER", "portConfig:\n$portConfig")
+        // #endregion
+        
+        // 房主配置顶层字段（所有顶层字段必须在任何 [section] 之前）
+        // proxy_network 必须在顶层，否则会被误解析为 section 的一部分
+        val topLevelConfig = if (isHost) {
+            val tcpWhitelist = gamePorts.joinToString(", ") { "\"$it\"" }
+            val udpWhitelist = gamePorts.joinToString(", ") { "\"$it\"" }
+            """
+ipv4 = "$HOST_IP_CIDR"
+dhcp = false
+proxy_network = [{ cidr = "10.126.126.0/24" }]
+tcp_whitelist = [$tcpWhitelist]
+udp_whitelist = [$udpWhitelist]
+            """.trim()
+        } else {
+            ""
+        }
+        
+        // whitelistConfig 不再需要，已合并到 topLevelConfig
+        val whitelistConfig = ""
+        
+        // 端口转发配置（仅加入者）- 始终启用，目标是固定的虚拟 IP
+        // 这样不需要重启实例，端口转发在实例启动时就配置好
+        // 当房主上线后，EasyTier 会自动通过隧道转发流量
+        val portForwardConfig = if (!isHost) {
+            val portForwards = gamePorts.joinToString("\n") { port ->
+                """
+[[port_forward]]
+bind_addr = "127.0.0.1:$port"
+dst_addr = "$HOST_IP:$port"
+proto = "tcp"
+
+[[port_forward]]
+bind_addr = "127.0.0.1:$port"
+dst_addr = "$HOST_IP:$port"
+proto = "udp"
+                """.trim()
+            }
+            portForwards
+        } else {
+            ""
+        }
+        
         return """
 instance_name = "$instanceName"
 hostname = "$hostname"
+$topLevelConfig
 
 [network_identity]
 network_name = "$networkName"
 network_secret = "$networkSecret"
 
-$portConfig
+$whitelistConfig
+
+$portForwardConfig
 
 # TCP/UDP listener - 允许其他玩家直接连接（参考 Terracotta）
 listeners = ["tcp://0.0.0.0:0", "udp://0.0.0.0:0"]
@@ -575,12 +597,15 @@ mtu = 1380
      * 更新网络状态
      */
     private fun updateNetworkStatus() {
-        if (!EasyTierJNI.isAvailable()) return
+        if (!EasyTierJNI.isAvailable()) {
+            Log.w("DEBUG_MULTIPLAYER", "MonitorLoop: JNI not available")
+            return
+        }
         
         try {
             val infosJson = EasyTierJNI.collectNetworkInfos()
-            if (infosJson.isNullOrEmpty()) {
-                Log.d(TAG, "No network info available")
+            if (infosJson.isNullOrEmpty() || infosJson.length < 50) {
+                Log.w("DEBUG_MULTIPLAYER", "MonitorLoop: empty/short (${infosJson?.length})")
                 return
             }
             
@@ -626,6 +651,10 @@ mtu = 1380
             // 更新节点列表
             _peers.value = instanceInfo.peers
             
+            // #region agent log - 精简：只在状态变化时记录
+            Log.w("DEBUG_MULTIPLAYER", "Status: ip=${instanceInfo.virtualIp}, peers=${instanceInfo.peers.size}, state=${_connectionState.value}")
+            // #endregion
+            
             Log.d(TAG, "Network status: IP=${instanceInfo.virtualIp}, peers=${instanceInfo.peers.size}")
             
             // 如果是加入者且在 FINDING_HOST 状态，检测房主
@@ -639,7 +668,8 @@ mtu = 1380
     }
     
     /**
-     * 检测房主并重启带端口转发的配置
+     * 检测房主并切换到 CONNECTED 状态
+     * 端口转发已在首次启动时配置，不需要重启实例
      */
     private fun checkAndConnectToHost(peers: List<NetworkPeerInfo>) {
         // 检查是否有房主（hostname 包含 "host" 或 IP 是 HOST_IP）
@@ -651,12 +681,12 @@ mtu = 1380
         
         if (hostPeer != null && !hostFound) {
             Log.i(TAG, "Host found! hostname=${hostPeer.hostname}, ip=${hostPeer.virtualIp}")
+            Log.w("DEBUG_MULTIPLAYER", "HostFound: ${hostPeer.hostname}, ip=${hostPeer.virtualIp}")
+            Log.w("DEBUG_MULTIPLAYER", "Game can now connect to: 127.0.0.1:$TERRARIA_PORT")
             hostFound = true
             
-            // 发现房主，重启带端口转发的配置
-            scope.launch {
-                restartWithPortForward()
-            }
+            // 切换到 CONNECTED 状态，端口转发已在启动时配置好
+            _connectionState.value = EasyTierConnectionState.CONNECTED
         }
     }
     
@@ -664,25 +694,29 @@ mtu = 1380
      * 重启 EasyTier 带端口转发配置
      */
     private suspend fun restartWithPortForward() = withContext(Dispatchers.IO) {
-        val instanceName = currentInstanceName ?: return@withContext
         val networkName = currentNetworkName ?: return@withContext
         val networkSecret = currentNetworkSecret ?: return@withContext
+        
+        // #region agent log - 假设AK: 使用新的实例名称避免冲突
+        val newInstanceName = "ral_mp_${System.currentTimeMillis() % 100000}"
+        Log.w("DEBUG_MULTIPLAYER", "Restart: newInstance=$newInstanceName, portForward to $HOST_IP:$TERRARIA_PORT")
+        // #endregion
         
         Log.i(TAG, "Restarting EasyTier with port forwarding...")
         
         try {
-            // 停止当前实例 - 使用更长的延迟确保完全停止
-            Log.d(TAG, "Stopping all instances...")
+            // 停止当前实例（使用 retainNetworkInstance(emptyArray) 停止所有实例）
+            val oldInstanceName = currentInstanceName
+            Log.w("DEBUG_MULTIPLAYER", "Stopping old instance: $oldInstanceName")
             EasyTierJNI.stopAllInstances()
-            delay(2000) // 等待 2 秒确保完全停止（异步操作需要更长时间）
+            delay(1000) // 等待 1 秒
             
-            // 再次确认已停止
-            val checkInfo = EasyTierJNI.collectNetworkInfos()
-            Log.d(TAG, "After stop, network info: $checkInfo")
+            // 更新实例名称
+            currentInstanceName = newInstanceName
             
             // 构建带端口转发的配置
             val config = buildConfig(
-                instanceName = instanceName,
+                instanceName = newInstanceName,
                 networkName = networkName,
                 networkSecret = networkSecret,
                 isHost = false,
@@ -690,30 +724,61 @@ mtu = 1380
             )
             
             Log.d(TAG, "Restarting with config:\n$config")
+            // #region agent log - 假设AA: 显示完整 TOML 配置（检查端口转发是否正确生成）
+            Log.w("DEBUG_MULTIPLAYER", "=== FULL CONFIG ===\n${config.take(1500)}")
+            // #endregion
+            
+            // #region agent log - 假设AG: 检查配置解析和实例启动
+            Log.w("DEBUG_MULTIPLAYER", "=== RESTART: Parsing config...")
+            // #endregion
             
             // 解析配置
             val parseResult = EasyTierJNI.parseConfig(config)
+            // #region agent log
+            Log.w("DEBUG_MULTIPLAYER", "parseConfig result=$parseResult, error=${EasyTierJNI.getLastError()}")
+            // #endregion
             if (parseResult != 0) {
                 val error = EasyTierJNI.getLastError() ?: "配置解析失败"
                 Log.e(TAG, "Failed to parse config: $error")
+                Log.w("DEBUG_MULTIPLAYER", "RESTART ABORT: parseConfig failed: $error")
                 _errorMessage.value = error
                 return@withContext
             }
             
+            // #region agent log
+            Log.w("DEBUG_MULTIPLAYER", "=== RESTART: Running network instance...")
+            // #endregion
+            
             // 启动网络实例
             val runResult = EasyTierJNI.runNetworkInstance(config)
+            // #region agent log
+            Log.w("DEBUG_MULTIPLAYER", "runNetworkInstance result=$runResult, error=${EasyTierJNI.getLastError()}")
+            // #endregion
             if (runResult != 0) {
                 val error = EasyTierJNI.getLastError() ?: "网络实例启动失败"
                 Log.e(TAG, "Failed to run network instance: $error")
+                Log.w("DEBUG_MULTIPLAYER", "RESTART ABORT: runNetworkInstance failed: $error")
                 _errorMessage.value = error
                 return@withContext
             }
             
             currentConfig = config
             
+            // #region agent log - 假设AH: 检查实例是否真的在运行
+            delay(500)
+            val checkInfo = EasyTierJNI.collectNetworkInfos()
+            Log.w("DEBUG_MULTIPLAYER", "Post-run check: networkInfo.length=${checkInfo?.length ?: 0}")
+            if ((checkInfo?.length ?: 0) < 50) {
+                Log.w("DEBUG_MULTIPLAYER", "WARNING: Instance may not be running! Info: $checkInfo")
+            }
+            // #endregion
+            
             // 如果 VPN 已初始化，设置 TUN fd
             if (_vpnInitialized.value && tunFd >= 0) {
-                val fdResult = EasyTierJNI.setTunFd(instanceName, tunFd)
+                val fdResult = EasyTierJNI.setTunFd(newInstanceName, tunFd)
+                // #region agent log
+                Log.w("DEBUG_MULTIPLAYER", "setTunFd($newInstanceName) result=$fdResult, error=${EasyTierJNI.getLastError()}")
+                // #endregion
                 if (fdResult != 0) {
                     Log.w(TAG, "Failed to set TUN fd: ${EasyTierJNI.getLastError()}")
                 }
@@ -723,8 +788,41 @@ mtu = 1380
             _connectionState.value = EasyTierConnectionState.CONNECTED
             Log.i(TAG, "EasyTier restarted with port forwarding, now CONNECTED")
             
+            // #region agent log - 假设AD: 等待网络重新连接
+            Log.w("DEBUG_MULTIPLAYER", "=== RESTART COMPLETE ===")
+            Log.w("DEBUG_MULTIPLAYER", "Waiting for network to reconnect...")
+            
+            // 等待网络重新连接（最多 10 秒）
+            var networkReady = false
+            for (i in 1..10) {
+                delay(1000)
+                val info = EasyTierJNI.collectNetworkInfos()
+                val infoLen = info?.length ?: 0
+                Log.w("DEBUG_MULTIPLAYER", "Wait[$i/10]: networkInfo.length=$infoLen")
+                if (infoLen > 100) {  // 有效的网络信息通常大于 100 字节
+                    networkReady = true
+                    Log.w("DEBUG_MULTIPLAYER", "Network reconnected! Starting port forward...")
+                    break
+                }
+            }
+            
+            if (!networkReady) {
+                Log.w("DEBUG_MULTIPLAYER", "WARNING: Network not fully reconnected after 10s")
+            }
+            
+            Log.w("DEBUG_MULTIPLAYER", "Game should connect to: 127.0.0.1:$TERRARIA_PORT")
+            Log.w("DEBUG_MULTIPLAYER", "Port forward destination: $HOST_IP:$TERRARIA_PORT")
+            
+            // 重新启动监控
+            startMonitoring()
+            Log.w("DEBUG_MULTIPLAYER", "Monitoring restarted")
+            // #endregion
+            
         } catch (e: Exception) {
             Log.e(TAG, "Failed to restart with port forwarding", e)
+            // #region agent log - 假设C: 记录重启失败
+            Log.w("DEBUG_MULTIPLAYER", "=== RESTART FAILED: ${e.message} ===")
+            // #endregion
             _errorMessage.value = e.message
         }
     }
@@ -744,11 +842,18 @@ mtu = 1380
                 val running = instanceJson.optBoolean("running", false)
                 val errorMsg = instanceJson.optString("error_msg", null)
                 
-                // 解析虚拟 IP
+                // 解析虚拟 IP - 尝试多种字段
                 val myNodeInfo = instanceJson.optJSONObject("my_node_info")
                 val virtualIpv4 = myNodeInfo?.optJSONObject("virtual_ipv4")
                 val virtualIp = parseIpv4(virtualIpv4)
+                // 尝试从 ipv4_addr 字段获取（Terracotta 使用此字段）
+                val ipv4AddrStr = myNodeInfo?.optString("ipv4_addr", null)
                 val myPeerId = myNodeInfo?.optLong("peer_id", 0L) ?: 0L
+                
+                // #region agent log - 假设R: 检查原始 JSON 结构
+                Log.w("DEBUG_MULTIPLAYER", "RawMyNodeInfo: ${myNodeInfo?.toString()?.take(500)}")
+                Log.w("DEBUG_MULTIPLAYER", "ParseInfo: virtualIp=$virtualIp, ipv4_addr=$ipv4AddrStr, peerId=$myPeerId")
+                // #endregion
                 
                 val peersList = mutableListOf<NetworkPeerInfo>()
                 
@@ -766,6 +871,12 @@ mtu = 1380
                         val hostname = route.optString("hostname", "")
                         val peerIpv4 = route.optJSONObject("ipv4_addr")
                         val peerIp = parseIpv4Addr(peerIpv4)
+                        
+                        // #region agent log - 假设U: 记录房主 route 的完整 JSON
+                        if (hostname.lowercase().contains("host")) {
+                            Log.w("DEBUG_MULTIPLAYER", "HostRoute: ${route.toString().take(800)}")
+                        }
+                        // #endregion
                         val stunInfo = route.optJSONObject("stun_info")
                         val udpNatType = stunInfo?.optInt("udp_nat_type", 0) ?: 0
                         val natType = natTypeToString(udpNatType)
@@ -889,8 +1000,8 @@ mtu = 1380
     private fun parseIpv4(ipv4Json: JSONObject?): String? {
         if (ipv4Json == null) return null
         val addressJson = ipv4Json.optJSONObject("address") ?: return null
-        val addr = addressJson.optInt("addr", 0)
-        if (addr == 0) return null
+        val addr = addressJson.optLong("addr", 0L)
+        if (addr == 0L) return null
         
         val networkLength = ipv4Json.optInt("network_length", 24)
         val ip = String.format(
@@ -904,13 +1015,17 @@ mtu = 1380
     }
     
     /**
-     * 解析 IPv4 地址 (Ipv4Addr 格式)
+     * 解析 IPv4 地址 (Ipv4Inet 格式: {"address": {"addr": int}})
+     * 参考 Terracotta: address.and_then(|address| address.address).map(|address| Ipv4Addr::from_octets(address.addr.to_be_bytes()))
      */
     private fun parseIpv4Addr(ipv4Json: JSONObject?): String? {
         if (ipv4Json == null) return null
-        val addr = ipv4Json.optInt("addr", 0)
-        if (addr == 0) return null
+        // 结构: {"address": {"addr": int}} 
+        val addressObj = ipv4Json.optJSONObject("address") ?: return null
+        val addr = addressObj.optLong("addr", 0L)
+        if (addr == 0L) return null
         
+        // 使用 Long 来处理大于 Int.MAX_VALUE 的地址
         return String.format(
             "%d.%d.%d.%d",
             (addr shr 24) and 0xFF,

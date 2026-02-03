@@ -82,11 +82,12 @@ object EasyTierJNI {
 
     /**
      * 收集网络信息
+     * @param maxLength 最大返回长度，默认 4096
      */
     @JvmStatic
-    fun collectNetworkInfos(): String? {
+    fun collectNetworkInfos(maxLength: Int = 4096): String? {
         return if (isLoaded) {
-            com.easytier.jni.EasyTierJNI.collectNetworkInfos()
+            com.easytier.jni.EasyTierJNI.collectNetworkInfos(maxLength)
         } else null
     }
 

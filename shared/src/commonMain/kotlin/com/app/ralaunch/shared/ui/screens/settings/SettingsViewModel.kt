@@ -33,8 +33,6 @@ data class SettingsUiState(
     val bigCoreAffinityEnabled: Boolean = false,
     val lowLatencyAudioEnabled: Boolean = false,
     val rendererType: String = "OpenGL ES",
-    val vulkanTurnipEnabled: Boolean = false,
-    val isAdrenoGpu: Boolean = false,
 
     // 画质设置
     val qualityLevel: Int = 0, // 0=高, 1=中, 2=低
@@ -79,7 +77,6 @@ sealed class SettingsEvent {
     data class SetBigCoreAffinity(val enabled: Boolean) : SettingsEvent()
     data class SetLowLatencyAudio(val enabled: Boolean) : SettingsEvent()
     data class SetRenderer(val renderer: String) : SettingsEvent()
-    data class SetVulkanTurnip(val enabled: Boolean) : SettingsEvent()
     
     // 画质
     data class SetQualityLevel(val level: Int) : SettingsEvent()
@@ -185,7 +182,6 @@ class SettingsViewModel(
             is SettingsEvent.SetLowLatencyAudio -> setLowLatencyAudio(event.enabled)
             is SettingsEvent.SetRenderer -> setRenderer(event.renderer)
             is SettingsEvent.OpenRendererSelector -> sendEffect(SettingsEffect.OpenRendererDialog)
-            is SettingsEvent.SetVulkanTurnip -> setVulkanTurnip(event.enabled)
             
             // 画质
             is SettingsEvent.SetQualityLevel -> setQualityLevel(event.level)
@@ -243,8 +239,6 @@ class SettingsViewModel(
                     bigCoreAffinityEnabled = settingsRepository.isBigCoreAffinityEnabled(),
                     lowLatencyAudioEnabled = settingsRepository.isLowLatencyAudioEnabled(),
                     rendererType = settingsRepository.getRendererType(),
-                    vulkanTurnipEnabled = settingsRepository.isVulkanTurnipEnabled(),
-                    isAdrenoGpu = settingsRepository.isAdrenoGpu(),
                     // 开发者
                     loggingEnabled = settingsRepository.isLoggingEnabled(),
                     verboseLogging = settingsRepository.isVerboseLogging(),
@@ -378,15 +372,6 @@ class SettingsViewModel(
         viewModelScope.launch {
             settingsRepository.setRendererType(renderer)
             _uiState.update { it.copy(rendererType = renderer) }
-        }
-    }
-
-    private fun setVulkanTurnip(enabled: Boolean) {
-        viewModelScope.launch {
-            settingsRepository.setVulkanTurnipEnabled(enabled)
-            _uiState.update { it.copy(vulkanTurnipEnabled = enabled) }
-            val message = if (enabled) "已启用 Turnip 驱动" else "已禁用 Turnip 驱动（使用系统驱动）"
-            sendEffect(SettingsEffect.ShowToast(message))
         }
     }
 

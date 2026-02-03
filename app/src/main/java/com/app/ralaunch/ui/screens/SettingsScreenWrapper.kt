@@ -206,9 +206,6 @@ fun SettingsScreenWrapper(
                     onLowLatencyAudioChange = { viewModel.setLowLatencyAudio(it) },
                     rendererType = uiState.rendererType,
                     onRendererClick = { viewModel.onEvent(SettingsEvent.OpenRendererSelector) },
-                    vulkanTurnipEnabled = uiState.vulkanTurnipEnabled,
-                    onVulkanTurnipChange = { viewModel.onEvent(SettingsEvent.SetVulkanTurnip(it)) },
-                    isAdrenoGpu = uiState.isAdrenoGpu,
                     // 画质设置
                     qualityLevel = uiState.qualityLevel,
                     onQualityLevelChange = { viewModel.onEvent(SettingsEvent.SetQualityLevel(it)) },
@@ -874,7 +871,6 @@ private fun getRendererCode(rendererName: String): String {
         "GL4ES + ANGLE" -> "gl4es+angle"
         "MobileGlues" -> "mobileglues"
         "ANGLE" -> "angle"
-        "DXVK" -> "dxvk"
         else -> "auto"
     }
 }

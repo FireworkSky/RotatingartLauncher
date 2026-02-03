@@ -223,8 +223,7 @@ fun defaultRenderers() = listOf(
     RendererOption("gl4es", "GL4ES", "最完美，游戏兼容性最强，但帧率稍慢"),
     RendererOption("gl4es+angle", "GL4ES + ANGLE", "翻译成Vulkan，速度和兼容性最佳，推荐高通骁龙使用"),
     RendererOption("mobileglues", "MobileGlues 1.3.3", "OpenGL 4.6 翻译至 OpenGL ES 3.2（现代化翻译层）"),
-    RendererOption("angle", "ANGLE (Vulkan Backend)", "OpenGL ES over Vulkan (Google官方，需要 Android 7.0+)"),
-    RendererOption("dxvk", "DXVK (D3D11)", "Direct3D 11 over Vulkan（需要 Android 7.0+）")
+    RendererOption("angle", "ANGLE (Vulkan Backend)", "OpenGL ES over Vulkan (Google官方，需要 Android 7.0+)")
 )
 
 /**

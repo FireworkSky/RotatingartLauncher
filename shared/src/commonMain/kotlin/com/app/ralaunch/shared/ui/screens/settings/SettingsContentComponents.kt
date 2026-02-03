@@ -219,9 +219,6 @@ fun GameSettingsContent(
     onLowLatencyAudioChange: (Boolean) -> Unit,
     rendererType: String,
     onRendererClick: () -> Unit,
-    vulkanTurnipEnabled: Boolean = false,
-    onVulkanTurnipChange: (Boolean) -> Unit = {},
-    isAdrenoGpu: Boolean = false,
     // 画质设置
     qualityLevel: Int = 0,
     onQualityLevelChange: (Int) -> Unit = {},
@@ -237,9 +234,6 @@ fun GameSettingsContent(
     renderTitle: String = "渲染",
     rendererTitle: String = "渲染器",
     rendererSubtitle: String = "选择图形渲染后端",
-    vulkanDriverTitle: String = "Vulkan 驱动",
-    turnipDriverTitle: String = "Turnip 驱动",
-    turnipDriverSubtitle: String = "使用开源 Turnip 驱动（仅 Adreno GPU）",
     // 画质设置文本
     qualityTitle: String = "画质",
     qualityLevelTitle: String = "画质预设",
@@ -286,21 +280,6 @@ fun GameSettingsContent(
                     icon = Icons.Default.Tv,
                     onClick = onRendererClick
                 )
-            }
-        }
-
-        // Vulkan 驱动设置 (仅 Adreno GPU 显示)
-        if (isAdrenoGpu) {
-            item {
-                SettingsSection(title = vulkanDriverTitle) {
-                    SwitchSettingItem(
-                        title = turnipDriverTitle,
-                        subtitle = turnipDriverSubtitle,
-                        icon = Icons.Default.Speed,
-                        checked = vulkanTurnipEnabled,
-                        onCheckedChange = onVulkanTurnipChange
-                    )
-                }
             }
         }
 

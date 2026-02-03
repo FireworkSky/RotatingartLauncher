@@ -56,9 +56,6 @@ object SettingsMapper {
             fnaRenderer = FnaRenderer.fromValue((json["fna_renderer"] as? String) ?: "auto"),
             fnaMapBufferRangeOptimization = (json["fna_enable_map_buffer_range_optimization_if_available"] as? Boolean) ?: true,
 
-            // Vulkan 设置
-            vulkanDriverTurnip = (json["vulkan_driver_turnip"] as? Boolean) ?: true,
-
             // CoreCLR 设置
             serverGC = (json["coreclr_server_gc"] as? Boolean) ?: false,
             concurrentGC = (json["coreclr_concurrent_gc"] as? Boolean) ?: true,

@@ -53,7 +53,6 @@ $SearchDirs += $JniLibsDir
 # 注意：lib7-Zip-JBinding.so 保留在 APK 中，因为安装游戏时需要立即使用
 $RuntimeLibs = @(
     "libbox64.so"              # 56.55 MB - Box64 x86_64 模拟器
-    "libvulkan_freedreno.so"   # 9.91 MB  - Turnip Vulkan 驱动
     "libmobileglues.so"        # 8.36 MB  - MobileGlues 翻译层
     "libSkiaSharp.so"          # 6.64 MB  - Skia 图形库
     "libEGL_angle.so"          # ~0.3 MB  - ANGLE EGL (必须和 GLES 一起)

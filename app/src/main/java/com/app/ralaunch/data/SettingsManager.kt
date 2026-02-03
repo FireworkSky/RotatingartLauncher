@@ -276,9 +276,6 @@ class SettingsManager private constructor() {
         get() = getBoolean(Keys.FNA_SHADER_LOW_PRECISION, Defaults.FNA_SHADER_LOW_PRECISION)
         set(value) = putBoolean(Keys.FNA_SHADER_LOW_PRECISION, value)
 
-    var isVulkanDriverTurnip: Boolean
-        get() = getBoolean(Keys.VULKAN_DRIVER_TURNIP, Defaults.VULKAN_DRIVER_TURNIP)
-        set(value) = putBoolean(Keys.VULKAN_DRIVER_TURNIP, value)
 
     // CoreCLR GC 设置
     var isServerGC: Boolean
@@ -393,8 +390,6 @@ class SettingsManager private constructor() {
         const val FNA_RENDER_SCALE = "fna_render_scale" // 渲染分辨率缩放 (0.5, 0.75, 1.0)
         const val FNA_SHADER_LOW_PRECISION = "fna_shader_low_precision" // 低精度 shader
 
-        const val VULKAN_DRIVER_TURNIP = "vulkan_driver_turnip"
-
         const val CORECLR_SERVER_GC = "coreclr_server_gc"
         const val CORECLR_CONCURRENT_GC = "coreclr_concurrent_gc"
         const val CORECLR_GC_HEAP_COUNT = "coreclr_gc_heap_count"
@@ -436,8 +431,6 @@ class SettingsManager private constructor() {
         const val FNA_MAX_ANISOTROPY = 4 // 中等各向异性
         const val FNA_RENDER_SCALE = 1.0f // 原生分辨率
         const val FNA_SHADER_LOW_PRECISION = false // 默认高精度 shader
-
-        const val VULKAN_DRIVER_TURNIP = true
 
         const val CONTROLS_OPACITY = 0.7f
         const val CONTROLS_VIBRATION_ENABLED = true

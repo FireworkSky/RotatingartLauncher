@@ -185,9 +185,6 @@
     <string name="renderer_angle">ANGLE (Vulkan)</string>
     <string name="renderer_angle_desc">OpenGL ES sobre Vulkan (oficial de Google, requiere Android 7.0+)</string>
     
-    <!-- Configuración del Controlador Vulkan -->
-    <string name="vulkan_driver_turnip">Controlador Vulkan Turnip</string>
-    <string name="vulkan_driver_turnip_desc">Usar controlador Vulkan de código abierto Turnip (solo GPU Adreno, generalmente mejor rendimiento)</string>
     <string name="renderer_opengl">OpenGL (gl4es+)</string>
     <string name="renderer_opengl_desc">A través de la capa de traducción gl4es+</string>
     <string name="renderer_opengles3">OpenGL ES 3 (Nativo)</string>

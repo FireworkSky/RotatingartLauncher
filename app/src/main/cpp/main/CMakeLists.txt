@@ -8,9 +8,6 @@ set(MAIN_SOURCES
         app_logger_jni.c
         renderer_loader.c
         thread_affinity_manager.cpp
-        vulkan_turnip_loader.c
-        dxvk_loader.c
-        turnip_loader_nsbypass.cpp
         touch_bridge.c
         virtual_mouse_sdl.c
         sdl_text_bridge.c

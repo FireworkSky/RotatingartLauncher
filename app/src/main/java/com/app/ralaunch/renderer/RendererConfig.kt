@@ -6,7 +6,6 @@ import android.os.Environment
 import android.util.Log
 import com.app.ralaunch.core.EnvVarsManager
 import com.app.ralaunch.data.SettingsManager
-import com.app.ralaunch.utils.GLInfoUtils
 import java.io.File
 import kotlin.io.path.Path
 
@@ -31,7 +30,6 @@ object RendererConfig {
     const val RENDERER_GL4ES_ANGLE: String = "gl4es+angle" // GL4ES + ANGLE
     const val RENDERER_MOBILEGLUES: String = "mobileglues" // MobileGlues
     const val RENDERER_ANGLE: String = "angle" // ANGLE
-    const val RENDERER_DXVK: String = "dxvk" // DXVK (D3D11 -> Vulkan)
 
     // 已弃用的渲染器 ID（向后兼容）
     @Deprecated("Use RENDERER_NATIVE_GLES instead")
@@ -150,16 +148,6 @@ object RendererConfig {
             "libGLESv2_angle.so",
             true,
             Build.VERSION_CODES.N // Vulkan 需要 Android 7.0+
-        ),
-        // DXVK 渲染器 (D3D11 over Vulkan)
-        RendererInfo(
-            RENDERER_DXVK,
-            "DXVK (D3D11)",
-            "Direct3D 11 over Vulkan - FNA3D 使用 D3D11 后端，通过 DXVK 翻译到 Vulkan",
-            "libdxvk_dxgi.so",  // DXVK DXGI 库
-            "libdxvk_d3d11.so",  // DXVK D3D11 库
-            true,
-            Build.VERSION_CODES.N // Vulkan 需要 Android 7.0+
         )
     )
 
@@ -250,38 +238,21 @@ object RendererConfig {
     fun getRendererEnv(context: Context, rendererId: String): MutableMap<String?, String?> {
         val envMap = mutableMapOf<String?, String?>()
 
-        // Add Turnip driver settings if needed
-        addTurnipSettingsIfNeeded(context, envMap)
-
         // Add renderer-specific environment variables
-        addRendererSpecificEnv(context, rendererId, envMap)
+        addRendererSpecificEnv(rendererId, envMap)
 
         return envMap
     }
 
     /**
-     * 添加 Turnip 驱动设置（仅适用于 Adreno GPU）
-     */
-    private fun addTurnipSettingsIfNeeded(context: Context, envMap: MutableMap<String?, String?>) {
-        val glInfo = GLInfoUtils.getGlInfo()
-        if (glInfo.isAdreno) {
-            val settingsManager = SettingsManager.getInstance()
-            if (settingsManager.isVulkanDriverTurnip) {
-                envMap["RALCORE_LOAD_TURNIP"] = "1"
-            }
-        }
-    }
-
-    /**
      * 添加渲染器特定的环境变量
      */
-    private fun addRendererSpecificEnv(context: Context, rendererId: String, envMap: MutableMap<String?, String?>) {
+    private fun addRendererSpecificEnv(rendererId: String, envMap: MutableMap<String?, String?>) {
         when (rendererId) {
             RENDERER_GL4ES -> addGl4esEnv(envMap)
             RENDERER_GL4ES_ANGLE -> addGl4esAngleEnv(envMap)
             RENDERER_MOBILEGLUES -> addMobileGluesEnv(envMap)
             RENDERER_ANGLE -> addAngleEnv(envMap)
-            RENDERER_DXVK -> addDxvkEnv(envMap)
             RENDERER_NATIVE_GLES -> { /* No additional env vars needed */ }
         }
     }
@@ -324,15 +295,6 @@ object RendererConfig {
         envMap.apply {
             put("RALCORE_EGL", "libEGL_angle.so")
             put("LIBGL_GLES", "libGLESv2_angle.so")
-        }
-    }
-
-    private fun addDxvkEnv(envMap: MutableMap<String?, String?>) {
-        envMap.apply {
-            put("RALCORE_RENDERER", "dxvk")
-            put("FNA3D_FORCE_DRIVER", "D3D11")
-            put("DXVK_WSI_DRIVER", "SDL2")
-            put("DXVK_LOG_LEVEL", "info")
         }
     }
 
@@ -394,8 +356,8 @@ object RendererConfig {
         // FNA3D OpenGL driver selection
         envVars["FNA3D_OPENGL_DRIVER"] = rendererId
 
-        // FNA3D Force Driver (D3D11 for DXVK, OpenGL for others)
-        envVars["FNA3D_FORCE_DRIVER"] = if (rendererId == RENDERER_DXVK) "D3D11" else "OpenGL"
+        // FNA3D Force Driver (OpenGL)
+        envVars["FNA3D_FORCE_DRIVER"] = "OpenGL"
 
         // OpenGL version configuration
         val openGlConfig = getOpenGlVersionConfig(rendererId)
