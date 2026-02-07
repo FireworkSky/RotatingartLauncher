@@ -51,7 +51,7 @@ fun ColorPickerDialog(
         containerColor = Color(0xFF1A1A2E),
         title = {
             Text(
-                "选择主题颜色",
+                "选择颜色",
                 fontWeight = FontWeight.Bold,
                 color = Color.White
             )

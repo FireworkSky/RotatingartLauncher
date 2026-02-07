@@ -564,13 +564,24 @@ fun ColorPickerRow(
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+            // 带棋盘格底色的颜色预览（半透明颜色也能看清）
             Box(
                 modifier = Modifier
                     .size(32.dp)
                     .clip(RoundedCornerShape(6.dp))
-                    .background(color)
+                    .background(
+                        androidx.compose.ui.graphics.Brush.linearGradient(
+                            colors = listOf(Color(0xFF404040), Color(0xFF606060))
+                        )
+                    )
                     .clickable { showColorPicker = true }
-            )
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(color)
+                )
+            }
         }
     }
     

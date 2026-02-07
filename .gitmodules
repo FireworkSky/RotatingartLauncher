@@ -7,9 +7,6 @@
 [submodule "app/src/main/cpp/Theorafile"]
 	path = app/src/main/cpp/Theorafile
 	url = https://github.com/FNA-XNA/Theorafile.git
-[submodule "app/src/main/cpp/SDL3"]
-	path = app/src/main/cpp/SDL3
-	url = https://github.com/libsdl-org/SDL.git
 [submodule "app/src/main/cpp/box64"]
 	path = app/src/main/cpp/box64
 	url = https://github.com/RotatingArtDev/box64.git
@@ -22,3 +19,6 @@
 [submodule "app/src/main/cpp/FMOD_SDL"]
 	path = app/src/main/cpp/FMOD_SDL
 	url = https://github.com/RotatingArtDev/FMOD_SDL.git
+[submodule "app/src/main/cpp/SDL"]
+	path = app/src/main/cpp/SDL
+	url = https://github.com/libsdl-org/SDL.git

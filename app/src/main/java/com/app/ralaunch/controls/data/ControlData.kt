@@ -445,8 +445,8 @@ sealed class ControlData {
     var textOpacity: Float = 1.0f // 0.0 - 1.0 (文本透明度，默认1.0)
     var textColor: Int = -0x1F1F20 // 文本颜色（默认柔和白 0xFFE0E0E0）
     var bgColor: Int = -0x7f7f80 // 灰色背景（更清晰可见）
-    var strokeColor: Int = 0x00000000 // 透明边框（无边框）
-    var strokeWidth: Float= 0f // dp单位 // 无边框宽度
+    var strokeColor: Int = 0x66FFFFFF // 半透明白色边框（40%不透明度）
+    var strokeWidth: Float= 1f // dp单位 // 默认1dp边框
     var cornerRadius: Float = 2f // dp单位 // 矩形只有一点点圆角
     var isVisible: Boolean = true
     var isPassThrough: Boolean = false // 触摸穿透：是否将触摸传递给游戏（默认 false）
@@ -679,5 +679,13 @@ sealed class ControlData {
         
         /** 轮盘纹理配置 */
         var texture: RadialMenuTextureConfig = RadialMenuTextureConfig()
+        
+        /** 编辑器中是否预览展开状态（不序列化） */
+        @kotlinx.serialization.Transient
+        var editorPreviewExpanded: Boolean = false
+        
+        /** 编辑器中选中的扇区索引 (-1 = 无选中)（不序列化） */
+        @kotlinx.serialization.Transient
+        var editorSelectedSector: Int = -1
     }
 }

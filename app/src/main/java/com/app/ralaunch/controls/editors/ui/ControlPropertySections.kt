@@ -13,6 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.app.ralaunch.controls.data.ControlData
@@ -498,6 +499,30 @@ fun RadialMenuPropertySection(
     onUpdate: (ControlData) -> Unit
 ) {
     PropertySection(title = "轮盘设置") {
+        // 预览展开开关
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text("预览展开状态", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
+                Text("在编辑器中查看展开后的扇区布局", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            Switch(
+                checked = control.editorPreviewExpanded,
+                onCheckedChange = {
+                    val updated = control.deepCopy() as ControlData.RadialMenu
+                    updated.editorPreviewExpanded = it
+                    // 关闭预览时重置选中扇区
+                    updated.editorSelectedSector = if (it) control.editorSelectedSector else -1
+                    onUpdate(updated)
+                }
+            )
+        }
+        
+        HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+        
         Text("扇区数量: ${control.sectorCount}", style = MaterialTheme.typography.labelMedium)
         Slider(
             value = control.sectorCount.toFloat(),
@@ -510,6 +535,9 @@ fun RadialMenuPropertySection(
                         label = "${updated.sectors.size + 1}"
                     ))
                 }
+                // 保持预览状态
+                updated.editorPreviewExpanded = control.editorPreviewExpanded
+                updated.editorSelectedSector = control.editorSelectedSector
                 onUpdate(updated)
             },
             valueRange = 4f..12f,
@@ -522,6 +550,8 @@ fun RadialMenuPropertySection(
             onValueChange = { newValue ->
                 val updated = control.deepCopy() as ControlData.RadialMenu
                 updated.expandedScale = newValue * 4f
+                updated.editorPreviewExpanded = control.editorPreviewExpanded
+                updated.editorSelectedSector = control.editorSelectedSector
                 onUpdate(updated)
             }
         )
@@ -532,6 +562,8 @@ fun RadialMenuPropertySection(
             onValueChange = { newValue ->
                 val updated = control.deepCopy() as ControlData.RadialMenu
                 updated.deadZoneRatio = newValue
+                updated.editorPreviewExpanded = control.editorPreviewExpanded
+                updated.editorSelectedSector = control.editorSelectedSector
                 onUpdate(updated)
             }
         )
@@ -542,6 +574,8 @@ fun RadialMenuPropertySection(
             onValueChange = {
                 val updated = control.deepCopy() as ControlData.RadialMenu
                 updated.expandDuration = it.toInt()
+                updated.editorPreviewExpanded = control.editorPreviewExpanded
+                updated.editorSelectedSector = control.editorSelectedSector
                 onUpdate(updated)
             },
             valueRange = 50f..500f,
@@ -559,60 +593,63 @@ fun RadialMenuPropertySection(
                 onCheckedChange = {
                     val updated = control.deepCopy() as ControlData.RadialMenu
                     updated.showDividers = it
+                    updated.editorPreviewExpanded = control.editorPreviewExpanded
+                    updated.editorSelectedSector = control.editorSelectedSector
                     onUpdate(updated)
                 }
             )
         }
     }
 
-    PropertySection(title = "颜色") {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text("选中高亮", style = MaterialTheme.typography.bodyMedium)
-            Box(
-                modifier = Modifier
-                    .size(32.dp)
-                    .clip(CircleShape)
-                    .background(Color(control.selectedColor))
-                    .clickable {
-                        // TODO: 接入颜色选择器
-                    }
-            )
-        }
+    PropertySection(title = "轮盘颜色") {
+        ColorPickerRow(
+            label = "选中高亮",
+            color = Color(control.selectedColor),
+            onColorSelected = { color ->
+                val updated = control.deepCopy() as ControlData.RadialMenu
+                updated.selectedColor = color.toArgb()
+                updated.editorPreviewExpanded = control.editorPreviewExpanded
+                updated.editorSelectedSector = control.editorSelectedSector
+                onUpdate(updated)
+            }
+        )
         
-        Spacer(modifier = Modifier.height(8.dp))
-        
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text("分隔线颜色", style = MaterialTheme.typography.bodyMedium)
-            Box(
-                modifier = Modifier
-                    .size(32.dp)
-                    .clip(CircleShape)
-                    .background(Color(control.dividerColor))
-                    .clickable {
-                        // TODO: 接入颜色选择器
-                    }
-            )
-        }
+        ColorPickerRow(
+            label = "分隔线颜色",
+            color = Color(control.dividerColor),
+            onColorSelected = { color ->
+                val updated = control.deepCopy() as ControlData.RadialMenu
+                updated.dividerColor = color.toArgb()
+                updated.editorPreviewExpanded = control.editorPreviewExpanded
+                updated.editorSelectedSector = control.editorSelectedSector
+                onUpdate(updated)
+            }
+        )
     }
     
-    PropertySection(title = "扇区按键绑定") {
+    PropertySection(title = "扇区按键绑定 (点击选中)") {
         val sectorCount = control.sectorCount.coerceAtMost(control.sectors.size)
         for (i in 0 until sectorCount) {
             val sector = control.sectors[i]
+            val isSectorSelected = control.editorPreviewExpanded && control.editorSelectedSector == i
             RadialMenuSectorRow(
                 index = i,
                 sector = sector,
+                isSelected = isSectorSelected,
+                onSelect = if (control.editorPreviewExpanded) {
+                    {
+                        val updated = control.deepCopy() as ControlData.RadialMenu
+                        updated.editorPreviewExpanded = control.editorPreviewExpanded
+                        // 切换选中：再次点击取消选中
+                        updated.editorSelectedSector = if (control.editorSelectedSector == i) -1 else i
+                        onUpdate(updated)
+                    }
+                } else null,
                 onSectorChange = { updatedSector ->
                     val updated = control.deepCopy() as ControlData.RadialMenu
                     updated.sectors[i] = updatedSector
+                    updated.editorPreviewExpanded = control.editorPreviewExpanded
+                    updated.editorSelectedSector = control.editorSelectedSector
                     onUpdate(updated)
                 }
             )

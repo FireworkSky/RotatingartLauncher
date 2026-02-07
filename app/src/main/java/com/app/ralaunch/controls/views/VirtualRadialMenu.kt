@@ -57,6 +57,17 @@ class VirtualRadialMenu(
     override var controlData: ControlData = data
         set(value) {
             field = value
+            // 编辑器预览展开状态变化时，自动切换展开/收起
+            val newData = value as? ControlData.RadialMenu
+            if (newData != null) {
+                if (newData.editorPreviewExpanded && mExpandProgress == 0f) {
+                    mExpandProgress = 1f
+                    mIsExpanded = true
+                } else if (!newData.editorPreviewExpanded && mExpandProgress == 1f && mActivePointerId < 0) {
+                    mExpandProgress = 0f
+                    mIsExpanded = false
+                }
+            }
             initPaints()
             invalidate()
         }
@@ -85,6 +96,9 @@ class VirtualRadialMenu(
     private lateinit var mTextPaint: TextPaint
     private lateinit var mStrokePaint: Paint
     private lateinit var mCenterIconPaint: Paint
+    private lateinit var mEditorSelectedPaint: Paint       // 编辑器选中扇区画笔
+    private lateinit var mEditorSelectedGlowPaint: Paint   // 编辑器选中扇区发光画笔
+    private lateinit var mSectorIndexPaint: TextPaint       // 扇区序号画笔
     private val mRectF = RectF()
     private val mSectorPath = Path()
 
@@ -187,6 +201,23 @@ class VirtualRadialMenu(
             alpha = (data.textOpacity * 200).toInt()
             strokeWidth = dpToPx(1.5f)
         }
+
+        // 编辑器选中扇区画笔（蓝色高亮，区别于游戏中的白色选中）
+        mEditorSelectedPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            style = Paint.Style.FILL
+            color = Color.argb(100, 66, 165, 245) // Material Blue 400, 40% 不透明度
+        }
+        mEditorSelectedGlowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            style = Paint.Style.FILL
+            color = Color.argb(50, 66, 165, 245) // 外层发光
+        }
+        // 扇区序号画笔
+        mSectorIndexPaint = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = Color.argb(180, 255, 255, 255)
+            textSize = dpToPx(8f)
+            textAlign = Paint.Align.CENTER
+            typeface = Typeface.DEFAULT
+        }
     }
 
     /**
@@ -214,9 +245,16 @@ class VirtualRadialMenu(
         val centerY = height / 2f
         val baseRadius = min(width, height) / 2f
 
-        if (mExpandProgress > 0f) {
-            // 绘制展开状态
+        // 编辑器预览模式下强制展开
+        val shouldShowExpanded = mExpandProgress > 0f || castedData.editorPreviewExpanded
+
+        if (shouldShowExpanded) {
+            // 预览模式直接以100%展开绘制
+            val effectiveProgress = if (castedData.editorPreviewExpanded && mExpandProgress == 0f) 1f else mExpandProgress
+            val savedProgress = mExpandProgress
+            mExpandProgress = effectiveProgress
             drawExpandedState(canvas, centerX, centerY, baseRadius)
+            mExpandProgress = savedProgress
         } else {
             // 绘制收起状态
             drawCollapsedState(canvas, centerX, centerY, baseRadius)
@@ -283,12 +321,47 @@ class VirtualRadialMenu(
         mBackgroundPaint.alpha = (data.opacity * 0.7f * 255 * mExpandProgress).toInt()
         canvas.drawCircle(centerX, centerY, expandedRadius, mBackgroundPaint)
 
+        // 编辑器选中扇区索引
+        val editorSelSector = data.editorSelectedSector
+        val isEditorPreview = data.editorPreviewExpanded
+
         // 绘制各扇区
         for (i in 0 until sectorCount) {
             val startAngle = -90f + i * sectorAngle - sectorAngle / 2
             val isSelected = i == mSelectedSector
+            val isEditorSelected = isEditorPreview && i == editorSelSector
 
-            // 选中高亮（带发光效果）
+            // 编辑器选中高亮（蓝色，优先级低于游戏中的选中高亮）
+            if (isEditorSelected && !isSelected) {
+                // 外层发光
+                mSectorPath.reset()
+                mSectorPath.moveTo(centerX, centerY)
+                mRectF.set(
+                    centerX - expandedRadius,
+                    centerY - expandedRadius,
+                    centerX + expandedRadius,
+                    centerY + expandedRadius
+                )
+                mSectorPath.arcTo(mRectF, startAngle, sectorAngle)
+                mSectorPath.close()
+                canvas.drawPath(mSectorPath, mEditorSelectedGlowPaint)
+
+                // 内层高亮
+                mSectorPath.reset()
+                val highlightRadius = expandedRadius * 0.97f
+                mSectorPath.moveTo(centerX, centerY)
+                mRectF.set(
+                    centerX - highlightRadius,
+                    centerY - highlightRadius,
+                    centerX + highlightRadius,
+                    centerY + highlightRadius
+                )
+                mSectorPath.arcTo(mRectF, startAngle, sectorAngle)
+                mSectorPath.close()
+                canvas.drawPath(mSectorPath, mEditorSelectedPaint)
+            }
+
+            // 游戏中选中高亮（带发光效果）
             if (isSelected) {
                 // 外层发光
                 mSectorPath.reset()
@@ -342,6 +415,8 @@ class VirtualRadialMenu(
                 val iconSize = (dpToPx(20f) * mExpandProgress).toInt().coerceAtLeast(1)
                 val icon = if (sector.iconPath.isNotEmpty()) loadSectorIcon(sector.iconPath, iconSize) else null
 
+                val isHighlighted = isSelected || isEditorSelected
+
                 if (icon != null && !icon.isRecycled) {
                     // 绘制图标
                     val iconPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -358,7 +433,7 @@ class VirtualRadialMenu(
                     if (label.isNotEmpty()) {
                         mTextPaint.textSize = dpToPx(9f) * mExpandProgress
                         mTextPaint.alpha = (data.textOpacity * 255 * mExpandProgress).toInt()
-                        if (isSelected) {
+                        if (isHighlighted) {
                             mTextPaint.typeface = Typeface.DEFAULT_BOLD
                         }
                         val textYPos = labelY + icon.height / 2f + dpToPx(2f)
@@ -374,17 +449,42 @@ class VirtualRadialMenu(
                             .removePrefix("XBOX_BUTTON_")
                     }
 
-                    val fontSize = if (isSelected) dpToPx(13f) else dpToPx(11f)
+                    val fontSize = if (isHighlighted) dpToPx(13f) else dpToPx(11f)
                     mTextPaint.textSize = fontSize * mExpandProgress
-                    mTextPaint.alpha = if (isSelected) {
+                    mTextPaint.alpha = if (isHighlighted) {
                         (255 * mExpandProgress).toInt()
                     } else {
                         (data.textOpacity * 220 * mExpandProgress).toInt()
                     }
-                    mTextPaint.typeface = if (isSelected) Typeface.DEFAULT_BOLD else Typeface.DEFAULT
+                    mTextPaint.typeface = if (isHighlighted) Typeface.DEFAULT_BOLD else Typeface.DEFAULT
 
                     val textYPos = labelY - (mTextPaint.descent() + mTextPaint.ascent()) / 2
                     canvas.drawText(label, labelX, textYPos, mTextPaint)
+                }
+
+                // 编辑器预览模式下绘制扇区序号（靠近外圈边缘）
+                if (isEditorPreview) {
+                    val indexRadius = expandedRadius * 0.88f
+                    val indexX = centerX + (indexRadius * cos(midAngleRad)).toFloat()
+                    val indexY = centerY + (indexRadius * sin(midAngleRad)).toFloat()
+                    
+                    // 序号背景圆
+                    val indexBgPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                        style = Paint.Style.FILL
+                        color = if (isEditorSelected) {
+                            Color.argb(200, 66, 165, 245) // 选中时蓝色
+                        } else {
+                            Color.argb(120, 0, 0, 0) // 未选中时黑色半透明
+                        }
+                    }
+                    val indexCircleRadius = dpToPx(7f)
+                    canvas.drawCircle(indexX, indexY, indexCircleRadius, indexBgPaint)
+                    
+                    // 序号文字
+                    mSectorIndexPaint.textSize = dpToPx(8f)
+                    mSectorIndexPaint.color = Color.WHITE
+                    val indexTextY = indexY - (mSectorIndexPaint.descent() + mSectorIndexPaint.ascent()) / 2
+                    canvas.drawText("${i + 1}", indexX, indexTextY, mSectorIndexPaint)
                 }
             }
         }
@@ -405,16 +505,30 @@ class VirtualRadialMenu(
         mBackgroundPaint.shader = null
 
         // 中心文字 (选中扇区的标签或轮盘名)
-        if (mSelectedSector >= 0 && mSelectedSector < data.sectors.size) {
-            val selectedLabel = data.sectors[mSelectedSector].label.ifEmpty {
-                data.sectors[mSelectedSector].keycode.name
+        // 优先显示游戏选中扇区，其次编辑器选中扇区
+        val displaySector = when {
+            mSelectedSector >= 0 && mSelectedSector < data.sectors.size -> mSelectedSector
+            isEditorPreview && editorSelSector >= 0 && editorSelSector < data.sectors.size -> editorSelSector
+            else -> -1
+        }
+        
+        if (displaySector >= 0) {
+            val selectedLabel = data.sectors[displaySector].label.ifEmpty {
+                data.sectors[displaySector].keycode.name
                     .removePrefix("KEYBOARD_").removePrefix("MOUSE_").removePrefix("XBOX_BUTTON_")
             }
             mTextPaint.textSize = dpToPx(11f) * mExpandProgress
             mTextPaint.alpha = (255 * mExpandProgress).toInt()
             mTextPaint.typeface = Typeface.DEFAULT_BOLD
+            
+            // 编辑器模式下显示 "扇区N: 标签"
+            val centerLabel = if (isEditorPreview && mSelectedSector < 0) {
+                "#${displaySector + 1} $selectedLabel"
+            } else {
+                selectedLabel
+            }
             val textY = centerY - (mTextPaint.descent() + mTextPaint.ascent()) / 2
-            canvas.drawText(selectedLabel, centerX, textY, mTextPaint)
+            canvas.drawText(centerLabel, centerX, textY, mTextPaint)
         } else {
             // 未选中时显示轮盘名
             val centerText = data.name.ifEmpty { "◎" }
