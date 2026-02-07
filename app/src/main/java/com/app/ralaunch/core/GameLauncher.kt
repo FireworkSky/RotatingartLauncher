@@ -98,7 +98,7 @@ object GameLauncher {
 
             // 核心运行时库（必须打包在 APK 中）
             // Core runtime libraries (must be bundled in APK)
-            System.loadLibrary("netcorehost")
+            System.loadLibrary("dotnethost")
             System.loadLibrary("FAudio")
             System.loadLibrary("theorafile")
             System.loadLibrary("SDL2")

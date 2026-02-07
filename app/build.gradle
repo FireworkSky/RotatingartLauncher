@@ -77,7 +77,7 @@ android {
             useLegacyPackaging = true
             // Debug 版本保留符号便于调试，Release 版本移除符号减小体积
             // keepDebugSymbols += ['**/*.so']  // 仅 debug 时启用
-            pickFirsts += ['lib/arm64-v8a/libc++_shared.so', 'lib/arm64-v8a/libnetcorehost.so']
+            pickFirsts += ['lib/arm64-v8a/libc++_shared.so', 'lib/arm64-v8a/libdotnethost.so']
             
             // 排除运行时动态加载的大型库（改为压缩存储在 assets 中）
             // 这些库在运行时通过 RuntimeLibraryLoader 解压并用 System.load() 加载
@@ -152,6 +152,10 @@ dependencies {
     implementation libs.kotlinx.coroutines.core
     implementation libs.kotlinx.coroutines.android
     implementation libs.kotlinx.serialization.json
+
+    // Haze (Glassmorphism blur)
+    implementation libs.haze
+    implementation libs.haze.materials
 
     // Compose
     implementation platform(libs.compose.bom)

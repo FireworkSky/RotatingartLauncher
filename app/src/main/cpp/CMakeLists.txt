@@ -45,9 +45,9 @@ set(SDL2_INCLUDE_DIRS ${SDL_SOURCE_DIR}/include)
 set(SDL2_LIBRARIES SDL2)
 add_subdirectory(${FAUDIO_SOURCE_DIR})
 
-# netcorehost (.NET Core Hosting)
-set(NETCOREHOST_SOURCE_DIR ${CMAKE_SOURCE_DIR}/netcorehost)
-add_subdirectory(${NETCOREHOST_SOURCE_DIR})
+# dotnethost (.NET Hosting API)
+set(DOTNETHOST_SOURCE_DIR ${CMAKE_SOURCE_DIR}/dotnethost)
+add_subdirectory(${DOTNETHOST_SOURCE_DIR})
 
 # liblinkernsbypass（绕过 Android 命名空间限制）
 add_subdirectory(${CMAKE_SOURCE_DIR}/liblinkernsbypass)
@@ -74,5 +74,5 @@ add_subdirectory(FMOD_SDL_BUILD_DEPS)
 add_subdirectory(main)
 
 # 安装目标
-install(TARGETS main SDL2 FAudio-shared FNA3D netcorehost fmod_SDL DESTINATION ${CMAKE_INSTALL_LIBDIR})
+install(TARGETS main SDL2 FAudio-shared FNA3D dotnethost fmod_SDL DESTINATION ${CMAKE_INSTALL_LIBDIR})
 install(TARGETS GL_gl4es EGL_gl4es DESTINATION ${CMAKE_INSTALL_LIBDIR})

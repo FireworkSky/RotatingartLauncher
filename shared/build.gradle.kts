@@ -31,6 +31,10 @@ kotlin {
                 implementation(libs.kotlinx.serialization.json)
                 implementation(libs.kotlinx.datetime)
 
+                // Haze (Glassmorphism blur)
+                implementation(libs.haze)
+                implementation(libs.haze.materials)
+
                 // Koin DI
                 implementation(libs.koin.core)
                 implementation(libs.koin.compose)

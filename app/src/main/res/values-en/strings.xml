@@ -689,6 +689,8 @@
 
     <!-- KeySelectorDialog Messages -->
     <string name="editor_keyboard">Keyboard</string>
+    <string name="key_selector_keyboard_mode">Keyboard</string>
+    <string name="key_selector_gamepad_mode">Gamepad</string>
 
     <!-- GameAdapter Messages -->
     <string name="game_shortcut">Shortcut</string>
@@ -856,13 +858,19 @@
     <string name="gog_login_title">Login to GOG</string>
     <string name="gog_login_subtitle">Access your DRM-Free game library</string>
     <string name="gog_email_hint">Email Address</string>
+    <string name="gog_email_label">Email Address</string>
     <string name="gog_password_hint">Password</string>
+    <string name="gog_password_label">Password</string>
     <string name="gog_visit_website">Visit Website</string>
     <string name="gog_login_button">Login</string>
     <string name="gog_user">GOG User</string>
     <string name="gog_library">Library</string>
     <string name="gog_search_hint">Search Games</string>
+    <string name="gog_search_placeholder">Search games...</string>
     <string name="gog_logout_button">Logout</string>
+    <string name="gog_logout">Logout</string>
+    <string name="gog_select_game">Select a game</string>
+    <string name="installed">Installed</string>
     <string name="gog_no_games_found">No Games Found</string>
     <string name="gog_no_games_message">Your GOG library is empty</string>
     <string name="gog_loading">Loading...</string>
@@ -1354,4 +1362,38 @@
     <string name="import_online_download_hint">Download mod loader from network</string>
     <string name="import_summary">Import Summary</string>
     <string name="import_progress_title">Import Progress</string>
+
+    <!-- Init component descriptions -->
+    <string name="init_component_runtime_libs_desc">Runtime libraries (renderer, etc.)</string>
+    <string name="init_extracting_runtime_libs">Extracting runtime libs...</string>
+    <string name="init_extraction_failed_simple">Extraction failed</string>
+
+    <!-- Navigation -->
+    <string name="nav_multiplayer">Multiplayer</string>
+
+    <!-- Multiplayer / EasyTier -->
+    <string name="multiplayer_title">Multiplayer</string>
+    <string name="multiplayer_settings">Multiplayer Settings</string>
+    <string name="multiplayer_network_name">Network Name</string>
+    <string name="multiplayer_network_name_hint">Enter room name</string>
+    <string name="multiplayer_network_secret">Network Secret</string>
+    <string name="multiplayer_network_secret_hint">Enter room password</string>
+    <string name="multiplayer_status_disconnected">Disconnected</string>
+    <string name="multiplayer_status_connecting">Connecting...</string>
+    <string name="multiplayer_status_connected">Connected</string>
+    <string name="multiplayer_join_network">Join Network</string>
+    <string name="multiplayer_disconnect">Disconnect</string>
+    <string name="multiplayer_network_nodes">Network Nodes</string>
+    <string name="multiplayer_local_node">Local</string>
+    <string name="multiplayer_online">Online</string>
+    <string name="multiplayer_waiting_players">Waiting for players...</string>
+    <string name="multiplayer_share_hint">Share network name and secret with friends so they can join the same network</string>
+    <string name="multiplayer_not_connected">Not connected</string>
+    <string name="multiplayer_connect_hint">Enter network name and secret, then tap \"Join Network\" to start</string>
+    <string name="multiplayer_powered_by">Powered by EasyTier P2P. NAT traversal, no public IP required.</string>
+    <string name="multiplayer_connection_error">Connection error</string>
+    <string name="multiplayer_connect_failed">Connect failed: %s</string>
+    <string name="multiplayer_disconnect_failed">Disconnect failed: %s</string>
+    <string name="multiplayer_nodes_count">%d nodes</string>
+    <string name="multiplayer_unknown_host">Unknown host</string>
 </resources>

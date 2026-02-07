@@ -1,5 +1,6 @@
 package com.app.ralaunch.shared.ui.components
 
+import androidx.compose.animation.Crossfade
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
@@ -7,26 +8,36 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
-import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.app.ralaunch.shared.ui.navigation.NavDestination
 import com.app.ralaunch.shared.ui.theme.AppThemeState
+import com.app.ralaunch.shared.ui.theme.LocalHazeState
+import com.app.ralaunch.shared.ui.theme.RaLaunchTheme
+import dev.chrisbanes.haze.hazeChild
+import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
+import dev.chrisbanes.haze.materials.HazeMaterials
 
 /**
  * 导航目的地 (兼容别名)
@@ -41,8 +52,17 @@ import com.app.ralaunch.shared.ui.theme.AppThemeState
 typealias NavigationDestination = NavDestination
 
 /**
- * 应用导航栏 - 现代化手柄风格定制版
+ * 应用导航栏 - Material Design 3 丝滑滑动风格
+ *
+ * 特性：
+ * - 毛玻璃背景（当 HazeState 可用时）
+ * - 丝滑滑动指示器（单个药丸在项目间 spring 弹性滑动）
+ * - 左侧发光条随指示器移动
+ * - Crossfade 图标过渡
+ * - 弹性按压缩放
+ * - 指示器切换脉冲
  */
+@OptIn(ExperimentalHazeMaterialsApi::class)
 @Composable
 fun AppNavigationRail(
     currentDestination: NavDestination?,
@@ -50,144 +70,300 @@ fun AppNavigationRail(
     modifier: Modifier = Modifier,
     logo: (@Composable () -> Unit)? = null
 ) {
+    // 主题响应
     val themeMode by AppThemeState.themeMode.collectAsState()
     val themeColor by AppThemeState.themeColor.collectAsState()
-    
-    key(themeMode, themeColor) {
-        Surface(
-            modifier = modifier
-                .fillMaxHeight()
-                .width(88.dp),
-            color = Color.Transparent,
-            tonalElevation = 0.dp
+    val hazeState = LocalHazeState.current
+    val surfaceColor = MaterialTheme.colorScheme.surface
+    val primaryColor = MaterialTheme.colorScheme.primary
+    val density = LocalDensity.current
+
+    // 导航项
+    val mainDestinations = remember { NavDestination.entries.filter { it != NavDestination.SETTINGS } }
+
+    // ====== 滑动指示器状态 ======
+
+    // 跟踪每个项目的中心 Y 坐标（根坐标系）
+    var containerTopY by remember { mutableFloatStateOf(0f) }
+    val itemCenterYs = remember { mutableStateMapOf<NavDestination, Float>() }
+
+    // 记住上次的主导航目的地（子页面时保持指示器位置）
+    var lastMainDest by remember { mutableStateOf(NavDestination.GAMES) }
+    LaunchedEffect(currentDestination) {
+        if (currentDestination != null) {
+            lastMainDest = currentDestination
+        }
+    }
+    val selectedDest = currentDestination ?: lastMainDest
+
+    // 指示器 Y 坐标动画（Animatable 实现首次 snap + 后续 spring）
+    val indicatorY = remember { Animatable(0f) }
+    var indicatorReady by remember { mutableStateOf(false) }
+
+    // 目标位置（响应选中项 + 位置测量变化）
+    val targetCenterY by remember {
+        derivedStateOf {
+            itemCenterYs[selectedDest] ?: 0f
+        }
+    }
+
+    // 驱动指示器平滑滑动
+    LaunchedEffect(targetCenterY) {
+        if (targetCenterY > 0f) {
+            if (!indicatorReady) {
+                // 首次：直接跳到位置，无动画
+                indicatorY.snapTo(targetCenterY)
+                indicatorReady = true
+            } else {
+                // 后续：快速弹性滑动（加速响应）
+                indicatorY.animateTo(
+                    targetCenterY,
+                    animationSpec = spring(
+                        dampingRatio = 0.75f,
+                        stiffness = 400f
+                    )
+                )
+            }
+        }
+    }
+
+    // 指示器缩放脉冲（切换时轻微放大再回弹）
+    val indicatorScale = remember { Animatable(1f) }
+    LaunchedEffect(selectedDest) {
+        if (indicatorReady) {
+            indicatorScale.animateTo(1.1f, tween(80, easing = FastOutSlowInEasing))
+            indicatorScale.animateTo(1f, spring(dampingRatio = 0.5f, stiffness = 300f))
+        }
+    }
+
+    // ====== UI 渲染 ======
+
+    // 毛玻璃容器
+    val baseModifier = modifier
+        .fillMaxHeight()
+        .width(88.dp)
+
+    val hazeModifier = if (hazeState != null) {
+        baseModifier.hazeChild(
+            state = hazeState,
+            style = HazeMaterials.thin(surfaceColor)
+        )
+    } else {
+        baseModifier.background(surfaceColor.copy(alpha = 0.85f))
+    }
+
+    Surface(
+        modifier = hazeModifier,
+        color = Color.Transparent,
+        tonalElevation = 0.dp
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .onGloballyPositioned { coords ->
+                    containerTopY = coords.positionInRoot().y
+                }
         ) {
+            // ===== 滑动指示器 =====
+            if (indicatorReady) {
+                val pillHeight = 52.dp
+                val pillWidth = 60.dp
+                val glowBarHeight = 28.dp
+                val localCenterY = indicatorY.value - containerTopY
+                val offsetY = with(density) { localCenterY.toDp() } - pillHeight / 2
+
+                // 药丸背景 - M3 风格活跃指示器
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .offset(y = offsetY)
+                        .size(pillWidth, pillHeight)
+                        .scale(indicatorScale.value)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(primaryColor.copy(alpha = 0.12f))
+                        // 柔和辉光
+                        .drawBehind {
+                            drawRoundRect(
+                                brush = Brush.radialGradient(
+                                    colors = listOf(
+                                        primaryColor.copy(alpha = 0.08f),
+                                        Color.Transparent
+                                    ),
+                                    center = center,
+                                    radius = size.maxDimension * 0.8f
+                                ),
+                                cornerRadius = CornerRadius(16f)
+                            )
+                        }
+                )
+
+                // 左侧发光条
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .offset(y = offsetY + (pillHeight - glowBarHeight) / 2)
+                        .width(3.5.dp)
+                        .height(glowBarHeight)
+                        .scale(indicatorScale.value)
+                        .clip(RoundedCornerShape(topEnd = 6.dp, bottomEnd = 6.dp))
+                        .background(
+                            Brush.verticalGradient(
+                                colors = listOf(
+                                    primaryColor.copy(alpha = 0.3f),
+                                    primaryColor,
+                                    primaryColor.copy(alpha = 0.3f)
+                                )
+                            )
+                        )
+                        .drawBehind {
+                            // 发光扩散
+                            drawRoundRect(
+                                brush = Brush.radialGradient(
+                                    colors = listOf(
+                                        primaryColor.copy(alpha = 0.25f),
+                                        Color.Transparent
+                                    ),
+                                    center = Offset(size.width / 2, size.height / 2),
+                                    radius = size.height * 0.5f
+                                ),
+                                topLeft = Offset(-8f, -4f),
+                                size = Size(size.width + 16f, size.height + 8f),
+                                cornerRadius = CornerRadius(8f)
+                            )
+                        }
+                )
+            }
+
+            // ===== 导航项列表 =====
             Column(
                 modifier = Modifier.fillMaxSize(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.SpaceBetween
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // 上部导航项
-                Column(
-                    modifier = Modifier.weight(1f),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.SpaceEvenly
-                ) {
-                    // 导航项列表 (排除设置)
-                    NavDestination.entries.filter { it != NavDestination.SETTINGS }.forEach { destination ->
-                        val isSelected = currentDestination == destination
-                        
-                        CustomRailItem(
-                            selected = isSelected,
-                            icon = if (isSelected) destination.selectedIcon else destination.unselectedIcon,
-                            label = destination.label,
-                            onClick = { onNavigate(destination) }
-                        )
-                    }
+                // 主导航项（每项 weight(1f) 填满分配空间，消除点击死区）
+                mainDestinations.forEach { destination ->
+                    SilkyNavItem(
+                        destination = destination,
+                        isSelected = selectedDest == destination,
+                        onClick = { onNavigate(destination) },
+                        onPositioned = { rootCenterY ->
+                            itemCenterYs[destination] = rootCenterY
+                        },
+                        modifier = Modifier.weight(1f)
+                    )
                 }
 
-                // 设置项固定在底部
-                val isSettingsSelected = currentDestination == NavDestination.SETTINGS
-                CustomRailItem(
-                    selected = isSettingsSelected,
-                    icon = if (isSettingsSelected) NavDestination.SETTINGS.selectedIcon else NavDestination.SETTINGS.unselectedIcon,
-                    label = NavDestination.SETTINGS.label,
-                    onClick = { onNavigate(NavDestination.SETTINGS) }
+                // 设置项固定底部（不参与 weight 分配）
+                SilkyNavItem(
+                    destination = NavDestination.SETTINGS,
+                    isSelected = selectedDest == NavDestination.SETTINGS,
+                    onClick = { onNavigate(NavDestination.SETTINGS) },
+                    onPositioned = { rootCenterY ->
+                        itemCenterYs[NavDestination.SETTINGS] = rootCenterY
+                    }
                 )
-                
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(12.dp))
             }
         }
     }
 }
 
 /**
- * 定制化导航项 - 增加平滑动画和手柄感反馈
+ * 丝滑导航项 - 弹性按压 + Crossfade 图标 + 平滑颜色过渡
+ * 
+ * 使用 Box 填满 weight 分配的空间，消除项目间的点击死区
  */
 @Composable
-private fun CustomRailItem(
-    selected: Boolean,
-    icon: ImageVector,
-    label: String,
-    onClick: () -> Unit
+private fun SilkyNavItem(
+    destination: NavDestination,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    onPositioned: (Float) -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
-    
-    val scale by animateFloatAsState(
-        targetValue = if (isPressed) 0.92f else 1f,
-        animationSpec = spring(dampingRatio = Spring.DampingRatioLowBouncy)
-    )
+    val primaryColor = MaterialTheme.colorScheme.primary
 
-    val contentColor by animateColorAsState(
-        targetValue = if (selected) MaterialTheme.colorScheme.primary 
-                      else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-        animationSpec = tween(250)
-    )
-    
-    val indicatorHeight by animateDpAsState(
-        targetValue = if (selected) 36.dp else 0.dp,
+    // 弹性按压缩放
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.85f else 1f,
         animationSpec = spring(
             dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessLow
-        )
+            stiffness = Spring.StiffnessHigh
+        ),
+        label = "pressScale"
     )
 
+    // 快速颜色过渡（即时反馈选中状态）
+    val contentColor by animateColorAsState(
+        targetValue = if (isSelected) primaryColor
+                      else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+        animationSpec = tween(120, easing = FastOutSlowInEasing),
+        label = "navColor"
+    )
+
+    // 图标大小脉冲（加速响应）
+    val iconSize by animateDpAsState(
+        targetValue = if (isSelected) 26.dp else 22.dp,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessHigh
+        ),
+        label = "iconPulse"
+    )
+
+    // Box 填满分配空间（weight），整个区域可点击
     Box(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
-            .scale(scale)
             .clickable(
                 interactionSource = interactionSource,
-                indication = ripple(bounded = false, radius = 32.dp),
+                indication = ripple(bounded = false, radius = 28.dp),
                 onClick = onClick
             )
-            .padding(vertical = 8.dp),
+            .onGloballyPositioned { coords ->
+                val centerY = coords.positionInRoot().y + coords.size.height / 2f
+                onPositioned(centerY)
+            },
         contentAlignment = Alignment.Center
     ) {
-        // 左侧选中指示条 - 弹性高度
-        Box(
-            modifier = Modifier
-                .align(Alignment.CenterStart)
-                .width(4.dp)
-                .height(indicatorHeight)
-                .clip(RoundedCornerShape(topEnd = 6.dp, bottomEnd = 6.dp))
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(
-                            MaterialTheme.colorScheme.primary.copy(alpha = 0.7f),
-                            MaterialTheme.colorScheme.primary,
-                            MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
-                        )
-                    )
-                )
-        )
-
         Column(
+            modifier = Modifier.scale(scale),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = label,
-                tint = contentColor,
-                modifier = Modifier.size(28.dp)
-            )
-            Spacer(modifier = Modifier.height(6.dp))
+            // Crossfade：填充 ↔ 轮廓图标快速过渡
+            Crossfade(
+                targetState = isSelected,
+                animationSpec = tween(140),
+                label = "iconCrossfade"
+            ) { selected ->
+                Icon(
+                    imageVector = if (selected) destination.selectedIcon else destination.unselectedIcon,
+                    contentDescription = destination.label,
+                    tint = contentColor,
+                    modifier = Modifier.size(iconSize)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(4.dp))
+
             Text(
-                text = label,
+                text = destination.label,
                 style = MaterialTheme.typography.labelSmall,
                 color = contentColor,
-                fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
-                fontSize = 11.sp,
-                letterSpacing = 0.5.sp
+                fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                fontSize = if (isSelected) 10.sp else 9.sp,
+                letterSpacing = 0.3.sp
             )
         }
     }
 }
 
 /**
- * 底部导航栏 - 现代化定制版
+ * 底部导航栏 - Material Design 3 毛玻璃风格
  */
+@OptIn(ExperimentalHazeMaterialsApi::class)
 @Composable
 fun AppNavigationBar(
     currentDestination: NavDestination?,
@@ -196,14 +372,28 @@ fun AppNavigationBar(
 ) {
     val themeMode by AppThemeState.themeMode.collectAsState()
     val themeColor by AppThemeState.themeColor.collectAsState()
-    
+    val hazeState = LocalHazeState.current
+    val surfaceColor = MaterialTheme.colorScheme.surface
+
     key(themeMode, themeColor) {
+        val baseModifier = modifier
+            .fillMaxWidth()
+            .height(80.dp)
+
+        val hazeModifier = if (hazeState != null) {
+            baseModifier.hazeChild(
+                state = hazeState,
+                style = HazeMaterials.thin(surfaceColor)
+            )
+        } else {
+            baseModifier
+        }
+
         Surface(
-            modifier = modifier
-                .fillMaxWidth()
-                .height(80.dp),
-            color = MaterialTheme.colorScheme.surface.copy(alpha = 0.8f),
-            tonalElevation = 4.dp
+            modifier = hazeModifier,
+            color = if (hazeState != null) Color.Transparent
+                    else MaterialTheme.colorScheme.surface.copy(alpha = 0.85f),
+            tonalElevation = if (hazeState != null) 0.dp else 4.dp
         ) {
             Row(
                 modifier = Modifier.fillMaxSize(),
@@ -212,24 +402,45 @@ fun AppNavigationBar(
             ) {
                 NavDestination.entries.forEach { destination ->
                     val isSelected = currentDestination == destination
-                    
+                    val primaryColor = MaterialTheme.colorScheme.primary
+
+                    val contentColor by animateColorAsState(
+                        targetValue = if (isSelected) primaryColor
+                                      else MaterialTheme.colorScheme.onSurfaceVariant,
+                        label = "navBarColor"
+                    )
+
                     Box(
                         modifier = Modifier
                             .weight(1f)
                             .fillMaxHeight()
-                            .clickable(onClick = { onNavigate(destination) }),
+                            .clickable(onClick = { onNavigate(destination) })
+                            // 选中时底部发光
+                            .drawBehind {
+                                if (isSelected) {
+                                    drawRoundRect(
+                                        brush = Brush.verticalGradient(
+                                            colors = listOf(
+                                                Color.Transparent,
+                                                primaryColor.copy(alpha = 0.15f)
+                                            )
+                                        ),
+                                        cornerRadius = CornerRadius(8f)
+                                    )
+                                }
+                            },
                         contentAlignment = Alignment.Center
                     ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Icon(
                                 imageVector = if (isSelected) destination.selectedIcon else destination.unselectedIcon,
                                 contentDescription = destination.label,
-                                tint = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                                tint = contentColor
                             )
                             Text(
                                 text = destination.label,
                                 style = MaterialTheme.typography.labelSmall,
-                                color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                                color = contentColor
                             )
                         }
                     }

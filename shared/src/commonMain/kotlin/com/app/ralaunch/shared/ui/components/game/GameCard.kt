@@ -13,24 +13,32 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.SportsEsports
-import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.app.ralaunch.shared.ui.model.GameItemUi
+import com.app.ralaunch.shared.ui.theme.RaLaunchTheme
 
 /**
- * 游戏卡片组件
+ * 游戏卡片组件 - Material Design 3 + 发光选中效果
  * 
- * 显示单个游戏的卡片，包含图标、名称和快捷方式标签
+ * 特性：
+ * - 选中态外发光效果
+ * - 弹性缩放动画
+ * - 渐变发光边框
+ * - 平滑颜色过渡
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -44,48 +52,99 @@ fun GameCard(
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
+    val primaryColor = MaterialTheme.colorScheme.primary
+    val extendedColors = RaLaunchTheme.extendedColors
+    val cardShape = RoundedCornerShape(14.dp)
 
-    // 极简动画
+    // 弹性缩放动画
     val scale by animateFloatAsState(
-        targetValue = if (isPressed) 0.98f else 1f,
-        animationSpec = tween(100),
+        targetValue = when {
+            isPressed -> 0.95f
+            isSelected -> 1.0f
+            else -> 1f
+        },
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessMedium
+        ),
         label = "scale"
     )
 
+    // 背景色动画
     val backgroundColor by animateColorAsState(
         targetValue = if (isSelected) {
-            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
+            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f)
         } else {
-            Color.Transparent
+            MaterialTheme.colorScheme.surfaceContainerLow.copy(alpha = 0.5f)
         },
+        animationSpec = tween(300),
         label = "backgroundColor"
     )
 
+    // 边框色动画
     val borderColor by animateColorAsState(
         targetValue = if (isSelected) {
-            MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
+            primaryColor.copy(alpha = 0.6f)
         } else {
-            MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
+            MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f)
         },
+        animationSpec = tween(300),
         label = "borderColor"
     )
 
-    // 使用 Box 替代 Surface，更轻量
+    // 发光强度动画
+    val glowAlpha by animateFloatAsState(
+        targetValue = if (isSelected) 0.45f else 0f,
+        animationSpec = tween(400),
+        label = "glowAlpha"
+    )
+
     Box(
         modifier = modifier
             .fillMaxWidth()
             .padding(2.dp)
             .scale(scale)
-            .clip(RoundedCornerShape(10.dp))
+            // 外发光效果（在卡片外围绘制柔和光晕）
+            .drawBehind {
+                if (glowAlpha > 0f) {
+                    val glowRadius = 10.dp.toPx()
+                    drawRoundRect(
+                        brush = Brush.radialGradient(
+                            colors = listOf(
+                                primaryColor.copy(alpha = glowAlpha * 0.6f),
+                                primaryColor.copy(alpha = glowAlpha * 0.2f),
+                                Color.Transparent
+                            ),
+                            center = center,
+                            radius = size.maxDimension / 2f + glowRadius
+                        ),
+                        topLeft = Offset(-glowRadius, -glowRadius),
+                        size = Size(size.width + glowRadius * 2, size.height + glowRadius * 2),
+                        cornerRadius = CornerRadius(glowRadius + 14.dp.toPx())
+                    )
+                }
+            }
+            .clip(cardShape)
             .background(backgroundColor)
             .border(
-                width = 1.dp,
-                color = borderColor,
-                shape = RoundedCornerShape(10.dp)
+                width = if (isSelected) 1.5.dp else 0.5.dp,
+                brush = if (isSelected) {
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            primaryColor.copy(alpha = 0.7f),
+                            primaryColor.copy(alpha = 0.3f)
+                        )
+                    )
+                } else {
+                    Brush.verticalGradient(
+                        colors = listOf(borderColor, borderColor)
+                    )
+                },
+                shape = cardShape
             )
             .combinedClickable(
                 interactionSource = interactionSource,
-                indication = ripple(bounded = true, color = MaterialTheme.colorScheme.primary),
+                indication = ripple(bounded = true, color = primaryColor),
                 onClick = onClick,
                 onLongClick = onLongClick
             )
@@ -112,7 +171,7 @@ fun GameCard(
                 fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                color = if (isSelected) primaryColor else MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
             )
         }
@@ -128,16 +187,32 @@ private fun GameCardIconSection(
         iconLoader(
             iconPath,
             Modifier
-                .fillMaxSize(0.75f) // 图标稍微缩小一点，留出呼吸空间
+                .fillMaxSize(0.75f)
                 .clip(RoundedCornerShape(12.dp))
         )
     } else {
-        Icon(
-            imageVector = Icons.Default.SportsEsports,
-            contentDescription = null,
-            modifier = Modifier.fillMaxSize(0.5f),
-            tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
-        )
+        // 默认图标 - 带毛玻璃背景
+        Box(
+            modifier = Modifier
+                .fillMaxSize(0.55f)
+                .clip(RoundedCornerShape(14.dp))
+                .background(
+                    Brush.radialGradient(
+                        colors = listOf(
+                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f),
+                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.15f)
+                        )
+                    )
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = Icons.Default.SportsEsports,
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize(0.6f),
+                tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
+            )
+        }
     }
 }
 

@@ -2,16 +2,21 @@ package com.app.ralaunch.controls.views
 
 import android.animation.ValueAnimator
 import android.content.Context
+import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.LinearGradient
 import android.graphics.Paint
 import android.graphics.Path
+import android.graphics.RadialGradient
 import android.graphics.RectF
+import android.graphics.Shader
 import android.graphics.Typeface
 import android.text.TextPaint
 import android.util.Log
 import android.view.View
 import android.view.animation.DecelerateInterpolator
+import android.view.animation.OvershootInterpolator
 import com.app.ralaunch.controls.bridges.ControlInputBridge
 import com.app.ralaunch.controls.data.ControlData
 import com.app.ralaunch.controls.textures.TextureLoader
@@ -75,9 +80,11 @@ class VirtualRadialMenu(
     private lateinit var mBackgroundPaint: Paint
     private lateinit var mSectorPaint: Paint
     private lateinit var mSelectedPaint: Paint
+    private lateinit var mSelectedGlowPaint: Paint
     private lateinit var mDividerPaint: Paint
     private lateinit var mTextPaint: TextPaint
     private lateinit var mStrokePaint: Paint
+    private lateinit var mCenterIconPaint: Paint
     private val mRectF = RectF()
     private val mSectorPath = Path()
 
@@ -85,14 +92,20 @@ class VirtualRadialMenu(
     private var mIsExpanded = false
     private var mExpandProgress = 0f // 0.0 = 收起, 1.0 = 展开
     private var mSelectedSector = -1 // 当前选中的扇区 (-1 = 无)
+    private var mPrevSelectedSector = -1 // 上一个选中的扇区（用于过渡动画）
     private var mActivePointerId = -1
     private var mTouchStartX = 0f
     private var mTouchStartY = 0f
     private var mCurrentTouchX = 0f
     private var mCurrentTouchY = 0f
 
+    // 图标缓存
+    private val mIconCache = mutableMapOf<String, Bitmap?>()
+
     // 动画
     private var mExpandAnimator: ValueAnimator? = null
+    private var mSectorHighlightProgress = 0f // 选中扇区高亮过渡
+    private var mSectorHighlightAnimator: ValueAnimator? = null
 
     init {
         initPaints()
@@ -129,11 +142,21 @@ class VirtualRadialMenu(
             color = data.selectedColor
         }
 
+        // 选中扇区发光画笔
+        mSelectedGlowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            style = Paint.Style.FILL
+            color = Color.argb(60,
+                Color.red(data.selectedColor),
+                Color.green(data.selectedColor),
+                Color.blue(data.selectedColor)
+            )
+        }
+
         // 分隔线画笔
         mDividerPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             style = Paint.Style.STROKE
             color = data.dividerColor
-            strokeWidth = 2f
+            strokeWidth = dpToPx(1f)
         }
 
         // 边框画笔
@@ -145,7 +168,7 @@ class VirtualRadialMenu(
                 Color.green(data.strokeColor),
                 Color.blue(data.strokeColor)
             )
-            strokeWidth = dpToPx(2f)
+            strokeWidth = dpToPx(1.5f)
         }
 
         // 文字画笔
@@ -155,6 +178,28 @@ class VirtualRadialMenu(
             textSize = dpToPx(14f)
             textAlign = Paint.Align.CENTER
             typeface = Typeface.DEFAULT_BOLD
+        }
+
+        // 中心图标画笔（绘制 ◎ 标志）
+        mCenterIconPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            style = Paint.Style.STROKE
+            color = data.textColor
+            alpha = (data.textOpacity * 200).toInt()
+            strokeWidth = dpToPx(1.5f)
+        }
+    }
+
+    /**
+     * 加载扇区图标（带缓存）
+     */
+    private fun loadSectorIcon(iconPath: String, size: Int): Bitmap? {
+        if (iconPath.isEmpty()) return null
+        val cacheKey = "${iconPath}_${size}"
+        return mIconCache.getOrPut(cacheKey) {
+            val loader = textureLoader ?: return@getOrPut null
+            val dir = assetsDir ?: return@getOrPut null
+            val fullPath = File(dir, iconPath).absolutePath
+            loader.loadTexture(fullPath, size, size)
         }
     }
 
@@ -180,18 +225,48 @@ class VirtualRadialMenu(
 
     private fun drawCollapsedState(canvas: Canvas, centerX: Float, centerY: Float, radius: Float) {
         val data = castedData
-        
-        // 绘制背景圆
+
+        // 绘制渐变背景圆
+        val bgGradient = RadialGradient(
+            centerX, centerY, radius,
+            intArrayOf(
+                Color.argb((data.opacity * 255).toInt(), Color.red(data.bgColor), Color.green(data.bgColor), Color.blue(data.bgColor)),
+                Color.argb((data.opacity * 200).toInt(), Color.red(data.bgColor), Color.green(data.bgColor), Color.blue(data.bgColor))
+            ),
+            floatArrayOf(0.3f, 1f),
+            Shader.TileMode.CLAMP
+        )
+        mBackgroundPaint.shader = bgGradient
         canvas.drawCircle(centerX, centerY, radius, mBackgroundPaint)
-        
+        mBackgroundPaint.shader = null
+
+        // 绘制扇区暗示线（收起时提示这是轮盘）
+        val hintAlpha = (data.opacity * 80).toInt()
+        val hintPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            style = Paint.Style.STROKE
+            color = Color.argb(hintAlpha, 255, 255, 255)
+            strokeWidth = dpToPx(0.5f)
+        }
+        val hintRadius = radius * 0.6f
+        val sectorCount = data.sectorCount
+        for (i in 0 until sectorCount) {
+            val angle = Math.toRadians((-90.0 + i * 360.0 / sectorCount))
+            val x1 = centerX + (hintRadius * 0.3f * cos(angle)).toFloat()
+            val y1 = centerY + (hintRadius * 0.3f * sin(angle)).toFloat()
+            val x2 = centerX + (hintRadius * cos(angle)).toFloat()
+            val y2 = centerY + (hintRadius * sin(angle)).toFloat()
+            canvas.drawLine(x1, y1, x2, y2, hintPaint)
+        }
+
         // 绘制边框
         if (data.borderOpacity > 0) {
             canvas.drawCircle(centerX, centerY, radius - dpToPx(1f), mStrokePaint)
         }
 
-        // 绘制中心文本或图标
+        // 绘制中心文本
         val text = data.name.ifEmpty { "◎" }
-        mTextPaint.textSize = dpToPx(16f)
+        mTextPaint.textSize = dpToPx(14f)
+        mTextPaint.alpha = (data.textOpacity * 255).toInt()
         val textY = centerY - (mTextPaint.descent() + mTextPaint.ascent()) / 2
         canvas.drawText(text, centerX, textY, mTextPaint)
     }
@@ -203,16 +278,19 @@ class VirtualRadialMenu(
         val sectorCount = data.sectorCount
         val sectorAngle = 360f / sectorCount
 
-        // 绘制整体背景
-        mBackgroundPaint.alpha = (data.opacity * 0.9f * 255 * mExpandProgress).toInt()
+        // 外圈半透明背景
+        mBackgroundPaint.shader = null
+        mBackgroundPaint.alpha = (data.opacity * 0.7f * 255 * mExpandProgress).toInt()
         canvas.drawCircle(centerX, centerY, expandedRadius, mBackgroundPaint)
 
         // 绘制各扇区
         for (i in 0 until sectorCount) {
             val startAngle = -90f + i * sectorAngle - sectorAngle / 2
-            
-            // 选中高亮
-            if (i == mSelectedSector) {
+            val isSelected = i == mSelectedSector
+
+            // 选中高亮（带发光效果）
+            if (isSelected) {
+                // 外层发光
                 mSectorPath.reset()
                 mSectorPath.moveTo(centerX, centerY)
                 mRectF.set(
@@ -223,20 +301,35 @@ class VirtualRadialMenu(
                 )
                 mSectorPath.arcTo(mRectF, startAngle, sectorAngle)
                 mSectorPath.close()
+                canvas.drawPath(mSectorPath, mSelectedGlowPaint)
+
+                // 内层高亮
+                mSectorPath.reset()
+                val highlightRadius = expandedRadius * 0.97f
+                mSectorPath.moveTo(centerX, centerY)
+                mRectF.set(
+                    centerX - highlightRadius,
+                    centerY - highlightRadius,
+                    centerX + highlightRadius,
+                    centerY + highlightRadius
+                )
+                mSectorPath.arcTo(mRectF, startAngle, sectorAngle)
+                mSectorPath.close()
                 canvas.drawPath(mSectorPath, mSelectedPaint)
             }
 
             // 扇区分隔线
             if (data.showDividers) {
-                val angleRad = Math.toRadians((startAngle).toDouble())
+                val angleRad = Math.toRadians(startAngle.toDouble())
                 val lineStartX = centerX + (deadZoneRadius * cos(angleRad)).toFloat()
                 val lineStartY = centerY + (deadZoneRadius * sin(angleRad)).toFloat()
-                val lineEndX = centerX + (expandedRadius * cos(angleRad)).toFloat()
-                val lineEndY = centerY + (expandedRadius * sin(angleRad)).toFloat()
+                val lineEndX = centerX + (expandedRadius * 0.95f * cos(angleRad)).toFloat()
+                val lineEndY = centerY + (expandedRadius * 0.95f * sin(angleRad)).toFloat()
+                mDividerPaint.alpha = (255 * mExpandProgress).toInt()
                 canvas.drawLine(lineStartX, lineStartY, lineEndX, lineEndY, mDividerPaint)
             }
 
-            // 扇区文本/图标
+            // 扇区内容（图标或文本）
             if (i < data.sectors.size) {
                 val sector = data.sectors[i]
                 val midAngle = startAngle + sectorAngle / 2
@@ -245,35 +338,111 @@ class VirtualRadialMenu(
                 val labelX = centerX + (labelRadius * cos(midAngleRad)).toFloat()
                 val labelY = centerY + (labelRadius * sin(midAngleRad)).toFloat()
 
-                val label = sector.label.ifEmpty { sector.keycode.name.removePrefix("KEYBOARD_") }
-                
-                // 调整文字大小和透明度
-                mTextPaint.textSize = dpToPx(12f) * mExpandProgress
-                mTextPaint.alpha = (data.textOpacity * 255 * mExpandProgress).toInt()
-                
-                val textY = labelY - (mTextPaint.descent() + mTextPaint.ascent()) / 2
-                canvas.drawText(label, labelX, textY, mTextPaint)
+                // 尝试加载图标
+                val iconSize = (dpToPx(20f) * mExpandProgress).toInt().coerceAtLeast(1)
+                val icon = if (sector.iconPath.isNotEmpty()) loadSectorIcon(sector.iconPath, iconSize) else null
+
+                if (icon != null && !icon.isRecycled) {
+                    // 绘制图标
+                    val iconPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                        alpha = (255 * mExpandProgress).toInt()
+                    }
+                    canvas.drawBitmap(
+                        icon,
+                        labelX - icon.width / 2f,
+                        labelY - icon.height / 2f - dpToPx(4f),
+                        iconPaint
+                    )
+                    // 图标下方绘制标签
+                    val label = sector.label
+                    if (label.isNotEmpty()) {
+                        mTextPaint.textSize = dpToPx(9f) * mExpandProgress
+                        mTextPaint.alpha = (data.textOpacity * 255 * mExpandProgress).toInt()
+                        if (isSelected) {
+                            mTextPaint.typeface = Typeface.DEFAULT_BOLD
+                        }
+                        val textYPos = labelY + icon.height / 2f + dpToPx(2f)
+                        canvas.drawText(label, labelX, textYPos, mTextPaint)
+                        mTextPaint.typeface = Typeface.DEFAULT_BOLD
+                    }
+                } else {
+                    // 纯文本模式
+                    val label = sector.label.ifEmpty {
+                        sector.keycode.name
+                            .removePrefix("KEYBOARD_")
+                            .removePrefix("MOUSE_")
+                            .removePrefix("XBOX_BUTTON_")
+                    }
+
+                    val fontSize = if (isSelected) dpToPx(13f) else dpToPx(11f)
+                    mTextPaint.textSize = fontSize * mExpandProgress
+                    mTextPaint.alpha = if (isSelected) {
+                        (255 * mExpandProgress).toInt()
+                    } else {
+                        (data.textOpacity * 220 * mExpandProgress).toInt()
+                    }
+                    mTextPaint.typeface = if (isSelected) Typeface.DEFAULT_BOLD else Typeface.DEFAULT
+
+                    val textYPos = labelY - (mTextPaint.descent() + mTextPaint.ascent()) / 2
+                    canvas.drawText(label, labelX, textYPos, mTextPaint)
+                }
             }
         }
 
-        // 绘制中心死区
-        mBackgroundPaint.alpha = (data.opacity * 255).toInt()
+        // 中心死区（渐变填充）
+        val deadZoneGradient = RadialGradient(
+            centerX, centerY, deadZoneRadius,
+            intArrayOf(
+                Color.argb((data.opacity * 255).toInt(), Color.red(data.bgColor), Color.green(data.bgColor), Color.blue(data.bgColor)),
+                Color.argb((data.opacity * 220).toInt(), Color.red(data.bgColor), Color.green(data.bgColor), Color.blue(data.bgColor))
+            ),
+            floatArrayOf(0.5f, 1f),
+            Shader.TileMode.CLAMP
+        )
+        mBackgroundPaint.shader = deadZoneGradient
+        mBackgroundPaint.alpha = 255
         canvas.drawCircle(centerX, centerY, deadZoneRadius, mBackgroundPaint)
+        mBackgroundPaint.shader = null
 
-        // 绘制边框
-        if (data.borderOpacity > 0) {
-            canvas.drawCircle(centerX, centerY, expandedRadius - dpToPx(1f), mStrokePaint)
-            canvas.drawCircle(centerX, centerY, deadZoneRadius - dpToPx(1f), mStrokePaint)
+        // 中心文字 (选中扇区的标签或轮盘名)
+        if (mSelectedSector >= 0 && mSelectedSector < data.sectors.size) {
+            val selectedLabel = data.sectors[mSelectedSector].label.ifEmpty {
+                data.sectors[mSelectedSector].keycode.name
+                    .removePrefix("KEYBOARD_").removePrefix("MOUSE_").removePrefix("XBOX_BUTTON_")
+            }
+            mTextPaint.textSize = dpToPx(11f) * mExpandProgress
+            mTextPaint.alpha = (255 * mExpandProgress).toInt()
+            mTextPaint.typeface = Typeface.DEFAULT_BOLD
+            val textY = centerY - (mTextPaint.descent() + mTextPaint.ascent()) / 2
+            canvas.drawText(selectedLabel, centerX, textY, mTextPaint)
+        } else {
+            // 未选中时显示轮盘名
+            val centerText = data.name.ifEmpty { "◎" }
+            mTextPaint.textSize = dpToPx(10f) * mExpandProgress
+            mTextPaint.alpha = (data.textOpacity * 180 * mExpandProgress).toInt()
+            mTextPaint.typeface = Typeface.DEFAULT
+            val textY = centerY - (mTextPaint.descent() + mTextPaint.ascent()) / 2
+            canvas.drawText(centerText, centerX, textY, mTextPaint)
         }
 
-        // 绘制当前触摸位置指示
-        if (mActivePointerId >= 0) {
+        // 边框
+        if (data.borderOpacity > 0) {
+            mStrokePaint.alpha = (data.borderOpacity * 255 * mExpandProgress).toInt()
+            canvas.drawCircle(centerX, centerY, expandedRadius - dpToPx(1f), mStrokePaint)
+            canvas.drawCircle(centerX, centerY, deadZoneRadius, mStrokePaint)
+        }
+
+        // 触摸位置指示（柔和光点）
+        if (mActivePointerId >= 0 && mSelectedSector >= 0) {
             val indicatorPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
                 style = Paint.Style.FILL
-                color = Color.WHITE
-                alpha = 150
+                shader = RadialGradient(
+                    mCurrentTouchX, mCurrentTouchY, dpToPx(12f),
+                    intArrayOf(Color.argb(180, 255, 255, 255), Color.TRANSPARENT),
+                    null, Shader.TileMode.CLAMP
+                )
             }
-            canvas.drawCircle(mCurrentTouchX, mCurrentTouchY, 15f, indicatorPaint)
+            canvas.drawCircle(mCurrentTouchX, mCurrentTouchY, dpToPx(12f), indicatorPaint)
         }
     }
 
@@ -284,7 +453,7 @@ class VirtualRadialMenu(
         val targetProgress = if (expand) 1f else 0f
         mExpandAnimator = ValueAnimator.ofFloat(mExpandProgress, targetProgress).apply {
             duration = castedData.expandDuration.toLong()
-            interpolator = DecelerateInterpolator()
+            interpolator = if (expand) OvershootInterpolator(0.8f) else DecelerateInterpolator()
             addUpdateListener { animator ->
                 mExpandProgress = animator.animatedValue as Float
                 invalidate()
@@ -412,11 +581,12 @@ class VirtualRadialMenu(
         
         val newSector = calculateSelectedSector(x, y)
         if (newSector != mSelectedSector) {
+            mPrevSelectedSector = mSelectedSector
+            mSelectedSector = newSector
             // 扇区变化时震动提示
             if (newSector >= 0) {
                 vibrationManager?.vibrateOneShot(15, 30)
             }
-            mSelectedSector = newSector
         }
         
         invalidate()
@@ -428,16 +598,20 @@ class VirtualRadialMenu(
         // 触发选中扇区的按键
         if (mSelectedSector >= 0) {
             triggerSectorKey(mSelectedSector, true)
-            // 短暂延迟后释放按键
+            // 短暂延迟后释放按键（使用安全方式）
+            val sectorToRelease = mSelectedSector
             postDelayed({
-                triggerSectorKey(mSelectedSector, false)
-            }, 50)
+                triggerSectorKey(sectorToRelease, false)
+            }, 60)
+            // 选中反馈震动
+            vibrationManager?.vibrateOneShot(30, 80)
         }
         
         // 收起轮盘
         animateExpand(false)
         
         mActivePointerId = -1
+        mPrevSelectedSector = -1
         mSelectedSector = -1
         invalidate()
     }

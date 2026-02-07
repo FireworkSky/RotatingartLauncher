@@ -1,4 +1,4 @@
-#include "netcorehost/bindings.hpp"
+#include "dotnethost/bindings.hpp"
 
 #include <algorithm>
 #include <cstdlib>
@@ -14,8 +14,8 @@ namespace fs = std::filesystem;
 
 namespace {
 
-using netcorehost::bindings::StatusCode;
-using CharT = netcorehost::bindings::char_t;
+using dotnethost::bindings::StatusCode;
+using CharT = dotnethost::bindings::char_t;
 
 #ifdef _WINDOWS
 const fs::path::string_type kHostfxrFileName = L"hostfxr.dll";
@@ -58,11 +58,7 @@ std::vector<int> parse_version_components(const StringT& name) {
             in_number = false;
         }
     }
-
-    if (in_number) {
-        parts.push_back(current);
-    }
-
+    if (in_number) parts.push_back(current);
     return parts;
 }
 
@@ -74,36 +70,21 @@ bool is_version_greater(const fs::path::string_type& a, const fs::path::string_t
     for (size_t i = 0; i < count; ++i) {
         const int ai = i < va.size() ? va[i] : 0;
         const int bi = i < vb.size() ? vb[i] : 0;
-        if (ai != bi) {
-            return ai > bi;
-        }
+        if (ai != bi) return ai > bi;
     }
-
-    if (a.size() != b.size()) {
-        return a.size() > b.size();
-    }
-
-    return a > b;
+    return a.size() != b.size() ? a.size() > b.size() : a > b;
 }
 
 bool pick_latest_subdirectory(const fs::path& base_dir, fs::path& out_dir) {
     std::error_code ec;
-    if (!fs::exists(base_dir, ec) || !fs::is_directory(base_dir, ec)) {
-        return false;
-    }
+    if (!fs::exists(base_dir, ec) || !fs::is_directory(base_dir, ec)) return false;
 
     bool has_best = false;
     fs::path best_path;
     fs::path::string_type best_name;
 
     for (const auto& entry : fs::directory_iterator(base_dir, fs::directory_options::skip_permission_denied, ec)) {
-        if (ec) {
-            continue;
-        }
-        if (!entry.is_directory(ec) || ec) {
-            continue;
-        }
-
+        if (ec || !entry.is_directory(ec) || ec) continue;
         const auto name = entry.path().filename().native();
         if (!has_best || is_version_greater(name, best_name)) {
             best_path = entry.path();
@@ -112,10 +93,7 @@ bool pick_latest_subdirectory(const fs::path& base_dir, fs::path& out_dir) {
         }
     }
 
-    if (!has_best) {
-        return false;
-    }
-
+    if (!has_best) return false;
     out_dir = best_path;
     return true;
 }
@@ -130,30 +108,25 @@ bool try_candidate(const fs::path& candidate, fs::path& result) {
 }
 
 bool locate_hostfxr(const fs::path& root, fs::path& out_path) {
-    if (try_candidate(root / kHostfxrFileName, out_path)) {
-        return true;
-    }
+    // 直接在根目录查找
+    if (try_candidate(root / kHostfxrFileName, out_path)) return true;
 
+    // host/fxr/<latest_version>/
     fs::path fxr_dir;
     if (pick_latest_subdirectory(root / "host" / "fxr", fxr_dir)) {
-        if (try_candidate(fxr_dir / kHostfxrFileName, out_path)) {
-            return true;
-        }
+        if (try_candidate(fxr_dir / kHostfxrFileName, out_path)) return true;
     }
 
+    // shared/Microsoft.NETCore.App/<latest_version>/
     fs::path shared_dir;
     if (pick_latest_subdirectory(root / "shared" / "Microsoft.NETCore.App", shared_dir)) {
-        if (try_candidate(shared_dir / kHostfxrFileName, out_path)) {
-            return true;
-        }
+        if (try_candidate(shared_dir / kHostfxrFileName, out_path)) return true;
     }
 
-    // 如果 root 已经是 host/fxr/<version> 目录，尝试直接查找
+    // 如果 root 已经是 host/fxr/<version> 目录
     auto parent = root.parent_path();
     if (parent.filename() == "fxr") {
-        if (try_candidate(root / kHostfxrFileName, out_path)) {
-            return true;
-        }
+        if (try_candidate(root / kHostfxrFileName, out_path)) return true;
     }
 
     return false;
@@ -161,38 +134,34 @@ bool locate_hostfxr(const fs::path& root, fs::path& out_path) {
 
 } // namespace
 
-extern "C" NETHOST_API int32_t NETHOST_CALLTYPE get_hostfxr_path(
+extern "C" DOTNETHOST_API int32_t DOTNETHOST_CALLTYPE get_hostfxr_path(
     CharT* buffer,
     size_t* buffer_size,
-    const netcorehost::bindings::get_hostfxr_parameters* parameters) {
-
-    using netcorehost::bindings::StatusCode;
+    const dotnethost::bindings::get_hostfxr_parameters* parameters) {
 
     if (buffer_size == nullptr) {
         return static_cast<int32_t>(StatusCode::InvalidArgFailure);
     }
 
     const fs::path::string_type dotnet_root_string = [&]() -> fs::path::string_type {
+        // 优先使用参数中的 dotnet_root
         if (parameters != nullptr && parameters->dotnet_root != nullptr && parameters->dotnet_root[0] != 0) {
             return to_string_type(parameters->dotnet_root);
         }
 
+        // 然后尝试环境变量
 #ifdef _WINDOWS
         auto env_value = get_env_value(L"DOTNET_ROOT");
 #else
         auto env_value = get_env_value("DOTNET_ROOT");
 #endif
+        if (!env_value.empty()) return env_value;
 
-        if (!env_value.empty()) {
-            return env_value;
-        }
-
+        // 最后尝试从 assembly_path 推断
         if (parameters != nullptr && parameters->assembly_path != nullptr && parameters->assembly_path[0] != 0) {
             fs::path assembly_path(to_string_type(parameters->assembly_path));
             auto parent = assembly_path.parent_path();
-            if (!parent.empty()) {
-                return parent.native();
-            }
+            if (!parent.empty()) return parent.native();
         }
 
         return fs::path::string_type();
@@ -223,4 +192,3 @@ extern "C" NETHOST_API int32_t NETHOST_CALLTYPE get_hostfxr_path(
     *buffer_size = required_size;
     return static_cast<int32_t>(StatusCode::Success);
 }
-

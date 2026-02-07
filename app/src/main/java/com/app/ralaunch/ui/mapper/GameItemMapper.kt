@@ -20,13 +20,18 @@ fun GameItem.toUiModel(): GameItemUi = GameItemUi(
 
 /**
  * 生成唯一 ID
- * 使用游戏名和路径的组合哈希，确保同名游戏有不同的 ID
+ * 直接使用游戏名+路径的组合字符串，避免 hashCode 碰撞导致 LazyGrid key 重复崩溃
  */
 private fun GameItem.generateUniqueId(): String {
-    return "${gameName}_${gamePath}".hashCode().toString()
+    return "${gameName}_${gamePath}"
 }
 
 /**
- * 批量转换
+ * 批量转换（自动去重）
+ * 
+ * Presenter 返回的列表可能包含重复条目（相同 gameName + gamePath），
+ * 使用 distinctBy 去重，确保 LazyGrid key 不会重复导致崩溃。
  */
-fun List<GameItem>.toUiModels(): List<GameItemUi> = map { it.toUiModel() }
+fun List<GameItem>.toUiModels(): List<GameItemUi> =
+    distinctBy { "${it.gameName}_${it.gamePath}" }
+        .map { it.toUiModel() }

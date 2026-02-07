@@ -111,7 +111,7 @@ class GameListComposeView @JvmOverloads constructor(
         )
     }
 
-    // GameItem 扩展属性
+    // GameItem 扩展属性 - 使用名称+路径组合，避免 hashCode 碰撞
     private val GameItem.id: String
-        get() = this.hashCode().toString()
+        get() = "${gameName}_${gamePath}"
 }

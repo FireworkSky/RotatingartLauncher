@@ -50,6 +50,7 @@ import com.app.ralaunch.ui.screens.SettingsScreenWrapper
 import com.app.ralaunch.utils.AppLogger
 import com.app.ralaunch.utils.DensityAdapter
 import com.app.ralaunch.error.ErrorHandler
+import dev.chrisbanes.haze.HazeState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -160,7 +161,7 @@ class MainActivityCompose : BaseActivity() {
                             val updatedGames = presenter.getGameList()
                             gameItemsMap.clear()
                             updatedGames.forEach { g ->
-                                val uniqueId = "${g.gameName}_${g.gamePath}".hashCode().toString()
+                                val uniqueId = "${g.gameName}_${g.gamePath}"
                                 gameItemsMap[uniqueId] = g
                             }
                             _uiState.update { state ->
@@ -416,7 +417,7 @@ class MainActivityCompose : BaseActivity() {
             gameItemsMap.clear()
             games.forEach { game ->
                 // 使用与 GameItemMapper.generateUniqueId() 相同的算法生成 key
-                val uniqueId = "${game.gameName}_${game.gamePath}".hashCode().toString()
+                val uniqueId = "${game.gameName}_${game.gamePath}"
                 gameItemsMap[uniqueId] = game
             }
             _uiState.update {
@@ -503,7 +504,8 @@ private fun MainActivityContent(
     permissionManager: PermissionManager? = null
 ) {
     val scope = rememberCoroutineScope()
-    
+    val hazeState = remember { HazeState() }
+
     // 导入状态 - 提升到此层级避免导航时丢失
     var importGameFilePath by remember { mutableStateOf<String?>(null) }
     var importGameName by remember { mutableStateOf<String?>(null) }
@@ -522,36 +524,37 @@ private fun MainActivityContent(
     }
     
     Box(modifier = Modifier.fillMaxSize()) {
-        // 背景层 - 沉浸式
-        AppBackground(
-            backgroundType = state.backgroundType,
-            isPlaying = state.isVideoPlaying,
-            playbackSpeed = videoSpeed,
-            modifier = Modifier.fillMaxSize()
-        )
-
-        // 全局半透明遮罩，增加内容对比度
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(
-                            Color.Black.copy(alpha = 0.15f),
-                            Color.Transparent,
-                            Color.Black.copy(alpha = 0.35f)
-                        )
-                    )
-                )
-        )
-
-        // 主内容 - 内容区域需要避开系统导航栏
+        // 主内容 - 背景层通过 backgroundLayer 传入，由 MainApp 自动标记为 hazeSource
         MainApp(
             modifier = Modifier
                 .fillMaxSize()
                 .systemBarsPadding()
                 .graphicsLayer { alpha = pageAlpha },
             navState = navState,
+            externalHazeState = hazeState,
+            backgroundLayer = {
+                // 背景层 - 沉浸式（作为毛玻璃模糊源）
+                AppBackground(
+                    backgroundType = state.backgroundType,
+                    isPlaying = state.isVideoPlaying,
+                    playbackSpeed = videoSpeed,
+                    modifier = Modifier.fillMaxSize()
+                )
+                // 全局半透明遮罩，增加内容对比度
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            Brush.verticalGradient(
+                                colors = listOf(
+                                    Color.Black.copy(alpha = 0.15f),
+                                    Color.Transparent,
+                                    Color.Black.copy(alpha = 0.35f)
+                                )
+                            )
+                        )
+                )
+            },
             appLogo = {
                 Image(
                     painter = painterResource(R.mipmap.ic_launcher_foreground),

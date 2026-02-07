@@ -34,12 +34,12 @@ object LocaleManager : ILocaleManager {
     private var currentLanguage: String = LANGUAGE_AUTO
 
     /**
-     * 获取当前设置的语言
+     * 获取当前设置的语言。新安装默认为英文；可在设置中切换「跟随系统 / English / 简体中文」等。
      */
     @JvmStatic
     fun getLanguage(context: Context): String {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        return prefs.getString(KEY_LANGUAGE, LANGUAGE_AUTO) ?: LANGUAGE_AUTO
+        return prefs.getString(KEY_LANGUAGE, LANGUAGE_EN) ?: LANGUAGE_EN
     }
 
     /**

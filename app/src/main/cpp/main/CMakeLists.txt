@@ -30,7 +30,7 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
         FAudio-shared
         FNA3D
         mojoshader
-        netcorehost
+        dotnethost
         linkernsbypass
         c++_shared
         ${CXX_SHARED_LIB}
@@ -40,7 +40,7 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
         ${SDL_SOURCE_DIR}/include
         ${FNA3D_SOURCE_DIR}/include
-        ${NETCOREHOST_SOURCE_DIR}/include
+        ${DOTNETHOST_SOURCE_DIR}/include
         ${CMAKE_SOURCE_DIR}/liblinkernsbypass
         ${CMAKE_CURRENT_SOURCE_DIR}
 )

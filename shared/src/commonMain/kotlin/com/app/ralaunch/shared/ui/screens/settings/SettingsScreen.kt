@@ -1,12 +1,13 @@
 package com.app.ralaunch.shared.ui.screens.settings
 
 import androidx.compose.animation.*
-import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.*
@@ -14,9 +15,16 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.app.ralaunch.shared.ui.components.GlassSurface
+import com.app.ralaunch.shared.ui.theme.RaLaunchTheme
 
 /**
  * 设置分类 - 跨平台
@@ -35,7 +43,12 @@ enum class SettingsCategory(
 }
 
 /**
- * 设置页面（分栏布局）- 跨平台
+ * 设置页面（分栏布局）- Material Design 3 毛玻璃风格
+ * 
+ * 特性：
+ * - 左侧分类列表使用毛玻璃面板
+ * - 选中态带有发光效果
+ * - 平滑过渡动画
  */
 @Composable
 fun SettingsScreenContent(
@@ -47,21 +60,28 @@ fun SettingsScreenContent(
     Row(
         modifier = modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
+            .background(Color.Transparent)
     ) {
-        // 左侧分类列表
-        SettingsCategoryList(
-            currentCategory = currentCategory,
-            onCategoryClick = onCategoryClick,
+        // 左侧分类列表 - 毛玻璃面板
+        GlassSurface(
             modifier = Modifier
                 .width(280.dp)
-                .fillMaxHeight()
-        )
+                .fillMaxHeight(),
+            shape = RoundedCornerShape(0.dp),
+            blurEnabled = true,
+            showBorder = false
+        ) {
+            SettingsCategoryList(
+                currentCategory = currentCategory,
+                onCategoryClick = onCategoryClick,
+                modifier = Modifier.fillMaxSize()
+            )
+        }
 
         // 分隔线
         VerticalDivider(
             modifier = Modifier.fillMaxHeight(),
-            color = MaterialTheme.colorScheme.outlineVariant
+            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
         )
 
         // 右侧内容区域
@@ -107,7 +127,6 @@ private fun SettingsCategoryList(
 ) {
     Column(
         modifier = modifier
-            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
             .padding(16.dp)
     ) {
         Text(
@@ -119,10 +138,10 @@ private fun SettingsCategoryList(
         )
 
         LazyColumn(
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             items(SettingsCategory.entries) { category ->
-                SettingsCategoryItem(
+                GlassSettingsCategoryItem(
                     category = category,
                     isSelected = category == currentCategory,
                     onClick = { onCategoryClick(category) }
@@ -133,21 +152,23 @@ private fun SettingsCategoryList(
 }
 
 /**
- * 设置分类项
+ * 设置分类项 - 毛玻璃 + 发光选中效果
  */
 @Composable
-private fun SettingsCategoryItem(
+private fun GlassSettingsCategoryItem(
     category: SettingsCategory,
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
+    val primaryColor = MaterialTheme.colorScheme.primary
+
     val containerColor by animateColorAsState(
         targetValue = if (isSelected) {
-            MaterialTheme.colorScheme.primaryContainer
+            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
         } else {
-            // 未选中时使用带有轻微主题色调的 surfaceVariant
-            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+            MaterialTheme.colorScheme.surfaceContainerLow.copy(alpha = 0.4f)
         },
+        animationSpec = tween(250),
         label = "containerColor"
     )
 
@@ -157,41 +178,79 @@ private fun SettingsCategoryItem(
         } else {
             MaterialTheme.colorScheme.onSurface
         },
+        animationSpec = tween(250),
         label = "contentColor"
+    )
+
+    // 发光效果
+    val glowAlpha by animateFloatAsState(
+        targetValue = if (isSelected) 0.2f else 0f,
+        animationSpec = tween(300),
+        label = "glow"
     )
 
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick),
-        shape = MaterialTheme.shapes.medium,
+            .clickable(onClick = onClick)
+            // 选中态发光
+            .drawBehind {
+                if (glowAlpha > 0f) {
+                    drawRoundRect(
+                        brush = Brush.radialGradient(
+                            colors = listOf(
+                                primaryColor.copy(alpha = glowAlpha),
+                                primaryColor.copy(alpha = glowAlpha * 0.3f),
+                                Color.Transparent
+                            ),
+                            center = center,
+                            radius = size.maxDimension * 0.5f
+                        ),
+                        cornerRadius = CornerRadius(12.dp.toPx())
+                    )
+                }
+            },
+        shape = RoundedCornerShape(12.dp),
         color = containerColor
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(14.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(
-                imageVector = category.icon,
-                contentDescription = null,
-                tint = contentColor,
-                modifier = Modifier.size(24.dp)
-            )
+            // 图标 - 带背景
+            Box(
+                modifier = Modifier
+                    .size(36.dp)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(
+                        if (isSelected) primaryColor.copy(alpha = 0.15f)
+                        else MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.5f)
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = category.icon,
+                    contentDescription = null,
+                    tint = if (isSelected) primaryColor else contentColor.copy(alpha = 0.7f),
+                    modifier = Modifier.size(20.dp)
+                )
+            }
 
-            Spacer(modifier = Modifier.width(16.dp))
+            Spacer(modifier = Modifier.width(14.dp))
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = category.title,
-                    style = MaterialTheme.typography.titleMedium,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
                     color = contentColor
                 )
                 Text(
                     text = category.description,
                     style = MaterialTheme.typography.bodySmall,
-                    color = contentColor.copy(alpha = 0.7f)
+                    color = contentColor.copy(alpha = 0.6f)
                 )
             }
 
@@ -199,7 +258,8 @@ private fun SettingsCategoryItem(
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                     contentDescription = null,
-                    tint = contentColor.copy(alpha = 0.7f)
+                    tint = primaryColor.copy(alpha = 0.7f),
+                    modifier = Modifier.size(20.dp)
                 )
             }
         }
@@ -227,8 +287,8 @@ fun SettingsSection(
         )
         Surface(
             modifier = Modifier.fillMaxWidth(),
-            color = MaterialTheme.colorScheme.surface,
-            shape = MaterialTheme.shapes.medium
+            color = MaterialTheme.colorScheme.surfaceContainerLow.copy(alpha = 0.6f),
+            shape = RoundedCornerShape(12.dp)
         ) {
             Column(content = content)
         }
@@ -250,7 +310,7 @@ fun ClickableSettingItem(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
-        color = MaterialTheme.colorScheme.surface
+        color = Color.Transparent
     ) {
         Row(
             modifier = Modifier
@@ -259,13 +319,21 @@ fun ClickableSettingItem(
             verticalAlignment = Alignment.CenterVertically
         ) {
             if (icon != null) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(24.dp)
-                )
-                Spacer(modifier = Modifier.width(16.dp))
+                Box(
+                    modifier = Modifier
+                        .size(32.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.5f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.width(14.dp))
             }
 
             Column(modifier = Modifier.weight(1f)) {
@@ -295,7 +363,8 @@ fun ClickableSettingItem(
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                modifier = Modifier.size(20.dp)
             )
         }
     }
@@ -316,7 +385,7 @@ fun SwitchSettingItem(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onCheckedChange(!checked) },
-        color = MaterialTheme.colorScheme.surface
+        color = Color.Transparent
     ) {
         Row(
             modifier = Modifier
@@ -325,13 +394,21 @@ fun SwitchSettingItem(
             verticalAlignment = Alignment.CenterVertically
         ) {
             if (icon != null) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(24.dp)
-                )
-                Spacer(modifier = Modifier.width(16.dp))
+                Box(
+                    modifier = Modifier
+                        .size(32.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.5f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.width(14.dp))
             }
 
             Column(modifier = Modifier.weight(1f)) {
@@ -380,13 +457,21 @@ fun SliderSettingItem(
             verticalAlignment = Alignment.CenterVertically
         ) {
             if (icon != null) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(24.dp)
-                )
-                Spacer(modifier = Modifier.width(16.dp))
+                Box(
+                    modifier = Modifier
+                        .size(32.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.5f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.width(14.dp))
             }
 
             Column(modifier = Modifier.weight(1f)) {
@@ -408,7 +493,8 @@ fun SliderSettingItem(
                 Text(
                     text = valueLabel,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.primary
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Medium
                 )
             }
         }
@@ -432,6 +518,6 @@ fun SliderSettingItem(
 fun SettingsDivider() {
     HorizontalDivider(
         modifier = Modifier.padding(horizontal = 16.dp),
-        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
     )
 }

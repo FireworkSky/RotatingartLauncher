@@ -30,6 +30,8 @@ coil = "2.7.0"
 # KMP
 koin = "4.0.0"
 kotlinxDatetime = "0.6.1"
+# Haze (Glassmorphism blur)
+haze = "1.0.0"
 # DataStore
 datastore = "1.1.1"
 # Lifecycle ViewModel
@@ -82,6 +84,9 @@ commons-compress = { group = "org.apache.commons", name = "commons-compress", ve
 xz = { group = "org.tukaani", name = "xz", version.ref = "xz" }
 android-svg = { group = "com.caverock", name = "androidsvg-aar", version.ref = "androidSvg" }
 recyclerview = { group = "androidx.recyclerview", name = "recyclerview", version.ref = "recyclerview" }
+# Haze (Glassmorphism blur)
+haze = { group = "dev.chrisbanes.haze", name = "haze", version.ref = "haze" }
+haze-materials = { group = "dev.chrisbanes.haze", name = "haze-materials", version.ref = "haze" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

@@ -141,7 +141,7 @@ class SettingsRepositoryImpl(
     }
 
     override suspend fun getLanguage(): String {
-        return dataStore.data.first()[PreferencesKeys.LANGUAGE] ?: "简体中文"
+        return dataStore.data.first()[PreferencesKeys.LANGUAGE] ?: "en"
     }
 
     override suspend fun setLanguage(language: String) {

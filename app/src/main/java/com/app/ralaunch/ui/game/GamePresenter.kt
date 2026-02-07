@@ -221,7 +221,7 @@ class GamePresenter : GameContract.Presenter {
                 // 渲染器
                 "RendererConfig", "RendererLoader",
                 // .NET 运行时
-                "NetCoreHost", "DotNetLauncher", "CoreCLR", "MonoGame",
+                "DotNetHost", "DotNetLauncher", "CoreCLR", "MonoGame",
                 // SDL 和音频
                 "SDL", "SDL_android", "SDLSurface", "FNA3D", "OpenAL", "FMOD",
                 // 系统层

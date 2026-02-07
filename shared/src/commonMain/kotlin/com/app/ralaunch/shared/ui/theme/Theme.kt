@@ -11,7 +11,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import dev.chrisbanes.haze.HazeState
 import kotlin.math.roundToInt
+
+// ==================== Haze 全局状态 ====================
+
+/**
+ * 全局 HazeState CompositionLocal
+ * 用于在组件树中共享模糊源状态，实现跨组件毛玻璃效果
+ */
+val LocalHazeState = staticCompositionLocalOf<HazeState?> { null }
 
 // ==================== 动态颜色生成 ====================
 
@@ -45,7 +54,20 @@ private fun generateDarkColorScheme(seedColor: Color): ColorScheme {
         onSurface = hslToColor(hsl[0], 0.10f, 0.90f),
         surfaceVariant = hslToColor(hsl[0], 0.15f, 0.20f),
         onSurfaceVariant = hslToColor(hsl[0], 0.10f, 0.80f),
-        outline = hslToColor(hsl[0], 0.20f, 0.45f)
+        outline = hslToColor(hsl[0], 0.20f, 0.45f),
+        outlineVariant = hslToColor(hsl[0], 0.15f, 0.30f),
+        // Surface container 层次（MD3 新增）
+        surfaceDim = hslToColor(hsl[0], 0.08f, 0.06f),
+        surfaceBright = hslToColor(hsl[0], 0.12f, 0.22f),
+        surfaceContainerLowest = hslToColor(hsl[0], 0.06f, 0.04f),
+        surfaceContainerLow = hslToColor(hsl[0], 0.08f, 0.09f),
+        surfaceContainer = hslToColor(hsl[0], 0.10f, 0.14f),
+        surfaceContainerHigh = hslToColor(hsl[0], 0.10f, 0.17f),
+        surfaceContainerHighest = hslToColor(hsl[0], 0.10f, 0.22f),
+        inverseSurface = hslToColor(hsl[0], 0.08f, 0.90f),
+        inverseOnSurface = hslToColor(hsl[0], 0.08f, 0.15f),
+        inversePrimary = hslToColor(hsl[0], 0.7f, 0.40f),
+        scrim = Color.Black
     )
 }
 
@@ -79,7 +101,20 @@ private fun generateLightColorScheme(seedColor: Color): ColorScheme {
         onSurface = hslToColor(hsl[0], 0.15f, 0.12f),
         surfaceVariant = hslToColor(hsl[0], 0.10f, 0.95f),
         onSurfaceVariant = hslToColor(hsl[0], 0.15f, 0.30f),
-        outline = hslToColor(hsl[0], 0.15f, 0.60f)
+        outline = hslToColor(hsl[0], 0.15f, 0.60f),
+        outlineVariant = hslToColor(hsl[0], 0.10f, 0.80f),
+        // Surface container 层次（MD3 新增）
+        surfaceDim = hslToColor(hsl[0], 0.08f, 0.88f),
+        surfaceBright = hslToColor(hsl[0], 0.05f, 0.99f),
+        surfaceContainerLowest = Color.White,
+        surfaceContainerLow = hslToColor(hsl[0], 0.06f, 0.97f),
+        surfaceContainer = hslToColor(hsl[0], 0.08f, 0.95f),
+        surfaceContainerHigh = hslToColor(hsl[0], 0.08f, 0.93f),
+        surfaceContainerHighest = hslToColor(hsl[0], 0.08f, 0.90f),
+        inverseSurface = hslToColor(hsl[0], 0.10f, 0.18f),
+        inverseOnSurface = hslToColor(hsl[0], 0.06f, 0.95f),
+        inversePrimary = hslToColor(hsl[0], 0.7f, 0.75f),
+        scrim = Color.Black
     )
 }
 
@@ -135,7 +170,7 @@ private fun hslToColor(h: Float, s: Float, l: Float): Color {
 }
 
 /**
- * 扩展颜色 - 用于游戏特定 UI
+ * 扩展颜色 - 用于游戏特定 UI + 毛玻璃 + 发光动效
  */
 data class ExtendedColors(
     val gameCardBackground: Color,
@@ -143,7 +178,16 @@ data class ExtendedColors(
     val success: Color,
     val onSuccess: Color,
     val warning: Color,
-    val onWarning: Color
+    val onWarning: Color,
+    // 毛玻璃
+    val glassOverlay: Color,
+    val glassBorder: Color,
+    val glassSurface: Color,
+    // 发光
+    val glowPrimary: Color,
+    val glowPrimaryIntense: Color,
+    val glowSecondary: Color,
+    val glowSuccess: Color
 )
 
 private val DarkExtendedColors = ExtendedColors(
@@ -152,7 +196,16 @@ private val DarkExtendedColors = ExtendedColors(
     success = AppColors.Success80,
     onSuccess = AppColors.Success20,
     warning = AppColors.Warning80,
-    onWarning = AppColors.Warning20
+    onWarning = AppColors.Warning20,
+    // 深色毛玻璃
+    glassOverlay = AppColors.GlassDark,
+    glassBorder = AppColors.GlassBorderDark,
+    glassSurface = AppColors.GlassDarkMedium,
+    // 深色发光（亮色系在暗背景上更明显）
+    glowPrimary = AppColors.GlowPrimary,
+    glowPrimaryIntense = AppColors.GlowPrimaryIntense,
+    glowSecondary = AppColors.GlowSecondary,
+    glowSuccess = AppColors.GlowSuccess
 )
 
 private val LightExtendedColors = ExtendedColors(
@@ -161,7 +214,16 @@ private val LightExtendedColors = ExtendedColors(
     success = AppColors.Success40,
     onSuccess = Color.White,
     warning = AppColors.Warning40,
-    onWarning = Color.White
+    onWarning = Color.White,
+    // 亮色毛玻璃
+    glassOverlay = AppColors.GlassLight,
+    glassBorder = AppColors.GlassBorderLight,
+    glassSurface = AppColors.GlassLightMedium,
+    // 亮色发光（稍暗以在亮背景上可见）
+    glowPrimary = AppColors.GlowPrimary.copy(alpha = 0.35f),
+    glowPrimaryIntense = AppColors.GlowPrimaryIntense.copy(alpha = 0.5f),
+    glowSecondary = AppColors.GlowSecondary.copy(alpha = 0.3f),
+    glowSuccess = AppColors.GlowSuccess.copy(alpha = 0.3f)
 )
 
 val LocalExtendedColors = staticCompositionLocalOf { LightExtendedColors }

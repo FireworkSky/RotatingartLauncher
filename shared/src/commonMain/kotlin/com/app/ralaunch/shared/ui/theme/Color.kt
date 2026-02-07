@@ -88,6 +88,32 @@ object AppColors {
     val ControlButtonDefault = Color(0x80FFFFFF)
     val ControlButtonPressed = Color(0xB0FFFFFF)
 
+    // ==================== 发光 & 毛玻璃颜色 ====================
+
+    /** 主色发光 (选中态) */
+    val GlowPrimary = Color(0x806750A4)
+    val GlowPrimaryIntense = Color(0xB36750A4)
+
+    /** 次要发光 */
+    val GlowSecondary = Color(0x6062CDCF)
+
+    /** 成功发光 */
+    val GlowSuccess = Color(0x604CAF50)
+
+    /** 毛玻璃暗色叠层 */
+    val GlassDark = Color(0x40000000)
+    val GlassDarkMedium = Color(0x66000000)
+    val GlassDarkHeavy = Color(0x99000000)
+
+    /** 毛玻璃亮色叠层 */
+    val GlassLight = Color(0x30FFFFFF)
+    val GlassLightMedium = Color(0x50FFFFFF)
+    val GlassLightHeavy = Color(0x80FFFFFF)
+
+    /** 毛玻璃边框 */
+    val GlassBorderDark = Color(0x30FFFFFF)
+    val GlassBorderLight = Color(0x40000000)
+
     // ==================== 透明度工具 ====================
     fun Color.alpha(alpha: Float): Color = this.copy(alpha = alpha)
 }

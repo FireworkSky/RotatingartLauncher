@@ -1,10 +1,12 @@
 package com.app.ralaunch.shared.ui.components.game
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -20,16 +22,22 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.app.ralaunch.shared.ui.components.GlassSurface
 import com.app.ralaunch.shared.ui.model.GameItemUi
 
 /**
- * 游戏列表内容组件
+ * 游戏列表内容组件 - Material Design 3 毛玻璃面板
  * 
- * 现代化双栏布局：左侧游戏网格，右侧详情面板
+ * 特性：
+ * - 双栏布局：左侧游戏网格，右侧毛玻璃详情面板
+ * - 右侧面板自动应用 Haze 毛玻璃模糊
+ * - 空状态带有发光图标
  */
 @Composable
 fun GameListContent(
@@ -68,13 +76,14 @@ fun GameListContent(
             )
         }
 
-        // ===== 右侧面板 - 详情 (轻量化) =====
-        Box(
+        // ===== 右侧面板 - 毛玻璃详情 =====
+        GlassSurface(
             modifier = Modifier
                 .weight(0.38f)
-                .fillMaxHeight()
-                .clip(RoundedCornerShape(16.dp))
-                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f))
+                .fillMaxHeight(),
+            shape = RoundedCornerShape(20.dp),
+            blurEnabled = true,
+            showBorder = true
         ) {
             DetailSection(
                 selectedGame = selectedGame,
@@ -103,7 +112,7 @@ private fun GameGridSection(
             EmptyGameListContent(onAddClick = onAddClick)
         } else {
             LazyVerticalGrid(
-                columns = GridCells.Adaptive(minSize = 160.dp), // 稍微增加尺寸
+                columns = GridCells.Adaptive(minSize = 160.dp),
                 contentPadding = PaddingValues(8.dp),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -115,7 +124,15 @@ private fun GameGridSection(
                         isSelected = game.id == selectedGame?.id,
                         onClick = { onGameClick(game) },
                         onLongClick = { onGameLongClick(game) },
-                        iconLoader = iconLoader
+                        iconLoader = iconLoader,
+                        modifier = Modifier.animateItem(
+                            fadeInSpec = tween(300),
+                            fadeOutSpec = tween(200),
+                            placementSpec = spring(
+                                dampingRatio = Spring.DampingRatioMediumBouncy,
+                                stiffness = Spring.StiffnessLow
+                            )
+                        )
                     )
                 }
             }
@@ -159,10 +176,12 @@ private fun DetailSection(
 }
 
 /**
- * 空选择状态组件
+ * 空选择状态组件 - 带发光图标
  */
 @Composable
 fun EmptySelectionContent(modifier: Modifier = Modifier) {
+    val primaryColor = MaterialTheme.colorScheme.primary
+
     Column(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -171,15 +190,30 @@ fun EmptySelectionContent(modifier: Modifier = Modifier) {
         Box(
             modifier = Modifier
                 .size(80.dp)
+                // 柔和发光
+                .drawBehind {
+                    drawCircle(
+                        brush = Brush.radialGradient(
+                            colors = listOf(
+                                primaryColor.copy(alpha = 0.15f),
+                                primaryColor.copy(alpha = 0.03f),
+                                Color.Transparent
+                            ),
+                            center = center,
+                            radius = size.maxDimension * 0.8f
+                        ),
+                        radius = size.maxDimension * 0.8f
+                    )
+                }
                 .clip(RoundedCornerShape(20.dp))
-                .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)),
+                .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.25f)),
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 imageVector = Icons.Default.TouchApp,
                 contentDescription = null,
                 modifier = Modifier.size(40.dp),
-                tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
+                tint = primaryColor.copy(alpha = 0.55f)
             )
         }
         Spacer(modifier = Modifier.height(20.dp))
@@ -199,13 +233,15 @@ fun EmptySelectionContent(modifier: Modifier = Modifier) {
 }
 
 /**
- * 空游戏列表组件
+ * 空游戏列表组件 - 带发光图标
  */
 @Composable
 fun EmptyGameListContent(
     onAddClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val primaryColor = MaterialTheme.colorScheme.primary
+
     Box(
         modifier = modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
@@ -214,15 +250,30 @@ fun EmptyGameListContent(
             Box(
                 modifier = Modifier
                     .size(80.dp)
+                    // 柔和发光
+                    .drawBehind {
+                        drawCircle(
+                            brush = Brush.radialGradient(
+                                colors = listOf(
+                                    primaryColor.copy(alpha = 0.15f),
+                                    primaryColor.copy(alpha = 0.03f),
+                                    Color.Transparent
+                                ),
+                                center = center,
+                                radius = size.maxDimension * 0.8f
+                            ),
+                            radius = size.maxDimension * 0.8f
+                        )
+                    }
                     .clip(RoundedCornerShape(20.dp))
-                    .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)),
+                    .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.25f)),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = Icons.Default.SportsEsports,
                     contentDescription = null,
                     modifier = Modifier.size(40.dp),
-                    tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
+                    tint = primaryColor.copy(alpha = 0.55f)
                 )
             }
             Spacer(modifier = Modifier.height(20.dp))
@@ -241,7 +292,7 @@ fun EmptyGameListContent(
             Spacer(modifier = Modifier.height(24.dp))
             FilledTonalButton(
                 onClick = onAddClick,
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(14.dp)
             ) {
                 Icon(
                     imageVector = Icons.Default.Add,
