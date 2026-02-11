@@ -1,22 +1,23 @@
 plugins {
     alias(libs.plugins.kmp)
-    alias(libs.plugins.android.library)
+    alias(libs.plugins.android.kotlin.multiplatform.library)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.plugin.serialization)
 }
 
 kotlin {
-    androidTarget {
-        compilations.all {
-            kotlinOptions {
-                jvmTarget = "21"
-            }
-        }
+    androidLibrary {
+        namespace = "com.app.ralaunch.shared"
+        compileSdk = 36
+        minSdk = 28
     }
+
+    jvmToolchain(21)
 
     sourceSets {
         val commonMain by getting {
+            kotlin.srcDir("src/commonMain/kotlin")
             dependencies {
                 // Compose Multiplatform
                 implementation(compose.runtime)
@@ -45,13 +46,8 @@ kotlin {
             }
         }
 
-        val commonTest by getting {
-            dependencies {
-                implementation(kotlin("test"))
-            }
-        }
-
         val androidMain by getting {
+            kotlin.srcDir("src/androidMain/kotlin")
             dependencies {
                 implementation(libs.kotlinx.coroutines.android)
                 implementation(libs.koin.android)
@@ -60,19 +56,5 @@ kotlin {
                 implementation(libs.lifecycle.viewmodel.compose)
             }
         }
-    }
-}
-
-android {
-    namespace = "com.app.ralaunch.shared"
-    compileSdk = 36
-
-    defaultConfig {
-        minSdk = 28
-    }
-
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_21
-        targetCompatibility = JavaVersion.VERSION_21
     }
 }

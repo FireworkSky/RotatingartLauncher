@@ -132,7 +132,7 @@ dependencies {
     implementation files('libs/fishnet-release.aar')
 
     // 项目模块
-    implementation project(path: ':shared')
+    implementation project(':shared')
 
     // 从 ralib 迁移的依赖
     implementation 'com.github.omicronapps:7-Zip-JBinding-4Android:Release-16.02-2.03'

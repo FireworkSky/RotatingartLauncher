@@ -8,4 +8,5 @@ plugins {
     // KMP Plugins
     alias(libs.plugins.kmp) apply false
     alias(libs.plugins.composeMultiplatform) apply false
+    alias(libs.plugins.android.kotlin.multiplatform.library) apply false
 }
