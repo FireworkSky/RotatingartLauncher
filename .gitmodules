@@ -21,4 +21,4 @@
 	url = https://github.com/RotatingArtDev/FMOD_SDL.git
 [submodule "app/src/main/cpp/SDL"]
 	path = app/src/main/cpp/SDL
-	url = https://github.com/libsdl-org/SDL.git
+	url = https://github.com/RotatingArtDev/SDL.git
