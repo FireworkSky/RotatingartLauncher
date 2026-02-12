@@ -46,6 +46,7 @@ fun GameListContent(
     onGameLongClick: (GameItemUi) -> Unit = {},
     onLaunchClick: () -> Unit,
     onDeleteClick: () -> Unit,
+    onEditClick: (updatedGame: GameItemUi) -> Unit = {},
     onAddClick: () -> Unit = {},
     isLoading: Boolean = false,
     modifier: Modifier = Modifier,
@@ -88,6 +89,7 @@ fun GameListContent(
                 selectedGame = selectedGame,
                 onLaunchClick = onLaunchClick,
                 onDeleteClick = onDeleteClick,
+                onEditClick = onEditClick,
                 iconLoader = iconLoader,
                 modifier = Modifier.fillMaxSize()
             )
@@ -148,6 +150,7 @@ private fun DetailSection(
     selectedGame: GameItemUi?,
     onLaunchClick: () -> Unit,
     onDeleteClick: () -> Unit,
+    onEditClick: (updatedGame: GameItemUi) -> Unit,
     iconLoader: @Composable (String?, Modifier) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -165,6 +168,7 @@ private fun DetailSection(
                     game = game,
                     onLaunchClick = onLaunchClick,
                     onDeleteClick = onDeleteClick,
+                    onEditClick = onEditClick,
                     iconLoader = iconLoader
                 )
             } else {

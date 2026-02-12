@@ -43,6 +43,7 @@ fun MainApp(
     onGameLongClick: (GameItemUi) -> Unit = {},
     onLaunchClick: () -> Unit = {},
     onDeleteClick: () -> Unit = {},
+    onEditClick: (updatedGame: GameItemUi) -> Unit = {},
     iconLoader: @Composable (String?, Modifier) -> Unit = { _, _ -> },
     // 页面内容 Slots
     controlsContent: @Composable () -> Unit = { PlaceholderScreen("控制布局") },
@@ -162,6 +163,7 @@ fun MainApp(
                                 onGameLongClick = onGameLongClick,
                                 onLaunchClick = onLaunchClick,
                                 onDeleteClick = onDeleteClick,
+                                onEditClick = onEditClick,
                                 iconLoader = iconLoader,
                                 controlsContent = controlsContent,
                                 downloadContent = downloadContent,
@@ -182,6 +184,7 @@ fun MainApp(
                                     onGameLongClick = onGameLongClick,
                                     onLaunchClick = onLaunchClick,
                                     onDeleteClick = onDeleteClick,
+                                    onEditClick = onEditClick,
                                     iconLoader = iconLoader,
                                     controlsContent = controlsContent,
                                     downloadContent = downloadContent,
@@ -239,6 +242,7 @@ private fun PageContent(
     onGameLongClick: (GameItemUi) -> Unit,
     onLaunchClick: () -> Unit,
     onDeleteClick: () -> Unit,
+    onEditClick: (updatedGame: GameItemUi) -> Unit,
     iconLoader: @Composable (String?, Modifier) -> Unit,
     controlsContent: @Composable () -> Unit,
     downloadContent: @Composable () -> Unit,
@@ -257,6 +261,7 @@ private fun PageContent(
                 onGameLongClick = onGameLongClick,
                 onLaunchClick = onLaunchClick,
                 onDeleteClick = onDeleteClick,
+                onEditClick = onEditClick,
                 onAddClick = { navState.navigateTo(Screen.Import) },
                 iconLoader = iconLoader
             )
@@ -285,6 +290,7 @@ private fun GamesPageContent(
     onGameLongClick: (GameItemUi) -> Unit,
     onLaunchClick: () -> Unit,
     onDeleteClick: () -> Unit,
+    onEditClick: (updatedGame: GameItemUi) -> Unit,
     onAddClick: () -> Unit,
     iconLoader: @Composable (String?, Modifier) -> Unit
 ) {
@@ -295,6 +301,7 @@ private fun GamesPageContent(
         onGameLongClick = onGameLongClick,
         onLaunchClick = onLaunchClick,
         onDeleteClick = onDeleteClick,
+        onEditClick = onEditClick,
         onAddClick = onAddClick,
         isLoading = isLoading,
         iconLoader = iconLoader

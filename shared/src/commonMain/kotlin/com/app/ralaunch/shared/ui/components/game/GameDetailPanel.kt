@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.SportsEsports
 import androidx.compose.material3.*
@@ -41,17 +43,81 @@ fun GameDetailPanel(
     game: GameItemUi,
     onLaunchClick: () -> Unit,
     onDeleteClick: () -> Unit,
+    onEditClick: (updatedGame: GameItemUi) -> Unit,
     modifier: Modifier = Modifier,
     iconLoader: @Composable (String?, Modifier) -> Unit = { _, _ -> }
 ) {
     val primaryColor = MaterialTheme.colorScheme.primary
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+    // Menu state
+    var showMenu by remember { mutableStateOf(false) }
+
+    // Edit dialog state
+    var showEditDialog by remember { mutableStateOf(false) }
+    var editedName by remember(game.id) { mutableStateOf(game.displayedName) }
+    var editedDescription by remember(game.id) { mutableStateOf(game.displayedDescription ?: "") }
+
+    // Edit dialog
+    if (showEditDialog) {
+        AlertDialog(
+            onDismissRequest = { showEditDialog = false },
+            title = { Text("编辑游戏信息") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    OutlinedTextField(
+                        value = editedName,
+                        onValueChange = { editedName = it },
+                        label = { Text("游戏名称") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    OutlinedTextField(
+                        value = editedDescription,
+                        onValueChange = { editedDescription = it },
+                        label = { Text("游戏描述") },
+                        maxLines = 3,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        // Create updated game with modified fields
+                        val updatedGame = game.copy(
+                            displayedName = editedName.trim(),
+                            displayedDescription = editedDescription.trim().ifEmpty { null }
+                        )
+                        onEditClick(updatedGame)
+                        showEditDialog = false
+                    },
+                    enabled = editedName.isNotBlank()
+                ) {
+                    Text("保存")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    showEditDialog = false
+                    // Reset to original values
+                    editedName = game.displayedName
+                    editedDescription = game.displayedDescription ?: ""
+                }) {
+                    Text("取消")
+                }
+            }
+        )
+    }
+
+    Box(
+        modifier = modifier.fillMaxSize()
     ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
         // 上半部分：Hero 区域
         Column(
             modifier = Modifier.weight(1f),
@@ -155,25 +221,100 @@ fun GameDetailPanel(
                     .height(48.dp)
             )
 
-            // 删除按钮
-            FilledTonalIconButton(
-                onClick = onDeleteClick,
-                modifier = Modifier.size(48.dp),
-                shape = RoundedCornerShape(14.dp),
-                colors = IconButtonDefaults.filledTonalIconButtonColors(
-                    containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.15f),
-                    contentColor = MaterialTheme.colorScheme.error.copy(alpha = 0.8f)
-                )
+            // FAB 菜单按钮
+            Box(
+                modifier = Modifier
+                    .size(48.dp),
+                contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    imageVector = Icons.Default.Delete,
-                    contentDescription = "删除",
-                    modifier = Modifier.size(20.dp)
-                )
+                // 主菜单按钮
+                FilledTonalIconButton(
+                    onClick = { showMenu = !showMenu },
+                    modifier = Modifier.fillMaxSize(),
+                    shape = RoundedCornerShape(14.dp),
+                    colors = IconButtonDefaults.filledTonalIconButtonColors(
+                        containerColor = if (showMenu)
+                            MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+                        else
+                            MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f),
+                        contentColor = if (showMenu)
+                            MaterialTheme.colorScheme.primary
+                        else
+                            MaterialTheme.colorScheme.onSecondaryContainer
+                    )
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.MoreVert,
+                        contentDescription = "更多选项",
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
             }
         }
-    }
+        } // End of Column
+
+        // 浮动菜单项（放在 Column 外部作为 overlay，在外层 Box 内）
+        androidx.compose.animation.AnimatedVisibility(
+            visible = showMenu,
+            enter = androidx.compose.animation.fadeIn() + androidx.compose.animation.scaleIn(
+                initialScale = 0.8f,
+                transformOrigin = androidx.compose.ui.graphics.TransformOrigin(0.5f, 1f)
+            ),
+            exit = androidx.compose.animation.fadeOut() + androidx.compose.animation.scaleOut(
+                targetScale = 0.8f,
+                transformOrigin = androidx.compose.ui.graphics.TransformOrigin(0.5f, 1f)
+            ),
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(end = 16.dp, bottom = 76.dp)  // 16dp matches Column padding, 76dp = 16dp padding + 48dp button + 12dp gap
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                // 编辑按钮
+                FilledTonalIconButton(
+                    onClick = {
+                        showMenu = false
+                        showEditDialog = true
+                    },
+                    modifier = Modifier.size(48.dp),
+                    shape = RoundedCornerShape(14.dp),
+                    colors = IconButtonDefaults.filledTonalIconButtonColors(
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                    )
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Edit,
+                        contentDescription = "编辑",
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+                // 删除按钮
+                FilledTonalIconButton(
+                    onClick = {
+                        showMenu = false
+                        onDeleteClick()
+                    },
+                    modifier = Modifier.size(48.dp),
+                    shape = RoundedCornerShape(14.dp),
+                    colors = IconButtonDefaults.filledTonalIconButtonColors(
+                        containerColor = MaterialTheme.colorScheme.errorContainer,
+                        contentColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = "删除",
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
+        }
+    } // End of outer Box
 }
+
 
 /**
  * 发光启动按钮 - 带脉冲发光效果

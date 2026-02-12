@@ -160,6 +160,21 @@ class MainActivityCompose : BaseActivity() {
                         onGameLongClick = { selectGameUi(it) },
                         onLaunchClick = { presenter.launchSelectedGame() },
                         onDeleteClick = { handleDeleteClick() },
+                        onEditClick = { updatedGameUi ->
+                            presenter.updateGame(updatedGameUi)
+                            // 刷新 UI 状态
+                            val updatedGames = presenter.getGameList()
+                            gameItemsMap.clear()
+                            updatedGames.forEach { g ->
+                                gameItemsMap[g.id] = g
+                            }
+                            _uiState.update { s ->
+                                s.copy(
+                                    games = updatedGames.toUiModels(),
+                                    selectedGame = updatedGameUi
+                                )
+                            }
+                        },
                         onNavigate = { handleNavigation(it) },
                         onDismissDeleteDialog = { dismissDeleteDialog() },
                         onConfirmDelete = { confirmDelete() },
@@ -508,6 +523,7 @@ private fun MainActivityContent(
     onGameLongClick: (GameItemUi) -> Unit,
     onLaunchClick: () -> Unit,
     onDeleteClick: () -> Unit,
+    onEditClick: (updatedGame: GameItemUi) -> Unit,
     onNavigate: (NavDestination) -> Unit,
     onDismissDeleteDialog: () -> Unit = {},
     onConfirmDelete: () -> Unit = {},
@@ -583,6 +599,7 @@ private fun MainActivityContent(
             onGameLongClick = onGameLongClick,
             onLaunchClick = onLaunchClick,
             onDeleteClick = onDeleteClick,
+            onEditClick = onEditClick,
             iconLoader = { iconPath, modifier ->
                 iconPath?.let {
                     AsyncImage(

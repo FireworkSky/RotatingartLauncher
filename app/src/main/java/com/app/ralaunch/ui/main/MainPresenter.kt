@@ -5,6 +5,8 @@ import android.content.SharedPreferences
 import com.app.ralaunch.shared.AppConstants
 import com.app.ralaunch.R
 import com.app.ralaunch.shared.domain.model.GameItem
+import com.app.ralaunch.shared.ui.model.GameItemUi
+import com.app.ralaunch.shared.ui.model.applyFromUiModel
 import com.app.ralaunch.data.repository.GameRepository
 import com.app.ralaunch.manager.GameLaunchManager
 import com.app.ralaunch.manager.GameDeletionManager
@@ -126,6 +128,32 @@ class MainPresenter(
     fun getSelectedGame(): GameItem? = selectedGame
 
     fun getGameList(): List<GameItem> = gameList
+
+    /**
+     * 更新游戏信息
+     *
+     * 接收更新后的 GameItemUi，将修改应用到对应的 GameItem 并持久化。
+     * 使用 applyFromUiModel 扩展函数，自动应用所有可编辑字段。
+     */
+    fun updateGame(updatedGameUi: GameItemUi) {
+        val index = gameList.indexOfFirst { it.id == updatedGameUi.id }
+        if (index >= 0) {
+            val game = gameList[index]
+
+            // 使用扩展函数应用所有可编辑字段
+            game.applyFromUiModel(updatedGameUi)
+
+            gameRepository.updateGame(index, game)
+
+            // 如果是当前选中的游戏，更新选中状态
+            if (selectedGame?.id == updatedGameUi.id) {
+                selectedGame = game
+                withView { showSelectedGame(game) }
+            }
+
+            withView { refreshGameList() }
+        }
+    }
 
     // ==================== 导航 ====================
 
