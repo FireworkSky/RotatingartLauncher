@@ -4,7 +4,6 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
-import com.app.ralaunch.data.SettingsManager
 import com.app.ralaunch.patch.PatchManager
 import com.app.ralaunch.shared.domain.model.BackgroundType
 import com.app.ralaunch.shared.domain.repository.SettingsRepositoryV2
@@ -35,16 +34,10 @@ internal suspend fun handleImageSelection(context: Context, uri: Uri, viewModel:
                 }
             }
             
-            val settingsRepository: SettingsRepositoryV2? = try {
-                KoinJavaComponent.getOrNull(SettingsRepositoryV2::class.java)
-            } catch (_: Exception) {
-                null
-            }
+            val settingsRepository: SettingsRepositoryV2 =
+                KoinJavaComponent.get(SettingsRepositoryV2::class.java)
 
-            val oldPath = settingsRepository
-                ?.getSettingsSnapshot()
-                ?.backgroundImagePath
-                ?: SettingsManager.getInstance().backgroundImagePath
+            val oldPath = settingsRepository.getSettingsSnapshot().backgroundImagePath
             if (!oldPath.isNullOrEmpty()) {
                 val oldFile = File(oldPath)
                 if (oldFile.exists() && oldFile.parentFile == backgroundDir) {
@@ -53,22 +46,11 @@ internal suspend fun handleImageSelection(context: Context, uri: Uri, viewModel:
             }
 
             val newPath = destFile.absolutePath
-            if (settingsRepository != null) {
-                settingsRepository.update {
-                    it.copy(
-                        backgroundImagePath = newPath,
-                        backgroundType = BackgroundType.IMAGE,
-                        backgroundVideoPath = "",
-                        backgroundOpacity = 90
-                    )
-                }
-            } else {
-                SettingsManager.getInstance().apply {
-                    backgroundImagePath = newPath
-                    backgroundType = "image"
-                    backgroundVideoPath = ""
-                    backgroundOpacity = 90
-                }
+            settingsRepository.update {
+                backgroundImagePath = newPath
+                backgroundType = BackgroundType.IMAGE
+                backgroundVideoPath = ""
+                backgroundOpacity = 90
             }
 
             withContext(Dispatchers.Main) {
@@ -103,28 +85,14 @@ internal suspend fun handleVideoSelection(context: Context, uri: Uri, viewModel:
             }
 
             val newPath = destFile.absolutePath
-            val settingsRepository: SettingsRepositoryV2? = try {
-                KoinJavaComponent.getOrNull(SettingsRepositoryV2::class.java)
-            } catch (_: Exception) {
-                null
-            }
+            val settingsRepository: SettingsRepositoryV2 =
+                KoinJavaComponent.get(SettingsRepositoryV2::class.java)
 
-            if (settingsRepository != null) {
-                settingsRepository.update {
-                    it.copy(
-                        backgroundVideoPath = newPath,
-                        backgroundType = BackgroundType.VIDEO,
-                        backgroundImagePath = "",
-                        backgroundOpacity = 90
-                    )
-                }
-            } else {
-                SettingsManager.getInstance().apply {
-                    backgroundVideoPath = newPath
-                    backgroundType = "video"
-                    backgroundImagePath = ""
-                    backgroundOpacity = 90
-                }
+            settingsRepository.update {
+                backgroundVideoPath = newPath
+                backgroundType = BackgroundType.VIDEO
+                backgroundImagePath = ""
+                backgroundOpacity = 90
             }
 
             withContext(Dispatchers.Main) {
@@ -236,18 +204,26 @@ internal fun applyVideoSpeedChange(speed: Float) {
 }
 
 internal fun restoreDefaultBackground(context: Context) {
-    SettingsManager.getInstance().apply {
-        backgroundType = "default"
-        backgroundImagePath = ""
-        backgroundVideoPath = ""
-        backgroundOpacity = 0
-        videoPlaybackSpeed = 1.0f
+    val settingsRepository: SettingsRepositoryV2 = KoinJavaComponent.get(SettingsRepositoryV2::class.java)
+    kotlinx.coroutines.runBlocking {
+        settingsRepository.update {
+            backgroundType = BackgroundType.DEFAULT
+            backgroundImagePath = ""
+            backgroundVideoPath = ""
+            backgroundOpacity = 0
+            videoPlaybackSpeed = 1.0f
+        }
     }
     AppThemeState.restoreDefaultBackground()
 }
 
 internal fun applyThemeColor(context: Context, colorId: Int) {
-    SettingsManager.getInstance().themeColor = colorId
+    val settingsRepository: SettingsRepositoryV2 = KoinJavaComponent.get(SettingsRepositoryV2::class.java)
+    kotlinx.coroutines.runBlocking {
+        settingsRepository.update {
+            themeColor = colorId
+        }
+    }
     AppThemeState.updateThemeColor(colorId)
     Toast.makeText(context, "主题颜色已更改", Toast.LENGTH_SHORT).show()
 }

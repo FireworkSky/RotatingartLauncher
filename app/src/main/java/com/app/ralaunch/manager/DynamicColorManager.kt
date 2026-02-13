@@ -6,7 +6,7 @@ import android.content.res.Configuration
 import android.graphics.Color
 import android.os.Build
 import androidx.annotation.ColorInt
-import com.app.ralaunch.data.SettingsManager
+import com.app.ralaunch.data.SettingsAccess
 import com.app.ralaunch.utils.AppLogger
 import com.google.android.material.color.DynamicColors
 import com.google.android.material.color.DynamicColorsOptions
@@ -44,7 +44,7 @@ class DynamicColorManager private constructor() {
                 }
             }
 
-            val themeColor = SettingsManager.getInstance().themeColor
+            val themeColor = SettingsAccess.themeColor
             applyCustomThemeColor(activity, themeColor)
         } catch (e: Exception) {
             AppLogger.error(TAG, "应用动态颜色失败: ${e.message}", e)
@@ -93,7 +93,7 @@ class DynamicColorManager private constructor() {
     }
 
     private fun shouldUseSystemDynamicColors(): Boolean {
-        val themeColor = SettingsManager.getInstance().themeColor
+        val themeColor = SettingsAccess.themeColor
         return themeColor == DEFAULT_COLOR
     }
 

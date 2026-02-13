@@ -18,4 +18,8 @@ actual class StoragePathsProvider(
             if (!it.exists()) it.mkdirs()
         }.absolutePath
     }
+
+    actual fun settingsFilePathFull(): String {
+        return File(context.filesDir, AppConstants.Files.SETTINGS).absolutePath
+    }
 }

@@ -5,7 +5,7 @@ import android.os.Build
 import android.os.Environment
 import android.util.Log
 import com.app.ralaunch.core.EnvVarsManager
-import com.app.ralaunch.data.SettingsManager
+import com.app.ralaunch.data.SettingsAccess
 import java.io.File
 import kotlin.io.path.Path
 
@@ -51,7 +51,7 @@ object RendererConfig {
     @JvmStatic
     fun setRenderer(context: Context?, renderer: String?) {
         if (renderer == null) return
-        SettingsManager.getInstance().fnaRenderer = renderer
+        SettingsAccess.fnaRenderer = renderer
     }
 
     /**
@@ -59,7 +59,7 @@ object RendererConfig {
      */
     @JvmStatic
     fun getRenderer(context: Context?): String {
-        val manager = SettingsManager.getInstance()
+        val manager = SettingsAccess
         val raw = manager.fnaRenderer
         val normalized = normalizeRendererValue(raw)
         if (normalized != raw) {
@@ -414,7 +414,7 @@ object RendererConfig {
      * 获取画质优化配置
      */
     private fun getQualityConfig(): Map<String, String?> {
-        val settings = SettingsManager.getInstance()
+        val settings = SettingsAccess
         val envVars = mutableMapOf<String, String?>()
 
         // 画质预设
@@ -499,7 +499,7 @@ object RendererConfig {
         return when {
             rendererId in vulkanTranslatedRenderers -> "0"
             else -> {
-                val settings = SettingsManager.getInstance()
+                val settings = SettingsAccess
                 if (settings.isFnaEnableMapBufferRangeOptimization) null else "0"
             }
         }

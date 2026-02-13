@@ -1,7 +1,7 @@
 package com.app.ralaunch.utils
 
 import android.content.Context
-import com.app.ralaunch.data.SettingsManager
+import com.app.ralaunch.data.SettingsAccess
 import kotlin.math.sqrt
 
 /**
@@ -63,7 +63,7 @@ object OpacityHelper {
      */
     @JvmStatic
     fun getUiAlphaFromSettings(context: Context?, hasBackground: Boolean): Float {
-        val opacity = SettingsManager.getInstance().backgroundOpacity
+        val opacity = SettingsAccess.backgroundOpacity
         return getUiAlpha(opacity, hasBackground)
     }
 
@@ -72,7 +72,7 @@ object OpacityHelper {
      */
     @JvmStatic
     fun getDialogAlphaFromSettings(context: Context?): Float {
-        val opacity = SettingsManager.getInstance().backgroundOpacity
+        val opacity = SettingsAccess.backgroundOpacity
         return getDialogAlpha(opacity)
     }
 
@@ -81,7 +81,7 @@ object OpacityHelper {
      */
     @JvmStatic
     fun getBackgroundAlphaFromSettings(context: Context?): Float {
-        val opacity = SettingsManager.getInstance().backgroundOpacity
+        val opacity = SettingsAccess.backgroundOpacity
         return getBackgroundAlpha(opacity)
     }
 
@@ -90,7 +90,7 @@ object OpacityHelper {
      */
     @JvmStatic
     fun getOverlayAlphaFromSettings(context: Context?): Int {
-        val opacity = SettingsManager.getInstance().backgroundOpacity
+        val opacity = SettingsAccess.backgroundOpacity
         return getOverlayAlpha(opacity)
     }
 }

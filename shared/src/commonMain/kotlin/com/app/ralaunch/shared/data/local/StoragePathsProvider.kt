@@ -8,4 +8,5 @@ package com.app.ralaunch.shared.data.local
 expect class StoragePathsProvider {
     fun gamesDirPathFull(): String
     fun controlLayoutsDirPathFull(): String
+    fun settingsFilePathFull(): String
 }

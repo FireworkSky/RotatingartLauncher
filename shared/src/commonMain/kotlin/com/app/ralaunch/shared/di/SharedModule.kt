@@ -25,7 +25,7 @@ val sharedModule = module {
     }
 
     single<SettingsRepositoryV2> {
-        SettingsRepositoryImpl(dataStore = get())
+        SettingsRepositoryImpl(storagePathsProvider = get())
     }
 
     // ==================== ViewModels ====================

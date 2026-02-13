@@ -8,7 +8,7 @@ import android.os.Looper
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.fragment.app.DialogFragment
-import com.app.ralaunch.data.SettingsManager
+import com.app.ralaunch.data.SettingsAccess
 import com.app.ralaunch.shared.manager.BackgroundType
 import com.app.ralaunch.shared.manager.IThemeManager
 import com.app.ralaunch.shared.manager.ThemeConfig
@@ -27,7 +27,7 @@ class ThemeManager(private val activity: AppCompatActivity) : IThemeManager {
         private const val TAG = "ThemeManager"
     }
 
-    private val settingsManager: SettingsManager = SettingsManager.getInstance()
+    private val settingsManager: SettingsAccess = SettingsAccess
     private val dynamicColorManager: DynamicColorManager = DynamicColorManager.getInstance()
 
     /**

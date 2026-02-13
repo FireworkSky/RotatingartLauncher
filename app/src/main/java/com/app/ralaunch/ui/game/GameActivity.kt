@@ -19,7 +19,7 @@ import com.app.ralaunch.game.input.GameImeHelper
 import com.app.ralaunch.game.input.GameTouchBridge
 import com.app.ralaunch.game.controls.GameVirtualControlsManager
 import com.app.ralaunch.crash.CrashReportActivity
-import com.app.ralaunch.data.SettingsManager
+import com.app.ralaunch.data.SettingsAccess
 import com.app.ralaunch.manager.GameFullscreenManager
 import com.app.ralaunch.utils.AppLogger
 import com.app.ralaunch.utils.DensityAdapter
@@ -131,7 +131,7 @@ class GameActivity : SDLActivity(), GameContract.View {
     }
 
     private fun applyThemeMode() {
-        val themeMode = SettingsManager.getInstance().themeMode
+        val themeMode = SettingsAccess.themeMode
         val nightMode = when (themeMode) {
             0 -> AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
             1 -> AppCompatDelegate.MODE_NIGHT_YES

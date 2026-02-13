@@ -2,7 +2,7 @@ package com.app.ralaunch.utils
 
 import android.content.Context
 import android.util.Log
-import com.app.ralaunch.data.SettingsManager
+import com.app.ralaunch.data.SettingsAccess
 import org.koin.java.KoinJavaComponent
 
 /**
@@ -29,10 +29,10 @@ object RuntimePreference {
 
     @JvmStatic
     fun setVerboseLogging(context: Context?, enabled: Boolean) {
-        SettingsManager.getInstance().isVerboseLogging = enabled
+        SettingsAccess.isVerboseLogging = enabled
     }
 
     @JvmStatic
     fun isVerboseLogging(context: Context?): Boolean =
-        SettingsManager.getInstance().isVerboseLogging
+        SettingsAccess.isVerboseLogging
 }

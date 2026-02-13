@@ -1,7 +1,7 @@
 package com.app.ralaunch.utils
 
 import android.util.Log
-import com.app.ralaunch.data.SettingsManager
+import com.app.ralaunch.data.SettingsAccess
 import com.app.ralaunch.shared.util.Logger
 import com.app.ralaunch.shared.util.LogLevel
 import java.io.File
@@ -50,7 +50,7 @@ object AppLogger : Logger {
             logDir?.takeIf { !it.exists() }?.mkdirs()
 
             logcatReader = LogcatReader.getInstance()
-            val settingsManager = SettingsManager.getInstance()
+            val settingsManager = SettingsAccess
             if (settingsManager.isLogSystemEnabled) {
                 logcatReader?.start(logDir)
                 Log.i(TAG, "LogcatReader started")

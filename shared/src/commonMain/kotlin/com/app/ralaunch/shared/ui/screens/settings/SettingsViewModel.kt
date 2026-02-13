@@ -274,35 +274,35 @@ class SettingsViewModel(
 
     private fun setThemeMode(mode: Int) {
         viewModelScope.launch {
-            settingsRepository.update { it.copy(themeMode = ThemeMode.fromValue(mode)) }
+            settingsRepository.update { themeMode = ThemeMode.fromValue(mode) }
             _uiState.update { it.copy(themeMode = mode) }
         }
     }
 
     private fun setThemeColor(color: Int) {
         viewModelScope.launch {
-            settingsRepository.update { it.copy(themeColor = color) }
+            settingsRepository.update { themeColor = color }
             _uiState.update { it.copy(themeColor = color) }
         }
     }
 
     private fun setBackgroundType(type: Int) {
         viewModelScope.launch {
-            settingsRepository.update { it.copy(backgroundType = intToBackgroundType(type)) }
+            settingsRepository.update { backgroundType = intToBackgroundType(type) }
             _uiState.update { it.copy(backgroundType = type) }
         }
     }
 
     private fun setLanguage(language: String) {
         viewModelScope.launch {
-            settingsRepository.update { it.copy(language = language) }
+            settingsRepository.update { this.language = language }
             _uiState.update { it.copy(language = getLanguageDisplayName(language)) }
         }
     }
 
     private fun setBackgroundOpacity(opacity: Int) {
         viewModelScope.launch {
-            settingsRepository.update { it.copy(backgroundOpacity = opacity) }
+            settingsRepository.update { backgroundOpacity = opacity }
             _uiState.update { it.copy(backgroundOpacity = opacity) }
             sendEffect(SettingsEffect.BackgroundOpacityChanged(opacity))
         }
@@ -310,7 +310,7 @@ class SettingsViewModel(
 
     private fun setVideoPlaybackSpeed(speed: Float) {
         viewModelScope.launch {
-            settingsRepository.update { it.copy(videoPlaybackSpeed = speed) }
+            settingsRepository.update { videoPlaybackSpeed = speed }
             _uiState.update { it.copy(videoPlaybackSpeed = speed) }
             sendEffect(SettingsEffect.VideoSpeedChanged(speed))
         }
@@ -319,13 +319,11 @@ class SettingsViewModel(
     private fun restoreDefaultBackground() {
         viewModelScope.launch {
             settingsRepository.update {
-                it.copy(
-                    backgroundType = BackgroundType.DEFAULT,
-                    backgroundImagePath = "",
-                    backgroundVideoPath = "",
-                    backgroundOpacity = 0,
-                    videoPlaybackSpeed = 1.0f
-                )
+                backgroundType = BackgroundType.DEFAULT
+                backgroundImagePath = ""
+                backgroundVideoPath = ""
+                backgroundOpacity = 0
+                videoPlaybackSpeed = 1.0f
             }
             _uiState.update { it.copy(
                 backgroundType = 0,
@@ -341,28 +339,28 @@ class SettingsViewModel(
 
     private fun setTouchMultitouch(enabled: Boolean) {
         viewModelScope.launch {
-            settingsRepository.update { it.copy(touchMultitouchEnabled = enabled) }
+            settingsRepository.update { touchMultitouchEnabled = enabled }
             _uiState.update { it.copy(touchMultitouchEnabled = enabled) }
         }
     }
 
     private fun setMouseRightStick(enabled: Boolean) {
         viewModelScope.launch {
-            settingsRepository.update { it.copy(mouseRightStickEnabled = enabled) }
+            settingsRepository.update { mouseRightStickEnabled = enabled }
             _uiState.update { it.copy(mouseRightStickEnabled = enabled) }
         }
     }
 
     private fun setVibrationEnabled(enabled: Boolean) {
         viewModelScope.launch {
-            settingsRepository.update { it.copy(vibrationEnabled = enabled) }
+            settingsRepository.update { vibrationEnabled = enabled }
             _uiState.update { it.copy(vibrationEnabled = enabled) }
         }
     }
 
     private fun setVibrationStrength(strength: Float) {
         viewModelScope.launch {
-            settingsRepository.update { it.copy(virtualControllerVibrationIntensity = strength) }
+            settingsRepository.update { virtualControllerVibrationIntensity = strength }
             _uiState.update { it.copy(vibrationStrength = strength) }
         }
     }
@@ -371,21 +369,21 @@ class SettingsViewModel(
 
     private fun setBigCoreAffinity(enabled: Boolean) {
         viewModelScope.launch {
-            settingsRepository.update { it.copy(setThreadAffinityToBigCore = enabled) }
+            settingsRepository.update { setThreadAffinityToBigCore = enabled }
             _uiState.update { it.copy(bigCoreAffinityEnabled = enabled) }
         }
     }
 
     private fun setLowLatencyAudio(enabled: Boolean) {
         viewModelScope.launch {
-            settingsRepository.update { it.copy(sdlAaudioLowLatency = enabled) }
+            settingsRepository.update { sdlAaudioLowLatency = enabled }
             _uiState.update { it.copy(lowLatencyAudioEnabled = enabled) }
         }
     }
 
     private fun setRenderer(renderer: String) {
         viewModelScope.launch {
-            settingsRepository.update { it.copy(fnaRenderer = renderer) }
+            settingsRepository.update { fnaRenderer = renderer }
             _uiState.update { it.copy(rendererType = getRendererDisplayName(renderer)) }
         }
     }
@@ -394,7 +392,7 @@ class SettingsViewModel(
 
     private fun setQualityLevel(level: Int) {
         viewModelScope.launch {
-            settingsRepository.update { it.copy(qualityLevel = level) }
+            settingsRepository.update { qualityLevel = level }
             _uiState.update { it.copy(qualityLevel = level) }
             val qualityName = when (level) {
                 0 -> "高画质"
@@ -408,7 +406,7 @@ class SettingsViewModel(
 
     private fun setShaderLowPrecision(enabled: Boolean) {
         viewModelScope.launch {
-            settingsRepository.update { it.copy(shaderLowPrecision = enabled) }
+            settingsRepository.update { shaderLowPrecision = enabled }
             _uiState.update { it.copy(shaderLowPrecision = enabled) }
             sendEffect(SettingsEffect.ShowToast("重启游戏后生效"))
         }
@@ -416,7 +414,7 @@ class SettingsViewModel(
 
     private fun setTargetFps(fps: Int) {
         viewModelScope.launch {
-            settingsRepository.update { it.copy(targetFps = fps) }
+            settingsRepository.update { targetFps = fps }
             _uiState.update { it.copy(targetFps = fps) }
             val fpsName = if (fps == 0) "无限制" else "$fps FPS"
             sendEffect(SettingsEffect.ShowToast("帧率限制已设置为${fpsName}，重启游戏后生效"))
@@ -427,28 +425,28 @@ class SettingsViewModel(
 
     private fun setLoggingEnabled(enabled: Boolean) {
         viewModelScope.launch {
-            settingsRepository.update { it.copy(logSystemEnabled = enabled) }
+            settingsRepository.update { logSystemEnabled = enabled }
             _uiState.update { it.copy(loggingEnabled = enabled) }
         }
     }
 
     private fun setVerboseLogging(enabled: Boolean) {
         viewModelScope.launch {
-            settingsRepository.update { it.copy(verboseLogging = enabled) }
+            settingsRepository.update { verboseLogging = enabled }
             _uiState.update { it.copy(verboseLogging = enabled) }
         }
     }
 
     private fun setKillLauncherUI(enabled: Boolean) {
         viewModelScope.launch {
-            settingsRepository.update { it.copy(killLauncherUIAfterLaunch = enabled) }
+            settingsRepository.update { killLauncherUIAfterLaunch = enabled }
             _uiState.update { it.copy(killLauncherUIEnabled = enabled) }
         }
     }
 
     private fun setServerGC(enabled: Boolean) {
         viewModelScope.launch {
-            settingsRepository.update { it.copy(serverGC = enabled) }
+            settingsRepository.update { serverGC = enabled }
             _uiState.update { it.copy(serverGCEnabled = enabled) }
             sendEffect(SettingsEffect.ShowToast("重启游戏后生效"))
         }
@@ -456,7 +454,7 @@ class SettingsViewModel(
 
     private fun setConcurrentGC(enabled: Boolean) {
         viewModelScope.launch {
-            settingsRepository.update { it.copy(concurrentGC = enabled) }
+            settingsRepository.update { concurrentGC = enabled }
             _uiState.update { it.copy(concurrentGCEnabled = enabled) }
             sendEffect(SettingsEffect.ShowToast("重启游戏后生效"))
         }
@@ -464,7 +462,7 @@ class SettingsViewModel(
 
     private fun setTieredCompilation(enabled: Boolean) {
         viewModelScope.launch {
-            settingsRepository.update { it.copy(tieredCompilation = enabled) }
+            settingsRepository.update { tieredCompilation = enabled }
             _uiState.update { it.copy(tieredCompilationEnabled = enabled) }
             sendEffect(SettingsEffect.ShowToast("重启游戏后生效"))
         }
@@ -472,7 +470,7 @@ class SettingsViewModel(
 
     private fun setFnaMapBufferRangeOpt(enabled: Boolean) {
         viewModelScope.launch {
-            settingsRepository.update { it.copy(fnaMapBufferRangeOptimization = enabled) }
+            settingsRepository.update { fnaMapBufferRangeOptimization = enabled }
             _uiState.update { it.copy(fnaMapBufferRangeOptEnabled = enabled) }
         }
     }

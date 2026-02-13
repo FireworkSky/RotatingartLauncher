@@ -5,7 +5,7 @@ import android.os.Build
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
-import com.app.ralaunch.data.SettingsManager
+import com.app.ralaunch.data.SettingsAccess
 import com.app.ralaunch.shared.manager.IVibrationManager
 import com.app.ralaunch.shared.manager.VibrationType
 
@@ -28,7 +28,7 @@ class VibrationManager(context: Context) : IVibrationManager {
         context.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
     }
 
-    private val settingsManager = SettingsManager.getInstance()
+    private val settingsManager = SettingsAccess
 
     private val isVibrationEnabled: Boolean
         get() = vibrator?.hasVibrator() == true && settingsManager.vibrationEnabled

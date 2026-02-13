@@ -5,7 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.app.ralaunch.R
-import com.app.ralaunch.data.SettingsManager
+import com.app.ralaunch.data.SettingsAccess
 import com.app.ralaunch.domain.usecase.AddGameUseCase
 import com.app.ralaunch.domain.usecase.DeleteGameFilesUseCase
 import com.app.ralaunch.domain.usecase.DeleteGameUseCase
@@ -165,7 +165,7 @@ class MainViewModel(
                 emitEffect(MainUiEffect.ShowToast(appContext.getString(R.string.game_launch_failed)))
                 return@launch
             }
-            if (SettingsManager.getInstance().isKillLauncherUIAfterLaunch) {
+            if (SettingsAccess.isKillLauncherUIAfterLaunch) {
                 emitEffect(MainUiEffect.ExitLauncher)
             }
         }

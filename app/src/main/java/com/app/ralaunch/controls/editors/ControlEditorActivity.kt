@@ -21,7 +21,7 @@ import com.app.ralaunch.shared.ui.theme.AppThemeState
 import com.app.ralaunch.shared.ui.theme.RaLaunchTheme
 import com.app.ralaunch.controls.packs.ControlPackManager
 import org.koin.java.KoinJavaComponent
-import com.app.ralaunch.data.SettingsManager
+import com.app.ralaunch.data.SettingsAccess
 import com.app.ralaunch.manager.DynamicColorManager
 import com.app.ralaunch.controls.textures.TextureLoader
 import com.app.ralaunch.utils.DensityAdapter
@@ -72,7 +72,7 @@ class ControlEditorActivity : AppCompatActivity() {
 
         // 应用动态颜色主题
         val dynamicColorManager = DynamicColorManager.getInstance()
-        val settingsManager = SettingsManager.getInstance()
+        val settingsManager = SettingsAccess
         dynamicColorManager.applyCustomThemeColor(this, settingsManager.themeColor)
 
         // 应用其他主题设置

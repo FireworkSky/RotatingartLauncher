@@ -15,7 +15,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelStoreOwner
-import com.app.ralaunch.data.SettingsManager
 import com.app.ralaunch.shared.domain.repository.SettingsRepositoryV2
 import com.app.ralaunch.shared.ui.components.dialogs.*
 import com.app.ralaunch.shared.ui.screens.settings.*
@@ -40,10 +39,12 @@ fun SettingsScreenWrapper(
     val context = LocalContext.current
     val activity = context as? Activity ?: return
     val scope = rememberCoroutineScope()
+    val settingsRepository: SettingsRepositoryV2 = remember {
+        KoinJavaComponent.get(SettingsRepositoryV2::class.java)
+    }
     
     // 使用 Activity 级别的 ViewModel 缓存，避免页面切换时重建
     val viewModel: SettingsViewModel = remember {
-        val settingsRepository: SettingsRepositoryV2 = KoinJavaComponent.get(SettingsRepositoryV2::class.java)
         val appInfo: AppInfo = KoinJavaComponent.getOrNull(AppInfo::class.java) ?: AppInfo()
         ViewModelProvider(
             activity as ViewModelStoreOwner,
@@ -68,7 +69,7 @@ fun SettingsScreenWrapper(
     var logs by remember { mutableStateOf<List<String>>(emptyList()) }
     
     // 联机设置状态
-    var multiplayerEnabled by remember { mutableStateOf(SettingsManager.getInstance().isMultiplayerEnabled) }
+    var multiplayerEnabled by remember { mutableStateOf(settingsRepository.Settings.multiplayerEnabled) }
 
     // 资产完整性检查状态
     var showAssetCheckDialog by remember { mutableStateOf(false) }
@@ -211,15 +212,19 @@ fun SettingsScreenWrapper(
                     onMultiplayerToggle = { enabled ->
                         if (enabled) {
                             // 首次启用需要先显示声明对话框
-                            if (!SettingsManager.getInstance().hasMultiplayerDisclaimerAccepted) {
+                            if (!settingsRepository.Settings.multiplayerDisclaimerAccepted) {
                                 showMultiplayerDisclaimerDialog = true
                             } else {
                                 multiplayerEnabled = true
-                                SettingsManager.getInstance().isMultiplayerEnabled = true
+                                scope.launch {
+                                    settingsRepository.update { multiplayerEnabled = true }
+                                }
                             }
                         } else {
                             multiplayerEnabled = false
-                            SettingsManager.getInstance().isMultiplayerEnabled = false
+                            scope.launch {
+                                settingsRepository.update { multiplayerEnabled = false }
+                            }
                         }
                     },
                     // 资产完整性检查
@@ -363,10 +368,14 @@ fun SettingsScreenWrapper(
     if (showMultiplayerDisclaimerDialog) {
         MultiplayerDisclaimerDialog(
             onConfirm = {
-                SettingsManager.getInstance().hasMultiplayerDisclaimerAccepted = true
-                SettingsManager.getInstance().isMultiplayerEnabled = true
                 multiplayerEnabled = true
                 showMultiplayerDisclaimerDialog = false
+                scope.launch {
+                    settingsRepository.update {
+                        multiplayerDisclaimerAccepted = true
+                        multiplayerEnabled = true
+                    }
+                }
                 Toast.makeText(context, "联机功能已启用", Toast.LENGTH_SHORT).show()
             },
             onDismiss = {

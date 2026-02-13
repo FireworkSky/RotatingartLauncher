@@ -4,21 +4,21 @@ import android.content.Context
 import android.content.res.Configuration
 import android.os.Build
 import android.os.LocaleList
-import com.app.ralaunch.shared.AppConstants
+import com.app.ralaunch.shared.domain.repository.SettingsRepositoryV2
 import com.app.ralaunch.shared.util.LocaleHelper
-import com.app.ralaunch.shared.util.SupportedLanguage
 import com.app.ralaunch.shared.util.LocaleManager as ILocaleManager
+import com.app.ralaunch.shared.util.SupportedLanguage
+import kotlinx.coroutines.runBlocking
+import org.koin.java.KoinJavaComponent
 import java.util.Locale
 
 /**
  * 多语言管理器 - Android 实现
  * 支持中文、英文等多种语言的动态切换
- * 
+ *
  * 实现 shared 模块的 LocaleManager 接口
  */
 object LocaleManager : ILocaleManager {
-    private const val PREFS_NAME = AppConstants.PREFS_NAME
-    private const val KEY_LANGUAGE = "app_language"
 
     // 使用 shared 模块的常量
     const val LANGUAGE_AUTO = LocaleHelper.LANGUAGE_AUTO
@@ -29,33 +29,22 @@ object LocaleManager : ILocaleManager {
 
     private val LOCALE_RUSSIAN = Locale("ru")
     private val LOCALE_SPANISH = Locale("es")
-    
-    // 用于存储当前 Context（弱引用场景下使用）
-    private var currentLanguage: String = LANGUAGE_AUTO
 
-    /**
-     * 获取当前设置的语言。新安装默认为英文；可在设置中切换「跟随系统 / English / 简体中文」等。
-     */
+    private var currentLanguage: String = LANGUAGE_EN
+
     @JvmStatic
     fun getLanguage(context: Context): String {
-        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        return prefs.getString(KEY_LANGUAGE, LANGUAGE_EN) ?: LANGUAGE_EN
+        val language = readLanguageFromRepository()
+        currentLanguage = language
+        return language
     }
 
-    /**
-     * 设置语言
-     */
     @JvmStatic
     fun setLanguage(context: Context, language: String) {
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            .edit()
-            .putString(KEY_LANGUAGE, language)
-            .apply()
+        persistLanguage(language)
+        currentLanguage = language
     }
 
-    /**
-     * 应用语言设置到Context
-     */
     @JvmStatic
     fun applyLanguage(context: Context?): Context? {
         context ?: return null
@@ -93,9 +82,6 @@ object LocaleManager : ILocaleManager {
         else -> Locale.getDefault()
     }
 
-    /**
-     * 获取语言的显示名称
-     */
     override fun getLanguageDisplayName(languageCode: String): String = when (languageCode) {
         LANGUAGE_AUTO -> "Follow System"
         LANGUAGE_ZH -> "简体中文"
@@ -104,14 +90,10 @@ object LocaleManager : ILocaleManager {
         LANGUAGE_ES -> "Español"
         else -> languageCode
     }
-    
-    // JvmStatic 版本供 Java 调用
+
     @JvmStatic
     fun getDisplayName(language: String): String = getLanguageDisplayName(language)
 
-    /**
-     * 获取所有支持的语言列表（旧方法，兼容性保留）
-     */
     @JvmStatic
     @Deprecated("使用 getSupportedLanguages(): List<SupportedLanguage>")
     fun getSupportedLanguagesArray(): Array<String> = arrayOf(
@@ -122,24 +104,37 @@ object LocaleManager : ILocaleManager {
         LANGUAGE_ES
     )
 
-    // ==================== ILocaleManager 接口实现 ====================
+    override fun getCurrentLanguage(): String {
+        val language = readLanguageFromRepository()
+        currentLanguage = language
+        return language
+    }
 
-    /**
-     * 获取当前语言代码（接口实现）
-     */
-    override fun getCurrentLanguage(): String = currentLanguage
-
-    /**
-     * 设置语言（接口实现）
-     */
     override fun setLanguage(languageCode: String) {
+        persistLanguage(languageCode)
         currentLanguage = languageCode
     }
 
-    /**
-     * 获取支持的语言列表（接口实现）
-     */
     override fun getSupportedLanguages(): List<SupportedLanguage> {
         return SupportedLanguage.primaryLanguages()
+    }
+
+    private fun readLanguageFromRepository(): String {
+        val language = runCatching {
+            KoinJavaComponent.get<SettingsRepositoryV2>(SettingsRepositoryV2::class.java).Settings.language
+        }.getOrNull()
+
+        return language?.takeIf { it.isNotBlank() }
+            ?: currentLanguage.takeIf { it.isNotBlank() }
+            ?: LANGUAGE_EN
+    }
+
+    private fun persistLanguage(language: String) {
+        runCatching {
+            val repository = KoinJavaComponent.get<SettingsRepositoryV2>(SettingsRepositoryV2::class.java)
+            runBlocking {
+                repository.update { this.language = language }
+            }
+        }
     }
 }

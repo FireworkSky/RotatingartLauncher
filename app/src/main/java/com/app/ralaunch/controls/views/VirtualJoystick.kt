@@ -18,7 +18,7 @@ import com.app.ralaunch.controls.bridges.ControlInputBridge
 import com.app.ralaunch.controls.bridges.SDLInputBridge
 import com.app.ralaunch.controls.textures.TextureLoader
 import com.app.ralaunch.controls.textures.TextureRenderer
-import com.app.ralaunch.data.SettingsManager
+import com.app.ralaunch.data.SettingsAccess
 import java.io.File
 import kotlin.math.atan2
 import kotlin.math.max
@@ -180,7 +180,7 @@ class VirtualJoystick(
         // 读取全局设置（攻击模式、鼠标速度、鼠标范围）
         try {
             val settingsManager =
-                SettingsManager.getInstance()
+                SettingsAccess
             mAttackMode = settingsManager.mouseRightStickAttackMode
             mGlobalMouseSpeed = settingsManager.mouseRightStickSpeed.toFloat()
             mGlobalMouseRangeLeft = settingsManager.mouseRightStickRangeLeft
@@ -1046,7 +1046,7 @@ class VirtualJoystick(
         }
 
         // 获取设置管理器以读取鼠标速度
-        val settingsManager = SettingsManager.getInstance()
+        val settingsManager = SettingsAccess
         val mouseMoveRatio = settingsManager.mouseRightStickSpeed.toFloat() / 100f
 
         // 计算绝对鼠标位置（基于屏幕中心 + 摇杆偏移）
@@ -1088,7 +1088,7 @@ class VirtualJoystick(
             // 从全局设置实时读取最新的范围值（而不是使用缓存的变量）
             try {
                 val settingsManager =
-                    SettingsManager.getInstance()
+                    SettingsAccess
                 var left = settingsManager.mouseRightStickRangeLeft
                 var top = settingsManager.mouseRightStickRangeTop
                 var right = settingsManager.mouseRightStickRangeRight

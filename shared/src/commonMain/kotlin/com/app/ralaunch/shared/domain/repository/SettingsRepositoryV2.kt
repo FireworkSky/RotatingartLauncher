@@ -10,9 +10,12 @@ import kotlinx.coroutines.flow.StateFlow
  */
 interface SettingsRepositoryV2 {
     val settings: StateFlow<AppSettings>
+    @Suppress("PropertyName")
+    val Settings: AppSettings
+        get() = settings.value.copy()
 
     suspend fun getSettingsSnapshot(): AppSettings
     suspend fun updateSettings(settings: AppSettings)
-    suspend fun update(transform: (AppSettings) -> AppSettings)
+    suspend fun update(block: AppSettings.() -> Unit)
     suspend fun resetToDefaults()
 }

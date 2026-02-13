@@ -12,7 +12,7 @@ import com.app.ralaunch.controls.bridges.SDLInputBridge
 import com.app.ralaunch.controls.editors.ui.GameControlsOverlay
 import com.app.ralaunch.controls.packs.ControlPackManager
 import com.app.ralaunch.controls.views.ControlLayout
-import com.app.ralaunch.data.SettingsManager
+import com.app.ralaunch.data.SettingsAccess
 import com.app.ralaunch.utils.AppLogger
 import com.app.ralaunch.view.FPSDisplayView
 import org.koin.java.KoinJavaComponent
@@ -35,7 +35,7 @@ class GameVirtualControlsManager {
     var inputBridge: SDLInputBridge? = null
         private set
     private var fpsDisplayView: FPSDisplayView? = null
-    private var settingsManager: SettingsManager? = null
+    private var settingsManager: SettingsAccess? = null
     private var composeOverlay: ComposeView? = null
     private var onExitGameCallback: (() -> Unit)? = null
     
@@ -58,7 +58,7 @@ class GameVirtualControlsManager {
         onExitGame: () -> Unit = {}
     ) {
         try {
-            settingsManager = SettingsManager.getInstance()
+            settingsManager = SettingsAccess
             inputBridge = SDLInputBridge()
             onExitGameCallback = onExitGame
 

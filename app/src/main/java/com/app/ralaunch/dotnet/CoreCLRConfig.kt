@@ -2,7 +2,7 @@ package com.app.ralaunch.dotnet
 
 import android.content.Context
 import com.app.ralaunch.core.EnvVarsManager
-import com.app.ralaunch.data.SettingsManager
+import com.app.ralaunch.data.SettingsAccess
 import org.koin.java.KoinJavaComponent
 
 /**
@@ -25,7 +25,7 @@ object CoreCLRConfig {
      * @param context Android Context
      */
     fun applyConfigAndInitHooking() {
-        val settings = SettingsManager.getInstance()
+        val settings = SettingsAccess
         val context: Context = KoinJavaComponent.get(Context::class.java)
         EnvVarsManager.quickSetEnvVars(
             // 应用 GC 配置
@@ -66,7 +66,7 @@ object CoreCLRConfig {
      * @return 配置摘要字符串
      */
     fun getConfigSummary(context: Context?): String {
-        val settings = SettingsManager.getInstance()
+        val settings = SettingsAccess
         val sb = StringBuilder()
 
         sb.append("CoreCLR 配置摘要:\n")

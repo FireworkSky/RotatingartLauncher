@@ -26,7 +26,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import com.app.ralaunch.R
-import com.app.ralaunch.data.SettingsManager
+import com.app.ralaunch.data.SettingsAccess
 import com.app.ralaunch.shared.domain.model.GameItem
 import com.app.ralaunch.manager.PermissionManager
 import com.app.ralaunch.manager.ThemeManager
@@ -83,7 +83,7 @@ class MainActivityCompose : BaseActivity() {
 
         super.onCreate(savedInstanceState)
 
-        // 初始化全局主题状态（从 SettingsManager 加载）
+        // 初始化全局主题状态（从 SettingsAccess 加载）
         initializeThemeState()
 
         initLogger()
@@ -231,10 +231,10 @@ class MainActivityCompose : BaseActivity() {
     }
     
     /**
-     * 初始化全局主题状态（从 SettingsManager 加载）
+     * 初始化全局主题状态（从 SettingsAccess 加载）
      */
     private fun initializeThemeState() {
-        val settings = SettingsManager.getInstance()
+        val settings = SettingsAccess
         val bgType = when (settings.backgroundType?.lowercase()) {
             "image" -> 1
             "video" -> 2

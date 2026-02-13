@@ -269,7 +269,7 @@ public class SDLSurface extends SurfaceView implements SurfaceHolder.Callback,
             // 简化的触摸事件处理 - SDL 层会处理虚拟控件的过滤
             // 所有触摸事件都发送给 SDL，SDL 层会根据 consumed fingers 列表决定是否转换为鼠标事件
 
-            var settingsManager = com.app.ralaunch.data.SettingsManager.getInstance();
+            var settingsManager = com.app.ralaunch.data.SettingsAccess.getInstance();
             // if touch events are disabled in settings, do not report any touches
             if (!settingsManager.isTouchEventEnabled()) {
                 // handle touches
@@ -355,7 +355,7 @@ public class SDLSurface extends SurfaceView implements SurfaceHolder.Callback,
                 return;
             }
 
-            var settingsManager = com.app.ralaunch.data.SettingsManager.getInstance();
+            var settingsManager = com.app.ralaunch.data.SettingsAccess.getInstance();
             // if touch events are disabled in settings, do not report any touches
             if (!settingsManager.isTouchEventEnabled()) {
                 nativeClearTouchData();

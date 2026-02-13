@@ -20,7 +20,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.app.ralaunch.controls.data.ControlData
-import com.app.ralaunch.data.SettingsManager
+import com.app.ralaunch.data.SettingsAccess
 
 @Composable
 fun PropertyPanel(
@@ -404,7 +404,7 @@ fun PropertySlider(
  */
 @Composable
 fun MouseModeSettings() {
-    val settingsManager = remember { SettingsManager.getInstance() }
+    val settingsManager = remember { SettingsAccess }
     
     var mouseSpeed by remember { mutableStateOf(settingsManager.mouseRightStickSpeed) }
     var rangeLeft by remember { mutableStateOf(settingsManager.mouseRightStickRangeLeft) }

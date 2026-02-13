@@ -557,11 +557,11 @@ class SDLJoyStickHandler_API19_VirtualJoystick extends SDLJoystickHandler_API19 
         // Check if virtual controller should be registered as first controller
         boolean asFirst = false; // default to false
         try {
-            com.app.ralaunch.data.SettingsManager settingsManager = 
-                com.app.ralaunch.data.SettingsManager.getInstance();
+            com.app.ralaunch.data.SettingsAccess settingsManager = 
+                com.app.ralaunch.data.SettingsAccess.getInstance();
             asFirst = settingsManager.isVirtualControllerAsFirst();
         } catch (Exception e) {
-            // If SettingsManager is not available, use default
+            // If SettingsAccess is not available, use default
         }
         
         // Register virtual Xbox controller first if setting is enabled
@@ -711,7 +711,7 @@ class SDLHapticHandler_API31 extends SDLHapticHandler {
     public void rumble(int device_id, float low_frequency_intensity, float high_frequency_intensity, int length) {
         // Check VIBRATOR_SERVICE
         if (device_id == deviceId_VIBRATOR_SERVICE) {
-            var settings = com.app.ralaunch.data.SettingsManager.getInstance();
+            var settings = com.app.ralaunch.data.SettingsAccess.getInstance();
 
             if (!settings.isVirtualControllerVibrationEnabled())
                 return;

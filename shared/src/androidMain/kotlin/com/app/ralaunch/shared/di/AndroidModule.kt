@@ -1,10 +1,7 @@
 package com.app.ralaunch.shared.di
 
-import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.Preferences
 import com.app.ralaunch.shared.data.local.AndroidControlLayoutStorage
 import com.app.ralaunch.shared.data.local.AndroidGameListStorage
-import com.app.ralaunch.shared.data.local.DataStoreFactory
 import com.app.ralaunch.shared.data.local.StoragePathsProvider
 import com.app.ralaunch.shared.data.repository.ControlLayoutRepositoryImpl
 import com.app.ralaunch.shared.data.repository.ControlLayoutStorage
@@ -26,11 +23,6 @@ import org.koin.dsl.module
 val androidModule = module {
 
     // ==================== 数据存储 ====================
-    
-    // DataStore
-    single<DataStore<Preferences>> {
-        DataStoreFactory(androidContext()).createPreferencesDataStore()
-    }
 
     // StoragePathsProvider
     single<StoragePathsProvider> {

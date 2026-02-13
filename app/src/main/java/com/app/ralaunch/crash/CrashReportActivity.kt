@@ -5,7 +5,7 @@ import android.content.pm.ActivityInfo
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import com.app.ralaunch.data.SettingsManager
+import com.app.ralaunch.data.SettingsAccess
 import com.app.ralaunch.manager.DynamicColorManager
 import com.app.ralaunch.shared.ui.theme.RaLaunchTheme
 import com.app.ralaunch.utils.DensityAdapter
@@ -27,7 +27,7 @@ class CrashReportActivity : ComponentActivity() {
 
         try {
             DynamicColorManager.getInstance()
-                .applyCustomThemeColor(this, SettingsManager.getInstance().themeColor)
+                .applyCustomThemeColor(this, SettingsAccess.themeColor)
         } catch (_: Exception) { }
 
         super.onCreate(savedInstanceState)

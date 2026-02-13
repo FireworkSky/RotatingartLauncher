@@ -30,7 +30,7 @@ import com.app.ralaunch.controls.textures.TextureConfig
 import com.app.ralaunch.controls.textures.TextureLoader
 import com.app.ralaunch.controls.views.ControlLayout as ControlLayoutView
 import com.app.ralaunch.controls.views.GridOverlayView
-import com.app.ralaunch.data.SettingsManager
+import com.app.ralaunch.data.SettingsAccess
 import com.app.ralaunch.easytier.EasyTierConnectionState
 import com.app.ralaunch.easytier.EasyTierManager
 import com.app.ralaunch.ui.compose.dialogs.KeyBindingDialog
@@ -45,7 +45,7 @@ import java.io.File
 fun GameControlsOverlay(
     controlLayoutView: ControlLayoutView,
     packManager: ControlPackManager,
-    settingsManager: SettingsManager,
+    settingsManager: SettingsAccess,
     toggleFloatingBallEvent: SharedFlow<Unit>,
     onExitGame: () -> Unit,
     onEditModeChanged: (Boolean) -> Unit = {},

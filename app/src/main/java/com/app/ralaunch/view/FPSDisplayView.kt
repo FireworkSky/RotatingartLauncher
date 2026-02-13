@@ -13,7 +13,7 @@ import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
 import com.app.ralaunch.controls.bridges.SDLInputBridge
-import com.app.ralaunch.data.SettingsManager
+import com.app.ralaunch.data.SettingsAccess
 import java.io.BufferedReader
 import java.io.FileReader
 import kotlin.math.max
@@ -73,7 +73,7 @@ class FPSDisplayView @JvmOverloads constructor(
 
     private val handler = Handler(Looper.getMainLooper())
     private var inputBridge: SDLInputBridge? = null
-    private val settingsManager = SettingsManager.getInstance()
+    private val settingsManager = SettingsAccess
     private val activityManager = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
 
     // 拖动相关

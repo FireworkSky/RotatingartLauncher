@@ -17,7 +17,7 @@ package com.app.ralaunch.core
 
 import android.content.Context
 import android.os.Environment
-import com.app.ralaunch.data.SettingsManager
+import com.app.ralaunch.data.SettingsAccess
 import org.koin.java.KoinJavaComponent
 import com.app.ralaunch.dotnet.DotNetLauncher
 import com.app.ralaunch.utils.AppLogger
@@ -250,7 +250,7 @@ object GameLauncher {
 
             // 步骤5：应用用户设置
             // Step 5: Apply user settings
-            val settings = SettingsManager.getInstance()
+            val settings = SettingsAccess
             AppLogger.debug(TAG, "应用用户设置 / Applying settings configuration...")
             AppLogger.debug(TAG, "  - 大核亲和性 / Big core affinity: ${settings.setThreadAffinityToBigCoreEnabled}")
             AppLogger.debug(TAG, "  - 多点触控 / Touch multitouch: ${settings.isTouchMultitouchEnabled}")

@@ -17,7 +17,7 @@ import org.koin.java.KoinJavaComponent
 import com.app.ralaunch.controls.bridges.ControlInputBridge
 import com.app.ralaunch.controls.bridges.SDLInputBridge
 import com.app.ralaunch.controls.data.ControlData
-import com.app.ralaunch.data.SettingsManager
+import com.app.ralaunch.data.SettingsAccess
 import kotlin.math.pow
 import kotlin.math.sqrt
 
@@ -116,7 +116,7 @@ class VirtualTouchPad(
 
     private var currentMouseButton = if (ControlsSharedState.isTouchPadRightButton) MotionEvent.BUTTON_SECONDARY else MotionEvent.BUTTON_PRIMARY
 
-    private val settingsManager = SettingsManager.getInstance()
+    private val settingsManager = SettingsAccess
 
     private val mouseMoveRatio
         get() = settingsManager.mouseRightStickSpeed.toFloat() / 100f // 移动距离放大倍数
