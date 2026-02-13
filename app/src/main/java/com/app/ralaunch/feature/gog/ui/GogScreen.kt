@@ -137,20 +137,3 @@ private fun GogLoggedInContent(
         }
     }
 }
-
-/**
- * GOG 屏幕状态持有者
- */
-class GogScreenState {
-    var selectedGame by mutableStateOf<GogGameUi?>(null)
-        private set
-
-    fun selectGame(game: GogGameUi?) {
-        selectedGame = game
-    }
-}
-
-@Composable
-fun rememberGogScreenState(): GogScreenState {
-    return remember { GogScreenState() }
-}

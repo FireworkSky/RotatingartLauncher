@@ -26,6 +26,7 @@ class ProcessLauncherService : Service() {
         private const val TAG = "ProcessLauncher"
         private const val CHANNEL_ID = "process_launcher_channel"
         private const val NOTIFICATION_ID = 9528
+        private const val LAUNCHER_STACK_SIZE_BYTES = 8L * 1024 * 1024
 
         const val EXTRA_ASSEMBLY_PATH = "assembly_path"
         const val EXTRA_ARGS = "args"
@@ -115,18 +116,23 @@ class ProcessLauncherService : Service() {
     private fun launchAsync(assemblyPath: String, args: Array<String>?, title: String, gameId: String?) {
         if (running) return
 
-        launcherThread = Thread({
-            try {
-                running = true
-                updateNotification("$title 正在运行")
-                doLaunch(assemblyPath, args, title, gameId)
-            } catch (e: Exception) {
-                AppLogger.error(TAG, "Launch error: ${e.message}", e)
-            } finally {
-                running = false
-                stopSelf()
-            }
-        }, "ProcessLauncher").apply { start() }
+        launcherThread = Thread(
+            null,
+            {
+                try {
+                    running = true
+                    updateNotification("$title 正在运行")
+                    doLaunch(assemblyPath, args, title, gameId)
+                } catch (e: Exception) {
+                    AppLogger.error(TAG, "Launch error: ${e.message}", e)
+                } finally {
+                    running = false
+                    stopSelf()
+                }
+            },
+            "ProcessLauncher",
+            LAUNCHER_STACK_SIZE_BYTES
+        ).apply { start() }
     }
 
     private fun doLaunch(assemblyPath: String, args: Array<String>?, title: String, gameId: String?): Int {

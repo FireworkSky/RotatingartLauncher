@@ -102,7 +102,7 @@ fun AppNavigationRail(
     var indicatorReady by remember { mutableStateOf(false) }
 
     // 目标位置（响应选中项 + 位置测量变化）
-    val targetCenterY by remember {
+    val targetCenterY by remember(selectedDest) {
         derivedStateOf {
             itemCenterYs[selectedDest] ?: 0f
         }
@@ -319,7 +319,7 @@ private fun SilkyNavItem(
             .fillMaxWidth()
             .clickable(
                 interactionSource = interactionSource,
-                indication = ripple(bounded = false, radius = 28.dp),
+                indication = null,
                 onClick = onClick
             )
             .onGloballyPositioned { coords ->
@@ -357,96 +357,6 @@ private fun SilkyNavItem(
                 fontSize = if (isSelected) 10.sp else 9.sp,
                 letterSpacing = 0.3.sp
             )
-        }
-    }
-}
-
-/**
- * 底部导航栏 - Material Design 3 毛玻璃风格
- */
-@OptIn(ExperimentalHazeMaterialsApi::class)
-@Composable
-fun AppNavigationBar(
-    currentDestination: NavDestination?,
-    onNavigate: (NavDestination) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val themeMode by AppThemeState.themeMode.collectAsState()
-    val themeColor by AppThemeState.themeColor.collectAsState()
-    val hazeState = LocalHazeState.current
-    val surfaceColor = MaterialTheme.colorScheme.surface
-
-    key(themeMode, themeColor) {
-        val baseModifier = modifier
-            .fillMaxWidth()
-            .height(80.dp)
-
-        val hazeModifier = if (hazeState != null) {
-            baseModifier.hazeChild(
-                state = hazeState,
-                style = HazeMaterials.thin(surfaceColor)
-            )
-        } else {
-            baseModifier
-        }
-
-        Surface(
-            modifier = hazeModifier,
-            color = if (hazeState != null) Color.Transparent
-                    else MaterialTheme.colorScheme.surface.copy(alpha = 0.85f),
-            tonalElevation = if (hazeState != null) 0.dp else 4.dp
-        ) {
-            Row(
-                modifier = Modifier.fillMaxSize(),
-                horizontalArrangement = Arrangement.SpaceEvenly,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                NavDestination.entries.forEach { destination ->
-                    val isSelected = currentDestination == destination
-                    val primaryColor = MaterialTheme.colorScheme.primary
-
-                    val contentColor by animateColorAsState(
-                        targetValue = if (isSelected) primaryColor
-                                      else MaterialTheme.colorScheme.onSurfaceVariant,
-                        label = "navBarColor"
-                    )
-
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .fillMaxHeight()
-                            .clickable(onClick = { onNavigate(destination) })
-                            // 选中时底部发光
-                            .drawBehind {
-                                if (isSelected) {
-                                    drawRoundRect(
-                                        brush = Brush.verticalGradient(
-                                            colors = listOf(
-                                                Color.Transparent,
-                                                primaryColor.copy(alpha = 0.15f)
-                                            )
-                                        ),
-                                        cornerRadius = CornerRadius(8f)
-                                    )
-                                }
-                            },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Icon(
-                                imageVector = if (isSelected) destination.selectedIcon else destination.unselectedIcon,
-                                contentDescription = destination.label,
-                                tint = contentColor
-                            )
-                            Text(
-                                text = destination.label,
-                                style = MaterialTheme.typography.labelSmall,
-                                color = contentColor
-                            )
-                        }
-                    }
-                }
-            }
         }
     }
 }

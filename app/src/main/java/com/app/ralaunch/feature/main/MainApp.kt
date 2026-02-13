@@ -11,6 +11,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.tooling.preview.Preview
 import com.app.ralaunch.shared.core.component.AppNavigationRail
 import com.app.ralaunch.shared.core.navigation.*
 import com.app.ralaunch.shared.core.theme.LocalHazeState
@@ -331,6 +332,7 @@ fun PlaceholderScreen(
 /**
  * MainApp 预览
  */
+@Preview(showBackground = true, widthDp = 800, heightDp = 600)
 @Composable
 fun MainAppPreview() {
     RaLaunchTheme {

@@ -188,27 +188,30 @@ fun SettingsScreenWrapper(
             }
             SettingsCategory.GAME -> {
                 GameSettingsContent(
-                    bigCoreAffinityEnabled = uiState.bigCoreAffinityEnabled,
+                    state = GameState(
+                        bigCoreAffinityEnabled = uiState.bigCoreAffinityEnabled,
+                        lowLatencyAudioEnabled = uiState.lowLatencyAudioEnabled,
+                        rendererType = uiState.rendererType,
+                        qualityLevel = uiState.qualityLevel,
+                        shaderLowPrecision = uiState.shaderLowPrecision,
+                        targetFps = uiState.targetFps
+                    ),
                     onBigCoreAffinityChange = { viewModel.onEvent(SettingsEvent.SetBigCoreAffinity(it)) },
-                    lowLatencyAudioEnabled = uiState.lowLatencyAudioEnabled,
                     onLowLatencyAudioChange = { viewModel.onEvent(SettingsEvent.SetLowLatencyAudio(it)) },
-                    rendererType = uiState.rendererType,
                     onRendererClick = { viewModel.onEvent(SettingsEvent.OpenRendererSelector) },
-                    // 画质设置
-                    qualityLevel = uiState.qualityLevel,
                     onQualityLevelChange = { viewModel.onEvent(SettingsEvent.SetQualityLevel(it)) },
-                    shaderLowPrecision = uiState.shaderLowPrecision,
                     onShaderLowPrecisionChange = { viewModel.onEvent(SettingsEvent.SetShaderLowPrecision(it)) },
-                    // 帧率设置
-                    targetFps = uiState.targetFps,
                     onTargetFpsChange = { viewModel.onEvent(SettingsEvent.SetTargetFps(it)) }
                 )
             }
             SettingsCategory.LAUNCHER -> {
                 LauncherSettingsContent(
+                    state = LauncherState(
+                        multiplayerEnabled = multiplayerEnabled,
+                        assetStatusSummary = assetStatusSummary
+                    ),
                     onPatchManagementClick = { viewModel.onEvent(SettingsEvent.OpenPatchManagement) },
                     onForceReinstallPatchesClick = { viewModel.onEvent(SettingsEvent.ForceReinstallPatches) },
-                    multiplayerEnabled = multiplayerEnabled,
                     onMultiplayerToggle = { enabled ->
                         if (enabled) {
                             // 首次启用需要先显示声明对话框
@@ -217,13 +220,13 @@ fun SettingsScreenWrapper(
                             } else {
                                 multiplayerEnabled = true
                                 scope.launch {
-                                    settingsRepository.update { multiplayerEnabled = true }
+                                    settingsRepository.update { this.multiplayerEnabled = true }
                                 }
                             }
                         } else {
                             multiplayerEnabled = false
                             scope.launch {
-                                settingsRepository.update { multiplayerEnabled = false }
+                                settingsRepository.update { this.multiplayerEnabled = false }
                             }
                         }
                     },
@@ -240,8 +243,7 @@ fun SettingsScreenWrapper(
                     },
                     onReExtractRuntimeLibsClick = {
                         showReExtractConfirmDialog = true
-                    },
-                    assetStatusSummary = assetStatusSummary
+                    }
                 )
             }
             SettingsCategory.DEVELOPER -> {
@@ -372,8 +374,8 @@ fun SettingsScreenWrapper(
                 showMultiplayerDisclaimerDialog = false
                 scope.launch {
                     settingsRepository.update {
-                        multiplayerDisclaimerAccepted = true
-                        multiplayerEnabled = true
+                        this.multiplayerDisclaimerAccepted = true
+                        this.multiplayerEnabled = true
                     }
                 }
                 Toast.makeText(context, "联机功能已启用", Toast.LENGTH_SHORT).show()

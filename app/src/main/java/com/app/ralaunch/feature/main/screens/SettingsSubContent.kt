@@ -3,6 +3,11 @@ package com.app.ralaunch.feature.main.screens
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Gamepad
+import androidx.compose.material.icons.filled.Mouse
+import androidx.compose.material.icons.filled.TouchApp
+import androidx.compose.material.icons.filled.Tune
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -33,6 +38,7 @@ internal fun ControlsSettingsContent(
             SwitchSettingItem(
                 title = "多点触控",
                 subtitle = "允许同时多个触控点",
+                icon = Icons.Default.TouchApp,
                 checked = touchMultitouchEnabled,
                 onCheckedChange = onTouchMultitouchChange
             )
@@ -42,6 +48,7 @@ internal fun ControlsSettingsContent(
             SwitchSettingItem(
                 title = "鼠标右摇杆",
                 subtitle = "鼠标移动映射到右摇杆",
+                icon = Icons.Default.Mouse,
                 checked = mouseRightStickEnabled,
                 onCheckedChange = onMouseRightStickChange
             )
@@ -51,6 +58,7 @@ internal fun ControlsSettingsContent(
             SwitchSettingItem(
                 title = "启用震动",
                 subtitle = "控制器震动反馈",
+                icon = Icons.Default.Gamepad,
                 checked = vibrationEnabled,
                 onCheckedChange = onVibrationChange
             )
@@ -63,6 +71,7 @@ internal fun ControlsSettingsContent(
                     value = vibrationStrength,
                     valueRange = 0f..1f,
                     valueLabel = "${(vibrationStrength * 100).toInt()}%",
+                    icon = Icons.Default.Tune,
                     onValueChange = onVibrationStrengthChange
                 )
             }
