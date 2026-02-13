@@ -78,9 +78,11 @@ class GameRepositoryImpl(
 
     override suspend fun moveGame(fromPosition: Int, toPosition: Int) {
         val games = _gamesFlow.value.toMutableList()
-        if (fromPosition in games.indices && toPosition in games.indices) {
+        if (fromPosition in games.indices) {
             val game = games.removeAt(fromPosition)
-            games.add(toPosition, game)
+            // 支持将项目移动到列表末尾，同时对越界位置做保护
+            val targetPosition = toPosition.coerceIn(0, games.size)
+            games.add(targetPosition, game)
             updateAndSave(games)
         }
     }
