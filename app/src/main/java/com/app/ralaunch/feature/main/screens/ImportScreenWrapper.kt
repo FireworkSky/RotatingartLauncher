@@ -1,8 +1,5 @@
 package com.app.ralaunch.feature.main.screens
 
-import android.os.Handler
-import android.os.Looper
-import android.widget.Toast
 import androidx.annotation.DrawableRes
 import androidx.compose.animation.*
 import androidx.compose.foundation.Image
@@ -14,7 +11,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
@@ -26,27 +22,13 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.app.ralaunch.R
-import com.app.ralaunch.shared.core.data.repository.GameListStorage
-import com.app.ralaunch.shared.core.model.domain.GameItem
-import com.app.ralaunch.shared.core.contract.repository.GameRepositoryV2
-import com.app.ralaunch.core.platform.install.GameInstaller
-import com.app.ralaunch.core.platform.install.InstallCallback
-import com.app.ralaunch.core.platform.install.InstallPluginRegistry
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import org.koin.java.KoinJavaComponent
+import com.app.ralaunch.feature.main.contracts.ImportUiState
 import java.io.File
-
-// 主线程 Handler，用于在页面切换后仍能执行回调
-private val mainHandler = Handler(Looper.getMainLooper())
 
 /**
  * 游戏导入 Screen - 现代化双栏布局
@@ -59,113 +41,27 @@ fun ImportScreenWrapper(
     detectedGameId: String? = null,
     modLoaderFilePath: String? = null,
     detectedModLoaderId: String? = null,
+    importUiState: ImportUiState = ImportUiState(),
     onBack: () -> Unit = {},
-    onImportComplete: (String, GameItem?) -> Unit = { _, _ -> },
+    onStartImport: () -> Unit = {},
     onSelectGameFile: () -> Unit = {},
-    onSelectModLoader: () -> Unit = {}
+    onSelectModLoader: () -> Unit = {},
+    onDismissError: () -> Unit = {}
 ) {
-    val context = LocalContext.current
-    val scope = rememberCoroutineScope()
-
-    // 导入过程状态（这些可以在本地管理，因为导入过程不会离开页面）
-    var isImporting by remember { mutableStateOf(false) }
-    var importProgress by remember { mutableIntStateOf(0) }
-    var importStatus by remember { mutableStateOf("") }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
-
-    var installer by remember { mutableStateOf<GameInstaller?>(null) }
-
-    // 开始导入
-    fun startImport() {
-        val gamePath = gameFilePath
-        if (gamePath.isNullOrEmpty() && modLoaderFilePath.isNullOrEmpty()) {
-            errorMessage = "请先选择游戏文件"
-            return
-        }
-
-        isImporting = true
-        importProgress = 0
-        importStatus = "准备中..."
-        errorMessage = null
-
-        // 获取 GameListStorage
-        val storage: GameListStorage = try {
-            KoinJavaComponent.get(GameListStorage::class.java)
-        } catch (_: Exception) {
-            isImporting = false
-            errorMessage = "无法初始化游戏存储"
-            return
-        }
-
-        val gameRepository: GameRepositoryV2? = try {
-            KoinJavaComponent.getOrNull(GameRepositoryV2::class.java)
-        } catch (_: Exception) { null }
-
-        val installer = GameInstaller(storage)
-
-        installer.install(
-            gameFilePath = gamePath ?: "",
-            modLoaderFilePath = modLoaderFilePath,
-            callback = object : InstallCallback {
-                override fun onProgress(message: String, progress: Int) {
-                    mainHandler.post {
-                        importStatus = message
-                        importProgress = progress
-                    }
-                }
-
-                override fun onComplete(gameItem: GameItem) {
-                    scope.launch {
-                        gameRepository?.upsert(gameItem, 0)
-                    }
-                    mainHandler.post {
-                        isImporting = false
-                        importStatus = "导入完成！"
-                        importProgress = 100
-                        try {
-                            onImportComplete("game", gameItem)
-                        } catch (_: Exception) {}
-                        Toast.makeText(context, "游戏导入成功", Toast.LENGTH_SHORT).show()
-                    }
-                }
-
-                override fun onError(error: String) {
-                    mainHandler.post {
-                        isImporting = false
-                        errorMessage = error
-                        Toast.makeText(context, "导入失败: $error", Toast.LENGTH_SHORT).show()
-                    }
-                }
-
-                override fun onCancelled() {
-                    mainHandler.post {
-                        isImporting = false
-                        errorMessage = "导入已取消"
-                    }
-                }
-            }
-        )
-    }
-
-    // 注意：不在页面切换时自动取消安装
-    // 安装任务会在后台继续运行直到完成
-    // 用户需要明确点击取消按钮才会取消安装
-
     // UI
     ModernImportScreen(
         gameFilePath = gameFilePath,
         detectedGameId = detectedGameId,
         modLoaderFilePath = modLoaderFilePath,
         detectedModLoaderId = detectedModLoaderId,
-        isImporting = isImporting,
-        importProgress = importProgress,
-        importStatus = importStatus,
-        errorMessage = errorMessage,
+        isImporting = importUiState.isImporting,
+        importProgress = importUiState.progress,
+        importStatus = importUiState.status,
+        errorMessage = importUiState.errorMessage,
         onSelectGameFile = onSelectGameFile,
         onSelectModLoader = onSelectModLoader,
-        onStartImport = { startImport() },
-        onBack = onBack,
-        onDismissError = { errorMessage = null }
+        onStartImport = onStartImport,
+        onDismissError = onDismissError
     )
 }
 
@@ -185,10 +81,8 @@ private fun ModernImportScreen(
     onSelectGameFile: () -> Unit,
     onSelectModLoader: () -> Unit,
     onStartImport: () -> Unit,
-    onBack: () -> Unit,
     onDismissError: () -> Unit
 ) {
-    val primaryColor = MaterialTheme.colorScheme.primary
     val hasFiles = !gameFilePath.isNullOrEmpty() || !modLoaderFilePath.isNullOrEmpty()
 
     Column(
@@ -208,165 +102,140 @@ private fun ModernImportScreen(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxHeight()
-                    .padding(end = 16.dp),
-                verticalArrangement = Arrangement.SpaceBetween
+                    .padding(end = 16.dp)
             ) {
-                // 上部：标题
-                Text(
-                    text = "导入新游戏",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.padding(bottom = 12.dp)
-                )
-
-                // 检测结果（选择文件后显示）
-                val displayName = detectedModLoaderId ?: detectedGameId
-                val displayLabel = if (detectedModLoaderId != null) "检测到模组加载器" else "检测到游戏"
-
-                AnimatedVisibility(
-                    visible = displayName != null,
-                    enter = fadeIn() + scaleIn(),
-                    exit = fadeOut() + scaleOut()
-                ) {
-                    Surface(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = 12.dp),
-                        shape = RoundedCornerShape(16.dp),
-                        color = MaterialTheme.colorScheme.primaryContainer,
-                        tonalElevation = 2.dp
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(16.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.CheckCircle,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(28.dp)
+                AnimatedContent(
+                    targetState = isImporting,
+                    modifier = Modifier.fillMaxSize(),
+                    transitionSpec = {
+                        (fadeIn() + scaleIn(initialScale = 0.96f)) togetherWith
+                            (fadeOut() + scaleOut(targetScale = 1.04f))
+                    },
+                    label = "import_left_panel_switch"
+                ) { importing ->
+                    if (importing) {
+                        ImportProgressPanel(
+                            importProgress = importProgress,
+                            importStatus = importStatus,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    } else {
+                        Column(modifier = Modifier.fillMaxSize()) {
+                            // 上部：标题
+                            Text(
+                                text = "导入新游戏",
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface,
+                                modifier = Modifier.padding(bottom = 12.dp)
                             )
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Column {
-                                Text(
-                                    text = displayLabel,
-                                    style = MaterialTheme.typography.labelMedium,
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
-                                )
-                                Text(
-                                    text = displayName ?: "",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer
-                                )
-                            }
-                        }
-                    }
-                }
 
-                // 中部：引导教程（可滚动）
-                val guideScrollState = rememberScrollState()
-                Column(
-                    modifier = Modifier
-                        .weight(1f)
-                        .verticalScroll(guideScrollState),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    // Step 1: 购买游戏
-                    ImportGuideSection(
-                        title = "第一步：购买游戏",
-                        icon = Icons.Outlined.ShoppingCart,
-                        steps = listOf(
-                            "前往 GOG.com 注册并登录账号",
-                            "搜索并购买游戏（如 Terraria、Stardew Valley）",
-                            "如已拥有游戏，跳过此步骤"
-                        )
-                    )
+                            // 检测结果（选择文件后显示）
+                            val displayName = detectedModLoaderId ?: detectedGameId
+                            val displayLabel = if (detectedModLoaderId != null) "检测到模组加载器" else "检测到游戏"
 
-                    // Step 2: 下载游戏
-                    ImportGuideSection(
-                        title = "第二步：下载游戏安装包",
-                        icon = Icons.Outlined.CloudDownload,
-                        steps = listOf(
-                            "在 GOG.com 点击头像进入「我的游戏」",
-                            "找到游戏，点击进入下载页面",
-                            "System 选择「Linux」版本",
-                            "下载 .sh 安装包（如 terraria_v1_4_5_4_88511.sh）"
-                        ),
-                        imageResId = R.drawable.guide_gog_download
-                    )
-
-                    // Step 3: 模组加载器（可选）
-                    ImportGuideSection(
-                        title = "第三步：下载模组加载器（可选）",
-                        icon = Icons.Outlined.Build,
-                        steps = listOf(
-                            "tModLoader（Terraria 模组）：",
-                            "  前往 github.com/tModLoader/tModLoader/releases",
-                            "  下载最新 stable 版本的 tModLoader.zip",
-                            "",
-                            "SMAPI（Stardew Valley 模组）：",
-                            "  前往 smapi.io 点击 Download",
-                            "  下载 SMAPI Linux 版本安装包"
-                        ),
-                        imageResId = R.drawable.guide_tmodloader_download
-                    )
-
-                    // Step 4: 导入到启动器
-                    ImportGuideSection(
-                        title = "第四步：导入到启动器",
-                        icon = Icons.Outlined.InstallMobile,
-                        steps = listOf(
-                            "点击右侧「游戏文件」→ 选择下载的 .sh 或 .zip 文件",
-                            "如需模组加载器，点击「模组加载器」→ 选择对应文件",
-                            "确认上方识别结果无误",
-                            "点击「开始导入」等待安装完成",
-                            "返回游戏列表即可启动游戏"
-                        )
-                    )
-                }
-                
-                // 下部：进度显示
-                AnimatedVisibility(
-                    visible = isImporting,
-                    enter = fadeIn() + expandVertically(),
-                    exit = fadeOut() + shrinkVertically()
-                ) {
-                    Surface(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
-                        color = MaterialTheme.colorScheme.surfaceVariant
-                    ) {
-                        Column(
-                            modifier = Modifier.padding(16.dp)
-                        ) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
+                            AnimatedVisibility(
+                                visible = displayName != null,
+                                enter = fadeIn() + scaleIn(),
+                                exit = fadeOut() + scaleOut()
                             ) {
-                                Text(
-                                    text = importStatus,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                Surface(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(bottom = 12.dp),
+                                    shape = RoundedCornerShape(16.dp),
+                                    color = MaterialTheme.colorScheme.primaryContainer,
+                                    tonalElevation = 2.dp
+                                ) {
+                                    Row(
+                                        modifier = Modifier.padding(16.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.CheckCircle,
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.primary,
+                                            modifier = Modifier.size(28.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(12.dp))
+                                        Column {
+                                            Text(
+                                                text = displayLabel,
+                                                style = MaterialTheme.typography.labelMedium,
+                                                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                                            )
+                                            Text(
+                                                text = displayName ?: "",
+                                                style = MaterialTheme.typography.titleMedium,
+                                                fontWeight = FontWeight.Bold,
+                                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+
+                            // 中部：引导教程（可滚动）
+                            val guideScrollState = rememberScrollState()
+                            Column(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .verticalScroll(guideScrollState),
+                                verticalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                // Step 1: 购买游戏
+                                ImportGuideSection(
+                                    title = "第一步：购买游戏",
+                                    icon = Icons.Outlined.ShoppingCart,
+                                    steps = listOf(
+                                        "前往 GOG.com 注册并登录账号",
+                                        "搜索并购买游戏（如 Terraria、Stardew Valley）",
+                                        "如已拥有游戏，跳过此步骤"
+                                    )
                                 )
-                                Text(
-                                    text = "$importProgress%",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.primary
+
+                                // Step 2: 下载游戏
+                                ImportGuideSection(
+                                    title = "第二步：下载游戏安装包",
+                                    icon = Icons.Outlined.CloudDownload,
+                                    steps = listOf(
+                                        "在 GOG.com 点击头像进入「我的游戏」",
+                                        "找到游戏，点击进入下载页面",
+                                        "System 选择「Linux」版本",
+                                        "下载 .sh 安装包（如 terraria_v1_4_5_4_88511.sh）"
+                                    ),
+                                    imageResId = R.drawable.guide_gog_download
+                                )
+
+                                // Step 3: 模组加载器（可选）
+                                ImportGuideSection(
+                                    title = "第三步：下载模组加载器（可选）",
+                                    icon = Icons.Outlined.Build,
+                                    steps = listOf(
+                                        "tModLoader（Terraria 模组）：",
+                                        "  前往 github.com/tModLoader/tModLoader/releases",
+                                        "  下载最新 stable 版本的 tModLoader.zip",
+                                        "",
+                                        "SMAPI（Stardew Valley 模组）：",
+                                        "  前往 smapi.io 点击 Download",
+                                        "  下载 SMAPI Linux 版本安装包"
+                                    ),
+                                    imageResId = R.drawable.guide_tmodloader_download
+                                )
+
+                                // Step 4: 导入到启动器
+                                ImportGuideSection(
+                                    title = "第四步：导入到启动器",
+                                    icon = Icons.Outlined.InstallMobile,
+                                    steps = listOf(
+                                        "点击右侧「游戏文件」→ 选择下载的 .sh 或 .zip 文件",
+                                        "如需模组加载器，点击「模组加载器」→ 选择对应文件",
+                                        "确认上方识别结果无误",
+                                        "点击「开始导入」等待安装完成",
+                                        "返回游戏列表即可启动游戏"
+                                    )
                                 )
                             }
-                            Spacer(modifier = Modifier.height(8.dp))
-                            LinearProgressIndicator(
-                                progress = { importProgress / 100f },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(6.dp)
-                                    .clip(RoundedCornerShape(3.dp)),
-                                trackColor = MaterialTheme.colorScheme.surfaceVariant,
-                            )
                         }
                     }
                 }
@@ -462,7 +331,7 @@ private fun ModernImportScreen(
                         CircularProgressIndicator(
                             modifier = Modifier.size(24.dp),
                             color = MaterialTheme.colorScheme.onPrimary,
-                            strokeWidth = 2.dp
+                            strokeWidth = ProgressIndicatorDefaults.CircularStrokeWidth
                         )
                         Spacer(modifier = Modifier.width(12.dp))
                         Text(
@@ -481,6 +350,82 @@ private fun ModernImportScreen(
                             text = "开始导入",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ImportProgressPanel(
+    importProgress: Int,
+    importStatus: String,
+    modifier: Modifier = Modifier
+) {
+    val progress = importProgress.coerceIn(0, 100)
+    val statusText = if (importStatus.isBlank()) "正在准备导入..." else importStatus
+    val statusScrollState = rememberScrollState()
+
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(20.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.55f),
+        tonalElevation = 2.dp
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(24.dp)
+        ) {
+            Text(
+                text = "导入进度",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(
+                            progress = { progress / 100f },
+                            modifier = Modifier.size(136.dp),
+                            strokeWidth = 10.dp
+                        )
+                        Text(
+                            text = "$progress%",
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(96.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.72f)
+                    ) {
+                        Text(
+                            text = statusText,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .verticalScroll(statusScrollState)
+                                .padding(horizontal = 12.dp, vertical = 10.dp),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }

@@ -11,8 +11,6 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -31,10 +29,12 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.app.ralaunch.R
@@ -42,6 +42,7 @@ import com.app.ralaunch.core.common.PermissionManager
 import com.app.ralaunch.shared.core.platform.AppConstants
 import com.app.ralaunch.shared.core.model.ui.ComponentState
 import com.app.ralaunch.shared.core.model.ui.InitUiState
+import com.app.ralaunch.shared.core.theme.RaLaunchTheme
 
 /**
  * 初始化页面步骤
@@ -129,7 +130,6 @@ fun InitializationScreen(
                 )
                 InitPage.SETUP -> SetupPage(
                     uiState = uiState,
-                    permissionManager = permissionManager,
                     onRequestPermissions = {
                         if (permissionManager.hasRequiredPermissions()) {
                             prefs.edit().putBoolean(AppConstants.InitKeys.PERMISSIONS_GRANTED, true).apply()
@@ -254,8 +254,14 @@ private fun LegalPage(
                 Image(
                     painter = painterResource(R.mipmap.ic_launcher_foreground),
                     contentDescription = "Logo",
-                    modifier = Modifier.size(80.dp),
-                    contentScale = ContentScale.Fit
+                    modifier = Modifier
+                        .size(80.dp)
+                        .graphicsLayer {
+                            clip = true
+                            scaleX = 1.42f
+                            scaleY = 1.42f
+                        },
+                    contentScale = ContentScale.Crop
                 )
             }
             
@@ -265,7 +271,7 @@ private fun LegalPage(
                 text = "RaLaunch",
                 style = MaterialTheme.typography.headlineLarge,
                 fontWeight = FontWeight.Bold,
-                color = Color.White
+                color = MaterialTheme.colorScheme.onBackground
             )
             
             Text(
@@ -299,7 +305,7 @@ private fun LegalPage(
                 color = MaterialTheme.colorScheme.tertiary
             )
         }
-        
+
         Spacer(modifier = Modifier.width(32.dp))
         
         // 右侧内容区域
@@ -323,7 +329,7 @@ private fun LegalPage(
                     text = stringResource(R.string.init_legal_title),
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.SemiBold,
-                    color = Color.White
+                    color = MaterialTheme.colorScheme.onBackground
                 )
             }
             
@@ -340,8 +346,9 @@ private fun LegalPage(
             ) {
                 Column(
                     modifier = Modifier
-                        .padding(20.dp)
+                        .fillMaxSize()
                         .verticalScroll(rememberScrollState())
+                        .padding(horizontal = 20.dp, vertical = 12.dp)
                 ) {
                     Text(
                         text = stringResource(R.string.init_legal_terms),
@@ -421,7 +428,6 @@ private fun LegalPage(
 @Composable
 private fun SetupPage(
     uiState: InitUiState,
-    permissionManager: PermissionManager,
     onRequestPermissions: () -> Unit,
     onStartExtraction: () -> Unit,
     context: Context
@@ -444,9 +450,10 @@ private fun SetupPage(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
                     .padding(24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
+                verticalArrangement = Arrangement.Top
             ) {
                 // 大进度环 + Logo
                 Box(
@@ -502,8 +509,14 @@ private fun SetupPage(
                                 Image(
                                     painter = painterResource(R.mipmap.ic_launcher_foreground),
                                     contentDescription = "Logo",
-                                    modifier = Modifier.size(56.dp),
-                                    contentScale = ContentScale.Fit
+                                    modifier = Modifier
+                                        .size(56.dp)
+                                        .graphicsLayer {
+                                            clip = true
+                                            scaleX = 1.42f
+                                            scaleY = 1.42f
+                                        },
+                                    contentScale = ContentScale.Crop
                                 )
                             }
                         }
@@ -575,103 +588,111 @@ private fun SetupPage(
         Column(
             modifier = Modifier
                 .weight(0.6f)
-                .fillMaxHeight(),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+                .fillMaxHeight()
         ) {
-            // 权限卡片
-            if (!uiState.hasPermissions) {
-                PermissionCard(
-                    hasPermissions = uiState.hasPermissions,
-                    onRequestPermissions = onRequestPermissions
-                )
-            }
-            
-            // 组件区域
-            Surface(
-                modifier = Modifier.weight(1f),
-                shape = RoundedCornerShape(20.dp),
-                color = MaterialTheme.colorScheme.surface,
-                tonalElevation = 1.dp
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(20.dp)
+                // 权限卡片
+                if (!uiState.hasPermissions) {
+                    PermissionCard(
+                        hasPermissions = uiState.hasPermissions,
+                        onRequestPermissions = onRequestPermissions
+                    )
+                }
+
+                // 组件区域
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(20.dp),
+                    color = MaterialTheme.colorScheme.surface,
+                    tonalElevation = 1.dp
                 ) {
-                    // 标题
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(20.dp)
+                    ) {
+                        // 标题
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Surface(
+                                shape = RoundedCornerShape(8.dp),
+                                color = MaterialTheme.colorScheme.primaryContainer
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Inventory,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                    modifier = Modifier
+                                        .padding(8.dp)
+                                        .size(20.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column {
+                                Text(
+                                    text = "运行环境组件",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Text(
+                                    text = "安装游戏所需的运行时组件",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        // 组件列表
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            uiState.components.forEach { component ->
+                                ComponentCard(component)
+                            }
+                        }
+                    }
+                }
+
+                // 功能说明卡片
+                Surface(
+                    shape = RoundedCornerShape(16.dp),
+                    color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f)
+                ) {
                     Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Surface(
-                            shape = RoundedCornerShape(8.dp),
-                            color = MaterialTheme.colorScheme.primaryContainer
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Inventory,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                                modifier = Modifier
-                                    .padding(8.dp)
-                                    .size(20.dp)
-                            )
-                        }
+                        Icon(
+                            imageVector = Icons.Outlined.Info,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.secondary,
+                            modifier = Modifier.size(20.dp)
+                        )
                         Spacer(modifier = Modifier.width(12.dp))
-                        Column {
-                            Text(
-                                text = "运行环境组件",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.SemiBold,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                            Text(
-                                text = "安装游戏所需的运行时组件",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
-                    
-                    Spacer(modifier = Modifier.height(16.dp))
-                    
-                    // 组件列表
-                    LazyColumn(
-                        modifier = Modifier.weight(1f),
-                        verticalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        items(uiState.components) { component ->
-                            ComponentCard(component)
-                        }
+                        Text(
+                            text = "首次运行需要解压运行环境，仅需几分钟",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSecondaryContainer,
+                            modifier = Modifier.weight(1f)
+                        )
                     }
                 }
             }
-            
-            // 功能说明卡片
-            Surface(
-                shape = RoundedCornerShape(16.dp),
-                color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f)
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Outlined.Info,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.secondary,
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Text(
-                        text = "首次运行需要解压运行环境，仅需几分钟",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer,
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-            }
-            
+
+            Spacer(modifier = Modifier.height(16.dp))
+
             // 开始按钮
             Button(
                 onClick = onStartExtraction,
@@ -716,6 +737,49 @@ private fun SetupPage(
     }
 }
 
+@Preview(showBackground = true, widthDp = 700, heightDp = 350)
+@Composable
+private fun InitializationLegalPagePreview() {
+    val context = LocalContext.current
+    RaLaunchTheme {
+        LegalPage(
+            onAccept = {},
+            onDecline = {},
+            context = context
+        )
+    }
+}
+
+@Preview(showBackground = true, widthDp = 700, heightDp = 350)
+@Composable
+private fun InitializationSetupPagePreview() {
+    val context = LocalContext.current
+    val previewState = InitUiState(
+        hasPermissions = true,
+        components = listOf(
+            ComponentState(
+                name = "dotnet",
+                description = "Microsoft .NET Runtime",
+                fileName = "dotnet.tar.xz",
+                needsExtraction = true,
+                progress = 45
+            )
+        ),
+        isExtracting = true,
+        overallProgress = 45,
+        statusMessage = "正在解压 dotnet..."
+    )
+
+    RaLaunchTheme {
+        SetupPage(
+            uiState = previewState,
+            onRequestPermissions = {},
+            onStartExtraction = {},
+            context = context
+        )
+    }
+}
+
 /**
  * 步骤指示点
  */
@@ -747,7 +811,7 @@ private fun StepDot(
             Icon(
                 imageVector = Icons.Default.Check,
                 contentDescription = null,
-                tint = Color.White,
+                tint = MaterialTheme.colorScheme.onPrimary,
                 modifier = Modifier.size(16.dp)
             )
         } else {
@@ -755,7 +819,7 @@ private fun StepDot(
                 text = label,
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.Bold,
-                color = if (isActive) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
+                color = if (isActive) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }
@@ -807,7 +871,7 @@ private fun PermissionCard(
                     text = stringResource(R.string.init_grant_permissions),
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Medium,
-                    color = Color.White
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
                     text = stringResource(R.string.init_permission_desc),
@@ -895,7 +959,7 @@ private fun ComponentCard(component: ComponentState) {
                     text = component.name,
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Medium,
-                    color = Color.White
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
                     text = component.description,

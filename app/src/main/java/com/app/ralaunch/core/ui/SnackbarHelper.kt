@@ -1,12 +1,15 @@
 package com.app.ralaunch.core.ui
 
 import android.view.View
+import com.google.android.material.snackbar.BaseTransientBottomBar
 import com.google.android.material.snackbar.Snackbar
 
 /**
  * Material Design 3 Snackbar 辅助工具
  */
 object SnackbarHelper {
+
+    private const val DEFAULT_ANIMATION_MODE = BaseTransientBottomBar.ANIMATION_MODE_SLIDE
 
     enum class Type {
         SUCCESS,
@@ -57,6 +60,7 @@ object SnackbarHelper {
         if (rootView == null || message == null) return
 
         val snackbar = Snackbar.make(rootView, message, duration)
+        snackbar.animationMode = DEFAULT_ANIMATION_MODE
 
         // 设置操作按钮
         if (actionText != null && actionListener != null) {

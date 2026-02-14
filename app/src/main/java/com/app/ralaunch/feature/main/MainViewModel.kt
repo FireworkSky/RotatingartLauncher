@@ -14,10 +14,14 @@ import com.app.ralaunch.feature.main.LoadGamesUseCase
 import com.app.ralaunch.feature.main.UpdateGameUseCase
 import com.app.ralaunch.core.common.GameDeletionManager
 import com.app.ralaunch.core.common.GameLaunchManager
+import com.app.ralaunch.core.platform.install.GameInstaller
+import com.app.ralaunch.core.platform.install.InstallCallback
 import com.app.ralaunch.shared.core.model.domain.GameItem
 import com.app.ralaunch.shared.core.contract.repository.GameRepositoryV2
+import com.app.ralaunch.shared.core.data.repository.GameListStorage
 import com.app.ralaunch.shared.core.model.ui.applyFromUiModel
 import com.app.ralaunch.shared.core.model.ui.toUiModels
+import com.app.ralaunch.feature.main.contracts.ImportUiState
 import com.app.ralaunch.feature.main.contracts.MainUiEffect
 import com.app.ralaunch.feature.main.contracts.MainUiEvent
 import com.app.ralaunch.feature.main.contracts.MainUiState
@@ -49,7 +53,11 @@ class MainViewModel(
     private val _effects = MutableSharedFlow<MainUiEffect>()
     val effects: SharedFlow<MainUiEffect> = _effects.asSharedFlow()
 
+    private val _importUiState = MutableStateFlow(ImportUiState())
+    val importUiState: StateFlow<ImportUiState> = _importUiState.asStateFlow()
+
     private val gameItemsMap = mutableMapOf<String, GameItem>()
+    private var activeInstaller: GameInstaller? = null
 
     init {
         onEvent(MainUiEvent.RefreshRequested)
@@ -70,6 +78,120 @@ class MainViewModel(
         }
     }
 
+    fun startImport(gameFilePath: String?, modLoaderFilePath: String?) {
+        if (_importUiState.value.isImporting) return
+
+        if (gameFilePath.isNullOrEmpty() && modLoaderFilePath.isNullOrEmpty()) {
+            _importUiState.update {
+                it.copy(errorMessage = "请先选择游戏文件")
+            }
+            return
+        }
+
+        val storage: GameListStorage = try {
+            KoinJavaComponent.get(GameListStorage::class.java)
+        } catch (_: Exception) {
+            _importUiState.update {
+                it.copy(
+                    isImporting = false,
+                    errorMessage = "无法初始化游戏存储"
+                )
+            }
+            return
+        }
+
+        _importUiState.update {
+            it.copy(
+                isImporting = true,
+                progress = 0,
+                status = "准备中...",
+                errorMessage = null,
+                lastCompletedGameId = null
+            )
+        }
+
+        val installer = GameInstaller(storage)
+        activeInstaller = installer
+
+        installer.install(
+            gameFilePath = gameFilePath ?: "",
+            modLoaderFilePath = modLoaderFilePath,
+            callback = object : InstallCallback {
+                override fun onProgress(message: String, progress: Int) {
+                    _importUiState.update {
+                        it.copy(
+                            status = message,
+                            progress = progress.coerceIn(0, 100)
+                        )
+                    }
+                }
+
+                override fun onComplete(gameItem: GameItem) {
+                    activeInstaller = null
+                    viewModelScope.launch(Dispatchers.IO) {
+                        try {
+                            addGameUseCase(gameItem, 0)
+                            refreshGames(selectedId = null)
+                            _importUiState.update {
+                                it.copy(
+                                    isImporting = false,
+                                    progress = 100,
+                                    status = "导入完成！",
+                                    errorMessage = null,
+                                    lastCompletedGameId = gameItem.id
+                                )
+                            }
+                            emitEffect(MainUiEffect.ShowSuccess(appContext.getString(R.string.game_added_success)))
+                        } catch (e: Exception) {
+                            _importUiState.update {
+                                it.copy(
+                                    isImporting = false,
+                                    errorMessage = e.message ?: "导入失败"
+                                )
+                            }
+                            emitEffect(MainUiEffect.ShowToast("导入失败: ${e.message ?: "未知错误"}"))
+                        }
+                    }
+                }
+
+                override fun onError(error: String) {
+                    activeInstaller = null
+                    _importUiState.update {
+                        it.copy(
+                            isImporting = false,
+                            lastCompletedGameId = null,
+                            errorMessage = error
+                        )
+                    }
+                    emitEffect(MainUiEffect.ShowToast("导入失败: $error"))
+                }
+
+                override fun onCancelled() {
+                    activeInstaller = null
+                    _importUiState.update {
+                        it.copy(
+                            isImporting = false,
+                            lastCompletedGameId = null,
+                            errorMessage = "导入已取消"
+                        )
+                    }
+                }
+            }
+        )
+    }
+
+    fun clearImportError() {
+        _importUiState.update {
+            it.copy(errorMessage = null)
+        }
+    }
+
+    fun resetImportCompletedFlag() {
+        _importUiState.update {
+            it.copy(lastCompletedGameId = null)
+        }
+    }
+
     private fun refreshGames(selectedId: String? = _uiState.value.selectedGame?.id) {
         viewModelScope.launch(Dispatchers.IO) {
             val games = loadGamesUseCase().distinctBy { it.id }
@@ -86,6 +208,7 @@ class MainViewModel(
                         selectedGame = selectedGame,
                         gamePendingDeletion = null,
                         deletePosition = -1,
+                        isDeletingGame = false,
                         isLoading = false
                     )
                 }
@@ -108,6 +231,7 @@ class MainViewModel(
     }
 
     private fun requestDeleteSelectedGame() {
+        if (_uiState.value.isDeletingGame) return
         val selectedGame = _uiState.value.selectedGame
         if (selectedGame == null) {
             emitEffect(MainUiEffect.ShowToast(appContext.getString(R.string.main_select_game_first)))
@@ -123,25 +247,52 @@ class MainViewModel(
     }
 
     private fun dismissDeleteDialog() {
+        if (_uiState.value.isDeletingGame) return
         _uiState.update {
             it.copy(
                 gamePendingDeletion = null,
-                deletePosition = -1
+                deletePosition = -1,
+                isDeletingGame = false
             )
         }
     }
 
     private fun confirmDelete() {
+        if (_uiState.value.isDeletingGame) return
         val pendingGame = _uiState.value.gamePendingDeletion ?: return
+        _uiState.update { it.copy(isDeletingGame = true) }
+
         viewModelScope.launch(Dispatchers.IO) {
-            val game = gameItemsMap[pendingGame.id] ?: return@launch
-            val filesDeleted = deleteGameFilesUseCase(game)
-            deleteGameUseCase(game.id)
-            refreshGames(selectedId = null)
-            if (filesDeleted) {
-                emitEffect(MainUiEffect.ShowSuccess(appContext.getString(R.string.main_game_deleted)))
-            } else {
-                emitEffect(MainUiEffect.ShowToast(appContext.getString(R.string.main_game_deleted_partial)))
+            try {
+                val game = gameItemsMap[pendingGame.id]
+                if (game == null) {
+                    emitEffect(MainUiEffect.ShowToast(appContext.getString(R.string.error_operation_failed)))
+                    withContext(Dispatchers.Main) {
+                        _uiState.update {
+                            it.copy(
+                                gamePendingDeletion = null,
+                                deletePosition = -1
+                            )
+                        }
+                    }
+                    return@launch
+                }
+
+                val filesDeleted = deleteGameFilesUseCase(game)
+                deleteGameUseCase(game.id)
+                refreshGames(selectedId = null)
+
+                if (filesDeleted) {
+                    emitEffect(MainUiEffect.ShowSuccess(appContext.getString(R.string.main_game_deleted)))
+                } else {
+                    emitEffect(MainUiEffect.ShowToast(appContext.getString(R.string.main_game_deleted_partial)))
+                }
+            } catch (_: Exception) {
+                emitEffect(MainUiEffect.ShowToast(appContext.getString(R.string.error_operation_failed)))
+            } finally {
+                withContext(Dispatchers.Main) {
+                    _uiState.update { it.copy(isDeletingGame = false) }
+                }
             }
         }
     }
@@ -183,6 +334,12 @@ class MainViewModel(
         viewModelScope.launch {
             _effects.emit(effect)
         }
+    }
+
+    override fun onCleared() {
+        activeInstaller?.cancel()
+        activeInstaller = null
+        super.onCleared()
     }
 }
 

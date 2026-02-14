@@ -14,6 +14,7 @@ import androidx.compose.material3.*
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -27,7 +28,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import com.app.ralaunch.R
 import com.app.ralaunch.core.common.SettingsAccess
-import com.app.ralaunch.shared.core.model.domain.GameItem
 import com.app.ralaunch.core.common.PermissionManager
 import com.app.ralaunch.core.common.ThemeManager
 import com.app.ralaunch.core.common.MessageHelper
@@ -39,6 +39,7 @@ import com.app.ralaunch.core.ui.base.BaseActivity
 import com.app.ralaunch.feature.main.background.AppBackground
 import com.app.ralaunch.feature.main.background.BackgroundType
 import com.app.ralaunch.shared.core.model.ui.GameItemUi
+import com.app.ralaunch.feature.main.contracts.ImportUiState
 import com.app.ralaunch.feature.main.contracts.MainUiEffect
 import com.app.ralaunch.feature.main.contracts.MainUiEvent
 import com.app.ralaunch.feature.main.contracts.MainUiState
@@ -94,6 +95,7 @@ class MainActivityCompose : BaseActivity() {
         // 设置纯 Compose UI
         setContent {
             val state by mainViewModel.uiState.collectAsStateWithLifecycle()
+            val importState by mainViewModel.importUiState.collectAsStateWithLifecycle()
 
             // 监听 AppThemeState 实现实时更新 (使用 collectAsState 确保实时响应)
             val themeMode by AppThemeState.themeMode.collectAsState()
@@ -121,6 +123,7 @@ class MainActivityCompose : BaseActivity() {
             // Splash 覆盖层状态
             var showSplash by remember { mutableStateOf(true) }
             val isContentReady = !state.isLoading
+
             LaunchedEffect(Unit) {
                 mainViewModel.effects.collect { effect ->
                     when (effect) {
@@ -139,6 +142,7 @@ class MainActivityCompose : BaseActivity() {
                     // 主内容（始终渲染，Splash 覆盖在上方）
                     MainActivityContent(
                         state = state.copy(backgroundType = backgroundType),
+                        importUiState = importState,
                         navState = navState,
                         pageAlpha = pageAlpha,
                         videoSpeed = videoSpeed,
@@ -150,11 +154,11 @@ class MainActivityCompose : BaseActivity() {
                         onDismissDeleteDialog = { mainViewModel.onEvent(MainUiEvent.DeleteDialogDismissed) },
                         onConfirmDelete = { mainViewModel.onEvent(MainUiEvent.DeleteConfirmed) },
                         permissionManager = permissionManager,
-                        onImportComplete = { gameType, gameItem ->
-                            gameItem?.let { game ->
-                                mainViewModel.onEvent(MainUiEvent.ImportCompleted(gameType, game))
-                            }
-                        }
+                        onStartImport = { gameFilePath, modLoaderFilePath ->
+                            mainViewModel.startImport(gameFilePath, modLoaderFilePath)
+                        },
+                        onDismissImportError = { mainViewModel.clearImportError() },
+                        onImportCompletionHandled = { mainViewModel.resetImportCompletedFlag() }
                     )
 
                     // MD3 风格启动画面覆盖层
@@ -260,6 +264,7 @@ class MainActivityCompose : BaseActivity() {
 @Composable
 private fun MainActivityContent(
     state: MainUiState,
+    importUiState: ImportUiState,
     navState: NavState,
     pageAlpha: Float = 1f,
     videoSpeed: Float = 1f,
@@ -270,7 +275,9 @@ private fun MainActivityContent(
     onEditClick: (updatedGame: GameItemUi) -> Unit,
     onDismissDeleteDialog: () -> Unit = {},
     onConfirmDelete: () -> Unit = {},
-    onImportComplete: (String, GameItem?) -> Unit = { _, _ -> },
+    onStartImport: (gameFilePath: String?, modLoaderFilePath: String?) -> Unit = { _, _ -> },
+    onDismissImportError: () -> Unit = {},
+    onImportCompletionHandled: () -> Unit = {},
     permissionManager: PermissionManager? = null
 ) {
     val scope = rememberCoroutineScope()
@@ -294,6 +301,16 @@ private fun MainActivityContent(
         importGameName = null
         importModLoaderFilePath = null
         importModLoaderName = null
+    }
+
+    LaunchedEffect(importUiState.lastCompletedGameId) {
+        val completedGameId = importUiState.lastCompletedGameId ?: return@LaunchedEffect
+        resetImportState()
+        if (navState.currentScreen is Screen.Import) {
+            navState.navigateToGames()
+        }
+        onImportCompletionHandled()
+        Log.d("MainActivityCompose", "Handled import completion for gameId=$completedGameId")
     }
     
     Box(modifier = Modifier.fillMaxSize()) {
@@ -334,8 +351,13 @@ private fun MainActivityContent(
                     contentDescription = "Logo",
                     modifier = Modifier
                         .size(40.dp)
-                        .clip(RoundedCornerShape(8.dp)),
-                    contentScale = ContentScale.Fit
+                        .clip(RoundedCornerShape(8.dp))
+                        .graphicsLayer {
+                            clip = true
+                            scaleX = 1.42f
+                            scaleY = 1.42f
+                        },
+                    contentScale = ContentScale.Crop
                 )
             },
             games = state.games,
@@ -390,15 +412,12 @@ private fun MainActivityContent(
                     detectedGameId = importGameName,
                     modLoaderFilePath = importModLoaderFilePath,
                     detectedModLoaderId = importModLoaderName,
+                    importUiState = importUiState,
                     onBack = {
                         resetImportState()
                         navState.navigateToGames() 
                     },
-                    onImportComplete = { type, gameItem ->
-                        resetImportState()
-                        onImportComplete(type, gameItem)
-                        navState.navigateToGames()
-                    },
+                    onStartImport = { onStartImport(importGameFilePath, importModLoaderFilePath) },
                     onSelectGameFile = {
                         currentFileType = "game"
                         navState.navigateTo(Screen.FileBrowser(
@@ -414,7 +433,8 @@ private fun MainActivityContent(
                             allowedExtensions = listOf(".zip"),
                             fileType = "modloader"
                         ))
-                    }
+                    },
+                    onDismissError = onDismissImportError
                 )
             },
             controlStoreContent = { 
@@ -494,6 +514,7 @@ private fun MainActivityContent(
         state.gamePendingDeletion?.let { game ->
             DeleteGameComposeDialog(
                 gameName = game.displayedName,
+                isDeleting = state.isDeletingGame,
                 onConfirm = onConfirmDelete,
                 onDismiss = onDismissDeleteDialog
             )
@@ -507,11 +528,14 @@ private fun MainActivityContent(
 @Composable
 private fun DeleteGameComposeDialog(
     gameName: String,
+    isDeleting: Boolean,
     onConfirm: () -> Unit,
     onDismiss: () -> Unit
 ) {
     AlertDialog(
-        onDismissRequest = onDismiss,
+        onDismissRequest = {
+            if (!isDeleting) onDismiss()
+        },
         containerColor = MaterialTheme.colorScheme.surfaceContainer,
         shape = RoundedCornerShape(20.dp),
         title = {
@@ -522,32 +546,56 @@ private fun DeleteGameComposeDialog(
             )
         },
         text = {
-            Column {
-                Text(
-                    text = "确定要删除 \"$gameName\" 吗？",
-                    style = MaterialTheme.typography.bodyLarge
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "此操作将删除游戏文件，不可撤销",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.error.copy(alpha = 0.8f)
-                )
+            if (isDeleting) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(22.dp),
+                        strokeWidth = 2.5.dp
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        text = "正在删除游戏文件...",
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                }
+            } else {
+                Column {
+                    Text(
+                        text = "确定要删除 \"$gameName\" 吗？",
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "此操作将删除游戏文件，不可撤销",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error.copy(alpha = 0.8f)
+                    )
+                }
             }
         },
         confirmButton = {
-            Button(
-                onClick = onConfirm,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.error
-                )
-            ) {
-                Text("删除")
+            if (!isDeleting) {
+                Button(
+                    onClick = onConfirm,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Text("删除")
+                }
             }
         },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("取消")
+        dismissButton = if (isDeleting) {
+            null
+        } else {
+            {
+                TextButton(onClick = onDismiss) {
+                    Text("取消")
+                }
             }
         }
     )

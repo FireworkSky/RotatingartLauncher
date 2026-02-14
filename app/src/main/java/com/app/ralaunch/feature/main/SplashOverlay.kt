@@ -171,8 +171,14 @@ fun SplashOverlay(
                     Image(
                         painter = painterResource(R.mipmap.ic_launcher_foreground),
                         contentDescription = null,
-                        modifier = Modifier.size(88.dp),
-                        contentScale = ContentScale.Fit
+                        modifier = Modifier
+                            .size(88.dp)
+                            .graphicsLayer {
+                                clip = true
+                                scaleX = 1.42f
+                                scaleY = 1.42f
+                            },
+                        contentScale = ContentScale.Crop
                     )
                 }
 

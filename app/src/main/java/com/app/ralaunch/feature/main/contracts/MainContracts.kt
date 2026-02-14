@@ -11,7 +11,8 @@ data class MainUiState(
     val backgroundType: BackgroundType = BackgroundType.None,
     val isVideoPlaying: Boolean = true,
     val gamePendingDeletion: GameItemUi? = null,
-    val deletePosition: Int = -1
+    val deletePosition: Int = -1,
+    val isDeletingGame: Boolean = false
 )
 
 sealed interface MainUiEvent {
