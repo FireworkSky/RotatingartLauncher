@@ -46,8 +46,8 @@ fun NavState.navigateToFileBrowser(initialPath: String = "") =
 /**
  * NavState 导航扩展：导航到游戏详情
  */
-fun NavState.navigateToGameDetail(gameId: String) = 
-    navigateTo(Screen.GameDetail(gameId), addToBackStack = true)
+fun NavState.navigateToGameDetail(storageId: String) =
+    navigateTo(Screen.GameDetail(storageId), addToBackStack = true)
 
 /**
  * NavState 导航扩展：导航到控制布局编辑器

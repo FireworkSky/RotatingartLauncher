@@ -17,6 +17,7 @@ import com.app.ralaunch.shared.core.navigation.*
 import com.app.ralaunch.shared.core.theme.LocalHazeState
 import com.app.ralaunch.shared.core.theme.RaLaunchTheme
 import com.app.ralaunch.shared.core.model.ui.GameItemUi
+import com.app.ralaunch.shared.core.component.game.GameInfoEditSubScreen
 import com.app.ralaunch.shared.core.component.game.GameListContent
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.haze
@@ -262,7 +263,9 @@ private fun PageContent(
                 onGameLongClick = onGameLongClick,
                 onLaunchClick = onLaunchClick,
                 onDeleteClick = onDeleteClick,
-                onEditClick = onEditClick,
+                onEditClick = {
+                    selectedGame?.id?.let { navState.navigateToGameDetail(it) }
+                },
                 onAddClick = { navState.navigateTo(Screen.Import) },
                 iconLoader = iconLoader
             )
@@ -273,7 +276,18 @@ private fun PageContent(
         is Screen.Import -> importContent()
         is Screen.ControlStore -> controlStoreContent()
         is Screen.FileBrowser -> fileBrowserContent(targetScreen.initialPath, targetScreen.allowedExtensions, targetScreen.fileType)
-        is Screen.GameDetail -> PlaceholderScreen("游戏详情: ${targetScreen.gameId}")
+        is Screen.GameDetail -> {
+            val game = games.find { it.id == targetScreen.storageId }
+            if (game != null) {
+                GameInfoEditSubScreen(
+                    game = game,
+                    onBack = { navState.goBack() },
+                    onSave = onEditClick
+                )
+            } else {
+                PlaceholderScreen("未找到游戏: ${targetScreen.storageId}")
+            }
+        }
         is Screen.ControlEditor -> PlaceholderScreen("布局编辑器")
         is Screen.Initialization -> { /* 已移至独立 Activity */ }
     }
@@ -291,7 +305,7 @@ private fun GamesPageContent(
     onGameLongClick: (GameItemUi) -> Unit,
     onLaunchClick: () -> Unit,
     onDeleteClick: () -> Unit,
-    onEditClick: (updatedGame: GameItemUi) -> Unit,
+    onEditClick: () -> Unit,
     onAddClick: () -> Unit,
     iconLoader: @Composable (String?, Modifier) -> Unit
 ) {

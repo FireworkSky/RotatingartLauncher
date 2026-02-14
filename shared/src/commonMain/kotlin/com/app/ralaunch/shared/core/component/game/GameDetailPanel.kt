@@ -7,6 +7,7 @@ import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MoreVert
@@ -28,8 +29,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
+import com.app.ralaunch.shared.core.component.menu.AnchoredActionItem
+import com.app.ralaunch.shared.core.component.menu.AnchoredActionMenu
+import com.app.ralaunch.shared.core.component.menu.AnchoredActionMenuStyle
 import com.app.ralaunch.shared.core.model.ui.GameItemUi
 
 /**
@@ -45,7 +47,7 @@ fun GameDetailPanel(
     game: GameItemUi,
     onLaunchClick: () -> Unit,
     onDeleteClick: () -> Unit,
-    onEditClick: (updatedGame: GameItemUi) -> Unit,
+    onEditClick: () -> Unit,
     modifier: Modifier = Modifier,
     iconLoader: @Composable (String?, Modifier) -> Unit = { _, _ -> }
 ) {
@@ -53,82 +55,6 @@ fun GameDetailPanel(
 
     // Menu state
     var showMenu by remember { mutableStateOf(false) }
-
-    // Edit dialog state
-    var showEditDialog by remember { mutableStateOf(false) }
-    var editedName by remember(game.id) { mutableStateOf(game.displayedName) }
-    var editedDescription by remember(game.id) { mutableStateOf(game.displayedDescription ?: "") }
-
-    // Edit dialog
-    if (showEditDialog) {
-        Dialog(
-            onDismissRequest = { showEditDialog = false },
-            properties = DialogProperties(usePlatformDefaultWidth = false)
-        ) {
-            Surface(
-                modifier = Modifier.fillMaxSize(),
-                color = MaterialTheme.colorScheme.surface
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(24.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Text(
-                        text = "编辑游戏信息",
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.SemiBold
-                    )
-
-                    OutlinedTextField(
-                        value = editedName,
-                        onValueChange = { editedName = it },
-                        label = { Text("游戏名称") },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    OutlinedTextField(
-                        value = editedDescription,
-                        onValueChange = { editedDescription = it },
-                        label = { Text("游戏描述") },
-                        maxLines = 5,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
-                    Spacer(modifier = Modifier.weight(1f))
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.End
-                    ) {
-                        TextButton(onClick = {
-                            showEditDialog = false
-                            // Reset to original values
-                            editedName = game.displayedName
-                            editedDescription = game.displayedDescription ?: ""
-                        }) {
-                            Text("取消")
-                        }
-                        TextButton(
-                            onClick = {
-                                // Create updated game with modified fields
-                                val updatedGame = game.copy(
-                                    displayedName = editedName.trim(),
-                                    displayedDescription = editedDescription.trim().ifEmpty { null }
-                                )
-                                onEditClick(updatedGame)
-                                showEditDialog = false
-                            },
-                            enabled = editedName.isNotBlank()
-                        ) {
-                            Text("保存")
-                        }
-                    }
-                }
-            }
-        }
-    }
 
     Box(
         modifier = modifier.fillMaxSize()
@@ -242,97 +168,51 @@ fun GameDetailPanel(
                     .height(48.dp)
             )
 
-            // FAB 菜单按钮
-            Box(
-                modifier = Modifier
-                    .size(48.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                // 主菜单按钮
-                FilledTonalIconButton(
-                    onClick = { showMenu = !showMenu },
-                    modifier = Modifier.fillMaxSize(),
-                    shape = RoundedCornerShape(14.dp),
-                    colors = IconButtonDefaults.filledTonalIconButtonColors(
-                        containerColor = if (showMenu)
-                            MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
-                        else
-                            MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f),
-                        contentColor = if (showMenu)
-                            MaterialTheme.colorScheme.primary
-                        else
-                            MaterialTheme.colorScheme.onSecondaryContainer
-                    )
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.MoreVert,
-                        contentDescription = "更多选项",
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-            }
+            Spacer(modifier = Modifier.size(48.dp))
         }
         } // End of Column
 
-        // 浮动菜单项（放在 Column 外部作为 overlay，在外层 Box 内）
-        androidx.compose.animation.AnimatedVisibility(
-            visible = showMenu,
-            enter = androidx.compose.animation.fadeIn() + androidx.compose.animation.scaleIn(
-                initialScale = 0.8f,
-                transformOrigin = androidx.compose.ui.graphics.TransformOrigin(0.5f, 1f)
+        AnchoredActionMenu(
+            expanded = showMenu,
+            onExpandedChange = { showMenu = it },
+            items = listOf(
+                AnchoredActionItem(
+                    key = "edit",
+                    icon = Icons.Default.Edit,
+                    contentDescription = "编辑",
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                    onClick = onEditClick
+                ),
+                AnchoredActionItem(
+                    key = "delete",
+                    icon = Icons.Default.Delete,
+                    contentDescription = "删除",
+                    containerColor = MaterialTheme.colorScheme.errorContainer,
+                    contentColor = MaterialTheme.colorScheme.error,
+                    onClick = onDeleteClick
+                )
             ),
-            exit = androidx.compose.animation.fadeOut() + androidx.compose.animation.scaleOut(
-                targetScale = 0.8f,
-                transformOrigin = androidx.compose.ui.graphics.TransformOrigin(0.5f, 1f)
-            ),
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(end = 16.dp, bottom = 76.dp)  // 16dp matches Column padding, 76dp = 16dp padding + 48dp button + 12dp gap
-        ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                // 编辑按钮
-                FilledTonalIconButton(
-                    onClick = {
-                        showMenu = false
-                        showEditDialog = true
-                    },
-                    modifier = Modifier.size(48.dp),
-                    shape = RoundedCornerShape(14.dp),
-                    colors = IconButtonDefaults.filledTonalIconButtonColors(
-                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-                    )
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Edit,
-                        contentDescription = "编辑",
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-                // 删除按钮
-                FilledTonalIconButton(
-                    onClick = {
-                        showMenu = false
-                        onDeleteClick()
-                    },
-                    modifier = Modifier.size(48.dp),
-                    shape = RoundedCornerShape(14.dp),
-                    colors = IconButtonDefaults.filledTonalIconButtonColors(
-                        containerColor = MaterialTheme.colorScheme.errorContainer,
-                        contentColor = MaterialTheme.colorScheme.error
-                    )
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Delete,
-                        contentDescription = "删除",
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-            }
-        }
+            modifier = Modifier.matchParentSize(),
+            anchorAlignment = Alignment.BottomEnd,
+            anchorPadding = PaddingValues(end = 16.dp, bottom = 16.dp),
+            style = AnchoredActionMenuStyle.TonalIcon,
+            itemSpacing = 8.dp,
+            mainButtonSize = 48.dp,
+            dismissOnOutsideClick = false,
+            mainIconCollapsed = Icons.Default.MoreVert,
+            mainIconExpanded = Icons.Default.Close,
+            mainContentDescriptionCollapsed = "更多选项",
+            mainContentDescriptionExpanded = "收起更多选项",
+            mainContainerColorCollapsed = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f),
+            mainContainerColorExpanded = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
+            mainContentColorCollapsed = MaterialTheme.colorScheme.onSecondaryContainer,
+            mainContentColorExpanded = MaterialTheme.colorScheme.primary,
+            rotateMainIcon = true,
+            animateItemAlpha = true,
+            collapsedOffsetBase = 56.dp,
+            collapsedOffsetStep = 56.dp
+        )
     } // End of outer Box
 }
 

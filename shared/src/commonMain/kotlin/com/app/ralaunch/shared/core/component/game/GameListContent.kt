@@ -46,7 +46,7 @@ fun GameListContent(
     onGameLongClick: (GameItemUi) -> Unit = {},
     onLaunchClick: () -> Unit,
     onDeleteClick: () -> Unit,
-    onEditClick: (updatedGame: GameItemUi) -> Unit = {},
+    onEditClick: () -> Unit = {},
     onAddClick: () -> Unit = {},
     isLoading: Boolean = false,
     modifier: Modifier = Modifier,
@@ -150,7 +150,7 @@ private fun DetailSection(
     selectedGame: GameItemUi?,
     onLaunchClick: () -> Unit,
     onDeleteClick: () -> Unit,
-    onEditClick: (updatedGame: GameItemUi) -> Unit,
+    onEditClick: () -> Unit,
     iconLoader: @Composable (String?, Modifier) -> Unit,
     modifier: Modifier = Modifier
 ) {

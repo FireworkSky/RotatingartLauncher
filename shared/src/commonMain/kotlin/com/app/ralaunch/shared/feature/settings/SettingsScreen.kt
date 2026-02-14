@@ -126,18 +126,21 @@ private fun SettingsCategoryList(
     modifier: Modifier = Modifier
 ) {
     Column(
-        modifier = modifier
-            .padding(16.dp)
+        modifier = modifier.fillMaxSize()
     ) {
         Text(
             text = "设置",
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.padding(bottom = 24.dp)
+            modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 16.dp)
         )
 
         LazyColumn(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth(),
+            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 16.dp),
             verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             items(SettingsCategory.entries) { category ->

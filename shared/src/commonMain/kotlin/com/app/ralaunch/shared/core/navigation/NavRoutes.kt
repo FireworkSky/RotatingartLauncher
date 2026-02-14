@@ -48,9 +48,9 @@ sealed class Screen(
         title = "文件浏览"
     )
     
-    /** 游戏详情（全屏模式） */
-    data class GameDetail(val gameId: String) : Screen(
-        route = "game_detail/$gameId",
+    /** 游戏详情/编辑（全屏模式，参数为游戏存储 ID） */
+    data class GameDetail(val storageId: String) : Screen(
+        route = "game_detail/$storageId",
         title = "游戏详情"
     )
     
@@ -135,13 +135,4 @@ enum class NavDestination(
             return entries.find { it.screen == screen }
         }
     }
-}
-
-/**
- * 导航参数
- */
-object NavArgs {
-    const val GAME_ID = "gameId"
-    const val LAYOUT_ID = "layoutId"
-    const val FILE_PATH = "filePath"
 }

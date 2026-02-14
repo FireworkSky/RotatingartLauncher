@@ -23,6 +23,9 @@ import com.app.ralaunch.feature.controls.editors.ControlEditorActivity
 import org.koin.java.KoinJavaComponent
 import com.app.ralaunch.feature.controls.packs.ControlPackInfo
 import com.app.ralaunch.feature.controls.packs.ControlPackManager
+import com.app.ralaunch.shared.core.component.menu.AnchoredActionItem
+import com.app.ralaunch.shared.core.component.menu.AnchoredActionMenu
+import com.app.ralaunch.shared.core.component.menu.AnchoredActionMenuStyle
 import java.io.File
 
 /**
@@ -359,6 +362,42 @@ private fun LayoutListPanel(
     onImportClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    var fabMenuExpanded by remember { mutableStateOf(false) }
+    val mainFabSize = 56.dp
+    val fabOuterMargin = 12.dp
+    val safeGap = 8.dp
+    val navBarBottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+    val bottomReserve = mainFabSize + fabOuterMargin + safeGap + navBarBottom
+    val fabItems = listOf(
+        AnchoredActionItem(
+            key = "store",
+            icon = Icons.Default.Storefront,
+            contentDescription = "控件商店",
+            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+            onClick = onOpenStore
+        ),
+        AnchoredActionItem(
+            key = "import",
+            icon = Icons.Default.FileOpen,
+            contentDescription = "导入布局",
+            containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+            onClick = onImportClick
+        ),
+        AnchoredActionItem(
+            key = "create",
+            icon = Icons.Default.Add,
+            contentDescription = "新建布局",
+            containerColor = MaterialTheme.colorScheme.primaryContainer,
+            onClick = onCreateClick
+        )
+    )
+
+    LaunchedEffect(showMoreMenu) {
+        if (showMoreMenu != null) {
+            fabMenuExpanded = false
+        }
+    }
+
     Box(modifier = modifier.background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))) {
         if (layouts.isEmpty()) {
             // 空状态
@@ -402,7 +441,12 @@ private fun LayoutListPanel(
             }
         } else {
             LazyColumn(
-                contentPadding = PaddingValues(12.dp),
+                contentPadding = PaddingValues(
+                    start = 12.dp,
+                    top = 12.dp,
+                    end = 12.dp,
+                    bottom = 12.dp + bottomReserve
+                ),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 items(layouts, key = { it.id }) { pack ->
@@ -412,10 +456,19 @@ private fun LayoutListPanel(
                         isQuickSwitch = pack.id in quickSwitchIds,
                         isSelected = pack.id == selectedLayout?.id,
                         showMoreMenu = showMoreMenu?.id == pack.id,
-                        onClick = { onLayoutSelect(pack) },
-                        onDoubleClick = { onLayoutClick(pack) },
+                        onClick = {
+                            fabMenuExpanded = false
+                            onLayoutSelect(pack)
+                        },
+                        onDoubleClick = {
+                            fabMenuExpanded = false
+                            onLayoutClick(pack)
+                        },
                         onSetDefault = { onSetDefault(pack) },
-                        onShowMoreMenu = { onShowMoreMenu(pack) },
+                        onShowMoreMenu = {
+                            fabMenuExpanded = false
+                            onShowMoreMenu(pack)
+                        },
                         onDismissMoreMenu = onDismissMoreMenu,
                         onRenameClick = { onRenameClick(pack) },
                         onDeleteClick = { onDeleteClick(pack) },
@@ -425,39 +478,27 @@ private fun LayoutListPanel(
             }
         }
 
-        // FAB 区域 - 商店 + 导入 + 新建
-        Column(
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(12.dp),
-            horizontalAlignment = Alignment.End,
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            // 商店按钮
-            FloatingActionButton(
-                onClick = onOpenStore,
-                containerColor = MaterialTheme.colorScheme.secondaryContainer
-            ) {
-                Icon(Icons.Default.Storefront, "控件商店")
-            }
-            
-            // 导入按钮
-            FloatingActionButton(
-                onClick = onImportClick,
-                containerColor = MaterialTheme.colorScheme.tertiaryContainer
-            ) {
-                Icon(Icons.Default.FileOpen, "导入布局")
-            }
-            
-            // 新建按钮
-            if (layouts.isNotEmpty()) {
-                FloatingActionButton(
-                    onClick = onCreateClick,
-                    containerColor = MaterialTheme.colorScheme.primaryContainer
-                ) {
-                    Icon(Icons.Default.Add, "新建布局")
-                }
-            }
+        if (layouts.isNotEmpty()) {
+            AnchoredActionMenu(
+                expanded = fabMenuExpanded,
+                onExpandedChange = { fabMenuExpanded = it },
+                items = fabItems,
+                modifier = Modifier
+                    .matchParentSize(),
+                style = AnchoredActionMenuStyle.Fab,
+                anchorAlignment = Alignment.BottomEnd,
+                anchorPadding = PaddingValues(fabOuterMargin),
+                itemSpacing = 12.dp,
+                mainButtonSize = mainFabSize,
+                mainIconCollapsed = Icons.Default.Menu,
+                mainIconExpanded = Icons.Default.Close,
+                mainContentDescriptionCollapsed = "显示快捷操作",
+                mainContentDescriptionExpanded = "收起快捷操作",
+                mainContainerColorCollapsed = MaterialTheme.colorScheme.primaryContainer,
+                mainContainerColorExpanded = MaterialTheme.colorScheme.primary,
+                mainContentColorCollapsed = MaterialTheme.colorScheme.onPrimaryContainer,
+                mainContentColorExpanded = MaterialTheme.colorScheme.onPrimary,
+            )
         }
     }
 }
@@ -794,5 +835,3 @@ private fun LayoutDetailPanel(
         }
     }
 }
-
-
