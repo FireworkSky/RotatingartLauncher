@@ -90,14 +90,6 @@ fun GameControlsOverlay(
         val packsToShow = quickSwitchPacks.ifEmpty { packManager.getInstalledPacks() }
         menuState.availablePacks = packsToShow.map { it.id to it.name }
         menuState.activePackId = packManager.getSelectedPackId()
-        
-        // 初始化子布局状态
-        val layout = controlLayoutView.currentLayout
-        if (layout != null && layout.hasSubLayouts()) {
-            menuState.subLayouts = layout.subLayouts.map { it.id to it.name }
-            menuState.activeSubLayoutId = layout.activeSubLayoutId
-                ?: layout.subLayouts.firstOrNull()?.id
-        }
     }
     
     // 同步调试日志状态到菜单
@@ -343,28 +335,9 @@ fun GameControlsOverlay(
                 menuState.activePackId = packId
                 val newLayout = packManager.getPackLayout(packId)
                 currentLayout = newLayout
-                if (newLayout != null && newLayout.hasSubLayouts()) {
-                    menuState.subLayouts = newLayout.subLayouts.map { it.id to it.name }
-                    menuState.activeSubLayoutId = newLayout.activeSubLayoutId
-                        ?: newLayout.subLayouts.firstOrNull()?.id
-                } else {
-                    menuState.subLayouts = emptyList()
-                    menuState.activeSubLayoutId = null
-                }
                 
                 hasUnsavedChanges = false
                 selectedControl = null
-            }
-            
-            override fun onSwitchSubLayout(subLayoutId: String) {
-                // 切换子布局
-                controlLayoutView.switchSubLayout(subLayoutId)
-                menuState.activeSubLayoutId = subLayoutId
-                currentLayout = controlLayoutView.currentLayout
-            }
-            
-            override fun onLayoutSwitcherVisibilityChanged(visible: Boolean) {
-                menuState.isLayoutSwitcherVisible = visible
             }
         }
     }
@@ -441,9 +414,7 @@ fun GameControlsOverlay(
                 onUpdate = { updatedControl ->
                     // 更新控件数据 - 使用 id 作为标识
                     val layout = controlLayoutView.currentLayout ?: return@PropertyPanel
-                    val index = layout.controls.indexOfFirst { it.id == updatedControl.id }
-                    if (index >= 0) {
-                        layout.controls[index] = updatedControl
+                    if (updateControlInLayout(layout, updatedControl)) {
                         controlLayoutView.loadLayout(layout)
                         currentLayout = layout
                         hasUnsavedChanges = true
@@ -471,7 +442,7 @@ fun GameControlsOverlay(
                         x = (x + 0.05f).coerceAtMost(0.95f)
                         y = (y + 0.05f).coerceAtMost(0.95f)
                     }
-                    layout.controls.add(duplicated)
+                    addControlToLayout(layout, duplicated)
                     controlLayoutView.loadLayout(layout)
                     currentLayout = layout
                     hasUnsavedChanges = true
@@ -480,24 +451,12 @@ fun GameControlsOverlay(
                 onDelete = {
                     val layout = controlLayoutView.currentLayout ?: return@PropertyPanel
                     val controlToDelete = selectedControl ?: return@PropertyPanel
-                    layout.controls.removeAll { it.id == controlToDelete.id }
+                    removeControlFromLayout(layout, controlToDelete.id)
                     controlLayoutView.loadLayout(layout)
                     currentLayout = layout
                     hasUnsavedChanges = true
                     selectedControl = null
                 }
-            )
-        }
-
-        // 子布局快捷切换覆盖层（非编辑模式 + 有子布局时显示）
-        if (menuState.subLayouts.isNotEmpty() 
-            && menuState.isLayoutSwitcherVisible 
-            && !menuState.isInEditMode
-        ) {
-            LayoutSwitcherOverlay(
-                subLayouts = menuState.subLayouts,
-                activeSubLayoutId = menuState.activeSubLayoutId,
-                onSwitch = { callbacks.onSwitchSubLayout(it) }
             )
         }
 
@@ -516,7 +475,7 @@ fun GameControlsOverlay(
                     onClick = {
                         val layout = controlLayoutView.currentLayout ?: return@FloatingActionButton
                         val controlToDelete = selectedControl ?: return@FloatingActionButton
-                        layout.controls.removeAll { it.id == controlToDelete.id }
+                        removeControlFromLayout(layout, controlToDelete.id)
                         controlLayoutView.loadLayout(layout)
                         currentLayout = layout
                         hasUnsavedChanges = true
@@ -542,9 +501,7 @@ fun GameControlsOverlay(
                 updated.keycode = keyCode
                 // 更新到布局 - 使用 id 作为标识
                 val layout = controlLayoutView.currentLayout ?: return@KeyBindingDialog
-                val index = layout.controls.indexOfFirst { it.id == button.id }
-                if (index >= 0) {
-                    layout.controls[index] = updated
+                if (updateControlInLayout(layout, updated)) {
                     controlLayoutView.loadLayout(layout)
                     hasUnsavedChanges = true
                 }
@@ -566,9 +523,7 @@ fun GameControlsOverlay(
                 updated.joystickKeys = keys
                 // 更新到布局 - 使用 id 作为标识
                 val layout = controlLayoutView.currentLayout ?: return@JoystickKeyMappingDialog
-                val index = layout.controls.indexOfFirst { it.id == joystick.id }
-                if (index >= 0) {
-                    layout.controls[index] = updated
+                if (updateControlInLayout(layout, updated)) {
                     controlLayoutView.loadLayout(layout)
                     hasUnsavedChanges = true
                 }
@@ -605,9 +560,7 @@ fun GameControlsOverlay(
                 }
                 // 更新到布局
                 val layout = controlLayoutView.currentLayout ?: return@TextureSelectorDialog
-                val index = layout.controls.indexOfFirst { it.id == btn.id }
-                if (index >= 0) {
-                    layout.controls[index] = updated
+                if (updateControlInLayout(layout, updated)) {
                     controlLayoutView.loadLayout(layout)
                     controlLayoutView.invalidate()
                     hasUnsavedChanges = true
@@ -637,9 +590,7 @@ fun GameControlsOverlay(
                 }
                 // 更新到布局
                 val layout = controlLayoutView.currentLayout ?: return@TextureSelectorDialog
-                val index = layout.controls.indexOfFirst { it.id == js.id }
-                if (index >= 0) {
-                    layout.controls[index] = updated
+                if (updateControlInLayout(layout, updated)) {
                     controlLayoutView.loadLayout(layout)
                     controlLayoutView.invalidate()
                     hasUnsavedChanges = true
@@ -663,9 +614,7 @@ fun GameControlsOverlay(
                 updated.polygonPoints = points
                 // 更新到布局
                 val layout = controlLayoutView.currentLayout ?: return@PolygonEditorDialog
-                val index = layout.controls.indexOfFirst { it.id == button.id }
-                if (index >= 0) {
-                    layout.controls[index] = updated
+                if (updateControlInLayout(layout, updated)) {
                     controlLayoutView.loadLayout(layout)
                     hasUnsavedChanges = true
                 }
@@ -679,3 +628,29 @@ fun GameControlsOverlay(
     }
 }
 
+private fun getPreferredControls(layout: ControlLayout): MutableList<ControlData> {
+    return layout.controls
+}
+
+private fun addControlToLayout(layout: ControlLayout, control: ControlData) {
+    getPreferredControls(layout).add(control)
+}
+
+private fun updateControlInLayout(layout: ControlLayout, updatedControl: ControlData): Boolean {
+    val preferredControls = getPreferredControls(layout)
+    val preferredIndex = preferredControls.indexOfFirst { it.id == updatedControl.id }
+    if (preferredIndex >= 0) {
+        preferredControls[preferredIndex] = updatedControl
+        return true
+    }
+
+    return false
+}
+
+private fun removeControlFromLayout(layout: ControlLayout, controlId: String): Boolean {
+    val preferredControls = getPreferredControls(layout)
+    if (preferredControls.removeAll { it.id == controlId }) {
+        return true
+    }
+    return false
+}

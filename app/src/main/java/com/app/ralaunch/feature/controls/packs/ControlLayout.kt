@@ -7,51 +7,12 @@ import kotlinx.serialization.Transient
 import kotlinx.serialization.json.Json
 import java.io.File
 import java.io.IOException
-import java.util.UUID
-
-/**
- * 子布局配置
- * 
- * 每个控件包可以包含多个子布局（如"建筑"、"战斗"等模式），
- * 游戏内可以快速切换子布局。
- */
-@Serializable
-data class SubLayout(
-    /** 子布局 ID */
-    var id: String = UUID.randomUUID().toString(),
-    
-    /** 子布局名称（如"建筑"、"战斗"、"默认"） */
-    var name: String = "Default",
-    
-    /** 子布局专属控件列表 */
-    var controls: MutableList<ControlData> = mutableListOf()
-) {
-    /**
-     * 创建当前子布局的深拷贝
-     */
-    fun deepCopy(): SubLayout {
-        val json = ControlLayout.json
-        val jsonString = json.encodeToString(serializer(), this)
-        return try {
-            json.decodeFromString<SubLayout>(jsonString).also { it.id = this.id }
-        } catch (e: Exception) {
-            this
-        }
-    }
-}
 
 /**
  * 控件布局配置
- * 
+ *
  * 包含布局的所有控件数据，支持 JSON 序列化/反序列化
- * 替代原有的 ControlConfig
- * 
- * 布局结构:
- * - controls: 共享控件列表（始终显示，不随子布局切换而变化）
- * - subLayouts: 子布局列表（如"建筑"、"战斗"等模式的专属控件）
- * - activeSubLayoutId: 当前激活的子布局 ID
- * 
- * 向后兼容: 无 subLayouts 的旧布局将 controls 视为全部控件。
+ * 仅保留单一 controls 列表。
  */
 @Serializable
 data class ControlLayout(
@@ -59,16 +20,10 @@ data class ControlLayout(
     var name: String = "Custom Layout",
     
     /** 布局版本（用于兼容性检查） */
-    var version: Int = 2,
-    
-    /** 共享控件列表（始终显示） */
-    var controls: MutableList<ControlData> = mutableListOf(),
-    
-    /** 子布局列表 */
-    var subLayouts: MutableList<SubLayout> = mutableListOf(),
-    
-    /** 当前激活的子布局 ID */
-    var activeSubLayoutId: String? = null
+    var version: Int = 3,
+
+    /** 控件列表 */
+    var controls: MutableList<ControlData> = mutableListOf()
 ) {
     /** 布局 ID（运行时使用，不序列化） */
     @Transient
@@ -90,32 +45,6 @@ data class ControlLayout(
         val jsonString = toJson()
         return loadFromJson(jsonString)?.copy()?.also { it.id = this.id } ?: this
     }
-
-    // ========== 子布局相关方法 ==========
-    
-    /**
-     * 获取当前激活的子布局
-     * 
-     * @return 激活的子布局，如果没有匹配则返回第一个子布局，如果没有子布局返回 null
-     */
-    fun getActiveSubLayout(): SubLayout? =
-        subLayouts.find { it.id == activeSubLayoutId } ?: subLayouts.firstOrNull()
-
-    /**
-     * 获取当前应显示的所有控件（共享控件 + 激活子布局的控件）
-     * 
-     * - 无子布局时: 返回 controls 列表（向后兼容旧布局）
-     * - 有子布局时: 返回 controls（共享）+ 激活子布局的 controls
-     */
-    fun getVisibleControls(): List<ControlData> {
-        if (subLayouts.isEmpty()) return controls  // 向后兼容
-        return controls + (getActiveSubLayout()?.controls ?: emptyList())
-    }
-    
-    /**
-     * 是否包含子布局
-     */
-    fun hasSubLayouts(): Boolean = subLayouts.isNotEmpty()
 
     companion object {
         val json = Json {
@@ -161,11 +90,7 @@ data class ControlLayout(
             val minThreshold = 0.02f
             var fixedCount = 0
 
-            // 收集所有需要检查的控件（共享 + 子布局中的）
             val allControls = layout.controls.toMutableList()
-            layout.subLayouts.forEach { subLayout ->
-                allControls.addAll(subLayout.controls)
-            }
 
             for (control in allControls) {
                 // 仅当所有三个透明度都接近 0 时才认为是旧格式需要迁移
@@ -225,4 +150,3 @@ data class ControlLayout(
         }
     }
 }
-

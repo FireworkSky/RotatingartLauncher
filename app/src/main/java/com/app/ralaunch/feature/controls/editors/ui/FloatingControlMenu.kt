@@ -95,15 +95,6 @@ class FloatingMenuState(
     /** 控件布局选择弹窗是否显示 */
     var isLayoutPickerVisible by mutableStateOf(false)
     
-    /** 当前包的子布局列表 (id, name) */
-    var subLayouts by mutableStateOf<List<Pair<String, String>>>(emptyList())
-    
-    /** 当前激活的子布局 ID */
-    var activeSubLayoutId by mutableStateOf<String?>(null)
-    
-    /** 专用布局切换器覆盖层可见性 */
-    var isLayoutSwitcherVisible by mutableStateOf(true)
-    
     /** 计算实际的幽灵模式状态 (手动幽灵 或 控件使用中) */
     val effectiveGhostMode: Boolean
         get() = isGhostMode || isControlInUse
@@ -184,8 +175,6 @@ interface FloatingMenuCallbacks {
     
     // 布局切换回调
     fun onSwitchPack(packId: String) {}
-    fun onSwitchSubLayout(subLayoutId: String) {}
-    fun onLayoutSwitcherVisibilityChanged(visible: Boolean) {}
     
     // 调试日志回调
     fun onToggleDebugLog() {}
@@ -498,58 +487,6 @@ private fun InGameMenu(
                         }
                     )
 
-                    // ========== 布局切换区域 ==========
-                    
-                    // 子布局快速切换（如果有子布局）
-                    if (state.subLayouts.isNotEmpty()) {
-                        HorizontalDivider()
-                        
-                        Text(
-                            text = "子布局",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            fontWeight = FontWeight.Medium,
-                            modifier = Modifier.padding(start = 12.dp)
-                        )
-                        
-                        @OptIn(ExperimentalLayoutApi::class)
-                        FlowRow(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 8.dp),
-                            horizontalArrangement = Arrangement.spacedBy(6.dp),
-                            verticalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
-                            state.subLayouts.forEach { (id, name) ->
-                                FilterChip(
-                                    selected = id == state.activeSubLayoutId,
-                                    onClick = { 
-                                        state.activeSubLayoutId = id
-                                        callbacks.onSwitchSubLayout(id)
-                                    },
-                                    label = { 
-                                        Text(
-                                            text = name,
-                                            style = MaterialTheme.typography.labelMedium
-                                        )
-                                    },
-                                    modifier = Modifier.height(32.dp)
-                                )
-                            }
-                        }
-                        
-                        // 布局切换器覆盖层开关
-                        MenuSwitchItem(
-                            icon = Icons.Default.Tab,
-                            label = "显示快捷切换栏",
-                            checked = state.isLayoutSwitcherVisible,
-                            onCheckedChange = {
-                                state.isLayoutSwitcherVisible = it
-                                callbacks.onLayoutSwitcherVisibilityChanged(it)
-                            }
-                        )
-                    }
-                    
                     // 控件布局切换（如果有多个可用布局）
                     if (state.availablePacks.size > 1) {
                         HorizontalDivider()

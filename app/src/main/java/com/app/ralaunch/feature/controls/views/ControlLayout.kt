@@ -499,8 +499,7 @@ class ControlLayout : FrameLayout {
         // 清除现有控件视图
         clearControls()
 
-        // 获取应显示的控件（共享 + 激活子布局的控件）
-        val visibleControls = layout.getVisibleControls()
+        val visibleControls = layout.controls
 
         // 创建并添加虚拟控制元素
         val addedCount = visibleControls.mapNotNull { data ->
@@ -512,26 +511,8 @@ class ControlLayout : FrameLayout {
             return false
         }
 
-        val subLayoutName = layout.getActiveSubLayout()?.name
-        val logSuffix = if (subLayoutName != null) " (sub-layout: $subLayoutName)" else ""
-        AppLogger.debug(TAG, "Loaded $addedCount controls from layout: ${layout.name}$logSuffix")
+        AppLogger.debug(TAG, "Loaded $addedCount controls from layout: ${layout.name}")
         return true
-    }
-
-    /**
-     * 切换子布局
-     * 仅更新 activeSubLayoutId 并重新加载控件，不改变控件包
-     * 
-     * @param subLayoutId 要切换到的子布局 ID
-     * @return 是否成功切换
-     */
-    fun switchSubLayout(subLayoutId: String): Boolean {
-        val layout = currentLayout ?: return false
-        if (layout.subLayouts.isEmpty()) return false
-        if (layout.subLayouts.none { it.id == subLayoutId }) return false
-        
-        layout.activeSubLayoutId = subLayoutId
-        return loadLayout(layout)
     }
 
     /**

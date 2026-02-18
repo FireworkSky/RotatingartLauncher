@@ -21,7 +21,6 @@ import androidx.compose.ui.viewinterop.AndroidView
 import com.app.ralaunch.feature.controls.ControlData
 import com.app.ralaunch.feature.controls.editors.ControlEditorViewModel
 import com.app.ralaunch.feature.controls.packs.ControlLayout
-import com.app.ralaunch.feature.controls.packs.SubLayout
 import com.app.ralaunch.feature.controls.views.ControlLayout as ControlLayoutView
 import com.app.ralaunch.feature.controls.views.GridOverlayView
 import com.app.ralaunch.feature.controls.bridges.DummyInputBridge
@@ -47,16 +46,9 @@ fun ControlEditorScreen(
     val showTextureSelector by viewModel.showTextureSelector.collectAsState()
     val showPolygonEditor by viewModel.showPolygonEditor.collectAsState()
     val isGridVisible by viewModel.isGridVisible.collectAsState()
-    val subLayouts by viewModel.subLayouts.collectAsState()
-    val activeEditTarget by viewModel.activeEditTarget.collectAsState()
     
     // 属性面板偏移量（可拖动）
     var propertyPanelOffset by remember { mutableStateOf(androidx.compose.ui.geometry.Offset.Zero) }
-    
-    // 子布局管理对话框
-    var showAddSubLayoutDialog by remember { mutableStateOf(false) }
-    var showRenameSubLayoutDialog by remember { mutableStateOf<SubLayout?>(null) }
-    var showDeleteSubLayoutDialog by remember { mutableStateOf<SubLayout?>(null) }
 
     // 处理返回键
     BackHandler {
@@ -111,17 +103,6 @@ fun ControlEditorScreen(
                 modifier = Modifier.fillMaxSize()
             )
         }
-
-        // Layer 1.5: 子布局标签栏（顶部居中）
-        SubLayoutTabBar(
-            subLayouts = subLayouts,
-            activeEditTarget = activeEditTarget,
-            onSwitchTarget = { viewModel.switchEditTarget(it) },
-            onAddSubLayout = { showAddSubLayoutDialog = true },
-            onRenameSubLayout = { showRenameSubLayoutDialog = it },
-            onDeleteSubLayout = { showDeleteSubLayoutDialog = it },
-            modifier = Modifier.align(Alignment.TopCenter)
-        )
 
         // Layer 2: 自由移动的悬浮球菜单系统
         Box(
@@ -315,234 +296,4 @@ fun ControlEditorScreen(
             onDismiss = { viewModel.dismissPolygonEditor() }
         )
     }
-    
-    // ========== 子布局管理对话框 ==========
-    
-    if (showAddSubLayoutDialog) {
-        SubLayoutNameDialog(
-            title = "添加子布局",
-            initialName = "",
-            onConfirm = { name ->
-                viewModel.addSubLayout(name)
-                showAddSubLayoutDialog = false
-            },
-            onDismiss = { showAddSubLayoutDialog = false }
-        )
-    }
-    
-    showRenameSubLayoutDialog?.let { subLayout ->
-        SubLayoutNameDialog(
-            title = "重命名子布局",
-            initialName = subLayout.name,
-            onConfirm = { name ->
-                viewModel.renameSubLayout(subLayout.id, name)
-                showRenameSubLayoutDialog = null
-            },
-            onDismiss = { showRenameSubLayoutDialog = null }
-        )
-    }
-    
-    showDeleteSubLayoutDialog?.let { subLayout ->
-        AlertDialog(
-            onDismissRequest = { showDeleteSubLayoutDialog = null },
-            title = { Text("删除子布局") },
-            text = { Text("确定要删除子布局 \"${subLayout.name}\" 吗？其中的所有控件也会被删除。") },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        viewModel.deleteSubLayout(subLayout.id)
-                        showDeleteSubLayoutDialog = null
-                    },
-                    colors = ButtonDefaults.textButtonColors(
-                        contentColor = MaterialTheme.colorScheme.error
-                    )
-                ) { Text("删除") }
-            },
-            dismissButton = {
-                TextButton(onClick = { showDeleteSubLayoutDialog = null }) { Text("取消") }
-            }
-        )
-    }
-}
-
-// ========== 子布局标签栏 ==========
-
-/**
- * 子布局编辑标签栏
- * 显示在编辑器顶部，用于在共享控件和各子布局之间切换编辑目标
- */
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun SubLayoutTabBar(
-    subLayouts: List<SubLayout>,
-    activeEditTarget: ControlEditorViewModel.EditTarget,
-    onSwitchTarget: (ControlEditorViewModel.EditTarget) -> Unit,
-    onAddSubLayout: () -> Unit,
-    onRenameSubLayout: (SubLayout) -> Unit,
-    onDeleteSubLayout: (SubLayout) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    // 长按菜单状态
-    var longPressedSubLayout by remember { mutableStateOf<SubLayout?>(null) }
-    var showContextMenu by remember { mutableStateOf(false) }
-    
-    Surface(
-        modifier = modifier.padding(top = 8.dp),
-        shape = RoundedCornerShape(16.dp),
-        color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.9f),
-        tonalElevation = 4.dp,
-        shadowElevation = 2.dp
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // 共享控件标签
-            val isSharedActive = activeEditTarget is ControlEditorViewModel.EditTarget.Shared
-            FilterChip(
-                selected = isSharedActive,
-                onClick = { onSwitchTarget(ControlEditorViewModel.EditTarget.Shared) },
-                label = {
-                    Text(
-                        text = if (subLayouts.isEmpty()) "所有控件" else "共享控件",
-                        style = MaterialTheme.typography.labelMedium
-                    )
-                },
-                leadingIcon = if (isSharedActive) {
-                    { Icon(Icons.Default.Lock, contentDescription = null, modifier = Modifier.size(16.dp)) }
-                } else null,
-                modifier = Modifier.height(32.dp)
-            )
-            
-            // 子布局标签
-            subLayouts.forEach { subLayout ->
-                val isActive = activeEditTarget is ControlEditorViewModel.EditTarget.SubLayoutTarget
-                    && (activeEditTarget as ControlEditorViewModel.EditTarget.SubLayoutTarget).subLayoutId == subLayout.id
-                
-                Box {
-                    FilterChip(
-                        selected = isActive,
-                        onClick = { 
-                            onSwitchTarget(
-                                ControlEditorViewModel.EditTarget.SubLayoutTarget(subLayout.id)
-                            )
-                        },
-                        label = {
-                            Text(
-                                text = subLayout.name,
-                                style = MaterialTheme.typography.labelMedium
-                            )
-                        },
-                        modifier = Modifier
-                            .height(32.dp)
-                            .pointerInput(subLayout.id) {
-                                detectDragGestures { _, _ -> } // consume drags
-                                // Long press handled via combinedClickable below
-                            },
-                        trailingIcon = if (isActive) {
-                            {
-                                IconButton(
-                                    onClick = {
-                                        longPressedSubLayout = subLayout
-                                        showContextMenu = true
-                                    },
-                                    modifier = Modifier.size(16.dp)
-                                ) {
-                                    Icon(
-                                        Icons.Default.MoreVert,
-                                        contentDescription = "更多操作",
-                                        modifier = Modifier.size(14.dp)
-                                    )
-                                }
-                            }
-                        } else null,
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                            selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
-                    )
-                    
-                    // 上下文菜单（三点按钮触发）
-                    DropdownMenu(
-                        expanded = showContextMenu && longPressedSubLayout?.id == subLayout.id,
-                        onDismissRequest = { showContextMenu = false }
-                    ) {
-                        DropdownMenuItem(
-                            text = { Text("重命名") },
-                            onClick = {
-                                showContextMenu = false
-                                onRenameSubLayout(subLayout)
-                            },
-                            leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) }
-                        )
-                        DropdownMenuItem(
-                            text = { Text("删除", color = MaterialTheme.colorScheme.error) },
-                            onClick = {
-                                showContextMenu = false
-                                onDeleteSubLayout(subLayout)
-                            },
-                            leadingIcon = { 
-                                Icon(
-                                    Icons.Default.Delete, 
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.error
-                                )
-                            }
-                        )
-                    }
-                }
-            }
-            
-            // 添加子布局按钮
-            IconButton(
-                onClick = onAddSubLayout,
-                modifier = Modifier.size(32.dp)
-            ) {
-                Icon(
-                    Icons.Default.Add,
-                    contentDescription = "添加子布局",
-                    modifier = Modifier.size(20.dp),
-                    tint = MaterialTheme.colorScheme.primary
-                )
-            }
-        }
-    }
-}
-
-/**
- * 子布局名称输入对话框
- */
-@Composable
-private fun SubLayoutNameDialog(
-    title: String,
-    initialName: String,
-    onConfirm: (String) -> Unit,
-    onDismiss: () -> Unit
-) {
-    var name by remember { mutableStateOf(initialName) }
-    
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(title) },
-        text = {
-            OutlinedTextField(
-                value = name,
-                onValueChange = { name = it },
-                label = { Text("名称") },
-                placeholder = { Text("如: 建筑、战斗、默认") },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth()
-            )
-        },
-        confirmButton = {
-            TextButton(
-                onClick = { if (name.isNotBlank()) onConfirm(name.trim()) },
-                enabled = name.isNotBlank()
-            ) { Text("确定") }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) { Text("取消") }
-        }
-    )
 }
