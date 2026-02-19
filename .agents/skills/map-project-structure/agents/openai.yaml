@@ -1,0 +1,4 @@
+interface:
+  display_name: "Map Project Structure"
+  short_description: "Map modules, entry points, and boundaries"
+  default_prompt: "Map this repository architecture: modules, entry points, boundaries, and where to start changes."
