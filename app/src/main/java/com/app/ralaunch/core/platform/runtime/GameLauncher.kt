@@ -244,7 +244,8 @@ object GameLauncher {
                 "HOME" to dataDir,
                 "XDG_DATA_HOME" to dataDir,
                 "XDG_CONFIG_HOME" to dataDir,
-                "XDG_CACHE_HOME" to cacheDir
+                "XDG_CACHE_HOME" to cacheDir,
+                "TMPDIR" to cacheDir
             )
             AppLogger.debug(TAG, "XDG 环境变量设置完成 / XDG environment variables set: OK")
 
