@@ -199,6 +199,8 @@ object GameLauncher {
      *                       List of patches to enable, null means no patches
      * @param rendererOverride 可选的渲染器覆盖（null 表示使用全局设置）
      *                         Optional renderer override (null means use global setting)
+     * @param gameEnvVars 游戏环境变量（null 值表示在启动前 unset 对应变量）
+     *                    Game environment variables (null value means unset before launch)
      * @return 程序集退出代码：
      *         Assembly exit code:
      *         - 0 或正数：正常退出码 / Normal exit code
@@ -208,7 +210,8 @@ object GameLauncher {
         assemblyPath: String,
         args: Array<String>,
         enabledPatches: List<Patch>? = null,
-        rendererOverride: String? = null
+        rendererOverride: String? = null,
+        gameEnvVars: Map<String, String?> = emptyMap()
     ): Int {
         try {
             AppLogger.info(TAG, "=== 开始启动 .NET 程序集 / Starting .NET Assembly Launch ===")
@@ -283,26 +286,6 @@ object GameLauncher {
             val monoModPath = AssemblyPatcher.getMonoModInstallPath().toString()
             AppLogger.info(TAG, "MonoMod 路径 / path: $monoModPath")
 
-            // 模组路径配置（外部存储 RALauncher 目录）
-            // Mod paths configuration (RALauncher directory in external storage)
-            val smapiModsPath = Path(dataDir).resolve("Stardew Valley").resolve("Mods")
-            val everestModsPath = Path(dataDir).resolve("Everest").resolve("Mods")
-            
-            // 创建模组目录（如果不存在）
-            // Create mod directories if they don't exist
-            try {
-                if (!smapiModsPath.exists()) {
-                    smapiModsPath.createDirectories()
-                    AppLogger.debug(TAG, "创建 SMAPI 模组目录 / Created SMAPI mods directory: $smapiModsPath")
-                }
-                if (!everestModsPath.exists()) {
-                    everestModsPath.createDirectories()
-                    AppLogger.debug(TAG, "创建 Everest 模组目录 / Created Everest mods directory: $everestModsPath")
-                }
-            } catch (e: Exception) {
-                AppLogger.warn(TAG, "无法创建模组目录 / Failed to create mod directories: ${e.message}")
-            }
-            
             EnvVarsManager.quickSetEnvVars(
                 // 启动钩子配置
                 // Startup hooks configuration
@@ -311,15 +294,6 @@ object GameLauncher {
                 // MonoMod 路径，供补丁的 AssemblyResolve 使用
                 // MonoMod path, used by patch's AssemblyResolve
                 "MONOMOD_PATH" to monoModPath,
-
-                // SMAPI 模组路径（星露谷物语）
-                // SMAPI mods path (Stardew Valley)
-                "SMAPI_MODS_PATH" to smapiModsPath.toString(),
-                
-                // Everest 模组路径（蔚蓝）- 通过 XDG_DATA_HOME 自动设置
-                // Everest 使用 XDG_DATA_HOME/Everest/Mods，已在上方设置 XDG_DATA_HOME
-                // Everest mods path (Celeste) - auto-configured via XDG_DATA_HOME
-                // Everest uses XDG_DATA_HOME/Everest/Mods, XDG_DATA_HOME is set above
 
                 // 触摸输入配置
                 // Touch input configuration
@@ -331,8 +305,6 @@ object GameLauncher {
                 // Audio configuration
                 "SDL_AAUDIO_LOW_LATENCY" to if (settings.isSdlAaudioLowLatency) "1" else "0",
             )
-            AppLogger.info(TAG, "SMAPI 模组路径 / SMAPI mods path: $smapiModsPath")
-            AppLogger.info(TAG, "Everest 模组路径 / Everest mods path: $everestModsPath")
             AppLogger.debug(TAG, "游戏设置环境变量配置完成 / Game settings environment variables set: OK")
 
             // 步骤8：配置渲染器
@@ -354,8 +326,32 @@ object GameLauncher {
                 AppLogger.debug(TAG, "未启用大核亲和性，跳过 / Thread affinity to big cores not enabled, skipping.")
             }
 
-            // 步骤10：启动 .NET 运行时
-            // Step 10: Launch .NET runtime
+            // 步骤10：应用游戏级环境变量（优先级高于全局/渲染器配置）
+            // Step 10: Apply per-game env vars (higher priority than global/renderer config)
+            if (gameEnvVars.isNotEmpty()) {
+                AppLogger.debug(TAG, "应用游戏环境变量 / Applying per-game env vars: ${gameEnvVars.size} item(s)")
+                val availableInterpolations = linkedMapOf(
+                    "PACKAGE_NAME" to appContext.packageName,
+                    "EXTERNAL_STORAGE_DIRECTORY" to Environment.getExternalStorageDirectory().path,
+                    "HOME" to dataDir,
+                    "XDG_DATA_HOME" to dataDir,
+                    "XDG_CONFIG_HOME" to dataDir,
+                    "XDG_CACHE_HOME" to cacheDir,
+                    "TMPDIR" to cacheDir,
+                    "MONOMOD_PATH" to monoModPath
+                ).apply {
+                    startupHooks?.let { put("DOTNET_STARTUP_HOOKS", it) }
+                }
+                val resolvedGameEnvVars = EnvVarsManager.interpolateEnvVars(
+                    envVars = gameEnvVars,
+                    availableInterpolations = availableInterpolations
+                )
+                EnvVarsManager.quickSetEnvVars(resolvedGameEnvVars)
+                AppLogger.debug(TAG, "游戏环境变量应用完成 / Per-game env vars applied: OK")
+            }
+
+            // 步骤11：启动 .NET 运行时
+            // Step 11: Launch .NET runtime
             AppLogger.info(TAG, "通过 hostfxr 启动 .NET 运行时 / Launching .NET runtime with hostfxr...")
             val result = DotNetLauncher.hostfxrLaunch(assemblyPath, args)
 

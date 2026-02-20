@@ -2,8 +2,6 @@ package com.app.ralaunch.core.common
 
 import android.content.Context
 import com.app.ralaunch.shared.core.model.domain.GameItem
-import com.app.ralaunch.feature.patch.data.PatchManager
-import org.koin.java.KoinJavaComponent
 import com.app.ralaunch.feature.game.legacy.GameActivity
 import com.app.ralaunch.core.common.util.AppLogger
 import java.io.File
@@ -24,9 +22,18 @@ class GameLaunchManager(private val context: Context) {
         android.util.Log.d(TAG, ">>> launchGame called for: ${game.displayedName}")
         AppLogger.info(TAG, "launchGame called for: ${game.displayedName}, path: ${game.gameExePathRelative}")
 
-        // 获取游戏目录和完整路径
-        val gameDir = getGameDirectory(game)
-        val gameFile = File(gameDir, game.gameExePathRelative)
+        if (game.id.isBlank()) {
+            AppLogger.error(TAG, "Game storage ID is blank, cannot launch")
+            return false
+        }
+
+        val gamePathFull = game.gameExePathFull
+        if (gamePathFull == null) {
+            AppLogger.error(TAG, "Game storage path is null for game: ${game.displayedName}")
+            return false
+        }
+
+        val gameFile = File(gamePathFull)
 
         if (!gameFile.exists() || !gameFile.isFile) {
             AppLogger.error(TAG, "Assembly file not found: ${gameFile.absolutePath}")
@@ -35,47 +42,9 @@ class GameLaunchManager(private val context: Context) {
 
         AppLogger.info(TAG, "Game runtime: dotnet")
 
-        val patchManager: PatchManager? = try {
-            KoinJavaComponent.getOrNull(PatchManager::class.java)
-        } catch (e: Exception) { null }
-        val gameCategoryId = game.gameId
-        val enabledPatches = patchManager?.getApplicableAndEnabledPatches(gameCategoryId, gameFile.toPath()) ?: emptyList()
-        AppLogger.info(TAG, "Game: $gameCategoryId, Applicable patches: ${enabledPatches.size}")
-
         GameActivity.launch(
             context = context,
-            gameName = game.displayedName,
-            assemblyPath = gameFile.absolutePath,
-            gameId = game.gameId,
-            gamePath = gameDir.absolutePath,
-            rendererOverride = game.rendererOverride,
-            enabledPatchIds = enabledPatches
-                .takeIf { it.isNotEmpty() }
-                ?.let { ArrayList(it.map { patch -> patch.manifest.id }) }
-        )
-
-        return true
-    }
-
-    /**
-     * 获取游戏目录
-     * 根据新的存储结构，目录名就是 storageBasePathRelative
-     */
-    private fun getGameDirectory(game: GameItem): File {
-        val gamesDir = File(context.getExternalFilesDir(null), "games")
-        return File(gamesDir, game.storageRootPathRelative)
-    }
-
-    fun launchAssembly(assemblyFile: File?): Boolean {
-        if (assemblyFile == null || !assemblyFile.exists()) {
-            AppLogger.error(TAG, "Assembly file is null or does not exist")
-            return false
-        }
-
-        GameActivity.launch(
-            context = context,
-            gameName = assemblyFile.name,
-            assemblyPath = assemblyFile.absolutePath
+            gameStorageId = game.id
         )
 
         return true

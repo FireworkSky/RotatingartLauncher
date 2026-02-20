@@ -1,10 +1,11 @@
 package com.app.ralaunch.feature.game.legacy
 
-import android.content.Context
 import android.os.Build
 import com.app.ralaunch.R
 import com.app.ralaunch.core.platform.runtime.GameLauncher
+import com.app.ralaunch.feature.patch.data.Patch
 import com.app.ralaunch.feature.patch.data.PatchManager
+import com.app.ralaunch.shared.core.contract.repository.GameRepositoryV2
 import org.koin.java.KoinJavaComponent
 import com.app.ralaunch.core.common.util.AppLogger
 import java.io.BufferedReader
@@ -40,69 +41,190 @@ class GamePresenter : GameContract.Presenter {
 
     override fun launchGame(): Int {
         val view = this.view ?: return -1
-        
+
         // 重置 GameLauncher 初始化状态，确保每次启动都重新初始化
         GameLauncher.resetInitializationState()
-        
+
         return try {
             val intent = view.getActivityIntent()
+            val gameStorageId = normalizeOptional(intent.getStringExtra(GameActivity.EXTRA_GAME_STORAGE_ID))
+            val gameExePath = normalizeOptional(intent.getStringExtra(GameActivity.EXTRA_GAME_EXE_PATH))
 
-            val assemblyPath = intent.getStringExtra(GameActivity.EXTRA_ASSEMBLY_PATH)
-
-            if (assemblyPath.isNullOrEmpty()) {
-                AppLogger.error(TAG, "Assembly path is null or empty")
-                view.runOnMainThread {
-                    view.showError(
-                        view.getStringRes(R.string.game_launch_failed),
-                        view.getStringRes(R.string.game_launch_assembly_path_empty)
+            when {
+                gameStorageId != null && gameExePath != null -> {
+                    AppLogger.error(TAG, "Invalid launch intent: both storage ID and direct launch params are provided")
+                    showLaunchError(view, "Invalid launch parameters: conflicting launch modes")
+                    -1
+                }
+                gameStorageId != null -> launchFromStorageId(view, gameStorageId)
+                gameExePath != null -> {
+                    val gameArgs = intent.getStringArrayExtra(GameActivity.EXTRA_GAME_ARGS) ?: emptyArray()
+                    val gameId = normalizeOptional(intent.getStringExtra(GameActivity.EXTRA_GAME_ID))
+                    val rendererOverride = normalizeOptional(intent.getStringExtra(GameActivity.EXTRA_GAME_RENDERER_OVERRIDE))
+                    val gameEnvVars = parseGameEnvVars(intent)
+                    launchFromDirectParams(
+                        view = view,
+                        gameExePath = gameExePath,
+                        gameArgs = gameArgs,
+                        gameId = gameId,
+                        gameRendererOverride = rendererOverride,
+                        gameEnvVars = gameEnvVars
                     )
                 }
-                return -1
-            }
-
-            val assemblyFile = File(assemblyPath)
-            if (!assemblyFile.exists() || !assemblyFile.isFile) {
-                AppLogger.error(TAG, "Assembly file not found: $assemblyPath")
-                view.runOnMainThread {
-                    view.showError(
-                        view.getStringRes(R.string.game_launch_failed),
-                        view.getStringRes(R.string.game_launch_assembly_not_exist, assemblyPath)
-                    )
+                else -> {
+                    AppLogger.error(TAG, "No supported launch parameters found in intent")
+                    showLaunchError(view, "No launch parameters provided")
+                    -1
                 }
-                return -2
             }
-            
-            val rendererOverride = intent.getStringExtra(GameActivity.EXTRA_GAME_RENDERER_OVERRIDE)
-            val enabledPatchIds = intent.getStringArrayListExtra(GameActivity.EXTRA_ENABLED_PATCH_IDS)
-            val patchManager: PatchManager? = try {
-                KoinJavaComponent.getOrNull(PatchManager::class.java)
-            } catch (e: Exception) { null }
-            val enabledPatches = enabledPatchIds?.takeIf { it.isNotEmpty() }?.let {
-                patchManager?.getPatchesByIds(it)
-            }
-
-            val exitCode = GameLauncher.launchDotNetAssembly(
-                assemblyPath = assemblyPath,
-                args = emptyArray(),
-                enabledPatches = enabledPatches,
-                rendererOverride = rendererOverride
-            ).also { code ->
-                onGameExit(code, GameLauncher.getLastErrorMessage())
-            }
-
-            if (exitCode == 0) {
-                AppLogger.info(TAG, "Game exited successfully.")
-            } else {
-                AppLogger.error(TAG, "Failed to launch game: $exitCode")
-            }
-            exitCode
         } catch (e: Exception) {
             AppLogger.error(TAG, "Exception in launchGame: ${e.message}", e)
-            view.runOnMainThread {
-                view.showError(view.getStringRes(R.string.game_launch_failed), e.message ?: "Unknown error")
-            }
-            -3
+            showLaunchError(view, e.message ?: "Unknown error")
+            -6
         }
+    }
+
+    private fun launchFromStorageId(view: GameContract.View, gameStorageId: String): Int {
+        val gameRepository: GameRepositoryV2 = try {
+            KoinJavaComponent.get(GameRepositoryV2::class.java)
+        } catch (e: Exception) {
+            AppLogger.error(TAG, "Failed to resolve GameRepositoryV2", e)
+            showLaunchError(view, "Failed to load game repository")
+            return -2
+        }
+
+        val game = gameRepository.games.value.find { it.id == gameStorageId }
+        if (game == null) {
+            AppLogger.error(TAG, "Game not found for storage ID: $gameStorageId")
+            showLaunchError(view, "Game not found: $gameStorageId")
+            return -3
+        }
+
+        val assemblyPath = game.gameExePathFull
+        if (assemblyPath.isNullOrEmpty()) {
+            AppLogger.error(TAG, "Assembly path is null or empty")
+            showLaunchError(view, view.getStringRes(R.string.game_launch_assembly_path_empty))
+            return -4
+        }
+
+        val assemblyFile = File(assemblyPath)
+        if (!assemblyFile.exists() || !assemblyFile.isFile) {
+            AppLogger.error(TAG, "Assembly file not found: $assemblyPath")
+            showLaunchError(view, view.getStringRes(R.string.game_launch_assembly_not_exist, assemblyPath))
+            return -5
+        }
+
+        val patchManager: PatchManager? = try {
+            KoinJavaComponent.getOrNull(PatchManager::class.java)
+        } catch (_: Exception) {
+            null
+        }
+        val enabledPatches = patchManager
+            ?.getApplicableAndEnabledPatches(game.gameId, assemblyFile.toPath())
+            ?: emptyList()
+
+        return launchAssembly(
+            assemblyPath = assemblyPath,
+            args = emptyArray(),
+            enabledPatches = enabledPatches,
+            rendererOverride = normalizeOptional(game.rendererOverride),
+            gameEnvVars = game.gameEnvVars
+        )
+    }
+
+    private fun launchFromDirectParams(
+        view: GameContract.View,
+        gameExePath: String,
+        gameArgs: Array<String>,
+        gameId: String?,
+        gameRendererOverride: String?,
+        gameEnvVars: Map<String, String?>
+    ): Int {
+        if (gameExePath.isBlank()) {
+            AppLogger.error(TAG, "Direct launch assembly path is blank")
+            showLaunchError(view, view.getStringRes(R.string.game_launch_assembly_path_empty))
+            return -4
+        }
+
+        val assemblyFile = File(gameExePath)
+        if (!assemblyFile.exists() || !assemblyFile.isFile) {
+            AppLogger.error(TAG, "Direct launch assembly file not found: $gameExePath")
+            showLaunchError(view, view.getStringRes(R.string.game_launch_assembly_not_exist, gameExePath))
+            return -5
+        }
+
+        val patchManager: PatchManager? = try {
+            KoinJavaComponent.getOrNull(PatchManager::class.java)
+        } catch (_: Exception) {
+            null
+        }
+        val enabledPatches = if (gameId != null) {
+            patchManager?.getApplicableAndEnabledPatches(gameId, assemblyFile.toPath()) ?: emptyList()
+        } else {
+            emptyList()
+        }
+
+        return launchAssembly(
+            assemblyPath = gameExePath,
+            args = gameArgs,
+            enabledPatches = enabledPatches,
+            rendererOverride = gameRendererOverride,
+            gameEnvVars = gameEnvVars
+        )
+    }
+
+    private fun launchAssembly(
+        assemblyPath: String,
+        args: Array<String>,
+        enabledPatches: List<Patch>,
+        rendererOverride: String?,
+        gameEnvVars: Map<String, String?>
+    ): Int {
+        val exitCode = GameLauncher.launchDotNetAssembly(
+            assemblyPath = assemblyPath,
+            args = args,
+            enabledPatches = enabledPatches,
+            rendererOverride = rendererOverride,
+            gameEnvVars = gameEnvVars
+        ).also { code ->
+            onGameExit(code, GameLauncher.getLastErrorMessage())
+        }
+
+        if (exitCode == 0) {
+            AppLogger.info(TAG, "Game exited successfully.")
+        } else {
+            AppLogger.error(TAG, "Failed to launch game: $exitCode")
+        }
+        return exitCode
+    }
+
+    private fun showLaunchError(view: GameContract.View, message: String) {
+        view.runOnMainThread {
+            view.showError(view.getStringRes(R.string.game_launch_failed), message)
+        }
+    }
+
+    private fun normalizeOptional(value: String?): String? = value?.trim()?.takeIf { it.isNotEmpty() }
+
+    @Suppress("UNCHECKED_CAST", "DEPRECATION")
+    private fun parseGameEnvVars(intent: android.content.Intent): Map<String, String?> {
+        val rawMap = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            intent.getSerializableExtra(GameActivity.EXTRA_GAME_ENV_VARS, HashMap::class.java)
+        } else {
+            intent.getSerializableExtra(GameActivity.EXTRA_GAME_ENV_VARS)
+        } as? Map<*, *> ?: return emptyMap()
+
+        val normalized = linkedMapOf<String, String?>()
+        for ((rawKey, rawValue) in rawMap) {
+            val key = (rawKey as? String)?.trim()?.takeIf { it.isNotEmpty() } ?: continue
+            val value = when (rawValue) {
+                null -> null
+                is String -> rawValue
+                else -> rawValue.toString()
+            }
+            normalized[key] = value
+        }
+        return normalized
     }
 
     override fun onGameExit(exitCode: Int, errorMessage: String?) {

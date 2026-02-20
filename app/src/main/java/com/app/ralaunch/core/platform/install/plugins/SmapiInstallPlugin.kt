@@ -19,6 +19,8 @@ class SmapiInstallPlugin : BaseInstallPlugin() {
     
     companion object {
         private const val TAG = "SmapiInstallPlugin"
+        private const val SMAPI_MODS_PATH_ENV_KEY = "SMAPI_MODS_PATH"
+        private const val SMAPI_MODS_PATH_VALUE_TEMPLATE = "{XDG_DATA_HOME}/Stardew Valley/Mods"
         
         /** RALauncher 外部存储目录名 */
         private const val RALAUNCHER_DIR = "RALauncher"
@@ -159,10 +161,17 @@ class SmapiInstallPlugin : BaseInstallPlugin() {
                     actualGameDir = actualGameDir,
                     iconPath = iconPath
                 )
+                val finalGameItem = if (definition == GameDefinition.SMAPI) {
+                    gameItem.copy(
+                        gameEnvVars = gameItem.gameEnvVars + (SMAPI_MODS_PATH_ENV_KEY to SMAPI_MODS_PATH_VALUE_TEMPLATE)
+                    )
+                } else {
+                    gameItem
+                }
                 
                 withContext(Dispatchers.Main) {
                     callback.onProgress("安装完成!", 100)
-                    callback.onComplete(gameItem)
+                    callback.onComplete(finalGameItem)
                 }
                 
             } catch (e: Exception) {

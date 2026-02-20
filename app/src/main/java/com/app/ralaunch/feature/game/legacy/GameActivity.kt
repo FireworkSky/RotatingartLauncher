@@ -37,12 +37,12 @@ class GameActivity : SDLActivity(), GameContract.View {
     companion object {
         private const val TAG = "GameActivity"
         private const val CONTROL_EDITOR_REQUEST_CODE = 2001
-        const val EXTRA_GAME_NAME = "GAME_NAME"
-        const val EXTRA_ASSEMBLY_PATH = "ASSEMBLY_PATH"
+        const val EXTRA_GAME_STORAGE_ID = "GAME_STORAGE_ID"
+        const val EXTRA_GAME_EXE_PATH = "GAME_EXE_PATH"
+        const val EXTRA_GAME_ARGS = "GAME_ARGS"
         const val EXTRA_GAME_ID = "GAME_ID"
-        const val EXTRA_GAME_PATH = "GAME_PATH"
-        const val EXTRA_ENABLED_PATCH_IDS = "ENABLED_PATCH_IDS"
         const val EXTRA_GAME_RENDERER_OVERRIDE = "GAME_RENDERER_OVERRIDE"
+        const val EXTRA_GAME_ENV_VARS = "GAME_ENV_VARS"
 
         @JvmStatic
         var instance: GameActivity? = null
@@ -51,44 +51,64 @@ class GameActivity : SDLActivity(), GameContract.View {
         @JvmStatic
         fun createLaunchIntent(
             context: Context,
-            gameName: String,
-            assemblyPath: String,
-            gameId: String? = null,
-            gamePath: String? = null,
-            rendererOverride: String? = null,
-            enabledPatchIds: ArrayList<String>? = null
+            gameStorageId: String
         ): Intent {
+            require(gameStorageId.isNotBlank()) { "gameStorageId must not be blank" }
             return Intent(context, GameActivity::class.java).apply {
-                putExtra(EXTRA_GAME_NAME, gameName)
-                putExtra(EXTRA_ASSEMBLY_PATH, assemblyPath)
-                gameId?.let { putExtra(EXTRA_GAME_ID, it) }
-                gamePath?.let { putExtra(EXTRA_GAME_PATH, it) }
-                rendererOverride?.let { putExtra(EXTRA_GAME_RENDERER_OVERRIDE, it) }
-                enabledPatchIds
-                    ?.takeIf { it.isNotEmpty() }
-                    ?.let { putStringArrayListExtra(EXTRA_ENABLED_PATCH_IDS, it) }
+                putExtra(EXTRA_GAME_STORAGE_ID, gameStorageId)
+            }
+        }
+
+        @JvmStatic
+        fun createLaunchIntent(
+            context: Context,
+            gameExePath: String,
+            gameArgs: Array<String>,
+            gameId: String?,
+            gameRendererOverride: String?,
+            gameEnvVars: Map<String, String?> = emptyMap()
+        ): Intent {
+            require(gameExePath.isNotBlank()) { "gameExePath must not be blank" }
+            return Intent(context, GameActivity::class.java).apply {
+                putExtra(EXTRA_GAME_EXE_PATH, gameExePath)
+                putExtra(EXTRA_GAME_ARGS, gameArgs)
+                putExtra(EXTRA_GAME_ID, gameId)
+                putExtra(EXTRA_GAME_RENDERER_OVERRIDE, gameRendererOverride)
+                putExtra(EXTRA_GAME_ENV_VARS, HashMap(gameEnvVars))
             }
         }
 
         @JvmStatic
         fun launch(
             context: Context,
-            gameName: String,
-            assemblyPath: String,
-            gameId: String? = null,
-            gamePath: String? = null,
-            rendererOverride: String? = null,
-            enabledPatchIds: ArrayList<String>? = null
+            gameStorageId: String
         ) {
             context.startActivity(
                 createLaunchIntent(
                     context = context,
-                    gameName = gameName,
-                    assemblyPath = assemblyPath,
+                    gameStorageId = gameStorageId
+                )
+            )
+            (context as? Activity)?.overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
+        }
+
+        @JvmStatic
+        fun launch(
+            context: Context,
+            gameExePath: String,
+            gameArgs: Array<String>,
+            gameId: String?,
+            gameRendererOverride: String?,
+            gameEnvVars: Map<String, String?> = emptyMap()
+        ) {
+            context.startActivity(
+                createLaunchIntent(
+                    context = context,
+                    gameExePath = gameExePath,
+                    gameArgs = gameArgs,
                     gameId = gameId,
-                    gamePath = gamePath,
-                    rendererOverride = rendererOverride,
-                    enabledPatchIds = enabledPatchIds
+                    gameRendererOverride = gameRendererOverride,
+                    gameEnvVars = gameEnvVars
                 )
             )
             (context as? Activity)?.overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)

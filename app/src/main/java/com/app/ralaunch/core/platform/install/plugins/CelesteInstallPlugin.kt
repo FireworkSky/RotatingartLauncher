@@ -175,6 +175,8 @@ class CelesteInstallPlugin : BaseInstallPlugin() {
 
         outputDir.resolve("everest-launch.txt")
             .writeText("# Splash screen disabled by Rotating Art Launcher\n--disable-splash\n")
+        outputDir.resolve("EverestXDGFlag")
+            .writeText("") // 创建一个空文件作为标记，告诉 Everest 使用 XDG 数据目录（Linux/MacOS）
 
         if (patchResult != 0) {
             throw Exception("Everest MiniInstaller 执行失败，错误码：$patchResult")

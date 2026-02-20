@@ -5,6 +5,7 @@ import android.util.Log
 
 object EnvVarsManager {
     const val TAG = "EnvVarsManager"
+    private val INTERPOLATION_PATTERN = Regex("\\{([A-Za-z0-9_\\-]+)\\}")
 
     fun quickSetEnvVars(vararg envVars: Pair<String, String?>) = quickSetEnvVars(envVars.toMap())
 
@@ -35,6 +36,25 @@ object EnvVarsManager {
             }
         } catch (e: Exception) {
             Log.e(TAG, "Failed to set env var $key: ${e.message}")
+        }
+    }
+
+    fun interpolateEnvVars(
+        envVars: Map<String, String?>,
+        availableInterpolations: Map<String, String>
+    ): Map<String, String?> {
+        if (envVars.isEmpty()) return emptyMap()
+
+        return envVars.mapValues { (_, value) ->
+            value?.let { interpolateValue(it, availableInterpolations) }
+        }
+    }
+
+    fun interpolateValue(value: String, availableInterpolations: Map<String, String>): String {
+        return INTERPOLATION_PATTERN.replace(value) { matchResult ->
+            val key = matchResult.groupValues[1]
+            availableInterpolations[key]
+                ?: throw IllegalArgumentException("Missing interpolation value for {$key} in env value: $value")
         }
     }
 }
