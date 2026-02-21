@@ -79,7 +79,7 @@ fun AppNavigationRail(
     val density = LocalDensity.current
 
     // 导航项
-    val mainDestinations = remember { NavDestination.entries.filter { it != NavDestination.SETTINGS } }
+    val destinations = remember { NavDestination.entries }
 
     // ====== 滑动指示器状态 ======
 
@@ -87,15 +87,15 @@ fun AppNavigationRail(
     var containerTopY by remember { mutableFloatStateOf(0f) }
     val itemCenterYs = remember { mutableStateMapOf<NavDestination, Float>() }
 
-    // 记住上次的主导航目的地（子页面时保持指示器位置）
-    var lastMainDest by remember { mutableStateOf(NavDestination.GAMES) }
+    // 记住上次的导航目的地（子页面时保持指示器位置）
+    var lastDestination by remember { mutableStateOf(NavDestination.GAMES) }
     // 使用 SideEffect 同步更新（比 LaunchedEffect 更即时，避免异步延迟导致指示器不跟随）
     SideEffect {
         if (currentDestination != null) {
-            lastMainDest = currentDestination
+            lastDestination = currentDestination
         }
     }
-    val selectedDest = currentDestination ?: lastMainDest
+    val selectedDest = currentDestination ?: lastDestination
 
     // 指示器 Y 坐标动画（Animatable 实现首次 snap + 后续 spring）
     val indicatorY = remember { Animatable(0f) }
@@ -240,8 +240,8 @@ fun AppNavigationRail(
                 modifier = Modifier.fillMaxSize(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // 主导航项（每项 weight(1f) 填满分配空间，消除点击死区）
-                mainDestinations.forEach { destination ->
+                // 所有导航项统一 weight(1f)，保持纵向间距一致
+                destinations.forEach { destination ->
                     SilkyNavItem(
                         destination = destination,
                         isSelected = selectedDest == destination,
@@ -252,17 +252,6 @@ fun AppNavigationRail(
                         modifier = Modifier.weight(1f)
                     )
                 }
-
-                // 设置项固定底部（不参与 weight 分配）
-                SilkyNavItem(
-                    destination = NavDestination.SETTINGS,
-                    isSelected = selectedDest == NavDestination.SETTINGS,
-                    onClick = { onNavigate(NavDestination.SETTINGS) },
-                    onPositioned = { rootCenterY ->
-                        itemCenterYs[NavDestination.SETTINGS] = rootCenterY
-                    }
-                )
-                Spacer(modifier = Modifier.height(12.dp))
             }
         }
     }

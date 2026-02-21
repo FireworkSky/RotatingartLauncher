@@ -20,9 +20,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -160,8 +157,8 @@ fun GameDetailPanel(
             horizontalArrangement = Arrangement.spacedBy(10.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // 启动按钮 - 发光效果
-            GlowLaunchButton(
+            // 启动按钮
+            LaunchButton(
                 onClick = onLaunchClick,
                 modifier = Modifier
                     .weight(1f)
@@ -217,29 +214,15 @@ fun GameDetailPanel(
 }
 
 
-/**
- * 发光启动按钮 - 带脉冲发光效果
- */
+/** 启动按钮 */
 @Composable
-private fun GlowLaunchButton(
+private fun LaunchButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
     val primaryColor = MaterialTheme.colorScheme.primary
-
-    // 脉冲发光动画
-    val infiniteTransition = rememberInfiniteTransition(label = "launch_btn_glow")
-    val glowAlpha by infiniteTransition.animateFloat(
-        initialValue = 0.2f,
-        targetValue = 0.45f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(2000, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "glow_alpha"
-    )
 
     // 按下缩放
     val scale by animateFloatAsState(
@@ -250,26 +233,7 @@ private fun GlowLaunchButton(
 
     Button(
         onClick = onClick,
-        modifier = modifier
-            .scale(scale)
-            // 底部发光
-            .drawBehind {
-                val glowRadius = 12.dp.toPx()
-                drawRoundRect(
-                    brush = Brush.radialGradient(
-                        colors = listOf(
-                            primaryColor.copy(alpha = glowAlpha),
-                            primaryColor.copy(alpha = glowAlpha * 0.3f),
-                            Color.Transparent
-                        ),
-                        center = Offset(center.x, size.height),
-                        radius = size.width * 0.5f
-                    ),
-                    topLeft = Offset(-glowRadius, 0f),
-                    size = Size(size.width + glowRadius * 2, size.height + glowRadius),
-                    cornerRadius = CornerRadius(14.dp.toPx())
-                )
-            },
+        modifier = modifier.scale(scale),
         interactionSource = interactionSource,
         shape = RoundedCornerShape(14.dp),
         colors = ButtonDefaults.buttonColors(

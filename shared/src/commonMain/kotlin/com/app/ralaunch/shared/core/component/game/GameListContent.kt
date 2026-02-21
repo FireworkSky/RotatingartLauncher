@@ -1,8 +1,7 @@
 package com.app.ralaunch.shared.core.component.game
 
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.EaseInOutCubic
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -26,6 +25,7 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.zIndex
 import androidx.compose.ui.unit.dp
 import com.app.ralaunch.shared.core.component.GlassSurface
 import com.app.ralaunch.shared.core.model.ui.GameItemUi
@@ -55,7 +55,7 @@ fun GameListContent(
     Row(
         modifier = modifier
             .fillMaxSize()
-            .padding(12.dp),
+            .padding(horizontal = 12.dp),
         horizontalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         // ===== 左侧面板 - 游戏网格 =====
@@ -80,7 +80,8 @@ fun GameListContent(
         GlassSurface(
             modifier = Modifier
                 .weight(0.38f)
-                .fillMaxHeight(),
+                .fillMaxHeight()
+                .padding(vertical = 12.dp),
             shape = RoundedCornerShape(20.dp),
             blurEnabled = true,
             showBorder = true
@@ -114,7 +115,12 @@ private fun GameGridSection(
         } else {
             LazyVerticalGrid(
                 columns = GridCells.Adaptive(minSize = 160.dp),
-                contentPadding = PaddingValues(8.dp),
+                contentPadding = PaddingValues(
+                    start = 12.dp,
+                    end = 12.dp,
+                    top = 12.dp,
+                    bottom = 12.dp
+                ),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 modifier = Modifier.fillMaxSize()
@@ -129,11 +135,11 @@ private fun GameGridSection(
                         modifier = Modifier.animateItem(
                             fadeInSpec = tween(300),
                             fadeOutSpec = tween(200),
-                            placementSpec = spring(
-                                dampingRatio = Spring.DampingRatioMediumBouncy,
-                                stiffness = Spring.StiffnessLow
+                            placementSpec = tween(
+                                durationMillis = 280,
+                                easing = EaseInOutCubic
                             )
-                        )
+                        ).zIndex(if (game.id == selectedGame?.id) 1f else 0f)
                     )
                 }
             }

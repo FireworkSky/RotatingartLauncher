@@ -16,13 +16,21 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.DialogProperties
+import kotlin.math.min
 import kotlin.math.roundToInt
 
 /**
@@ -47,7 +55,9 @@ fun ColorPickerDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        modifier = Modifier.widthIn(max = 550.dp),
+        modifier = Modifier
+            .widthIn(min = 560.dp, max = 640.dp),
+        properties = DialogProperties(usePlatformDefaultWidth = false),
         containerColor = Color(0xFF1A1A2E),
         title = {
             Text(
@@ -57,170 +67,182 @@ fun ColorPickerDialog(
             )
         },
         text = {
-            // 三栏横向布局
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(220.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                // 左侧：颜色预览 + 信息
-                Column(
+            BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+                val leftColumnWidth = 90.dp
+                val rightColumnWidth = 72.dp
+                val horizontalGap = 12.dp
+                val middleWidth =
+                    (maxWidth - leftColumnWidth - rightColumnWidth - horizontalGap * 2).coerceAtLeast(220.dp)
+                val squareSize = middleWidth.coerceIn(220.dp, 320.dp)
+                val pickerRowHeight = squareSize + 52.dp
+
+                // 三栏横向布局
+                Row(
                     modifier = Modifier
-                        .width(90.dp)
-                        .fillMaxHeight(),
-                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                        .fillMaxWidth()
+                        .height(pickerRowHeight),
+                    horizontalArrangement = Arrangement.spacedBy(horizontalGap)
                 ) {
-                    // 颜色预览方块（带透明度）
-                    Box(
+                    // 左侧：颜色预览 + 信息
+                    Column(
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .aspectRatio(1f)
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(
-                                // 棋盘格背景显示透明度
-                                Brush.linearGradient(
-                                    colors = listOf(Color(0xFF404040), Color(0xFF606060))
-                                )
+                            .width(leftColumnWidth)
+                            .fillMaxHeight(),
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        // 颜色预览方块（带透明度）
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .aspectRatio(1f)
+                                .clip(RoundedCornerShape(12.dp))
+                                .checkerboardBackground()
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(Color(hsvColor.toArgb()).copy(alpha = alpha))
+                                    .border(1.dp, Color.White.copy(alpha = 0.2f), RoundedCornerShape(12.dp))
                             )
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .background(Color(hsvColor.toArgb()).copy(alpha = alpha))
-                                .border(1.dp, Color.White.copy(alpha = 0.2f), RoundedCornerShape(12.dp))
-                        )
-                    }
-                    
-                    // HEX 值（含透明度）
-                    val alphaHex = (alpha * 255).roundToInt().toString(16).uppercase().padStart(2, '0')
-                    val colorHex = Integer.toHexString(hsvColor.toArgb() and 0x00FFFFFF).uppercase().padStart(6, '0')
-                    Text(
-                        text = "#$alphaHex$colorHex",
-                        style = MaterialTheme.typography.bodySmall,
-                        fontWeight = FontWeight.Medium,
-                        color = Color.White
-                    )
-                    
-                    // RGBA 值
-                    val color = hsvColor.toArgb()
-                    val r = (color shr 16) and 0xFF
-                    val g = (color shr 8) and 0xFF
-                    val b = color and 0xFF
-                    val a = (alpha * 255).roundToInt()
-                    Text(
-                        text = "RGBA($r,$g,$b,$a)",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = Color.White.copy(alpha = 0.5f)
-                    )
-                }
+                        }
 
-                // 中间：饱和度/明度选择器 + 色相条
-                Column(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxHeight(),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    // 饱和度/明度选择器
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .weight(1f)
-                            .clip(RoundedCornerShape(12.dp))
-                    ) {
-                        SaturationValueSelector(
-                            hue = hsvColor.hue,
-                            saturation = hsvColor.saturation,
-                            value = hsvColor.value,
-                            onSaturationValueChange = { s, v ->
-                                hsvColor = hsvColor.copy(saturation = s, value = v)
-                            }
-                        )
-                    }
-
-                    // 色相选择条（彩虹条）
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(16.dp)
-                            .clip(RoundedCornerShape(6.dp))
-                    ) {
-                        HueSelector(
-                            hue = hsvColor.hue,
-                            onHueChange = { h ->
-                                hsvColor = hsvColor.copy(hue = h)
-                            }
-                        )
-                    }
-                    
-                    // 透明度选择条
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
+                        // HEX 值（含透明度）
+                        val alphaHex = (alpha * 255).roundToInt().toString(16).uppercase().padStart(2, '0')
+                        val colorHex = Integer.toHexString(hsvColor.toArgb() and 0x00FFFFFF).uppercase().padStart(6, '0')
                         Text(
-                            text = "透明度",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = Color.White.copy(alpha = 0.7f)
+                            text = "#$alphaHex$colorHex",
+                            style = MaterialTheme.typography.bodySmall,
+                            fontWeight = FontWeight.Medium,
+                            color = Color.White
                         )
+
+                        // RGBA 值
+                        val color = hsvColor.toArgb()
+                        val r = (color shr 16) and 0xFF
+                        val g = (color shr 8) and 0xFF
+                        val b = color and 0xFF
+                        val a = (alpha * 255).roundToInt()
+                        Text(
+                            text = "RGBA($r,$g,$b,$a)",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Color.White.copy(alpha = 0.5f)
+                        )
+                    }
+
+                    // 中间：饱和度/明度选择器 + 色相条
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight(),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        // 饱和度/明度选择器
                         Box(
                             modifier = Modifier
-                                .weight(1f)
+                                .fillMaxWidth()
+                                .weight(1f),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxHeight()
+                                    .aspectRatio(1f, matchHeightConstraintsFirst = true)
+                                    .clip(RoundedCornerShape(12.dp))
+                            ) {
+                                SaturationValueSelector(
+                                    hue = hsvColor.hue,
+                                    saturation = hsvColor.saturation,
+                                    value = hsvColor.value,
+                                    onSaturationValueChange = { s, v ->
+                                        hsvColor = hsvColor.copy(saturation = s, value = v)
+                                    }
+                                )
+                            }
+                        }
+
+                        // 色相选择条（彩虹条）
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
                                 .height(16.dp)
                                 .clip(RoundedCornerShape(6.dp))
                         ) {
-                            AlphaSelector(
+                            HueSelector(
                                 hue = hsvColor.hue,
-                                saturation = hsvColor.saturation,
-                                value = hsvColor.value,
-                                alpha = alpha,
-                                onAlphaChange = { a -> alpha = a }
+                                onHueChange = { h ->
+                                    hsvColor = hsvColor.copy(hue = h)
+                                }
                             )
                         }
-                        Text(
-                            text = "${(alpha * 100).roundToInt()}%",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = Color.White.copy(alpha = 0.7f),
-                            modifier = Modifier.width(32.dp)
-                        )
-                    }
-                }
 
-                // 右侧：预设颜色（竖向两列）
-                Column(
-                    modifier = Modifier
-                        .width(72.dp)
-                        .fillMaxHeight(),
-                    verticalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    Text(
-                        text = "预设",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = Color.White.copy(alpha = 0.5f)
-                    )
-                    LazyVerticalGrid(
-                        columns = GridCells.Fixed(2),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                        verticalArrangement = Arrangement.spacedBy(6.dp),
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        items(presetColors) { presetColor ->
+                        // 透明度选择条
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Text(
+                                text = "透明度",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = Color.White.copy(alpha = 0.7f)
+                            )
                             Box(
                                 modifier = Modifier
-                                    .size(30.dp)
+                                    .weight(1f)
+                                    .height(16.dp)
                                     .clip(RoundedCornerShape(6.dp))
-                                    .background(Color(presetColor))
-                                    .then(
-                                        if (presetColor == 0xFFFFFFFF.toInt()) {
-                                            Modifier.border(1.dp, Color(0xFF505050), RoundedCornerShape(6.dp))
-                                        } else Modifier
-                                    )
-                                    .clickable {
-                                        hsvColor = HsvColor.fromArgb(presetColor)
-                                    }
+                            ) {
+                                AlphaSelector(
+                                    hue = hsvColor.hue,
+                                    saturation = hsvColor.saturation,
+                                    value = hsvColor.value,
+                                    alpha = alpha,
+                                    onAlphaChange = { a -> alpha = a }
+                                )
+                            }
+                            Text(
+                                text = "${(alpha * 100).roundToInt()}%",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = Color.White.copy(alpha = 0.7f),
+                                modifier = Modifier.width(32.dp)
                             )
+                        }
+                    }
+
+                    // 右侧：预设颜色（竖向两列）
+                    Column(
+                        modifier = Modifier
+                            .width(rightColumnWidth)
+                            .fillMaxHeight(),
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Text(
+                            text = "预设",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Color.White.copy(alpha = 0.5f)
+                        )
+                        LazyVerticalGrid(
+                            columns = GridCells.Fixed(2),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            verticalArrangement = Arrangement.spacedBy(6.dp),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            items(presetColors) { presetColor ->
+                                Box(
+                                    modifier = Modifier
+                                        .size(30.dp)
+                                        .clip(RoundedCornerShape(6.dp))
+                                        .background(Color(presetColor))
+                                        .then(
+                                            if (presetColor == 0xFFFFFFFF.toInt()) {
+                                                Modifier.border(1.dp, Color(0xFF505050), RoundedCornerShape(6.dp))
+                                            } else Modifier
+                                        )
+                                        .clickable {
+                                            hsvColor = HsvColor.fromArgb(presetColor)
+                                        }
+                                )
+                            }
                         }
                     }
                 }
@@ -257,6 +279,7 @@ private fun SaturationValueSelector(
     onSaturationValueChange: (Float, Float) -> Unit
 ) {
     var size by remember { mutableStateOf(IntSize.Zero) }
+    val density = LocalDensity.current
 
     Box(
         modifier = Modifier
@@ -305,12 +328,15 @@ private fun SaturationValueSelector(
         )
         // 选择指示器
         if (size.width > 0 && size.height > 0) {
+            val selectorSizePx = with(density) { 20.dp.roundToPx() }
             Box(
                 modifier = Modifier
-                    .offset(
-                        x = ((saturation * size.width - 10) / 2.625f).dp,
-                        y = (((1f - value) * size.height - 10) / 2.625f).dp
-                    )
+                    .offset {
+                        IntOffset(
+                            x = (saturation * size.width - selectorSizePx / 2f).roundToInt(),
+                            y = ((1f - value) * size.height - selectorSizePx / 2f).roundToInt()
+                        )
+                    }
                     .size(20.dp)
                     .border(2.dp, Color.White, CircleShape)
                     .padding(2.dp)
@@ -320,12 +346,43 @@ private fun SaturationValueSelector(
     }
 }
 
+private fun Modifier.checkerboardBackground(
+    cellSize: Dp = 8.dp,
+    lightColor: Color = Color(0xFF666666),
+    darkColor: Color = Color(0xFF4A4A4A)
+): Modifier = drawBehind {
+    val cellPx = cellSize.toPx().coerceAtLeast(1f)
+    var y = 0f
+    var row = 0
+
+    while (y < size.height) {
+        var x = 0f
+        var column = 0
+        while (x < size.width) {
+            val rectColor = if ((row + column) % 2 == 0) lightColor else darkColor
+            drawRect(
+                color = rectColor,
+                topLeft = Offset(x, y),
+                size = Size(
+                    width = min(cellPx, size.width - x),
+                    height = min(cellPx, size.height - y)
+                )
+            )
+            x += cellPx
+            column++
+        }
+        y += cellPx
+        row++
+    }
+}
+
 @Composable
 private fun HueSelector(
     hue: Float,
     onHueChange: (Float) -> Unit
 ) {
     var size by remember { mutableStateOf(IntSize.Zero) }
+    val density = LocalDensity.current
 
     val hueGradient = Brush.horizontalGradient(
         colors = (0..360 step 30).map { Color.hsv(it.toFloat(), 1f, 1f) }
@@ -351,9 +408,15 @@ private fun HueSelector(
     ) {
         // 选择指示器
         if (size.width > 0) {
+            val markerWidthPx = with(density) { 6.dp.roundToPx() }
             Box(
                 modifier = Modifier
-                    .offset(x = ((hue / 360f * size.width - 3) / 2.625f).dp)
+                    .offset {
+                        IntOffset(
+                            x = (hue / 360f * size.width - markerWidthPx / 2f).roundToInt(),
+                            y = 0
+                        )
+                    }
                     .fillMaxHeight()
                     .width(6.dp)
                     .background(Color.White, RoundedCornerShape(3.dp))
@@ -372,6 +435,7 @@ private fun AlphaSelector(
     onAlphaChange: (Float) -> Unit
 ) {
     var size by remember { mutableStateOf(IntSize.Zero) }
+    val density = LocalDensity.current
 
     val currentColor = Color.hsv(hue, saturation, value)
     val alphaGradient = Brush.horizontalGradient(
@@ -413,9 +477,15 @@ private fun AlphaSelector(
         )
         // 选择指示器
         if (size.width > 0) {
+            val markerWidthPx = with(density) { 6.dp.roundToPx() }
             Box(
                 modifier = Modifier
-                    .offset(x = ((alpha * size.width - 3) / 2.625f).dp)
+                    .offset {
+                        IntOffset(
+                            x = (alpha * size.width - markerWidthPx / 2f).roundToInt(),
+                            y = 0
+                        )
+                    }
                     .fillMaxHeight()
                     .width(6.dp)
                     .background(Color.White, RoundedCornerShape(3.dp))

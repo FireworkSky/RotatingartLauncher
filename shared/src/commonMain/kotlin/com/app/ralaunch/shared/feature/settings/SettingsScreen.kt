@@ -164,6 +164,7 @@ private fun GlassSettingsCategoryItem(
     onClick: () -> Unit
 ) {
     val primaryColor = MaterialTheme.colorScheme.primary
+    val itemShape = RoundedCornerShape(12.dp)
 
     val containerColor by animateColorAsState(
         targetValue = if (isSelected) {
@@ -195,6 +196,7 @@ private fun GlassSettingsCategoryItem(
     Surface(
         modifier = Modifier
             .fillMaxWidth()
+            .clip(itemShape)
             .clickable(onClick = onClick)
             // 选中态发光
             .drawBehind {
@@ -213,7 +215,7 @@ private fun GlassSettingsCategoryItem(
                     )
                 }
             },
-        shape = RoundedCornerShape(12.dp),
+        shape = itemShape,
         color = containerColor
     ) {
         Row(
@@ -280,6 +282,8 @@ fun SettingsSection(
     modifier: Modifier = Modifier,
     content: @Composable ColumnScope.() -> Unit
 ) {
+    val sectionShape = RoundedCornerShape(12.dp)
+
     Column(modifier = modifier.fillMaxWidth()) {
         Text(
             text = title,
@@ -289,9 +293,11 @@ fun SettingsSection(
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
         )
         Surface(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(sectionShape),
             color = MaterialTheme.colorScheme.surfaceContainerLow.copy(alpha = 0.6f),
-            shape = RoundedCornerShape(12.dp)
+            shape = sectionShape
         ) {
             Column(content = content)
         }

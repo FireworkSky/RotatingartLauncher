@@ -4,8 +4,10 @@ import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -89,16 +91,19 @@ fun ActionWindowMenu(
     onCloseMenu: () -> Unit,
     onExit: () -> Unit
 ) {
+    val scrollState = rememberScrollState()
+
     Surface(
-        modifier = Modifier.width(240.dp),
+        modifier = Modifier
+            .width(240.dp)
+            .heightIn(max = 420.dp),
         shape = RoundedCornerShape(16.dp),
         color = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.95f),
         tonalElevation = 8.dp,
         shadowElevation = 8.dp
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            modifier = Modifier.padding(16.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -118,51 +123,60 @@ fun ActionWindowMenu(
             
             HorizontalDivider(modifier = Modifier.background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f)))
 
-            MenuRowItem(
-                icon = Icons.Default.AddCircle,
-                label = "组件库",
-                isActive = isPaletteVisible,
-                onClick = onTogglePalette
-            )
-            
-            MenuRowItem(
-                icon = if (isGhostMode) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                label = "幽灵模式",
-                isActive = isGhostMode,
-                onClick = onToggleGhostMode
-            )
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 12.dp)
+                    .verticalScroll(scrollState)
+                    .weight(1f, fill = false),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                MenuRowItem(
+                    icon = Icons.Default.AddCircle,
+                    label = "组件库",
+                    isActive = isPaletteVisible,
+                    onClick = onTogglePalette
+                )
+                
+                MenuRowItem(
+                    icon = if (isGhostMode) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                    label = "幽灵模式",
+                    isActive = isGhostMode,
+                    onClick = onToggleGhostMode
+                )
 
-            MenuRowItem(
-                icon = if (isGridVisible) Icons.Default.GridOn else Icons.Default.GridOff,
-                label = "网格显示",
-                isActive = isGridVisible,
-                onClick = onToggleGrid
-            )
+                MenuRowItem(
+                    icon = if (isGridVisible) Icons.Default.GridOn else Icons.Default.GridOff,
+                    label = "网格显示",
+                    isActive = isGridVisible,
+                    onClick = onToggleGrid
+                )
 
-            MenuRowItem(
-                icon = Icons.Default.Settings,
-                label = "编辑器设置",
-                isActive = false,
-                onClick = onOpenSettings
-            )
+                MenuRowItem(
+                    icon = Icons.Default.Settings,
+                    label = "编辑器设置",
+                    isActive = false,
+                    onClick = onOpenSettings
+                )
 
-            HorizontalDivider(modifier = Modifier.background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)))
+                HorizontalDivider(modifier = Modifier.background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)))
 
-            MenuRowItem(
-                icon = Icons.Default.Save,
-                label = "保存布局",
-                isActive = false,
-                onClick = onSave,
-                tint = MaterialTheme.colorScheme.primary
-            )
+                MenuRowItem(
+                    icon = Icons.Default.Save,
+                    label = "保存布局",
+                    isActive = false,
+                    onClick = onSave,
+                    tint = MaterialTheme.colorScheme.primary
+                )
 
-            MenuRowItem(
-                icon = Icons.Default.ExitToApp,
-                label = "退出编辑器",
-                isActive = false,
-                onClick = onExit,
-                tint = MaterialTheme.colorScheme.error
-            )
+                MenuRowItem(
+                    icon = Icons.Default.ExitToApp,
+                    label = "退出编辑器",
+                    isActive = false,
+                    onClick = onExit,
+                    tint = MaterialTheme.colorScheme.error
+                )
+            }
         }
     }
 }
@@ -216,10 +230,12 @@ fun ComponentPalette(
     onAddControl: (String) -> Unit,
     onClose: () -> Unit
 ) {
+    val scrollState = rememberScrollState()
+
     Surface(
         modifier = Modifier
             .width(240.dp)
-            .wrapContentHeight(),
+            .heightIn(max = 420.dp),
         shape = RoundedCornerShape(16.dp),
         color = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.95f),
         tonalElevation = 12.dp,
@@ -227,8 +243,7 @@ fun ComponentPalette(
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -240,30 +255,39 @@ fun ComponentPalette(
                     Icon(Icons.Default.Close, contentDescription = "关闭", modifier = Modifier.size(16.dp))
                 }
             }
-            
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
+
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 12.dp)
+                    .verticalScroll(scrollState)
+                    .weight(1f, fill = false),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                PaletteItem(Icons.Default.RadioButtonChecked, "按钮", "button", onAddControl)
-                PaletteItem(Icons.Default.Games, "摇杆", "joystick", onAddControl)
-                PaletteItem(Icons.Default.TouchApp, "触控", "touchpad", onAddControl)
-            }
-            Spacer(modifier = Modifier.height(8.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-                PaletteItem(Icons.Default.Mouse, "滚轮", "mousewheel", onAddControl)
-                PaletteItem(Icons.Default.TextFields, "文本", "text", onAddControl)
-                PaletteItem(Icons.Default.DonutLarge, "轮盘", "radialmenu", onAddControl)
-            }
-            Spacer(modifier = Modifier.height(8.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-                PaletteItem(Icons.Default.Gamepad, "十字键", "dpad", onAddControl)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    PaletteItem(Icons.Default.RadioButtonChecked, "按钮", "button", onAddControl)
+                    PaletteItem(Icons.Default.Games, "摇杆", "joystick", onAddControl)
+                    PaletteItem(Icons.Default.TouchApp, "触控", "touchpad", onAddControl)
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    PaletteItem(Icons.Default.Mouse, "滚轮", "mousewheel", onAddControl)
+                    PaletteItem(Icons.Default.TextFields, "文本", "text", onAddControl)
+                    PaletteItem(Icons.Default.DonutLarge, "轮盘", "radialmenu", onAddControl)
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    PaletteItem(Icons.Default.Gamepad, "十字键", "dpad", onAddControl)
+                }
             }
         }
     }

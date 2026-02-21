@@ -54,6 +54,8 @@ fun GameCard(
     val primaryColor = MaterialTheme.colorScheme.primary
     val extendedColors = RaLaunchTheme.extendedColors
     val cardShape = RoundedCornerShape(14.dp)
+    val glowRadius = 10.dp
+    val glowPadding = 4.dp
 
     // 弹性缩放动画
     val scale by animateFloatAsState(
@@ -101,12 +103,12 @@ fun GameCard(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .padding(2.dp)
+            .padding(glowPadding)
             .scale(scale)
             // 外发光效果（在卡片外围绘制柔和光晕）
             .drawBehind {
                 if (glowAlpha > 0f) {
-                    val glowRadius = 10.dp.toPx()
+                    val glowRadiusPx = glowRadius.toPx()
                     drawRoundRect(
                         brush = Brush.radialGradient(
                             colors = listOf(
@@ -115,11 +117,11 @@ fun GameCard(
                                 Color.Transparent
                             ),
                             center = center,
-                            radius = size.maxDimension / 2f + glowRadius
+                            radius = size.maxDimension / 2f + glowRadiusPx
                         ),
-                        topLeft = Offset(-glowRadius, -glowRadius),
-                        size = Size(size.width + glowRadius * 2, size.height + glowRadius * 2),
-                        cornerRadius = CornerRadius(glowRadius + 14.dp.toPx())
+                        topLeft = Offset(-glowRadiusPx, -glowRadiusPx),
+                        size = Size(size.width + glowRadiusPx * 2, size.height + glowRadiusPx * 2),
+                        cornerRadius = CornerRadius(glowRadiusPx + 14.dp.toPx())
                     )
                 }
             }

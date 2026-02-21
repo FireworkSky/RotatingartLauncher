@@ -4,6 +4,11 @@ import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -291,8 +296,8 @@ private fun ControlLayoutScreen(
             // 右侧：布局详情/预览
             LayoutDetailPanel(
                 layout = selectedLayout,
-                isDefault = selectedLayout?.id == selectedPackId,
-                isQuickSwitch = selectedLayout?.id in quickSwitchIds,
+                selectedPackId = selectedPackId,
+                quickSwitchIds = quickSwitchIds,
                 onEditClick = { selectedLayout?.let { onLayoutClick(it) } },
                 onSetDefault = { selectedLayout?.let { onSetDefault(it) } },
                 onToggleQuickSwitch = { enabled ->
@@ -661,8 +666,8 @@ private fun LayoutListItem(
 @Composable
 private fun LayoutDetailPanel(
     layout: ControlPackInfo?,
-    isDefault: Boolean,
-    isQuickSwitch: Boolean,
+    selectedPackId: String?,
+    quickSwitchIds: List<String>,
     onEditClick: () -> Unit,
     onSetDefault: () -> Unit,
     onToggleQuickSwitch: (Boolean) -> Unit,
@@ -674,10 +679,23 @@ private fun LayoutDetailPanel(
             .background(MaterialTheme.colorScheme.background)
             .padding(24.dp)
     ) {
-        if (layout != null) {
-            Column(
-                modifier = Modifier.fillMaxSize()
-            ) {
+        AnimatedContent(
+            targetState = layout,
+            modifier = Modifier.fillMaxSize(),
+            contentKey = { it?.id ?: "empty_state" },
+            transitionSpec = {
+                fadeIn(animationSpec = tween(durationMillis = 200))
+                    .togetherWith(fadeOut(animationSpec = tween(durationMillis = 160)))
+            },
+            label = "control_layout_detail_transition"
+        ) { currentLayout ->
+            if (currentLayout != null) {
+                val isDefault = currentLayout.id == selectedPackId
+                val isQuickSwitch = currentLayout.id in quickSwitchIds
+
+                Column(
+                    modifier = Modifier.fillMaxSize()
+                ) {
                 // 布局信息
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Surface(
@@ -700,7 +718,7 @@ private fun LayoutDetailPanel(
                     Column(modifier = Modifier.weight(1f)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(
-                                text = layout.name,
+                                text = currentLayout.name,
                                 style = MaterialTheme.typography.titleLarge,
                                 fontWeight = FontWeight.Bold
                             )
@@ -721,17 +739,17 @@ private fun LayoutDetailPanel(
                         }
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(
-                            text = layout.author.ifBlank { "自定义布局" },
+                            text = currentLayout.author.ifBlank { "自定义布局" },
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
 
-                if (layout.description.isNotBlank()) {
+                if (currentLayout.description.isNotBlank()) {
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
-                        text = layout.description,
+                        text = currentLayout.description,
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
                     )
@@ -778,58 +796,107 @@ private fun LayoutDetailPanel(
 
                 Spacer(modifier = Modifier.weight(1f))
 
-                // 操作按钮
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    OutlinedButton(
-                        onClick = onPreviewClick,
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Icon(Icons.Default.Visibility, null, modifier = Modifier.size(18.dp))
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text("预览")
-                    }
-                    if (!isDefault) {
-                        OutlinedButton(
-                            onClick = onSetDefault,
-                            modifier = Modifier.weight(1f)
+                // 操作按钮（窄屏自适应为两行，避免文字换行）
+                BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+                    val buttonPadding = PaddingValues(horizontal = 12.dp, vertical = 10.dp)
+                    val useTwoRows = !isDefault && maxWidth < 560.dp
+
+                    if (useTwoRows) {
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            Icon(Icons.Default.Star, null, modifier = Modifier.size(18.dp))
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text("设为默认")
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                OutlinedButton(
+                                    onClick = onPreviewClick,
+                                    modifier = Modifier.weight(1f),
+                                    contentPadding = buttonPadding
+                                ) {
+                                    Icon(Icons.Default.Visibility, null, modifier = Modifier.size(18.dp))
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text("预览", maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis)
+                                }
+                                OutlinedButton(
+                                    onClick = onSetDefault,
+                                    modifier = Modifier.weight(1f),
+                                    contentPadding = buttonPadding
+                                ) {
+                                    Icon(Icons.Default.Star, null, modifier = Modifier.size(18.dp))
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text("设为默认", maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis)
+                                }
+                            }
+                            Button(
+                                onClick = onEditClick,
+                                modifier = Modifier.fillMaxWidth(),
+                                contentPadding = buttonPadding
+                            ) {
+                                Icon(Icons.Default.Edit, null, modifier = Modifier.size(18.dp))
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text("编辑", maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis)
+                            }
                         }
-                    }
-                    Button(
-                        onClick = onEditClick,
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Icon(Icons.Default.Edit, null, modifier = Modifier.size(18.dp))
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text("编辑")
+                    } else {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            OutlinedButton(
+                                onClick = onPreviewClick,
+                                modifier = Modifier.weight(1f),
+                                contentPadding = buttonPadding
+                            ) {
+                                Icon(Icons.Default.Visibility, null, modifier = Modifier.size(18.dp))
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text("预览", maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis)
+                            }
+                            if (!isDefault) {
+                                OutlinedButton(
+                                    onClick = onSetDefault,
+                                    modifier = Modifier.weight(1f),
+                                    contentPadding = buttonPadding
+                                ) {
+                                    Icon(Icons.Default.Star, null, modifier = Modifier.size(18.dp))
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text("设为默认", maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis)
+                                }
+                            }
+                            Button(
+                                onClick = onEditClick,
+                                modifier = Modifier.weight(1f),
+                                contentPadding = buttonPadding
+                            ) {
+                                Icon(Icons.Default.Edit, null, modifier = Modifier.size(18.dp))
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text("编辑", maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis)
+                            }
+                        }
                     }
                 }
             }
-        } else {
-            // 空状态
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(
-                        Icons.Default.TouchApp,
-                        null,
-                        modifier = Modifier.size(64.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(
-                        text = "选择一个布局",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
-                    )
+            } else {
+                // 空状态
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Icon(
+                            Icons.Default.TouchApp,
+                            null,
+                            modifier = Modifier.size(64.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = "选择一个布局",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                        )
+                    }
                 }
             }
         }

@@ -418,10 +418,7 @@ private fun InGameMenu(
         shadowElevation = 8.dp
     ) {
         Column(
-            modifier = Modifier
-                .padding(16.dp)
-                .verticalScroll(scrollState), // 添加滚动支持
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+            modifier = Modifier.padding(16.dp)
         ) {
             // 可拖动的标题栏
             DraggableMenuHeader(
@@ -432,176 +429,185 @@ private fun InGameMenu(
             
             HorizontalDivider()
 
-            // 编辑模式切换
-            MenuRowItem(
-                icon = if (state.isInEditMode) Icons.Default.Close else Icons.Default.Edit,
-                label = if (state.isInEditMode) "退出编辑模式" else "进入编辑模式",
-                isActive = state.isInEditMode,
-                onClick = { 
-                    state.toggleEditMode()
-                    callbacks.onToggleEditMode()
-                },
-                tint = if (state.isInEditMode) MaterialTheme.colorScheme.error else Color.Unspecified
-            )
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 10.dp)
+                    .verticalScroll(scrollState)
+                    .weight(1f, fill = false),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                // 编辑模式切换
+                MenuRowItem(
+                    icon = if (state.isInEditMode) Icons.Default.Close else Icons.Default.Edit,
+                    label = if (state.isInEditMode) "退出编辑模式" else "进入编辑模式",
+                    isActive = state.isInEditMode,
+                    onClick = { 
+                        state.toggleEditMode()
+                        callbacks.onToggleEditMode()
+                    },
+                    tint = if (state.isInEditMode) MaterialTheme.colorScheme.error else Color.Unspecified
+                )
 
-            // 编辑模式下的选项
-            AnimatedVisibility(visible = state.isInEditMode) {
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    MenuRowItem(
-                        icon = Icons.Default.AddCircle,
-                        label = "组件库",
-                        isActive = state.isPaletteVisible,
-                        onClick = { state.togglePalette() }
-                    )
-                    
-                    MenuRowItem(
-                        icon = if (state.isGridVisible) Icons.Default.GridOn else Icons.Default.GridOff,
-                        label = "网格显示",
-                        isActive = state.isGridVisible,
-                        onClick = { state.toggleGrid() }
-                    )
-
-                    MenuRowItem(
-                        icon = Icons.Default.Save,
-                        label = "保存布局",
-                        isActive = false,
-                        onClick = { callbacks.onSave() },
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                    
-                    HorizontalDivider()
-                }
-            }
-
-            // 非编辑模式下的游戏选项
-            AnimatedVisibility(visible = !state.isInEditMode) {
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    // 控件可见性
-                    MenuRowItem(
-                        icon = if (state.isControlsVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
-                        label = if (state.isControlsVisible) "隐藏控件" else "显示控件",
-                        isActive = !state.isControlsVisible,
-                        onClick = { 
-                            state.isControlsVisible = !state.isControlsVisible
-                            callbacks.onToggleControls()
-                        }
-                    )
-
-                    // 控件布局切换（如果有多个可用布局）
-                    if (state.availablePacks.size > 1) {
-                        HorizontalDivider()
-                        
-                        val activePackName = state.availablePacks
-                            .find { it.first == state.activePackId }?.second ?: "未选择"
+                // 编辑模式下的选项
+                AnimatedVisibility(visible = state.isInEditMode) {
+                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        MenuRowItem(
+                            icon = Icons.Default.AddCircle,
+                            label = "组件库",
+                            isActive = state.isPaletteVisible,
+                            onClick = { state.togglePalette() }
+                        )
                         
                         MenuRowItem(
-                            icon = Icons.Default.SwapHoriz,
-                            label = "控件布局切换",
+                            icon = if (state.isGridVisible) Icons.Default.GridOn else Icons.Default.GridOff,
+                            label = "网格显示",
+                            isActive = state.isGridVisible,
+                            onClick = { state.toggleGrid() }
+                        )
+
+                        MenuRowItem(
+                            icon = Icons.Default.Save,
+                            label = "保存布局",
                             isActive = false,
-                            onClick = { state.isLayoutPickerVisible = true }
+                            onClick = { callbacks.onSave() },
+                            tint = MaterialTheme.colorScheme.primary
                         )
                         
-                        // 当前布局名称提示
-                        Text(
-                            text = "当前: $activePackName",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(start = 44.dp)
-                        )
+                        HorizontalDivider()
                     }
-                    
-                    HorizontalDivider()
+                }
 
-                    // FPS 显示开关
-                    MenuSwitchItem(
-                        icon = Icons.Default.Speed,
-                        label = "FPS 显示",
-                        checked = state.isFpsDisplayEnabled,
-                        onCheckedChange = { 
-                            state.isFpsDisplayEnabled = it
-                            callbacks.onFpsDisplayChanged(it)
+                // 非编辑模式下的游戏选项
+                AnimatedVisibility(visible = !state.isInEditMode) {
+                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        // 控件可见性
+                        MenuRowItem(
+                            icon = if (state.isControlsVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                            label = if (state.isControlsVisible) "隐藏控件" else "显示控件",
+                            isActive = !state.isControlsVisible,
+                            onClick = { 
+                                state.isControlsVisible = !state.isControlsVisible
+                                callbacks.onToggleControls()
+                            }
+                        )
+
+                        // 控件布局切换（如果有多个可用布局）
+                        if (state.availablePacks.size > 1) {
+                            HorizontalDivider()
+                            
+                            val activePackName = state.availablePacks
+                                .find { it.first == state.activePackId }?.second ?: "未选择"
+                            
+                            MenuRowItem(
+                                icon = Icons.Default.SwapHoriz,
+                                label = "控件布局切换",
+                                isActive = false,
+                                onClick = { state.isLayoutPickerVisible = true }
+                            )
+                            
+                            // 当前布局名称提示
+                            Text(
+                                text = "当前: $activePackName",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(start = 44.dp)
+                            )
                         }
-                    )
+                        
+                        HorizontalDivider()
 
-                    // 触摸事件开关
-                    MenuSwitchItem(
-                        icon = Icons.Default.TouchApp,
-                        label = "触摸控制",
-                        checked = state.isTouchEventEnabled,
-                        onCheckedChange = { 
-                            state.isTouchEventEnabled = it
-                            callbacks.onTouchEventChanged(it)
-                        }
-                    )
-                    
-                    HorizontalDivider()
+                        // FPS 显示开关
+                        MenuSwitchItem(
+                            icon = Icons.Default.Speed,
+                            label = "FPS 显示",
+                            checked = state.isFpsDisplayEnabled,
+                            onCheckedChange = { 
+                                state.isFpsDisplayEnabled = it
+                                callbacks.onFpsDisplayChanged(it)
+                            }
+                        )
 
-                    // 调试日志
-                    MenuSwitchItem(
-                        icon = Icons.Default.BugReport,
-                        label = "调试日志",
-                        checked = state.isDebugLogEnabled,
-                        onCheckedChange = {
-                            state.isDebugLogEnabled = it
-                            callbacks.onToggleDebugLog()
+                        // 触摸事件开关
+                        MenuSwitchItem(
+                            icon = Icons.Default.TouchApp,
+                            label = "触摸控制",
+                            checked = state.isTouchEventEnabled,
+                            onCheckedChange = { 
+                                state.isTouchEventEnabled = it
+                                callbacks.onTouchEventChanged(it)
+                            }
+                        )
+                        
+                        HorizontalDivider()
+
+                        // 调试日志
+                        MenuSwitchItem(
+                            icon = Icons.Default.BugReport,
+                            label = "调试日志",
+                            checked = state.isDebugLogEnabled,
+                            onCheckedChange = {
+                                state.isDebugLogEnabled = it
+                                callbacks.onToggleDebugLog()
+                            }
+                        )
+
+                        HorizontalDivider()
+                    }
+                }
+
+                // 联机功能 - 仅在设置中启用时显示
+                if (callbacks.isMultiplayerFeatureEnabled()) {
+                    MenuRowItem(
+                        icon = Icons.Default.Wifi,
+                        label = when (state.multiplayerConnectionState) {
+                            MultiplayerState.CONNECTED -> when {
+                                state.multiplayerPeerCount > 0 -> "联机中 (${state.multiplayerPeerCount + 1}人)"
+                                state.multiplayerIsHost -> "已连接 (等待加入)"
+                                else -> "已连接 (寻找房主)"
+                            }
+                            MultiplayerState.CONNECTING -> "连接中..."
+                            else -> "联机"
+                        },
+                        isActive = state.multiplayerConnectionState == MultiplayerState.CONNECTED,
+                        onClick = { state.isMultiplayerPanelVisible = true },
+                        tint = when (state.multiplayerConnectionState) {
+                            MultiplayerState.CONNECTED -> MaterialTheme.colorScheme.tertiary
+                            MultiplayerState.CONNECTING -> MaterialTheme.colorScheme.secondary
+                            MultiplayerState.ERROR -> MaterialTheme.colorScheme.error
+                            else -> Color.Unspecified
                         }
                     )
 
                     HorizontalDivider()
                 }
-            }
 
-            // 联机功能 - 仅在设置中启用时显示
-            if (callbacks.isMultiplayerFeatureEnabled()) {
+                // 隐藏悬浮球
                 MenuRowItem(
-                    icon = Icons.Default.Wifi,
-                    label = when (state.multiplayerConnectionState) {
-                        MultiplayerState.CONNECTED -> when {
-                            state.multiplayerPeerCount > 0 -> "联机中 (${state.multiplayerPeerCount + 1}人)"
-                            state.multiplayerIsHost -> "已连接 (等待加入)"
-                            else -> "已连接 (寻找房主)"
-                        }
-                        MultiplayerState.CONNECTING -> "连接中..."
-                        else -> "联机"
-                    },
-                    isActive = state.multiplayerConnectionState == MultiplayerState.CONNECTED,
-                    onClick = { state.isMultiplayerPanelVisible = true },
-                    tint = when (state.multiplayerConnectionState) {
-                        MultiplayerState.CONNECTED -> MaterialTheme.colorScheme.tertiary
-                        MultiplayerState.CONNECTING -> MaterialTheme.colorScheme.secondary
-                        MultiplayerState.ERROR -> MaterialTheme.colorScheme.error
-                        else -> Color.Unspecified
-                    }
+                    icon = Icons.Default.VisibilityOff,
+                    label = "隐藏悬浮球(返回键打开)",
+                    isActive = false,
+                    onClick = { state.toggleFloatingBallVisibility() }
+                )
+                
+                Text(
+                    text = "按返回键可重新显示",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(start = 12.dp)
                 )
 
                 HorizontalDivider()
+
+                // 退出游戏
+                MenuRowItem(
+                    icon = Icons.Default.ExitToApp,
+                    label = "退出游戏",
+                    isActive = false,
+                    onClick = { callbacks.onExitGame() },
+                    tint = MaterialTheme.colorScheme.error
+                )
             }
-
-            // 隐藏悬浮球
-            MenuRowItem(
-                icon = Icons.Default.VisibilityOff,
-                label = "隐藏悬浮球(返回键打开)",
-                isActive = false,
-                onClick = { state.toggleFloatingBallVisibility() }
-            )
-            
-            Text(
-                text = "按返回键可重新显示",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(start = 12.dp)
-            )
-
-            HorizontalDivider()
-
-            // 退出游戏
-            MenuRowItem(
-                icon = Icons.Default.ExitToApp,
-                label = "退出游戏",
-                isActive = false,
-                onClick = { callbacks.onExitGame() },
-                tint = MaterialTheme.colorScheme.error
-            )
         }
     }
 }
