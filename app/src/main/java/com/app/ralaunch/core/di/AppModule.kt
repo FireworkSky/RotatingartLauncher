@@ -2,6 +2,7 @@ package com.app.ralaunch.core.di
 
 import androidx.activity.ComponentActivity
 import androidx.appcompat.app.AppCompatActivity
+import com.app.ralaunch.feature.announcement.AnnouncementRepositoryService
 import com.app.ralaunch.feature.controls.packs.ControlPackManager
 import com.app.ralaunch.core.common.*
 import com.app.ralaunch.shared.core.config.IThemeManager
@@ -26,6 +27,10 @@ val appModule = module {
 
     single {
         ControlPackManager(androidContext())
+    }
+
+    single {
+        AnnouncementRepositoryService(androidContext())
     }
 
     // PatchManager 初始化（可空，延迟加载）

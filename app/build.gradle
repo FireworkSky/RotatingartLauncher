@@ -168,6 +168,7 @@ dependencies {
     implementation libs.activity.compose
     implementation libs.lifecycle.runtime.compose
     implementation libs.coil.compose
+    implementation 'com.github.jeziellago:compose-markdown:0.5.8'
     debugImplementation 'androidx.compose.ui:ui-tooling'
 
     // Koin DI

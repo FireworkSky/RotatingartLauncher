@@ -49,6 +49,7 @@ import com.app.ralaunch.feature.main.screens.ControlStoreScreenWrapper
 import com.app.ralaunch.feature.main.screens.DownloadScreenWrapper
 import com.app.ralaunch.feature.main.screens.FileBrowserScreenWrapper
 import com.app.ralaunch.feature.main.screens.ImportScreenWrapper
+import com.app.ralaunch.feature.main.screens.AnnouncementScreenWrapper
 import com.app.ralaunch.feature.main.screens.SettingsScreenWrapper
 import com.app.ralaunch.feature.main.screens.buildRendererOptions
 import com.app.ralaunch.feature.main.MainViewModel
@@ -412,6 +413,9 @@ private fun MainActivityContent(
                         navState.navigateTo(Screen.Import)
                     }
                 )
+            },
+            announcementsContent = {
+                AnnouncementScreenWrapper()
             },
             importContent = {
                 ImportScreenWrapper(

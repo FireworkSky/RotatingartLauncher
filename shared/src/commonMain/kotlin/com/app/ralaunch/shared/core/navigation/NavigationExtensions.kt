@@ -28,6 +28,11 @@ fun NavState.navigateToDownload() = navigateTo(NavDestination.DOWNLOAD)
 fun NavState.navigateToImport() = navigateTo(NavDestination.IMPORT)
 
 /**
+ * NavState 导航扩展：导航到公告
+ */
+fun NavState.navigateToAnnouncements() = navigateTo(NavDestination.ANNOUNCEMENTS)
+
+/**
  * NavState 导航扩展：导航到设置
  */
 fun NavState.navigateToSettings() = navigateTo(NavDestination.SETTINGS)

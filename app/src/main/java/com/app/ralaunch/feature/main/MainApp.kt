@@ -52,6 +52,7 @@ fun MainApp(
     // 页面内容 Slots
     controlsContent: @Composable () -> Unit = { PlaceholderScreen("控制布局") },
     downloadContent: @Composable () -> Unit = { PlaceholderScreen("下载") },
+    announcementsContent: @Composable () -> Unit = { PlaceholderScreen("公告") },
     settingsContent: @Composable () -> Unit = { PlaceholderScreen("设置") },
     importContent: @Composable () -> Unit = { PlaceholderScreen("导入游戏") },
     controlStoreContent: @Composable () -> Unit = { PlaceholderScreen("控制包商店") },
@@ -172,6 +173,7 @@ fun MainApp(
                                 iconLoader = iconLoader,
                                 controlsContent = controlsContent,
                                 downloadContent = downloadContent,
+                                announcementsContent = announcementsContent,
                                 settingsContent = settingsContent,
                                 importContent = importContent,
                                 controlStoreContent = controlStoreContent,
@@ -194,6 +196,7 @@ fun MainApp(
                                     iconLoader = iconLoader,
                                     controlsContent = controlsContent,
                                     downloadContent = downloadContent,
+                                    announcementsContent = announcementsContent,
                                     settingsContent = settingsContent,
                                     importContent = importContent,
                                     controlStoreContent = controlStoreContent,
@@ -253,6 +256,7 @@ private fun PageContent(
     iconLoader: @Composable (String?, Modifier) -> Unit,
     controlsContent: @Composable () -> Unit,
     downloadContent: @Composable () -> Unit,
+    announcementsContent: @Composable () -> Unit,
     settingsContent: @Composable () -> Unit,
     importContent: @Composable () -> Unit,
     controlStoreContent: @Composable () -> Unit,
@@ -277,6 +281,7 @@ private fun PageContent(
         }
         is Screen.Controls -> controlsContent()
         is Screen.Download -> downloadContent()
+        is Screen.Announcements -> announcementsContent()
         is Screen.Settings -> settingsContent()
         is Screen.Import -> importContent()
         is Screen.ControlStore -> controlStoreContent()

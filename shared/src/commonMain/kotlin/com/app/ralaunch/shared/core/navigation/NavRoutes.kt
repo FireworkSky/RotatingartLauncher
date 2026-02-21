@@ -26,6 +26,9 @@ sealed class Screen(
     
     /** 导入游戏页 */
     data object Import : Screen("import", "导入")
+
+    /** 公告页 */
+    data object Announcements : Screen("announcements", "公告")
     
     /** 设置页 */
     data object Settings : Screen("settings", "设置")
@@ -69,6 +72,7 @@ sealed class Screen(
                 "controls" -> Controls
                 "download" -> Download
                 "import" -> Import
+                "announcements" -> Announcements
                 "settings" -> Settings
                 "control_store" -> ControlStore
                 "initialization" -> Initialization
@@ -114,6 +118,12 @@ enum class NavDestination(
         label = "导入",
         selectedIcon = Icons.Filled.Add,
         unselectedIcon = Icons.Outlined.Add
+    ),
+    ANNOUNCEMENTS(
+        screen = Screen.Announcements,
+        label = "公告",
+        selectedIcon = Icons.Filled.Notifications,
+        unselectedIcon = Icons.Outlined.NotificationsNone
     ),
     SETTINGS(
         screen = Screen.Settings,
