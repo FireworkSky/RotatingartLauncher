@@ -323,7 +323,7 @@ class MainActivityCompose : BaseActivity() {
         runCatching {
             startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
         }.onFailure {
-            MessageHelper.showToast(this, "无法打开链接")
+            MessageHelper.showToast(this, getString(R.string.settings_cannot_open_url))
         }
     }
 
@@ -344,7 +344,7 @@ class MainActivityCompose : BaseActivity() {
     ) {
         val downloadManager = getSystemService(DownloadManager::class.java)
         if (downloadManager == null) {
-            MessageHelper.showToast(this, "系统下载服务不可用")
+            MessageHelper.showToast(this, getString(R.string.main_update_download_service_unavailable))
             if (fallbackUrl.isNotBlank()) openExternalUrl(fallbackUrl)
             return
         }
@@ -352,7 +352,7 @@ class MainActivityCompose : BaseActivity() {
         val fileName = "RotatingartLauncher-${latestVersion.trim().removePrefix("v")}.apk"
         val targetDir = getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)
         if (targetDir == null) {
-            MessageHelper.showToast(this, "无法访问下载目录")
+            MessageHelper.showToast(this, getString(R.string.main_update_download_dir_unavailable))
             if (fallbackUrl.isNotBlank()) openExternalUrl(fallbackUrl)
             return
         }
@@ -374,7 +374,7 @@ class MainActivityCompose : BaseActivity() {
                     totalBytes = targetFile.length(),
                     downloadedApkUri = existingApkUri
                 )
-                MessageHelper.showInfo(this, "检测到已下载完成的更新包")
+                MessageHelper.showInfo(this, getString(R.string.main_update_download_detected_existing_apk))
                 return
             }
         }
@@ -383,8 +383,8 @@ class MainActivityCompose : BaseActivity() {
         }
 
         val request = DownloadManager.Request(Uri.parse(downloadUrl)).apply {
-            setTitle("启动器更新")
-            setDescription("正在下载版本 $latestVersion")
+            setTitle(getString(R.string.main_update_notification_title))
+            setDescription(getString(R.string.main_update_notification_downloading_version, latestVersion))
             setMimeType("application/vnd.android.package-archive")
             setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
             setAllowedOverRoaming(true)
@@ -405,14 +405,16 @@ class MainActivityCompose : BaseActivity() {
                 status = UpdateDownloadStatus.STARTING
             )
             startUpdateDownloadProgressPolling(activeUpdateDownloadId)
-            MessageHelper.showToast(this, "已开始在启动器内下载更新")
+            MessageHelper.showToast(this, getString(R.string.main_update_download_started))
         }.onFailure { error ->
+            val errorReason = error.message ?: getString(R.string.common_unknown_error)
+            val errorMessage = getString(R.string.main_update_download_start_failed, errorReason)
             updateDownloadUiState = UpdateDownloadUiState(
                 version = latestVersion,
                 status = UpdateDownloadStatus.FAILED,
-                errorMessage = "下载启动失败: ${error.message ?: "未知错误"}"
+                errorMessage = errorMessage
             )
-            MessageHelper.showToast(this, "下载启动失败: ${error.message ?: "未知错误"}")
+            MessageHelper.showToast(this, errorMessage)
             if (fallbackUrl.isNotBlank()) {
                 openExternalUrl(fallbackUrl)
             }
@@ -434,16 +436,18 @@ class MainActivityCompose : BaseActivity() {
                     val totalBytes = it.getLong(it.getColumnIndexOrThrow(DownloadManager.COLUMN_TOTAL_SIZE_BYTES))
                     val downloadedUri = downloadManager.getUriForDownloadedFile(downloadId)
                     if (downloadedUri == null) {
-                        val version = updateDownloadUiState?.version ?: "最新版本"
+                        val version = updateDownloadUiState?.version
+                            ?: getString(R.string.main_update_latest_version_label)
                         updateDownloadUiState = UpdateDownloadUiState(
                             version = version,
                             status = UpdateDownloadStatus.FAILED,
-                            errorMessage = "下载完成但无法读取安装包"
+                            errorMessage = getString(R.string.main_update_download_completed_apk_unreadable)
                         )
-                        MessageHelper.showToast(this, "下载完成但无法读取安装包")
+                        MessageHelper.showToast(this, getString(R.string.main_update_download_completed_apk_unreadable))
                         return
                     }
-                    val version = updateDownloadUiState?.version ?: "最新版本"
+                    val version = updateDownloadUiState?.version
+                        ?: getString(R.string.main_update_latest_version_label)
                     updateDownloadUiState = UpdateDownloadUiState(
                         version = version,
                         status = UpdateDownloadStatus.COMPLETED,
@@ -452,17 +456,19 @@ class MainActivityCompose : BaseActivity() {
                         totalBytes = totalBytes,
                         downloadedApkUri = downloadedUri
                     )
-                    MessageHelper.showSuccess(this, "下载完成")
+                    MessageHelper.showSuccess(this, getString(R.string.gog_download_complete))
                 }
                 DownloadManager.STATUS_FAILED -> {
                     val reason = it.getInt(it.getColumnIndexOrThrow(DownloadManager.COLUMN_REASON))
-                    val version = updateDownloadUiState?.version ?: "最新版本"
+                    val version = updateDownloadUiState?.version
+                        ?: getString(R.string.main_update_latest_version_label)
+                    val errorMessage = getString(R.string.main_update_download_failed_with_code, reason)
                     updateDownloadUiState = UpdateDownloadUiState(
                         version = version,
                         status = UpdateDownloadStatus.FAILED,
-                        errorMessage = "下载失败，错误码: $reason"
+                        errorMessage = errorMessage
                     )
-                    MessageHelper.showToast(this, "下载失败，错误码: $reason")
+                    MessageHelper.showToast(this, errorMessage)
                 }
             }
         }
@@ -475,7 +481,8 @@ class MainActivityCompose : BaseActivity() {
             while (isActive && activeUpdateDownloadId == downloadId) {
                 val snapshot = queryUpdateDownloadSnapshot(downloadId) ?: break
                 val progress = snapshot.progressPercent()
-                val version = updateDownloadUiState?.version ?: "最新版本"
+                val version = updateDownloadUiState?.version
+                    ?: getString(R.string.main_update_latest_version_label)
                 when (snapshot.status) {
                     DownloadManager.STATUS_PENDING,
                     DownloadManager.STATUS_PAUSED,
@@ -495,7 +502,10 @@ class MainActivityCompose : BaseActivity() {
                             progress = progress,
                             downloadedBytes = snapshot.bytesSoFar,
                             totalBytes = snapshot.totalBytes,
-                            errorMessage = "下载失败，错误码: ${snapshot.reason}"
+                            errorMessage = getString(
+                                R.string.main_update_download_failed_with_code,
+                                snapshot.reason
+                            )
                         )
                         activeUpdateDownloadId = -1L
                         break
@@ -557,7 +567,7 @@ class MainActivityCompose : BaseActivity() {
         ) {
             pendingInstallApkUri = apkUri
             waitingUnknownSourcePermission = true
-            MessageHelper.showToast(this, "请先允许安装未知来源应用")
+            MessageHelper.showToast(this, getString(R.string.main_update_require_unknown_source_permission))
             val permissionIntent = Intent(
                 Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
                 Uri.parse("package:$packageName")
@@ -577,7 +587,11 @@ class MainActivityCompose : BaseActivity() {
             waitingUnknownSourcePermission = false
             updateDownloadUiState = null
         }.onFailure { error ->
-            MessageHelper.showToast(this, "无法启动安装: ${error.message ?: "未知错误"}")
+            val errorReason = error.message ?: getString(R.string.common_unknown_error)
+            MessageHelper.showToast(
+                this,
+                getString(R.string.main_update_install_launch_failed, errorReason)
+            )
         }
     }
 
@@ -980,7 +994,7 @@ private fun AppUpdateComposeDialog(
         shape = RoundedCornerShape(20.dp),
         title = {
             Text(
-                text = "发现新版本",
+                text = stringResource(R.string.main_update_dialog_title),
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold
             )
@@ -990,11 +1004,17 @@ private fun AppUpdateComposeDialog(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Text(
-                    text = "当前版本: ${update.currentVersion}",
+                    text = stringResource(
+                        R.string.main_update_current_version,
+                        update.currentVersion
+                    ),
                     style = MaterialTheme.typography.bodyMedium
                 )
                 Text(
-                    text = "最新版本: ${update.latestVersion}",
+                    text = stringResource(
+                        R.string.main_update_latest_version,
+                        update.latestVersion
+                    ),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.primary
                 )
@@ -1015,12 +1035,18 @@ private fun AppUpdateComposeDialog(
         },
         confirmButton = {
             Button(onClick = onConfirm) {
-                Text(if (update.downloadUrl.isBlank()) "前往更新" else "下载更新")
+                Text(
+                    if (update.downloadUrl.isBlank()) {
+                        stringResource(R.string.main_update_action_open_release)
+                    } else {
+                        stringResource(R.string.main_update_action_download)
+                    }
+                )
             }
         },
         dismissButton = {
             TextButton(onClick = onIgnore) {
-                Text("忽略此版本")
+                Text(stringResource(R.string.main_update_action_ignore_version))
             }
         }
     )
@@ -1034,18 +1060,27 @@ private fun UpdateDownloadComposeDialog(
     onRetry: () -> Unit
 ) {
     val title = when (state.status) {
-        UpdateDownloadStatus.STARTING -> "正在准备下载"
-        UpdateDownloadStatus.DOWNLOADING -> "正在下载更新"
-        UpdateDownloadStatus.COMPLETED -> "下载完成"
-        UpdateDownloadStatus.FAILED -> "下载失败"
+        UpdateDownloadStatus.STARTING -> stringResource(R.string.main_update_status_starting)
+        UpdateDownloadStatus.DOWNLOADING -> stringResource(R.string.main_update_status_downloading)
+        UpdateDownloadStatus.COMPLETED -> stringResource(R.string.main_update_status_completed)
+        UpdateDownloadStatus.FAILED -> stringResource(R.string.main_update_status_failed)
     }
     val canDismiss = state.status == UpdateDownloadStatus.COMPLETED ||
         state.status == UpdateDownloadStatus.FAILED
     val progressFraction = (state.progress.coerceIn(0, 100) / 100f)
     val progressText = if (state.totalBytes > 0) {
-        "${state.progress}% · ${state.downloadedBytes.toReadableSize()} / ${state.totalBytes.toReadableSize()}"
+        stringResource(
+            R.string.main_update_progress_with_total,
+            state.progress,
+            state.downloadedBytes.toReadableSize(),
+            state.totalBytes.toReadableSize()
+        )
     } else {
-        "${state.progress}% · ${state.downloadedBytes.toReadableSize()}"
+        stringResource(
+            R.string.main_update_progress_without_total,
+            state.progress,
+            state.downloadedBytes.toReadableSize()
+        )
     }
 
     AlertDialog(
@@ -1064,7 +1099,7 @@ private fun UpdateDownloadComposeDialog(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Text(
-                    text = "目标版本: ${state.version}",
+                    text = stringResource(R.string.main_update_target_version, state.version),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -1075,7 +1110,7 @@ private fun UpdateDownloadComposeDialog(
                         trackColor = MaterialTheme.colorScheme.surfaceVariant
                     )
                     Text(
-                        text = "正在连接下载服务，请稍候…",
+                        text = stringResource(R.string.main_update_connecting_service),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -1099,13 +1134,13 @@ private fun UpdateDownloadComposeDialog(
                 if (state.status == UpdateDownloadStatus.COMPLETED) {
                     AssistChip(
                         onClick = onInstall,
-                        label = { Text("已就绪，可安装") }
+                        label = { Text(stringResource(R.string.main_update_ready_to_install)) }
                     )
                 }
 
                 if (state.status == UpdateDownloadStatus.FAILED) {
                     Text(
-                        text = state.errorMessage ?: "下载过程中出现未知错误",
+                        text = state.errorMessage ?: stringResource(R.string.main_update_download_unknown_error),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.error
                     )
@@ -1115,10 +1150,10 @@ private fun UpdateDownloadComposeDialog(
         confirmButton = {
             when (state.status) {
                 UpdateDownloadStatus.COMPLETED -> {
-                    Button(onClick = onInstall) { Text("立即安装") }
+                    Button(onClick = onInstall) { Text(stringResource(R.string.gog_install_now)) }
                 }
                 UpdateDownloadStatus.FAILED -> {
-                    Button(onClick = onRetry) { Text("重试下载") }
+                    Button(onClick = onRetry) { Text(stringResource(R.string.main_update_action_retry_download)) }
                 }
                 else -> {}
             }
@@ -1126,23 +1161,24 @@ private fun UpdateDownloadComposeDialog(
         dismissButton = {
             if (canDismiss) {
                 TextButton(onClick = onDismiss) {
-                    Text("关闭")
+                    Text(stringResource(R.string.close))
                 }
             }
         }
     )
 }
 
+@Composable
 private fun Long.toReadableSize(): String {
-    if (this <= 0) return "0 B"
+    if (this <= 0) return stringResource(R.string.main_update_size_zero_bytes)
     val kb = 1024.0
     val mb = kb * 1024
     val gb = mb * 1024
     return when {
-        this >= gb -> String.format("%.2f GB", this / gb)
-        this >= mb -> String.format("%.1f MB", this / mb)
-        this >= kb -> String.format("%.1f KB", this / kb)
-        else -> "$this B"
+        this >= gb -> stringResource(R.string.main_update_size_gb, this / gb)
+        this >= mb -> stringResource(R.string.main_update_size_mb, this / mb)
+        this >= kb -> stringResource(R.string.main_update_size_kb, this / kb)
+        else -> stringResource(R.string.main_update_size_bytes, this)
     }
 }
 

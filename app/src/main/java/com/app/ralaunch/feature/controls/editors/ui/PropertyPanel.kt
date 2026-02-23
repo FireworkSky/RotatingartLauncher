@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import com.app.ralaunch.R
 import com.app.ralaunch.feature.controls.ControlData
 import com.app.ralaunch.core.common.SettingsAccess
+import kotlin.math.roundToInt
 
 @Composable
 fun PropertyPanel(
@@ -165,6 +166,8 @@ fun PropertyPanel(
                         label = stringResource(R.string.editor_width),
                         value = control.width,
                         valueRange = 0.02f..0.5f,
+                        snapStep = 0.005f,
+                        valueLabel = { formatPercentWithSingleDecimal(it) },
                         onValueChange = { newWidth ->
                             val updated = control.deepCopy().apply { 
                                 width = newWidth
@@ -180,6 +183,8 @@ fun PropertyPanel(
                         label = stringResource(R.string.editor_height),
                         value = control.height,
                         valueRange = 0.02f..0.5f,
+                        snapStep = 0.005f,
+                        valueLabel = { formatPercentWithSingleDecimal(it) },
                         onValueChange = { newHeight ->
                             val updated = control.deepCopy().apply { 
                                 height = newHeight
@@ -391,22 +396,37 @@ fun PropertySlider(
     label: String,
     value: Float,
     onValueChange: (Float) -> Unit,
-    valueRange: ClosedFloatingPointRange<Float> = 0f..1f
+    valueRange: ClosedFloatingPointRange<Float> = 0f..1f,
+    snapStep: Float? = null,
+    valueLabel: (Float) -> String = { "${(it * 100).toInt()}%" }
 ) {
+    val normalizedStep = snapStep?.takeIf { it > 0f }
+
     Column {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(label, style = MaterialTheme.typography.labelMedium)
-            Text("${(value * 100).toInt()}%", style = MaterialTheme.typography.labelSmall)
+            Text(valueLabel(value), style = MaterialTheme.typography.labelSmall)
         }
         Slider(
             value = value,
-            onValueChange = onValueChange,
+            onValueChange = { rawValue ->
+                val snappedValue = normalizedStep?.let { step ->
+                    val snappedOffset = ((rawValue - valueRange.start) / step).roundToInt() * step
+                    (valueRange.start + snappedOffset).coerceIn(valueRange.start, valueRange.endInclusive)
+                } ?: rawValue
+                onValueChange(snappedValue)
+            },
             valueRange = valueRange
         )
     }
+}
+
+private fun formatPercentWithSingleDecimal(value: Float): String {
+    val percent = (value * 1000f).roundToInt() / 10f
+    return "$percent%"
 }
 
 /**
