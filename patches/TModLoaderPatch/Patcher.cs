@@ -239,7 +239,8 @@ public static class Patcher
         "c60b2ab7b63114be09765227e12875b0",
         "64bb377414ecb61fc44b85ccc5de5de8",
         "2e07a044a8f16a508c5360b37dffe893",
-        "c35b269396a5f83722bd94d45163a735"
+        "c35b269396a5f83722bd94d45163a735",
+        "95d8e8b92868b301eeeef0518edab2ce"
     };
 
     public static void InstallVerifierBugMitigation(Assembly assembly)
