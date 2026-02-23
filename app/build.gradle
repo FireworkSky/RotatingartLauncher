@@ -14,8 +14,8 @@ android {
         applicationId "com.app.ralaunch"
         minSdk 28
         targetSdk 35
-        versionCode 1
-        versionName "1.2.0"
+        versionCode 2
+        versionName "1.9"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
@@ -168,7 +168,6 @@ dependencies {
     implementation libs.activity.compose
     implementation libs.lifecycle.runtime.compose
     implementation libs.coil.compose
-    implementation 'com.github.jeziellago:compose-markdown:0.5.8'
     debugImplementation 'androidx.compose.ui:ui-tooling'
 
     // Koin DI

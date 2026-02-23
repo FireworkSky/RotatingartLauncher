@@ -1,11 +1,13 @@
 package com.app.ralaunch.feature.main
 
 import android.content.Context
+import android.content.pm.PackageManager
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.app.ralaunch.R
 import com.app.ralaunch.core.common.SettingsAccess
+import com.app.ralaunch.core.common.util.AppLogger
 import com.app.ralaunch.feature.main.AddGameUseCase
 import com.app.ralaunch.feature.main.DeleteGameFilesUseCase
 import com.app.ralaunch.feature.main.DeleteGameUseCase
@@ -21,10 +23,14 @@ import com.app.ralaunch.shared.core.contract.repository.GameRepositoryV2
 import com.app.ralaunch.shared.core.data.repository.GameListStorage
 import com.app.ralaunch.shared.core.model.ui.applyFromUiModel
 import com.app.ralaunch.shared.core.model.ui.toUiModels
+import com.app.ralaunch.feature.main.contracts.AppUpdateUiModel
 import com.app.ralaunch.feature.main.contracts.ImportUiState
 import com.app.ralaunch.feature.main.contracts.MainUiEffect
 import com.app.ralaunch.feature.main.contracts.MainUiEvent
 import com.app.ralaunch.feature.main.contracts.MainUiState
+import com.app.ralaunch.feature.main.update.LauncherUpdateChecker
+import com.app.ralaunch.feature.main.update.LauncherUpdateInfo
+import com.app.ralaunch.feature.main.update.LauncherUpdatePreferences
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -44,7 +50,8 @@ class MainViewModel(
     private val updateGameUseCase: UpdateGameUseCase,
     private val deleteGameUseCase: DeleteGameUseCase,
     private val launchGameUseCase: LaunchGameUseCase,
-    private val deleteGameFilesUseCase: DeleteGameFilesUseCase
+    private val deleteGameFilesUseCase: DeleteGameFilesUseCase,
+    private val launcherUpdateChecker: LauncherUpdateChecker
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(MainUiState())
@@ -58,22 +65,41 @@ class MainViewModel(
 
     private val gameItemsMap = mutableMapOf<String, GameItem>()
     private var activeInstaller: GameInstaller? = null
+    private var isUpdateCheckInProgress = false
+    private var lastUpdateCheckAt: Long = 0L
+
+    companion object {
+        private const val UPDATE_CHECK_INTERVAL_MS = 60_000L
+    }
 
     init {
         onEvent(MainUiEvent.RefreshRequested)
+        onEvent(MainUiEvent.CheckAppUpdate)
     }
 
     fun onEvent(event: MainUiEvent) {
         when (event) {
             is MainUiEvent.RefreshRequested -> refreshGames()
+            is MainUiEvent.CheckAppUpdate -> checkAppUpdate()
+            is MainUiEvent.CheckAppUpdateManually -> checkAppUpdate(
+                force = true,
+                bypassIgnoredVersion = true,
+                fromUserAction = true
+            )
             is MainUiEvent.GameSelected -> selectGame(event.game.id)
             is MainUiEvent.GameEdited -> updateGame(event.game)
             is MainUiEvent.LaunchRequested -> launchSelectedGame()
             is MainUiEvent.DeleteRequested -> requestDeleteSelectedGame()
             is MainUiEvent.DeleteDialogDismissed -> dismissDeleteDialog()
             is MainUiEvent.DeleteConfirmed -> confirmDelete()
+            is MainUiEvent.UpdateDialogDismissed -> dismissUpdateDialog()
+            is MainUiEvent.UpdateIgnoreClicked -> ignoreCurrentUpdate()
+            is MainUiEvent.UpdateActionClicked -> openUpdateUrl()
             is MainUiEvent.ImportCompleted -> onGameImportComplete(event.game)
-            is MainUiEvent.AppResumed -> _uiState.update { it.copy(isVideoPlaying = true) }
+            is MainUiEvent.AppResumed -> {
+                _uiState.update { it.copy(isVideoPlaying = true) }
+                checkAppUpdate(force = false)
+            }
             is MainUiEvent.AppPaused -> _uiState.update { it.copy(isVideoPlaying = false) }
         }
     }
@@ -337,6 +363,114 @@ class MainViewModel(
         }
     }
 
+    private fun checkAppUpdate(
+        force: Boolean = true,
+        bypassIgnoredVersion: Boolean = false,
+        fromUserAction: Boolean = false
+    ) {
+        if (isUpdateCheckInProgress) return
+        if (_uiState.value.availableUpdate != null) return
+        val now = System.currentTimeMillis()
+        if (!force && now - lastUpdateCheckAt < UPDATE_CHECK_INTERVAL_MS) return
+
+        if (fromUserAction) {
+            emitEffect(MainUiEffect.ShowToast("正在检查更新..."))
+        }
+        lastUpdateCheckAt = now
+        isUpdateCheckInProgress = true
+        viewModelScope.launch {
+            try {
+                val currentVersion = resolveCurrentVersionName()
+                val result = launcherUpdateChecker.checkForUpdate(currentVersion)
+
+                result.onSuccess { info ->
+                    if (info == null) {
+                        AppLogger.info("MainViewModel", "No update. currentVersion=$currentVersion")
+                        if (fromUserAction) {
+                            emitEffect(MainUiEffect.ShowToast("当前已是最新版本"))
+                        }
+                        return@onSuccess
+                    }
+                    if (!bypassIgnoredVersion) {
+                        val ignoredVersion = LauncherUpdatePreferences.getIgnoredUpdateVersion(appContext)
+                        if (ignoredVersion == info.latestVersion.trim()) {
+                            AppLogger.info("MainViewModel", "Ignored update version=${info.latestVersion}")
+                            return@onSuccess
+                        }
+                    }
+                    _uiState.update { state ->
+                        state.copy(availableUpdate = info.toAppUpdateUiModel())
+                    }
+                    AppLogger.info(
+                        "MainViewModel",
+                        "Update available current=${info.currentVersion}, latest=${info.latestVersion}"
+                    )
+                }.onFailure { error ->
+                    AppLogger.warn("MainViewModel", "Check update failed: ${error.message}", error)
+                }
+            } finally {
+                isUpdateCheckInProgress = false
+            }
+        }
+    }
+
+    private fun dismissUpdateDialog() {
+        _uiState.update { it.copy(availableUpdate = null) }
+    }
+
+    private fun openUpdateUrl() {
+        val updateInfo = _uiState.value.availableUpdate ?: return
+        LauncherUpdatePreferences.clearIgnoredUpdateVersion(appContext)
+        _uiState.update { it.copy(availableUpdate = null) }
+        if (updateInfo.downloadUrl.isNotBlank()) {
+            emitEffect(
+                MainUiEffect.DownloadLauncherUpdate(
+                    downloadUrl = updateInfo.downloadUrl,
+                    latestVersion = updateInfo.latestVersion,
+                    releaseUrl = updateInfo.releaseUrl
+                )
+            )
+        } else {
+            emitEffect(MainUiEffect.OpenUrl(updateInfo.releaseUrl))
+        }
+    }
+
+    private fun ignoreCurrentUpdate() {
+        val updateInfo = _uiState.value.availableUpdate ?: return
+        LauncherUpdatePreferences.setIgnoredUpdateVersion(appContext, updateInfo.latestVersion)
+        _uiState.update { it.copy(availableUpdate = null) }
+    }
+
+    private fun LauncherUpdateInfo.toAppUpdateUiModel(): AppUpdateUiModel {
+        return AppUpdateUiModel(
+            currentVersion = currentVersion,
+            latestVersion = latestVersion,
+            releaseName = releaseName,
+            releaseNotes = releaseNotes,
+            downloadUrl = downloadUrl,
+            releaseUrl = releaseUrl
+        )
+    }
+
+    private fun resolveCurrentVersionName(): String {
+        return runCatching {
+            val packageInfo = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+                appContext.packageManager.getPackageInfo(
+                    appContext.packageName,
+                    PackageManager.PackageInfoFlags.of(0)
+                )
+            } else {
+                @Suppress("DEPRECATION")
+                appContext.packageManager.getPackageInfo(appContext.packageName, 0)
+            }
+
+            packageInfo.versionName
+                ?.trim()
+                ?.ifBlank { "0.0.0" }
+                ?: "0.0.0"
+        }.getOrDefault("0.0.0")
+    }
+
     private fun emitEffect(effect: MainUiEffect) {
         viewModelScope.launch {
             _effects.emit(effect)
@@ -366,6 +500,7 @@ class MainViewModelFactory(
         val deleteGameUseCase = DeleteGameUseCase(gameRepository)
         val launchGameUseCase = LaunchGameUseCase(GameLaunchManager(appContext))
         val deleteGameFilesUseCase = DeleteGameFilesUseCase(GameDeletionManager(appContext))
+        val launcherUpdateChecker: LauncherUpdateChecker = KoinJavaComponent.get(LauncherUpdateChecker::class.java)
 
         return MainViewModel(
             appContext = appContext.applicationContext,
@@ -374,7 +509,8 @@ class MainViewModelFactory(
             updateGameUseCase = updateGameUseCase,
             deleteGameUseCase = deleteGameUseCase,
             launchGameUseCase = launchGameUseCase,
-            deleteGameFilesUseCase = deleteGameFilesUseCase
+            deleteGameFilesUseCase = deleteGameFilesUseCase,
+            launcherUpdateChecker = launcherUpdateChecker
         ) as T
     }
 }

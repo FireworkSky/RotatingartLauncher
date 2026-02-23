@@ -1,11 +1,22 @@
 package com.app.ralaunch.feature.main
 
+import android.app.DownloadManager
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
+import android.database.Cursor
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.os.Environment
 import android.os.Handler
 import android.os.Looper
+import android.provider.Settings
 import android.util.Log
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.core.content.FileProvider
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -23,8 +34,11 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
@@ -33,6 +47,7 @@ import com.app.ralaunch.core.common.SettingsAccess
 import com.app.ralaunch.core.common.PermissionManager
 import com.app.ralaunch.core.common.ThemeManager
 import com.app.ralaunch.core.common.MessageHelper
+import com.app.ralaunch.core.platform.android.provider.RaLaunchFileProvider
 import com.app.ralaunch.shared.core.platform.AppConstants
 import com.app.ralaunch.shared.core.navigation.*
 import com.app.ralaunch.shared.core.theme.AppThemeState
@@ -42,6 +57,7 @@ import com.app.ralaunch.feature.main.background.AppBackground
 import com.app.ralaunch.feature.main.background.BackgroundType
 import com.app.ralaunch.shared.core.model.ui.GameItemUi
 import com.app.ralaunch.feature.main.contracts.ImportUiState
+import com.app.ralaunch.feature.main.contracts.AppUpdateUiModel
 import com.app.ralaunch.feature.main.contracts.MainUiEffect
 import com.app.ralaunch.feature.main.contracts.MainUiEvent
 import com.app.ralaunch.feature.main.contracts.MainUiState
@@ -61,6 +77,9 @@ import com.app.ralaunch.core.common.ErrorHandler
 import com.app.ralaunch.feature.main.SplashOverlay
 import dev.chrisbanes.haze.HazeState
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -74,6 +93,22 @@ class MainActivityCompose : BaseActivity() {
     private lateinit var mainViewModel: MainViewModel
 
     private val navState = NavState()
+    private var activeUpdateDownloadId: Long = -1L
+    private var updateDownloadPollingJob: Job? = null
+    private var latestUpdateDownloadUrl: String? = null
+    private var latestUpdateFallbackUrl: String? = null
+    private var updateDownloadUiState by mutableStateOf<UpdateDownloadUiState?>(null)
+    private var pendingInstallApkUri: Uri? = null
+    private var waitingUnknownSourcePermission: Boolean = false
+
+    private val updateDownloadReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            if (intent?.action != DownloadManager.ACTION_DOWNLOAD_COMPLETE) return
+            val downloadId = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1L)
+            if (downloadId <= 0L || downloadId != activeUpdateDownloadId) return
+            handleUpdateDownloadFinished(downloadId)
+        }
+    }
 
     // ==================== Lifecycle ====================
 
@@ -95,6 +130,7 @@ class MainActivityCompose : BaseActivity() {
         ErrorHandler.init(this)
         permissionManager = PermissionManager(this).apply { initialize() }
         mainViewModel = ViewModelProvider(this, MainViewModelFactory(this))[MainViewModel::class.java]
+        registerUpdateDownloadReceiver()
 
         // 设置纯 Compose UI
         setContent {
@@ -133,6 +169,14 @@ class MainActivityCompose : BaseActivity() {
                     when (effect) {
                         is MainUiEffect.ShowToast -> MessageHelper.showToast(this@MainActivityCompose, effect.message)
                         is MainUiEffect.ShowSuccess -> MessageHelper.showSuccess(this@MainActivityCompose, effect.message)
+                        is MainUiEffect.DownloadLauncherUpdate -> {
+                            downloadLauncherUpdate(
+                                downloadUrl = effect.downloadUrl,
+                                latestVersion = effect.latestVersion,
+                                fallbackUrl = effect.releaseUrl
+                            )
+                        }
+                        is MainUiEffect.OpenUrl -> openExternalUrl(effect.url)
                         is MainUiEffect.ExitLauncher -> finishAffinity()
                     }
                 }
@@ -157,6 +201,17 @@ class MainActivityCompose : BaseActivity() {
                         onEditClick = { updatedGameUi -> mainViewModel.onEvent(MainUiEvent.GameEdited(updatedGameUi)) },
                         onDismissDeleteDialog = { mainViewModel.onEvent(MainUiEvent.DeleteDialogDismissed) },
                         onConfirmDelete = { mainViewModel.onEvent(MainUiEvent.DeleteConfirmed) },
+                        availableUpdate = state.availableUpdate,
+                        updateDownloadState = updateDownloadUiState,
+                        onDismissUpdateDialog = { mainViewModel.onEvent(MainUiEvent.UpdateDialogDismissed) },
+                        onIgnoreUpdateClick = { mainViewModel.onEvent(MainUiEvent.UpdateIgnoreClicked) },
+                        onUpdateActionClick = { mainViewModel.onEvent(MainUiEvent.UpdateActionClicked) },
+                        onCheckLauncherUpdateClick = {
+                            mainViewModel.onEvent(MainUiEvent.CheckAppUpdateManually)
+                        },
+                        onDismissUpdateDownloadDialog = { updateDownloadUiState = null },
+                        onInstallDownloadedUpdate = { installDownloadedUpdateFromDialog() },
+                        onRetryUpdateDownload = { retryUpdateDownload() },
                         permissionManager = permissionManager,
                         onStartImport = { gameFilePath, modLoaderFilePath ->
                             mainViewModel.startImport(gameFilePath, modLoaderFilePath)
@@ -187,6 +242,7 @@ class MainActivityCompose : BaseActivity() {
         }
 
         ErrorHandler.setCurrentActivity(this)
+        resumePendingInstallIfPossible()
 
         // 恢复视频播放
         Handler(Looper.getMainLooper()).postDelayed({
@@ -202,6 +258,9 @@ class MainActivityCompose : BaseActivity() {
     }
 
     override fun onDestroy() {
+        runCatching { unregisterReceiver(updateDownloadReceiver) }
+        updateDownloadPollingJob?.cancel()
+        updateDownloadPollingJob = null
         super.onDestroy()
         if (!isChangingConfigurations) AppLogger.close()
     }
@@ -260,6 +319,268 @@ class MainActivityCompose : BaseActivity() {
         )
     }
 
+    private fun openExternalUrl(url: String) {
+        runCatching {
+            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+        }.onFailure {
+            MessageHelper.showToast(this, "无法打开链接")
+        }
+    }
+
+    private fun registerUpdateDownloadReceiver() {
+        val filter = IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(updateDownloadReceiver, filter, RECEIVER_NOT_EXPORTED)
+        } else {
+            @Suppress("DEPRECATION")
+            registerReceiver(updateDownloadReceiver, filter)
+        }
+    }
+
+    private fun downloadLauncherUpdate(
+        downloadUrl: String,
+        latestVersion: String,
+        fallbackUrl: String
+    ) {
+        val downloadManager = getSystemService(DownloadManager::class.java)
+        if (downloadManager == null) {
+            MessageHelper.showToast(this, "系统下载服务不可用")
+            if (fallbackUrl.isNotBlank()) openExternalUrl(fallbackUrl)
+            return
+        }
+
+        val fileName = "RotatingartLauncher-${latestVersion.trim().removePrefix("v")}.apk"
+        val targetDir = getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)
+        if (targetDir == null) {
+            MessageHelper.showToast(this, "无法访问下载目录")
+            if (fallbackUrl.isNotBlank()) openExternalUrl(fallbackUrl)
+            return
+        }
+        val targetFile = File(targetDir, fileName)
+        if (targetFile.exists() && targetFile.length() > 0L) {
+            val existingApkUri = runCatching {
+                FileProvider.getUriForFile(
+                    this,
+                    RaLaunchFileProvider.AUTHORITY,
+                    targetFile
+                )
+            }.getOrNull()
+            if (existingApkUri != null) {
+                updateDownloadUiState = UpdateDownloadUiState(
+                    version = latestVersion,
+                    status = UpdateDownloadStatus.COMPLETED,
+                    progress = 100,
+                    downloadedBytes = targetFile.length(),
+                    totalBytes = targetFile.length(),
+                    downloadedApkUri = existingApkUri
+                )
+                MessageHelper.showInfo(this, "检测到已下载完成的更新包")
+                return
+            }
+        }
+        if (targetFile.exists()) {
+            targetFile.delete()
+        }
+
+        val request = DownloadManager.Request(Uri.parse(downloadUrl)).apply {
+            setTitle("启动器更新")
+            setDescription("正在下载版本 $latestVersion")
+            setMimeType("application/vnd.android.package-archive")
+            setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+            setAllowedOverRoaming(true)
+            setAllowedOverMetered(true)
+            setDestinationInExternalFilesDir(
+                this@MainActivityCompose,
+                Environment.DIRECTORY_DOWNLOADS,
+                fileName
+            )
+        }
+
+        runCatching {
+            latestUpdateDownloadUrl = downloadUrl
+            latestUpdateFallbackUrl = fallbackUrl
+            activeUpdateDownloadId = downloadManager.enqueue(request)
+            updateDownloadUiState = UpdateDownloadUiState(
+                version = latestVersion,
+                status = UpdateDownloadStatus.STARTING
+            )
+            startUpdateDownloadProgressPolling(activeUpdateDownloadId)
+            MessageHelper.showToast(this, "已开始在启动器内下载更新")
+        }.onFailure { error ->
+            updateDownloadUiState = UpdateDownloadUiState(
+                version = latestVersion,
+                status = UpdateDownloadStatus.FAILED,
+                errorMessage = "下载启动失败: ${error.message ?: "未知错误"}"
+            )
+            MessageHelper.showToast(this, "下载启动失败: ${error.message ?: "未知错误"}")
+            if (fallbackUrl.isNotBlank()) {
+                openExternalUrl(fallbackUrl)
+            }
+        }
+    }
+
+    private fun handleUpdateDownloadFinished(downloadId: Long) {
+        updateDownloadPollingJob?.cancel()
+        updateDownloadPollingJob = null
+        val downloadManager = getSystemService(DownloadManager::class.java) ?: return
+        val query = DownloadManager.Query().setFilterById(downloadId)
+        val cursor: Cursor = downloadManager.query(query) ?: return
+        cursor.use {
+            if (!it.moveToFirst()) return
+            val status = it.getInt(it.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS))
+            when (status) {
+                DownloadManager.STATUS_SUCCESSFUL -> {
+                    val bytesSoFar = it.getLong(it.getColumnIndexOrThrow(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR))
+                    val totalBytes = it.getLong(it.getColumnIndexOrThrow(DownloadManager.COLUMN_TOTAL_SIZE_BYTES))
+                    val downloadedUri = downloadManager.getUriForDownloadedFile(downloadId)
+                    if (downloadedUri == null) {
+                        val version = updateDownloadUiState?.version ?: "最新版本"
+                        updateDownloadUiState = UpdateDownloadUiState(
+                            version = version,
+                            status = UpdateDownloadStatus.FAILED,
+                            errorMessage = "下载完成但无法读取安装包"
+                        )
+                        MessageHelper.showToast(this, "下载完成但无法读取安装包")
+                        return
+                    }
+                    val version = updateDownloadUiState?.version ?: "最新版本"
+                    updateDownloadUiState = UpdateDownloadUiState(
+                        version = version,
+                        status = UpdateDownloadStatus.COMPLETED,
+                        progress = 100,
+                        downloadedBytes = bytesSoFar,
+                        totalBytes = totalBytes,
+                        downloadedApkUri = downloadedUri
+                    )
+                    MessageHelper.showSuccess(this, "下载完成")
+                }
+                DownloadManager.STATUS_FAILED -> {
+                    val reason = it.getInt(it.getColumnIndexOrThrow(DownloadManager.COLUMN_REASON))
+                    val version = updateDownloadUiState?.version ?: "最新版本"
+                    updateDownloadUiState = UpdateDownloadUiState(
+                        version = version,
+                        status = UpdateDownloadStatus.FAILED,
+                        errorMessage = "下载失败，错误码: $reason"
+                    )
+                    MessageHelper.showToast(this, "下载失败，错误码: $reason")
+                }
+            }
+        }
+        activeUpdateDownloadId = -1L
+    }
+
+    private fun startUpdateDownloadProgressPolling(downloadId: Long) {
+        updateDownloadPollingJob?.cancel()
+        updateDownloadPollingJob = lifecycleScope.launch {
+            while (isActive && activeUpdateDownloadId == downloadId) {
+                val snapshot = queryUpdateDownloadSnapshot(downloadId) ?: break
+                val progress = snapshot.progressPercent()
+                val version = updateDownloadUiState?.version ?: "最新版本"
+                when (snapshot.status) {
+                    DownloadManager.STATUS_PENDING,
+                    DownloadManager.STATUS_PAUSED,
+                    DownloadManager.STATUS_RUNNING -> {
+                        updateDownloadUiState = UpdateDownloadUiState(
+                            version = version,
+                            status = UpdateDownloadStatus.DOWNLOADING,
+                            progress = progress,
+                            downloadedBytes = snapshot.bytesSoFar,
+                            totalBytes = snapshot.totalBytes
+                        )
+                    }
+                    DownloadManager.STATUS_FAILED -> {
+                        updateDownloadUiState = UpdateDownloadUiState(
+                            version = version,
+                            status = UpdateDownloadStatus.FAILED,
+                            progress = progress,
+                            downloadedBytes = snapshot.bytesSoFar,
+                            totalBytes = snapshot.totalBytes,
+                            errorMessage = "下载失败，错误码: ${snapshot.reason}"
+                        )
+                        activeUpdateDownloadId = -1L
+                        break
+                    }
+                    DownloadManager.STATUS_SUCCESSFUL -> {
+                        handleUpdateDownloadFinished(downloadId)
+                        break
+                    }
+                }
+                delay(450)
+            }
+        }
+    }
+
+    private fun queryUpdateDownloadSnapshot(downloadId: Long): DownloadSnapshot? {
+        val downloadManager = getSystemService(DownloadManager::class.java) ?: return null
+        val query = DownloadManager.Query().setFilterById(downloadId)
+        val cursor: Cursor = downloadManager.query(query) ?: return null
+        cursor.use {
+            if (!it.moveToFirst()) return null
+            return DownloadSnapshot(
+                status = it.getInt(it.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS)),
+                bytesSoFar = it.getLong(it.getColumnIndexOrThrow(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR)),
+                totalBytes = it.getLong(it.getColumnIndexOrThrow(DownloadManager.COLUMN_TOTAL_SIZE_BYTES)),
+                reason = it.getInt(it.getColumnIndexOrThrow(DownloadManager.COLUMN_REASON))
+            )
+        }
+    }
+
+    private fun retryUpdateDownload() {
+        val downloadUrl = latestUpdateDownloadUrl.orEmpty()
+        val fallbackUrl = latestUpdateFallbackUrl.orEmpty()
+        val version = updateDownloadUiState?.version.orEmpty()
+        if (downloadUrl.isBlank() || version.isBlank()) return
+        downloadLauncherUpdate(
+            downloadUrl = downloadUrl,
+            latestVersion = version,
+            fallbackUrl = fallbackUrl
+        )
+    }
+
+    private fun installDownloadedUpdateFromDialog() {
+        val downloadedApkUri = updateDownloadUiState?.downloadedApkUri ?: return
+        promptInstallDownloadedApk(downloadedApkUri)
+    }
+
+    private fun resumePendingInstallIfPossible() {
+        if (!waitingUnknownSourcePermission) return
+        val apkUri = pendingInstallApkUri ?: return
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O || packageManager.canRequestPackageInstalls()) {
+            waitingUnknownSourcePermission = false
+            promptInstallDownloadedApk(apkUri)
+        }
+    }
+
+    private fun promptInstallDownloadedApk(apkUri: Uri) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
+            !packageManager.canRequestPackageInstalls()
+        ) {
+            pendingInstallApkUri = apkUri
+            waitingUnknownSourcePermission = true
+            MessageHelper.showToast(this, "请先允许安装未知来源应用")
+            val permissionIntent = Intent(
+                Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
+                Uri.parse("package:$packageName")
+            )
+            startActivity(permissionIntent)
+            return
+        }
+
+        runCatching {
+            val installIntent = Intent(Intent.ACTION_VIEW).apply {
+                setDataAndType(apkUri, "application/vnd.android.package-archive")
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            startActivity(installIntent)
+            pendingInstallApkUri = null
+            waitingUnknownSourcePermission = false
+            updateDownloadUiState = null
+        }.onFailure { error ->
+            MessageHelper.showToast(this, "无法启动安装: ${error.message ?: "未知错误"}")
+        }
+    }
+
 }
 
 /**
@@ -279,6 +600,15 @@ private fun MainActivityContent(
     onEditClick: (updatedGame: GameItemUi) -> Unit,
     onDismissDeleteDialog: () -> Unit = {},
     onConfirmDelete: () -> Unit = {},
+    availableUpdate: AppUpdateUiModel? = null,
+    updateDownloadState: UpdateDownloadUiState? = null,
+    onDismissUpdateDialog: () -> Unit = {},
+    onIgnoreUpdateClick: () -> Unit = {},
+    onUpdateActionClick: () -> Unit = {},
+    onCheckLauncherUpdateClick: () -> Unit = {},
+    onDismissUpdateDownloadDialog: () -> Unit = {},
+    onInstallDownloadedUpdate: () -> Unit = {},
+    onRetryUpdateDownload: () -> Unit = {},
     onStartImport: (gameFilePath: String?, modLoaderFilePath: String?) -> Unit = { _, _ -> },
     onDismissImportError: () -> Unit = {},
     onImportCompletionHandled: () -> Unit = {},
@@ -390,7 +720,8 @@ private fun MainActivityContent(
             // 各页面的 Compose 实现
             settingsContent = {
                 SettingsScreenWrapper(
-                    onBack = { navState.navigateToGames() }
+                    onBack = { navState.navigateToGames() },
+                    onCheckLauncherUpdate = onCheckLauncherUpdateClick
                 )
             },
             controlsContent = {
@@ -531,6 +862,24 @@ private fun MainActivityContent(
                 onDismiss = onDismissDeleteDialog
             )
         }
+
+        availableUpdate?.let { update ->
+            AppUpdateComposeDialog(
+                update = update,
+                onConfirm = onUpdateActionClick,
+                onIgnore = onIgnoreUpdateClick,
+                onDismiss = onDismissUpdateDialog
+            )
+        }
+
+        updateDownloadState?.let { downloadState ->
+            UpdateDownloadComposeDialog(
+                state = downloadState,
+                onDismiss = onDismissUpdateDownloadDialog,
+                onInstall = onInstallDownloadedUpdate,
+                onRetry = onRetryUpdateDownload
+            )
+        }
     }
 }
 
@@ -611,4 +960,217 @@ private fun DeleteGameComposeDialog(
             }
         }
     )
+}
+
+@Composable
+private fun AppUpdateComposeDialog(
+    update: AppUpdateUiModel,
+    onConfirm: () -> Unit,
+    onIgnore: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    val previewNotes = remember(update.releaseNotes) {
+        val normalized = update.releaseNotes.trim()
+        if (normalized.length <= 240) normalized else normalized.take(240) + "..."
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+        shape = RoundedCornerShape(20.dp),
+        title = {
+            Text(
+                text = "发现新版本",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold
+            )
+        },
+        text = {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    text = "当前版本: ${update.currentVersion}",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Text(
+                    text = "最新版本: ${update.latestVersion}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Text(
+                    text = update.releaseName,
+                    style = MaterialTheme.typography.titleMedium
+                )
+                if (previewNotes.isNotEmpty()) {
+                    Text(
+                        text = previewNotes,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 6,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            Button(onClick = onConfirm) {
+                Text(if (update.downloadUrl.isBlank()) "前往更新" else "下载更新")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onIgnore) {
+                Text("忽略此版本")
+            }
+        }
+    )
+}
+
+@Composable
+private fun UpdateDownloadComposeDialog(
+    state: UpdateDownloadUiState,
+    onDismiss: () -> Unit,
+    onInstall: () -> Unit,
+    onRetry: () -> Unit
+) {
+    val title = when (state.status) {
+        UpdateDownloadStatus.STARTING -> "正在准备下载"
+        UpdateDownloadStatus.DOWNLOADING -> "正在下载更新"
+        UpdateDownloadStatus.COMPLETED -> "下载完成"
+        UpdateDownloadStatus.FAILED -> "下载失败"
+    }
+    val canDismiss = state.status == UpdateDownloadStatus.COMPLETED ||
+        state.status == UpdateDownloadStatus.FAILED
+    val progressFraction = (state.progress.coerceIn(0, 100) / 100f)
+    val progressText = if (state.totalBytes > 0) {
+        "${state.progress}% · ${state.downloadedBytes.toReadableSize()} / ${state.totalBytes.toReadableSize()}"
+    } else {
+        "${state.progress}% · ${state.downloadedBytes.toReadableSize()}"
+    }
+
+    AlertDialog(
+        onDismissRequest = { if (canDismiss) onDismiss() },
+        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+        shape = RoundedCornerShape(24.dp),
+        title = {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.SemiBold
+            )
+        },
+        text = {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Text(
+                    text = "目标版本: ${state.version}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                if (state.status == UpdateDownloadStatus.STARTING) {
+                    LinearProgressIndicator(
+                        modifier = Modifier.fillMaxWidth(),
+                        trackColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
+                    Text(
+                        text = "正在连接下载服务，请稍候…",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                } else if (state.status == UpdateDownloadStatus.DOWNLOADING) {
+                    LinearProgressIndicator(
+                        progress = { progressFraction },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(8.dp),
+                        trackColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
+                    Text(
+                        text = progressText,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                        textAlign = TextAlign.End,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+
+                if (state.status == UpdateDownloadStatus.COMPLETED) {
+                    AssistChip(
+                        onClick = onInstall,
+                        label = { Text("已就绪，可安装") }
+                    )
+                }
+
+                if (state.status == UpdateDownloadStatus.FAILED) {
+                    Text(
+                        text = state.errorMessage ?: "下载过程中出现未知错误",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            when (state.status) {
+                UpdateDownloadStatus.COMPLETED -> {
+                    Button(onClick = onInstall) { Text("立即安装") }
+                }
+                UpdateDownloadStatus.FAILED -> {
+                    Button(onClick = onRetry) { Text("重试下载") }
+                }
+                else -> {}
+            }
+        },
+        dismissButton = {
+            if (canDismiss) {
+                TextButton(onClick = onDismiss) {
+                    Text("关闭")
+                }
+            }
+        }
+    )
+}
+
+private fun Long.toReadableSize(): String {
+    if (this <= 0) return "0 B"
+    val kb = 1024.0
+    val mb = kb * 1024
+    val gb = mb * 1024
+    return when {
+        this >= gb -> String.format("%.2f GB", this / gb)
+        this >= mb -> String.format("%.1f MB", this / mb)
+        this >= kb -> String.format("%.1f KB", this / kb)
+        else -> "$this B"
+    }
+}
+
+private data class DownloadSnapshot(
+    val status: Int,
+    val bytesSoFar: Long,
+    val totalBytes: Long,
+    val reason: Int
+) {
+    fun progressPercent(): Int {
+        if (totalBytes <= 0L) return 0
+        return ((bytesSoFar.coerceAtLeast(0L) * 100) / totalBytes).toInt().coerceIn(0, 100)
+    }
+}
+
+private data class UpdateDownloadUiState(
+    val version: String,
+    val status: UpdateDownloadStatus,
+    val progress: Int = 0,
+    val downloadedBytes: Long = 0L,
+    val totalBytes: Long = 0L,
+    val errorMessage: String? = null,
+    val downloadedApkUri: Uri? = null
+)
+
+private enum class UpdateDownloadStatus {
+    STARTING,
+    DOWNLOADING,
+    COMPLETED,
+    FAILED
 }

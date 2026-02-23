@@ -37,7 +37,8 @@ import org.koin.java.KoinJavaComponent
  */
 @Composable
 fun SettingsScreenWrapper(
-    onBack: () -> Unit = {}
+    onBack: () -> Unit = {},
+    onCheckLauncherUpdate: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val activity = context as? Activity ?: return
@@ -289,7 +290,9 @@ fun SettingsScreenWrapper(
                         appVersion = uiState.appVersion,
                         buildInfo = uiState.buildInfo
                     ),
-                    onCheckUpdateClick = { viewModel.onEvent(SettingsEvent.CheckUpdate) },
+                    onCheckUpdateClick = {
+                        onCheckLauncherUpdate()
+                    },
                     onLicenseClick = { viewModel.onEvent(SettingsEvent.OpenLicense) },
                     onSponsorsClick = { viewModel.onEvent(SettingsEvent.OpenSponsors) },
                     onCommunityLinkClick = { url -> viewModel.onEvent(SettingsEvent.OpenUrl(url)) },

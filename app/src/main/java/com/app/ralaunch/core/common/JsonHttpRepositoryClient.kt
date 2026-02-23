@@ -13,10 +13,16 @@ object JsonHttpRepositoryClient {
     suspend fun getText(
         urlString: String,
         connectTimeoutMs: Int,
-        readTimeoutMs: Int
+        readTimeoutMs: Int,
+        headers: Map<String, String> = emptyMap()
     ): Result<String> = withContext(Dispatchers.IO) {
         runCatching {
-            val connection = openConnection(urlString, connectTimeoutMs, readTimeoutMs)
+            val connection = openConnection(
+                urlString = urlString,
+                connectTimeoutMs = connectTimeoutMs,
+                readTimeoutMs = readTimeoutMs,
+                headers = headers
+            )
             connection.useInputStream()
         }
     }
@@ -25,12 +31,14 @@ object JsonHttpRepositoryClient {
         urlString: String,
         json: Json,
         connectTimeoutMs: Int,
-        readTimeoutMs: Int
+        readTimeoutMs: Int,
+        headers: Map<String, String> = emptyMap()
     ): Result<T> {
         return getText(
             urlString = urlString,
             connectTimeoutMs = connectTimeoutMs,
-            readTimeoutMs = readTimeoutMs
+            readTimeoutMs = readTimeoutMs,
+            headers = headers
         ).mapCatching { content ->
             json.decodeFromString<T>(content)
         }
@@ -39,12 +47,16 @@ object JsonHttpRepositoryClient {
     fun openConnection(
         urlString: String,
         connectTimeoutMs: Int,
-        readTimeoutMs: Int
+        readTimeoutMs: Int,
+        headers: Map<String, String> = emptyMap()
     ): HttpURLConnection {
         val connection = URL(urlString).openConnection() as HttpURLConnection
         connection.connectTimeout = connectTimeoutMs
         connection.readTimeout = readTimeoutMs
         connection.requestMethod = "GET"
+        headers.forEach { (key, value) ->
+            connection.setRequestProperty(key, value)
+        }
         return connection
     }
 

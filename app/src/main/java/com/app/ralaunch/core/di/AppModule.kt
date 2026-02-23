@@ -5,6 +5,7 @@ import androidx.appcompat.app.AppCompatActivity
 import com.app.ralaunch.feature.announcement.AnnouncementRepositoryService
 import com.app.ralaunch.feature.controls.packs.ControlPackManager
 import com.app.ralaunch.core.common.*
+import com.app.ralaunch.feature.main.update.LauncherUpdateChecker
 import com.app.ralaunch.shared.core.config.IThemeManager
 import com.app.ralaunch.shared.core.config.IVibrationManager
 import com.app.ralaunch.feature.patch.data.PatchManager
@@ -31,6 +32,10 @@ val appModule = module {
 
     single {
         AnnouncementRepositoryService(androidContext())
+    }
+
+    single {
+        LauncherUpdateChecker()
     }
 
     // PatchManager 初始化（可空，延迟加载）
