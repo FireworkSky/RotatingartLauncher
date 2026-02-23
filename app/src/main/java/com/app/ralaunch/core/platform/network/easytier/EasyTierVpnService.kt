@@ -96,7 +96,10 @@ class EasyTierVpnService : VpnService() {
     private fun initTunInterface() {
         try {
             // 启动前台服务
-            startForeground(NOTIFICATION_ID, createNotification("正在初始化 VPN..."))
+            startForeground(
+                NOTIFICATION_ID,
+                createNotification(getString(R.string.easytier_vpn_status_initializing))
+            )
             
             // 创建 VPN 接口
             val builder = Builder()
@@ -109,7 +112,7 @@ class EasyTierVpnService : VpnService() {
             
             if (vpnInterface == null) {
                 Log.e(TAG, "Failed to establish VPN interface")
-                sendErrorBroadcast("无法创建 VPN 接口")
+                sendErrorBroadcast(getString(R.string.easytier_vpn_error_create_interface))
                 stopSelf()
                 return
             }
@@ -118,14 +121,14 @@ class EasyTierVpnService : VpnService() {
             isRunning = true
             Log.i(TAG, "TUN interface established, fd=$tunFd")
             
-            updateNotification("VPN 已就绪")
+            updateNotification(getString(R.string.easytier_vpn_status_ready))
             
             // 发送广播通知已就绪（跨进程通信）
             sendReadyBroadcast(tunFd)
             
         } catch (e: Exception) {
             Log.e(TAG, "Failed to init TUN interface", e)
-            sendErrorBroadcast(e.message ?: "未知错误")
+            sendErrorBroadcast(e.message ?: getString(R.string.common_unknown_error))
             stopSelf()
         }
     }
@@ -163,7 +166,10 @@ class EasyTierVpnService : VpnService() {
     private fun startVpn(config: String, virtualIp: String) {
         try {
             // 启动前台服务
-            startForeground(NOTIFICATION_ID, createNotification("正在连接..."))
+            startForeground(
+                NOTIFICATION_ID,
+                createNotification(getString(R.string.easytier_vpn_status_connecting))
+            )
             
             // 创建 VPN 接口
             val builder = Builder()
@@ -195,7 +201,9 @@ class EasyTierVpnService : VpnService() {
                         val error = EasyTierJNI.getLastError()
                         Log.e(TAG, "Failed to run network instance: $error")
                         withContext(Dispatchers.Main) {
-                            updateNotification("连接失败: $error")
+                            updateNotification(
+                                getString(R.string.easytier_vpn_status_connect_failed, error)
+                            )
                         }
                         return@launch
                     }
@@ -206,7 +214,9 @@ class EasyTierVpnService : VpnService() {
                         val error = EasyTierJNI.getLastError()
                         Log.e(TAG, "Failed to set TUN fd: $error")
                         withContext(Dispatchers.Main) {
-                            updateNotification("TUN 设置失败: $error")
+                            updateNotification(
+                                getString(R.string.easytier_vpn_status_tun_set_failed, error)
+                            )
                         }
                         return@launch
                     }
@@ -215,12 +225,19 @@ class EasyTierVpnService : VpnService() {
                     Log.i(TAG, "EasyTier VPN started successfully")
                     
                     withContext(Dispatchers.Main) {
-                        updateNotification("已连接 - $virtualIp")
+                        updateNotification(
+                            getString(R.string.easytier_vpn_status_connected, virtualIp)
+                        )
                     }
                 } catch (e: Exception) {
                     Log.e(TAG, "Error starting EasyTier", e)
                     withContext(Dispatchers.Main) {
-                        updateNotification("错误: ${e.message}")
+                        updateNotification(
+                            getString(
+                                R.string.easytier_vpn_status_error,
+                                e.message ?: getString(R.string.common_unknown_error)
+                            )
+                        )
                     }
                 }
             }
@@ -262,10 +279,10 @@ class EasyTierVpnService : VpnService() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 CHANNEL_ID,
-                "EasyTier 联机",
+                getString(R.string.easytier_vpn_channel_name),
                 NotificationManager.IMPORTANCE_LOW
             ).apply {
-                description = "EasyTier VPN 连接状态"
+                description = getString(R.string.easytier_vpn_channel_description)
             }
             
             val manager = getSystemService(NotificationManager::class.java)
@@ -283,11 +300,11 @@ class EasyTierVpnService : VpnService() {
         )
         
         return NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("EasyTier 联机")
+            .setContentTitle(getString(R.string.easytier_vpn_notification_title))
             .setContentText(status)
             .setSmallIcon(android.R.drawable.ic_menu_share)
             .setOngoing(true)
-            .addAction(0, "断开连接", stopPendingIntent)
+            .addAction(0, getString(R.string.multiplayer_disconnect), stopPendingIntent)
             .build()
     }
     

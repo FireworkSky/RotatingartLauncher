@@ -30,6 +30,8 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
+import com.app.ralaunch.shared.generated.resources.*
+import org.jetbrains.compose.resources.stringResource
 import kotlin.math.min
 import kotlin.math.roundToInt
 
@@ -42,6 +44,12 @@ fun ColorPickerDialog(
     onSelect: (Int) -> Unit,
     onDismiss: () -> Unit
 ) {
+    val titleText = stringResource(Res.string.color_picker_title)
+    val alphaLabelText = stringResource(Res.string.color_picker_alpha)
+    val presetsLabelText = stringResource(Res.string.color_picker_presets)
+    val confirmText = stringResource(Res.string.confirm)
+    val cancelText = stringResource(Res.string.cancel)
+
     var hsvColor by remember { mutableStateOf(HsvColor.fromArgb(currentColor)) }
     // 提取当前颜色的 alpha 值
     var alpha by remember { mutableFloatStateOf(((currentColor shr 24) and 0xFF) / 255f) }
@@ -61,7 +69,7 @@ fun ColorPickerDialog(
         containerColor = Color(0xFF1A1A2E),
         title = {
             Text(
-                "选择颜色",
+                titleText,
                 fontWeight = FontWeight.Bold,
                 color = Color.White
             )
@@ -182,7 +190,7 @@ fun ColorPickerDialog(
                             horizontalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
                             Text(
-                                text = "透明度",
+                                text = alphaLabelText,
                                 style = MaterialTheme.typography.labelSmall,
                                 color = Color.White.copy(alpha = 0.7f)
                             )
@@ -217,7 +225,7 @@ fun ColorPickerDialog(
                         verticalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         Text(
-                            text = "预设",
+                            text = presetsLabelText,
                             style = MaterialTheme.typography.labelSmall,
                             color = Color.White.copy(alpha = 0.5f)
                         )
@@ -259,12 +267,12 @@ fun ColorPickerDialog(
                 },
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF7B4BB9))
             ) {
-                Text("确定", color = Color.White)
+                Text(confirmText, color = Color.White)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("取消", color = Color.White.copy(alpha = 0.7f))
+                Text(cancelText, color = Color.White.copy(alpha = 0.7f))
             }
         }
     )

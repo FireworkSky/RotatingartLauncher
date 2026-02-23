@@ -6,6 +6,10 @@ plugins {
     alias(libs.plugins.kotlin.plugin.serialization)
 }
 
+compose.resources {
+    packageOfResClass = "com.app.ralaunch.shared.generated.resources"
+}
+
 kotlin {
     androidLibrary {
         namespace = "com.app.ralaunch.shared"

@@ -1,6 +1,8 @@
 package com.app.ralaunch.core.platform.install.extractors
 
 import android.util.Log
+import com.app.ralaunch.R
+import com.app.ralaunch.RaLaunchApp
 import com.app.ralaunch.core.common.util.TemporaryFileAcquirer
 import java.io.FileInputStream
 import java.io.FileOutputStream
@@ -49,7 +51,11 @@ class GogShFileExtractor(
         return try {
             TemporaryFileAcquirer().use { tfa ->
                 // 获取 MakeSelf SH 文件的头部信息
-                extractionListener?.onProgress("正在提取安装脚本...", 0.01f, state)
+                extractionListener?.onProgress(
+                    RaLaunchApp.getInstance().getString(R.string.extract_gog_script),
+                    0.01f,
+                    state
+                )
                 val shFile = MakeSelfShFile.parse(sourcePath)
                     ?: throw IOException("解析 MakeSelf Sh 文件头部失败")
 
@@ -66,7 +72,11 @@ class GogShFileExtractor(
                         throw IOException("MakeSelf Sh 文件头部信息无效，超出文件总大小")
                     }
 
-                    extractionListener?.onProgress("正在提取MojoSetup归档...", 0.02f, state)
+                    extractionListener?.onProgress(
+                        RaLaunchApp.getInstance().getString(R.string.extract_gog_mojosetup),
+                        0.02f,
+                        state
+                    )
 
                     // 提取 mojosetup.tar.gz
                     val mojosetupPath = tfa.acquireTempFilePath(EXTRACTED_MOJOSETUP_TAR_GZ_FILENAME)
@@ -76,7 +86,11 @@ class GogShFileExtractor(
                         srcChannel.transferTo(shFile.offset, shFile.filesize, mojosetupChannel)
                     }
 
-                    extractionListener?.onProgress("正在提取游戏数据...", 0.03f, state)
+                    extractionListener?.onProgress(
+                        RaLaunchApp.getInstance().getString(R.string.extract_gog_game_data),
+                        0.03f,
+                        state
+                    )
 
                     // 提取 game_data.zip
                     val gameDataPath = tfa.acquireTempFilePath(EXTRACTED_GAME_DATA_ZIP_FILENAME)
@@ -90,7 +104,11 @@ class GogShFileExtractor(
                         )
                     }
 
-                    extractionListener?.onProgress("正在解析游戏数据...", 0.09f, state)
+                    extractionListener?.onProgress(
+                        RaLaunchApp.getInstance().getString(R.string.extract_gog_parse_game_data),
+                        0.09f,
+                        state
+                    )
                     Log.d(TAG, "Extraction from MakeSelf SH file completed successfully")
 
                     // 解压 game_data.zip
@@ -98,7 +116,11 @@ class GogShFileExtractor(
                     val gdzf = GameDataZipFile.parse(gameDataPath)
                         ?: throw IOException("解析 game_data.zip 失败")
 
-                    extractionListener?.onProgress("正在解压游戏数据...", 0.1f, state)
+                    extractionListener?.onProgress(
+                        RaLaunchApp.getInstance().getString(R.string.extract_gog_decompress_game_data),
+                        0.1f,
+                        state
+                    )
 
                     val gamePath = destinationPath.resolve(Paths.get("GoG Games", gdzf.id))
                     val zipExtractor = BasicSevenZipExtractor(
@@ -135,17 +157,23 @@ class GogShFileExtractor(
                     } catch (ignored: Exception) {
                     }
 
-                    extractionListener?.onProgress("游戏数据提取完成", 1.0f, state)
+                    val completedMessage = RaLaunchApp.getInstance()
+                        .getString(R.string.extract_gog_game_data_complete)
+                    extractionListener?.onProgress(completedMessage, 1.0f, state)
                     state[STATE_KEY_GAME_PATH] = gamePath
                     state[STATE_KEY_GAME_DATA_ZIP_FILE] = gdzf
-                    extractionListener?.onComplete("游戏数据提取完成", state)
+                    extractionListener?.onComplete(completedMessage, state)
 
                     true
                 }
             }
         } catch (ex: Exception) {
             Log.e(TAG, "Error when extracting source file", ex)
-            extractionListener?.onError("GoG Sh 文件解压失败", ex, state)
+            extractionListener?.onError(
+                RaLaunchApp.getInstance().getString(R.string.extract_gog_sh_failed),
+                ex,
+                state
+            )
             false
         }
     }

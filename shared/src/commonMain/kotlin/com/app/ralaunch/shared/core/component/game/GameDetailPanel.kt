@@ -45,6 +45,11 @@ fun GameDetailPanel(
     onLaunchClick: () -> Unit,
     onDeleteClick: () -> Unit,
     onEditClick: () -> Unit,
+    launchButtonText: String,
+    editContentDescription: String,
+    deleteContentDescription: String,
+    moreOptionsContentDescription: String,
+    collapseOptionsContentDescription: String,
     modifier: Modifier = Modifier,
     iconLoader: @Composable (String?, Modifier) -> Unit = { _, _ -> }
 ) {
@@ -160,6 +165,7 @@ fun GameDetailPanel(
             // 启动按钮
             LaunchButton(
                 onClick = onLaunchClick,
+                text = launchButtonText,
                 modifier = Modifier
                     .weight(1f)
                     .height(48.dp)
@@ -176,7 +182,7 @@ fun GameDetailPanel(
                 AnchoredActionItem(
                     key = "edit",
                     icon = Icons.Default.Edit,
-                    contentDescription = "编辑",
+                    contentDescription = editContentDescription,
                     containerColor = MaterialTheme.colorScheme.secondaryContainer,
                     contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
                     onClick = onEditClick
@@ -184,7 +190,7 @@ fun GameDetailPanel(
                 AnchoredActionItem(
                     key = "delete",
                     icon = Icons.Default.Delete,
-                    contentDescription = "删除",
+                    contentDescription = deleteContentDescription,
                     containerColor = MaterialTheme.colorScheme.errorContainer,
                     contentColor = MaterialTheme.colorScheme.error,
                     onClick = onDeleteClick
@@ -199,8 +205,8 @@ fun GameDetailPanel(
             dismissOnOutsideClick = false,
             mainIconCollapsed = Icons.Default.MoreVert,
             mainIconExpanded = Icons.Default.Close,
-            mainContentDescriptionCollapsed = "更多选项",
-            mainContentDescriptionExpanded = "收起更多选项",
+            mainContentDescriptionCollapsed = moreOptionsContentDescription,
+            mainContentDescriptionExpanded = collapseOptionsContentDescription,
             mainContainerColorCollapsed = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f),
             mainContainerColorExpanded = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
             mainContentColorCollapsed = MaterialTheme.colorScheme.onSecondaryContainer,
@@ -218,6 +224,7 @@ fun GameDetailPanel(
 @Composable
 private fun LaunchButton(
     onClick: () -> Unit,
+    text: String,
     modifier: Modifier = Modifier
 ) {
     val interactionSource = remember { MutableInteractionSource() }
@@ -253,7 +260,7 @@ private fun LaunchButton(
         )
         Spacer(modifier = Modifier.width(8.dp))
         Text(
-            text = "启动游戏",
+            text = text,
             style = MaterialTheme.typography.labelLarge,
             fontWeight = FontWeight.SemiBold,
             maxLines = 1

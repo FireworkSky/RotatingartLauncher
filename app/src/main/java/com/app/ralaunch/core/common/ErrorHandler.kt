@@ -47,7 +47,7 @@ class ErrorHandler private constructor() {
             }
 
             try {
-                val stackTrace = getStackTrace(throwable)
+                val stackTrace = getStackTrace(context, throwable)
                 val errorDetails = buildErrorDetails(context, throwable, stackTrace)
 
                 val errorActivityClass = getErrorActivityClass(context) ?: return@setDefaultUncaughtExceptionHandler
@@ -78,7 +78,7 @@ class ErrorHandler private constructor() {
         }
     }
 
-    private fun getStackTrace(throwable: Throwable): String {
+    private fun getStackTrace(context: Context, throwable: Throwable): String {
         val sw = StringWriter()
         val pw = PrintWriter(sw)
         throwable.printStackTrace(pw)
@@ -86,7 +86,12 @@ class ErrorHandler private constructor() {
 
         val maxSize = 100000
         if (stackTrace.length > maxSize) {
-            stackTrace = stackTrace.substring(0, maxSize - 50) + "\n...[stack trace truncated]"
+            val truncatedLabel = getLocalizedString(
+                context,
+                "crash_logcat_truncated_prefix",
+                "...[Logs truncated]..."
+            )
+            stackTrace = stackTrace.substring(0, maxSize - 50) + "\n$truncatedLabel"
         }
 
         return stackTrace
@@ -94,21 +99,30 @@ class ErrorHandler private constructor() {
 
     private fun buildErrorDetails(context: Context, throwable: Throwable, stackTrace: String): String {
         val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+        val occurredAtLabel = getLocalizedString(context, "crash_time_occurred", "Occurred At")
+        val appVersionLabel = getLocalizedString(context, "crash_app_version", "App Version")
+        val unknownLabel = getLocalizedString(context, "crash_unknown", "Unknown")
+        val deviceModelLabel = getLocalizedString(context, "crash_device_model", "Device Model")
+        val androidLabel = getLocalizedString(context, "crash_android_version", "Android")
+        val errorTypeLabel = getLocalizedString(context, "crash_error_type_label", "Type")
+        val errorMessageLabel = getLocalizedString(context, "crash_error_message_label", "Message")
+        val stackTraceLabel = getLocalizedString(context, "crash_stacktrace_title", "Stack Trace")
+
         return buildString {
-            append("发生时间: ${sdf.format(Date())}\n\n")
+            append("$occurredAtLabel: ${sdf.format(Date())}\n\n")
 
             try {
                 val versionName = context.packageManager.getPackageInfo(context.packageName, 0).versionName
-                append("应用版本: $versionName\n")
+                append("$appVersionLabel: $versionName\n")
             } catch (e: Exception) {
-                append("应用版本: 未知\n")
+                append("$appVersionLabel: $unknownLabel\n")
             }
 
-            append("设备型号: ${Build.MANUFACTURER} ${Build.MODEL}\n")
-            append("Android 版本: ${Build.VERSION.RELEASE} (SDK ${Build.VERSION.SDK_INT})\n\n")
-            append("异常类型: ${throwable.javaClass.name}\n")
-            throwable.message?.let { append("异常信息: $it\n") }
-            append("\n堆栈跟踪:\n$stackTrace")
+            append("$deviceModelLabel: ${Build.MANUFACTURER} ${Build.MODEL}\n")
+            append("$androidLabel: ${Build.VERSION.RELEASE} (SDK ${Build.VERSION.SDK_INT})\n\n")
+            append("$errorTypeLabel: ${throwable.javaClass.name}\n")
+            throwable.message?.let { append("$errorMessageLabel: $it\n") }
+            append("\n$stackTraceLabel:\n$stackTrace")
         }
     }
 
@@ -349,9 +363,11 @@ class ErrorHandler private constructor() {
         fun handleError(throwable: Throwable) {
             val inst = getInstance()
             val activity = inst.getActivity()
-            val title = if (activity != null) {
-                inst.getLocalizedString(activity, "error_title_default", "Error")
-            } else "Error"
+            val title = inst.getLocalizedString(
+                activity ?: inst.getApplicationContext(),
+                "error_title_default",
+                "Error"
+            )
             handleError(title, throwable, false)
         }
 
@@ -386,10 +402,13 @@ class ErrorHandler private constructor() {
                 action.run()
             } catch (e: Exception) {
                 val title = errorTitle ?: run {
-                    val activity = getInstance().getActivity()
-                    if (activity != null) {
-                        getInstance().getLocalizedString(activity, "error_operation_failed", "Operation failed")
-                    } else "Operation failed"
+                    val inst = getInstance()
+                    val activity = inst.getActivity()
+                    inst.getLocalizedString(
+                        activity ?: inst.getApplicationContext(),
+                        "error_operation_failed",
+                        "Operation failed"
+                    )
                 }
                 handleError(title, e, false)
             }
@@ -406,10 +425,13 @@ class ErrorHandler private constructor() {
                 callable.call()
             } catch (e: Exception) {
                 val title = errorTitle ?: run {
-                    val activity = getInstance().getActivity()
-                    if (activity != null) {
-                        getInstance().getLocalizedString(activity, "error_operation_failed", "Operation failed")
-                    } else "Operation failed"
+                    val inst = getInstance()
+                    val activity = inst.getActivity()
+                    inst.getLocalizedString(
+                        activity ?: inst.getApplicationContext(),
+                        "error_operation_failed",
+                        "Operation failed"
+                    )
                 }
                 handleError(title, e, false)
                 defaultValue

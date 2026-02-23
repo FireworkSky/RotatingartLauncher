@@ -1,6 +1,8 @@
 package com.app.ralaunch.feature.gog.data.api
 
 import android.content.Context
+import androidx.annotation.StringRes
+import com.app.ralaunch.R
 import com.app.ralaunch.feature.gog.data.GogConstants
 import com.app.ralaunch.core.common.util.AppLogger
 import org.json.JSONObject
@@ -14,8 +16,9 @@ import java.nio.charset.StandardCharsets
  * 借鉴 lgogdownloader 的 website.h 设计
  */
 class GogAuthClient(context: Context) {
+    private val appContext = context.applicationContext
 
-    private val prefs = context.applicationContext.getSharedPreferences(
+    private val prefs = appContext.getSharedPreferences(
         GogConstants.PREF_NAME, Context.MODE_PRIVATE
     )
     
@@ -26,6 +29,9 @@ class GogAuthClient(context: Context) {
     fun interface TwoFactorCallback {
         fun requestSecurityCode(type: String): String?
     }
+
+    internal fun localize(@StringRes resId: Int, vararg args: Any): String =
+        appContext.getString(resId, *args)
 
     // ==================== 公共 API ====================
     
@@ -190,7 +196,7 @@ class GogAuthClient(context: Context) {
                         location.contains("totp") -> handleTwoStepAuth(location, "totp")
                         location.contains("code=") -> extractCodeFromUrl(location)
                         location.contains("/login") -> {
-                            throw IOException("Login failed - Please check username and password")
+                            throw IOException(localize(R.string.gog_error_login_failed_check_credentials))
                         }
                         else -> followRedirectsUntilCode(location)
                     }
@@ -198,11 +204,11 @@ class GogAuthClient(context: Context) {
                 200 -> {
                     val response = readResponse(conn.inputStream)
                     if (response.contains("error") || response.contains("invalid")) {
-                        throw IOException("Login failed - Incorrect username or password")
+                        throw IOException(localize(R.string.gog_error_login_failed_wrong_credentials))
                     }
                     null
                 }
-                else -> throw IOException("Login failed - Response code: $responseCode")
+                else -> throw IOException(localize(R.string.gog_error_login_failed_response_code, responseCode))
             }
         } finally {
             conn.disconnect()
@@ -231,9 +237,9 @@ class GogAuthClient(context: Context) {
             saveAllCookies(conn)
 
             when (responseCode) {
-                302, 303 -> throw IOException("Two-factor authentication page redirected, session may have expired")
+                302, 303 -> throw IOException(localize(R.string.gog_error_two_factor_redirect))
                 200 -> html = readResponse(conn.inputStream)
-                else -> throw IOException("Cannot access two-factor authentication page")
+                else -> throw IOException(localize(R.string.gog_error_cannot_access_two_factor))
             }
         } finally {
             conn.disconnect()

@@ -104,7 +104,7 @@ class InitializationActivity : ComponentActivity() {
             } catch (e: Exception) {
                 AppLogger.error("InitActivity", "Extraction failed", e)
                 mainHandler.post {
-                    ErrorHandler.handleError(e.message ?: "Unknown error", e)
+                    ErrorHandler.handleError(e.message ?: getString(R.string.error_message_default), e)
                 }
             } finally {
                 isExtracting.set(false)

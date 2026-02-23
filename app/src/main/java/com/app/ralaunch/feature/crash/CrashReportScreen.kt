@@ -31,12 +31,14 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
+import com.app.ralaunch.R
 import java.io.File
 import java.io.FileWriter
 import java.text.SimpleDateFormat
@@ -63,7 +65,7 @@ fun CrashReportScreen(
     )
 
     // 解析错误详情
-    val parsedInfo = remember(errorDetails) { parseErrorDetails(errorDetails) }
+    val parsedInfo = remember(errorDetails, context) { parseErrorDetails(context, errorDetails) }
 
     Box(
         modifier = Modifier
@@ -126,7 +128,7 @@ fun CrashReportScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = "详细日志",
+                                text = stringResource(R.string.crash_details_log_title),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.SemiBold,
                                 color = MaterialTheme.colorScheme.onSurface
@@ -141,7 +143,11 @@ fun CrashReportScreen(
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.KeyboardArrowDown,
-                                    contentDescription = if (stackTraceExpanded) "收起" else "展开",
+                                    contentDescription = if (stackTraceExpanded) {
+                                        stringResource(R.string.crash_collapse)
+                                    } else {
+                                        stringResource(R.string.crash_expand)
+                                    },
                                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                     modifier = Modifier.rotate(rotationAngle)
                                 )
@@ -172,12 +178,15 @@ fun CrashReportScreen(
                                 ) {
                                     // 错误信息部分
                                     if (!parsedInfo.errorType.isNullOrEmpty() || !parsedInfo.errorMessage.isNullOrEmpty()) {
+                                        val errorTypeLabel = stringResource(R.string.crash_error_type_label)
+                                        val errorMessageLabel = stringResource(R.string.crash_error_message_label)
+                                        val exitCodeLabel = stringResource(R.string.crash_exit_code_label)
                                         LogSection(
-                                            title = "错误信息",
+                                            title = stringResource(R.string.crash_error_info_title),
                                             content = buildString {
-                                                parsedInfo.errorType?.let { append("类型: $it\n") }
-                                                parsedInfo.errorMessage?.let { append("信息: $it\n") }
-                                                parsedInfo.exitCode?.let { append("退出代码: $it") }
+                                                parsedInfo.errorType?.let { append("$errorTypeLabel: $it\n") }
+                                                parsedInfo.errorMessage?.let { append("$errorMessageLabel: $it\n") }
+                                                parsedInfo.exitCode?.let { append("$exitCodeLabel: $it") }
                                             },
                                             color = MaterialTheme.colorScheme.error
                                         )
@@ -187,13 +196,13 @@ fun CrashReportScreen(
                                     // 堆栈跟踪
                                     if (!stackTrace.isNullOrEmpty()) {
                                         LogSection(
-                                            title = "堆栈跟踪 / Logcat",
+                                            title = stringResource(R.string.crash_stacktrace_title),
                                             content = stackTrace,
                                             color = MaterialTheme.colorScheme.primary
                                         )
                                     } else {
                                         Text(
-                                            text = "无可用的堆栈跟踪信息",
+                                            text = stringResource(R.string.crash_no_stacktrace),
                                             color = MaterialTheme.colorScheme.outline,
                                             fontFamily = FontFamily.Monospace,
                                             fontSize = 13.sp
@@ -246,13 +255,13 @@ private fun ErrorHeaderCard(info: ParsedErrorInfo) {
 
                 Column {
                     Text(
-                        text = "应用已停止运行",
+                        text = stringResource(R.string.crash_app_stopped),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.error
                     )
                     Text(
-                        text = info.errorType ?: "游戏异常退出",
+                        text = info.errorType ?: stringResource(R.string.crash_game_exited_abnormally),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -290,7 +299,7 @@ private fun ErrorHeaderCard(info: ParsedErrorInfo) {
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
-                        text = "退出代码",
+                        text = stringResource(R.string.crash_exit_code),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.outline
                     )
@@ -320,7 +329,7 @@ private fun DeviceInfoCard(info: ParsedErrorInfo) {
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Text(
-                text = "环境信息",
+                text = stringResource(R.string.crash_environment_info),
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onSurface
@@ -328,10 +337,10 @@ private fun DeviceInfoCard(info: ParsedErrorInfo) {
 
             Spacer(modifier = Modifier.height(4.dp))
 
-            InfoRow("发生时间", info.timestamp ?: "未知")
-            InfoRow("应用版本", info.appVersion ?: "未知")
-            InfoRow("设备型号", info.deviceModel ?: "未知")
-            InfoRow("Android", info.androidVersion ?: "未知")
+            InfoRow(stringResource(R.string.crash_time_occurred), info.timestamp ?: stringResource(R.string.crash_unknown))
+            InfoRow(stringResource(R.string.crash_app_version), info.appVersion ?: stringResource(R.string.crash_unknown))
+            InfoRow(stringResource(R.string.crash_device_model), info.deviceModel ?: stringResource(R.string.crash_unknown))
+            InfoRow(stringResource(R.string.crash_android_version), info.androidVersion ?: stringResource(R.string.crash_unknown))
         }
     }
 }
@@ -422,7 +431,7 @@ private fun ActionButtons(
                 modifier = Modifier.size(18.dp)
             )
             Spacer(modifier = Modifier.width(8.dp))
-            Text("分享日志", fontSize = 14.sp)
+            Text(stringResource(R.string.crash_share_log), fontSize = 14.sp)
         }
 
         // 重启应用
@@ -441,7 +450,7 @@ private fun ActionButtons(
                 modifier = Modifier.size(18.dp)
             )
             Spacer(modifier = Modifier.width(6.dp))
-            Text("重启应用", fontSize = 14.sp)
+            Text(stringResource(R.string.crash_restart_app), fontSize = 14.sp)
         }
 
         // 关闭应用
@@ -460,7 +469,7 @@ private fun ActionButtons(
                 modifier = Modifier.size(18.dp)
             )
             Spacer(modifier = Modifier.width(6.dp))
-            Text("关闭应用", fontSize = 14.sp)
+            Text(stringResource(R.string.crash_close_app), fontSize = 14.sp)
         }
     }
 }
@@ -476,10 +485,19 @@ private data class ParsedErrorInfo(
     val exitCode: String? = null
 )
 
-private fun parseErrorDetails(errorDetails: String?): ParsedErrorInfo {
+private fun parseErrorDetails(context: android.content.Context, errorDetails: String?): ParsedErrorInfo {
     if (errorDetails.isNullOrEmpty()) return ParsedErrorInfo()
 
     val lines = errorDetails.lines()
+    val timestampPrefixes = listOf("${context.getString(R.string.crash_time_occurred)}:", "发生时间:")
+    val appVersionPrefixes = listOf("${context.getString(R.string.crash_app_version)}:", "应用版本:")
+    val deviceModelPrefixes = listOf("${context.getString(R.string.crash_device_model)}:", "设备型号:")
+    val androidVersionPrefixes = listOf("${context.getString(R.string.crash_android_version)}:", "Android 版本:", "Android:")
+    val errorTypePrefixes = listOf("${context.getString(R.string.crash_error_type_label)}:", "错误类型:", "异常类型:")
+    val errorMessagePrefixes = listOf("${context.getString(R.string.crash_error_message_label)}:", "错误信息:", "异常信息:")
+    val exitCodePrefixes = listOf("${context.getString(R.string.crash_exit_code_label)}:", "退出代码:")
+    val nativeErrorPrefixes = listOf("${context.getString(R.string.crash_native_error_label)}:", "C层错误:")
+
     var timestamp: String? = null
     var appVersion: String? = null
     var deviceModel: String? = null
@@ -490,17 +508,14 @@ private fun parseErrorDetails(errorDetails: String?): ParsedErrorInfo {
 
     for (line in lines) {
         when {
-            line.startsWith("发生时间:") -> timestamp = line.substringAfter(":").trim()
-            line.startsWith("应用版本:") -> appVersion = line.substringAfter(":").trim()
-            line.startsWith("设备型号:") -> deviceModel = line.substringAfter(":").trim()
-            line.startsWith("Android 版本:") || line.startsWith("Android:") -> 
-                androidVersion = line.substringAfter(":").trim()
-            line.startsWith("错误类型:") || line.startsWith("异常类型:") -> 
-                errorType = line.substringAfter(":").trim()
-            line.startsWith("错误信息:") || line.startsWith("异常信息:") -> 
-                errorMessage = line.substringAfter(":").trim()
-            line.startsWith("退出代码:") -> exitCode = line.substringAfter(":").trim()
-            line.startsWith("C层错误:") && errorMessage.isNullOrEmpty() -> 
+            timestampPrefixes.any { line.startsWith(it) } -> timestamp = line.substringAfter(":").trim()
+            appVersionPrefixes.any { line.startsWith(it) } -> appVersion = line.substringAfter(":").trim()
+            deviceModelPrefixes.any { line.startsWith(it) } -> deviceModel = line.substringAfter(":").trim()
+            androidVersionPrefixes.any { line.startsWith(it) } -> androidVersion = line.substringAfter(":").trim()
+            errorTypePrefixes.any { line.startsWith(it) } -> errorType = line.substringAfter(":").trim()
+            errorMessagePrefixes.any { line.startsWith(it) } -> errorMessage = line.substringAfter(":").trim()
+            exitCodePrefixes.any { line.startsWith(it) } -> exitCode = line.substringAfter(":").trim()
+            nativeErrorPrefixes.any { line.startsWith(it) } && errorMessage.isNullOrEmpty() ->
                 errorMessage = line.substringAfter(":").trim()
         }
     }
@@ -531,24 +546,24 @@ private fun shareLog(
         val logContent = buildString {
             append("=" .repeat(60))
             append("\n")
-            append("                    RaLaunch 崩溃报告\n")
+            append("                    ${context.getString(R.string.crash_report_file_title)}\n")
             append("=" .repeat(60))
             append("\n\n")
 
             errorDetails?.takeIf { it.isNotEmpty() }?.let {
-                append("【基本信息】\n")
+                append("【${context.getString(R.string.crash_report_basic_info_section)}】\n")
                 append(it)
                 append("\n\n")
             }
 
             stackTrace?.takeIf { it.isNotEmpty() }?.let {
-                append("【详细日志】\n")
+                append("【${context.getString(R.string.crash_report_detailed_logs_section)}】\n")
                 append("-".repeat(40))
                 append("\n")
                 append(it)
             }
 
-            if (isEmpty()) append("无法获取错误日志")
+            if (isEmpty()) append(context.getString(R.string.crash_report_unavailable))
         }
 
         FileWriter(logFile).use { it.write(logContent) }
@@ -562,17 +577,17 @@ private fun shareLog(
         val shareIntent = Intent(Intent.ACTION_SEND).apply {
             type = "text/plain"
             putExtra(Intent.EXTRA_STREAM, fileUri)
-            putExtra(Intent.EXTRA_SUBJECT, "RaLaunch 崩溃日志")
-            putExtra(Intent.EXTRA_TEXT, "RaLaunch 崩溃日志 - ${sdf.format(Date())}")
+            putExtra(Intent.EXTRA_SUBJECT, context.getString(R.string.crash_share_subject))
+            putExtra(Intent.EXTRA_TEXT, context.getString(R.string.crash_share_text_format, sdf.format(Date())))
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
 
         context.startActivity(
-            Intent.createChooser(shareIntent, "分享崩溃日志").apply {
+            Intent.createChooser(shareIntent, context.getString(R.string.crash_share_chooser)).apply {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
         )
     } catch (e: Exception) {
-        Toast.makeText(context, "分享日志失败: ${e.message}", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, context.getString(R.string.crash_share_failed, e.message ?: ""), Toast.LENGTH_SHORT).show()
     }
 }

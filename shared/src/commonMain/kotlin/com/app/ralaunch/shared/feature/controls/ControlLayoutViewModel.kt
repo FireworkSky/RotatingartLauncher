@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.app.ralaunch.shared.core.model.domain.ControlLayout
 import com.app.ralaunch.shared.core.model.domain.ControlConfig
 import com.app.ralaunch.shared.core.contract.repository.ControlLayoutRepositoryV2
+import com.app.ralaunch.shared.generated.resources.*
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -13,6 +14,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.getString
 
 /**
  * 控制布局 UI 状态 - 跨平台
@@ -134,9 +136,10 @@ class ControlLayoutViewModel(
                     }
                 }
             } catch (e: Exception) {
+                val errorMessage = e.message ?: getString(Res.string.error_operation_failed)
                 _uiState.update {
                     it.copy(
-                        error = e.message ?: "加载布局失败",
+                        error = errorMessage,
                         isLoading = false
                     )
                 }
@@ -159,14 +162,13 @@ class ControlLayoutViewModel(
     }
 
     private fun createNewLayout() {
-        val newLayout = ControlLayout(
-            id = "layout_${System.currentTimeMillis()}",
-            name = "新布局",
-            controls = emptyList()
-        )
-
         viewModelScope.launch {
             try {
+                val newLayout = ControlLayout(
+                    id = "layout_${System.currentTimeMillis()}",
+                    name = getString(Res.string.control_new_layout),
+                    controls = emptyList()
+                )
                 repository.saveLayout(newLayout)
                 _uiState.update {
                     it.copy(
@@ -174,7 +176,7 @@ class ControlLayoutViewModel(
                         isEditing = true
                     )
                 }
-                sendEffect(ControlLayoutEffect.ShowToast("新布局已创建"))
+                sendEffect(ControlLayoutEffect.ShowToast(getString(Res.string.control_layout_created)))
             } catch (e: Exception) {
                 _uiState.update { it.copy(error = e.message) }
             }
@@ -182,17 +184,16 @@ class ControlLayoutViewModel(
     }
 
     private fun duplicateLayout(layout: ControlLayout) {
-        val duplicated = layout.copy(
-            id = "layout_${System.currentTimeMillis()}",
-            name = "${layout.name} (复制)",
-            createdAt = System.currentTimeMillis(),
-            updatedAt = System.currentTimeMillis()
-        )
-
         viewModelScope.launch {
             try {
+                val duplicated = layout.copy(
+                    id = "layout_${System.currentTimeMillis()}",
+                    name = "${layout.name} ${getString(Res.string.control_layout_copy_suffix)}",
+                    createdAt = System.currentTimeMillis(),
+                    updatedAt = System.currentTimeMillis()
+                )
                 repository.saveLayout(duplicated)
-                sendEffect(ControlLayoutEffect.ShowToast("布局已复制"))
+                sendEffect(ControlLayoutEffect.ShowToast(getString(Res.string.control_layout_duplicated)))
             } catch (e: Exception) {
                 _uiState.update { it.copy(error = e.message) }
             }
@@ -225,7 +226,7 @@ class ControlLayoutViewModel(
                         }
                     )
                 }
-                sendEffect(ControlLayoutEffect.ShowToast("布局已删除"))
+                sendEffect(ControlLayoutEffect.ShowToast(getString(Res.string.control_layout_deleted)))
             } catch (e: Exception) {
                 _uiState.update { it.copy(error = e.message) }
             }
@@ -264,7 +265,7 @@ class ControlLayoutViewModel(
                 repository.saveLayout(layout.copy(updatedAt = System.currentTimeMillis()))
                 _uiState.update { it.copy(currentLayout = layout) }
                 sendEffect(ControlLayoutEffect.LayoutSaved)
-                sendEffect(ControlLayoutEffect.ShowToast("布局已保存"))
+                sendEffect(ControlLayoutEffect.ShowToast(getString(Res.string.editor_layout_saved)))
             } catch (e: Exception) {
                 _uiState.update { it.copy(error = e.message) }
             }
@@ -326,11 +327,13 @@ class ControlLayoutViewModel(
     private fun importLayout(path: String) {
         viewModelScope.launch {
             val result = repository.importPack(path)
-            result.onSuccess { layout ->
+            result.getOrNull()?.let { layout ->
                 sendEffect(ControlLayoutEffect.ImportComplete(layout))
-                sendEffect(ControlLayoutEffect.ShowToast("布局已导入"))
-            }.onFailure { e ->
-                _uiState.update { it.copy(error = "导入失败: ${e.message}") }
+                sendEffect(ControlLayoutEffect.ShowToast(getString(Res.string.control_layout_imported)))
+            }
+            result.exceptionOrNull()?.let { e ->
+                val errorMessage = e.message ?: getString(Res.string.error_operation_failed)
+                _uiState.update { it.copy(error = errorMessage) }
             }
         }
         dismissImportDialog()
@@ -346,11 +349,13 @@ class ControlLayoutViewModel(
     fun performExport(layout: ControlLayout, path: String) {
         viewModelScope.launch {
             val result = repository.exportLayout(layout.id, path)
-            result.onSuccess { exportPath ->
+            result.getOrNull()?.let { exportPath ->
                 sendEffect(ControlLayoutEffect.ExportComplete(exportPath))
-                sendEffect(ControlLayoutEffect.ShowToast("布局已导出"))
-            }.onFailure { e ->
-                _uiState.update { it.copy(error = "导出失败: ${e.message}") }
+                sendEffect(ControlLayoutEffect.ShowToast(getString(Res.string.control_export_success)))
+            }
+            result.exceptionOrNull()?.let { e ->
+                val errorMessage = e.message ?: getString(Res.string.error_operation_failed)
+                _uiState.update { it.copy(error = errorMessage) }
             }
         }
     }

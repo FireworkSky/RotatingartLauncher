@@ -16,30 +16,30 @@ sealed class Screen(
     // ===== 主导航页面 =====
     
     /** 游戏列表页 */
-    data object Games : Screen("games", "游戏")
+    data object Games : Screen("games")
     
     /** 控制布局页 */
-    data object Controls : Screen("controls", "控制")
+    data object Controls : Screen("controls")
     
     /** 下载页 (GOG Client) */
-    data object Download : Screen("download", "下载")
+    data object Download : Screen("download")
     
     /** 导入游戏页 */
-    data object Import : Screen("import", "导入")
+    data object Import : Screen("import")
 
     /** 公告页 */
-    data object Announcements : Screen("announcements", "公告")
+    data object Announcements : Screen("announcements")
     
     /** 设置页 */
-    data object Settings : Screen("settings", "设置")
+    data object Settings : Screen("settings")
     
     // ===== 子页面/全屏页面 =====
     
     /** 控制包商店 */
-    data object ControlStore : Screen("control_store", "控制包商店")
+    data object ControlStore : Screen("control_store")
     
     /** 初始化页面 */
-    data object Initialization : Screen("initialization", "初始化")
+    data object Initialization : Screen("initialization")
     
     /** 文件浏览器 */
     data class FileBrowser(
@@ -47,20 +47,17 @@ sealed class Screen(
         val allowedExtensions: List<String> = emptyList(),
         val fileType: String = ""
     ) : Screen(
-        route = "file_browser",
-        title = "文件浏览"
+        route = "file_browser"
     )
     
     /** 游戏详情/编辑（全屏模式，参数为游戏存储 ID） */
     data class GameDetail(val storageId: String) : Screen(
-        route = "game_detail/$storageId",
-        title = "游戏详情"
+        route = "game_detail/$storageId"
     )
     
     /** 控制布局编辑器 */
     data class ControlEditor(val layoutId: String? = null) : Screen(
-        route = if (layoutId == null) "control_editor" else "control_editor/$layoutId",
-        title = "编辑布局"
+        route = if (layoutId == null) "control_editor" else "control_editor/$layoutId"
     )
 
     companion object {
@@ -91,43 +88,36 @@ sealed class Screen(
  */
 enum class NavDestination(
     val screen: Screen,
-    val label: String,
     val selectedIcon: ImageVector,
     val unselectedIcon: ImageVector
 ) {
     GAMES(
         screen = Screen.Games,
-        label = "游戏",
         selectedIcon = Icons.Filled.SportsEsports,
         unselectedIcon = Icons.Outlined.SportsEsports
     ),
     CONTROLS(
         screen = Screen.Controls,
-        label = "控制",
         selectedIcon = Icons.Filled.TouchApp,
         unselectedIcon = Icons.Outlined.TouchApp
     ),
     DOWNLOAD(
         screen = Screen.Download,
-        label = "下载",
         selectedIcon = Icons.Filled.RocketLaunch,
         unselectedIcon = Icons.Outlined.RocketLaunch
     ),
     IMPORT(
         screen = Screen.Import,
-        label = "导入",
         selectedIcon = Icons.Filled.Add,
         unselectedIcon = Icons.Outlined.Add
     ),
     ANNOUNCEMENTS(
         screen = Screen.Announcements,
-        label = "公告",
         selectedIcon = Icons.Filled.Notifications,
         unselectedIcon = Icons.Outlined.NotificationsNone
     ),
     SETTINGS(
         screen = Screen.Settings,
-        label = "设置",
         selectedIcon = Icons.Filled.Settings,
         unselectedIcon = Icons.Outlined.Settings
     );

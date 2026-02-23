@@ -451,7 +451,12 @@ private fun PatchItem(
                     }
                     Toast.makeText(
                         context,
-                        "${selectedGame.displayedName} - ${patch.manifest.name}: $statusText",
+                        context.getString(
+                            R.string.patch_status_changed_message,
+                            selectedGame.displayedName,
+                            patch.manifest.name,
+                            statusText
+                        ),
                         Toast.LENGTH_SHORT
                     ).show()
                 }

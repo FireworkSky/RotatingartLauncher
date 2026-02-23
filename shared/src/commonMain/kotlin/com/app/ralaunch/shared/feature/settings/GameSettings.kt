@@ -10,6 +10,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.app.ralaunch.shared.generated.resources.*
+import org.jetbrains.compose.resources.stringResource
 import kotlin.math.roundToInt
 
 /**
@@ -84,10 +86,10 @@ private fun PerformanceSection(
     onLowLatencyAudioChange: (Boolean) -> Unit,
     onRalAudioBufferSizeChange: (Int?) -> Unit
 ) {
-    SettingsSection(title = "性能") {
+    SettingsSection(title = stringResource(Res.string.settings_game_performance_section)) {
         SwitchSettingItem(
-            title = "大核亲和性",
-            subtitle = "将游戏线程绑定到高性能核心",
+            title = stringResource(Res.string.thread_affinity_big_core),
+            subtitle = stringResource(Res.string.thread_affinity_big_core_desc),
             icon = Icons.Default.Memory,
             checked = bigCoreAffinityEnabled,
             onCheckedChange = onBigCoreAffinityChange
@@ -96,8 +98,8 @@ private fun PerformanceSection(
         SettingsDivider()
 
         SwitchSettingItem(
-            title = "低延迟音频",
-            subtitle = "启用 AAudio 低延迟模式",
+            title = stringResource(Res.string.low_latency_audio),
+            subtitle = stringResource(Res.string.settings_game_low_latency_audio_subtitle),
             icon = Icons.AutoMirrored.Filled.VolumeUp,
             checked = lowLatencyAudioEnabled,
             onCheckedChange = onLowLatencyAudioChange
@@ -106,13 +108,13 @@ private fun PerformanceSection(
         SettingsDivider()
 
         SliderSettingItem(
-            title = "音频缓冲区大小",
-            subtitle = "设置 FAudio 和 FMOD 的缓冲区大小，较小的值可降低音频延迟但可能增加断音风险",
+            title = stringResource(Res.string.settings_game_audio_buffer_title),
+            subtitle = stringResource(Res.string.settings_game_audio_buffer_subtitle),
             icon = Icons.Default.Tune,
             value = audioBufferSizeToSliderPosition(ralAudioBufferSize),
             valueRange = 0f..7f,
             steps = 6,
-            valueLabel = ralAudioBufferSize?.toString() ?: "Auto",
+            valueLabel = ralAudioBufferSize?.toString() ?: stringResource(Res.string.common_auto),
             onValueChange = { sliderValue ->
                 onRalAudioBufferSizeChange(sliderPositionToAudioBufferSize(sliderValue))
             }
@@ -138,10 +140,10 @@ private fun RendererSection(
     rendererDisplayName: String,
     onRendererClick: () -> Unit
 ) {
-    SettingsSection(title = "渲染") {
+    SettingsSection(title = stringResource(Res.string.settings_game_renderer_section)) {
         ClickableSettingItem(
-            title = "渲染器",
-            subtitle = "选择图形渲染后端",
+            title = stringResource(Res.string.renderer_title),
+            subtitle = stringResource(Res.string.renderer_desc),
             value = rendererDisplayName,
             icon = Icons.Default.Tv,
             onClick = onRendererClick
@@ -158,14 +160,24 @@ private fun QualitySection(
     onShaderLowPrecisionChange: (Boolean) -> Unit,
     onTargetFpsChange: (Int) -> Unit
 ) {
-    val qualityNames = listOf("高画质", "中画质", "低画质")
-    val fpsOptions = listOf(0 to "无限制", 30 to "30 FPS", 45 to "45 FPS", 60 to "60 FPS")
-    val currentFpsName = fpsOptions.find { it.first == targetFps }?.second ?: "无限制"
+    val qualityNames = listOf(
+        stringResource(Res.string.settings_quality_high),
+        stringResource(Res.string.settings_quality_medium),
+        stringResource(Res.string.settings_quality_low)
+    )
+    val fpsOptions = listOf(
+        0 to stringResource(Res.string.settings_fps_unlimited),
+        30 to stringResource(Res.string.settings_fps_30),
+        45 to stringResource(Res.string.settings_fps_45),
+        60 to stringResource(Res.string.settings_fps_60)
+    )
+    val currentFpsName = fpsOptions.find { it.first == targetFps }?.second
+        ?: stringResource(Res.string.settings_fps_unlimited)
 
-    SettingsSection(title = "画质") {
+    SettingsSection(title = stringResource(Res.string.settings_game_quality_section)) {
         ClickableSettingItem(
-            title = "画质预设",
-            subtitle = "选择画质等级，低画质可提高性能",
+            title = stringResource(Res.string.settings_game_quality_preset_title),
+            subtitle = stringResource(Res.string.settings_game_quality_preset_subtitle),
             value = qualityNames.getOrElse(qualityLevel) { qualityNames[0] },
             icon = Icons.Default.Tune,
             onClick = {
@@ -178,8 +190,8 @@ private fun QualitySection(
         SettingsDivider()
 
         SwitchSettingItem(
-            title = "低精度着色器",
-            subtitle = "降低 Shader 精度以提升性能",
+            title = stringResource(Res.string.settings_game_shader_low_precision_title),
+            subtitle = stringResource(Res.string.settings_game_shader_low_precision_subtitle),
             icon = Icons.Default.FilterAlt,
             checked = shaderLowPrecision,
             onCheckedChange = onShaderLowPrecisionChange
@@ -188,8 +200,8 @@ private fun QualitySection(
         SettingsDivider()
 
         ClickableSettingItem(
-            title = "帧率限制",
-            subtitle = "限制游戏最大帧率，可节省电量",
+            title = stringResource(Res.string.settings_game_fps_limit_title),
+            subtitle = stringResource(Res.string.settings_game_fps_limit_subtitle),
             value = currentFpsName,
             icon = Icons.Default.Speed,
             onClick = {

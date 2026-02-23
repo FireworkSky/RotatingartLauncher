@@ -38,7 +38,9 @@ val sharedModule = module {
     }
 
     viewModel { (controlLayoutRepository: ControlLayoutRepositoryV2) ->
-        ControlLayoutViewModel(repository = controlLayoutRepository)
+        ControlLayoutViewModel(
+            repository = controlLayoutRepository
+        )
     }
 }
 

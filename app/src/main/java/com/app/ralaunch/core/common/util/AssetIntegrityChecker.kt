@@ -1,6 +1,7 @@
 package com.app.ralaunch.core.common.util
 
 import android.content.Context
+import com.app.ralaunch.R
 import com.app.ralaunch.core.platform.runtime.RuntimeLibraryLoader
 import com.app.ralaunch.shared.core.platform.AppConstants
 import kotlinx.coroutines.Dispatchers
@@ -45,7 +46,7 @@ object AssetIntegrityChecker {
      * 关键组件定义
      */
     private data class CriticalComponent(
-        val name: String,
+        val nameResId: Int,
         val dirName: String,
         val criticalFiles: List<String>,
         val minSizeBytes: Long = 1024  // 最小文件大小，防止空文件
@@ -59,7 +60,7 @@ object AssetIntegrityChecker {
      */
     private val CRITICAL_COMPONENTS = listOf(
         CriticalComponent(
-            name = ".NET Runtime",
+            nameResId = R.string.asset_check_component_dotnet_runtime,
             dirName = "dotnet",
             criticalFiles = listOf(
                 "apphost"  // 只检查 dotnet 目录存在和基本文件
@@ -89,12 +90,13 @@ object AssetIntegrityChecker {
 
         // 1. 检查关键组件目录
         for (component in CRITICAL_COMPONENTS) {
+            val componentName = context.getString(component.nameResId)
             val componentDir = File(filesDir, component.dirName)
             
             if (!componentDir.exists()) {
                 issues.add(CheckResult.Issue(
                     type = CheckResult.IssueType.DIRECTORY_MISSING,
-                    description = "${component.name} 目录缺失",
+                    description = context.getString(R.string.asset_check_issue_directory_missing, componentName),
                     filePath = componentDir.absolutePath,
                     canAutoFix = true
                 ))
@@ -104,7 +106,7 @@ object AssetIntegrityChecker {
             // 检查关键文件
             for (fileName in component.criticalFiles) {
                 val file = File(componentDir, fileName)
-                val issue = checkFile(file, component.name, component.minSizeBytes)
+                val issue = checkFile(context, file, componentName, component.minSizeBytes)
                 if (issue != null) {
                     issues.add(issue)
                 }
@@ -116,14 +118,22 @@ object AssetIntegrityChecker {
         if (!runtimeDir.exists()) {
             issues.add(CheckResult.Issue(
                 type = CheckResult.IssueType.DIRECTORY_MISSING,
-                description = "运行时库目录缺失",
+                description = context.getString(
+                    R.string.asset_check_issue_directory_missing,
+                    context.getString(R.string.asset_check_component_runtime_libs)
+                ),
                 filePath = runtimeDir.absolutePath,
                 canAutoFix = true
             ))
         } else {
             for ((fileName, minSize) in RUNTIME_LIBS_CRITICAL) {
                 val file = File(runtimeDir, fileName)
-                val issue = checkFile(file, "运行时库", minSize)
+                val issue = checkFile(
+                    context,
+                    file,
+                    context.getString(R.string.asset_check_component_runtime_libs),
+                    minSize
+                )
                 if (issue != null) {
                     issues.add(issue)
                 }
@@ -134,7 +144,7 @@ object AssetIntegrityChecker {
             if (!versionFile.exists()) {
                 issues.add(CheckResult.Issue(
                     type = CheckResult.IssueType.VERSION_MISMATCH,
-                    description = "运行时库版本文件缺失",
+                    description = context.getString(R.string.asset_check_issue_runtime_version_missing),
                     filePath = versionFile.absolutePath,
                     canAutoFix = true
                 ))
@@ -143,7 +153,7 @@ object AssetIntegrityChecker {
 
         // 生成摘要
         val summary = if (issues.isEmpty()) {
-            "所有资产检查通过"
+            context.getString(R.string.asset_check_summary_all_passed)
         } else {
             val criticalCount = issues.count { 
                 it.type == CheckResult.IssueType.MISSING_FILE || 
@@ -151,9 +161,15 @@ object AssetIntegrityChecker {
             }
             val warningCount = issues.size - criticalCount
             buildString {
-                append("发现 ${issues.size} 个问题")
-                if (criticalCount > 0) append("（$criticalCount 个严重）")
-                if (warningCount > 0) append("（$warningCount 个警告）")
+                append(context.getString(R.string.asset_check_summary_issues_found, issues.size))
+                if (criticalCount > 0) {
+                    append(" ")
+                    append(context.getString(R.string.asset_check_summary_critical_count, criticalCount))
+                }
+                if (warningCount > 0) {
+                    append(" ")
+                    append(context.getString(R.string.asset_check_summary_warning_count, warningCount))
+                }
             }
         }
 
@@ -172,29 +188,35 @@ object AssetIntegrityChecker {
     /**
      * 检查单个文件
      */
-    private fun checkFile(file: File, componentName: String, minSize: Long): CheckResult.Issue? {
+    private fun checkFile(context: Context, file: File, componentName: String, minSize: Long): CheckResult.Issue? {
         return when {
             !file.exists() -> CheckResult.Issue(
                 type = CheckResult.IssueType.MISSING_FILE,
-                description = "$componentName 缺少文件: ${file.name}",
+                description = context.getString(R.string.asset_check_issue_missing_file, componentName, file.name),
                 filePath = file.absolutePath,
                 canAutoFix = true
             )
             file.length() == 0L -> CheckResult.Issue(
                 type = CheckResult.IssueType.EMPTY_FILE,
-                description = "$componentName 文件为空: ${file.name}",
+                description = context.getString(R.string.asset_check_issue_empty_file, componentName, file.name),
                 filePath = file.absolutePath,
                 canAutoFix = true
             )
             file.length() < minSize -> CheckResult.Issue(
                 type = CheckResult.IssueType.CORRUPTED_FILE,
-                description = "$componentName 文件可能损坏: ${file.name} (${file.length()} bytes < $minSize bytes)",
+                description = context.getString(
+                    R.string.asset_check_issue_corrupted_file,
+                    componentName,
+                    file.name,
+                    file.length(),
+                    minSize
+                ),
                 filePath = file.absolutePath,
                 canAutoFix = true
             )
             !file.canRead() -> CheckResult.Issue(
                 type = CheckResult.IssueType.PERMISSION_ERROR,
-                description = "$componentName 文件无法读取: ${file.name}",
+                description = context.getString(R.string.asset_check_issue_permission_error, componentName, file.name),
                 filePath = file.absolutePath,
                 canAutoFix = false
             )
@@ -235,20 +257,24 @@ object AssetIntegrityChecker {
     ): FixResult = withContext(Dispatchers.IO) {
         val fixableIssues = issues.filter { it.canAutoFix }
         if (fixableIssues.isEmpty()) {
-            return@withContext FixResult(success = true, message = "没有可自动修复的问题")
+            return@withContext FixResult(
+                success = true,
+                message = context.getString(R.string.asset_fix_no_auto_fixable_issues)
+            )
         }
 
         AppLogger.info(TAG, "开始自动修复 ${fixableIssues.size} 个问题...")
-        progressCallback?.invoke(0, "准备修复...")
+        progressCallback?.invoke(0, context.getString(R.string.asset_fix_progress_prepare))
 
         var fixedCount = 0
         var failedCount = 0
         val errors = mutableListOf<String>()
+        val runtimeDirPath = RuntimeLibraryLoader.getRuntimeLibsDir(context).absolutePath
 
         // 按类型分组处理
         val needsRuntimeLibsExtract = fixableIssues.any { 
-            it.filePath?.contains("runtime_libs") == true ||
-            it.description.contains("运行时库")
+            val filePath = it.filePath
+            filePath?.startsWith(runtimeDirPath) == true || filePath?.contains("runtime_libs") == true
         }
 
         val needsComponentExtract = fixableIssues.any {
@@ -258,7 +284,7 @@ object AssetIntegrityChecker {
 
         // 重新解压运行时库
         if (needsRuntimeLibsExtract) {
-            progressCallback?.invoke(20, "重新解压运行时库...")
+            progressCallback?.invoke(20, context.getString(R.string.asset_fix_progress_reextract_runtime))
             try {
                 val result = RuntimeLibraryLoader.forceReExtract(context) { progress, msg ->
                     progressCallback?.invoke(20 + progress * 40 / 100, msg)
@@ -268,18 +294,23 @@ object AssetIntegrityChecker {
                     AppLogger.info(TAG, "运行时库重新解压成功")
                 } else {
                     failedCount++
-                    errors.add("运行时库重新解压失败")
+                    errors.add(context.getString(R.string.asset_fix_runtime_reextract_failed))
                 }
             } catch (e: Exception) {
                 failedCount++
-                errors.add("运行时库解压异常: ${e.message}")
+                errors.add(
+                    context.getString(
+                        R.string.asset_fix_runtime_extract_exception,
+                        e.message ?: context.getString(R.string.common_unknown_error)
+                    )
+                )
                 AppLogger.error(TAG, "运行时库重新解压失败", e)
             }
         }
 
         // 重新解压核心组件需要清除初始化标记
         if (needsComponentExtract) {
-            progressCallback?.invoke(70, "标记需要重新初始化...")
+            progressCallback?.invoke(70, context.getString(R.string.asset_fix_progress_mark_reinit))
             try {
                 val prefs = context.getSharedPreferences(AppConstants.PREFS_NAME, 0)
                 prefs.edit()
@@ -289,18 +320,27 @@ object AssetIntegrityChecker {
                 AppLogger.info(TAG, "已标记需要重新初始化，下次启动将重新解压组件")
             } catch (e: Exception) {
                 failedCount++
-                errors.add("无法标记重新初始化: ${e.message}")
+                errors.add(
+                    context.getString(
+                        R.string.asset_fix_mark_reinit_failed,
+                        e.message ?: context.getString(R.string.common_unknown_error)
+                    )
+                )
             }
         }
 
-        progressCallback?.invoke(100, "修复完成")
+        progressCallback?.invoke(100, context.getString(R.string.asset_fix_progress_completed))
 
         val message = buildString {
-            append("修复完成: ")
-            if (fixedCount > 0) append("成功 $fixedCount 项")
-            if (failedCount > 0) append("，失败 $failedCount 项")
+            append(context.getString(R.string.asset_fix_result_prefix))
+            if (fixedCount > 0) append(context.getString(R.string.asset_fix_result_success_count, fixedCount))
+            if (failedCount > 0) {
+                if (fixedCount > 0) append(", ")
+                append(context.getString(R.string.asset_fix_result_failed_count, failedCount))
+            }
             if (needsComponentExtract && fixedCount > 0) {
-                append("\n\n请重启应用以完成组件重新安装。")
+                append("\n\n")
+                append(context.getString(R.string.asset_fix_restart_required))
             }
         }
 
@@ -335,21 +375,24 @@ object AssetIntegrityChecker {
             val sharedDir = File(dotnetDir, "shared/Microsoft.NETCore.App")
             val versions = sharedDir.listFiles()?.filter { it.isDirectory }?.map { it.name } ?: emptyList()
             if (versions.isNotEmpty()) {
-                "✓ .NET Runtime (${versions.joinToString()})"
+                context.getString(
+                    R.string.asset_check_status_dotnet_installed_versions,
+                    versions.joinToString()
+                )
             } else {
-                "✓ .NET Runtime 已安装"
+                context.getString(R.string.asset_check_status_dotnet_installed)
             }
         } else {
-            "✗ .NET Runtime 未安装"
+            context.getString(R.string.asset_check_status_dotnet_not_installed)
         }
         sb.appendLine(dotnetStatus)
 
         // 运行时库状态
         val runtimeStatus = if (RuntimeLibraryLoader.isExtracted(context)) {
             val libs = RuntimeLibraryLoader.listExtractedLibraries(context)
-            "✓ 运行时库 (${libs.size} 个库)"
+            context.getString(R.string.asset_check_status_runtime_libs_installed, libs.size)
         } else {
-            "✗ 运行时库未解压"
+            context.getString(R.string.asset_check_status_runtime_libs_not_extracted)
         }
         sb.appendLine(runtimeStatus)
 

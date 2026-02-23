@@ -1,5 +1,7 @@
 package com.app.ralaunch.core.platform.install
 
+import com.app.ralaunch.R
+import com.app.ralaunch.RaLaunchApp
 import com.app.ralaunch.core.platform.install.extractors.BasicSevenZipExtractor
 import com.app.ralaunch.core.platform.install.extractors.ExtractorCollection
 import com.app.ralaunch.core.platform.install.extractors.GogShFileExtractor
@@ -76,12 +78,16 @@ object GameExtractorUtils {
             if (result && success) {
                 ExtractResult.Success(gamePath?.toFile() ?: outputDir)
             } else {
-                ExtractResult.Error(errorMsg ?: "解压失败")
+                ExtractResult.Error(
+                    errorMsg ?: RaLaunchApp.getInstance().getString(R.string.extract_failed)
+                )
             }
 
         } catch (e: Exception) {
             e.printStackTrace()
-            ExtractResult.Error(e.message ?: "解压失败")
+            ExtractResult.Error(
+                e.message ?: RaLaunchApp.getInstance().getString(R.string.extract_failed)
+            )
         }
     }
 
@@ -130,12 +136,16 @@ object GameExtractorUtils {
             if (result && success) {
                 ExtractResult.Success(outputDir)
             } else {
-                ExtractResult.Error(errorMsg ?: "解压失败")
+                ExtractResult.Error(
+                    errorMsg ?: RaLaunchApp.getInstance().getString(R.string.extract_failed)
+                )
             }
 
         } catch (e: Exception) {
             e.printStackTrace()
-            ExtractResult.Error(e.message ?: "解压失败")
+            ExtractResult.Error(
+                e.message ?: RaLaunchApp.getInstance().getString(R.string.extract_failed)
+            )
         }
     }
 

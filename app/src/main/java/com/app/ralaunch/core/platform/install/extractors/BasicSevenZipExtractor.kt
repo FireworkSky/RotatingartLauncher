@@ -1,6 +1,7 @@
 package com.app.ralaunch.core.platform.install.extractors
 
 import android.util.Log
+import com.app.ralaunch.R
 import com.app.ralaunch.RaLaunchApp
 import com.app.ralaunch.core.platform.runtime.RuntimeLibraryLoader
 import net.sf.sevenzipjbinding.*
@@ -104,7 +105,11 @@ class BasicSevenZipExtractor : ExtractorCollection.IExtractor {
     override fun extract(): Boolean {
         // 确保 7-Zip 原生库已加载
         if (!ensureLibraryLoaded()) {
-            extractionListener?.onError("7-Zip 原生库加载失败", RuntimeException("Failed to load 7-Zip native library"), state)
+            extractionListener?.onError(
+                RaLaunchApp.getInstance().getString(R.string.extract_7zip_library_load_failed),
+                RuntimeException("Failed to load 7-Zip native library"),
+                state
+            )
             return false
         }
         
@@ -125,12 +130,17 @@ class BasicSevenZipExtractor : ExtractorCollection.IExtractor {
 
             Log.d(TAG, "SevenZip extraction completed successfully")
             extractionListener?.apply {
-                onProgress("解压完成", 1.0f, state)
-                onComplete("解压完成", state)
+                val completeMessage = RaLaunchApp.getInstance().getString(R.string.extract_complete)
+                onProgress(completeMessage, 1.0f, state)
+                onComplete(completeMessage, state)
             }
             true
         } catch (ex: Exception) {
-            extractionListener?.onError("基础7z解压器解压失败", ex, state)
+            extractionListener?.onError(
+                RaLaunchApp.getInstance().getString(R.string.extract_7zip_failed),
+                ex,
+                state
+            )
             false
         }
     }
@@ -181,7 +191,11 @@ class BasicSevenZipExtractor : ExtractorCollection.IExtractor {
                 }
 
                 val progress = if (totalBytes > 0) totalBytesExtracted.toFloat() / totalBytes else 0f
-                extractionListener?.onProgress("正在解压: $filePath", progress, state)
+                extractionListener?.onProgress(
+                    RaLaunchApp.getInstance().getString(R.string.extract_in_progress, filePath),
+                    progress,
+                    state
+                )
 
                 // 返回输出流
                 outputStream = SequentialFileOutputStream(targetFilePath)

@@ -53,7 +53,7 @@ class GamePresenter : GameContract.Presenter {
             when {
                 gameStorageId != null && gameExePath != null -> {
                     AppLogger.error(TAG, "Invalid launch intent: both storage ID and direct launch params are provided")
-                    showLaunchError(view, "Invalid launch parameters: conflicting launch modes")
+                    showLaunchError(view, view.getStringRes(R.string.game_launch_invalid_params_conflict))
                     -1
                 }
                 gameStorageId != null -> launchFromStorageId(view, gameStorageId)
@@ -73,13 +73,13 @@ class GamePresenter : GameContract.Presenter {
                 }
                 else -> {
                     AppLogger.error(TAG, "No supported launch parameters found in intent")
-                    showLaunchError(view, "No launch parameters provided")
+                    showLaunchError(view, view.getStringRes(R.string.game_launch_no_params))
                     -1
                 }
             }
         } catch (e: Exception) {
             AppLogger.error(TAG, "Exception in launchGame: ${e.message}", e)
-            showLaunchError(view, e.message ?: "Unknown error")
+            showLaunchError(view, e.message ?: view.getStringRes(R.string.common_unknown_error))
             -6
         }
     }
@@ -89,14 +89,14 @@ class GamePresenter : GameContract.Presenter {
             KoinJavaComponent.get(GameRepositoryV2::class.java)
         } catch (e: Exception) {
             AppLogger.error(TAG, "Failed to resolve GameRepositoryV2", e)
-            showLaunchError(view, "Failed to load game repository")
+            showLaunchError(view, view.getStringRes(R.string.game_launch_repository_load_failed))
             return -2
         }
 
         val game = gameRepository.games.value.find { it.id == gameStorageId }
         if (game == null) {
             AppLogger.error(TAG, "Game not found for storage ID: $gameStorageId")
-            showLaunchError(view, "Game not found: $gameStorageId")
+            showLaunchError(view, view.getStringRes(R.string.main_game_not_found, gameStorageId))
             return -3
         }
 
@@ -250,10 +250,10 @@ class GamePresenter : GameContract.Presenter {
                 null
             }
 
-            val logcatLogs = getRecentLogcatLogs()
+            val logcatLogs = getRecentLogcatLogs(view)
             val message = buildExitMessage(view, exitCode, errorMessage)
             val errorDetails = buildErrorDetails(view, exitCode, nativeError, errorMessage)
-            val stackTrace = buildStackTrace(exitCode, nativeError, logcatLogs, errorMessage)
+            val stackTrace = buildStackTrace(view, exitCode, nativeError, logcatLogs, errorMessage)
 
             view.showCrashReport(
                 stackTrace = stackTrace,
@@ -285,54 +285,55 @@ class GamePresenter : GameContract.Presenter {
     ): String {
         return buildString {
             val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
-            append("发生时间: ${sdf.format(Date())}\n\n")
+            append("${view.getStringRes(R.string.crash_time_occurred)}: ${sdf.format(Date())}\n\n")
 
-            val versionName = view.getAppVersionName() ?: "未知"
-            append("应用版本: $versionName\n")
-            append("设备型号: ${Build.MANUFACTURER} ${Build.MODEL}\n")
-            append("Android 版本: ${Build.VERSION.RELEASE} (SDK ${Build.VERSION.SDK_INT})\n\n")
+            val versionName = view.getAppVersionName() ?: view.getStringRes(R.string.crash_unknown)
+            append("${view.getStringRes(R.string.crash_app_version)}: $versionName\n")
+            append("${view.getStringRes(R.string.crash_device_model)}: ${Build.MANUFACTURER} ${Build.MODEL}\n")
+            append("${view.getStringRes(R.string.crash_android_version)}: ${Build.VERSION.RELEASE} (SDK ${Build.VERSION.SDK_INT})\n\n")
 
-            append("错误类型: 游戏异常退出\n")
-            append("退出代码: $exitCode\n")
+            append("${view.getStringRes(R.string.crash_error_type_label)}: ${view.getStringRes(R.string.crash_game_exited_abnormally)}\n")
+            append("${view.getStringRes(R.string.crash_exit_code_label)}: $exitCode\n")
 
             if (!nativeError.isNullOrEmpty()) {
-                append("C层错误: $nativeError\n")
+                append("${view.getStringRes(R.string.crash_native_error_label)}: $nativeError\n")
             }
 
             if (!errorMessage.isNullOrEmpty()) {
-                append("错误信息: $errorMessage\n")
+                append("${view.getStringRes(R.string.crash_error_message_label)}: $errorMessage\n")
             }
         }
     }
 
     private fun buildStackTrace(
+        view: GameContract.View,
         exitCode: Int,
         nativeError: String?,
         logcatLogs: String?,
         errorMessage: String?
     ): String {
         return buildString {
-            append("游戏进程异常退出\n")
-            append("退出代码: $exitCode\n\n")
+            append("${view.getStringRes(R.string.crash_game_exited_abnormally)}\n")
+            append("${view.getStringRes(R.string.crash_exit_code_label)}: $exitCode\n\n")
 
             if (!nativeError.isNullOrEmpty()) {
-                append("=== C层错误信息 ===\n")
+                append("${view.getStringRes(R.string.crash_stacktrace_native_section)}\n")
                 append("$nativeError\n\n")
             }
 
             if (!logcatLogs.isNullOrEmpty()) {
-                append("=== Logcat 日志（最近错误） ===\n")
+                append("${view.getStringRes(R.string.crash_stacktrace_logcat_section)}\n")
                 append("$logcatLogs\n\n")
             }
 
             if (!errorMessage.isNullOrEmpty()) {
-                append("=== 错误详情 ===\n")
+                append("${view.getStringRes(R.string.crash_stacktrace_error_details_section)}\n")
                 append(errorMessage)
             }
         }
     }
 
-    private fun getRecentLogcatLogs(): String? {
+    private fun getRecentLogcatLogs(view: GameContract.View): String? {
         return try {
             // 关键日志标签列表 - 用于捕获所有重要的运行时信息
             val importantTags = listOf(
@@ -378,7 +379,7 @@ class GamePresenter : GameContract.Presenter {
 
             var result = filteredLogs
             if (result.length > MAX_LOG_LENGTH) {
-                result = "...[日志已截断]...\n" + result.takeLast(MAX_LOG_LENGTH)
+                result = view.getStringRes(R.string.crash_logcat_truncated_prefix) + "\n" + result.takeLast(MAX_LOG_LENGTH)
             }
 
             result.takeIf { it.isNotEmpty() }

@@ -1,6 +1,8 @@
 package com.app.ralaunch.core.platform.runtime
 
 import android.content.Context
+import com.app.ralaunch.R
+import com.app.ralaunch.RaLaunchApp
 import com.app.ralaunch.core.common.util.AppLogger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -158,7 +160,10 @@ object RuntimeLibraryLoader {
             }
             
             AppLogger.info(TAG, "Extracting runtime libraries...")
-            progressCallback?.invoke(0, "准备解压运行时库...")
+            progressCallback?.invoke(
+                0,
+                RaLaunchApp.getInstance().getString(R.string.runtime_extract_prepare)
+            )
             
             // 清理旧目录
             if (runtimeDir.exists()) {
@@ -196,7 +201,13 @@ object RuntimeLibraryLoader {
                         
                         extractedCount++
                         val progress = (extractedCount * 100) / 10  // 假设约10个文件
-                        progressCallback?.invoke(minOf(progress, 95), "解压: ${entry.name}")
+                        progressCallback?.invoke(
+                            minOf(progress, 95),
+                            RaLaunchApp.getInstance().getString(
+                                R.string.runtime_extract_entry,
+                                entry.name
+                            )
+                        )
                         
                         AppLogger.debug(TAG, "Extracted: ${entry.name}")
                     }
@@ -213,7 +224,13 @@ object RuntimeLibraryLoader {
             
             if (missingLibs.isNotEmpty()) {
                 AppLogger.error(TAG, "Missing required libraries after extraction: $missingLibs")
-                progressCallback?.invoke(-1, "解压不完整，缺少: ${missingLibs.joinToString()}")
+                progressCallback?.invoke(
+                    -1,
+                    RaLaunchApp.getInstance().getString(
+                        R.string.runtime_extract_incomplete_missing,
+                        missingLibs.joinToString()
+                    )
+                )
                 return@withContext false
             }
             
@@ -225,13 +242,22 @@ object RuntimeLibraryLoader {
             val extractedLibs = listExtractedLibraries(context)
             AppLogger.info(TAG, "Runtime libraries extracted: ${extractedLibs.joinToString()}")
             
-            progressCallback?.invoke(100, "解压完成")
+            progressCallback?.invoke(
+                100,
+                RaLaunchApp.getInstance().getString(R.string.extract_complete)
+            )
             AppLogger.info(TAG, "Runtime libraries extracted to: ${runtimeDir.absolutePath}")
             
             true
         } catch (e: Exception) {
             AppLogger.error(TAG, "Failed to extract runtime libs", e)
-            progressCallback?.invoke(-1, "解压失败: ${e.message}")
+            progressCallback?.invoke(
+                -1,
+                RaLaunchApp.getInstance().getString(
+                    R.string.runtime_extract_failed_with_reason,
+                    e.message ?: ""
+                )
+            )
             // 清理可能的不完整解压
             try {
                 runtimeDir.deleteRecursively()

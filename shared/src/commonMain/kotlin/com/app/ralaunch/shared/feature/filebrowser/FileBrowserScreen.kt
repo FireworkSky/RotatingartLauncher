@@ -22,6 +22,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.app.ralaunch.shared.generated.resources.*
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * 文件浏览器 Screen - 跨平台（双栏横屏布局）
@@ -29,7 +31,7 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun FileBrowserScreen(
     state: FileBrowserUiState,
-    title: String = "选择文件",
+    title: String? = null,
     onSearchQueryChange: (String) -> Unit,
     onSortModeChange: (SortMode) -> Unit,
     onFileClick: (FileItemData) -> Unit,
@@ -39,6 +41,7 @@ fun FileBrowserScreen(
     modifier: Modifier = Modifier
 ) {
     var showSortMenu by remember { mutableStateOf(false) }
+    val resolvedTitle = title ?: stringResource(Res.string.select_file)
 
     Column(
         modifier = modifier
@@ -47,7 +50,7 @@ fun FileBrowserScreen(
     ) {
         // 顶部栏
         FileBrowserTopBar(
-            title = title,
+            title = resolvedTitle,
             currentPath = state.currentPath,
             sortMode = state.sortMode,
             showSortMenu = showSortMenu,
@@ -60,7 +63,9 @@ fun FileBrowserScreen(
         )
 
         if (!state.hasPermission) {
-            PermissionRequestContent(onRequestPermission = onRequestPermission)
+            PermissionRequestContent(
+                onRequestPermission = onRequestPermission
+            )
         } else {
             FileBrowserContentLandscape(
                 state = state,
@@ -82,6 +87,12 @@ private fun FileBrowserTopBar(
     onSortModeChange: (SortMode) -> Unit,
     onBack: () -> Unit
 ) {
+    val backContentDescription = stringResource(Res.string.back)
+    val sortContentDescription = stringResource(Res.string.filebrowser_sort)
+    val sortByNameText = stringResource(Res.string.filebrowser_sort_name)
+    val sortBySizeText = stringResource(Res.string.filebrowser_sort_size)
+    val sortByTimeText = stringResource(Res.string.filebrowser_sort_time)
+
     Surface(
         modifier = Modifier.fillMaxWidth(),
         color = MaterialTheme.colorScheme.surface,
@@ -95,7 +106,7 @@ private fun FileBrowserTopBar(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 IconButton(onClick = onBack) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, "返回")
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, backContentDescription)
                 }
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
@@ -113,15 +124,15 @@ private fun FileBrowserTopBar(
                 }
                 Box {
                     IconButton(onClick = { onShowSortMenu(true) }) {
-                        Icon(Icons.Default.Sort, "排序")
+                        Icon(Icons.Default.Sort, sortContentDescription)
                     }
                     DropdownMenu(
                         expanded = showSortMenu,
                         onDismissRequest = { onShowSortMenu(false) }
                     ) {
-                        SortMenuItem("按名称", SortMode.NAME, sortMode, onSortModeChange)
-                        SortMenuItem("按大小", SortMode.SIZE, sortMode, onSortModeChange)
-                        SortMenuItem("按时间", SortMode.TIME, sortMode, onSortModeChange)
+                        SortMenuItem(sortByNameText, SortMode.NAME, sortMode, onSortModeChange)
+                        SortMenuItem(sortBySizeText, SortMode.SIZE, sortMode, onSortModeChange)
+                        SortMenuItem(sortByTimeText, SortMode.TIME, sortMode, onSortModeChange)
                     }
                 }
             }
@@ -225,6 +236,12 @@ private fun FileDetailPanel(
     modifier: Modifier = Modifier
 ) {
     val scrollState = rememberScrollState()
+    val detailSizeLabel = stringResource(Res.string.filebrowser_detail_size)
+    val detailPathLabel = stringResource(Res.string.filebrowser_detail_path)
+    val detailModifiedLabel = stringResource(Res.string.filebrowser_detail_modified_time)
+    val selectThisFileText = stringResource(Res.string.filebrowser_select_this_file)
+    val selectFilePromptText = stringResource(Res.string.filebrowser_select_prompt)
+    val unknownModifiedTimeText = stringResource(Res.string.filebrowser_unknown_time)
     
     Surface(
         modifier = modifier,
@@ -278,10 +295,13 @@ private fun FileDetailPanel(
                     Spacer(modifier = Modifier.height(12.dp))
 
                     // 文件信息
-                    FileInfoRow(label = "大小", value = formatFileSize(selectedFile.size))
-                    FileInfoRow(label = "路径", value = selectedFile.path)
+                    FileInfoRow(label = detailSizeLabel, value = formatFileSize(selectedFile.size))
+                    FileInfoRow(label = detailPathLabel, value = selectedFile.path)
                     if (selectedFile.lastModified > 0) {
-                        FileInfoRow(label = "修改时间", value = formatLastModified(selectedFile.lastModified))
+                        FileInfoRow(
+                            label = detailModifiedLabel,
+                            value = formatLastModified(selectedFile.lastModified, unknownModifiedTimeText)
+                        )
                     }
                 }
 
@@ -295,7 +315,7 @@ private fun FileDetailPanel(
                 ) {
                     Icon(Icons.Default.Check, null, modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text("选择此文件", style = MaterialTheme.typography.labelLarge)
+                    Text(selectThisFileText, style = MaterialTheme.typography.labelLarge)
                 }
             }
         } else {
@@ -316,7 +336,7 @@ private fun FileDetailPanel(
                     )
                     Spacer(modifier = Modifier.height(12.dp))
                     Text(
-                        text = "选择一个文件",
+                        text = selectFilePromptText,
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
                     )
@@ -356,8 +376,8 @@ private fun getFileIcon(file: FileItemData): androidx.compose.ui.graphics.vector
     }
 }
 
-private fun formatLastModified(timestamp: Long): String {
-    if (timestamp <= 0) return "未知"
+private fun formatLastModified(timestamp: Long, unknownText: String): String {
+    if (timestamp <= 0) return unknownText
     val date = java.util.Date(timestamp)
     val format = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm", java.util.Locale.getDefault())
     return format.format(date)
@@ -369,16 +389,23 @@ private fun SearchBar(
     onQueryChange: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val searchPlaceholderText = stringResource(Res.string.filebrowser_search_hint)
+    val clearSearchContentDescription = stringResource(Res.string.content_desc_clear)
+
     OutlinedTextField(
         value = query,
         onValueChange = onQueryChange,
         modifier = modifier.fillMaxWidth().height(40.dp),
-        placeholder = { Text("搜索...", style = MaterialTheme.typography.labelMedium) },
+        placeholder = { Text(searchPlaceholderText, style = MaterialTheme.typography.labelMedium) },
         leadingIcon = { Icon(Icons.Default.Search, null, modifier = Modifier.size(18.dp)) },
         trailingIcon = {
             if (query.isNotEmpty()) {
                 IconButton(onClick = { onQueryChange("") }, modifier = Modifier.size(28.dp)) {
-                    Icon(Icons.Default.Clear, "清除", modifier = Modifier.size(16.dp))
+                    Icon(
+                        Icons.Default.Clear,
+                        clearSearchContentDescription,
+                        modifier = Modifier.size(16.dp)
+                    )
                 }
             }
         },
@@ -511,6 +538,8 @@ private fun FileInfo(file: FileItemData, modifier: Modifier = Modifier) {
 
 @Composable
 private fun EmptyFileList() {
+    val emptyFolderText = stringResource(Res.string.filebrowser_directory_empty)
+
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
@@ -524,7 +553,7 @@ private fun EmptyFileList() {
             )
             Spacer(modifier = Modifier.height(16.dp))
             Text(
-                text = "文件夹为空",
+                text = emptyFolderText,
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -533,7 +562,13 @@ private fun EmptyFileList() {
 }
 
 @Composable
-private fun PermissionRequestContent(onRequestPermission: () -> Unit) {
+private fun PermissionRequestContent(
+    onRequestPermission: () -> Unit
+) {
+    val permissionRequiredText = stringResource(Res.string.filebrowser_storage_permission_required)
+    val permissionDescriptionText = stringResource(Res.string.filebrowser_storage_permission_desc)
+    val grantPermissionText = stringResource(Res.string.permission_grant)
+
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
@@ -550,13 +585,13 @@ private fun PermissionRequestContent(onRequestPermission: () -> Unit) {
             )
             Spacer(modifier = Modifier.height(24.dp))
             Text(
-                text = "需要存储权限",
+                text = permissionRequiredText,
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "请授予存储访问权限以浏览文件",
+                text = permissionDescriptionText,
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -567,7 +602,7 @@ private fun PermissionRequestContent(onRequestPermission: () -> Unit) {
             ) {
                 Icon(Icons.Default.Security, null)
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("授予权限")
+                Text(grantPermissionText)
             }
         }
     }

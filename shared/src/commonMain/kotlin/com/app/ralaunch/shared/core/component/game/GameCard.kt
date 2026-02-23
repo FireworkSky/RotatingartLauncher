@@ -216,31 +216,3 @@ private fun GameCardIconSection(
         }
     }
 }
-
-@Composable
-private fun GameCardInfoSection(
-    name: String,
-    isShortcut: Boolean
-) {
-    Column(modifier = Modifier.padding(12.dp)) {
-        Text(
-            text = name,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
-
-        if (isShortcut) {
-            Spacer(modifier = Modifier.height(4.dp))
-            AssistChip(
-                onClick = {},
-                label = { Text("快捷方式", style = MaterialTheme.typography.labelSmall) },
-                modifier = Modifier.height(24.dp),
-                colors = AssistChipDefaults.assistChipColors(
-                    containerColor = MaterialTheme.colorScheme.tertiaryContainer
-                )
-            )
-        }
-    }
-}

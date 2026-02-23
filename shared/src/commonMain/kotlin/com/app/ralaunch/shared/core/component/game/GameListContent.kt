@@ -48,6 +48,16 @@ fun GameListContent(
     onDeleteClick: () -> Unit,
     onEditClick: () -> Unit = {},
     onAddClick: () -> Unit = {},
+    noSelectionTitle: String,
+    noSelectionMessage: String,
+    emptyGamesTitle: String,
+    emptyGamesMessage: String,
+    addGameButtonText: String,
+    launchGameButtonText: String,
+    editActionContentDescription: String,
+    deleteActionContentDescription: String,
+    moreActionsContentDescription: String,
+    collapseActionsContentDescription: String,
     isLoading: Boolean = false,
     modifier: Modifier = Modifier,
     iconLoader: @Composable (String?, Modifier) -> Unit = { _, _ -> }
@@ -70,6 +80,9 @@ fun GameListContent(
                 onGameClick = onGameClick,
                 onGameLongClick = onGameLongClick,
                 onAddClick = onAddClick,
+                emptyGamesTitle = emptyGamesTitle,
+                emptyGamesMessage = emptyGamesMessage,
+                addGameButtonText = addGameButtonText,
                 isLoading = isLoading,
                 iconLoader = iconLoader,
                 modifier = Modifier.fillMaxSize()
@@ -91,6 +104,13 @@ fun GameListContent(
                 onLaunchClick = onLaunchClick,
                 onDeleteClick = onDeleteClick,
                 onEditClick = onEditClick,
+                noSelectionTitle = noSelectionTitle,
+                noSelectionMessage = noSelectionMessage,
+                launchGameButtonText = launchGameButtonText,
+                editActionContentDescription = editActionContentDescription,
+                deleteActionContentDescription = deleteActionContentDescription,
+                moreActionsContentDescription = moreActionsContentDescription,
+                collapseActionsContentDescription = collapseActionsContentDescription,
                 iconLoader = iconLoader,
                 modifier = Modifier.fillMaxSize()
             )
@@ -105,13 +125,21 @@ private fun GameGridSection(
     onGameClick: (GameItemUi) -> Unit,
     onGameLongClick: (GameItemUi) -> Unit,
     onAddClick: () -> Unit,
+    emptyGamesTitle: String,
+    emptyGamesMessage: String,
+    addGameButtonText: String,
     isLoading: Boolean,
     iconLoader: @Composable (String?, Modifier) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Box(modifier = modifier) {
         if (games.isEmpty() && !isLoading) {
-            EmptyGameListContent(onAddClick = onAddClick)
+            EmptyGameListContent(
+                onAddClick = onAddClick,
+                title = emptyGamesTitle,
+                message = emptyGamesMessage,
+                addButtonText = addGameButtonText
+            )
         } else {
             LazyVerticalGrid(
                 columns = GridCells.Adaptive(minSize = 160.dp),
@@ -157,6 +185,13 @@ private fun DetailSection(
     onLaunchClick: () -> Unit,
     onDeleteClick: () -> Unit,
     onEditClick: () -> Unit,
+    noSelectionTitle: String,
+    noSelectionMessage: String,
+    launchGameButtonText: String,
+    editActionContentDescription: String,
+    deleteActionContentDescription: String,
+    moreActionsContentDescription: String,
+    collapseActionsContentDescription: String,
     iconLoader: @Composable (String?, Modifier) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -175,10 +210,18 @@ private fun DetailSection(
                     onLaunchClick = onLaunchClick,
                     onDeleteClick = onDeleteClick,
                     onEditClick = onEditClick,
+                    launchButtonText = launchGameButtonText,
+                    editContentDescription = editActionContentDescription,
+                    deleteContentDescription = deleteActionContentDescription,
+                    moreOptionsContentDescription = moreActionsContentDescription,
+                    collapseOptionsContentDescription = collapseActionsContentDescription,
                     iconLoader = iconLoader
                 )
             } else {
-                EmptySelectionContent()
+                EmptySelectionContent(
+                    title = noSelectionTitle,
+                    message = noSelectionMessage
+                )
             }
         }
     }
@@ -188,7 +231,11 @@ private fun DetailSection(
  * 空选择状态组件 - 带发光图标
  */
 @Composable
-fun EmptySelectionContent(modifier: Modifier = Modifier) {
+fun EmptySelectionContent(
+    title: String,
+    message: String,
+    modifier: Modifier = Modifier
+) {
     val primaryColor = MaterialTheme.colorScheme.primary
 
     Column(
@@ -227,14 +274,14 @@ fun EmptySelectionContent(modifier: Modifier = Modifier) {
         }
         Spacer(modifier = Modifier.height(20.dp))
         Text(
-            text = "选择一个游戏",
+            text = title,
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Medium,
             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            text = "从左侧列表中选择要启动的游戏",
+            text = message,
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
         )
@@ -247,6 +294,9 @@ fun EmptySelectionContent(modifier: Modifier = Modifier) {
 @Composable
 fun EmptyGameListContent(
     onAddClick: () -> Unit,
+    title: String,
+    message: String,
+    addButtonText: String,
     modifier: Modifier = Modifier
 ) {
     val primaryColor = MaterialTheme.colorScheme.primary
@@ -287,14 +337,14 @@ fun EmptyGameListContent(
             }
             Spacer(modifier = Modifier.height(20.dp))
             Text(
-                text = "还没有游戏",
+                text = title,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "点击下方按钮添加你的第一个游戏",
+                text = message,
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
             )
@@ -309,7 +359,7 @@ fun EmptyGameListContent(
                     modifier = Modifier.size(20.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("导入游戏")
+                Text(addButtonText)
             }
         }
     }

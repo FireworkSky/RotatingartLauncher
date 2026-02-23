@@ -12,14 +12,15 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelStoreOwner
 import com.app.ralaunch.shared.core.contract.repository.SettingsRepositoryV2
 import com.app.ralaunch.shared.core.component.dialogs.*
-import com.app.ralaunch.shared.feature.settings.*
 import com.app.ralaunch.shared.core.theme.AppThemeState
+import com.app.ralaunch.shared.feature.settings.*
 import com.app.ralaunch.core.ui.dialog.PatchManagementDialogCompose
 import com.app.ralaunch.core.common.util.AssetIntegrityChecker
 import com.app.ralaunch.R
@@ -167,7 +168,7 @@ fun SettingsScreenWrapper(
                         backgroundType = uiState.backgroundType,
                         backgroundOpacity = uiState.backgroundOpacity,
                         videoPlaybackSpeed = uiState.videoPlaybackSpeed,
-                        language = uiState.language
+                        language = LocaleManager.getLanguageDisplayName(uiState.language)
                     ),
                     onThemeModeChange = { viewModel.onEvent(SettingsEvent.SetThemeMode(it)) },
                     onThemeColorClick = { viewModel.onEvent(SettingsEvent.OpenThemeColorSelector) },
@@ -316,7 +317,7 @@ fun SettingsScreenWrapper(
 
     if (showLanguageDialog) {
         LanguageSelectDialog(
-            currentLanguage = getLanguageCode(uiState.language),
+            currentLanguage = uiState.language,
             onSelect = { code ->
                 LocaleManager.setLanguage(context, code)
                 viewModel.onEvent(SettingsEvent.SetLanguage(code))
@@ -364,14 +365,16 @@ fun SettingsScreenWrapper(
             onClear = {
                 clearLogs(context)
                 logs = emptyList()
-                Toast.makeText(context, "日志已清除", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, context.getString(R.string.settings_logs_cleared), Toast.LENGTH_SHORT).show()
             },
             onDismiss = { showLogViewerDialog = false }
         )
     }
 
     if (showLicenseDialog) {
-        LicenseDialog(onDismiss = { showLicenseDialog = false })
+        LicenseDialog(
+            onDismiss = { showLicenseDialog = false }
+        )
     }
     
     if (showPatchManagementDialog) {
@@ -392,7 +395,7 @@ fun SettingsScreenWrapper(
                         this.multiplayerEnabled = true
                     }
                 }
-                Toast.makeText(context, "联机功能已启用", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, context.getString(R.string.settings_multiplayer_enabled), Toast.LENGTH_SHORT).show()
             },
             onDismiss = {
                 showMultiplayerDisclaimerDialog = false
@@ -418,14 +421,14 @@ fun SettingsScreenWrapper(
                             Toast.makeText(context, fixResult.message, Toast.LENGTH_LONG).show()
                             if (fixResult.needsRestart) {
                                 // 提示需要重启
-                                Toast.makeText(context, "请重启应用以完成修复", Toast.LENGTH_LONG).show()
+                                Toast.makeText(context, context.getString(R.string.settings_fix_restart_required), Toast.LENGTH_LONG).show()
                             }
                             showAssetCheckDialog = false
                             // 重新检查
                             assetCheckResult = AssetIntegrityChecker.checkIntegrity(context)
                             assetStatusSummary = AssetIntegrityChecker.getStatusSummary(context)
                         } else {
-                            Toast.makeText(context, "修复失败: ${fixResult.message}", Toast.LENGTH_LONG).show()
+                            Toast.makeText(context, context.getString(R.string.settings_fix_failed, fixResult.message), Toast.LENGTH_LONG).show()
                         }
                     }
                 }
@@ -447,13 +450,13 @@ fun SettingsScreenWrapper(
                     tint = MaterialTheme.colorScheme.primary
                 )
             },
-            title = { Text("重新解压运行时库") },
+            title = { Text(stringResource(R.string.settings_reextract_runtime_title)) },
             text = {
                 Column {
-                    Text("此操作将删除现有运行时库并重新解压。")
+                    Text(stringResource(R.string.settings_reextract_runtime_message))
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        "如果游戏启动失败或提示库文件缺失，可以尝试此操作。",
+                        stringResource(R.string.settings_reextract_runtime_hint),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -463,7 +466,7 @@ fun SettingsScreenWrapper(
                             modifier = Modifier.fillMaxWidth()
                         )
                         Text(
-                            "正在解压...",
+                            stringResource(R.string.settings_reextract_runtime_in_progress),
                             style = MaterialTheme.typography.bodySmall,
                             modifier = Modifier.padding(top = 8.dp)
                         )
@@ -483,21 +486,21 @@ fun SettingsScreenWrapper(
                                 showReExtractConfirmDialog = false
                                 
                                 if (result) {
-                                    Toast.makeText(context, "运行时库重新解压成功", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(context, context.getString(R.string.settings_reextract_runtime_success), Toast.LENGTH_SHORT).show()
                                 } else {
-                                    Toast.makeText(context, "运行时库重新解压失败", Toast.LENGTH_LONG).show()
+                                    Toast.makeText(context, context.getString(R.string.settings_reextract_runtime_failed), Toast.LENGTH_LONG).show()
                                 }
                                 // 刷新状态
                                 assetStatusSummary = AssetIntegrityChecker.getStatusSummary(context)
                             } catch (e: Exception) {
                                 isReExtracting = false
-                                Toast.makeText(context, "解压失败: ${e.message}", Toast.LENGTH_LONG).show()
+                                Toast.makeText(context, context.getString(R.string.settings_extract_failed_with_reason, e.message ?: ""), Toast.LENGTH_LONG).show()
                             }
                         }
                     },
                     enabled = !isReExtracting
                 ) {
-                    Text("确认解压")
+                    Text(stringResource(R.string.settings_confirm_extract))
                 }
             },
             dismissButton = {
@@ -505,7 +508,7 @@ fun SettingsScreenWrapper(
                     onClick = { showReExtractConfirmDialog = false },
                     enabled = !isReExtracting
                 ) {
-                    Text("取消")
+                    Text(stringResource(R.string.cancel))
                 }
             }
         )

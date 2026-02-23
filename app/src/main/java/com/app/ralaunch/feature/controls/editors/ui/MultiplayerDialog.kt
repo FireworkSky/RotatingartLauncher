@@ -17,9 +17,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.ClipboardManager
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.app.ralaunch.R
 
 /**
  * 联机模式
@@ -76,6 +78,7 @@ fun MultiplayerDialog(
         )
     }
     var showCopied by remember { mutableStateOf(false) }
+    val invalidInviteCodeText = stringResource(R.string.control_editor_multiplayer_invalid_invite_code)
     
     // 生成随机房间名和密码
     fun generateRoomCredentials(): Pair<String, String> {
@@ -180,7 +183,7 @@ fun MultiplayerDialog(
                                     modifier = Modifier.size(28.dp)
                                 )
                                 Text(
-                                    text = "联机菜单",
+                                    text = stringResource(R.string.control_editor_multiplayer_menu),
                                     style = MaterialTheme.typography.titleLarge,
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.onSurface
@@ -192,8 +195,12 @@ fun MultiplayerDialog(
                             // 我想当房主 - 点击直接创建房间
                             MultiplayerOptionItem(
                                 icon = Icons.Default.Home,
-                                title = "我想当房主",
-                                subtitle = if (isCreatingRoom) "正在创建..." else "创建房间并生成邀请码",
+                                title = stringResource(R.string.control_editor_multiplayer_i_want_host),
+                                subtitle = if (isCreatingRoom) {
+                                    stringResource(R.string.control_editor_multiplayer_creating_short)
+                                } else {
+                                    stringResource(R.string.control_editor_multiplayer_create_and_generate_code)
+                                },
                                 isSelected = selectedMode == MultiplayerMode.CREATE_ROOM,
                                 onClick = { 
                                     selectedMode = MultiplayerMode.CREATE_ROOM
@@ -205,8 +212,8 @@ fun MultiplayerDialog(
                             // 我想当房客
                             MultiplayerOptionItem(
                                 icon = Icons.Default.People,
-                                title = "我想当房客",
-                                subtitle = "输入房主提供的邀请码",
+                                title = stringResource(R.string.control_editor_multiplayer_i_want_guest),
+                                subtitle = stringResource(R.string.control_editor_multiplayer_enter_invite_code),
                                 isSelected = selectedMode == MultiplayerMode.JOIN_ROOM,
                                 onClick = { selectedMode = MultiplayerMode.JOIN_ROOM }
                             )
@@ -219,11 +226,11 @@ fun MultiplayerDialog(
                                 colors = ButtonDefaults.textButtonColors(
                                     contentColor = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
-                            ) {
-                                Icon(Icons.Default.BugReport, contentDescription = null, modifier = Modifier.size(18.dp))
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text("诊断")
-                            }
+                                ) {
+                                    Icon(Icons.Default.BugReport, contentDescription = null, modifier = Modifier.size(18.dp))
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text(stringResource(R.string.control_editor_diagnosis))
+                                }
                             
                             // 关闭按钮
                             TextButton(
@@ -231,11 +238,11 @@ fun MultiplayerDialog(
                                 colors = ButtonDefaults.textButtonColors(
                                     contentColor = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
-                            ) {
-                                Icon(Icons.Default.Close, contentDescription = null, modifier = Modifier.size(18.dp))
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text("关闭")
-                            }
+                                ) {
+                                    Icon(Icons.Default.Close, contentDescription = null, modifier = Modifier.size(18.dp))
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text(stringResource(R.string.close))
+                                }
                         }
                         
                         // 分隔线
@@ -273,7 +280,7 @@ fun MultiplayerDialog(
                                         onJoinRoom = {
                                             val decoded = InviteCodeUtils.decode(inviteCode)
                                             if (decoded == null) {
-                                                showError = "无效的邀请码"
+                                                showError = invalidInviteCodeText
                                                 return@JoinRoomDialogContent
                                             }
                                             showError = null
@@ -297,7 +304,7 @@ fun MultiplayerDialog(
                                         )
                                         Spacer(modifier = Modifier.height(12.dp))
                                         Text(
-                                            text = "请选择联机方式",
+                                            text = stringResource(R.string.control_editor_multiplayer_select_mode),
                                             style = MaterialTheme.typography.bodyLarge,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
@@ -390,7 +397,7 @@ private fun UnavailableContent(
         )
         Spacer(modifier = Modifier.height(16.dp))
         Text(
-            text = "联机功能不可用",
+            text = stringResource(R.string.control_editor_multiplayer_unavailable),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface
@@ -403,7 +410,7 @@ private fun UnavailableContent(
         )
         Spacer(modifier = Modifier.height(24.dp))
         Button(onClick = onDismiss) {
-            Text("关闭")
+            Text(stringResource(R.string.close))
         }
     }
 }
@@ -435,12 +442,12 @@ private fun CreateRoomDialogContent(
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    text = "正在创建房间...",
+                    text = stringResource(R.string.control_editor_multiplayer_creating_room),
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    text = "正在连接公共服务器...",
+                    text = stringResource(R.string.control_editor_multiplayer_connecting_public_server),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -469,7 +476,7 @@ private fun CreateRoomDialogContent(
                 ) {
                     Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("重试")
+                    Text(stringResource(R.string.retry))
                 }
             }
             
@@ -483,7 +490,7 @@ private fun CreateRoomDialogContent(
                 )
                 Spacer(modifier = Modifier.height(12.dp))
                 Text(
-                    text = "房间已创建",
+                    text = stringResource(R.string.control_editor_multiplayer_room_created),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
@@ -501,7 +508,7 @@ private fun CreateRoomDialogContent(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
-                            text = "邀请码",
+                            text = stringResource(R.string.control_editor_multiplayer_invite_code),
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -535,14 +542,18 @@ private fun CreateRoomDialogContent(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        if (showCopied) "已复制" else "复制邀请码",
+                        if (showCopied) {
+                            stringResource(R.string.control_editor_multiplayer_copied)
+                        } else {
+                            stringResource(R.string.control_editor_multiplayer_copy_invite_code)
+                        },
                         fontWeight = FontWeight.Bold
                     )
                 }
                 
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "分享邀请码给好友加入房间",
+                    text = stringResource(R.string.control_editor_multiplayer_share_invite_code_hint),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -558,12 +569,12 @@ private fun CreateRoomDialogContent(
                 )
                 Spacer(modifier = Modifier.height(12.dp))
                 Text(
-                    text = "点击左侧「我想当房主」",
+                    text = stringResource(R.string.control_editor_multiplayer_click_host_left),
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
-                    text = "自动创建房间并生成邀请码",
+                    text = stringResource(R.string.control_editor_multiplayer_auto_create_hint),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                 )
@@ -588,7 +599,7 @@ private fun JoinRoomDialogContent(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         Text(
-            text = "请输入房主提供的邀请码",
+            text = stringResource(R.string.control_editor_multiplayer_enter_invite_code),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface
@@ -597,7 +608,12 @@ private fun JoinRoomDialogContent(
         OutlinedTextField(
             value = inviteCode,
             onValueChange = onInviteCodeChange,
-            placeholder = { Text("U/XXXX-XXXX-XXXX", color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)) },
+            placeholder = {
+                Text(
+                    stringResource(R.string.control_editor_multiplayer_invite_code_placeholder),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                )
+            },
             singleLine = true,
             modifier = Modifier.fillMaxWidth(),
             colors = OutlinedTextFieldDefaults.colors(
@@ -612,7 +628,7 @@ private fun JoinRoomDialogContent(
                 ) {
                     Icon(
                         Icons.Default.ContentPaste,
-                        contentDescription = "粘贴",
+                        contentDescription = stringResource(R.string.control_editor_paste),
                         tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                     )
                 }
@@ -640,7 +656,7 @@ private fun JoinRoomDialogContent(
             ) {
                 Icon(Icons.Default.ContentPaste, contentDescription = null, modifier = Modifier.size(18.dp))
                 Spacer(modifier = Modifier.width(4.dp))
-                Text("粘贴")
+                Text(stringResource(R.string.control_editor_paste))
             }
             
             Button(
@@ -653,7 +669,7 @@ private fun JoinRoomDialogContent(
             ) {
                 Icon(Icons.Default.Login, contentDescription = null, modifier = Modifier.size(18.dp))
                 Spacer(modifier = Modifier.width(4.dp))
-                Text("加入", fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.control_editor_join), fontWeight = FontWeight.Bold)
             }
         }
     }
@@ -677,7 +693,7 @@ private fun ConnectingDialogContent(onDismiss: () -> Unit) {
         )
         Spacer(modifier = Modifier.height(16.dp))
         Text(
-            text = "正在连接房间...",
+            text = stringResource(R.string.control_editor_multiplayer_connecting_room),
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurface
         )
@@ -686,7 +702,7 @@ private fun ConnectingDialogContent(onDismiss: () -> Unit) {
             onClick = onDismiss,
             colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurfaceVariant)
         ) {
-            Text("取消")
+            Text(stringResource(R.string.cancel))
         }
     }
 }
@@ -735,7 +751,7 @@ private fun ConnectedDialogContent(
                     modifier = Modifier.size(28.dp)
                 )
                 Text(
-                    text = "已连接",
+                    text = stringResource(R.string.control_editor_multiplayer_connected),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.tertiary
@@ -763,9 +779,12 @@ private fun ConnectedDialogContent(
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = when {
-                            state.multiplayerPeerCount > 0 -> "在线人数: ${state.multiplayerPeerCount + 1}"
-                            state.multiplayerIsHost -> "等待玩家加入..."
-                            else -> "正在寻找房主..."
+                            state.multiplayerPeerCount > 0 -> stringResource(
+                                R.string.control_editor_multiplayer_online_count,
+                                state.multiplayerPeerCount + 1
+                            )
+                            state.multiplayerIsHost -> stringResource(R.string.control_editor_multiplayer_waiting_players)
+                            else -> stringResource(R.string.control_editor_multiplayer_searching_host)
                         },
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurface
@@ -785,7 +804,7 @@ private fun ConnectedDialogContent(
             ) {
                 Icon(Icons.Default.Close, contentDescription = null, modifier = Modifier.size(18.dp))
                 Spacer(modifier = Modifier.width(4.dp))
-                Text("断开连接")
+                Text(stringResource(R.string.control_editor_multiplayer_disconnect))
             }
             
             TextButton(
@@ -793,7 +812,7 @@ private fun ConnectedDialogContent(
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurfaceVariant)
             ) {
-                Text("返回游戏")
+                Text(stringResource(R.string.control_editor_back_to_game))
             }
         }
         
@@ -824,7 +843,11 @@ private fun ConnectedDialogContent(
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(
-                        text = if (state.multiplayerIsHost) "游戏服务器地址" else "游戏连接地址",
+                        text = if (state.multiplayerIsHost) {
+                            stringResource(R.string.control_editor_multiplayer_game_server_address)
+                        } else {
+                            stringResource(R.string.control_editor_multiplayer_game_connect_address)
+                        },
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -848,7 +871,7 @@ private fun ConnectedDialogContent(
                         ) {
                             Icon(
                                 Icons.Default.ContentCopy,
-                                contentDescription = "复制",
+                                contentDescription = stringResource(R.string.copy),
                                 tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                             )
                         }
@@ -856,7 +879,7 @@ private fun ConnectedDialogContent(
                     // 游戏端口说明
                     Column {
                         Text(
-                            text = "游戏端口：泰拉瑞亚 7777 / 星露谷 24642",
+                            text = stringResource(R.string.control_editor_multiplayer_game_ports),
                             style = MaterialTheme.typography.bodySmall,
                             fontWeight = FontWeight.Medium,
                             color = MaterialTheme.colorScheme.tertiary
@@ -864,9 +887,15 @@ private fun ConnectedDialogContent(
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             text = if (state.multiplayerIsHost) 
-                                "房主开服后，其他玩家在游戏中连接 $gameAddress:端口" 
+                                stringResource(
+                                    R.string.control_editor_multiplayer_host_game_address_hint,
+                                    gameAddress
+                                )
                             else 
-                                "在游戏「多人游戏」→「通过IP加入」输入 $gameAddress:端口",
+                                stringResource(
+                                    R.string.control_editor_multiplayer_guest_game_address_hint,
+                                    gameAddress
+                                ),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -892,7 +921,7 @@ private fun ConnectedDialogContent(
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = "分享邀请码给好友",
+                                text = stringResource(R.string.control_editor_multiplayer_share_invite_code),
                                 style = MaterialTheme.typography.labelMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -920,7 +949,7 @@ private fun ConnectedDialogContent(
                             ) {
                                 Icon(Icons.Default.ContentCopy, contentDescription = null, modifier = Modifier.size(16.dp))
                                 Spacer(modifier = Modifier.width(4.dp))
-                                Text("复制", style = MaterialTheme.typography.labelMedium)
+                                Text(stringResource(R.string.copy), style = MaterialTheme.typography.labelMedium)
                             }
                         }
                     }
@@ -945,7 +974,7 @@ private fun ConnectedDialogContent(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "已复制到剪贴板",
+                            text = stringResource(R.string.control_editor_multiplayer_copied_to_clipboard),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.tertiary
                         )

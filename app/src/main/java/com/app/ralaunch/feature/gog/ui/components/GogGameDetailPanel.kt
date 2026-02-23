@@ -102,7 +102,7 @@ private fun GogGameDetailContent(
 
         // 游戏 ID
         Text(
-            text = "ID: ${game.id}",
+            text = stringResource(R.string.gog_game_id, game.id),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -159,7 +159,7 @@ private fun GogGameDetailContent(
 
         // 提示文字
         Text(
-            text = "点击下载游戏和 ModLoader",
+            text = stringResource(R.string.gog_download_game_modloader_hint),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
             modifier = Modifier.align(Alignment.CenterHorizontally)

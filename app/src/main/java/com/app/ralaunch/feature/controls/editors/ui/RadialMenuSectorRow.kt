@@ -11,8 +11,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.app.ralaunch.R
 import com.app.ralaunch.feature.controls.ControlData
 import com.app.ralaunch.core.ui.dialog.KeyBindingDialog
 
@@ -51,7 +53,7 @@ fun RadialMenuSectorRow(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                "扇区 ${index + 1}",
+                stringResource(R.string.control_editor_sector_label_number, index + 1),
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.SemiBold,
                 color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
@@ -63,7 +65,7 @@ fun RadialMenuSectorRow(
                     modifier = Modifier.height(18.dp)
                 ) {
                     Text(
-                        "已选中",
+                        stringResource(R.string.control_editor_selected),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onPrimary,
                         modifier = Modifier.padding(horizontal = 6.dp)
@@ -80,7 +82,7 @@ fun RadialMenuSectorRow(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("标签", style = MaterialTheme.typography.bodySmall)
+            Text(stringResource(R.string.control_editor_label), style = MaterialTheme.typography.bodySmall)
             if (isEditingLabel) {
                 OutlinedTextField(
                     value = editLabel,
@@ -96,7 +98,7 @@ fun RadialMenuSectorRow(
                             },
                             modifier = Modifier.size(20.dp)
                         ) {
-                            Icon(Icons.Default.Check, contentDescription = "确认", modifier = Modifier.size(16.dp))
+                            Icon(Icons.Default.Check, contentDescription = stringResource(R.string.confirm), modifier = Modifier.size(16.dp))
                         }
                     }
                 )
@@ -107,7 +109,7 @@ fun RadialMenuSectorRow(
                     contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
                 ) {
                     Text(
-                        sector.label.ifEmpty { "未设置" },
+                        sector.label.ifEmpty { stringResource(R.string.editor_combo_keys_not_set) },
                         style = MaterialTheme.typography.bodySmall,
                         maxLines = 1
                     )
@@ -123,7 +125,7 @@ fun RadialMenuSectorRow(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("按键", style = MaterialTheme.typography.bodySmall)
+            Text(stringResource(R.string.editor_key_mapping), style = MaterialTheme.typography.bodySmall)
             OutlinedButton(
                 onClick = { showKeyDialog = true },
                 modifier = Modifier.height(36.dp),
@@ -136,7 +138,7 @@ fun RadialMenuSectorRow(
                         .removePrefix("XBOX_BUTTON_")
                         .removePrefix("XBOX_TRIGGER_")
                         .removePrefix("SPECIAL_")
-                        .let { if (it == "UNKNOWN") "未绑定" else it },
+                        .let { if (it == "UNKNOWN") stringResource(R.string.editor_key_not_bound) else it },
                     style = MaterialTheme.typography.bodySmall,
                     maxLines = 1
                 )

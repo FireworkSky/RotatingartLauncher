@@ -22,6 +22,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -141,7 +142,7 @@ private fun DownloadOptionCard(
                         contentColor = Color.White
                     )
                 ) {
-                    Text("进入", fontWeight = FontWeight.Medium)
+                    Text(stringResource(R.string.download_enter), fontWeight = FontWeight.Medium)
                 }
             }
         }
@@ -252,7 +253,7 @@ private fun GogTabContent(
             )
         },
         onLoginError = { error ->
-            Toast.makeText(context, "登录失败: $error", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, context.getString(R.string.gog_login_error, error), Toast.LENGTH_SHORT).show()
         },
         modifier = Modifier.fillMaxSize()
     )
@@ -451,7 +452,7 @@ private fun handleGameClick(
                 }
                 
                 if (linuxInstallers.isEmpty()) {
-                    Toast.makeText(context, "该游戏没有 Linux 版本", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, context.getString(R.string.gog_no_linux_version), Toast.LENGTH_SHORT).show()
                 } else {
                     onShowDownloadDialog(linuxInstallers, updatedRule)
                 }
@@ -476,7 +477,7 @@ private fun startDownload(
     onDownloadComplete: (gamePath: String?, modLoaderPath: String?) -> Unit
 ) {
     if (gameFile == null) {
-        Toast.makeText(context, "请选择游戏版本", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, context.getString(R.string.gog_select_game_version_prompt), Toast.LENGTH_SHORT).show()
         return
     }
 
@@ -545,6 +546,7 @@ private fun startDownload(
                 downloadFromUrl(
                     url = modLoaderVersion.url,
                     targetFile = modLoaderTargetFile,
+                    context = context,
                     onProgress = { downloaded, total, speed ->
                         scope.launch(Dispatchers.Main) {
                             onStatusChange(DownloadStatus.Downloading(
@@ -565,16 +567,16 @@ private fun startDownload(
             withContext(Dispatchers.Main) {
                 onDownloadComplete(downloadedGamePath, downloadedModLoaderPath)
                 onStatusChange(DownloadStatus.Completed(downloadedGamePath, downloadedModLoaderPath))
-                Toast.makeText(context, "下载完成", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, context.getString(R.string.gog_download_complete), Toast.LENGTH_SHORT).show()
             }
 
         } catch (e: Exception) {
             AppLogger.error("DownloadScreen", "下载失败", e)
             withContext(Dispatchers.Main) {
                 val errorMsg = if (e.message?.contains("cancelled") == true) {
-                    "下载已取消"
+                    context.getString(R.string.gog_download_cancelled)
                 } else {
-                    e.message ?: "未知错误"
+                    e.message ?: context.getString(R.string.common_unknown_error)
                 }
                 onStatusChange(DownloadStatus.Failed(errorMsg))
             }
@@ -588,6 +590,7 @@ private fun startDownload(
 private fun downloadFromUrl(
     url: String,
     targetFile: File,
+    context: android.content.Context,
     onProgress: (downloaded: Long, total: Long, speed: Long) -> Unit
 ) {
     val conn = java.net.URL(url).openConnection() as java.net.HttpURLConnection
@@ -598,7 +601,7 @@ private fun downloadFromUrl(
         conn.setRequestProperty("User-Agent", "Mozilla/5.0")
 
         val code = conn.responseCode
-        if (code >= 400) throw java.io.IOException("Download failed, HTTP $code")
+        if (code >= 400) throw java.io.IOException(context.getString(R.string.gog_error_download_failed, code))
 
         val total = conn.contentLengthLong
         var lastTime = System.currentTimeMillis()

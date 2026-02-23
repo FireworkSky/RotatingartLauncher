@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
+import com.app.ralaunch.R
 import com.app.ralaunch.feature.patch.data.PatchManager
 import com.app.ralaunch.core.platform.runtime.renderer.RendererRegistry
 import com.app.ralaunch.shared.core.component.dialogs.RendererOption
@@ -63,11 +64,11 @@ internal suspend fun handleImageSelection(context: Context, uri: Uri, viewModel:
 
                 viewModel.onEvent(SettingsEvent.SetBackgroundType(1))
                 viewModel.onEvent(SettingsEvent.SetBackgroundOpacity(90))
-                Toast.makeText(context, "背景图片已设置", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, context.getString(R.string.appearance_background_image_set), Toast.LENGTH_SHORT).show()
             }
         } catch (e: Exception) {
             withContext(Dispatchers.Main) {
-                Toast.makeText(context, "设置背景失败: ${e.message}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, context.getString(R.string.settings_background_set_failed, e.message ?: ""), Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -105,11 +106,11 @@ internal suspend fun handleVideoSelection(context: Context, uri: Uri, viewModel:
 
                 viewModel.onEvent(SettingsEvent.SetBackgroundType(2))
                 viewModel.onEvent(SettingsEvent.SetBackgroundOpacity(90))
-                Toast.makeText(context, "背景视频已设置", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, context.getString(R.string.appearance_background_video_set), Toast.LENGTH_SHORT).show()
             }
         } catch (e: Exception) {
             withContext(Dispatchers.Main) {
-                Toast.makeText(context, "设置背景失败: ${e.message}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, context.getString(R.string.settings_background_set_failed, e.message ?: ""), Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -121,7 +122,7 @@ internal fun openUrl(context: Context, url: String) {
     try {
         context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
     } catch (e: Exception) {
-        Toast.makeText(context, "无法打开链接", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, context.getString(R.string.settings_cannot_open_url), Toast.LENGTH_SHORT).show()
     }
 }
 
@@ -129,7 +130,7 @@ internal fun openSponsorsPage(context: Context) {
     try {
         context.startActivity(Intent(context, SponsorsActivity::class.java))
     } catch (e: Exception) {
-        Toast.makeText(context, "无法打开赞助商页面", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, context.getString(R.string.settings_cannot_open_sponsors), Toast.LENGTH_SHORT).show()
     }
 }
 
@@ -137,7 +138,7 @@ internal fun loadLogs(context: Context): List<String> {
     return try {
         LogcatReader.getInstance()?.logFile?.readLines()?.takeLast(500) ?: emptyList()
     } catch (e: Exception) {
-        listOf("无法读取日志: ${e.message}")
+        listOf(context.getString(R.string.settings_logs_read_failed, e.message ?: ""))
     }
 }
 
@@ -157,11 +158,11 @@ internal suspend fun exportLogs(context: Context, uri: Uri) {
                 output.write(logs.joinToString("\n").toByteArray())
             }
             withContext(Dispatchers.Main) {
-                Toast.makeText(context, "日志已导出", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, context.getString(R.string.log_exported), Toast.LENGTH_SHORT).show()
             }
         } catch (e: Exception) {
             withContext(Dispatchers.Main) {
-                Toast.makeText(context, "导出失败: ${e.message}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, context.getString(R.string.log_export_failed, e.message ?: ""), Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -171,9 +172,9 @@ internal fun clearAppCache(context: Context) {
     try {
         context.cacheDir.deleteRecursively()
         context.externalCacheDir?.deleteRecursively()
-        Toast.makeText(context, "缓存已清除", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, context.getString(R.string.settings_cache_cleared), Toast.LENGTH_SHORT).show()
     } catch (e: Exception) {
-        Toast.makeText(context, "清除缓存失败", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, context.getString(R.string.settings_clear_cache_failed), Toast.LENGTH_SHORT).show()
     }
 }
 
@@ -186,12 +187,12 @@ internal fun forceReinstallPatches(context: Context) {
             patchManager?.let { pm ->
                 PatchManager.installBuiltInPatches(pm, true)
                 android.os.Handler(android.os.Looper.getMainLooper()).post {
-                    Toast.makeText(context, "补丁已重新安装", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, context.getString(R.string.patches_reinstalled), Toast.LENGTH_SHORT).show()
                 }
             }
         } catch (e: Exception) {
             android.os.Handler(android.os.Looper.getMainLooper()).post {
-                Toast.makeText(context, "重装补丁失败: ${e.message}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, context.getString(R.string.patches_reinstall_failed, e.message ?: ""), Toast.LENGTH_SHORT).show()
             }
         }
     }.start()
@@ -227,7 +228,7 @@ internal fun applyThemeColor(context: Context, colorId: Int) {
         }
     }
     AppThemeState.updateThemeColor(colorId)
-    Toast.makeText(context, "主题颜色已更改", Toast.LENGTH_SHORT).show()
+    Toast.makeText(context, context.getString(R.string.theme_color_changed), Toast.LENGTH_SHORT).show()
 }
 
 internal fun getLanguageCode(languageName: String): String {

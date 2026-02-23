@@ -17,12 +17,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import kotlin.math.roundToInt
 import com.app.ralaunch.core.common.console.ConsoleManager
 import com.app.ralaunch.core.common.console.DebugLogOverlay
+import com.app.ralaunch.R
 import com.app.ralaunch.feature.controls.ControlData
 import com.app.ralaunch.feature.controls.packs.ControlLayout
 import com.app.ralaunch.feature.controls.packs.ControlPackManager
@@ -179,13 +181,13 @@ fun GameControlsOverlay(
     }
     
     // 回调实现
-    val callbacks = remember(controlLayoutView, packManager, settingsManager) {
+    val callbacks = remember(controlLayoutView, packManager, settingsManager, context) {
         object : FloatingMenuCallbacks {
             override fun onAddButton() {
                 val layout = controlLayoutView.currentLayout ?: ControlLayout().also {
                     it.controls = mutableListOf()
                 }
-                InGameControlOperations.addButton(layout)
+                InGameControlOperations.addButton(layout, context)
                 controlLayoutView.loadLayout(layout)
                 currentLayout = layout
                 hasUnsavedChanges = true
@@ -195,7 +197,7 @@ fun GameControlsOverlay(
                 val layout = controlLayoutView.currentLayout ?: ControlLayout().also {
                     it.controls = mutableListOf()
                 }
-                InGameControlOperations.addJoystick(layout, ControlData.Joystick.Mode.KEYBOARD, false)
+                InGameControlOperations.addJoystick(layout, ControlData.Joystick.Mode.KEYBOARD, false, context)
                 controlLayoutView.loadLayout(layout)
                 currentLayout = layout
                 hasUnsavedChanges = true
@@ -205,7 +207,7 @@ fun GameControlsOverlay(
                 val layout = controlLayoutView.currentLayout ?: ControlLayout().also {
                     it.controls = mutableListOf()
                 }
-                InGameControlOperations.addTouchPad(layout)
+                InGameControlOperations.addTouchPad(layout, context)
                 controlLayoutView.loadLayout(layout)
                 currentLayout = layout
                 hasUnsavedChanges = true
@@ -215,7 +217,7 @@ fun GameControlsOverlay(
                 val layout = controlLayoutView.currentLayout ?: ControlLayout().also {
                     it.controls = mutableListOf()
                 }
-                InGameControlOperations.addMouseWheel(layout)
+                InGameControlOperations.addMouseWheel(layout, context)
                 controlLayoutView.loadLayout(layout)
                 currentLayout = layout
                 hasUnsavedChanges = true
@@ -225,7 +227,7 @@ fun GameControlsOverlay(
                 val layout = controlLayoutView.currentLayout ?: ControlLayout().also {
                     it.controls = mutableListOf()
                 }
-                InGameControlOperations.addText(layout)
+                InGameControlOperations.addText(layout, context)
                 controlLayoutView.loadLayout(layout)
                 currentLayout = layout
                 hasUnsavedChanges = true
@@ -235,7 +237,7 @@ fun GameControlsOverlay(
                 val layout = controlLayoutView.currentLayout ?: ControlLayout().also {
                     it.controls = mutableListOf()
                 }
-                InGameControlOperations.addRadialMenu(layout)
+                InGameControlOperations.addRadialMenu(layout, context)
                 controlLayoutView.loadLayout(layout)
                 currentLayout = layout
                 hasUnsavedChanges = true
@@ -245,7 +247,7 @@ fun GameControlsOverlay(
                 val layout = controlLayoutView.currentLayout ?: ControlLayout().also {
                     it.controls = mutableListOf()
                 }
-                InGameControlOperations.addDPad(layout)
+                InGameControlOperations.addDPad(layout, context)
                 controlLayoutView.loadLayout(layout)
                 currentLayout = layout
                 hasUnsavedChanges = true
@@ -399,6 +401,7 @@ fun GameControlsOverlay(
             state = menuState,
             callbacks = callbacks
         )
+        val copySuffix = stringResource(R.string.editor_copy_suffix)
 
         // 右侧属性面板 (仅编辑模式下选中控件时显示，可拖动)
         AnimatedVisibility(
@@ -438,7 +441,7 @@ fun GameControlsOverlay(
                     // 深拷贝控件并生成新的 ID 和名称
                     val duplicated = controlToDuplicate.deepCopy().apply {
                         id = java.util.UUID.randomUUID().toString()
-                        name = "${controlToDuplicate.name}_副本"
+                        name = "${controlToDuplicate.name}_$copySuffix"
                         x = (x + 0.05f).coerceAtMost(0.95f)
                         y = (y + 0.05f).coerceAtMost(0.95f)
                     }
@@ -484,7 +487,7 @@ fun GameControlsOverlay(
                     containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.8f),
                     contentColor = MaterialTheme.colorScheme.error
                 ) {
-                    Icon(Icons.Default.Delete, contentDescription = "删除控件")
+                    Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.editor_delete_control))
                 }
             }
         }

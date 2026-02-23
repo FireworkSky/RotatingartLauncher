@@ -14,8 +14,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.app.ralaunch.R
 import com.app.ralaunch.feature.controls.ControlData
 
 /**
@@ -29,14 +31,14 @@ fun ButtonPropertySection(
     onOpenTextureSelector: ((ControlData, String) -> Unit)?,
     onOpenPolygonEditor: ((ControlData.Button) -> Unit)?
 ) {
-    PropertySection(title = "按钮设置") {
+    PropertySection(title = stringResource(R.string.control_editor_button_settings)) {
         // 按键选择
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("绑定按键", style = MaterialTheme.typography.bodyMedium)
+            Text(stringResource(R.string.editor_key_mapping), style = MaterialTheme.typography.bodyMedium)
             OutlinedButton(
                 onClick = { onOpenKeySelector?.invoke(control) }
             ) {
@@ -45,7 +47,7 @@ fun ButtonPropertySection(
         }
         
         // 输入模式选择
-        Text("输入模式", style = MaterialTheme.typography.labelMedium)
+        Text(stringResource(R.string.control_editor_input_mode), style = MaterialTheme.typography.labelMedium)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             FilterChip(
                 selected = control.mode == ControlData.Button.Mode.KEYBOARD,
@@ -54,7 +56,7 @@ fun ButtonPropertySection(
                     updated.mode = ControlData.Button.Mode.KEYBOARD
                     onUpdate(updated)
                 },
-                label = { Text("键盘") }
+                label = { Text(stringResource(R.string.key_selector_keyboard_mode)) }
             )
             FilterChip(
                 selected = control.mode == ControlData.Button.Mode.GAMEPAD,
@@ -63,7 +65,7 @@ fun ButtonPropertySection(
                     updated.mode = ControlData.Button.Mode.GAMEPAD
                     onUpdate(updated)
                 },
-                label = { Text("手柄") }
+                label = { Text(stringResource(R.string.key_selector_gamepad_mode)) }
             )
         }
         
@@ -75,8 +77,8 @@ fun ButtonPropertySection(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                Text("切换模式 (Toggle)", style = MaterialTheme.typography.bodyMedium)
-                Text("按下后保持状态", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(stringResource(R.string.editor_toggle_mode), style = MaterialTheme.typography.bodyMedium)
+                Text(stringResource(R.string.editor_toggle_mode_desc), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             Switch(
                 checked = control.isToggle,
@@ -88,7 +90,7 @@ fun ButtonPropertySection(
             )
         }
 
-        Text("形状", style = MaterialTheme.typography.labelMedium)
+        Text(stringResource(R.string.editor_control_shape), style = MaterialTheme.typography.labelMedium)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             FilterChip(
                 selected = control.shape == ControlData.Button.Shape.RECTANGLE,
@@ -97,7 +99,7 @@ fun ButtonPropertySection(
                     updated.shape = ControlData.Button.Shape.RECTANGLE
                     onUpdate(updated)
                 },
-                label = { Text("矩形") }
+                label = { Text(stringResource(R.string.control_shape_rectangle)) }
             )
             FilterChip(
                 selected = control.shape == ControlData.Button.Shape.CIRCLE,
@@ -106,7 +108,7 @@ fun ButtonPropertySection(
                     updated.shape = ControlData.Button.Shape.CIRCLE
                     onUpdate(updated)
                 },
-                label = { Text("圆形") }
+                label = { Text(stringResource(R.string.control_shape_circle)) }
             )
             FilterChip(
                 selected = control.shape == ControlData.Button.Shape.POLYGON,
@@ -122,7 +124,7 @@ fun ButtonPropertySection(
                     }
                     onUpdate(updated)
                 },
-                label = { Text("多边形") }
+                label = { Text(stringResource(R.string.control_editor_polygon)) }
             )
         }
         
@@ -134,26 +136,31 @@ fun ButtonPropertySection(
             ) {
                 Icon(Icons.Default.Edit, null, modifier = Modifier.size(18.dp))
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("编辑多边形 (${control.polygonPoints.size}个顶点)")
+                Text(
+                    stringResource(
+                        R.string.control_editor_polygon_edit_with_vertex_count,
+                        control.polygonPoints.size
+                    )
+                )
             }
         }
     }
 
     // 按钮纹理设置
-    PropertySection(title = "纹理") {
+    PropertySection(title = stringResource(R.string.control_editor_texture)) {
         TextureSettingItem(
-            label = "普通状态",
+            label = stringResource(R.string.control_texture_normal),
             hasTexture = control.texture.normal.enabled,
             onClick = { onOpenTextureSelector?.invoke(control, "normal") }
         )
         TextureSettingItem(
-            label = "按下状态",
+            label = stringResource(R.string.control_texture_pressed),
             hasTexture = control.texture.pressed.enabled,
             onClick = { onOpenTextureSelector?.invoke(control, "pressed") }
         )
         if (control.isToggle) {
             TextureSettingItem(
-                label = "切换状态",
+                label = stringResource(R.string.control_texture_toggled),
                 hasTexture = control.texture.toggled.enabled,
                 onClick = { onOpenTextureSelector?.invoke(control, "toggled") }
             )
@@ -167,9 +174,9 @@ fun ButtonPropertySection(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Text("自定义形状", style = MaterialTheme.typography.bodyMedium)
+                    Text(stringResource(R.string.control_editor_custom_shape), style = MaterialTheme.typography.bodyMedium)
                     Text(
-                        "使用纹理透明度作为控件形状，透明区域不响应点击",
+                        stringResource(R.string.control_editor_custom_shape_hint),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -197,24 +204,24 @@ fun JoystickPropertySection(
     onOpenJoystickKeyMapping: ((ControlData.Joystick) -> Unit)?,
     onOpenTextureSelector: ((ControlData, String) -> Unit)?
 ) {
-    PropertySection(title = "摇杆设置") {
+    PropertySection(title = stringResource(R.string.control_editor_joystick_settings)) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("键位映射", style = MaterialTheme.typography.bodyMedium)
+            Text(stringResource(R.string.editor_key_mapping), style = MaterialTheme.typography.bodyMedium)
             OutlinedButton(
                 onClick = { onOpenJoystickKeyMapping?.invoke(control) }
             ) {
                 Icon(Icons.Default.Gamepad, contentDescription = null, modifier = Modifier.size(18.dp))
                 Spacer(modifier = Modifier.width(4.dp))
-                Text("设置")
+                Text(stringResource(R.string.control_editor_set))
             }
         }
 
         PropertySlider(
-            label = "摇杆球大小",
+            label = stringResource(R.string.control_editor_joystick_knob_size),
             value = control.stickKnobSize,
             onValueChange = {
                 val updated = control.deepCopy() as ControlData.Joystick
@@ -224,7 +231,7 @@ fun JoystickPropertySection(
         )
         
         PropertySlider(
-            label = "摇杆球透明度",
+            label = stringResource(R.string.control_editor_joystick_knob_opacity),
             value = control.stickOpacity,
             onValueChange = {
                 val updated = control.deepCopy() as ControlData.Joystick
@@ -239,8 +246,12 @@ fun JoystickPropertySection(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                Text("右摇杆模式", style = MaterialTheme.typography.bodyMedium)
-                Text("手柄模式下用于右摇杆", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(stringResource(R.string.control_editor_right_stick_mode), style = MaterialTheme.typography.bodyMedium)
+                Text(
+                    stringResource(R.string.control_editor_right_stick_mode_hint),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
             Switch(
                 checked = control.isRightStick,
@@ -252,7 +263,7 @@ fun JoystickPropertySection(
             )
         }
 
-        Text("输入模式", style = MaterialTheme.typography.labelMedium)
+        Text(stringResource(R.string.control_editor_input_mode), style = MaterialTheme.typography.labelMedium)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             FilterChip(
                 selected = control.mode == ControlData.Joystick.Mode.KEYBOARD,
@@ -261,7 +272,7 @@ fun JoystickPropertySection(
                     updated.mode = ControlData.Joystick.Mode.KEYBOARD
                     onUpdate(updated)
                 },
-                label = { Text("键盘") }
+                label = { Text(stringResource(R.string.key_selector_keyboard_mode)) }
             )
             FilterChip(
                 selected = control.mode == ControlData.Joystick.Mode.GAMEPAD,
@@ -270,7 +281,7 @@ fun JoystickPropertySection(
                     updated.mode = ControlData.Joystick.Mode.GAMEPAD
                     onUpdate(updated)
                 },
-                label = { Text("手柄") }
+                label = { Text(stringResource(R.string.key_selector_gamepad_mode)) }
             )
             FilterChip(
                 selected = control.mode == ControlData.Joystick.Mode.MOUSE,
@@ -279,7 +290,7 @@ fun JoystickPropertySection(
                     updated.mode = ControlData.Joystick.Mode.MOUSE
                     onUpdate(updated)
                 },
-                label = { Text("鼠标") }
+                label = { Text(stringResource(R.string.control_editor_mouse)) }
             )
         }
         
@@ -292,14 +303,14 @@ fun JoystickPropertySection(
     }
 
     // 摇杆纹理设置
-    PropertySection(title = "纹理") {
+    PropertySection(title = stringResource(R.string.control_editor_texture)) {
         TextureSettingItem(
-            label = "背景",
+            label = stringResource(R.string.control_texture_background),
             hasTexture = control.texture.background.enabled,
             onClick = { onOpenTextureSelector?.invoke(control, "background") }
         )
         TextureSettingItem(
-            label = "摇杆球",
+            label = stringResource(R.string.control_texture_knob),
             hasTexture = control.texture.knob.enabled,
             onClick = { onOpenTextureSelector?.invoke(control, "knob") }
         )
@@ -315,15 +326,19 @@ fun TouchPadPropertySection(
     onUpdate: (ControlData) -> Unit,
     onOpenTextureSelector: ((ControlData, String) -> Unit)?
 ) {
-    PropertySection(title = "触控板设置") {
+    PropertySection(title = stringResource(R.string.control_editor_touchpad_settings)) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                Text("双指点击模拟摇杆", style = MaterialTheme.typography.bodyMedium)
-                Text("双指点击时模拟摇杆移动", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(stringResource(R.string.editor_double_click_joystick), style = MaterialTheme.typography.bodyMedium)
+                Text(
+                    stringResource(R.string.editor_double_click_joystick_desc),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
             Switch(
                 checked = control.isDoubleClickSimulateJoystick,
@@ -342,9 +357,9 @@ fun TouchPadPropertySection(
         MouseModeSettings()
     }
     
-    PropertySection(title = "纹理") {
+    PropertySection(title = stringResource(R.string.control_editor_texture)) {
         TextureSettingItem(
-            label = "背景",
+            label = stringResource(R.string.control_texture_background),
             hasTexture = control.texture.background.enabled,
             onClick = { onOpenTextureSelector?.invoke(control, "background") }
         )
@@ -360,8 +375,8 @@ fun MouseWheelPropertySection(
     onUpdate: (ControlData) -> Unit,
     onOpenTextureSelector: ((ControlData, String) -> Unit)?
 ) {
-    PropertySection(title = "滚轮设置") {
-        Text("滚轮方向", style = MaterialTheme.typography.labelMedium)
+    PropertySection(title = stringResource(R.string.control_editor_mousewheel_settings)) {
+        Text(stringResource(R.string.control_editor_wheel_direction), style = MaterialTheme.typography.labelMedium)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             FilterChip(
                 selected = control.orientation == ControlData.MouseWheel.Orientation.VERTICAL,
@@ -370,7 +385,7 @@ fun MouseWheelPropertySection(
                     updated.orientation = ControlData.MouseWheel.Orientation.VERTICAL
                     onUpdate(updated)
                 },
-                label = { Text("垂直") }
+                label = { Text(stringResource(R.string.control_editor_vertical)) }
             )
             FilterChip(
                 selected = control.orientation == ControlData.MouseWheel.Orientation.HORIZONTAL,
@@ -379,7 +394,7 @@ fun MouseWheelPropertySection(
                     updated.orientation = ControlData.MouseWheel.Orientation.HORIZONTAL
                     onUpdate(updated)
                 },
-                label = { Text("水平") }
+                label = { Text(stringResource(R.string.control_editor_horizontal)) }
             )
         }
         
@@ -391,8 +406,12 @@ fun MouseWheelPropertySection(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                Text("反转滚动方向", style = MaterialTheme.typography.bodyMedium)
-                Text("上滑变下滚，左滑变右滚", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(stringResource(R.string.editor_mousewheel_reverse), style = MaterialTheme.typography.bodyMedium)
+                Text(
+                    stringResource(R.string.editor_mousewheel_reverse_desc),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
             Switch(
                 checked = control.reverseDirection,
@@ -405,7 +424,7 @@ fun MouseWheelPropertySection(
         }
         
         PropertySlider(
-            label = "灵敏度",
+            label = stringResource(R.string.editor_mousewheel_sensitivity),
             value = (control.scrollSensitivity - 10f) / 90f,
             onValueChange = {
                 val updated = control.deepCopy() as ControlData.MouseWheel
@@ -415,7 +434,7 @@ fun MouseWheelPropertySection(
         )
         
         PropertySlider(
-            label = "速度倍率",
+            label = stringResource(R.string.editor_mousewheel_ratio),
             value = (control.scrollRatio - 0.1f) / 4.9f,
             onValueChange = {
                 val updated = control.deepCopy() as ControlData.MouseWheel
@@ -425,9 +444,9 @@ fun MouseWheelPropertySection(
         )
     }
     
-    PropertySection(title = "纹理") {
+    PropertySection(title = stringResource(R.string.control_editor_texture)) {
         TextureSettingItem(
-            label = "背景",
+            label = stringResource(R.string.control_texture_background),
             hasTexture = control.texture.background.enabled,
             onClick = { onOpenTextureSelector?.invoke(control, "background") }
         )
@@ -443,7 +462,7 @@ fun TextPropertySection(
     onUpdate: (ControlData) -> Unit,
     onOpenTextureSelector: ((ControlData, String) -> Unit)?
 ) {
-    PropertySection(title = "文本设置") {
+    PropertySection(title = stringResource(R.string.control_editor_text_settings)) {
         OutlinedTextField(
             value = control.displayText,
             onValueChange = { 
@@ -451,14 +470,14 @@ fun TextPropertySection(
                 updated.displayText = it
                 onUpdate(updated)
             },
-            label = { Text("显示文本") },
+            label = { Text(stringResource(R.string.editor_text_content)) },
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(8.dp)
         )
         
         Spacer(modifier = Modifier.height(8.dp))
         
-        Text("形状", style = MaterialTheme.typography.labelMedium)
+        Text(stringResource(R.string.editor_control_shape), style = MaterialTheme.typography.labelMedium)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             FilterChip(
                 selected = control.shape == ControlData.Text.Shape.RECTANGLE,
@@ -467,7 +486,7 @@ fun TextPropertySection(
                     updated.shape = ControlData.Text.Shape.RECTANGLE
                     onUpdate(updated)
                 },
-                label = { Text("矩形") }
+                label = { Text(stringResource(R.string.control_shape_rectangle)) }
             )
             FilterChip(
                 selected = control.shape == ControlData.Text.Shape.CIRCLE,
@@ -476,14 +495,14 @@ fun TextPropertySection(
                     updated.shape = ControlData.Text.Shape.CIRCLE
                     onUpdate(updated)
                 },
-                label = { Text("圆形") }
+                label = { Text(stringResource(R.string.control_shape_circle)) }
             )
         }
     }
     
-    PropertySection(title = "纹理") {
+    PropertySection(title = stringResource(R.string.control_editor_texture)) {
         TextureSettingItem(
-            label = "背景",
+            label = stringResource(R.string.control_texture_background),
             hasTexture = control.texture.background.enabled,
             onClick = { onOpenTextureSelector?.invoke(control, "background") }
         )
@@ -498,7 +517,7 @@ fun RadialMenuPropertySection(
     control: ControlData.RadialMenu,
     onUpdate: (ControlData) -> Unit
 ) {
-    PropertySection(title = "轮盘设置") {
+    PropertySection(title = stringResource(R.string.control_editor_radial_menu_settings)) {
         // 预览展开开关
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -506,8 +525,12 @@ fun RadialMenuPropertySection(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                Text("预览展开状态", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
-                Text("在编辑器中查看展开后的扇区布局", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(stringResource(R.string.control_editor_preview_expanded), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
+                Text(
+                    stringResource(R.string.control_editor_preview_expanded_hint),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
             Switch(
                 checked = control.editorPreviewExpanded,
@@ -523,7 +546,10 @@ fun RadialMenuPropertySection(
         
         HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
         
-        Text("扇区数量: ${control.sectorCount}", style = MaterialTheme.typography.labelMedium)
+        Text(
+            stringResource(R.string.control_editor_radial_sector_count, control.sectorCount),
+            style = MaterialTheme.typography.labelMedium
+        )
         Slider(
             value = control.sectorCount.toFloat(),
             onValueChange = {
@@ -545,7 +571,7 @@ fun RadialMenuPropertySection(
         )
         
         PropertySlider(
-            label = "展开大小",
+            label = stringResource(R.string.control_editor_expanded_size),
             value = control.expandedScale / 4f,
             onValueChange = { newValue ->
                 val updated = control.deepCopy() as ControlData.RadialMenu
@@ -557,7 +583,7 @@ fun RadialMenuPropertySection(
         )
         
         PropertySlider(
-            label = "中心死区",
+            label = stringResource(R.string.control_editor_dead_zone),
             value = control.deadZoneRatio,
             onValueChange = { newValue ->
                 val updated = control.deepCopy() as ControlData.RadialMenu
@@ -568,7 +594,10 @@ fun RadialMenuPropertySection(
             }
         )
 
-        Text("展开动画: ${control.expandDuration}ms", style = MaterialTheme.typography.labelMedium)
+        Text(
+            stringResource(R.string.control_editor_expand_animation_ms, control.expandDuration),
+            style = MaterialTheme.typography.labelMedium
+        )
         Slider(
             value = control.expandDuration.toFloat(),
             onValueChange = {
@@ -587,7 +616,7 @@ fun RadialMenuPropertySection(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("显示分隔线", style = MaterialTheme.typography.bodyMedium)
+            Text(stringResource(R.string.control_editor_show_dividers), style = MaterialTheme.typography.bodyMedium)
             Switch(
                 checked = control.showDividers,
                 onCheckedChange = {
@@ -601,9 +630,9 @@ fun RadialMenuPropertySection(
         }
     }
 
-    PropertySection(title = "轮盘颜色") {
+    PropertySection(title = stringResource(R.string.control_editor_radial_menu_colors)) {
         ColorPickerRow(
-            label = "选中高亮",
+            label = stringResource(R.string.control_editor_selected_highlight),
             color = Color(control.selectedColor),
             onColorSelected = { color ->
                 val updated = control.deepCopy() as ControlData.RadialMenu
@@ -615,7 +644,7 @@ fun RadialMenuPropertySection(
         )
         
         ColorPickerRow(
-            label = "分隔线颜色",
+            label = stringResource(R.string.control_editor_divider_color),
             color = Color(control.dividerColor),
             onColorSelected = { color ->
                 val updated = control.deepCopy() as ControlData.RadialMenu
@@ -627,7 +656,7 @@ fun RadialMenuPropertySection(
         )
     }
     
-    PropertySection(title = "扇区按键绑定 (点击选中)") {
+    PropertySection(title = stringResource(R.string.control_editor_sector_key_binding)) {
         val sectorCount = control.sectorCount.coerceAtMost(control.sectors.size)
         for (i in 0 until sectorCount) {
             val sector = control.sectors[i]
@@ -671,9 +700,9 @@ fun DPadPropertySection(
     control: ControlData.DPad,
     onUpdate: (ControlData) -> Unit
 ) {
-    PropertySection(title = "方向按键") {
+    PropertySection(title = stringResource(R.string.control_editor_direction_keys)) {
         DPadKeyRow(
-            label = "↑ 上",
+            label = stringResource(R.string.key_arrow_up),
             keycode = control.upKeycode,
             onKeycodeChange = { keycode ->
                 val updated = control.deepCopy() as ControlData.DPad
@@ -683,7 +712,7 @@ fun DPadPropertySection(
         )
         
         DPadKeyRow(
-            label = "↓ 下",
+            label = stringResource(R.string.key_arrow_down),
             keycode = control.downKeycode,
             onKeycodeChange = { keycode ->
                 val updated = control.deepCopy() as ControlData.DPad
@@ -693,7 +722,7 @@ fun DPadPropertySection(
         )
         
         DPadKeyRow(
-            label = "← 左",
+            label = stringResource(R.string.key_arrow_left),
             keycode = control.leftKeycode,
             onKeycodeChange = { keycode ->
                 val updated = control.deepCopy() as ControlData.DPad
@@ -703,7 +732,7 @@ fun DPadPropertySection(
         )
         
         DPadKeyRow(
-            label = "→ 右",
+            label = stringResource(R.string.key_arrow_right),
             keycode = control.rightKeycode,
             onKeycodeChange = { keycode ->
                 val updated = control.deepCopy() as ControlData.DPad

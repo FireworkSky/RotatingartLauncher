@@ -9,6 +9,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.app.ralaunch.shared.generated.resources.*
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * 外观设置状态
@@ -19,7 +21,7 @@ data class AppearanceState(
     val backgroundType: Int = 0,         // 0=默认, 1=图片, 2=视频
     val backgroundOpacity: Int = 0,      // 背景透明度 0-100
     val videoPlaybackSpeed: Float = 1.0f,// 视频播放速度 0.5-2.0
-    val language: String = "简体中文"
+    val language: String = "auto"
 )
 
 /**
@@ -81,16 +83,16 @@ private fun ThemeSection(
     themeColor: Int,
     onThemeColorClick: () -> Unit
 ) {
-    SettingsSection(title = "主题") {
+    SettingsSection(title = stringResource(Res.string.settings_appearance_theme_section)) {
         // 主题模式
         ClickableSettingItem(
-            title = "深色模式",
-            subtitle = "选择应用主题",
+            title = stringResource(Res.string.settings_appearance_theme_mode_title),
+            subtitle = stringResource(Res.string.settings_appearance_theme_mode_subtitle),
             value = when (themeMode) {
-                0 -> "跟随系统"
-                1 -> "深色"
-                2 -> "浅色"
-                else -> "跟随系统"
+                0 -> stringResource(Res.string.settings_appearance_theme_mode_system)
+                1 -> stringResource(Res.string.settings_appearance_theme_mode_dark)
+                2 -> stringResource(Res.string.settings_appearance_theme_mode_light)
+                else -> stringResource(Res.string.settings_appearance_theme_mode_system)
             },
             icon = Icons.Default.DarkMode,
             onClick = {
@@ -104,8 +106,8 @@ private fun ThemeSection(
 
         // 主题颜色
         ClickableSettingItem(
-            title = "主题颜色",
-            subtitle = "自定义应用主色调",
+            title = stringResource(Res.string.settings_appearance_theme_color_title),
+            subtitle = stringResource(Res.string.settings_appearance_theme_color_subtitle),
             icon = Icons.Default.Palette,
             onClick = onThemeColorClick
         )
@@ -125,11 +127,15 @@ private fun BackgroundSection(
 ) {
     val hasBackground = backgroundType != 0
 
-    SettingsSection(title = "背景") {
+    SettingsSection(title = stringResource(Res.string.settings_appearance_background_section)) {
         // 选择背景图片
         ClickableSettingItem(
-            title = "背景图片",
-            subtitle = if (backgroundType == 1) "已设置" else "点击选择图片",
+            title = stringResource(Res.string.settings_appearance_background_image_title),
+            subtitle = if (backgroundType == 1) {
+                stringResource(Res.string.settings_appearance_background_set)
+            } else {
+                stringResource(Res.string.settings_appearance_background_select_image)
+            },
             icon = Icons.Default.Image,
             onClick = onSelectImageClick
         )
@@ -138,8 +144,12 @@ private fun BackgroundSection(
 
         // 选择背景视频
         ClickableSettingItem(
-            title = "背景视频",
-            subtitle = if (backgroundType == 2) "已设置" else "点击选择视频",
+            title = stringResource(Res.string.settings_appearance_background_video_title),
+            subtitle = if (backgroundType == 2) {
+                stringResource(Res.string.settings_appearance_background_set)
+            } else {
+                stringResource(Res.string.settings_appearance_background_select_video)
+            },
             icon = Icons.Default.VideoLibrary,
             onClick = onSelectVideoClick
         )
@@ -149,8 +159,8 @@ private fun BackgroundSection(
             SettingsDivider()
 
             SliderSettingItem(
-                title = "背景透明度",
-                subtitle = "调整UI元素透明度",
+                title = stringResource(Res.string.settings_appearance_background_opacity_title),
+                subtitle = stringResource(Res.string.settings_appearance_background_opacity_subtitle),
                 icon = Icons.Default.Opacity,
                 value = backgroundOpacity.toFloat(),
                 valueRange = 0f..100f,
@@ -165,8 +175,8 @@ private fun BackgroundSection(
             SettingsDivider()
 
             SliderSettingItem(
-                title = "视频播放速度",
-                subtitle = "调整背景视频播放速度",
+                title = stringResource(Res.string.settings_appearance_video_speed_title),
+                subtitle = stringResource(Res.string.settings_appearance_video_speed_subtitle),
                 icon = Icons.Default.Speed,
                 value = videoSpeed,
                 valueRange = 0.5f..2.0f,
@@ -181,8 +191,8 @@ private fun BackgroundSection(
             SettingsDivider()
 
             ClickableSettingItem(
-                title = "恢复默认背景",
-                subtitle = "清除自定义背景设置",
+                title = stringResource(Res.string.settings_appearance_restore_background_title),
+                subtitle = stringResource(Res.string.settings_appearance_restore_background_subtitle),
                 icon = Icons.Default.Restore,
                 onClick = onRestoreDefault
             )
@@ -195,10 +205,10 @@ private fun LanguageSection(
     language: String,
     onLanguageClick: () -> Unit
 ) {
-    SettingsSection(title = "语言") {
+    SettingsSection(title = stringResource(Res.string.settings_appearance_language_section)) {
         ClickableSettingItem(
-            title = "应用语言",
-            subtitle = "更改后需重启生效",
+            title = stringResource(Res.string.settings_appearance_language_title),
+            subtitle = stringResource(Res.string.settings_appearance_language_subtitle),
             value = language,
             icon = Icons.Default.Language,
             onClick = onLanguageClick

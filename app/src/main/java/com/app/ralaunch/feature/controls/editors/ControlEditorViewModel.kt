@@ -1,8 +1,10 @@
 package com.app.ralaunch.feature.controls.editors
 
+import android.content.Context
 import androidx.compose.ui.geometry.Offset
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.app.ralaunch.R
 import com.app.ralaunch.feature.controls.ControlData
 import com.app.ralaunch.feature.controls.packs.ControlLayout
 import com.app.ralaunch.feature.controls.packs.ControlPackManager
@@ -18,7 +20,12 @@ import java.util.UUID
  * 管理编辑器状态、选中控件以及数据持久化
  */
 class ControlEditorViewModel : ViewModel() {
+    private val appContext: Context = KoinJavaComponent.get(Context::class.java)
     private val packManager: ControlPackManager = KoinJavaComponent.get(ControlPackManager::class.java)
+
+    private fun nextControlName(baseLabelResId: Int, count: Int): String {
+        return "${appContext.getString(baseLabelResId)} $count"
+    }
 
     // 菜单偏移位置 (自由拖拽)
     private val _menuOffset = MutableStateFlow(Offset(100f, 100f))
@@ -210,50 +217,50 @@ class ControlEditorViewModel : ViewModel() {
         
         val newControl = when (type) {
             "button" -> ControlData.Button().apply {
-                name = "New Button ${controls.size + 1}"
+                name = nextControlName(R.string.editor_default_button_name, controls.size + 1)
                 x = 0.5f
                 y = 0.5f
                 width = 0.1f
                 height = 0.1f
             }
             "joystick" -> ControlData.Joystick().apply {
-                name = "New Joystick ${controls.size + 1}"
+                name = nextControlName(R.string.editor_control_type_joystick, controls.size + 1)
                 x = 0.2f
                 y = 0.7f
                 width = 0.25f
                 height = 0.25f
             }
             "touchpad" -> ControlData.TouchPad().apply {
-                name = "New TouchPad ${controls.size + 1}"
+                name = nextControlName(R.string.editor_default_touchpad_name, controls.size + 1)
                 x = 0.7f
                 y = 0.7f
                 width = 0.3f
                 height = 0.3f
             }
             "mousewheel" -> ControlData.MouseWheel().apply {
-                name = "New MouseWheel ${controls.size + 1}"
+                name = nextControlName(R.string.editor_default_mousewheel_name, controls.size + 1)
                 x = 0.9f
                 y = 0.5f
                 width = 0.08f
                 height = 0.15f
             }
             "text" -> ControlData.Text().apply {
-                name = "New Text ${controls.size + 1}"
-                displayText = "文本"
+                name = nextControlName(R.string.editor_default_text_name, controls.size + 1)
+                displayText = appContext.getString(R.string.editor_default_text_name)
                 x = 0.5f
                 y = 0.3f
                 width = 0.15f
                 height = 0.05f
             }
             "radialmenu" -> ControlData.RadialMenu().apply {
-                name = "New RadialMenu ${controls.size + 1}"
+                name = nextControlName(R.string.control_editor_radial_menu_label, controls.size + 1)
                 x = 0.5f
                 y = 0.5f
                 width = 0.12f
                 height = 0.12f
             }
             "dpad" -> ControlData.DPad().apply {
-                name = "New DPad ${controls.size + 1}"
+                name = nextControlName(R.string.control_editor_dpad_label, controls.size + 1)
                 x = 0.15f
                 y = 0.65f
                 width = 0.25f
@@ -294,7 +301,7 @@ class ControlEditorViewModel : ViewModel() {
         // 深拷贝控件并生成新的 ID 和名称
         val duplicated = selected.deepCopy().apply {
             id = UUID.randomUUID().toString()
-            name = "${selected.name}_副本"
+            name = "${selected.name}_${appContext.getString(R.string.editor_copy_suffix)}"
             // 稍微偏移位置，避免完全重叠
             x = (x + 0.05f).coerceAtMost(0.95f)
             y = (y + 0.05f).coerceAtMost(0.95f)

@@ -33,8 +33,8 @@ object ControlTypeManager {
             }
             is ControlData.TouchPad -> context.getString(R.string.control_type_touchpad)
             is ControlData.MouseWheel -> context.getString(R.string.control_type_mousewheel)
-            is ControlData.RadialMenu -> "轮盘菜单"
-            is ControlData.DPad -> "十字键"
+            is ControlData.RadialMenu -> context.getString(R.string.control_editor_radial_menu_label)
+            is ControlData.DPad -> context.getString(R.string.control_editor_dpad_label)
         }
     }
 
@@ -141,4 +141,3 @@ object ControlTypeManager {
         fun onTypeSelected(data: ControlData?)
     }
 }
-

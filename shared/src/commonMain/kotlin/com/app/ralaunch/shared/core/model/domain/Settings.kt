@@ -60,7 +60,7 @@ data class AppSettings(
     var backgroundVideoPath: String = "",
     var backgroundOpacity: Int = 0,
     var videoPlaybackSpeed: Float = 1.0f,
-    var language: String = "en",
+    var language: String = "auto",
 
     // 控制设置
     var controlsOpacity: Float = 0.7f,

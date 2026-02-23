@@ -6,6 +6,7 @@ import com.app.ralaunch.core.platform.runtime.renderer.RendererRegistry
 import com.app.ralaunch.shared.core.model.domain.BackgroundType
 import com.app.ralaunch.shared.core.model.domain.ThemeMode
 import com.app.ralaunch.shared.core.contract.repository.SettingsRepositoryV2
+import com.app.ralaunch.shared.generated.resources.*
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -14,6 +15,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.getString
 
 /**
  * 设置页面 UI 状态 - 跨平台
@@ -27,7 +29,7 @@ data class SettingsUiState(
     val backgroundType: Int = 0,
     val backgroundOpacity: Int = 0,
     val videoPlaybackSpeed: Float = 1.0f,
-    val language: String = "简体中文",
+    val language: String = "auto",
 
     // 控制设置
     val touchMultitouchEnabled: Boolean = true,
@@ -238,7 +240,7 @@ class SettingsViewModel(
                     backgroundType = backgroundTypeToInt(settings.backgroundType),
                     backgroundOpacity = settings.backgroundOpacity,
                     videoPlaybackSpeed = settings.videoPlaybackSpeed,
-                    language = getLanguageDisplayName(settings.language),
+                    language = settings.language,
                     // 控制
                     touchMultitouchEnabled = settings.touchMultitouchEnabled,
                     mouseRightStickEnabled = settings.mouseRightStickEnabled,
@@ -263,7 +265,7 @@ class SettingsViewModel(
                     fnaMapBufferRangeOptEnabled = settings.fnaMapBufferRangeOptimization,
                     // 关于
                     appVersion = appInfo.versionName,
-                    buildInfo = "Build ${appInfo.versionCode}"
+                    buildInfo = appInfo.versionCode.toString()
                 )
             }
         }
@@ -301,7 +303,7 @@ class SettingsViewModel(
     private fun setLanguage(language: String) {
         viewModelScope.launch {
             settingsRepository.update { this.language = language }
-            _uiState.update { it.copy(language = getLanguageDisplayName(language)) }
+            _uiState.update { it.copy(language = language) }
         }
     }
 
@@ -336,7 +338,7 @@ class SettingsViewModel(
                 videoPlaybackSpeed = 1.0f
             ) }
             sendEffect(SettingsEffect.RestoreDefaultBackgroundComplete)
-            sendEffect(SettingsEffect.ShowToast("背景已恢复默认"))
+            sendEffect(SettingsEffect.ShowToast(getString(Res.string.appearance_background_restored)))
         }
     }
 
@@ -415,12 +417,16 @@ class SettingsViewModel(
             settingsRepository.update { qualityLevel = level }
             _uiState.update { it.copy(qualityLevel = level) }
             val qualityName = when (level) {
-                0 -> "高画质"
-                1 -> "中画质"
-                2 -> "低画质"
-                else -> "高画质"
+                0 -> getString(Res.string.settings_quality_high)
+                1 -> getString(Res.string.settings_quality_medium)
+                2 -> getString(Res.string.settings_quality_low)
+                else -> getString(Res.string.settings_quality_high)
             }
-            sendEffect(SettingsEffect.ShowToast("已设置为${qualityName}，重启游戏后生效"))
+            sendEffect(
+                SettingsEffect.ShowToast(
+                    getString(Res.string.settings_quality_applied_toast, qualityName)
+                )
+            )
         }
     }
 
@@ -428,7 +434,7 @@ class SettingsViewModel(
         viewModelScope.launch {
             settingsRepository.update { shaderLowPrecision = enabled }
             _uiState.update { it.copy(shaderLowPrecision = enabled) }
-            sendEffect(SettingsEffect.ShowToast("重启游戏后生效"))
+            sendEffect(SettingsEffect.ShowToast(getString(Res.string.settings_restart_required_toast)))
         }
     }
 
@@ -436,8 +442,18 @@ class SettingsViewModel(
         viewModelScope.launch {
             settingsRepository.update { targetFps = fps }
             _uiState.update { it.copy(targetFps = fps) }
-            val fpsName = if (fps == 0) "无限制" else "$fps FPS"
-            sendEffect(SettingsEffect.ShowToast("帧率限制已设置为${fpsName}，重启游戏后生效"))
+            val fpsName = when (fps) {
+                0 -> getString(Res.string.settings_fps_unlimited)
+                30 -> getString(Res.string.settings_fps_30)
+                45 -> getString(Res.string.settings_fps_45)
+                60 -> getString(Res.string.settings_fps_60)
+                else -> getString(Res.string.settings_fps_unlimited)
+            }
+            sendEffect(
+                SettingsEffect.ShowToast(
+                    getString(Res.string.settings_fps_limit_applied_toast, fpsName)
+                )
+            )
         }
     }
 
@@ -468,7 +484,7 @@ class SettingsViewModel(
         viewModelScope.launch {
             settingsRepository.update { serverGC = enabled }
             _uiState.update { it.copy(serverGCEnabled = enabled) }
-            sendEffect(SettingsEffect.ShowToast("重启游戏后生效"))
+            sendEffect(SettingsEffect.ShowToast(getString(Res.string.settings_restart_required_toast)))
         }
     }
 
@@ -476,7 +492,7 @@ class SettingsViewModel(
         viewModelScope.launch {
             settingsRepository.update { concurrentGC = enabled }
             _uiState.update { it.copy(concurrentGCEnabled = enabled) }
-            sendEffect(SettingsEffect.ShowToast("重启游戏后生效"))
+            sendEffect(SettingsEffect.ShowToast(getString(Res.string.settings_restart_required_toast)))
         }
     }
 
@@ -484,7 +500,7 @@ class SettingsViewModel(
         viewModelScope.launch {
             settingsRepository.update { tieredCompilation = enabled }
             _uiState.update { it.copy(tieredCompilationEnabled = enabled) }
-            sendEffect(SettingsEffect.ShowToast("重启游戏后生效"))
+            sendEffect(SettingsEffect.ShowToast(getString(Res.string.settings_restart_required_toast)))
         }
     }
 
@@ -498,7 +514,7 @@ class SettingsViewModel(
     private fun clearCache() {
         viewModelScope.launch {
             sendEffect(SettingsEffect.ClearCacheComplete)
-            sendEffect(SettingsEffect.ShowToast("缓存已清除"))
+            sendEffect(SettingsEffect.ShowToast(getString(Res.string.settings_cache_cleared)))
         }
     }
 
@@ -509,16 +525,8 @@ class SettingsViewModel(
     }
 
     private fun checkUpdate() {
-        sendEffect(SettingsEffect.ShowToast("正在检查更新..."))
-    }
-
-    private fun getLanguageDisplayName(languageCode: String): String {
-        return when (languageCode) {
-            "zh" -> "简体中文"
-            "en" -> "English"
-            "ru" -> "Русский"
-            "es" -> "Español"
-            else -> "Follow System"
+        viewModelScope.launch {
+            sendEffect(SettingsEffect.ShowToast(getString(Res.string.settings_checking_update)))
         }
     }
 

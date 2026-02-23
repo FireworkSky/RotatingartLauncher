@@ -68,14 +68,16 @@ val androidModule = module {
         try {
             val context = androidContext()
             val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
+            val versionCode = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
+                packageInfo.longVersionCode
+            } else {
+                @Suppress("DEPRECATION")
+                packageInfo.versionCode.toLong()
+            }
             AppInfo(
-                versionName = packageInfo.versionName ?: "Unknown",
-                versionCode = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
-                    packageInfo.longVersionCode
-                } else {
-                    @Suppress("DEPRECATION")
-                    packageInfo.versionCode.toLong()
-                }
+                versionName = packageInfo.versionName
+                    ?: versionCode.toString(),
+                versionCode = versionCode
             )
         } catch (e: Exception) {
             AppInfo()

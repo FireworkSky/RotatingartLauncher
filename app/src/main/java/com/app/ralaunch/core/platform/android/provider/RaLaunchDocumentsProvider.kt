@@ -14,6 +14,7 @@ import android.provider.DocumentsProvider
 import android.system.ErrnoException
 import android.system.Os
 import android.webkit.MimeTypeMap
+import com.app.ralaunch.R
 import com.app.ralaunch.core.common.util.FileUtils
 import java.io.File
 import java.io.FileNotFoundException
@@ -69,7 +70,7 @@ class RaLaunchDocumentsProvider : DocumentsProvider() {
         result.newRow().apply {
             add(Root.COLUMN_ROOT_ID, mPackageName)
             add(Root.COLUMN_DOCUMENT_ID, mPackageName)
-            add(Root.COLUMN_SUMMARY, "RaLaunch ")
+            add(Root.COLUMN_SUMMARY, context!!.getString(R.string.documents_provider_root_summary))
             add(Root.COLUMN_FLAGS, Root.FLAG_SUPPORTS_CREATE or Root.FLAG_SUPPORTS_IS_CHILD)
             add(Root.COLUMN_TITLE, appName)
             add(Root.COLUMN_MIME_TYPES, "*/*")

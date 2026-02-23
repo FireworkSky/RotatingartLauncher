@@ -470,7 +470,11 @@ private fun PackItem(
                     modifier = Modifier.padding(top = 2.dp)
                 ) {
                     Text(
-                        text = "${info.author} • v${info.version}",
+                        text = stringResource(
+                            R.string.pack_author_version_compact,
+                            info.author,
+                            info.version
+                        ),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontSize = 11.sp

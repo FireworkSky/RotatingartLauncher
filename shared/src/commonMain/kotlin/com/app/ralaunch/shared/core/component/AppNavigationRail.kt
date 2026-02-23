@@ -68,6 +68,7 @@ fun AppNavigationRail(
     currentDestination: NavDestination?,
     onNavigate: (NavDestination) -> Unit,
     modifier: Modifier = Modifier,
+    labelProvider: (NavDestination) -> String = { it.route },
     logo: (@Composable () -> Unit)? = null
 ) {
     // 主题响应
@@ -242,8 +243,11 @@ fun AppNavigationRail(
             ) {
                 // 所有导航项统一 weight(1f)，保持纵向间距一致
                 destinations.forEach { destination ->
+                    val label = labelProvider(destination)
                     SilkyNavItem(
-                        destination = destination,
+                        selectedIcon = destination.selectedIcon,
+                        unselectedIcon = destination.unselectedIcon,
+                        label = label,
                         isSelected = selectedDest == destination,
                         onClick = { onNavigate(destination) },
                         onPositioned = { rootCenterY ->
@@ -264,7 +268,9 @@ fun AppNavigationRail(
  */
 @Composable
 private fun SilkyNavItem(
-    destination: NavDestination,
+    selectedIcon: ImageVector,
+    unselectedIcon: ImageVector,
+    label: String,
     isSelected: Boolean,
     onClick: () -> Unit,
     onPositioned: (Float) -> Unit,
@@ -329,8 +335,8 @@ private fun SilkyNavItem(
                 label = "iconCrossfade"
             ) { selected ->
                 Icon(
-                    imageVector = if (selected) destination.selectedIcon else destination.unselectedIcon,
-                    contentDescription = destination.label,
+                    imageVector = if (selected) selectedIcon else unselectedIcon,
+                    contentDescription = label,
                     tint = contentColor,
                     modifier = Modifier.size(iconSize)
                 )
@@ -339,7 +345,7 @@ private fun SilkyNavItem(
             Spacer(modifier = Modifier.height(4.dp))
 
             Text(
-                text = destination.label,
+                text = label,
                 style = MaterialTheme.typography.labelSmall,
                 color = contentColor,
                 fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,

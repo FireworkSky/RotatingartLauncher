@@ -89,7 +89,7 @@ class ErrorDialog private constructor(
                     append(details)
                 }
             }
-            clipboard.setPrimaryClip(ClipData.newPlainText("Error Details", text))
+            clipboard.setPrimaryClip(ClipData.newPlainText(ctx.getString(R.string.error_details_title), text))
             Toast.makeText(context, ctx.getString(R.string.error_copy_success), Toast.LENGTH_SHORT).show()
         } catch (e: Exception) {
             Log.e("ErrorDialog", "Failed to copy to clipboard", e)

@@ -2,8 +2,10 @@ package com.app.ralaunch.core.platform.network.easytier
 
 import android.content.Context
 import android.util.Log
+import com.app.ralaunch.R
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
+import org.koin.java.KoinJavaComponent
 
 /**
  * 网络节点信息
@@ -107,7 +109,9 @@ class EasyTierManager {
      * 获取不可用原因
      */
     fun getUnavailableReason(): String {
-        return EasyTierJNI.getLoadError() ?: "EasyTier JNI 库未加载"
+        val appContext: Context = KoinJavaComponent.get(Context::class.java)
+        return EasyTierJNI.getLoadError()
+            ?: appContext.getString(R.string.easytier_jni_not_loaded)
     }
     
     /**
@@ -125,9 +129,13 @@ class EasyTierManager {
         isHost: Boolean = false,
         instanceName: String = "ral_multiplayer"
     ): Result<Unit> = withContext(Dispatchers.IO) {
+        val appContext: Context = KoinJavaComponent.get(Context::class.java)
         
         if (!EasyTierJNI.isAvailable()) {
-            val error = "EasyTier JNI 库未加载: ${EasyTierJNI.getLoadError()}"
+            val error = appContext.getString(
+                R.string.easytier_jni_not_loaded_with_reason,
+                EasyTierJNI.getLoadError() ?: appContext.getString(R.string.common_unknown_error)
+            )
             _errorMessage.value = error
             _connectionState.value = EasyTierConnectionState.ERROR
             return@withContext Result.failure(Exception(error))
@@ -155,14 +163,16 @@ class EasyTierManager {
             // 解析配置
             val parseResult = EasyTierJNI.parseConfig(config)
             if (parseResult != 0) {
-                val error = EasyTierJNI.getLastError() ?: "配置解析失败"
+                val error = EasyTierJNI.getLastError()
+                    ?: appContext.getString(R.string.easytier_error_config_parse_failed)
                 throw Exception(error)
             }
             
             // 启动网络实例
             val runResult = EasyTierJNI.runNetworkInstance(config)
             if (runResult != 0) {
-                val error = EasyTierJNI.getLastError() ?: "网络实例启动失败"
+                val error = EasyTierJNI.getLastError()
+                    ?: appContext.getString(R.string.easytier_error_instance_start_failed)
                 throw Exception(error)
             }
             

@@ -10,7 +10,9 @@ import androidx.compose.material.icons.filled.TouchApp
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.app.ralaunch.R
 import com.app.ralaunch.shared.feature.settings.*
 
 /**
@@ -34,10 +36,10 @@ internal fun ControlsSettingsContent(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        SettingsSection(title = "触控") {
+        SettingsSection(title = stringResource(R.string.settings_controls_touch_section)) {
             SwitchSettingItem(
-                title = "多点触控",
-                subtitle = "允许同时多个触控点",
+                title = stringResource(R.string.settings_controls_multitouch_title),
+                subtitle = stringResource(R.string.settings_controls_multitouch_subtitle),
                 icon = Icons.Default.TouchApp,
                 checked = touchMultitouchEnabled,
                 onCheckedChange = onTouchMultitouchChange
@@ -46,18 +48,18 @@ internal fun ControlsSettingsContent(
             SettingsDivider()
 
             SwitchSettingItem(
-                title = "鼠标右摇杆",
-                subtitle = "鼠标移动映射到右摇杆",
+                title = stringResource(R.string.settings_controls_mouse_right_stick_title),
+                subtitle = stringResource(R.string.settings_controls_mouse_right_stick_subtitle),
                 icon = Icons.Default.Mouse,
                 checked = mouseRightStickEnabled,
                 onCheckedChange = onMouseRightStickChange
             )
         }
 
-        SettingsSection(title = "震动") {
+        SettingsSection(title = stringResource(R.string.settings_controls_vibration_section)) {
             SwitchSettingItem(
-                title = "启用震动",
-                subtitle = "控制器震动反馈",
+                title = stringResource(R.string.settings_vibration),
+                subtitle = stringResource(R.string.settings_vibration_desc),
                 icon = Icons.Default.Gamepad,
                 checked = vibrationEnabled,
                 onCheckedChange = onVibrationChange
@@ -67,7 +69,7 @@ internal fun ControlsSettingsContent(
                 SettingsDivider()
 
                 SliderSettingItem(
-                    title = "震动强度",
+                    title = stringResource(R.string.settings_controls_vibration_strength_title),
                     value = vibrationStrength,
                     valueRange = 0f..1f,
                     valueLabel = "${(vibrationStrength * 100).toInt()}%",
@@ -98,10 +100,10 @@ internal fun GameSettingsContent(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        SettingsSection(title = "性能") {
+        SettingsSection(title = stringResource(R.string.settings_game_performance_section)) {
             SwitchSettingItem(
-                title = "大核心亲和性",
-                subtitle = "将游戏线程绑定到高性能核心",
+                title = stringResource(R.string.thread_affinity_big_core),
+                subtitle = stringResource(R.string.thread_affinity_big_core_desc),
                 checked = bigCoreAffinityEnabled,
                 onCheckedChange = onBigCoreAffinityChange
             )
@@ -109,17 +111,17 @@ internal fun GameSettingsContent(
             SettingsDivider()
 
             SwitchSettingItem(
-                title = "低延迟音频",
-                subtitle = "降低音频延迟，可能增加功耗",
+                title = stringResource(R.string.low_latency_audio),
+                subtitle = stringResource(R.string.settings_game_low_latency_audio_subtitle),
                 checked = lowLatencyAudioEnabled,
                 onCheckedChange = onLowLatencyAudioChange
             )
         }
 
-        SettingsSection(title = "渲染") {
+        SettingsSection(title = stringResource(R.string.settings_game_renderer_section)) {
             ClickableSettingItem(
-                title = "渲染器",
-                subtitle = "选择图形渲染后端",
+                title = stringResource(R.string.renderer_title),
+                subtitle = stringResource(R.string.renderer_desc),
                 value = rendererType,
                 onClick = onRendererClick
             )

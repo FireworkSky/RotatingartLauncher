@@ -228,7 +228,7 @@ private fun copyErrorToClipboard(
                 append(details)
             }
         }
-        clipboard.setPrimaryClip(ClipData.newPlainText("Error Details", text))
+        clipboard.setPrimaryClip(ClipData.newPlainText(context.getString(R.string.error_details_title), text))
         Toast.makeText(context, context.getString(R.string.error_copy_success), Toast.LENGTH_SHORT).show()
     } catch (_: Exception) { }
 }

@@ -2,7 +2,6 @@ package com.app.ralaunch.feature.main.screens
 
 import android.os.Environment
 import androidx.compose.runtime.*
-import androidx.compose.ui.platform.LocalContext
 import com.app.ralaunch.shared.feature.filebrowser.*
 import java.io.File
 
@@ -15,13 +14,13 @@ fun FileBrowserScreenWrapper(
     initialPath: String = "",
     fileType: String? = null,
     allowedExtensions: List<String> = emptyList(),
-    title: String = "选择文件",
+    title: String? = null,
     hasPermission: Boolean = true,
     onFileSelected: (String, String?) -> Unit,
     onBack: () -> Unit,
     onRequestPermission: () -> Unit = {}
 ) {
-    val context = LocalContext.current
+    val fileBrowserTitle = title
     
     // 状态
     var currentPath by remember { mutableStateOf(initialPath) }
@@ -121,7 +120,7 @@ fun FileBrowserScreenWrapper(
 
     FileBrowserScreen(
         state = uiState,
-        title = title,
+        title = fileBrowserTitle,
         onSearchQueryChange = { searchQuery = it },
         onSortModeChange = { 
             sortMode = it

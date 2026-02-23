@@ -15,10 +15,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.app.ralaunch.R
 import com.app.ralaunch.core.platform.network.easytier.DiagStepResult
 import com.app.ralaunch.core.platform.network.easytier.DiagStepStatus
 import com.app.ralaunch.core.platform.network.easytier.EasyTierDiagnostics
@@ -33,18 +35,19 @@ fun MultiplayerDiagnosticsDialog(
     onDismiss: () -> Unit
 ) {
     val scope = rememberCoroutineScope()
+    val initialStepTitles = listOf(
+        stringResource(R.string.control_editor_diag_jni_load),
+        stringResource(R.string.control_editor_diag_config_generate),
+        stringResource(R.string.control_editor_diag_config_parse),
+        stringResource(R.string.control_editor_diag_instance_start),
+        stringResource(R.string.control_editor_diag_network_collect),
+        stringResource(R.string.control_editor_diag_port_check),
+        stringResource(R.string.control_editor_diag_cleanup)
+    )
     var isRunning by remember { mutableStateOf(false) }
-    var steps by remember {
+    var steps by remember(initialStepTitles) {
         mutableStateOf(
-            listOf(
-                DiagStepResult("JNI 库加载检查"),
-                DiagStepResult("配置生成"),
-                DiagStepResult("配置解析测试"),
-                DiagStepResult("网络实例启动"),
-                DiagStepResult("网络信息收集"),
-                DiagStepResult("端口监听检测 (7777)"),
-                DiagStepResult("清理测试实例")
-            )
+            initialStepTitles.map { DiagStepResult(it) }
         )
     }
     var expandedStep by remember { mutableStateOf<Int?>(null) }
@@ -96,7 +99,7 @@ fun MultiplayerDiagnosticsDialog(
                             modifier = Modifier.size(24.dp)
                         )
                         Text(
-                            text = "联机诊断",
+                            text = stringResource(R.string.control_editor_multiplayer_diagnostics),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface
@@ -106,7 +109,7 @@ fun MultiplayerDiagnosticsDialog(
                         onClick = { if (!isRunning) onDismiss() },
                         enabled = !isRunning
                     ) {
-                        Icon(Icons.Default.Close, contentDescription = "关闭")
+                        Icon(Icons.Default.Close, contentDescription = stringResource(R.string.close))
                     }
                 }
 
@@ -143,7 +146,7 @@ fun MultiplayerDiagnosticsDialog(
                         modifier = Modifier.weight(1f),
                         enabled = !isRunning
                     ) {
-                        Text("关闭")
+                        Text(stringResource(R.string.close))
                     }
 
                     Button(
@@ -180,11 +183,11 @@ fun MultiplayerDiagnosticsDialog(
                                 color = MaterialTheme.colorScheme.onPrimary
                             )
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text("诊断中...")
+                            Text(stringResource(R.string.control_editor_diagnosing))
                         } else {
                             Icon(Icons.Default.PlayArrow, contentDescription = null, modifier = Modifier.size(18.dp))
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text("开始诊断")
+                            Text(stringResource(R.string.control_editor_start_diagnosis))
                         }
                     }
                 }

@@ -43,6 +43,18 @@ fun GameInfoEditSubScreen(
     rendererOptions: List<RendererOption>,
     onBack: () -> Unit,
     onSave: (GameItemUi) -> Unit,
+    followGlobalSettingsText: String,
+    editGameInfoTitle: String,
+    backContentDescription: String,
+    editDisplayInfoText: String,
+    gameNameLabelText: String,
+    gameDescriptionLabelText: String,
+    rendererOptionalText: String,
+    rendererOverrideLabelText: String,
+    followGlobalButtonText: String,
+    selectRendererButtonText: String,
+    cancelButtonText: String,
+    saveButtonText: String,
     modifier: Modifier = Modifier
 ) {
     var editedName by remember(game.id) { mutableStateOf(game.displayedName) }
@@ -55,22 +67,22 @@ fun GameInfoEditSubScreen(
     var editedRendererOverride by remember(game.id, rendererOptions) { mutableStateOf(initialRendererOverride) }
     var showRendererDialog by remember { mutableStateOf(false) }
 
-    val rendererDisplayName = remember(editedRendererOverride, rendererOptions) {
+    val rendererDisplayName = remember(editedRendererOverride, rendererOptions, followGlobalSettingsText) {
         editedRendererOverride?.let { rendererId ->
             rendererOptions.firstOrNull { it.renderer == rendererId }?.name ?: rendererId
-        } ?: "跟随全局设置"
+        } ?: followGlobalSettingsText
     }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
         topBar = {
             TopAppBar(
-                title = { Text("编辑游戏信息") },
+                title = { Text(editGameInfoTitle) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "返回"
+                            contentDescription = backContentDescription
                         )
                     }
                 }
@@ -86,7 +98,7 @@ fun GameInfoEditSubScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
-                text = "修改显示信息",
+                text = editDisplayInfoText,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold
             )
@@ -94,7 +106,7 @@ fun GameInfoEditSubScreen(
             OutlinedTextField(
                 value = editedName,
                 onValueChange = { editedName = it },
-                label = { Text("游戏名称") },
+                label = { Text(gameNameLabelText) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth()
             )
@@ -102,7 +114,7 @@ fun GameInfoEditSubScreen(
             OutlinedTextField(
                 value = editedDescription,
                 onValueChange = { editedDescription = it },
-                label = { Text("游戏描述") },
+                label = { Text(gameDescriptionLabelText) },
                 minLines = 4,
                 maxLines = 8,
                 modifier = Modifier.fillMaxWidth()
@@ -111,7 +123,7 @@ fun GameInfoEditSubScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "渲染器（可选）",
+                text = rendererOptionalText,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold
             )
@@ -119,7 +131,7 @@ fun GameInfoEditSubScreen(
             OutlinedTextField(
                 value = rendererDisplayName,
                 onValueChange = {},
-                label = { Text("渲染器覆盖") },
+                label = { Text(rendererOverrideLabelText) },
                 readOnly = true,
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth()
@@ -133,14 +145,14 @@ fun GameInfoEditSubScreen(
                     onClick = { editedRendererOverride = null },
                     modifier = Modifier.weight(1f)
                 ) {
-                    Text("跟随全局")
+                    Text(followGlobalButtonText)
                 }
 
                 Button(
                     onClick = { showRendererDialog = true },
                     modifier = Modifier.weight(1f)
                 ) {
-                    Text("选择渲染器")
+                    Text(selectRendererButtonText)
                 }
             }
 
@@ -151,7 +163,7 @@ fun GameInfoEditSubScreen(
                 horizontalArrangement = Arrangement.End
             ) {
                 TextButton(onClick = onBack) {
-                    Text("取消")
+                    Text(cancelButtonText)
                 }
                 Button(
                     onClick = {
@@ -166,7 +178,7 @@ fun GameInfoEditSubScreen(
                     enabled = editedName.trim().isNotEmpty(),
                     contentPadding = PaddingValues(horizontal = 20.dp, vertical = 10.dp)
                 ) {
-                    Text("保存")
+                    Text(saveButtonText)
                 }
             }
         }

@@ -18,6 +18,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import com.app.ralaunch.R
 import com.app.ralaunch.feature.gog.data.GogConstants
 import com.app.ralaunch.core.common.util.AppLogger
 import java.net.URLEncoder
@@ -32,6 +33,7 @@ fun GogEmbeddedWebLogin(
     onLoginFailed: (error: String) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
     var isLoading by remember { mutableStateOf(true) }
     var currentUrl by remember { mutableStateOf("") }
     var webView by remember { mutableStateOf<WebView?>(null) }
@@ -88,19 +90,6 @@ fun GogEmbeddedWebLogin(
                 }
             )
         }
-    }
-}
-
-/**
- * 简化 URL 显示
- */
-private fun getDisplayUrl(url: String): String {
-    return when {
-        url.contains("login.gog.com") -> "login.gog.com"
-        url.contains("auth.gog.com") -> "auth.gog.com"
-        url.contains("gog.com") -> "gog.com"
-        url.isEmpty() -> "加载中..."
-        else -> url.take(50)
     }
 }
 
@@ -170,7 +159,7 @@ private fun GogLoginWebView(
 
                         if (url.contains("error=") || url.contains("login_failed")) {
                             val error = extractError(url)
-                            onError(error ?: "Login failed")
+                            onError(error ?: context.getString(R.string.gog_login_failed))
                             return true
                         }
 
@@ -184,7 +173,9 @@ private fun GogLoginWebView(
                     ) {
                         super.onReceivedError(view, request, error)
                         if (request?.isForMainFrame == true) {
-                            onError("网络错误: ${error?.description}")
+                            val description = error?.description?.toString()
+                                ?: context.getString(R.string.common_unknown_error)
+                            onError(context.getString(R.string.gog_login_error, description))
                         }
                     }
                 }

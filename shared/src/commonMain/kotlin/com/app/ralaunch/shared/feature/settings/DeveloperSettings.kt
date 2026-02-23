@@ -9,6 +9,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.app.ralaunch.shared.generated.resources.*
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * 开发者设置状态
@@ -118,10 +120,10 @@ private fun LoggingSection(
     onViewLogsClick: () -> Unit,
     onExportLogsClick: () -> Unit
 ) {
-    SettingsSection(title = "日志") {
+    SettingsSection(title = stringResource(Res.string.settings_developer_logging_section)) {
         SwitchSettingItem(
-            title = "启用日志系统",
-            subtitle = "记录应用运行日志",
+            title = stringResource(Res.string.settings_developer_logging_enable_title),
+            subtitle = stringResource(Res.string.settings_developer_logging_enable_subtitle),
             icon = Icons.Default.Description,
             checked = loggingEnabled,
             onCheckedChange = onLoggingChange
@@ -130,8 +132,8 @@ private fun LoggingSection(
         SettingsDivider()
 
         SwitchSettingItem(
-            title = "详细日志",
-            subtitle = "输出更多调试信息",
+            title = stringResource(Res.string.settings_developer_verbose_logging_title),
+            subtitle = stringResource(Res.string.settings_developer_verbose_logging_subtitle),
             icon = Icons.Default.BugReport,
             checked = verboseLogging,
             onCheckedChange = onVerboseLoggingChange
@@ -140,8 +142,8 @@ private fun LoggingSection(
         SettingsDivider()
 
         ClickableSettingItem(
-            title = "查看日志",
-            subtitle = "查看最近的运行日志",
+            title = stringResource(Res.string.settings_developer_view_logs_title),
+            subtitle = stringResource(Res.string.settings_developer_view_logs_subtitle),
             icon = Icons.Default.Visibility,
             onClick = onViewLogsClick
         )
@@ -149,8 +151,8 @@ private fun LoggingSection(
         SettingsDivider()
 
         ClickableSettingItem(
-            title = "导出日志",
-            subtitle = "分享日志文件以便调试",
+            title = stringResource(Res.string.settings_developer_export_logs_title),
+            subtitle = stringResource(Res.string.settings_developer_export_logs_subtitle),
             icon = Icons.Default.Share,
             onClick = onExportLogsClick
         )
@@ -166,10 +168,10 @@ private fun PerformanceSection(
     onKillLauncherUIChange: (Boolean) -> Unit,
     onLowLatencyAudioChange: (Boolean) -> Unit
 ) {
-    SettingsSection(title = "性能") {
+    SettingsSection(title = stringResource(Res.string.settings_developer_performance_section)) {
         SwitchSettingItem(
-            title = "大核心亲和性",
-            subtitle = "将游戏线程绑定到高性能核心",
+            title = stringResource(Res.string.thread_affinity_big_core),
+            subtitle = stringResource(Res.string.thread_affinity_big_core_desc),
             icon = Icons.Default.Memory,
             checked = bigCoreAffinityEnabled,
             onCheckedChange = onBigCoreAffinityChange
@@ -178,8 +180,8 @@ private fun PerformanceSection(
         SettingsDivider()
 
         SwitchSettingItem(
-            title = "启动后关闭启动器UI",
-            subtitle = "释放更多内存给游戏",
+            title = stringResource(Res.string.settings_developer_kill_launcher_ui_title),
+            subtitle = stringResource(Res.string.settings_developer_kill_launcher_ui_subtitle),
             icon = Icons.Default.ExitToApp,
             checked = killLauncherUIEnabled,
             onCheckedChange = onKillLauncherUIChange
@@ -188,8 +190,8 @@ private fun PerformanceSection(
         SettingsDivider()
 
         SwitchSettingItem(
-            title = "低延迟音频",
-            subtitle = "降低音频延迟，可能增加功耗",
+            title = stringResource(Res.string.low_latency_audio),
+            subtitle = stringResource(Res.string.settings_game_low_latency_audio_subtitle),
             icon = Icons.Default.Audiotrack,
             checked = lowLatencyAudioEnabled,
             onCheckedChange = onLowLatencyAudioChange
@@ -206,10 +208,10 @@ private fun DotNetRuntimeSection(
     onConcurrentGCChange: (Boolean) -> Unit,
     onTieredCompilationChange: (Boolean) -> Unit
 ) {
-    SettingsSection(title = ".NET 运行时") {
+    SettingsSection(title = stringResource(Res.string.settings_developer_dotnet_section)) {
         SwitchSettingItem(
-            title = "Server GC",
-            subtitle = "使用服务器模式垃圾回收",
+            title = stringResource(Res.string.settings_developer_server_gc_title),
+            subtitle = stringResource(Res.string.settings_developer_server_gc_subtitle),
             icon = Icons.Default.Storage,
             checked = serverGCEnabled,
             onCheckedChange = onServerGCChange
@@ -218,8 +220,8 @@ private fun DotNetRuntimeSection(
         SettingsDivider()
 
         SwitchSettingItem(
-            title = "Concurrent GC",
-            subtitle = "启用并发垃圾回收",
+            title = stringResource(Res.string.settings_developer_concurrent_gc_title),
+            subtitle = stringResource(Res.string.settings_developer_concurrent_gc_subtitle),
             icon = Icons.Default.Sync,
             checked = concurrentGCEnabled,
             onCheckedChange = onConcurrentGCChange
@@ -228,8 +230,8 @@ private fun DotNetRuntimeSection(
         SettingsDivider()
 
         SwitchSettingItem(
-            title = "Tiered Compilation",
-            subtitle = "启用分层编译优化",
+            title = stringResource(Res.string.settings_developer_tiered_compilation_title),
+            subtitle = stringResource(Res.string.settings_developer_tiered_compilation_subtitle),
             icon = Icons.Default.Layers,
             checked = tieredCompilationEnabled,
             onCheckedChange = onTieredCompilationChange
@@ -242,10 +244,10 @@ private fun FnaOptimizationSection(
     mapBufferRangeOptEnabled: Boolean,
     onMapBufferRangeOptChange: (Boolean) -> Unit
 ) {
-    SettingsSection(title = "FNA 优化") {
+    SettingsSection(title = stringResource(Res.string.settings_developer_fna_section)) {
         SwitchSettingItem(
-            title = "MapBufferRange 优化",
-            subtitle = "启用 OpenGL 缓冲区优化",
+            title = stringResource(Res.string.settings_developer_map_buffer_range_title),
+            subtitle = stringResource(Res.string.settings_developer_map_buffer_range_subtitle),
             icon = Icons.Default.Speed,
             checked = mapBufferRangeOptEnabled,
             onCheckedChange = onMapBufferRangeOptChange
@@ -258,10 +260,10 @@ private fun MaintenanceSection(
     onClearCacheClick: () -> Unit,
     onForceReinstallPatchesClick: () -> Unit
 ) {
-    SettingsSection(title = "维护") {
+    SettingsSection(title = stringResource(Res.string.settings_developer_maintenance_section)) {
         ClickableSettingItem(
-            title = "清除缓存",
-            subtitle = "清理应用缓存文件",
+            title = stringResource(Res.string.settings_developer_clear_cache_title),
+            subtitle = stringResource(Res.string.settings_developer_clear_cache_subtitle),
             icon = Icons.Default.DeleteSweep,
             onClick = onClearCacheClick
         )
@@ -269,8 +271,8 @@ private fun MaintenanceSection(
         SettingsDivider()
 
         ClickableSettingItem(
-            title = "强制重装补丁",
-            subtitle = "重新安装所有内置补丁",
+            title = stringResource(Res.string.force_reinstall_patches),
+            subtitle = stringResource(Res.string.force_reinstall_patches_desc),
             icon = Icons.Default.Refresh,
             onClick = onForceReinstallPatchesClick
         )

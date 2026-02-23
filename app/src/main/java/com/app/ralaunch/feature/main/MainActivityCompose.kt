@@ -22,6 +22,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.collectAsState
 import androidx.lifecycle.ViewModelProvider
@@ -355,7 +356,7 @@ private fun MainActivityContent(
             appLogo = {
                 Image(
                     painter = painterResource(R.mipmap.ic_launcher_foreground),
-                    contentDescription = "Logo",
+                    contentDescription = null,
                     modifier = Modifier
                         .size(40.dp)
                         .clip(RoundedCornerShape(8.dp))
@@ -551,7 +552,7 @@ private fun DeleteGameComposeDialog(
         shape = RoundedCornerShape(20.dp),
         title = {
             Text(
-                text = "删除游戏",
+                text = stringResource(R.string.delete_game_title),
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold
             )
@@ -569,19 +570,19 @@ private fun DeleteGameComposeDialog(
                     )
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
-                        text = "正在删除游戏文件...",
+                        text = stringResource(R.string.main_deleting_game_files),
                         style = MaterialTheme.typography.bodyLarge
                     )
                 }
             } else {
                 Column {
                     Text(
-                        text = "确定要删除 \"$gameName\" 吗？",
+                        text = stringResource(R.string.main_delete_game_confirm_message, gameName),
                         style = MaterialTheme.typography.bodyLarge
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "此操作将删除游戏文件，不可撤销",
+                        text = stringResource(R.string.main_delete_game_irreversible),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.error.copy(alpha = 0.8f)
                     )
@@ -596,7 +597,7 @@ private fun DeleteGameComposeDialog(
                         containerColor = MaterialTheme.colorScheme.error
                     )
                 ) {
-                    Text("删除")
+                    Text(stringResource(R.string.delete_confirm))
                 }
             }
         },
@@ -605,7 +606,7 @@ private fun DeleteGameComposeDialog(
         } else {
             {
                 TextButton(onClick = onDismiss) {
-                    Text("取消")
+                    Text(stringResource(R.string.cancel))
                 }
             }
         }

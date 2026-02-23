@@ -3,8 +3,12 @@ package com.app.ralaunch.core.platform.runtime.renderer
 import android.content.Context
 import android.os.Build
 import android.os.Environment
+import com.app.ralaunch.shared.generated.resources.*
 import java.io.File
 import kotlin.io.path.Path
+import kotlinx.coroutines.runBlocking
+import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.getString
 import org.koin.core.context.GlobalContext
 
 actual object RendererRegistry {
@@ -23,8 +27,8 @@ actual object RendererRegistry {
         register(
             RendererInfo(
                 id = ID_NATIVE,
-                displayName = "Native OpenGL ES 3",
-                description = "最快，有GPU加速，但可能有渲染错误",
+                displayName = null,
+                description = null,
                 eglLibrary = null,
                 glesLibrary = null,
                 needsPreload = false,
@@ -35,8 +39,8 @@ actual object RendererRegistry {
         register(
             RendererInfo(
                 id = ID_GL4ES,
-                displayName = "GL4ES",
-                description = "最完美，游戏兼容性最强，但帧率稍慢",
+                displayName = null,
+                description = null,
                 eglLibrary = "libEGL_gl4es.so",
                 glesLibrary = "libGL_gl4es.so",
                 needsPreload = true,
@@ -54,8 +58,8 @@ actual object RendererRegistry {
         register(
             RendererInfo(
                 id = ID_GL4ES_ANGLE,
-                displayName = "GL4ES + ANGLE",
-                description = "翻译成Vulkan，速度和兼容性最佳，推荐高通骁龙使用",
+                displayName = null,
+                description = null,
                 eglLibrary = "libEGL_gl4es.so",
                 glesLibrary = "libGL_gl4es.so",
                 needsPreload = true,
@@ -73,8 +77,8 @@ actual object RendererRegistry {
         register(
             RendererInfo(
                 id = ID_MOBILEGLUES,
-                displayName = "MobileGlues 1.3.3",
-                description = "OpenGL 4.6 翻译至 OpenGL ES 3.2（现代化翻译层）",
+                displayName = null,
+                description = null,
                 eglLibrary = "libmobileglues.so",
                 glesLibrary = "libmobileglues.so",
                 needsPreload = true,
@@ -92,8 +96,8 @@ actual object RendererRegistry {
         register(
             RendererInfo(
                 id = ID_ANGLE,
-                displayName = "ANGLE (Vulkan Backend)",
-                description = "OpenGL ES over Vulkan (Google官方)",
+                displayName = null,
+                description = null,
                 eglLibrary = "libEGL_angle.so",
                 glesLibrary = "libGLESv2_angle.so",
                 needsPreload = true,
@@ -107,8 +111,8 @@ actual object RendererRegistry {
         register(
             RendererInfo(
                 id = ID_ZINK,
-                displayName = "Zink (Mesa Vulkan)",
-                description = "桌面 OpenGL over Vulkan (Mesa Zink + Turnip)",
+                displayName = null,
+                description = null,
                 eglLibrary = "libOSMesa.so",
                 glesLibrary = "libOSMesa.so",
                 needsPreload = true,
@@ -147,13 +151,29 @@ actual object RendererRegistry {
     @JvmStatic
     fun getRendererDisplayName(rendererId: String): String {
         val normalized = normalizeRendererId(rendererId)
-        return getRendererInfo(normalized)?.displayName ?: normalized
+        return when (normalized) {
+            ID_NATIVE -> getSharedString(Res.string.renderer_native, normalized)
+            ID_GL4ES -> getSharedString(Res.string.renderer_gl4es, normalized)
+            ID_GL4ES_ANGLE -> getSharedString(Res.string.renderer_gl4es_angle, normalized)
+            ID_MOBILEGLUES -> getSharedString(Res.string.renderer_mobileglues, normalized)
+            ID_ANGLE -> getSharedString(Res.string.renderer_angle, normalized)
+            ID_ZINK -> getSharedString(Res.string.renderer_zink, normalized)
+            else -> getRendererInfo(normalized)?.displayName ?: normalized
+        }
     }
 
     @JvmStatic
     fun getRendererDescription(rendererId: String): String {
         val normalized = normalizeRendererId(rendererId)
-        return getRendererInfo(normalized)?.description.orEmpty()
+        return when (normalized) {
+            ID_NATIVE -> getSharedString(Res.string.renderer_native_desc)
+            ID_GL4ES -> getSharedString(Res.string.renderer_gl4es_desc)
+            ID_GL4ES_ANGLE -> getSharedString(Res.string.renderer_gl4es_angle_desc)
+            ID_MOBILEGLUES -> getSharedString(Res.string.renderer_mobileglues_desc)
+            ID_ANGLE -> getSharedString(Res.string.renderer_angle_desc)
+            ID_ZINK -> getSharedString(Res.string.renderer_zink_desc)
+            else -> getRendererInfo(normalized)?.description.orEmpty()
+        }
     }
 
     @JvmStatic
@@ -235,5 +255,11 @@ actual object RendererRegistry {
     private fun getGlobalContext(): Context {
         val context: Context = GlobalContext.get().get(Context::class, null, null)
         return context.applicationContext
+    }
+
+    private fun getSharedString(resource: StringResource, fallback: String = ""): String {
+        return runBlocking {
+            runCatching { getString(resource) }.getOrElse { fallback }
+        }
     }
 }

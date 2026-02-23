@@ -10,6 +10,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
+import com.app.ralaunch.shared.generated.resources.*
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * 启动器设置状态
@@ -66,7 +68,7 @@ private fun AssetSection(
     onCheckIntegrityClick: () -> Unit,
     onReExtractRuntimeLibsClick: () -> Unit
 ) {
-    SettingsSection(title = "资产管理") {
+    SettingsSection(title = stringResource(Res.string.settings_launcher_assets_section)) {
         // 资产状态摘要
         if (assetStatusSummary.isNotEmpty()) {
             Surface(
@@ -86,8 +88,8 @@ private fun AssetSection(
         }
 
         ClickableSettingItem(
-            title = "检查资产完整性",
-            subtitle = "检查库文件和资源是否完整",
+            title = stringResource(Res.string.settings_launcher_check_integrity_title),
+            subtitle = stringResource(Res.string.settings_launcher_check_integrity_subtitle),
             icon = Icons.Default.VerifiedUser,
             onClick = onCheckIntegrityClick
         )
@@ -95,8 +97,8 @@ private fun AssetSection(
         SettingsDivider()
 
         ClickableSettingItem(
-            title = "重新解压运行时库",
-            subtitle = "如果游戏启动失败，尝试重新解压",
+            title = stringResource(Res.string.settings_reextract_runtime_title),
+            subtitle = stringResource(Res.string.settings_launcher_reextract_runtime_subtitle),
             icon = Icons.Default.RestartAlt,
             onClick = onReExtractRuntimeLibsClick
         )
@@ -108,10 +110,10 @@ private fun MultiplayerSection(
     multiplayerEnabled: Boolean,
     onMultiplayerToggle: (Boolean) -> Unit
 ) {
-    SettingsSection(title = "联机功能") {
+    SettingsSection(title = stringResource(Res.string.multiplayer_settings)) {
         SwitchSettingItem(
-            title = "启用联机功能",
-            subtitle = "开启后可在游戏内使用 P2P 联机功能",
+            title = stringResource(Res.string.settings_launcher_enable_multiplayer_title),
+            subtitle = stringResource(Res.string.settings_launcher_enable_multiplayer_subtitle),
             icon = Icons.Default.Wifi,
             checked = multiplayerEnabled,
             onCheckedChange = onMultiplayerToggle
@@ -124,10 +126,10 @@ private fun PatchSection(
     onPatchManagementClick: () -> Unit,
     onForceReinstallPatchesClick: () -> Unit
 ) {
-    SettingsSection(title = "补丁管理") {
+    SettingsSection(title = stringResource(Res.string.patch_management)) {
         ClickableSettingItem(
-            title = "管理补丁",
-            subtitle = "查看、导入或删除游戏补丁",
+            title = stringResource(Res.string.patch_management),
+            subtitle = stringResource(Res.string.patch_management_desc),
             icon = Icons.Default.Extension,
             onClick = onPatchManagementClick
         )
@@ -135,8 +137,8 @@ private fun PatchSection(
         SettingsDivider()
 
         ClickableSettingItem(
-            title = "强制重装补丁",
-            subtitle = "下次启动游戏时重新安装所有补丁",
+            title = stringResource(Res.string.force_reinstall_patches),
+            subtitle = stringResource(Res.string.force_reinstall_patches_desc),
             icon = Icons.Default.Refresh,
             onClick = onForceReinstallPatchesClick
         )

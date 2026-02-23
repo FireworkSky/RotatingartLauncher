@@ -11,7 +11,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import com.app.ralaunch.R
 import com.app.ralaunch.shared.core.component.AppNavigationRail
 import com.app.ralaunch.shared.core.component.dialogs.RendererOption
 import com.app.ralaunch.shared.core.navigation.*
@@ -50,13 +52,13 @@ fun MainApp(
     gameRendererOptions: List<RendererOption> = emptyList(),
     iconLoader: @Composable (String?, Modifier) -> Unit = { _, _ -> },
     // 页面内容 Slots
-    controlsContent: @Composable () -> Unit = { PlaceholderScreen("控制布局") },
-    downloadContent: @Composable () -> Unit = { PlaceholderScreen("下载") },
-    announcementsContent: @Composable () -> Unit = { PlaceholderScreen("公告") },
-    settingsContent: @Composable () -> Unit = { PlaceholderScreen("设置") },
-    importContent: @Composable () -> Unit = { PlaceholderScreen("导入游戏") },
-    controlStoreContent: @Composable () -> Unit = { PlaceholderScreen("控制包商店") },
-    fileBrowserContent: @Composable (initialPath: String, allowedExtensions: List<String>, fileType: String) -> Unit = { _, _, _ -> PlaceholderScreen("文件浏览") },
+    controlsContent: (@Composable () -> Unit)? = null,
+    downloadContent: (@Composable () -> Unit)? = null,
+    announcementsContent: (@Composable () -> Unit)? = null,
+    settingsContent: (@Composable () -> Unit)? = null,
+    importContent: (@Composable () -> Unit)? = null,
+    controlStoreContent: (@Composable () -> Unit)? = null,
+    fileBrowserContent: (@Composable (initialPath: String, allowedExtensions: List<String>, fileType: String) -> Unit)? = null,
     // 背景层 (视频/图片) - 作为毛玻璃源
     backgroundLayer: @Composable BoxScope.() -> Unit = {},
     // 外部提供的 HazeState（可选，不提供则内部创建）
@@ -87,11 +89,36 @@ fun MainApp(
                 val currentDest by remember {
                     derivedStateOf { navState.currentDestination }
                 }
+                val resolvedControlsContent = controlsContent ?: { PlaceholderScreen(stringResource(R.string.main_control_layout)) }
+                val resolvedDownloadContent = downloadContent ?: { PlaceholderScreen(stringResource(R.string.main_download)) }
+                val resolvedAnnouncementsContent = announcementsContent ?: { PlaceholderScreen(stringResource(R.string.main_announcements)) }
+                val resolvedSettingsContent = settingsContent ?: { PlaceholderScreen(stringResource(R.string.main_settings)) }
+                val resolvedImportContent = importContent ?: { PlaceholderScreen(stringResource(R.string.main_import_game)) }
+                val resolvedControlStoreContent = controlStoreContent ?: { PlaceholderScreen(stringResource(R.string.main_control_store)) }
+                val resolvedFileBrowserContent = fileBrowserContent ?: { _, _, _ ->
+                    PlaceholderScreen(stringResource(R.string.main_file_browser))
+                }
+                val navGamesLabel = stringResource(R.string.game_list_title)
+                val navControlsLabel = stringResource(R.string.main_control_layout)
+                val navDownloadLabel = stringResource(R.string.main_download)
+                val navImportLabel = stringResource(R.string.main_import_game)
+                val navAnnouncementsLabel = stringResource(R.string.main_announcements)
+                val navSettingsLabel = stringResource(R.string.main_settings)
 
                 // 左侧导航栏（会自动从 LocalHazeState 获取模糊状态）
                 AppNavigationRail(
                     currentDestination = currentDest,
                     onNavigate = { navState.navigateTo(it) },
+                    labelProvider = { destination ->
+                        when (destination) {
+                            NavDestination.GAMES -> navGamesLabel
+                            NavDestination.CONTROLS -> navControlsLabel
+                            NavDestination.DOWNLOAD -> navDownloadLabel
+                            NavDestination.IMPORT -> navImportLabel
+                            NavDestination.ANNOUNCEMENTS -> navAnnouncementsLabel
+                            NavDestination.SETTINGS -> navSettingsLabel
+                        }
+                    },
                     logo = appLogo
                 )
 
@@ -171,13 +198,13 @@ fun MainApp(
                                 onEditClick = onEditClick,
                                 gameRendererOptions = gameRendererOptions,
                                 iconLoader = iconLoader,
-                                controlsContent = controlsContent,
-                                downloadContent = downloadContent,
-                                announcementsContent = announcementsContent,
-                                settingsContent = settingsContent,
-                                importContent = importContent,
-                                controlStoreContent = controlStoreContent,
-                                fileBrowserContent = fileBrowserContent
+                                controlsContent = resolvedControlsContent,
+                                downloadContent = resolvedDownloadContent,
+                                announcementsContent = resolvedAnnouncementsContent,
+                                settingsContent = resolvedSettingsContent,
+                                importContent = resolvedImportContent,
+                                controlStoreContent = resolvedControlStoreContent,
+                                fileBrowserContent = resolvedFileBrowserContent
                             )
                         } else {
                             DeferredPage {
@@ -194,13 +221,13 @@ fun MainApp(
                                     onEditClick = onEditClick,
                                     gameRendererOptions = gameRendererOptions,
                                     iconLoader = iconLoader,
-                                    controlsContent = controlsContent,
-                                    downloadContent = downloadContent,
-                                    announcementsContent = announcementsContent,
-                                    settingsContent = settingsContent,
-                                    importContent = importContent,
-                                    controlStoreContent = controlStoreContent,
-                                    fileBrowserContent = fileBrowserContent
+                                    controlsContent = resolvedControlsContent,
+                                    downloadContent = resolvedDownloadContent,
+                                    announcementsContent = resolvedAnnouncementsContent,
+                                    settingsContent = resolvedSettingsContent,
+                                    importContent = resolvedImportContent,
+                                    controlStoreContent = resolvedControlStoreContent,
+                                    fileBrowserContent = resolvedFileBrowserContent
                                 )
                             }
                         }
@@ -262,6 +289,29 @@ private fun PageContent(
     controlStoreContent: @Composable () -> Unit,
     fileBrowserContent: @Composable (String, List<String>, String) -> Unit
 ) {
+    val noGameSelectedTitle = stringResource(R.string.main_no_game_selected)
+    val noGameSelectedMessage = stringResource(R.string.main_select_game)
+    val emptyGamesTitle = stringResource(R.string.patch_no_games)
+    val emptyGamesMessage = stringResource(R.string.main_empty_game_list_hint)
+    val addGameButtonText = stringResource(R.string.main_add_game)
+    val launchGameButtonText = stringResource(R.string.main_launch_game)
+    val editContentDescription = stringResource(R.string.control_layout_edit)
+    val deleteContentDescription = stringResource(R.string.delete)
+    val moreActionsContentDescription = stringResource(R.string.control_layout_more_actions)
+    val collapseActionsContentDescription = stringResource(R.string.control_layout_hide_quick_actions)
+    val followGlobalSettingsText = stringResource(R.string.renderer_follow_global_settings)
+    val editGameInfoTitle = stringResource(R.string.main_edit_game_info)
+    val backContentDescription = stringResource(R.string.back)
+    val editDisplayInfoText = stringResource(R.string.main_edit_display_info)
+    val gameNameLabelText = stringResource(R.string.game_name)
+    val gameDescriptionLabelText = stringResource(R.string.game_description)
+    val rendererOptionalText = stringResource(R.string.main_renderer_optional)
+    val rendererOverrideLabelText = stringResource(R.string.main_renderer_override)
+    val followGlobalButtonText = stringResource(R.string.renderer_follow_global)
+    val selectRendererButtonText = stringResource(R.string.renderer_select)
+    val cancelButtonText = stringResource(R.string.cancel)
+    val saveButtonText = stringResource(R.string.control_edit_save)
+
     when (targetScreen) {
         is Screen.Games -> {
             GamesPageContent(
@@ -276,6 +326,16 @@ private fun PageContent(
                     selectedGame?.id?.let { navState.navigateToGameDetail(it) }
                 },
                 onAddClick = { navState.navigateTo(Screen.Import) },
+                noSelectionTitle = noGameSelectedTitle,
+                noSelectionMessage = noGameSelectedMessage,
+                emptyGamesTitle = emptyGamesTitle,
+                emptyGamesMessage = emptyGamesMessage,
+                addGameButtonText = addGameButtonText,
+                launchGameButtonText = launchGameButtonText,
+                editActionContentDescription = editContentDescription,
+                deleteActionContentDescription = deleteContentDescription,
+                moreActionsContentDescription = moreActionsContentDescription,
+                collapseActionsContentDescription = collapseActionsContentDescription,
                 iconLoader = iconLoader
             )
         }
@@ -293,13 +353,25 @@ private fun PageContent(
                     game = game,
                     rendererOptions = gameRendererOptions,
                     onBack = { navState.goBack() },
-                    onSave = onEditClick
+                    onSave = onEditClick,
+                    followGlobalSettingsText = followGlobalSettingsText,
+                    editGameInfoTitle = editGameInfoTitle,
+                    backContentDescription = backContentDescription,
+                    editDisplayInfoText = editDisplayInfoText,
+                    gameNameLabelText = gameNameLabelText,
+                    gameDescriptionLabelText = gameDescriptionLabelText,
+                    rendererOptionalText = rendererOptionalText,
+                    rendererOverrideLabelText = rendererOverrideLabelText,
+                    followGlobalButtonText = followGlobalButtonText,
+                    selectRendererButtonText = selectRendererButtonText,
+                    cancelButtonText = cancelButtonText,
+                    saveButtonText = saveButtonText
                 )
             } else {
-                PlaceholderScreen("未找到游戏: ${targetScreen.storageId}")
+                PlaceholderScreen(stringResource(R.string.main_game_not_found, targetScreen.storageId))
             }
         }
-        is Screen.ControlEditor -> PlaceholderScreen("布局编辑器")
+        is Screen.ControlEditor -> PlaceholderScreen(stringResource(R.string.main_control_editor_placeholder))
         is Screen.Initialization -> { /* 已移至独立 Activity */ }
     }
 }
@@ -318,6 +390,16 @@ private fun GamesPageContent(
     onDeleteClick: () -> Unit,
     onEditClick: () -> Unit,
     onAddClick: () -> Unit,
+    noSelectionTitle: String,
+    noSelectionMessage: String,
+    emptyGamesTitle: String,
+    emptyGamesMessage: String,
+    addGameButtonText: String,
+    launchGameButtonText: String,
+    editActionContentDescription: String,
+    deleteActionContentDescription: String,
+    moreActionsContentDescription: String,
+    collapseActionsContentDescription: String,
     iconLoader: @Composable (String?, Modifier) -> Unit
 ) {
     GameListContent(
@@ -329,6 +411,16 @@ private fun GamesPageContent(
         onDeleteClick = onDeleteClick,
         onEditClick = onEditClick,
         onAddClick = onAddClick,
+        noSelectionTitle = noSelectionTitle,
+        noSelectionMessage = noSelectionMessage,
+        emptyGamesTitle = emptyGamesTitle,
+        emptyGamesMessage = emptyGamesMessage,
+        addGameButtonText = addGameButtonText,
+        launchGameButtonText = launchGameButtonText,
+        editActionContentDescription = editActionContentDescription,
+        deleteActionContentDescription = deleteActionContentDescription,
+        moreActionsContentDescription = moreActionsContentDescription,
+        collapseActionsContentDescription = collapseActionsContentDescription,
         isLoading = isLoading,
         iconLoader = iconLoader
     )

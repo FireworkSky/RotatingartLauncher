@@ -10,8 +10,10 @@ import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.app.ralaunch.R
 import com.app.ralaunch.core.common.util.AssetIntegrityChecker
 
 /**
@@ -38,9 +40,9 @@ internal fun AssetCheckResultDialog(
         },
         title = {
             Text(
-                if (isChecking) "正在检查..." 
-                else if (result?.isValid == true) "检查通过" 
-                else "发现问题"
+                if (isChecking) stringResource(R.string.asset_check_in_progress)
+                else if (result?.isValid == true) stringResource(R.string.asset_check_passed)
+                else stringResource(R.string.asset_check_issues_found)
             )
         },
         text = {
@@ -52,7 +54,7 @@ internal fun AssetCheckResultDialog(
                         modifier = Modifier.fillMaxWidth()
                     )
                     Spacer(modifier = Modifier.height(16.dp))
-                    Text("正在检查资产完整性...")
+                    Text(stringResource(R.string.asset_check_checking_message))
                 } else if (result != null) {
                     Text(
                         result.summary,
@@ -88,7 +90,7 @@ internal fun AssetCheckResultDialog(
                         if (canFix) {
                             Spacer(modifier = Modifier.height(16.dp))
                             Text(
-                                "点击「自动修复」可尝试修复上述问题。",
+                                stringResource(R.string.asset_check_auto_fix_tip),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.primary
                             )
@@ -100,7 +102,7 @@ internal fun AssetCheckResultDialog(
         confirmButton = {
             if (!isChecking && result?.issues?.any { it.canAutoFix } == true) {
                 TextButton(onClick = onAutoFix) {
-                    Text("自动修复")
+                    Text(stringResource(R.string.asset_check_auto_fix))
                 }
             }
         },
@@ -109,7 +111,7 @@ internal fun AssetCheckResultDialog(
                 onClick = onDismiss,
                 enabled = !isChecking
             ) {
-                Text("关闭")
+                Text(stringResource(R.string.close))
             }
         }
     )
@@ -134,7 +136,7 @@ internal fun MultiplayerDisclaimerDialog(
         },
         title = {
             Text(
-                text = "联机功能声明",
+                text = stringResource(R.string.multiplayer_disclaimer_title),
                 style = MaterialTheme.typography.headlineSmall
             )
         },
@@ -143,15 +145,15 @@ internal fun MultiplayerDisclaimerDialog(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Text(
-                    text = "联机功能使用 EasyTier (LGPL-3.0) 第三方开源组件，在使用过程中所遇到的问题请通过相关渠道进行反馈。",
+                    text = stringResource(R.string.multiplayer_disclaimer_intro),
                     style = MaterialTheme.typography.bodyMedium
                 )
                 Text(
-                    text = "联机功能使用 P2P 技术，联机成功后房间内用户之间将直接连接。不会使用第三方服务器对您的流量进行转发。最终联机体验和参与联机者的网络情况有较大关系。",
+                    text = stringResource(R.string.multiplayer_disclaimer_p2p),
                     style = MaterialTheme.typography.bodyMedium
                 )
                 Text(
-                    text = "在多人联机全过程中，您必须严格遵守您所在国家与地区的全部法律法规。",
+                    text = stringResource(R.string.multiplayer_disclaimer_legal),
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Medium
                 )
@@ -159,14 +161,13 @@ internal fun MultiplayerDisclaimerDialog(
         },
         confirmButton = {
             TextButton(onClick = onConfirm) {
-                Text("确认")
+                Text(stringResource(R.string.confirm))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("取消")
+                Text(stringResource(R.string.cancel))
             }
         }
     )
 }
-

@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -222,7 +223,7 @@ private fun DownloadDialogHeader(
             }
 
             IconButton(onClick = onClose, modifier = Modifier.size(36.dp)) {
-                Icon(Icons.Default.Close, "关闭", tint = Color.White)
+                Icon(Icons.Default.Close, stringResource(R.string.close), tint = Color.White)
             }
         }
     }
@@ -242,7 +243,7 @@ private fun GameVersionPanel(
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
-                text = "选择游戏版本",
+                text = stringResource(R.string.gog_select_game_version),
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.SemiBold,
                 color = Color.White
@@ -325,7 +326,7 @@ private fun RightPanel(
             )
             Spacer(modifier = Modifier.width(10.dp))
             Text(
-                text = "开始下载",
+                text = stringResource(R.string.gog_start_download),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold
             )
@@ -396,7 +397,7 @@ private fun ModLoaderVersionSelector(
 ) {
     Column {
         Text(
-            text = "选择 ${modLoaderRule.name} 版本",
+            text = stringResource(R.string.gog_select_modloader_version, modLoaderRule.name),
             style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.SemiBold,
             color = Color.White
@@ -420,12 +421,12 @@ private fun ModLoaderVersionSelector(
                 Spacer(modifier = Modifier.width(10.dp))
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = selectedVersion?.version ?: "选择版本",
+                        text = selectedVersion?.version ?: stringResource(R.string.gog_select_version),
                         style = MaterialTheme.typography.bodyMedium,
                         color = Color.White
                     )
                     if (selectedVersion?.stable == true) {
-                        Text("稳定版", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.tertiary)
+                        Text(stringResource(R.string.runtime_version_stable), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.tertiary)
                     }
                 }
                 Icon(
@@ -486,7 +487,7 @@ private fun ModLoaderVersionItem(
             Text(version.version, style = MaterialTheme.typography.bodyMedium, color = Color.White, modifier = Modifier.weight(1f))
             if (version.stable) {
                 Surface(shape = RoundedCornerShape(4.dp), color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.2f)) {
-                    Text("稳定", Modifier.padding(horizontal = 6.dp, vertical = 2.dp), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.tertiary)
+                    Text(stringResource(R.string.runtime_version_stable), Modifier.padding(horizontal = 6.dp, vertical = 2.dp), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.tertiary)
                 }
             }
         }
@@ -532,7 +533,7 @@ private fun DownloadProgressContent(
             verticalArrangement = Arrangement.Center
         ) {
             Text(
-                text = "正在下载",
+                text = stringResource(R.string.gog_download_status_downloading),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 color = Color.White
@@ -614,7 +615,7 @@ private fun DownloadCompletedContent(
             verticalArrangement = Arrangement.Center
         ) {
             Text(
-                text = "下载完成",
+                text = stringResource(R.string.gog_download_complete),
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
                 color = Color.White
@@ -626,7 +627,7 @@ private fun DownloadCompletedContent(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(Icons.Default.Check, null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.tertiary)
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("游戏已下载", style = MaterialTheme.typography.bodyLarge, color = Color.White.copy(alpha = 0.8f))
+                    Text(stringResource(R.string.gog_game_downloaded), style = MaterialTheme.typography.bodyLarge, color = Color.White.copy(alpha = 0.8f))
                 }
             }
             if (modLoaderPath != null) {
@@ -634,7 +635,7 @@ private fun DownloadCompletedContent(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(Icons.Default.Check, null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.tertiary)
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("ModLoader 已下载", style = MaterialTheme.typography.bodyLarge, color = Color.White.copy(alpha = 0.8f))
+                    Text(stringResource(R.string.gog_modloader_downloaded), style = MaterialTheme.typography.bodyLarge, color = Color.White.copy(alpha = 0.8f))
                 }
             }
 
@@ -649,7 +650,7 @@ private fun DownloadCompletedContent(
                 ) {
                     Icon(Icons.Default.InstallMobile, null)
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("立即安装", fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(R.string.gog_install_now), fontWeight = FontWeight.SemiBold)
                 }
 
                 OutlinedButton(
@@ -658,7 +659,7 @@ private fun DownloadCompletedContent(
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White.copy(alpha = 0.7f))
                 ) {
-                    Text("稍后安装")
+                    Text(stringResource(R.string.gog_install_later))
                 }
             }
         }
@@ -684,7 +685,7 @@ private fun DownloadFailedContent(
         }
 
         Column(modifier = Modifier.weight(0.6f), verticalArrangement = Arrangement.Center) {
-            Text("下载失败", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, color = Color.White)
+            Text(stringResource(R.string.gog_download_failed_title), style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, color = Color.White)
             Spacer(modifier = Modifier.height(8.dp))
             Text(error, style = MaterialTheme.typography.bodyLarge, color = Color.White.copy(alpha = 0.7f))
             Spacer(modifier = Modifier.height(24.dp))
@@ -697,7 +698,7 @@ private fun DownloadFailedContent(
                 ) {
                     Icon(Icons.Default.Refresh, null)
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("重试", fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(R.string.retry), fontWeight = FontWeight.SemiBold)
                 }
                 OutlinedButton(
                     onClick = onClose,
@@ -705,7 +706,7 @@ private fun DownloadFailedContent(
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White.copy(alpha = 0.7f))
                 ) {
-                    Text("关闭")
+                    Text(stringResource(R.string.close))
                 }
             }
         }

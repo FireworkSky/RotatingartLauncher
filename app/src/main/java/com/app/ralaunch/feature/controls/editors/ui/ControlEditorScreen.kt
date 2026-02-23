@@ -15,9 +15,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import com.app.ralaunch.R
 import com.app.ralaunch.feature.controls.ControlData
 import com.app.ralaunch.feature.controls.editors.ControlEditorViewModel
 import com.app.ralaunch.feature.controls.packs.ControlLayout
@@ -232,7 +234,7 @@ fun ControlEditorScreen(
                     containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.8f),
                     contentColor = MaterialTheme.colorScheme.error
                 ) {
-                    Icon(Icons.Default.Delete, contentDescription = "删除控件")
+                    Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.editor_delete_control))
                 }
             }
         }

@@ -17,12 +17,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import coil.compose.AsyncImage
+import com.app.ralaunch.R
 import com.app.ralaunch.feature.controls.packs.ControlPackInfo
 import java.io.File
 
@@ -31,25 +33,26 @@ internal fun CreateLayoutDialog(
     onConfirm: (String) -> Unit,
     onDismiss: () -> Unit
 ) {
-    var name by remember { mutableStateOf("新建布局") }
+    val defaultName = stringResource(R.string.control_new_layout_button)
+    var name by remember(defaultName) { mutableStateOf(defaultName) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("新建布局") },
+        title = { Text(stringResource(R.string.control_create_layout)) },
         text = {
             OutlinedTextField(
                 value = name,
                 onValueChange = { name = it },
-                label = { Text("布局名称") },
+                label = { Text(stringResource(R.string.layout_name_hint)) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth()
             )
         },
         confirmButton = {
-            TextButton(onClick = { onConfirm(name) }) { Text("创建") }
+            TextButton(onClick = { onConfirm(name) }) { Text(stringResource(R.string.confirm)) }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("取消") }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) }
         }
     )
 }
@@ -64,21 +67,21 @@ internal fun RenameLayoutDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("重命名布局") },
+        title = { Text(stringResource(R.string.control_rename_layout)) },
         text = {
             OutlinedTextField(
                 value = name,
                 onValueChange = { name = it },
-                label = { Text("新名称") },
+                label = { Text(stringResource(R.string.layout_name_hint)) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth()
             )
         },
         confirmButton = {
-            TextButton(onClick = { onConfirm(name) }) { Text("确定") }
+            TextButton(onClick = { onConfirm(name) }) { Text(stringResource(R.string.confirm)) }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("取消") }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) }
         }
     )
 }
@@ -134,7 +137,7 @@ internal fun LocalLayoutPreviewDialog(
                     if (previewImages.isNotEmpty()) {
                         AsyncImage(
                             model = previewImages.first(),
-                            contentDescription = "布局预览",
+                            contentDescription = stringResource(R.string.control_layout_preview_image),
                             modifier = Modifier.fillMaxSize(),
                             contentScale = ContentScale.Fit
                         )
@@ -148,7 +151,7 @@ internal fun LocalLayoutPreviewDialog(
                             )
                             Spacer(modifier = Modifier.height(12.dp))
                             Text(
-                                text = "暂无预览图",
+                                text = stringResource(R.string.pack_no_preview),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
                             )
@@ -180,7 +183,7 @@ internal fun LocalLayoutPreviewDialog(
                             onClick = onDismiss,
                             modifier = Modifier.size(40.dp)
                         ) {
-                            Icon(Icons.Default.Close, "关闭")
+                            Icon(Icons.Default.Close, stringResource(R.string.close))
                         }
                     }
                     
@@ -200,7 +203,7 @@ internal fun LocalLayoutPreviewDialog(
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
-                                text = pack.author.ifBlank { "自定义布局" },
+                                text = pack.author.ifBlank { stringResource(R.string.control_layout_custom_author) },
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -209,7 +212,7 @@ internal fun LocalLayoutPreviewDialog(
                         Spacer(modifier = Modifier.height(4.dp))
                         
                         Text(
-                            text = "v${pack.version}",
+                            text = stringResource(R.string.pack_version_short, pack.version),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -257,7 +260,7 @@ internal fun LocalLayoutPreviewDialog(
                         ) {
                             Icon(Icons.Default.Edit, null, modifier = Modifier.size(18.dp))
                             Spacer(modifier = Modifier.width(6.dp))
-                            Text("编辑")
+                            Text(stringResource(R.string.control_layout_edit))
                         }
                     }
                 }

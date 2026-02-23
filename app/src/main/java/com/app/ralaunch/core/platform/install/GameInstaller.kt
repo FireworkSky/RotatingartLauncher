@@ -1,5 +1,7 @@
 package com.app.ralaunch.core.platform.install
 
+import com.app.ralaunch.R
+import com.app.ralaunch.RaLaunchApp
 import com.app.ralaunch.shared.core.data.repository.GameListStorage
 import java.io.File
 
@@ -53,7 +55,9 @@ class GameInstaller(private val storage: GameListStorage) {
         }
         
         if (plugin == null) {
-            callback.onError("未找到支持此游戏的安装插件")
+            callback.onError(
+                RaLaunchApp.getInstance().getString(R.string.install_plugin_not_found)
+            )
             return
         }
         

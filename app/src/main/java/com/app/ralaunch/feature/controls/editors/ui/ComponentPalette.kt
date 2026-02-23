@@ -20,6 +20,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.app.ralaunch.R
@@ -61,7 +62,7 @@ fun FloatingBall(
     ) {
         Icon(
             painter = painterResource(id = R.drawable.ic_ral),
-            contentDescription = "菜单",
+            contentDescription = stringResource(R.string.control_editor_menu),
             tint = MaterialTheme.colorScheme.onPrimary,
             modifier = Modifier.size(20.dp)
         )
@@ -111,13 +112,17 @@ fun ActionWindowMenu(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "快捷菜单",
+                    text = stringResource(R.string.control_editor_quick_menu),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
                 )
                 IconButton(onClick = onCloseMenu, modifier = Modifier.size(24.dp)) {
-                    Icon(Icons.Default.ExpandLess, contentDescription = "收起菜单", modifier = Modifier.size(20.dp))
+                    Icon(
+                        Icons.Default.ExpandLess,
+                        contentDescription = stringResource(R.string.control_editor_collapse_menu),
+                        modifier = Modifier.size(20.dp)
+                    )
                 }
             }
             
@@ -133,28 +138,28 @@ fun ActionWindowMenu(
             ) {
                 MenuRowItem(
                     icon = Icons.Default.AddCircle,
-                    label = "组件库",
+                    label = stringResource(R.string.control_editor_component_library),
                     isActive = isPaletteVisible,
                     onClick = onTogglePalette
                 )
                 
                 MenuRowItem(
                     icon = if (isGhostMode) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                    label = "幽灵模式",
+                    label = stringResource(R.string.control_editor_ghost_mode),
                     isActive = isGhostMode,
                     onClick = onToggleGhostMode
                 )
 
                 MenuRowItem(
                     icon = if (isGridVisible) Icons.Default.GridOn else Icons.Default.GridOff,
-                    label = "网格显示",
+                    label = stringResource(R.string.control_editor_grid_display),
                     isActive = isGridVisible,
                     onClick = onToggleGrid
                 )
 
                 MenuRowItem(
                     icon = Icons.Default.Settings,
-                    label = "编辑器设置",
+                    label = stringResource(R.string.control_editor_settings),
                     isActive = false,
                     onClick = onOpenSettings
                 )
@@ -163,7 +168,7 @@ fun ActionWindowMenu(
 
                 MenuRowItem(
                     icon = Icons.Default.Save,
-                    label = "保存布局",
+                    label = stringResource(R.string.control_editor_save_layout),
                     isActive = false,
                     onClick = onSave,
                     tint = MaterialTheme.colorScheme.primary
@@ -171,7 +176,7 @@ fun ActionWindowMenu(
 
                 MenuRowItem(
                     icon = Icons.Default.ExitToApp,
-                    label = "退出编辑器",
+                    label = stringResource(R.string.control_editor_exit_editor),
                     isActive = false,
                     onClick = onExit,
                     tint = MaterialTheme.colorScheme.error
@@ -250,9 +255,13 @@ fun ComponentPalette(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("组件库", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Text(
+                    stringResource(R.string.control_editor_component_library),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
                 IconButton(onClick = onClose, modifier = Modifier.size(24.dp)) {
-                    Icon(Icons.Default.Close, contentDescription = "关闭", modifier = Modifier.size(16.dp))
+                    Icon(Icons.Default.Close, contentDescription = stringResource(R.string.close), modifier = Modifier.size(16.dp))
                 }
             }
 
@@ -268,25 +277,25 @@ fun ComponentPalette(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
-                    PaletteItem(Icons.Default.RadioButtonChecked, "按钮", "button", onAddControl)
-                    PaletteItem(Icons.Default.Games, "摇杆", "joystick", onAddControl)
-                    PaletteItem(Icons.Default.TouchApp, "触控", "touchpad", onAddControl)
+                    PaletteItem(Icons.Default.RadioButtonChecked, stringResource(R.string.control_editor_button_label), "button", onAddControl)
+                    PaletteItem(Icons.Default.Games, stringResource(R.string.control_editor_joystick_label), "joystick", onAddControl)
+                    PaletteItem(Icons.Default.TouchApp, stringResource(R.string.control_editor_touch_label), "touchpad", onAddControl)
                 }
                 Spacer(modifier = Modifier.height(8.dp))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
-                    PaletteItem(Icons.Default.Mouse, "滚轮", "mousewheel", onAddControl)
-                    PaletteItem(Icons.Default.TextFields, "文本", "text", onAddControl)
-                    PaletteItem(Icons.Default.DonutLarge, "轮盘", "radialmenu", onAddControl)
+                    PaletteItem(Icons.Default.Mouse, stringResource(R.string.control_editor_mousewheel_label), "mousewheel", onAddControl)
+                    PaletteItem(Icons.Default.TextFields, stringResource(R.string.control_editor_text_label), "text", onAddControl)
+                    PaletteItem(Icons.Default.DonutLarge, stringResource(R.string.control_editor_radial_menu_label), "radialmenu", onAddControl)
                 }
                 Spacer(modifier = Modifier.height(8.dp))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
-                    PaletteItem(Icons.Default.Gamepad, "十字键", "dpad", onAddControl)
+                    PaletteItem(Icons.Default.Gamepad, stringResource(R.string.control_editor_dpad_label), "dpad", onAddControl)
                 }
             }
         }

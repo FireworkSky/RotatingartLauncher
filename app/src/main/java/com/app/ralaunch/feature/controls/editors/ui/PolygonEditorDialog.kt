@@ -22,9 +22,11 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import com.app.ralaunch.R
 import com.app.ralaunch.feature.controls.ControlData
 
 /**
@@ -100,7 +102,7 @@ fun PolygonEditorDialog(
                                 color = MaterialTheme.colorScheme.primaryContainer
                             ) {
                                 Text(
-                                    "${selectedPoints.size} 个顶点",
+                                    stringResource(R.string.control_editor_polygon_vertex_count, selectedPoints.size),
                                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                                     style = MaterialTheme.typography.labelMedium
                                 )
@@ -114,7 +116,7 @@ fun PolygonEditorDialog(
                                 color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.9f)
                             ) {
                                 Text(
-                                    "点击编辑形状",
+                                    stringResource(R.string.control_editor_polygon_tap_to_edit),
                                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                                     style = MaterialTheme.typography.labelMedium
                                 )
@@ -142,7 +144,7 @@ fun PolygonEditorDialog(
                                 )
                                 Spacer(modifier = Modifier.height(16.dp))
                                 Text(
-                                    "点击绘制形状",
+                                    stringResource(R.string.control_editor_polygon_tap_to_draw),
                                     style = MaterialTheme.typography.headlineSmall,
                                     color = MaterialTheme.colorScheme.primary
                                 )
@@ -172,14 +174,14 @@ fun PolygonEditorDialog(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(
-                                    "多边形形状",
+                                    stringResource(R.string.control_editor_polygon_shape),
                                     style = MaterialTheme.typography.titleMedium
                                 )
                                 IconButton(
                                     onClick = onDismiss,
                                     modifier = Modifier.size(32.dp)
                                 ) {
-                                    Icon(Icons.Default.Close, "关闭", modifier = Modifier.size(20.dp))
+                                    Icon(Icons.Default.Close, stringResource(R.string.close), modifier = Modifier.size(20.dp))
                                 }
                             }
                             
@@ -192,7 +194,14 @@ fun PolygonEditorDialog(
                             ) {
                                 Icon(Icons.Default.Edit, null, modifier = Modifier.size(16.dp))
                                 Spacer(modifier = Modifier.width(6.dp))
-                                Text(if (selectedPoints.size >= 3) "重新绘制" else "绘制", style = MaterialTheme.typography.labelLarge)
+                                Text(
+                                    if (selectedPoints.size >= 3) {
+                                        stringResource(R.string.control_editor_polygon_redraw)
+                                    } else {
+                                        stringResource(R.string.control_editor_polygon_draw)
+                                    },
+                                    style = MaterialTheme.typography.labelLarge
+                                )
                             }
                             
                             if (selectedPoints.size >= 3) {
@@ -205,7 +214,7 @@ fun PolygonEditorDialog(
                                 ) {
                                     Icon(Icons.Default.Delete, null, modifier = Modifier.size(16.dp))
                                     Spacer(modifier = Modifier.width(6.dp))
-                                    Text("清除", style = MaterialTheme.typography.labelLarge)
+                                    Text(stringResource(R.string.control_clear), style = MaterialTheme.typography.labelLarge)
                                 }
                             }
                         }
@@ -223,7 +232,7 @@ fun PolygonEditorDialog(
                             ) {
                                 Icon(Icons.Default.Check, null, modifier = Modifier.size(16.dp))
                                 Spacer(modifier = Modifier.width(6.dp))
-                                Text("应用", style = MaterialTheme.typography.labelLarge)
+                                Text(stringResource(R.string.control_editor_apply), style = MaterialTheme.typography.labelLarge)
                             }
                             
                             Spacer(modifier = Modifier.height(6.dp))
@@ -233,7 +242,7 @@ fun PolygonEditorDialog(
                                 modifier = Modifier.fillMaxWidth(),
                                 contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
                             ) {
-                                Text("取消", style = MaterialTheme.typography.labelLarge)
+                                Text(stringResource(R.string.cancel), style = MaterialTheme.typography.labelLarge)
                             }
                         }
                     }
@@ -591,7 +600,7 @@ fun PolygonDrawingCanvas(
                             color = MaterialTheme.colorScheme.primaryContainer
                         ) {
                             Text(
-                                "${vertices.size} 个顶点",
+                                stringResource(R.string.control_editor_polygon_vertex_count, vertices.size),
                                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                                 style = MaterialTheme.typography.labelMedium
                             )
@@ -615,19 +624,19 @@ fun PolygonDrawingCanvas(
                                 )
                                 Spacer(modifier = Modifier.height(16.dp))
                                 Text(
-                                    "绘制形状",
+                                    stringResource(R.string.control_editor_polygon_draw_shape),
                                     style = MaterialTheme.typography.titleLarge,
                                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
                                 )
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Text(
-                                    "每一笔添加一个顶点",
+                                    stringResource(R.string.control_editor_polygon_stroke_add_vertex),
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f)
                                 )
                                 Spacer(modifier = Modifier.height(2.dp))
                                 Text(
-                                    "自动连接上一个顶点",
+                                    stringResource(R.string.control_editor_polygon_auto_connect_last_vertex),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.15f)
                                 )
@@ -645,7 +654,7 @@ fun PolygonDrawingCanvas(
                             color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.9f)
                         ) {
                             Text(
-                                "继续绘制 (至少需要3个顶点)",
+                                stringResource(R.string.control_editor_polygon_continue_drawing),
                                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                                 style = MaterialTheme.typography.labelMedium
                             )
@@ -678,9 +687,9 @@ fun PolygonDrawingCanvas(
                                     onClick = onDismiss,
                                     modifier = Modifier.size(36.dp)
                                 ) {
-                                    Icon(Icons.AutoMirrored.Filled.ArrowBack, "返回")
+                                    Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.back))
                                 }
-                                Text("绘制", style = MaterialTheme.typography.titleMedium)
+                                Text(stringResource(R.string.control_editor_polygon_draw), style = MaterialTheme.typography.titleMedium)
                                 IconButton(
                                     onClick = {
                                         if (history.isNotEmpty()) {
@@ -693,7 +702,7 @@ fun PolygonDrawingCanvas(
                                 ) {
                                     Icon(
                                         Icons.AutoMirrored.Filled.Undo,
-                                        "撤销",
+                                        stringResource(R.string.control_editor_undo),
                                         tint = if (history.isNotEmpty()) 
                                             MaterialTheme.colorScheme.onSurface 
                                         else 
@@ -711,7 +720,7 @@ fun PolygonDrawingCanvas(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(
-                                    "网格吸附",
+                                    stringResource(R.string.control_editor_grid_snap),
                                     style = MaterialTheme.typography.labelMedium
                                 )
                                 Switch(
@@ -725,7 +734,7 @@ fun PolygonDrawingCanvas(
                             if (snapToGridEnabled) {
                                 Spacer(modifier = Modifier.height(8.dp))
                                 Text(
-                                    "网格密度: ${gridDivisions}×${gridDivisions}",
+                                    stringResource(R.string.control_editor_grid_density, gridDivisions),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -742,12 +751,12 @@ fun PolygonDrawingCanvas(
                             
                             // 使用说明
                             Text(
-                                "操作说明",
+                                stringResource(R.string.control_editor_instructions),
                                 style = MaterialTheme.typography.labelMedium
                             )
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                "• 画一笔添加顶点\n• 拖动顶点调整位置",
+                                stringResource(R.string.control_editor_polygon_instruction_lines),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -765,7 +774,7 @@ fun PolygonDrawingCanvas(
                             ) {
                                 Icon(Icons.Default.Delete, null, modifier = Modifier.size(18.dp))
                                 Spacer(modifier = Modifier.width(6.dp))
-                                Text("清空")
+                                Text(stringResource(R.string.control_editor_clear_all))
                             }
                         }
                         
@@ -779,7 +788,7 @@ fun PolygonDrawingCanvas(
                         ) {
                             Icon(Icons.Default.Check, null, modifier = Modifier.size(18.dp))
                             Spacer(modifier = Modifier.width(6.dp))
-                            Text("完成")
+                            Text(stringResource(R.string.control_editor_done))
                         }
                     }
                 }

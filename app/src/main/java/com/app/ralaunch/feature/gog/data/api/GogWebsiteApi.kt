@@ -1,5 +1,6 @@
 package com.app.ralaunch.feature.gog.data.api
 
+import com.app.ralaunch.R
 import com.app.ralaunch.feature.gog.data.GogConstants
 import com.app.ralaunch.feature.gog.data.model.*
 import com.app.ralaunch.core.common.util.AppLogger
@@ -36,7 +37,7 @@ class GogWebsiteApi(private val authClient: GogAuthClient) {
         val userData = getUserData()
         if (userData.length() == 0) return null
 
-        val username = userData.optString("username", "GOG 用户")
+        val username = userData.optString("username", authClient.localize(R.string.gog_user))
         val email = userData.optString("email", "")
         val userId = userData.optString("userId", "")
         var avatarUrl = ""
@@ -69,7 +70,7 @@ class GogWebsiteApi(private val authClient: GogAuthClient) {
      */
     @Throws(IOException::class)
     fun getOwnedGames(): List<GogGame> {
-        val accessToken = authClient.getAccessToken() ?: throw IOException("Not logged in")
+        val accessToken = authClient.getAccessToken() ?: throw IOException(authClient.localize(R.string.gog_error_not_logged_in))
         val games = mutableListOf<GogGame>()
         var page = 1
 
@@ -136,7 +137,7 @@ class GogWebsiteApi(private val authClient: GogAuthClient) {
     @Throws(IOException::class)
     fun getGameDetails(productId: String): GogGameDetails {
         val json = getProductInfo(productId)
-        if (json.length() == 0) throw IOException("Cannot get game information")
+        if (json.length() == 0) throw IOException(authClient.localize(R.string.gog_error_cannot_get_game_info))
 
         val title = json.optString("title", "")
         val gamename = json.optString("slug", "")

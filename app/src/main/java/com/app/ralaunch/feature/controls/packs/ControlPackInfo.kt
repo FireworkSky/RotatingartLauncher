@@ -27,7 +27,7 @@ data class PackCategory(
         /** 默认"全部"分类 */
         val ALL = PackCategory(
             id = "all",
-            name = "全部",
+            name = "All",
             icon = "apps",
             order = -1
         )

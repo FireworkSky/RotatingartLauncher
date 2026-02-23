@@ -1,6 +1,7 @@
 package com.app.ralaunch.feature.controls.packs
 
 import android.content.Context
+import com.app.ralaunch.R
 import com.app.ralaunch.core.common.JsonHttpRepositoryClient
 import com.app.ralaunch.core.common.util.AppLogger
 import kotlinx.coroutines.Dispatchers
@@ -192,7 +193,9 @@ class ControlPackRepositoryService(private val context: Context) {
                 val manifestResult = downloadFile("$baseUrl/${ControlPackInfo.MANIFEST_FILE_NAME}", manifestFile)
                 if (manifestResult.isFailure) {
                     packDir.deleteRecursively()
-                    listener?.onError("Failed to download manifest.json")
+                    listener?.onError(
+                        context.getString(R.string.pack_download_failed, ControlPackInfo.MANIFEST_FILE_NAME)
+                    )
                     return@withContext Result.failure(manifestResult.exceptionOrNull()!!)
                 }
                 downloadedSize += manifestFile.length()
@@ -204,7 +207,9 @@ class ControlPackRepositoryService(private val context: Context) {
                 val layoutResult = downloadFile("$baseUrl/${ControlPackInfo.LAYOUT_FILE_NAME}", layoutFile)
                 if (layoutResult.isFailure) {
                     packDir.deleteRecursively()
-                    listener?.onError("Failed to download layout.json")
+                    listener?.onError(
+                        context.getString(R.string.pack_download_failed, ControlPackInfo.LAYOUT_FILE_NAME)
+                    )
                     return@withContext Result.failure(layoutResult.exceptionOrNull()!!)
                 }
                 downloadedSize += layoutFile.length()
@@ -251,7 +256,7 @@ class ControlPackRepositoryService(private val context: Context) {
                 Result.success(packDir)
             } catch (e: Exception) {
                 AppLogger.error(TAG, "Failed to download pack: ${packInfo.id}", e)
-                listener?.onError(e.message ?: "Unknown error")
+                listener?.onError(e.message ?: context.getString(R.string.common_unknown_error))
                 Result.failure(e)
             }
         }

@@ -44,8 +44,11 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.app.ralaunch.R
 import com.app.ralaunch.feature.announcement.AnnouncementItem
 import com.app.ralaunch.feature.announcement.AnnouncementRepositoryService
 import dev.jeziellago.compose.markdowntext.MarkdownText
@@ -56,6 +59,7 @@ import org.koin.java.KoinJavaComponent
 @Composable
 fun AnnouncementScreenWrapper() {
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
     val service: AnnouncementRepositoryService = remember {
         KoinJavaComponent.get(AnnouncementRepositoryService::class.java)
     }
@@ -110,8 +114,8 @@ fun AnnouncementScreenWrapper() {
                     markdownById[announcementId] = markdown
                     markdownErrors.remove(announcementId)
                 },
-                onFailure = { error ->
-                    markdownErrors[announcementId] = error.message ?: "加载内容失败"
+                onFailure = {
+                    markdownErrors[announcementId] = context.getString(R.string.announcement_load_content_failed)
                 }
             )
 
@@ -135,8 +139,8 @@ fun AnnouncementScreenWrapper() {
                     syncMarkdownState(announcements)
                     AnnouncementUiState.Success(announcements)
                 },
-                onFailure = { error ->
-                    AnnouncementUiState.Error(error.message ?: "加载公告失败")
+                onFailure = {
+                    AnnouncementUiState.Error(context.getString(R.string.announcement_load_failed))
                 }
             )
             isRefreshing = false
@@ -194,7 +198,7 @@ fun AnnouncementScreenWrapper() {
                                 )
                                 Spacer(modifier = Modifier.height(12.dp))
                                 Button(onClick = { loadAnnouncements(forceRefresh = true) }) {
-                                    Text("重试")
+                                    Text(stringResource(R.string.retry))
                                 }
                             }
                         }
@@ -207,7 +211,7 @@ fun AnnouncementScreenWrapper() {
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text(
-                                    text = "暂无公告",
+                                    text = stringResource(R.string.announcement_empty),
                                     style = MaterialTheme.typography.bodyLarge
                                 )
                             }
@@ -357,14 +361,14 @@ private fun AnnouncementCard(
                             color = MaterialTheme.colorScheme.error
                         )
                         TextButton(onClick = onRetryLoadMarkdown) {
-                            Text("重试")
+                            Text(stringResource(R.string.retry))
                         }
                     }
                 }
 
                 else -> {
                     Text(
-                        text = "暂无内容",
+                        text = stringResource(R.string.announcement_no_content),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

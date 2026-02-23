@@ -1,5 +1,6 @@
 package com.app.ralaunch.feature.gog.data
 
+import com.app.ralaunch.R
 import com.app.ralaunch.feature.gog.data.api.GogAuthClient
 import com.app.ralaunch.feature.gog.data.GogConstants
 import com.app.ralaunch.feature.gog.data.model.GogGameFile
@@ -63,7 +64,7 @@ class GogDownloader(private val authClient: GogAuthClient) {
         
         targetFile.parentFile?.let {
             if (!it.exists() && !it.mkdirs()) {
-                throw IOException("Cannot create download directory: ${it.absolutePath}")
+                throw IOException(authClient.localize(R.string.gog_error_cannot_create_download_dir, it.absolutePath))
             }
         }
 
@@ -77,7 +78,7 @@ class GogDownloader(private val authClient: GogAuthClient) {
                 conn.readTimeout = GogConstants.DOWNLOAD_TIMEOUT_MS
 
                 val code = conn.responseCode
-                if (code >= 400) throw IOException("Download failed, HTTP $code")
+                if (code >= 400) throw IOException(authClient.localize(R.string.gog_error_download_failed, code))
 
                 val total = conn.contentLengthLong
                 var lastTime = System.currentTimeMillis()
@@ -91,7 +92,7 @@ class GogDownloader(private val authClient: GogAuthClient) {
                         
                         while (input.read(buffer).also { len = it } != -1) {
                             if (isCancelled) {
-                                throw IOException("Download cancelled")
+                                throw IOException(authClient.localize(R.string.gog_download_cancelled))
                             }
                             
                             output.write(buffer, 0, len)
@@ -132,7 +133,7 @@ class GogDownloader(private val authClient: GogAuthClient) {
         val targetFile = File(targetDir, fileName)
         
         val downloadUrl = gameFile.manualUrl.ifEmpty {
-            throw IOException("No download URL available for ${gameFile.name}")
+            throw IOException(authClient.localize(R.string.gog_cannot_get_download_link))
         }
         
         downloadWithAuth(downloadUrl, targetFile, progress)
@@ -152,7 +153,7 @@ class GogDownloader(private val authClient: GogAuthClient) {
         
         targetFile.parentFile?.let {
             if (!it.exists() && !it.mkdirs()) {
-                throw IOException("Cannot create download directory: ${it.absolutePath}")
+                throw IOException(authClient.localize(R.string.gog_error_cannot_create_download_dir, it.absolutePath))
             }
         }
 
@@ -195,7 +196,7 @@ class GogDownloader(private val authClient: GogAuthClient) {
                         append = false
                     }
                     else -> {
-                        throw IOException("Download failed, HTTP $code")
+                        throw IOException(authClient.localize(R.string.gog_error_download_failed, code))
                     }
                 }
 
@@ -210,7 +211,7 @@ class GogDownloader(private val authClient: GogAuthClient) {
                         
                         while (input.read(buffer).also { len = it } != -1) {
                             if (isCancelled) {
-                                throw IOException("Download cancelled")
+                                throw IOException(authClient.localize(R.string.gog_download_cancelled))
                             }
                             
                             output.write(buffer, 0, len)
@@ -247,13 +248,13 @@ class GogDownloader(private val authClient: GogAuthClient) {
             try {
                 return operation()
             } catch (e: java.net.UnknownHostException) {
-                lastException = IOException("Cannot connect to GOG server - DNS resolution failed", e)
+                lastException = IOException(authClient.localize(R.string.gog_error_dns_failed), e)
             } catch (e: java.net.SocketTimeoutException) {
-                lastException = IOException("Connection to GOG server timed out", e)
+                lastException = IOException(authClient.localize(R.string.gog_error_connection_timeout), e)
             } catch (e: java.net.ConnectException) {
-                lastException = IOException("Connection failed", e)
+                lastException = IOException(authClient.localize(R.string.gog_error_network_failed), e)
             } catch (e: IOException) {
-                if (e.message?.contains("cancelled") == true) throw e
+                if (isCancelled) throw e
                 lastException = e
             }
 
@@ -263,13 +264,13 @@ class GogDownloader(private val authClient: GogAuthClient) {
                     Thread.sleep(GogConstants.RETRY_DELAY_MS.toLong())
                 } catch (ie: InterruptedException) {
                     Thread.currentThread().interrupt()
-                    throw IOException("Retry interrupted", ie)
+                    throw IOException(authClient.localize(R.string.gog_error_retry_interrupted), ie)
                 }
             }
         }
 
         AppLogger.error(TAG, "$operationName - All retries failed")
-        throw lastException ?: IOException("Unknown error during $operationName")
+        throw lastException ?: IOException(authClient.localize(R.string.common_unknown_error))
     }
 
     companion object {

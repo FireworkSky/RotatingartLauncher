@@ -79,7 +79,7 @@
         <activity
             android:name=".feature.controls.editors.ControlEditorActivity"
             android:exported="false"
-            android:label="控制布局编辑器"
+            android:label="@string/control_editor_activity_label"
             android:screenOrientation="sensorLandscape"
             android:launchMode="singleTop"
             android:theme="@style/Theme.raLaunch" />

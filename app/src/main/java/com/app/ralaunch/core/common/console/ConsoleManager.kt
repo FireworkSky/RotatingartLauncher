@@ -1,6 +1,10 @@
 package com.app.ralaunch.core.common.console
 
+import androidx.annotation.StringRes
+import com.app.ralaunch.R
+import com.app.ralaunch.RaLaunchApp
 import com.app.ralaunch.core.common.util.AppLogger
+import com.app.ralaunch.core.common.util.LocaleManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -141,7 +145,8 @@ object ConsoleManager {
 
     // ==================== 智能提示 ====================
 
-    private const val HINT_TAG = "💡 提示"
+    private val HINT_TAG: String
+        get() = getLocalizedString(R.string.console_hint_tag)
 
     /** 避免同一提示短时间内重复显示 */
     private var lastHintKey = ""
@@ -170,19 +175,27 @@ object ConsoleManager {
         when {
             // 世界选择菜单
             m.contains("new world") && m.contains("n") ->
-                addHint("world_select", " 输入数字选择1,2,3,4选择世界，输入 n 创建新世界，输入 d+数字 删除世界")
+                addHint("world_select", getLocalizedString(
+                    R.string.console_hint_world_select
+                ))
 
             // 端口输入
             m.contains("server port") || (m.contains("port") && m.contains("7777")) ->
-                addHint("port", "⬇ 输入端口号（默认 7777，直接回车使用默认值）")
+                addHint("port", getLocalizedString(
+                    R.string.console_hint_port
+                ))
 
             // 最大玩家数
             m.contains("max player") || m.contains("maxplayers") ->
-                addHint("maxplayers", "⬇ 输入最大玩家数（直接回车使用默认值）")
+                addHint("maxplayers", getLocalizedString(
+                    R.string.console_hint_max_players
+                ))
 
             // 密码
             m.contains("server password") ->
-                addHint("password", "⬇ 输入服务器密码（留空则无密码，直接回车跳过）")
+                addHint("password", getLocalizedString(
+                    R.string.console_hint_password
+                ))
 
             // 服务器启动成功
             m.contains("listening on port") || m.contains("server started") -> {
@@ -190,24 +203,51 @@ object ConsoleManager {
                 val portMatch = Regex("""port\s*:?\s*(\d+)""", RegexOption.IGNORE_CASE).find(msg)
                 val port = portMatch?.groupValues?.get(1) ?: "7777"
                 addHint("server_ready",
-                    " 服务器已启动！游戏内连接方式: 多人模式 → 通过IP加入 → 127.0.0.1:$port")
+                    getLocalizedString(
+                        R.string.console_hint_server_ready,
+                        port
+                    )
+                )
             }
 
             // 自动转发
             m.contains("auto-forwarding port") || m.contains("upnp") ->
-                addHint("upnp", " 正在尝试 UPnP 端口转发，外网玩家可通过你的公网IP连接")
+                addHint("upnp", getLocalizedString(
+                    R.string.console_hint_upnp
+                ))
 
             // Mods 加载
             m.contains("loading mods") || m.contains("loading mod") ->
-                addHint("mods_loading", " 正在加载 Mods，请耐心等待...")
+                addHint("mods_loading", getLocalizedString(
+                    R.string.console_hint_mods_loading
+                ))
 
             // 世界生成中
             m.contains("generating world") || m.contains("world generation") ->
-                addHint("worldgen", " 正在生成新世界，这可能需要几分钟...")
+                addHint("worldgen", getLocalizedString(
+                    R.string.console_hint_world_generating
+                ))
 
             // 世界保存
             m.contains("saving world") ->
-                addHint("saving", " 正在保存世界...")
+                addHint("saving", getLocalizedString(
+                    R.string.console_hint_saving_world
+                ))
+        }
+    }
+
+    private fun getLocalizedString(
+        @StringRes resId: Int,
+        vararg formatArgs: Any
+    ): String {
+        val appContext = RaLaunchApp.getAppContext()
+        return runCatching {
+            val localizedContext = LocaleManager.applyLanguage(appContext) ?: appContext
+            if (formatArgs.isEmpty()) localizedContext.getString(resId)
+            else localizedContext.getString(resId, *formatArgs)
+        }.getOrElse {
+            if (formatArgs.isEmpty()) appContext.getString(resId)
+            else appContext.getString(resId, *formatArgs)
         }
     }
 

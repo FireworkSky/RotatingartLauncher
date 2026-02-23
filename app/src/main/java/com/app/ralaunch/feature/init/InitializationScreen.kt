@@ -253,7 +253,7 @@ private fun LegalPage(
             ) {
                 Image(
                     painter = painterResource(R.mipmap.ic_launcher_foreground),
-                    contentDescription = "Logo",
+                    contentDescription = null,
                     modifier = Modifier
                         .size(80.dp)
                         .graphicsLayer {
@@ -268,14 +268,14 @@ private fun LegalPage(
             Spacer(modifier = Modifier.height(24.dp))
             
             Text(
-                text = "RaLaunch",
+                text = stringResource(R.string.main_splash_brand),
                 style = MaterialTheme.typography.headlineLarge,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onBackground
             )
             
             Text(
-                text = "v1.0",
+                text = stringResource(R.string.app_version),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -508,7 +508,7 @@ private fun SetupPage(
                             ) {
                                 Image(
                                     painter = painterResource(R.mipmap.ic_launcher_foreground),
-                                    contentDescription = "Logo",
+                                    contentDescription = null,
                                     modifier = Modifier
                                         .size(56.dp)
                                         .graphicsLayer {
@@ -527,7 +527,7 @@ private fun SetupPage(
                 
                 // 品牌名
                 Text(
-                    text = "RaLaunch",
+                    text = stringResource(R.string.main_splash_brand),
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
@@ -637,13 +637,13 @@ private fun SetupPage(
                             Spacer(modifier = Modifier.width(12.dp))
                             Column {
                                 Text(
-                                    text = "运行环境组件",
+                                    text = stringResource(R.string.init_runtime_components_title),
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.SemiBold,
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
                                 Text(
-                                    text = "安装游戏所需的运行时组件",
+                                    text = stringResource(R.string.init_runtime_components_subtitle),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -682,7 +682,7 @@ private fun SetupPage(
                         )
                         Spacer(modifier = Modifier.width(12.dp))
                         Text(
-                            text = "首次运行需要解压运行环境，仅需几分钟",
+                            text = stringResource(R.string.init_runtime_components_hint),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSecondaryContainer,
                             modifier = Modifier.weight(1f)
@@ -726,7 +726,7 @@ private fun SetupPage(
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
                         text = if (uiState.hasPermissions) 
-                            "开始安装"
+                            stringResource(R.string.init_start_install)
                         else 
                             stringResource(R.string.init_grant_permissions),
                         style = MaterialTheme.typography.titleMedium
@@ -759,7 +759,7 @@ private fun InitializationSetupPagePreview() {
         components = listOf(
             ComponentState(
                 name = "dotnet",
-                description = "Microsoft .NET Runtime",
+                description = context.getString(R.string.init_component_dotnet_desc),
                 fileName = "dotnet.tar.xz",
                 needsExtraction = true,
                 progress = 45
@@ -767,7 +767,7 @@ private fun InitializationSetupPagePreview() {
         ),
         isExtracting = true,
         overallProgress = 45,
-        statusMessage = "正在解压 dotnet..."
+        statusMessage = context.getString(R.string.init_extracting)
     )
 
     RaLaunchTheme {
@@ -900,6 +900,11 @@ private fun PermissionCard(
  */
 @Composable
 private fun ComponentCard(component: ComponentState) {
+    val displayName = when (component.name) {
+        "dotnet" -> stringResource(R.string.asset_check_component_dotnet_runtime)
+        else -> component.name
+    }
+
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
@@ -956,7 +961,7 @@ private fun ComponentCard(component: ComponentState) {
             
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = component.name,
+                    text = displayName,
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Medium,
                     color = MaterialTheme.colorScheme.onSurface

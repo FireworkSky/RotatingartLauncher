@@ -97,7 +97,10 @@ class ProcessLauncherService : Service() {
         }
 
         val title = intent.getStringExtra(EXTRA_TITLE) ?: ""
-        startForeground(NOTIFICATION_ID, createNotification("$title 正在启动..."))
+        startForeground(
+            NOTIFICATION_ID,
+            createNotification(getString(R.string.process_launcher_status_starting, title))
+        )
 
         val assemblyPath = intent.getStringExtra(EXTRA_ASSEMBLY_PATH)
         val args = intent.getStringArrayExtra(EXTRA_ARGS)
@@ -121,7 +124,7 @@ class ProcessLauncherService : Service() {
             {
                 try {
                     running = true
-                    updateNotification("$title 正在运行")
+                    updateNotification(getString(R.string.process_launcher_status_running, title))
                     doLaunch(assemblyPath, args, title, gameId)
                 } catch (e: Exception) {
                     AppLogger.error(TAG, "Launch error: ${e.message}", e)
@@ -201,8 +204,12 @@ class ProcessLauncherService : Service() {
 
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(CHANNEL_ID, "进程启动器", NotificationManager.IMPORTANCE_LOW).apply {
-                description = "后台进程运行通知"
+            val channel = NotificationChannel(
+                CHANNEL_ID,
+                getString(R.string.process_launcher_channel_name),
+                NotificationManager.IMPORTANCE_LOW
+            ).apply {
+                description = getString(R.string.process_launcher_channel_description)
             }
             getSystemService(NotificationManager::class.java)?.createNotificationChannel(channel)
         }
@@ -210,7 +217,7 @@ class ProcessLauncherService : Service() {
 
     private fun createNotification(text: String): Notification {
         return NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("后台进程")
+            .setContentTitle(getString(R.string.process_launcher_notification_title))
             .setContentText(text)
             .setSmallIcon(R.drawable.ic_ral)
             .setPriority(NotificationCompat.PRIORITY_LOW)

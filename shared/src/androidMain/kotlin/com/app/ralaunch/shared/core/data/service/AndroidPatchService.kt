@@ -2,11 +2,13 @@ package com.app.ralaunch.shared.core.data.service
 
 import android.content.Context
 import com.app.ralaunch.shared.core.contract.service.*
+import com.app.ralaunch.shared.generated.resources.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.withContext
+import org.jetbrains.compose.resources.getString
 
 /**
  * Android 平台补丁服务实现
@@ -23,7 +25,7 @@ class AndroidPatchService(
     
     private val _installedPatches = MutableStateFlow<List<PatchInfo>>(emptyList())
     override val installedPatches: Flow<List<PatchInfo>> = _installedPatches.asStateFlow()
-    
+
     /**
      * 刷新补丁列表
      */
@@ -53,7 +55,10 @@ class AndroidPatchService(
     override suspend fun checkCompatibility(patchId: String, gameId: String): PatchCompatibility = withContext(Dispatchers.IO) {
         val patch = getPatchInfo(patchId)
         if (patch == null) {
-            return@withContext PatchCompatibility(false, "补丁不存在")
+            return@withContext PatchCompatibility(
+                false,
+                getString(Res.string.shared_patch_not_found)
+            )
         }
         
         if (patch.targetGames.isEmpty()) {
@@ -64,7 +69,10 @@ class AndroidPatchService(
             return@withContext PatchCompatibility(true)
         }
         
-        PatchCompatibility(false, "补丁不支持此游戏")
+        PatchCompatibility(
+            false,
+            getString(Res.string.shared_patch_not_supported_for_game)
+        )
     }
     
     override suspend fun enablePatch(patchId: String, gameId: String): Boolean = withContext(Dispatchers.IO) {
@@ -84,7 +92,11 @@ class AndroidPatchService(
     
     override suspend fun installPatch(patchPath: String): Result<PatchInfo> = withContext(Dispatchers.IO) {
         // 桥接到 PatchManager.installPatch
-        Result.failure(NotImplementedError("待实现"))
+        Result.failure(
+            NotImplementedError(
+                getString(Res.string.shared_feature_not_implemented)
+            )
+        )
     }
     
     override suspend fun uninstallPatch(patchId: String): Boolean = withContext(Dispatchers.IO) {

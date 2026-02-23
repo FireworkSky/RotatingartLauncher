@@ -18,6 +18,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.app.ralaunch.shared.generated.resources.*
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * 语言选择数据
@@ -38,10 +40,13 @@ fun LanguageSelectDialog(
     onSelect: (String) -> Unit,
     onDismiss: () -> Unit
 ) {
+    val titleText = stringResource(Res.string.language_settings)
+    val cancelText = stringResource(Res.string.cancel)
+
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
-            Text("选择语言", fontWeight = FontWeight.Bold)
+            Text(titleText, fontWeight = FontWeight.Bold)
         },
         text = {
             LazyColumn(
@@ -95,23 +100,18 @@ fun LanguageSelectDialog(
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text("取消")
+                Text(cancelText)
             }
         }
     )
 }
 
 fun defaultLanguages() = listOf(
-    LanguageOption("zh-CN", "Chinese (Simplified)", "简体中文"),
-    LanguageOption("zh-TW", "Chinese (Traditional)", "繁體中文"),
+    LanguageOption("auto", "Follow System", "跟随系统"),
+    LanguageOption("zh", "Chinese (Simplified)", "简体中文"),
     LanguageOption("en", "English", "English"),
-    LanguageOption("ja", "Japanese", "日本語"),
-    LanguageOption("ko", "Korean", "한국어"),
     LanguageOption("ru", "Russian", "Русский"),
-    LanguageOption("es", "Spanish", "Español"),
-    LanguageOption("fr", "French", "Français"),
-    LanguageOption("de", "German", "Deutsch"),
-    LanguageOption("pt", "Portuguese", "Português")
+    LanguageOption("es", "Spanish", "Español")
 )
 
 // ==================== 颜色选择器 ====================
@@ -122,7 +122,11 @@ fun ThemeColorSelectDialog(
     currentColor: Int,
     onSelect: (Int) -> Unit,
     onDismiss: () -> Unit
-) = ColorPickerDialog(currentColor, onSelect, onDismiss)
+) = ColorPickerDialog(
+    currentColor = currentColor,
+    onSelect = onSelect,
+    onDismiss = onDismiss
+)
 
 /**
  * 渲染器选项
@@ -143,11 +147,14 @@ fun RendererSelectDialog(
     onSelect: (String) -> Unit,
     onDismiss: () -> Unit
 ) {
+    val titleText = stringResource(Res.string.renderer_select)
+    val cancelText = stringResource(Res.string.cancel)
+
     AlertDialog(
         onDismissRequest = onDismiss,
         modifier = Modifier.widthIn(max = 600.dp),
         title = {
-            Text("选择渲染器", fontWeight = FontWeight.Bold)
+            Text(titleText, fontWeight = FontWeight.Bold)
         },
         text = {
             LazyVerticalGrid(
@@ -211,7 +218,7 @@ fun RendererSelectDialog(
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text("取消")
+                Text(cancelText)
             }
         }
     )
@@ -227,6 +234,12 @@ fun LogViewerDialog(
     onClear: () -> Unit,
     onDismiss: () -> Unit
 ) {
+    val titleText = stringResource(Res.string.settings_logs_title)
+    val exportText = stringResource(Res.string.export)
+    val clearText = stringResource(Res.string.control_clear)
+    val emptyLogsText = stringResource(Res.string.settings_logs_empty)
+    val closeText = stringResource(Res.string.close)
+
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
@@ -235,13 +248,13 @@ fun LogViewerDialog(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("日志查看", fontWeight = FontWeight.Bold)
+                Text(titleText, fontWeight = FontWeight.Bold)
                 Row {
                     TextButton(onClick = onExport) {
-                        Text("导出")
+                        Text(exportText)
                     }
                     TextButton(onClick = onClear) {
-                        Text("清除")
+                        Text(clearText)
                     }
                 }
             }
@@ -260,7 +273,7 @@ fun LogViewerDialog(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = "暂无日志",
+                            text = emptyLogsText,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
@@ -282,7 +295,7 @@ fun LogViewerDialog(
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text("关闭")
+                Text(closeText)
             }
         }
     )
@@ -296,10 +309,13 @@ fun LicenseDialog(
     licenses: List<LicenseInfo> = defaultLicenses(),
     onDismiss: () -> Unit
 ) {
+    val titleText = stringResource(Res.string.settings_open_source_licenses)
+    val closeText = stringResource(Res.string.close)
+
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
-            Text("开源许可", fontWeight = FontWeight.Bold)
+            Text(titleText, fontWeight = FontWeight.Bold)
         },
         text = {
             LazyColumn(
@@ -340,7 +356,7 @@ fun LicenseDialog(
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text("关闭")
+                Text(closeText)
             }
         }
     )
@@ -383,6 +399,11 @@ data class PatchInfo(
 @Composable
 fun PatchManagementDialog(
     patches: List<PatchInfo> = emptyList(),
+    titleText: String,
+    importText: String,
+    emptyPatchesText: String,
+    emptyPatchesHintText: String,
+    closeText: String,
     onImportPatch: () -> Unit = {},
     onDeletePatch: (PatchInfo) -> Unit = {},
     onTogglePatch: (PatchInfo, Boolean) -> Unit = { _, _ -> },
@@ -396,9 +417,9 @@ fun PatchManagementDialog(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("补丁管理", fontWeight = FontWeight.Bold)
+                Text(titleText, fontWeight = FontWeight.Bold)
                 TextButton(onClick = onImportPatch) {
-                    Text("导入")
+                    Text(importText)
                 }
             }
         },
@@ -415,12 +436,12 @@ fun PatchManagementDialog(
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Text(
-                            text = "暂无已安装的补丁",
+                            text = emptyPatchesText,
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Text(
-                            text = "点击「导入」添加补丁文件",
+                            text = emptyPatchesHintText,
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                         )
@@ -476,7 +497,7 @@ fun PatchManagementDialog(
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text("关闭")
+                Text(closeText)
             }
         }
     )

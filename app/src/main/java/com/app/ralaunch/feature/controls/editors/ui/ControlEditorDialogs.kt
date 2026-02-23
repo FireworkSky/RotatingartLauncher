@@ -9,9 +9,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import com.app.ralaunch.R
 import com.app.ralaunch.feature.controls.ControlData
 import com.app.ralaunch.feature.controls.KeyMapper
 import com.app.ralaunch.core.ui.dialog.KeyBindingDialog
@@ -56,14 +58,14 @@ fun DPadKeyRow(
                     ControlData.KeyCode.KEYBOARD_A to "A",
                     ControlData.KeyCode.KEYBOARD_S to "S",
                     ControlData.KeyCode.KEYBOARD_D to "D",
-                    ControlData.KeyCode.KEYBOARD_UP to "↑ 上",
-                    ControlData.KeyCode.KEYBOARD_DOWN to "↓ 下",
-                    ControlData.KeyCode.KEYBOARD_LEFT to "← 左",
-                    ControlData.KeyCode.KEYBOARD_RIGHT to "→ 右",
-                    ControlData.KeyCode.XBOX_BUTTON_DPAD_UP to "手柄 ↑",
-                    ControlData.KeyCode.XBOX_BUTTON_DPAD_DOWN to "手柄 ↓",
-                    ControlData.KeyCode.XBOX_BUTTON_DPAD_LEFT to "手柄 ←",
-                    ControlData.KeyCode.XBOX_BUTTON_DPAD_RIGHT to "手柄 →"
+                    ControlData.KeyCode.KEYBOARD_UP to stringResource(R.string.key_arrow_up),
+                    ControlData.KeyCode.KEYBOARD_DOWN to stringResource(R.string.key_arrow_down),
+                    ControlData.KeyCode.KEYBOARD_LEFT to stringResource(R.string.key_arrow_left),
+                    ControlData.KeyCode.KEYBOARD_RIGHT to stringResource(R.string.key_arrow_right),
+                    ControlData.KeyCode.XBOX_BUTTON_DPAD_UP to stringResource(R.string.control_editor_gamepad_arrow_up),
+                    ControlData.KeyCode.XBOX_BUTTON_DPAD_DOWN to stringResource(R.string.control_editor_gamepad_arrow_down),
+                    ControlData.KeyCode.XBOX_BUTTON_DPAD_LEFT to stringResource(R.string.control_editor_gamepad_arrow_left),
+                    ControlData.KeyCode.XBOX_BUTTON_DPAD_RIGHT to stringResource(R.string.control_editor_gamepad_arrow_right)
                 )
                 
                 commonKeys.forEach { pair ->
@@ -99,8 +101,8 @@ fun ExitConfirmDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         icon = { Icon(Icons.Default.Warning, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
-        title = { Text("退出编辑器", fontWeight = FontWeight.Bold) },
-        text = { Text("您有未保存的更改，是否保存后退出？") },
+        title = { Text(stringResource(R.string.editor_exit_title), fontWeight = FontWeight.Bold) },
+        text = { Text(stringResource(R.string.control_editor_unsaved_changes_exit_confirm)) },
         confirmButton = {
             Button(
                 onClick = onSaveAndExit,
@@ -108,19 +110,19 @@ fun ExitConfirmDialog(
             ) {
                 Icon(Icons.Default.Save, contentDescription = null, modifier = Modifier.size(18.dp))
                 Spacer(modifier = Modifier.width(4.dp))
-                Text("保存并退出")
+                Text(stringResource(R.string.editor_save_and_exit))
             }
         },
         dismissButton = {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 TextButton(onClick = onDismiss) {
-                    Text("取消")
+                    Text(stringResource(R.string.cancel))
                 }
                 OutlinedButton(
                     onClick = onExitWithoutSaving,
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error)
                 ) {
-                    Text("不保存")
+                    Text(stringResource(R.string.control_editor_do_not_save))
                 }
             }
         }
@@ -137,7 +139,12 @@ fun JoystickKeyMappingDialog(
     onDismiss: () -> Unit
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
-    val directions = listOf("↑ 上", "→ 右", "↓ 下", "← 左")
+    val directions = listOf(
+        stringResource(R.string.key_arrow_up),
+        stringResource(R.string.key_arrow_right),
+        stringResource(R.string.key_arrow_down),
+        stringResource(R.string.key_arrow_left)
+    )
     
     var keys by remember { mutableStateOf(currentKeys.clone()) }
     var selectingDirectionIndex by remember { mutableStateOf<Int?>(null) }
@@ -153,7 +160,11 @@ fun JoystickKeyMappingDialog(
                 modifier = Modifier.padding(20.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Text("摇杆键位映射", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                Text(
+                    stringResource(R.string.editor_joystick_key_mapping),
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold
+                )
                 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -168,7 +179,7 @@ fun JoystickKeyMappingDialog(
                                 ControlData.KeyCode.KEYBOARD_A
                             )
                         },
-                        label = { Text("WASD") }
+                        label = { Text(stringResource(R.string.control_editor_wasd_keys)) }
                     )
                     SuggestionChip(
                         onClick = { 
@@ -179,7 +190,7 @@ fun JoystickKeyMappingDialog(
                                 ControlData.KeyCode.KEYBOARD_LEFT
                             )
                         },
-                        label = { Text("方向键 ↑←↓→") }
+                        label = { Text(stringResource(R.string.control_editor_arrow_keys_compact)) }
                     )
                 }
 
@@ -194,7 +205,8 @@ fun JoystickKeyMappingDialog(
                         Text(direction, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
                         
                         val keyCode = keys.getOrNull(index)
-                        val displayName = keyCode?.let { KeyMapper.getKeyName(context, it) } ?: "未设置"
+                        val displayName = keyCode?.let { KeyMapper.getKeyName(context, it) }
+                            ?: stringResource(R.string.editor_combo_keys_not_set)
                         
                         OutlinedButton(
                             onClick = { selectingDirectionIndex = index },
@@ -219,11 +231,11 @@ fun JoystickKeyMappingDialog(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     TextButton(onClick = onDismiss) {
-                        Text("取消")
+                        Text(stringResource(R.string.cancel))
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     Button(onClick = { onUpdateKeys(keys) }) {
-                        Text("确定")
+                        Text(stringResource(R.string.confirm))
                     }
                 }
             }
@@ -269,9 +281,13 @@ fun EditorSettingsDialog(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("编辑器设置", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                    Text(
+                        stringResource(R.string.control_editor_settings),
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold
+                    )
                     IconButton(onClick = onDismiss) {
-                        Icon(Icons.Default.Close, contentDescription = "关闭")
+                        Icon(Icons.Default.Close, contentDescription = stringResource(R.string.close))
                     }
                 }
 
@@ -283,8 +299,12 @@ fun EditorSettingsDialog(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column {
-                        Text("显示网格", style = MaterialTheme.typography.bodyLarge)
-                        Text("辅助对齐控件位置", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(stringResource(R.string.control_editor_grid_display), style = MaterialTheme.typography.bodyLarge)
+                        Text(
+                            stringResource(R.string.control_editor_grid_align_hint),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
                     Switch(
                         checked = isGridVisible,
@@ -298,10 +318,18 @@ fun EditorSettingsDialog(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column {
-                        Text("吸附阈值", style = MaterialTheme.typography.bodyLarge)
-                        Text("控件自动对齐灵敏度", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(stringResource(R.string.control_editor_snap_threshold), style = MaterialTheme.typography.bodyLarge)
+                        Text(
+                            stringResource(R.string.control_editor_snap_sensitivity_hint),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
-                    Text("10px", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary)
+                    Text(
+                        stringResource(R.string.control_editor_snap_threshold_value),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.primary
+                    )
                 }
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -310,7 +338,7 @@ fun EditorSettingsDialog(
                     onClick = onDismiss,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("完成")
+                    Text(stringResource(R.string.control_editor_done))
                 }
             }
         }
@@ -351,7 +379,11 @@ fun TextureSettingItem(
                 Text(label, style = MaterialTheme.typography.bodyMedium)
             }
             Text(
-                text = if (hasTexture) "已设置" else "未设置",
+                text = if (hasTexture) {
+                    stringResource(R.string.control_texture_enabled)
+                } else {
+                    stringResource(R.string.control_texture_disabled)
+                },
                 style = MaterialTheme.typography.labelSmall,
                 color = if (hasTexture) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -394,13 +426,13 @@ fun TextureSelectorDialog(
     val currentPath = currentConfig?.path ?: ""
 
     val textureTypeName = when (textureType) {
-        "normal" -> "普通状态"
-        "pressed" -> "按下状态"
-        "toggled" -> "切换状态"
-        "background" -> "背景"
-        "knob" -> "摇杆球"
-        "backgroundPressed" -> "按下背景"
-        "knobPressed" -> "按下摇杆球"
+        "normal" -> stringResource(R.string.control_texture_normal)
+        "pressed" -> stringResource(R.string.control_texture_pressed)
+        "toggled" -> stringResource(R.string.control_texture_toggled)
+        "background" -> stringResource(R.string.control_texture_background)
+        "knob" -> stringResource(R.string.control_texture_knob)
+        "backgroundPressed" -> stringResource(R.string.control_editor_texture_background_pressed)
+        "knobPressed" -> stringResource(R.string.control_editor_texture_knob_pressed)
         else -> textureType
     }
 
@@ -421,11 +453,15 @@ fun TextureSelectorDialog(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column {
-                        Text("自定义纹理", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                        Text(
+                            stringResource(R.string.control_editor_custom_texture),
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold
+                        )
                         Text(textureTypeName, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
                     }
                     IconButton(onClick = onDismiss) {
-                        Icon(Icons.Default.Close, contentDescription = "关闭")
+                        Icon(Icons.Default.Close, contentDescription = stringResource(R.string.close))
                     }
                 }
 
@@ -437,8 +473,12 @@ fun TextureSelectorDialog(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column {
-                        Text("启用自定义纹理", style = MaterialTheme.typography.bodyLarge)
-                        Text("替换默认控件外观", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(stringResource(R.string.control_editor_enable_custom_texture), style = MaterialTheme.typography.bodyLarge)
+                        Text(
+                            stringResource(R.string.control_editor_replace_default_texture_hint),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
                     Switch(
                         checked = textureEnabled,
@@ -459,7 +499,11 @@ fun TextureSelectorDialog(
                         ) {
                             Icon(Icons.Default.Image, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                             Column(modifier = Modifier.weight(1f)) {
-                                Text("已设置纹理", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
+                                Text(
+                                    stringResource(R.string.control_editor_texture_set),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.Medium
+                                )
                                 Text(currentPath.substringAfterLast("/"), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                         }
@@ -473,7 +517,13 @@ fun TextureSelectorDialog(
                 ) {
                     Icon(Icons.Default.PhotoLibrary, contentDescription = null, modifier = Modifier.size(20.dp))
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text(if (currentPath.isEmpty()) "选择图片" else "更换图片")
+                    Text(
+                        if (currentPath.isEmpty()) {
+                            stringResource(R.string.control_editor_select_image)
+                        } else {
+                            stringResource(R.string.control_editor_change_image)
+                        }
+                    )
                 }
 
                 if (currentPath.isNotEmpty()) {
@@ -490,7 +540,7 @@ fun TextureSelectorDialog(
                     ) {
                         Icon(Icons.Default.Delete, contentDescription = null, modifier = Modifier.size(20.dp))
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("清除纹理")
+                        Text(stringResource(R.string.control_texture_clear))
                     }
                 }
 
@@ -501,7 +551,7 @@ fun TextureSelectorDialog(
                     horizontalArrangement = Arrangement.End
                 ) {
                     TextButton(onClick = onDismiss) {
-                        Text("关闭")
+                        Text(stringResource(R.string.close))
                     }
                 }
             }

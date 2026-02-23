@@ -21,9 +21,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.app.ralaunch.R
 import com.app.ralaunch.feature.controls.editors.ControlEditorActivity
 import org.koin.java.KoinJavaComponent
 import com.app.ralaunch.feature.controls.packs.ControlPackInfo
@@ -93,7 +95,7 @@ fun ControlLayoutScreenWrapper(
         if (name.isBlank()) return
 
         if (layouts.any { it.name.equals(name, ignoreCase = true) }) {
-            Toast.makeText(context, "布局名称已存在", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, context.getString(R.string.control_layout_name_exists), Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -112,7 +114,7 @@ fun ControlLayoutScreenWrapper(
     fun setDefaultLayout(pack: ControlPackInfo) {
         packManager.setSelectedPackId(pack.id)
         selectedPackId = pack.id
-        Toast.makeText(context, "已设为默认布局", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, context.getString(R.string.control_set_as_default), Toast.LENGTH_SHORT).show()
     }
 
     // 重命名
@@ -120,7 +122,7 @@ fun ControlLayoutScreenWrapper(
         if (newName.isBlank()) return
 
         if (layouts.any { it.id != pack.id && it.name.equals(newName, ignoreCase = true) }) {
-            Toast.makeText(context, "布局名称已存在", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, context.getString(R.string.control_layout_name_exists), Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -140,7 +142,7 @@ fun ControlLayoutScreenWrapper(
 
         showDeleteDialog = null
         loadLayouts()
-        Toast.makeText(context, "布局已删除", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, context.getString(R.string.control_layout_deleted), Toast.LENGTH_SHORT).show()
     }
 
     // 预览状态
@@ -327,18 +329,18 @@ private fun ControlLayoutScreen(
     showDeleteDialog?.let { pack ->
         AlertDialog(
             onDismissRequest = onDeleteDismiss,
-            title = { Text("删除布局") },
-            text = { Text("确定要删除 \"${pack.name}\" 吗？此操作不可撤销。") },
+            title = { Text(stringResource(R.string.control_delete_layout)) },
+            text = { Text(stringResource(R.string.control_layout_delete_irreversible_confirm, pack.name)) },
             confirmButton = {
                 TextButton(
                     onClick = { onDeleteConfirm(pack) },
                     colors = ButtonDefaults.textButtonColors(
                         contentColor = MaterialTheme.colorScheme.error
                     )
-                ) { Text("删除") }
+                ) { Text(stringResource(R.string.delete)) }
             },
             dismissButton = {
-                TextButton(onClick = onDeleteDismiss) { Text("取消") }
+                TextButton(onClick = onDeleteDismiss) { Text(stringResource(R.string.cancel)) }
             }
         )
     }
@@ -377,21 +379,21 @@ private fun LayoutListPanel(
         AnchoredActionItem(
             key = "store",
             icon = Icons.Default.Storefront,
-            contentDescription = "控件商店",
+            contentDescription = stringResource(R.string.pack_store),
             containerColor = MaterialTheme.colorScheme.secondaryContainer,
             onClick = onOpenStore
         ),
         AnchoredActionItem(
             key = "import",
             icon = Icons.Default.FileOpen,
-            contentDescription = "导入布局",
+            contentDescription = stringResource(R.string.import_layout),
             containerColor = MaterialTheme.colorScheme.tertiaryContainer,
             onClick = onImportClick
         ),
         AnchoredActionItem(
             key = "create",
             icon = Icons.Default.Add,
-            contentDescription = "新建布局",
+            contentDescription = stringResource(R.string.control_new_layout_button),
             containerColor = MaterialTheme.colorScheme.primaryContainer,
             onClick = onCreateClick
         )
@@ -421,7 +423,7 @@ private fun LayoutListPanel(
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    "暂无控制布局",
+                    stringResource(R.string.control_layout_empty_title),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -429,19 +431,19 @@ private fun LayoutListPanel(
                 FilledTonalButton(onClick = onCreateClick) {
                     Icon(Icons.Default.Add, null, modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("新建布局")
+                    Text(stringResource(R.string.control_new_layout_button))
                 }
                 Spacer(modifier = Modifier.height(12.dp))
                 OutlinedButton(onClick = onImportClick) {
                     Icon(Icons.Default.FileOpen, null, modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("导入布局")
+                    Text(stringResource(R.string.import_layout))
                 }
                 Spacer(modifier = Modifier.height(12.dp))
                 OutlinedButton(onClick = onOpenStore) {
                     Icon(Icons.Default.Storefront, null, modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("控件商店")
+                    Text(stringResource(R.string.pack_store))
                 }
             }
         } else {
@@ -497,8 +499,8 @@ private fun LayoutListPanel(
                 mainButtonSize = mainFabSize,
                 mainIconCollapsed = Icons.Default.Menu,
                 mainIconExpanded = Icons.Default.Close,
-                mainContentDescriptionCollapsed = "显示快捷操作",
-                mainContentDescriptionExpanded = "收起快捷操作",
+                mainContentDescriptionCollapsed = stringResource(R.string.control_layout_show_quick_actions),
+                mainContentDescriptionExpanded = stringResource(R.string.control_layout_hide_quick_actions),
                 mainContainerColorCollapsed = MaterialTheme.colorScheme.primaryContainer,
                 mainContainerColorExpanded = MaterialTheme.colorScheme.primary,
                 mainContentColorCollapsed = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -586,7 +588,7 @@ private fun LayoutListItem(
                             color = MaterialTheme.colorScheme.primary
                         ) {
                             Text(
-                                text = "默认",
+                                text = stringResource(R.string.layout_default_tag),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onPrimary,
                                 modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
@@ -600,7 +602,7 @@ private fun LayoutListItem(
                             color = MaterialTheme.colorScheme.tertiary
                         ) {
                             Text(
-                                text = "快切",
+                                text = stringResource(R.string.control_layout_quick_switch_tag),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onTertiary,
                                 modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
@@ -609,7 +611,7 @@ private fun LayoutListItem(
                     }
                 }
                 Text(
-                    text = pack.author.ifBlank { "自定义布局" },
+                    text = pack.author.ifBlank { stringResource(R.string.control_layout_custom_author) },
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -618,37 +620,37 @@ private fun LayoutListItem(
             // 更多菜单
             Box {
                 IconButton(onClick = onShowMoreMenu, modifier = Modifier.size(32.dp)) {
-                    Icon(Icons.Default.MoreVert, "更多", modifier = Modifier.size(18.dp))
+                    Icon(Icons.Default.MoreVert, stringResource(R.string.control_layout_more_actions), modifier = Modifier.size(18.dp))
                 }
                 DropdownMenu(
                     expanded = showMoreMenu,
                     onDismissRequest = onDismissMoreMenu
                 ) {
                     DropdownMenuItem(
-                        text = { Text("编辑") },
+                        text = { Text(stringResource(R.string.control_layout_edit)) },
                         onClick = { onDoubleClick(); onDismissMoreMenu() },
                         leadingIcon = { Icon(Icons.Default.Edit, null) }
                     )
                     if (!isDefault) {
                         DropdownMenuItem(
-                            text = { Text("设为默认") },
+                            text = { Text(stringResource(R.string.action_set_default)) },
                             onClick = { onSetDefault(); onDismissMoreMenu() },
                             leadingIcon = { Icon(Icons.Default.Check, null) }
                         )
                     }
                     DropdownMenuItem(
-                        text = { Text("重命名") },
+                        text = { Text(stringResource(R.string.control_rename_layout)) },
                         onClick = onRenameClick,
                         leadingIcon = { Icon(Icons.Default.DriveFileRenameOutline, null) }
                     )
                     DropdownMenuItem(
-                        text = { Text("导出") },
+                        text = { Text(stringResource(R.string.export)) },
                         onClick = onExportClick,
                         leadingIcon = { Icon(Icons.Default.FileUpload, null) }
                     )
                     HorizontalDivider()
                     DropdownMenuItem(
-                        text = { Text("删除", color = MaterialTheme.colorScheme.error) },
+                        text = { Text(stringResource(R.string.delete), color = MaterialTheme.colorScheme.error) },
                         onClick = onDeleteClick,
                         leadingIcon = {
                             Icon(Icons.Default.Delete, null, tint = MaterialTheme.colorScheme.error)
@@ -726,7 +728,7 @@ private fun LayoutDetailPanel(
                                 Spacer(modifier = Modifier.width(8.dp))
                                 AssistChip(
                                     onClick = {},
-                                    label = { Text("默认") },
+                                    label = { Text(stringResource(R.string.layout_default_tag)) },
                                     leadingIcon = {
                                         Icon(
                                             Icons.Default.Star,
@@ -739,7 +741,7 @@ private fun LayoutDetailPanel(
                         }
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(
-                            text = currentLayout.author.ifBlank { "自定义布局" },
+                            text = currentLayout.author.ifBlank { stringResource(R.string.control_layout_custom_author) },
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -777,12 +779,12 @@ private fun LayoutDetailPanel(
                         )
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = "游戏内快速切换",
+                                text = stringResource(R.string.control_layout_quick_switch_title),
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.Medium
                             )
                             Text(
-                                text = "启用后可在游戏悬浮菜单中快速切换到此布局",
+                                text = stringResource(R.string.control_layout_quick_switch_subtitle),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -817,7 +819,7 @@ private fun LayoutDetailPanel(
                                 ) {
                                     Icon(Icons.Default.Visibility, null, modifier = Modifier.size(18.dp))
                                     Spacer(modifier = Modifier.width(6.dp))
-                                    Text("预览", maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis)
+                                    Text(stringResource(R.string.control_layout_preview), maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis)
                                 }
                                 OutlinedButton(
                                     onClick = onSetDefault,
@@ -826,7 +828,7 @@ private fun LayoutDetailPanel(
                                 ) {
                                     Icon(Icons.Default.Star, null, modifier = Modifier.size(18.dp))
                                     Spacer(modifier = Modifier.width(6.dp))
-                                    Text("设为默认", maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis)
+                                    Text(stringResource(R.string.action_set_default), maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis)
                                 }
                             }
                             Button(
@@ -836,7 +838,7 @@ private fun LayoutDetailPanel(
                             ) {
                                 Icon(Icons.Default.Edit, null, modifier = Modifier.size(18.dp))
                                 Spacer(modifier = Modifier.width(6.dp))
-                                Text("编辑", maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis)
+                                Text(stringResource(R.string.control_layout_edit), maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis)
                             }
                         }
                     } else {
@@ -851,7 +853,7 @@ private fun LayoutDetailPanel(
                             ) {
                                 Icon(Icons.Default.Visibility, null, modifier = Modifier.size(18.dp))
                                 Spacer(modifier = Modifier.width(6.dp))
-                                Text("预览", maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis)
+                                Text(stringResource(R.string.control_layout_preview), maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis)
                             }
                             if (!isDefault) {
                                 OutlinedButton(
@@ -861,7 +863,7 @@ private fun LayoutDetailPanel(
                                 ) {
                                     Icon(Icons.Default.Star, null, modifier = Modifier.size(18.dp))
                                     Spacer(modifier = Modifier.width(6.dp))
-                                    Text("设为默认", maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis)
+                                    Text(stringResource(R.string.action_set_default), maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis)
                                 }
                             }
                             Button(
@@ -871,7 +873,7 @@ private fun LayoutDetailPanel(
                             ) {
                                 Icon(Icons.Default.Edit, null, modifier = Modifier.size(18.dp))
                                 Spacer(modifier = Modifier.width(6.dp))
-                                Text("编辑", maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis)
+                                Text(stringResource(R.string.control_layout_edit), maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis)
                             }
                         }
                     }
@@ -892,7 +894,7 @@ private fun LayoutDetailPanel(
                         )
                         Spacer(modifier = Modifier.height(16.dp))
                         Text(
-                            text = "选择一个布局",
+                            text = stringResource(R.string.control_layout_select_one),
                             style = MaterialTheme.typography.titleMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
                         )

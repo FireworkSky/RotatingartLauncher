@@ -3,6 +3,7 @@ package com.app.ralaunch.feature.controls
 import android.content.Context
 import com.app.ralaunch.R
 import com.app.ralaunch.feature.controls.ControlData
+import org.koin.java.KoinJavaComponent
 
 /**
  * 按键映射辅助类
@@ -28,28 +29,12 @@ object KeyMapper {
         keys[ControlData.KeyCode.MOUSE_WHEEL_DOWN] = context.getString(R.string.key_mouse_wheel_down)
 
         // 手柄按钮
-        keys[ControlData.KeyCode.XBOX_BUTTON_A] = "A"
-        keys[ControlData.KeyCode.XBOX_BUTTON_B] = "B"
-        keys[ControlData.KeyCode.XBOX_BUTTON_X] = "X"
-        keys[ControlData.KeyCode.XBOX_BUTTON_Y] = "Y"
-        keys[ControlData.KeyCode.XBOX_BUTTON_LB] = "LB"
-        keys[ControlData.KeyCode.XBOX_BUTTON_RB] = "RB"
-        keys[ControlData.KeyCode.XBOX_TRIGGER_LEFT] = "LT"
-        keys[ControlData.KeyCode.XBOX_TRIGGER_RIGHT] = "RT"
-        keys[ControlData.KeyCode.XBOX_BUTTON_BACK] = "Back"
-        keys[ControlData.KeyCode.XBOX_BUTTON_START] = "Start"
-        keys[ControlData.KeyCode.XBOX_BUTTON_GUIDE] = "Guide"
-        keys[ControlData.KeyCode.XBOX_BUTTON_LEFT_STICK] = "L3"
-        keys[ControlData.KeyCode.XBOX_BUTTON_RIGHT_STICK] = "R3"
-        keys[ControlData.KeyCode.XBOX_BUTTON_DPAD_UP] = "D-Pad ↑"
-        keys[ControlData.KeyCode.XBOX_BUTTON_DPAD_DOWN] = "D-Pad ↓"
-        keys[ControlData.KeyCode.XBOX_BUTTON_DPAD_LEFT] = "D-Pad ←"
-        keys[ControlData.KeyCode.XBOX_BUTTON_DPAD_RIGHT] = "D-Pad →"
+        keys.putAll(getXboxButtons(context))
 
         // 常用键盘按键
         keys[ControlData.KeyCode.KEYBOARD_SPACE] = context.getString(R.string.key_space)
         keys[ControlData.KeyCode.KEYBOARD_RETURN] = context.getString(R.string.key_enter)
-        keys[ControlData.KeyCode.KEYBOARD_ESCAPE] = "ESC"
+        keys[ControlData.KeyCode.KEYBOARD_ESCAPE] = context.getString(R.string.key_escape)
 
         // 字母键 (完整的A-Z)
         keys[ControlData.KeyCode.KEYBOARD_A] = "A"
@@ -116,15 +101,15 @@ object KeyMapper {
         keys[ControlData.KeyCode.KEYBOARD_RALT] = context.getString(R.string.key_alt_right)
 
         // 其他常用键
-        keys[ControlData.KeyCode.KEYBOARD_TAB] = "Tab"
-        keys[ControlData.KeyCode.KEYBOARD_CAPSLOCK] = "Caps Lock"
-        keys[ControlData.KeyCode.KEYBOARD_BACKSPACE] = "Backspace"
-        keys[ControlData.KeyCode.KEYBOARD_DELETE] = "Delete"
-        keys[ControlData.KeyCode.KEYBOARD_INSERT] = "Insert"
-        keys[ControlData.KeyCode.KEYBOARD_HOME] = "Home"
-        keys[ControlData.KeyCode.KEYBOARD_END] = "End"
-        keys[ControlData.KeyCode.KEYBOARD_PAGEUP] = "Page Up"
-        keys[ControlData.KeyCode.KEYBOARD_PAGEDOWN] = "Page Down"
+        keys[ControlData.KeyCode.KEYBOARD_TAB] = context.getString(R.string.key_tab)
+        keys[ControlData.KeyCode.KEYBOARD_CAPSLOCK] = context.getString(R.string.key_caps_lock)
+        keys[ControlData.KeyCode.KEYBOARD_BACKSPACE] = context.getString(R.string.key_backspace)
+        keys[ControlData.KeyCode.KEYBOARD_DELETE] = context.getString(R.string.key_delete)
+        keys[ControlData.KeyCode.KEYBOARD_INSERT] = context.getString(R.string.key_insert)
+        keys[ControlData.KeyCode.KEYBOARD_HOME] = context.getString(R.string.key_home)
+        keys[ControlData.KeyCode.KEYBOARD_END] = context.getString(R.string.key_end)
+        keys[ControlData.KeyCode.KEYBOARD_PAGEUP] = context.getString(R.string.key_page_up)
+        keys[ControlData.KeyCode.KEYBOARD_PAGEDOWN] = context.getString(R.string.key_page_down)
 
         // 方向键
         keys[ControlData.KeyCode.KEYBOARD_UP] = context.getString(R.string.key_arrow_up)
@@ -168,130 +153,30 @@ object KeyMapper {
         return keys
     }
     
+    private fun getInjectedContextOrNull(): Context? {
+        return runCatching { KoinJavaComponent.get<Context>(Context::class.java) }.getOrNull()
+    }
+
+    private fun fallbackKeyName(keycode: ControlData.KeyCode): String {
+        return keycode.name
+            .removePrefix("KEYBOARD_")
+            .removePrefix("MOUSE_")
+            .removePrefix("XBOX_BUTTON_")
+            .removePrefix("XBOX_TRIGGER_")
+            .removePrefix("SPECIAL_")
+            .ifEmpty { keycode.name }
+    }
+
+    private fun fallbackAllKeys(): Map<ControlData.KeyCode, String> {
+        return ControlData.KeyCode.entries.associateWith { fallbackKeyName(it) }
+    }
+
     /**
      * 保留旧的属性访问器以保持向后兼容性
-     * 使用默认的中文字符串
      */
     @Deprecated("Use getAllKeys(context) instead for proper localization")
     val allKeys: Map<ControlData.KeyCode, String>
-        get() {
-            val keys: MutableMap<ControlData.KeyCode, String> = LinkedHashMap()
-
-            // 特殊功能
-            keys[ControlData.KeyCode.SPECIAL_KEYBOARD] = "键盘"
-            keys[ControlData.KeyCode.SPECIAL_TOUCHPAD_RIGHT_BUTTON] = "触摸板左右键"
-
-            // 鼠标按键
-            keys[ControlData.KeyCode.MOUSE_LEFT] = "鼠标左键"
-            keys[ControlData.KeyCode.MOUSE_RIGHT] = "鼠标右键"
-            keys[ControlData.KeyCode.MOUSE_MIDDLE] = "鼠标中键"
-            keys[ControlData.KeyCode.MOUSE_WHEEL_UP] = "滚轮↑"
-            keys[ControlData.KeyCode.MOUSE_WHEEL_DOWN] = "滚轮↓"
-
-            // 手柄按钮
-            keys[ControlData.KeyCode.XBOX_BUTTON_A] = "A"
-            keys[ControlData.KeyCode.XBOX_BUTTON_B] = "B"
-            keys[ControlData.KeyCode.XBOX_BUTTON_X] = "X"
-            keys[ControlData.KeyCode.XBOX_BUTTON_Y] = "Y"
-            keys[ControlData.KeyCode.XBOX_BUTTON_LB] = "LB"
-            keys[ControlData.KeyCode.XBOX_BUTTON_RB] = "RB"
-            keys[ControlData.KeyCode.XBOX_TRIGGER_LEFT] = "LT"
-            keys[ControlData.KeyCode.XBOX_TRIGGER_RIGHT] = "RT"
-            keys[ControlData.KeyCode.XBOX_BUTTON_BACK] = "Back"
-            keys[ControlData.KeyCode.XBOX_BUTTON_START] = "Start"
-            keys[ControlData.KeyCode.XBOX_BUTTON_GUIDE] = "Guide"
-            keys[ControlData.KeyCode.XBOX_BUTTON_LEFT_STICK] = "L3"
-            keys[ControlData.KeyCode.XBOX_BUTTON_RIGHT_STICK] = "R3"
-            keys[ControlData.KeyCode.XBOX_BUTTON_DPAD_UP] = "D-Pad ↑"
-            keys[ControlData.KeyCode.XBOX_BUTTON_DPAD_DOWN] = "D-Pad ↓"
-            keys[ControlData.KeyCode.XBOX_BUTTON_DPAD_LEFT] = "D-Pad ←"
-            keys[ControlData.KeyCode.XBOX_BUTTON_DPAD_RIGHT] = "D-Pad →"
-
-            // 常用键盘按键
-            keys[ControlData.KeyCode.KEYBOARD_SPACE] = "空格"
-            keys[ControlData.KeyCode.KEYBOARD_RETURN] = "回车"
-            keys[ControlData.KeyCode.KEYBOARD_ESCAPE] = "ESC"
-
-            // 字母键 (完整的A-Z)
-            for (c in 'A'..'Z') {
-                val keyCode = ControlData.KeyCode.entries.find { it.name == "KEYBOARD_$c" }
-                if (keyCode != null) keys[keyCode] = c.toString()
-            }
-
-            // 数字键
-            for (i in 0..9) {
-                val keyCode = ControlData.KeyCode.entries.find { it.name == "KEYBOARD_$i" }
-                if (keyCode != null) keys[keyCode] = i.toString()
-            }
-
-            // 功能键 (F1-F12)
-            for (i in 1..12) {
-                val keyCode = ControlData.KeyCode.entries.find { it.name == "KEYBOARD_F$i" }
-                if (keyCode != null) keys[keyCode] = "F$i"
-            }
-
-            // 修饰键 (左侧)
-            keys[ControlData.KeyCode.KEYBOARD_LSHIFT] = "Shift (左)"
-            keys[ControlData.KeyCode.KEYBOARD_LCTRL] = "Ctrl (左)"
-            keys[ControlData.KeyCode.KEYBOARD_LALT] = "Alt (左)"
-
-            // 修饰键 (右侧)
-            keys[ControlData.KeyCode.KEYBOARD_RSHIFT] = "Shift (右)"
-            keys[ControlData.KeyCode.KEYBOARD_RCTRL] = "Ctrl (右)"
-            keys[ControlData.KeyCode.KEYBOARD_RALT] = "Alt (右)"
-
-            // 其他常用键
-            keys[ControlData.KeyCode.KEYBOARD_TAB] = "Tab"
-            keys[ControlData.KeyCode.KEYBOARD_CAPSLOCK] = "Caps Lock"
-            keys[ControlData.KeyCode.KEYBOARD_BACKSPACE] = "Backspace"
-            keys[ControlData.KeyCode.KEYBOARD_DELETE] = "Delete"
-            keys[ControlData.KeyCode.KEYBOARD_INSERT] = "Insert"
-            keys[ControlData.KeyCode.KEYBOARD_HOME] = "Home"
-            keys[ControlData.KeyCode.KEYBOARD_END] = "End"
-            keys[ControlData.KeyCode.KEYBOARD_PAGEUP] = "Page Up"
-            keys[ControlData.KeyCode.KEYBOARD_PAGEDOWN] = "Page Down"
-
-            // 方向键
-            keys[ControlData.KeyCode.KEYBOARD_UP] = "↑ 上"
-            keys[ControlData.KeyCode.KEYBOARD_DOWN] = "↓ 下"
-            keys[ControlData.KeyCode.KEYBOARD_LEFT] = "← 左"
-            keys[ControlData.KeyCode.KEYBOARD_RIGHT] = "→ 右"
-
-            // 符号键
-            keys[ControlData.KeyCode.KEYBOARD_MINUS] = "-"
-            keys[ControlData.KeyCode.KEYBOARD_EQUALS] = "="
-            keys[ControlData.KeyCode.KEYBOARD_LEFTBRACKET] = "["
-            keys[ControlData.KeyCode.KEYBOARD_RIGHTBRACKET] = "]"
-            keys[ControlData.KeyCode.KEYBOARD_BACKSLASH] = "\\"
-            keys[ControlData.KeyCode.KEYBOARD_SEMICOLON] = ";"
-            keys[ControlData.KeyCode.KEYBOARD_APOSTROPHE] = "'"
-            keys[ControlData.KeyCode.KEYBOARD_GRAVE] = "`"
-            keys[ControlData.KeyCode.KEYBOARD_COMMA] = ","
-            keys[ControlData.KeyCode.KEYBOARD_PERIOD] = "."
-            keys[ControlData.KeyCode.KEYBOARD_SLASH] = "/"
-
-            // 小键盘数字键
-            keys[ControlData.KeyCode.KEYBOARD_KP_0] = "小键盘 0"
-            keys[ControlData.KeyCode.KEYBOARD_KP_1] = "小键盘 1"
-            keys[ControlData.KeyCode.KEYBOARD_KP_2] = "小键盘 2"
-            keys[ControlData.KeyCode.KEYBOARD_KP_3] = "小键盘 3"
-            keys[ControlData.KeyCode.KEYBOARD_KP_4] = "小键盘 4"
-            keys[ControlData.KeyCode.KEYBOARD_KP_5] = "小键盘 5"
-            keys[ControlData.KeyCode.KEYBOARD_KP_6] = "小键盘 6"
-            keys[ControlData.KeyCode.KEYBOARD_KP_7] = "小键盘 7"
-            keys[ControlData.KeyCode.KEYBOARD_KP_8] = "小键盘 8"
-            keys[ControlData.KeyCode.KEYBOARD_KP_9] = "小键盘 9"
-
-            // 小键盘功能键
-            keys[ControlData.KeyCode.KEYBOARD_KP_PLUS] = "小键盘 +"
-            keys[ControlData.KeyCode.KEYBOARD_KP_MINUS] = "小键盘 -"
-            keys[ControlData.KeyCode.KEYBOARD_KP_MULTIPLY] = "小键盘 *"
-            keys[ControlData.KeyCode.KEYBOARD_KP_DIVIDE] = "小键盘 /"
-            keys[ControlData.KeyCode.KEYBOARD_KP_PERIOD] = "小键盘 ."
-            keys[ControlData.KeyCode.KEYBOARD_KP_ENTER] = "小键盘 Enter"
-
-            return keys
-        }
+        get() = getInjectedContextOrNull()?.let { getAllKeys(it) } ?: fallbackAllKeys()
 
     /**
      * 根据按键码获取按键名称（本地化版本）
@@ -305,7 +190,7 @@ object KeyMapper {
      */
     @Deprecated("Use getKeyName(context, keycode) instead for proper localization")
     fun getKeyName(keycode: ControlData.KeyCode): String {
-        return allKeys[keycode] ?: "未知 (${keycode.code})"
+        return allKeys[keycode] ?: "${keycode.name} (${keycode.code})"
     }
 
     /**
@@ -319,9 +204,9 @@ object KeyMapper {
         keys[ControlData.KeyCode.KEYBOARD_SPACE] = context.getString(R.string.key_space)
         keys[ControlData.KeyCode.KEYBOARD_E] = "E"
         keys[ControlData.KeyCode.KEYBOARD_H] = "H"
-        keys[ControlData.KeyCode.KEYBOARD_ESCAPE] = "ESC"
-        keys[ControlData.KeyCode.KEYBOARD_LSHIFT] = "Shift"
-        keys[ControlData.KeyCode.KEYBOARD_LCTRL] = "Ctrl"
+        keys[ControlData.KeyCode.KEYBOARD_ESCAPE] = context.getString(R.string.key_escape)
+        keys[ControlData.KeyCode.KEYBOARD_LSHIFT] = context.getString(R.string.key_shift_left)
+        keys[ControlData.KeyCode.KEYBOARD_LCTRL] = context.getString(R.string.key_ctrl_left)
         return keys
     }
     
@@ -330,42 +215,60 @@ object KeyMapper {
      */
     @Deprecated("Use getGameKeys(context) instead for proper localization")
     val gameKeys: Map<ControlData.KeyCode, String>
-        get() {
-            val keys: MutableMap<ControlData.KeyCode, String> = LinkedHashMap()
-            keys[ControlData.KeyCode.MOUSE_LEFT] = "鼠标左键"
-            keys[ControlData.KeyCode.MOUSE_RIGHT] = "鼠标右键"
-            keys[ControlData.KeyCode.KEYBOARD_SPACE] = "空格"
-            keys[ControlData.KeyCode.KEYBOARD_E] = "E"
-            keys[ControlData.KeyCode.KEYBOARD_H] = "H"
-            keys[ControlData.KeyCode.KEYBOARD_ESCAPE] = "ESC"
-            keys[ControlData.KeyCode.KEYBOARD_LSHIFT] = "Shift"
-            keys[ControlData.KeyCode.KEYBOARD_LCTRL] = "Ctrl"
-            return keys
-        }
+        get() = getInjectedContextOrNull()?.let { getGameKeys(it) } ?: mapOf(
+            ControlData.KeyCode.MOUSE_LEFT to fallbackKeyName(ControlData.KeyCode.MOUSE_LEFT),
+            ControlData.KeyCode.MOUSE_RIGHT to fallbackKeyName(ControlData.KeyCode.MOUSE_RIGHT),
+            ControlData.KeyCode.KEYBOARD_SPACE to fallbackKeyName(ControlData.KeyCode.KEYBOARD_SPACE),
+            ControlData.KeyCode.KEYBOARD_E to "E",
+            ControlData.KeyCode.KEYBOARD_H to "H",
+            ControlData.KeyCode.KEYBOARD_ESCAPE to "ESC",
+            ControlData.KeyCode.KEYBOARD_LSHIFT to "Shift",
+            ControlData.KeyCode.KEYBOARD_LCTRL to "Ctrl"
+        )
+
+    fun getXboxButtons(context: Context): Map<ControlData.KeyCode, String> {
+        val keys: MutableMap<ControlData.KeyCode, String> = LinkedHashMap()
+        keys[ControlData.KeyCode.XBOX_BUTTON_A] = "A"
+        keys[ControlData.KeyCode.XBOX_BUTTON_B] = "B"
+        keys[ControlData.KeyCode.XBOX_BUTTON_X] = "X"
+        keys[ControlData.KeyCode.XBOX_BUTTON_Y] = "Y"
+        keys[ControlData.KeyCode.XBOX_BUTTON_LB] = "LB"
+        keys[ControlData.KeyCode.XBOX_BUTTON_RB] = "RB"
+        keys[ControlData.KeyCode.XBOX_TRIGGER_LEFT] = "LT"
+        keys[ControlData.KeyCode.XBOX_TRIGGER_RIGHT] = "RT"
+        keys[ControlData.KeyCode.XBOX_BUTTON_BACK] = context.getString(R.string.key_gamepad_back)
+        keys[ControlData.KeyCode.XBOX_BUTTON_START] = context.getString(R.string.key_gamepad_start)
+        keys[ControlData.KeyCode.XBOX_BUTTON_GUIDE] = context.getString(R.string.key_gamepad_guide)
+        keys[ControlData.KeyCode.XBOX_BUTTON_LEFT_STICK] = "L3"
+        keys[ControlData.KeyCode.XBOX_BUTTON_RIGHT_STICK] = "R3"
+        keys[ControlData.KeyCode.XBOX_BUTTON_DPAD_UP] = context.getString(R.string.key_gamepad_dpad_up)
+        keys[ControlData.KeyCode.XBOX_BUTTON_DPAD_DOWN] = context.getString(R.string.key_gamepad_dpad_down)
+        keys[ControlData.KeyCode.XBOX_BUTTON_DPAD_LEFT] = context.getString(R.string.key_gamepad_dpad_left)
+        keys[ControlData.KeyCode.XBOX_BUTTON_DPAD_RIGHT] = context.getString(R.string.key_gamepad_dpad_right)
+        return keys
+    }
 
     val xboxButtons: Map<ControlData.KeyCode, String>
         /**
          * 获取手柄按钮映射（用于手柄模式按钮选择）
          */
-        get() {
-            val keys: MutableMap<ControlData.KeyCode, String> = LinkedHashMap()
-            keys[ControlData.KeyCode.XBOX_BUTTON_A] = "A"
-            keys[ControlData.KeyCode.XBOX_BUTTON_B] = "B"
-            keys[ControlData.KeyCode.XBOX_BUTTON_X] = "X"
-            keys[ControlData.KeyCode.XBOX_BUTTON_Y] = "Y"
-            keys[ControlData.KeyCode.XBOX_BUTTON_LB] = "LB"
-            keys[ControlData.KeyCode.XBOX_BUTTON_RB] = "RB"
-            keys[ControlData.KeyCode.XBOX_TRIGGER_LEFT] = "LT"
-            keys[ControlData.KeyCode.XBOX_TRIGGER_RIGHT] = "RT"
-            keys[ControlData.KeyCode.XBOX_BUTTON_BACK] = "Back"
-            keys[ControlData.KeyCode.XBOX_BUTTON_START] = "Start"
-            keys[ControlData.KeyCode.XBOX_BUTTON_GUIDE] = "Guide"
-            keys[ControlData.KeyCode.XBOX_BUTTON_LEFT_STICK] = "L3"
-            keys[ControlData.KeyCode.XBOX_BUTTON_RIGHT_STICK] = "R3"
-            keys[ControlData.KeyCode.XBOX_BUTTON_DPAD_UP] = "D-Pad ↑"
-            keys[ControlData.KeyCode.XBOX_BUTTON_DPAD_DOWN] = "D-Pad ↓"
-            keys[ControlData.KeyCode.XBOX_BUTTON_DPAD_LEFT] = "D-Pad ←"
-            keys[ControlData.KeyCode.XBOX_BUTTON_DPAD_RIGHT] = "D-Pad →"
-            return keys
-        }
+        get() = getInjectedContextOrNull()?.let { getXboxButtons(it) } ?: mapOf(
+            ControlData.KeyCode.XBOX_BUTTON_A to "A",
+            ControlData.KeyCode.XBOX_BUTTON_B to "B",
+            ControlData.KeyCode.XBOX_BUTTON_X to "X",
+            ControlData.KeyCode.XBOX_BUTTON_Y to "Y",
+            ControlData.KeyCode.XBOX_BUTTON_LB to "LB",
+            ControlData.KeyCode.XBOX_BUTTON_RB to "RB",
+            ControlData.KeyCode.XBOX_TRIGGER_LEFT to "LT",
+            ControlData.KeyCode.XBOX_TRIGGER_RIGHT to "RT",
+            ControlData.KeyCode.XBOX_BUTTON_BACK to "Back",
+            ControlData.KeyCode.XBOX_BUTTON_START to "Start",
+            ControlData.KeyCode.XBOX_BUTTON_GUIDE to "Guide",
+            ControlData.KeyCode.XBOX_BUTTON_LEFT_STICK to "L3",
+            ControlData.KeyCode.XBOX_BUTTON_RIGHT_STICK to "R3",
+            ControlData.KeyCode.XBOX_BUTTON_DPAD_UP to "D-Pad ↑",
+            ControlData.KeyCode.XBOX_BUTTON_DPAD_DOWN to "D-Pad ↓",
+            ControlData.KeyCode.XBOX_BUTTON_DPAD_LEFT to "D-Pad ←",
+            ControlData.KeyCode.XBOX_BUTTON_DPAD_RIGHT to "D-Pad →"
+        )
 }

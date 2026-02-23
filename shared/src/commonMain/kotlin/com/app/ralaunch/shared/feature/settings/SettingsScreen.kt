@@ -24,22 +24,24 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.app.ralaunch.shared.core.component.GlassSurface
-import com.app.ralaunch.shared.core.theme.RaLaunchTheme
+import com.app.ralaunch.shared.generated.resources.*
+import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * 设置分类 - 跨平台
  */
 enum class SettingsCategory(
-    val title: String,
+    val title: StringResource,
     val icon: ImageVector,
-    val description: String
+    val description: StringResource
 ) {
-    APPEARANCE("外观", Icons.Default.Palette, "主题、背景、语言"),
-    CONTROLS("控制", Icons.Default.TouchApp, "触控、控制器设置"),
-    GAME("游戏", Icons.Default.SportsEsports, "运行时、渲染器设置"),
-    LAUNCHER("启动器", Icons.Default.Rocket, "补丁管理、高级选项"),
-    DEVELOPER("开发者", Icons.Default.Code, "日志、调试选项"),
-    ABOUT("关于", Icons.Default.Info, "版本、开源许可")
+    APPEARANCE(Res.string.settings_appearance, Icons.Default.Palette, Res.string.settings_category_appearance_desc),
+    CONTROLS(Res.string.settings_control, Icons.Default.TouchApp, Res.string.settings_category_controls_desc),
+    GAME(Res.string.settings_game, Icons.Default.SportsEsports, Res.string.settings_category_game_desc),
+    LAUNCHER(Res.string.settings_launcher, Icons.Default.Rocket, Res.string.settings_category_launcher_desc),
+    DEVELOPER(Res.string.settings_developer, Icons.Default.Code, Res.string.settings_category_developer_desc),
+    ABOUT(Res.string.settings_about, Icons.Default.Info, Res.string.settings_category_about_desc)
 }
 
 /**
@@ -105,7 +107,7 @@ fun SettingsScreenContent(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = "选择一个设置分类",
+                            text = stringResource(Res.string.settings_select_category_prompt),
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
                         )
@@ -129,7 +131,7 @@ private fun SettingsCategoryList(
         modifier = modifier.fillMaxSize()
     ) {
         Text(
-            text = "设置",
+            text = stringResource(Res.string.settings),
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface,
@@ -247,13 +249,13 @@ private fun GlassSettingsCategoryItem(
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = category.title,
+                    text = stringResource(category.title),
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
                     color = contentColor
                 )
                 Text(
-                    text = category.description,
+                    text = stringResource(category.description),
                     style = MaterialTheme.typography.bodySmall,
                     color = contentColor.copy(alpha = 0.6f)
                 )

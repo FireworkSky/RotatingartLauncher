@@ -17,8 +17,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.app.ralaunch.R
 import com.app.ralaunch.feature.controls.ControlData
 import com.app.ralaunch.core.common.SettingsAccess
 
@@ -76,13 +78,13 @@ fun PropertyPanel(
                     if (onDrag != null) {
                         Icon(
                             Icons.Default.DragIndicator,
-                            contentDescription = "拖动",
+                            contentDescription = stringResource(R.string.control_editor_drag),
                             modifier = Modifier.size(20.dp),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                     Text(
-                        text = "属性编辑",
+                        text = stringResource(R.string.editor_edit_control_properties),
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.ExtraBold,
                         color = MaterialTheme.colorScheme.primary
@@ -91,31 +93,31 @@ fun PropertyPanel(
                 Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                     if (onDuplicate != null) {
                         IconButton(onClick = onDuplicate) {
-                            Icon(Icons.Default.ContentCopy, contentDescription = "复制控件")
+                            Icon(Icons.Default.ContentCopy, contentDescription = stringResource(R.string.editor_copy))
                         }
                     }
                     IconButton(onClick = onClose) {
-                        Icon(Icons.Default.Close, contentDescription = "关闭")
+                        Icon(Icons.Default.Close, contentDescription = stringResource(R.string.close))
                     }
                 }
             }
 
             if (control != null) {
-                PropertySection(title = "基础设置") {
+                PropertySection(title = stringResource(R.string.editor_category_basic)) {
                     OutlinedTextField(
                         value = control.name,
                         onValueChange = { 
                             val updated = control.deepCopy().apply { name = it }
                             onUpdate(updated)
                         },
-                        label = { Text("控件名称") },
+                        label = { Text(stringResource(R.string.editor_control_name)) },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
                         shape = RoundedCornerShape(8.dp)
                     )
 
                     PropertySlider(
-                        label = "背景透明度",
+                        label = stringResource(R.string.editor_opacity_title),
                         value = control.opacity,
                         onValueChange = { 
                             val updated = control.deepCopy().apply { opacity = it }
@@ -125,9 +127,9 @@ fun PropertyPanel(
                 }
 
                 // ===== 尺寸与位置 =====
-                PropertySection(title = "尺寸与位置") {
+                PropertySection(title = stringResource(R.string.editor_category_position)) {
                     PropertySlider(
-                        label = "X 位置",
+                        label = stringResource(R.string.editor_position_x),
                         value = control.x,
                         onValueChange = { 
                             val updated = control.deepCopy().apply { x = it }
@@ -135,7 +137,7 @@ fun PropertyPanel(
                         }
                     )
                     PropertySlider(
-                        label = "Y 位置",
+                        label = stringResource(R.string.editor_position_y),
                         value = control.y,
                         onValueChange = { 
                             val updated = control.deepCopy().apply { y = it }
@@ -147,7 +149,7 @@ fun PropertyPanel(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text("锁定宽高比", style = MaterialTheme.typography.bodyMedium)
+                        Text(stringResource(R.string.editor_auto_size), style = MaterialTheme.typography.bodyMedium)
                         Switch(
                             checked = control.isSizeRatioLocked,
                             onCheckedChange = {
@@ -160,7 +162,7 @@ fun PropertyPanel(
                     }
                     
                     PropertySlider(
-                        label = "宽度",
+                        label = stringResource(R.string.editor_width),
                         value = control.width,
                         valueRange = 0.02f..0.5f,
                         onValueChange = { newWidth ->
@@ -175,7 +177,7 @@ fun PropertyPanel(
                     )
                     
                     PropertySlider(
-                        label = "高度",
+                        label = stringResource(R.string.editor_height),
                         value = control.height,
                         valueRange = 0.02f..0.5f,
                         onValueChange = { newHeight ->
@@ -189,7 +191,7 @@ fun PropertyPanel(
                         }
                     )
                     PropertySlider(
-                        label = "旋转角度",
+                        label = stringResource(R.string.editor_rotation),
                         value = control.rotation / 360f,
                         onValueChange = {
                             val updated = control.deepCopy().apply { rotation = it * 360f }
@@ -253,9 +255,9 @@ fun PropertyPanel(
                 }
 
                 // ===== 外观设置 =====
-                PropertySection(title = "外观") {
+                PropertySection(title = stringResource(R.string.editor_category_appearance)) {
                     ColorPickerRow(
-                        label = "背景颜色",
+                        label = stringResource(R.string.editor_bg_color),
                         color = Color(control.bgColor),
                         onColorSelected = { color ->
                             val updated = control.deepCopy().apply { bgColor = color.toArgb() }
@@ -264,7 +266,7 @@ fun PropertyPanel(
                     )
                     
                     ColorPickerRow(
-                        label = "边框颜色",
+                        label = stringResource(R.string.editor_stroke_color),
                         color = Color(control.strokeColor),
                         onColorSelected = { color ->
                             val updated = control.deepCopy().apply { strokeColor = color.toArgb() }
@@ -273,7 +275,7 @@ fun PropertyPanel(
                     )
                     
                     ColorPickerRow(
-                        label = "文本颜色",
+                        label = stringResource(R.string.control_editor_text_color),
                         color = Color(control.textColor),
                         onColorSelected = { color ->
                             val updated = control.deepCopy().apply { textColor = color.toArgb() }
@@ -282,7 +284,7 @@ fun PropertyPanel(
                     )
                     
                     PropertySlider(
-                        label = "圆角大小",
+                        label = stringResource(R.string.editor_corner_radius),
                         value = control.cornerRadius / 50f,
                         onValueChange = {
                             val updated = control.deepCopy().apply { cornerRadius = it * 50f }
@@ -290,7 +292,7 @@ fun PropertyPanel(
                         }
                     )
                     PropertySlider(
-                        label = "边框宽度",
+                        label = stringResource(R.string.control_editor_border_width),
                         value = control.strokeWidth / 10f,
                         onValueChange = {
                             val updated = control.deepCopy().apply { strokeWidth = it * 10f }
@@ -298,7 +300,7 @@ fun PropertyPanel(
                         }
                     )
                     PropertySlider(
-                        label = "边框透明度",
+                        label = stringResource(R.string.editor_border_opacity),
                         value = control.borderOpacity,
                         onValueChange = {
                             val updated = control.deepCopy().apply { borderOpacity = it }
@@ -306,7 +308,7 @@ fun PropertyPanel(
                         }
                     )
                     PropertySlider(
-                        label = "文字透明度",
+                        label = stringResource(R.string.editor_text_opacity),
                         value = control.textOpacity,
                         onValueChange = {
                             val updated = control.deepCopy().apply { textOpacity = it }
@@ -316,15 +318,19 @@ fun PropertyPanel(
                 }
 
                 // ===== 高级设置 =====
-                PropertySection(title = "高级") {
+                PropertySection(title = stringResource(R.string.control_editor_advanced)) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column {
-                            Text("可见性", style = MaterialTheme.typography.bodyMedium)
-                            Text("隐藏后不显示但仍可响应", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(stringResource(R.string.editor_visible_in_game), style = MaterialTheme.typography.bodyMedium)
+                            Text(
+                                stringResource(R.string.control_editor_visibility_hint),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                         }
                         Switch(
                             checked = control.isVisible,
@@ -340,8 +346,12 @@ fun PropertyPanel(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column {
-                            Text("穿透模式", style = MaterialTheme.typography.bodyMedium)
-                            Text("触摸事件穿透到下层", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(stringResource(R.string.editor_pass_through), style = MaterialTheme.typography.bodyMedium)
+                            Text(
+                                stringResource(R.string.editor_pass_through_desc),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                         }
                         Switch(
                             checked = control.isPassThrough,
@@ -418,7 +428,7 @@ fun MouseModeSettings() {
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text("移动速度", style = MaterialTheme.typography.labelMedium)
+                Text(stringResource(R.string.editor_mouse_speed), style = MaterialTheme.typography.labelMedium)
                 Text("$mouseSpeed", style = MaterialTheme.typography.labelSmall)
             }
             Slider(
@@ -431,9 +441,9 @@ fun MouseModeSettings() {
             )
         }
         
-        Text("移动范围", style = MaterialTheme.typography.labelMedium)
+        Text(stringResource(R.string.editor_mouse_range), style = MaterialTheme.typography.labelMedium)
         Text(
-            "控制鼠标可移动的屏幕区域（从中心向各方向扩展的比例）",
+            stringResource(R.string.control_editor_mouse_range_hint),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -443,7 +453,7 @@ fun MouseModeSettings() {
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text("左", style = MaterialTheme.typography.labelSmall)
+                Text(stringResource(R.string.editor_mouse_range_left), style = MaterialTheme.typography.labelSmall)
                 Text("${(rangeLeft * 100).toInt()}%", style = MaterialTheme.typography.labelSmall)
             }
             Slider(
@@ -461,7 +471,7 @@ fun MouseModeSettings() {
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text("上", style = MaterialTheme.typography.labelSmall)
+                Text(stringResource(R.string.editor_mouse_range_top), style = MaterialTheme.typography.labelSmall)
                 Text("${(rangeTop * 100).toInt()}%", style = MaterialTheme.typography.labelSmall)
             }
             Slider(
@@ -479,7 +489,7 @@ fun MouseModeSettings() {
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text("右", style = MaterialTheme.typography.labelSmall)
+                Text(stringResource(R.string.editor_mouse_range_right), style = MaterialTheme.typography.labelSmall)
                 Text("${(rangeRight * 100).toInt()}%", style = MaterialTheme.typography.labelSmall)
             }
             Slider(
@@ -497,7 +507,7 @@ fun MouseModeSettings() {
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text("下", style = MaterialTheme.typography.labelSmall)
+                Text(stringResource(R.string.editor_mouse_range_bottom), style = MaterialTheme.typography.labelSmall)
                 Text("${(rangeBottom * 100).toInt()}%", style = MaterialTheme.typography.labelSmall)
             }
             Slider(
@@ -522,7 +532,7 @@ fun MouseModeSettings() {
                     settingsManager.mouseRightStickRangeRight = 1f
                     settingsManager.mouseRightStickRangeBottom = 1f
                 },
-                label = { Text("全屏") }
+                label = { Text(stringResource(R.string.control_editor_full_screen)) }
             )
             SuggestionChip(
                 onClick = {
@@ -532,7 +542,7 @@ fun MouseModeSettings() {
                     settingsManager.mouseRightStickRangeRight = 0.5f
                     settingsManager.mouseRightStickRangeBottom = 0.5f
                 },
-                label = { Text("半屏") }
+                label = { Text(stringResource(R.string.control_editor_half_screen)) }
             )
         }
     }

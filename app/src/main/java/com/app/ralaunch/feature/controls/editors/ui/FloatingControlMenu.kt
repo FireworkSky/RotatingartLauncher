@@ -20,9 +20,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import com.app.ralaunch.R
 import kotlin.math.roundToInt
 
 /**
@@ -343,35 +345,38 @@ private fun EditorMenu(
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            MenuHeader(title = "编辑器菜单", onClose = { state.isExpanded = false })
+            MenuHeader(
+                title = stringResource(R.string.control_editor_menu_editor),
+                onClose = { state.isExpanded = false }
+            )
             
             HorizontalDivider()
 
             // 使用 ControlEditorScreen 中定义的 MenuRowItem
             MenuRowItem(
                 icon = Icons.Default.AddCircle,
-                label = "组件库",
+                label = stringResource(R.string.control_editor_component_library),
                 isActive = state.isPaletteVisible,
                 onClick = { state.togglePalette() }
             )
             
             MenuRowItem(
                 icon = if (state.isGhostMode) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                label = "幽灵模式",
+                label = stringResource(R.string.control_editor_ghost_mode),
                 isActive = state.isGhostMode,
                 onClick = { state.toggleGhostMode() }
             )
 
             MenuRowItem(
                 icon = if (state.isGridVisible) Icons.Default.GridOn else Icons.Default.GridOff,
-                label = "网格显示",
+                label = stringResource(R.string.control_editor_grid_display),
                 isActive = state.isGridVisible,
                 onClick = { state.toggleGrid() }
             )
 
             MenuRowItem(
                 icon = Icons.Default.Settings,
-                label = "编辑器设置",
+                label = stringResource(R.string.control_editor_settings),
                 isActive = false,
                 onClick = { callbacks.onOpenSettings() }
             )
@@ -380,7 +385,7 @@ private fun EditorMenu(
 
             MenuRowItem(
                 icon = Icons.Default.Save,
-                label = "保存布局",
+                label = stringResource(R.string.control_editor_save_layout),
                 isActive = false,
                 onClick = { callbacks.onSave() },
                 tint = MaterialTheme.colorScheme.primary
@@ -388,7 +393,7 @@ private fun EditorMenu(
 
             MenuRowItem(
                 icon = Icons.Default.ExitToApp,
-                label = "退出编辑器",
+                label = stringResource(R.string.control_editor_exit_editor),
                 isActive = false,
                 onClick = { callbacks.onExit() },
                 tint = MaterialTheme.colorScheme.error
@@ -422,7 +427,7 @@ private fun InGameMenu(
         ) {
             // 可拖动的标题栏
             DraggableMenuHeader(
-                title = "游戏菜单", 
+                title = stringResource(R.string.control_editor_game_menu),
                 onClose = { state.isExpanded = false },
                 onDrag = { delta -> state.updateMenuPanelOffset(delta) }
             )
@@ -440,7 +445,11 @@ private fun InGameMenu(
                 // 编辑模式切换
                 MenuRowItem(
                     icon = if (state.isInEditMode) Icons.Default.Close else Icons.Default.Edit,
-                    label = if (state.isInEditMode) "退出编辑模式" else "进入编辑模式",
+                    label = if (state.isInEditMode) {
+                        stringResource(R.string.control_editor_exit_edit_mode)
+                    } else {
+                        stringResource(R.string.control_editor_enter_edit_mode)
+                    },
                     isActive = state.isInEditMode,
                     onClick = { 
                         state.toggleEditMode()
@@ -454,21 +463,21 @@ private fun InGameMenu(
                     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         MenuRowItem(
                             icon = Icons.Default.AddCircle,
-                            label = "组件库",
+                            label = stringResource(R.string.control_editor_component_library),
                             isActive = state.isPaletteVisible,
                             onClick = { state.togglePalette() }
                         )
                         
                         MenuRowItem(
                             icon = if (state.isGridVisible) Icons.Default.GridOn else Icons.Default.GridOff,
-                            label = "网格显示",
+                            label = stringResource(R.string.control_editor_grid_display),
                             isActive = state.isGridVisible,
                             onClick = { state.toggleGrid() }
                         )
 
                         MenuRowItem(
                             icon = Icons.Default.Save,
-                            label = "保存布局",
+                            label = stringResource(R.string.control_editor_save_layout),
                             isActive = false,
                             onClick = { callbacks.onSave() },
                             tint = MaterialTheme.colorScheme.primary
@@ -484,7 +493,11 @@ private fun InGameMenu(
                         // 控件可见性
                         MenuRowItem(
                             icon = if (state.isControlsVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
-                            label = if (state.isControlsVisible) "隐藏控件" else "显示控件",
+                            label = if (state.isControlsVisible) {
+                                stringResource(R.string.control_editor_hide_controls)
+                            } else {
+                                stringResource(R.string.control_editor_show_controls)
+                            },
                             isActive = !state.isControlsVisible,
                             onClick = { 
                                 state.isControlsVisible = !state.isControlsVisible
@@ -497,18 +510,18 @@ private fun InGameMenu(
                             HorizontalDivider()
                             
                             val activePackName = state.availablePacks
-                                .find { it.first == state.activePackId }?.second ?: "未选择"
+                                .find { it.first == state.activePackId }?.second ?: stringResource(R.string.control_editor_not_selected)
                             
                             MenuRowItem(
                                 icon = Icons.Default.SwapHoriz,
-                                label = "控件布局切换",
+                                label = stringResource(R.string.control_editor_layout_switch),
                                 isActive = false,
                                 onClick = { state.isLayoutPickerVisible = true }
                             )
                             
                             // 当前布局名称提示
                             Text(
-                                text = "当前: $activePackName",
+                                text = stringResource(R.string.control_editor_current_layout, activePackName),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.padding(start = 44.dp)
@@ -520,7 +533,7 @@ private fun InGameMenu(
                         // FPS 显示开关
                         MenuSwitchItem(
                             icon = Icons.Default.Speed,
-                            label = "FPS 显示",
+                            label = stringResource(R.string.control_editor_fps_display),
                             checked = state.isFpsDisplayEnabled,
                             onCheckedChange = { 
                                 state.isFpsDisplayEnabled = it
@@ -531,7 +544,7 @@ private fun InGameMenu(
                         // 触摸事件开关
                         MenuSwitchItem(
                             icon = Icons.Default.TouchApp,
-                            label = "触摸控制",
+                            label = stringResource(R.string.control_editor_touch_controls),
                             checked = state.isTouchEventEnabled,
                             onCheckedChange = { 
                                 state.isTouchEventEnabled = it
@@ -544,7 +557,7 @@ private fun InGameMenu(
                         // 调试日志
                         MenuSwitchItem(
                             icon = Icons.Default.BugReport,
-                            label = "调试日志",
+                            label = stringResource(R.string.control_editor_debug_log),
                             checked = state.isDebugLogEnabled,
                             onCheckedChange = {
                                 state.isDebugLogEnabled = it
@@ -562,12 +575,15 @@ private fun InGameMenu(
                         icon = Icons.Default.Wifi,
                         label = when (state.multiplayerConnectionState) {
                             MultiplayerState.CONNECTED -> when {
-                                state.multiplayerPeerCount > 0 -> "联机中 (${state.multiplayerPeerCount + 1}人)"
-                                state.multiplayerIsHost -> "已连接 (等待加入)"
-                                else -> "已连接 (寻找房主)"
+                                state.multiplayerPeerCount > 0 -> stringResource(
+                                    R.string.control_editor_multiplayer_connected_players,
+                                    state.multiplayerPeerCount + 1
+                                )
+                                state.multiplayerIsHost -> stringResource(R.string.control_editor_multiplayer_connected_waiting_join)
+                                else -> stringResource(R.string.control_editor_multiplayer_connected_finding_host)
                             }
-                            MultiplayerState.CONNECTING -> "连接中..."
-                            else -> "联机"
+                            MultiplayerState.CONNECTING -> stringResource(R.string.control_editor_connecting)
+                            else -> stringResource(R.string.control_editor_multiplayer)
                         },
                         isActive = state.multiplayerConnectionState == MultiplayerState.CONNECTED,
                         onClick = { state.isMultiplayerPanelVisible = true },
@@ -585,13 +601,13 @@ private fun InGameMenu(
                 // 隐藏悬浮球
                 MenuRowItem(
                     icon = Icons.Default.VisibilityOff,
-                    label = "隐藏悬浮球(返回键打开)",
+                    label = stringResource(R.string.control_editor_hide_floating_ball),
                     isActive = false,
                     onClick = { state.toggleFloatingBallVisibility() }
                 )
                 
                 Text(
-                    text = "按返回键可重新显示",
+                    text = stringResource(R.string.control_editor_back_to_show),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(start = 12.dp)
@@ -602,7 +618,7 @@ private fun InGameMenu(
                 // 退出游戏
                 MenuRowItem(
                     icon = Icons.Default.ExitToApp,
-                    label = "退出游戏",
+                    label = stringResource(R.string.control_editor_exit_game),
                     isActive = false,
                     onClick = { callbacks.onExitGame() },
                     tint = MaterialTheme.colorScheme.error
@@ -629,7 +645,11 @@ private fun MenuHeader(
             color = MaterialTheme.colorScheme.primary
         )
         IconButton(onClick = onClose, modifier = Modifier.size(24.dp)) {
-            Icon(Icons.Default.ExpandLess, contentDescription = "收起菜单", modifier = Modifier.size(20.dp))
+            Icon(
+                Icons.Default.ExpandLess,
+                contentDescription = stringResource(R.string.control_editor_collapse_menu),
+                modifier = Modifier.size(20.dp)
+            )
         }
     }
 }
@@ -662,7 +682,7 @@ private fun DraggableMenuHeader(
             // 拖动指示器
             Icon(
                 Icons.Default.DragIndicator, 
-                contentDescription = "拖动",
+                contentDescription = stringResource(R.string.control_editor_drag),
                 modifier = Modifier.size(18.dp),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -674,7 +694,11 @@ private fun DraggableMenuHeader(
             )
         }
         IconButton(onClick = onClose, modifier = Modifier.size(24.dp)) {
-            Icon(Icons.Default.ExpandLess, contentDescription = "收起菜单", modifier = Modifier.size(20.dp))
+            Icon(
+                Icons.Default.ExpandLess,
+                contentDescription = stringResource(R.string.control_editor_collapse_menu),
+                modifier = Modifier.size(20.dp)
+            )
         }
     }
 }
@@ -732,7 +756,7 @@ private fun LayoutPickerDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
-            Text("控件布局切换")
+            Text(stringResource(R.string.control_editor_layout_switch))
         },
         text = {
             LazyColumn(
@@ -775,7 +799,7 @@ private fun LayoutPickerDialog(
                             if (isSelected) {
                                 Icon(
                                     imageVector = Icons.Default.Check,
-                                    contentDescription = "已选择",
+                                    contentDescription = stringResource(R.string.control_editor_selected),
                                     tint = MaterialTheme.colorScheme.primary,
                                     modifier = Modifier.size(20.dp)
                                 )
@@ -787,7 +811,7 @@ private fun LayoutPickerDialog(
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text("关闭")
+                Text(stringResource(R.string.close))
             }
         }
     )

@@ -83,7 +83,7 @@ class MainViewModel(
 
         if (gameFilePath.isNullOrEmpty() && modLoaderFilePath.isNullOrEmpty()) {
             _importUiState.update {
-                it.copy(errorMessage = "请先选择游戏文件")
+                it.copy(errorMessage = appContext.getString(R.string.import_select_game_first))
             }
             return
         }
@@ -94,7 +94,7 @@ class MainViewModel(
             _importUiState.update {
                 it.copy(
                     isImporting = false,
-                    errorMessage = "无法初始化游戏存储"
+                    errorMessage = appContext.getString(R.string.import_storage_init_failed)
                 )
             }
             return
@@ -104,7 +104,7 @@ class MainViewModel(
             it.copy(
                 isImporting = true,
                 progress = 0,
-                status = "准备中...",
+                status = appContext.getString(R.string.import_preparing_import),
                 errorMessage = null,
                 lastCompletedGameId = null
             )
@@ -136,7 +136,7 @@ class MainViewModel(
                                 it.copy(
                                     isImporting = false,
                                     progress = 100,
-                                    status = "导入完成！",
+                                    status = appContext.getString(R.string.import_complete_exclamation),
                                     errorMessage = null,
                                     lastCompletedGameId = gameItem.id
                                 )
@@ -146,10 +146,17 @@ class MainViewModel(
                             _importUiState.update {
                                 it.copy(
                                     isImporting = false,
-                                    errorMessage = e.message ?: "导入失败"
+                                    errorMessage = e.message ?: appContext.getString(R.string.import_error_game_import_failed)
                                 )
                             }
-                            emitEffect(MainUiEffect.ShowToast("导入失败: ${e.message ?: "未知错误"}"))
+                            emitEffect(
+                                MainUiEffect.ShowToast(
+                                    appContext.getString(
+                                        R.string.import_failed_colon,
+                                        e.message ?: appContext.getString(R.string.common_unknown_error)
+                                    )
+                                )
+                            )
                         }
                     }
                 }
@@ -163,7 +170,7 @@ class MainViewModel(
                             errorMessage = error
                         )
                     }
-                    emitEffect(MainUiEffect.ShowToast("导入失败: $error"))
+                    emitEffect(MainUiEffect.ShowToast(appContext.getString(R.string.import_failed_colon, error)))
                 }
 
                 override fun onCancelled() {
@@ -172,7 +179,7 @@ class MainViewModel(
                         it.copy(
                             isImporting = false,
                             lastCompletedGameId = null,
-                            errorMessage = "导入已取消"
+                            errorMessage = appContext.getString(R.string.import_cancelled)
                         )
                     }
                 }

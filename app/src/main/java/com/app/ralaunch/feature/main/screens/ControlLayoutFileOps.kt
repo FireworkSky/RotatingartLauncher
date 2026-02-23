@@ -2,6 +2,7 @@ package com.app.ralaunch.feature.main.screens
 
 import android.net.Uri
 import android.widget.Toast
+import com.app.ralaunch.R
 import com.app.ralaunch.feature.controls.packs.ControlPackManager
 import java.io.File
 
@@ -25,14 +26,14 @@ internal fun exportPackToZip(
                     inputStream.copyTo(outputStream)
                 }
             }
-            Toast.makeText(context, "导出成功", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, context.getString(R.string.control_export_success), Toast.LENGTH_SHORT).show()
         }.onFailure { error ->
-            Toast.makeText(context, "导出失败: ${error.message}", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, context.getString(R.string.control_export_failed, error.message ?: ""), Toast.LENGTH_SHORT).show()
         }
         
         tempFile.delete()
     } catch (e: Exception) {
-        Toast.makeText(context, "导出失败: ${e.message}", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, context.getString(R.string.control_export_failed, e.message ?: ""), Toast.LENGTH_SHORT).show()
     }
 }
 
@@ -58,14 +59,14 @@ internal fun importPackFromUri(
         
         result.onSuccess { packInfo ->
             onSuccess()
-            Toast.makeText(context, "导入成功: ${packInfo.name}", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, context.getString(R.string.control_import_success, packInfo.name), Toast.LENGTH_SHORT).show()
         }.onFailure { error ->
-            Toast.makeText(context, "导入失败: ${error.message}", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, context.getString(R.string.control_import_failed, error.message ?: ""), Toast.LENGTH_SHORT).show()
         }
         
         tempFile.delete()
         
     } catch (e: Exception) {
-        Toast.makeText(context, "导入失败: ${e.message}", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, context.getString(R.string.control_import_failed, e.message ?: ""), Toast.LENGTH_SHORT).show()
     }
 }

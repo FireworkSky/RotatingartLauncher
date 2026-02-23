@@ -1,5 +1,7 @@
 package com.app.ralaunch.core.platform.install.plugins
 
+import com.app.ralaunch.R
+import com.app.ralaunch.RaLaunchApp
 import com.app.ralaunch.core.platform.install.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -13,7 +15,8 @@ import java.io.File
 class TerrariaInstallPlugin : BaseInstallPlugin() {
     
     override val pluginId = "terraria"
-    override val displayName = "Terraria / tModLoader"
+    override val displayName: String
+        get() = RaLaunchApp.getInstance().getString(R.string.install_plugin_display_name_terraria_tmodloader)
     override val supportedGames = listOf(GameDefinition.TERRARIA, GameDefinition.TMODLOADER)
     
     override fun detectGame(gameFile: File): GameDetectResult? {
@@ -54,7 +57,10 @@ class TerrariaInstallPlugin : BaseInstallPlugin() {
         installJob = CoroutineScope(Dispatchers.IO).launch {
             try {
                 withContext(Dispatchers.Main) {
-                    callback.onProgress("开始安装...", 0)
+                    callback.onProgress(
+                        RaLaunchApp.getInstance().getString(R.string.install_starting),
+                        0
+                    )
                 }
                 
                 if (!gameStorageRootFull.exists()) gameStorageRootFull.mkdirs()
@@ -63,7 +69,11 @@ class TerrariaInstallPlugin : BaseInstallPlugin() {
                 var terrariaExeParent: File? = extractGameFile(gameFile, gameStorageRootFull, callback)
                 
                 if (terrariaExeParent == null) {
-                    withContext(Dispatchers.Main) { callback.onError("游戏解压失败") }
+                    withContext(Dispatchers.Main) {
+                        callback.onError(
+                            RaLaunchApp.getInstance().getString(R.string.install_extract_game_failed)
+                        )
+                    }
                     return@launch
                 }
                 
@@ -79,7 +89,10 @@ class TerrariaInstallPlugin : BaseInstallPlugin() {
                 // 安装 tModLoader
                 if (modLoaderFile != null) {
                     withContext(Dispatchers.Main) {
-                        callback.onProgress("准备 tModLoader 目录...", 48)
+                        callback.onProgress(
+                            RaLaunchApp.getInstance().getString(R.string.install_tmodloader_prepare_dir),
+                            48
+                        )
                     }
                     
                     val gogGamesDir = terrariaExeParent.parentFile
@@ -87,7 +100,10 @@ class TerrariaInstallPlugin : BaseInstallPlugin() {
                     tModLoaderExeParent.mkdirs()
                     
                     withContext(Dispatchers.Main) {
-                        callback.onProgress("安装 tModLoader...", 55)
+                        callback.onProgress(
+                            RaLaunchApp.getInstance().getString(R.string.install_tmodloader),
+                            55
+                        )
                     }
                     installTModLoader(modLoaderFile, tModLoaderExeParent, callback)
                     
@@ -102,19 +118,28 @@ class TerrariaInstallPlugin : BaseInstallPlugin() {
                 
                 // 安装 MonoMod 库
                 withContext(Dispatchers.Main) {
-                    callback.onProgress("安装 MonoMod 库...", 90)
+                    callback.onProgress(
+                        RaLaunchApp.getInstance().getString(R.string.install_monomod),
+                        90
+                    )
                 }
                 installMonoMod(finalExeParent)
-                
+
                 // 提取图标
                 withContext(Dispatchers.Main) {
-                    callback.onProgress("提取图标...", 92)
+                    callback.onProgress(
+                        RaLaunchApp.getInstance().getString(R.string.install_extract_icon),
+                        92
+                    )
                 }
                 val iconPath = extractIcon(finalExeParent, definition)
-                
+
                 // 创建游戏信息文件 - 使用 outputDir 作为存储根目录
                 withContext(Dispatchers.Main) {
-                    callback.onProgress("完成安装...", 98)
+                    callback.onProgress(
+                        RaLaunchApp.getInstance().getString(R.string.install_finishing),
+                        98
+                    )
                 }
                 createGameInfo(gameStorageRootFull, finalExeParent, definition, iconPath)
 
@@ -127,13 +152,18 @@ class TerrariaInstallPlugin : BaseInstallPlugin() {
                 )
                 
                 withContext(Dispatchers.Main) {
-                    callback.onProgress("安装完成!", 100)
+                    callback.onProgress(
+                        RaLaunchApp.getInstance().getString(R.string.install_complete),
+                        100
+                    )
                     callback.onComplete(gameItem)
                 }
                 
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
-                    callback.onError(e.message ?: "安装失败")
+                    callback.onError(
+                        e.message ?: RaLaunchApp.getInstance().getString(R.string.install_failed)
+                    )
                 }
             }
         }
@@ -197,7 +227,13 @@ class TerrariaInstallPlugin : BaseInstallPlugin() {
                     if (!isCancelled) {
                         val progressInt = 55 + (progress * 30).toInt().coerceIn(0, 30)
                         CoroutineScope(Dispatchers.Main).launch {
-                            callback.onProgress("安装 tModLoader: $msg", progressInt)
+                            callback.onProgress(
+                                RaLaunchApp.getInstance().getString(
+                                    R.string.install_tmodloader_with_detail,
+                                    msg
+                                ),
+                                progressInt
+                            )
                         }
                     }
                 }
@@ -208,7 +244,10 @@ class TerrariaInstallPlugin : BaseInstallPlugin() {
                 is GameExtractorUtils.ExtractResult.Success -> {
                     val sourceDir = findTModLoaderRoot(tempDir)
                     withContext(Dispatchers.Main) {
-                        callback.onProgress("复制 tModLoader 文件...", 88)
+                        callback.onProgress(
+                            RaLaunchApp.getInstance().getString(R.string.install_tmodloader_copy_files),
+                            88
+                        )
                     }
                     copyDirectory(sourceDir, outputDir)
                 }

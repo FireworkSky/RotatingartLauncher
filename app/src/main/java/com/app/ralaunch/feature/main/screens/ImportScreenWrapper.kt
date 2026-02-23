@@ -23,6 +23,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -123,7 +124,7 @@ private fun ModernImportScreen(
                         Column(modifier = Modifier.fillMaxSize()) {
                             // 上部：标题
                             Text(
-                                text = "导入新游戏",
+                                text = stringResource(R.string.import_new_game_title),
                                 style = MaterialTheme.typography.titleLarge,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onSurface,
@@ -132,7 +133,11 @@ private fun ModernImportScreen(
 
                             // 检测结果（选择文件后显示）
                             val displayName = detectedModLoaderId ?: detectedGameId
-                            val displayLabel = if (detectedModLoaderId != null) "检测到模组加载器" else "检测到游戏"
+                            val displayLabel = if (detectedModLoaderId != null) {
+                                stringResource(R.string.import_detected_modloader_label)
+                            } else {
+                                stringResource(R.string.import_detected_game_label)
+                            }
 
                             AnimatedVisibility(
                                 visible = displayName != null,
@@ -185,54 +190,54 @@ private fun ModernImportScreen(
                             ) {
                                 // Step 1: 购买游戏
                                 ImportGuideSection(
-                                    title = "第一步：购买游戏",
+                                    title = stringResource(R.string.import_guide_step1_title),
                                     icon = Icons.Outlined.ShoppingCart,
                                     steps = listOf(
-                                        "前往 GOG.com 注册并登录账号",
-                                        "搜索并购买游戏（如 Terraria、Stardew Valley）",
-                                        "如已拥有游戏，跳过此步骤"
+                                        stringResource(R.string.import_guide_step1_item1),
+                                        stringResource(R.string.import_guide_step1_item2),
+                                        stringResource(R.string.import_guide_step1_item3)
                                     )
                                 )
 
                                 // Step 2: 下载游戏
                                 ImportGuideSection(
-                                    title = "第二步：下载游戏安装包",
+                                    title = stringResource(R.string.import_guide_step2_title),
                                     icon = Icons.Outlined.CloudDownload,
                                     steps = listOf(
-                                        "在 GOG.com 点击头像进入「我的游戏」",
-                                        "找到游戏，点击进入下载页面",
-                                        "System 选择「Linux」版本",
-                                        "下载 .sh 安装包（如 terraria_v1_4_5_4_88511.sh）"
+                                        stringResource(R.string.import_guide_step2_item1),
+                                        stringResource(R.string.import_guide_step2_item2),
+                                        stringResource(R.string.import_guide_step2_item3),
+                                        stringResource(R.string.import_guide_step2_item4)
                                     ),
                                     imageResId = R.drawable.guide_gog_download
                                 )
 
                                 // Step 3: 模组加载器（可选）
                                 ImportGuideSection(
-                                    title = "第三步：下载模组加载器（可选）",
+                                    title = stringResource(R.string.import_guide_step3_title),
                                     icon = Icons.Outlined.Build,
                                     steps = listOf(
-                                        "tModLoader（Terraria 模组）：",
-                                        "  前往 github.com/tModLoader/tModLoader/releases",
-                                        "  下载最新 stable 版本的 tModLoader.zip",
+                                        stringResource(R.string.import_guide_step3_item1),
+                                        stringResource(R.string.import_guide_step3_item2),
+                                        stringResource(R.string.import_guide_step3_item3),
                                         "",
-                                        "SMAPI（Stardew Valley 模组）：",
-                                        "  前往 smapi.io 点击 Download",
-                                        "  下载 SMAPI Linux 版本安装包"
+                                        stringResource(R.string.import_guide_step3_item4),
+                                        stringResource(R.string.import_guide_step3_item5),
+                                        stringResource(R.string.import_guide_step3_item6)
                                     ),
                                     imageResId = R.drawable.guide_tmodloader_download
                                 )
 
                                 // Step 4: 导入到启动器
                                 ImportGuideSection(
-                                    title = "第四步：导入到启动器",
+                                    title = stringResource(R.string.import_guide_step4_title),
                                     icon = Icons.Outlined.InstallMobile,
                                     steps = listOf(
-                                        "点击右侧「游戏文件」→ 选择下载的 .sh 或 .zip 文件",
-                                        "如需模组加载器，点击「模组加载器」→ 选择对应文件",
-                                        "确认上方识别结果无误",
-                                        "点击「开始导入」等待安装完成",
-                                        "返回游戏列表即可启动游戏"
+                                        stringResource(R.string.import_guide_step4_item1),
+                                        stringResource(R.string.import_guide_step4_item2),
+                                        stringResource(R.string.import_guide_step4_item3),
+                                        stringResource(R.string.import_guide_step4_item4),
+                                        stringResource(R.string.import_guide_step4_item5)
                                     )
                                 )
                             }
@@ -250,8 +255,8 @@ private fun ModernImportScreen(
             ) {
                 // 游戏文件卡片
                 ModernFileCard(
-                    title = "游戏文件",
-                    subtitle = if (gameFilePath != null) File(gameFilePath).name else "选择 .sh 或 .zip 安装包",
+                    title = stringResource(R.string.import_game_file),
+                    subtitle = if (gameFilePath != null) File(gameFilePath).name else stringResource(R.string.import_game_file_subtitle_hint),
                     icon = Icons.Outlined.SportsEsports,
                     isSelected = gameFilePath != null,
                     isPrimary = true,
@@ -263,12 +268,12 @@ private fun ModernImportScreen(
 
                 // 模组加载器卡片
                 ModernFileCard(
-                    title = "模组加载器",
-                    subtitle = if (modLoaderFilePath != null) File(modLoaderFilePath).name else "tModLoader / SMAPI 等（可选）",
+                    title = stringResource(R.string.import_modloader_file),
+                    subtitle = if (modLoaderFilePath != null) File(modLoaderFilePath).name else stringResource(R.string.import_modloader_subtitle_hint),
                     icon = Icons.Outlined.Build,
                     isSelected = modLoaderFilePath != null,
                     isPrimary = false,
-                    badge = "可选",
+                    badge = stringResource(R.string.import_optional_badge),
                     onClick = onSelectModLoader,
                     enabled = !isImporting
                 )
@@ -305,7 +310,7 @@ private fun ModernImportScreen(
                             IconButton(onClick = onDismissError) {
                                 Icon(
                                     Icons.Default.Close,
-                                    contentDescription = "关闭",
+                                    contentDescription = stringResource(R.string.close),
                                     tint = MaterialTheme.colorScheme.onErrorContainer
                                 )
                             }
@@ -335,7 +340,7 @@ private fun ModernImportScreen(
                         )
                         Spacer(modifier = Modifier.width(12.dp))
                         Text(
-                            text = "导入中... $importProgress%",
+                            text = stringResource(R.string.import_in_progress_percent, importProgress),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.SemiBold
                         )
@@ -347,7 +352,7 @@ private fun ModernImportScreen(
                         )
                         Spacer(modifier = Modifier.width(12.dp))
                         Text(
-                            text = "开始导入",
+                            text = stringResource(R.string.import_start),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.SemiBold
                         )
@@ -365,7 +370,7 @@ private fun ImportProgressPanel(
     modifier: Modifier = Modifier
 ) {
     val progress = importProgress.coerceIn(0, 100)
-    val statusText = if (importStatus.isBlank()) "正在准备导入..." else importStatus
+    val statusText = if (importStatus.isBlank()) stringResource(R.string.import_preparing_import) else importStatus
     val statusScrollState = rememberScrollState()
 
     Surface(
@@ -380,7 +385,7 @@ private fun ImportProgressPanel(
                 .padding(24.dp)
         ) {
             Text(
-                text = "导入进度",
+                text = stringResource(R.string.import_progress_title),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface
@@ -660,7 +665,7 @@ private fun ImportGuideSection(
                 Spacer(modifier = Modifier.height(8.dp))
                 Image(
                     painter = painterResource(id = imageResId),
-                    contentDescription = "参考截图",
+                    contentDescription = stringResource(R.string.import_reference_screenshot),
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(8.dp)),

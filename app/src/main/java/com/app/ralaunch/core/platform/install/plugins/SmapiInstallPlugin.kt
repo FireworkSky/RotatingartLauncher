@@ -2,6 +2,8 @@ package com.app.ralaunch.core.platform.install.plugins
 
 import android.os.Environment
 import android.util.Log
+import com.app.ralaunch.R
+import com.app.ralaunch.RaLaunchApp
 import com.app.ralaunch.core.platform.install.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -38,7 +40,8 @@ class SmapiInstallPlugin : BaseInstallPlugin() {
     }
     
     override val pluginId = "smapi"
-    override val displayName = "Stardew Valley / SMAPI"
+    override val displayName: String
+        get() = RaLaunchApp.getInstance().getString(R.string.install_plugin_display_name_stardew_smapi)
     override val supportedGames = listOf(GameDefinition.STARDEW_VALLEY, GameDefinition.SMAPI)
     
     override fun detectGame(gameFile: File): GameDetectResult? {
@@ -92,7 +95,10 @@ class SmapiInstallPlugin : BaseInstallPlugin() {
         installJob = CoroutineScope(Dispatchers.IO).launch {
             try {
                 withContext(Dispatchers.Main) {
-                    callback.onProgress("开始安装...", 0)
+                    callback.onProgress(
+                        RaLaunchApp.getInstance().getString(R.string.install_starting),
+                        0
+                    )
                 }
                 
                 if (!gameStorageRoot.exists()) gameStorageRoot.mkdirs()
@@ -100,7 +106,11 @@ class SmapiInstallPlugin : BaseInstallPlugin() {
                 // 解压游戏本体
                 var actualGameDir = extractGameFile(gameFile, gameStorageRoot, callback)
                 if (actualGameDir == null) {
-                    withContext(Dispatchers.Main) { callback.onError("游戏解压失败") }
+                    withContext(Dispatchers.Main) {
+                        callback.onError(
+                            RaLaunchApp.getInstance().getString(R.string.install_extract_game_failed)
+                        )
+                    }
                     return@launch
                 }
                 
@@ -114,7 +124,10 @@ class SmapiInstallPlugin : BaseInstallPlugin() {
                 // 安装 SMAPI
                 if (modLoaderFile != null) {
                     withContext(Dispatchers.Main) {
-                        callback.onProgress("安装 SMAPI...", 55)
+                        callback.onProgress(
+                            RaLaunchApp.getInstance().getString(R.string.install_smapi),
+                            55
+                        )
                     }
                     
                     if (isSmapiInstaller(modLoaderFile)) {
@@ -144,13 +157,19 @@ class SmapiInstallPlugin : BaseInstallPlugin() {
                 
                 // 提取图标
                 withContext(Dispatchers.Main) {
-                    callback.onProgress("提取图标...", 92)
+                    callback.onProgress(
+                        RaLaunchApp.getInstance().getString(R.string.install_extract_icon),
+                        92
+                    )
                 }
                 val iconPath = extractIcon(actualGameDir, definition)
                 
                 // 创建游戏信息文件 - 使用 outputDir 作为存储根目录
                 withContext(Dispatchers.Main) {
-                    callback.onProgress("完成安装...", 98)
+                    callback.onProgress(
+                        RaLaunchApp.getInstance().getString(R.string.install_finishing),
+                        98
+                    )
                 }
                 createGameInfo(gameStorageRoot, actualGameDir, definition, iconPath)
 
@@ -170,13 +189,18 @@ class SmapiInstallPlugin : BaseInstallPlugin() {
                 }
                 
                 withContext(Dispatchers.Main) {
-                    callback.onProgress("安装完成!", 100)
+                    callback.onProgress(
+                        RaLaunchApp.getInstance().getString(R.string.install_complete),
+                        100
+                    )
                     callback.onComplete(finalGameItem)
                 }
                 
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
-                    callback.onError(e.message ?: "安装失败")
+                    callback.onError(
+                        e.message ?: RaLaunchApp.getInstance().getString(R.string.install_failed)
+                    )
                 }
             }
         }
@@ -223,7 +247,13 @@ class SmapiInstallPlugin : BaseInstallPlugin() {
                 if (!isCancelled) {
                     val progressInt = 55 + (progress * 30).toInt().coerceIn(0, 30)
                     CoroutineScope(Dispatchers.Main).launch {
-                        callback.onProgress("安装 SMAPI: $msg", progressInt)
+                        callback.onProgress(
+                            RaLaunchApp.getInstance().getString(
+                                R.string.install_smapi_with_detail,
+                                msg
+                            ),
+                            progressInt
+                        )
                     }
                 }
             }
@@ -232,13 +262,28 @@ class SmapiInstallPlugin : BaseInstallPlugin() {
         when (result) {
             is GameExtractorUtils.ExtractResult.Error -> throw Exception(result.message)
             is GameExtractorUtils.ExtractResult.Success -> {
-                withContext(Dispatchers.Main) { callback.onProgress("应用 MonoMod 补丁...", 86) }
+                withContext(Dispatchers.Main) {
+                    callback.onProgress(
+                        RaLaunchApp.getInstance().getString(R.string.install_apply_monomod_patch),
+                        86
+                    )
+                }
                 installMonoMod(outputDir)
                 
-                withContext(Dispatchers.Main) { callback.onProgress("修补 ARM64 架构...", 88) }
+                withContext(Dispatchers.Main) {
+                    callback.onProgress(
+                        RaLaunchApp.getInstance().getString(R.string.install_patch_arm64),
+                        88
+                    )
+                }
                 patchDllsToArm64(outputDir)
                 
-                withContext(Dispatchers.Main) { callback.onProgress("修补配置文件...", 90) }
+                withContext(Dispatchers.Main) {
+                    callback.onProgress(
+                        RaLaunchApp.getInstance().getString(R.string.install_patch_config),
+                        90
+                    )
+                }
                 patchJsonConfigs(outputDir)
             }
         }
@@ -256,7 +301,13 @@ class SmapiInstallPlugin : BaseInstallPlugin() {
                     if (!isCancelled) {
                         val progressInt = 55 + (progress * 20).toInt().coerceIn(0, 20)
                         CoroutineScope(Dispatchers.Main).launch {
-                            callback.onProgress("解压 SMAPI: $msg", progressInt)
+                            callback.onProgress(
+                                RaLaunchApp.getInstance().getString(
+                                    R.string.install_extract_smapi_with_detail,
+                                    msg
+                                ),
+                                progressInt
+                            )
                         }
                     }
                 }
@@ -267,7 +318,12 @@ class SmapiInstallPlugin : BaseInstallPlugin() {
                 is GameExtractorUtils.ExtractResult.Success -> { /* 继续 */ }
             }
             
-            withContext(Dispatchers.Main) { callback.onProgress("处理 SMAPI 文件...", 75) }
+            withContext(Dispatchers.Main) {
+                callback.onProgress(
+                    RaLaunchApp.getInstance().getString(R.string.install_process_smapi_files),
+                    75
+                )
+            }
             processInstallerFiles(tempDir, outputDir, callback)
             
         } finally {
@@ -279,7 +335,12 @@ class SmapiInstallPlugin : BaseInstallPlugin() {
         val installDat = findInstallDat(tempDir)
         
         if (installDat != null && installDat.exists()) {
-            withContext(Dispatchers.Main) { callback.onProgress("解压 SMAPI 核心文件...", 80) }
+            withContext(Dispatchers.Main) {
+                callback.onProgress(
+                    RaLaunchApp.getInstance().getString(R.string.install_extract_smapi_core_files),
+                    80
+                )
+            }
             
             val datResult = GameExtractorUtils.extractZip(
                 zipFile = installDat,
@@ -288,7 +349,13 @@ class SmapiInstallPlugin : BaseInstallPlugin() {
                     if (!isCancelled) {
                         val progressInt = 80 + (progress * 10).toInt().coerceIn(0, 10)
                         CoroutineScope(Dispatchers.Main).launch {
-                            callback.onProgress("安装 SMAPI: $msg", progressInt)
+                            callback.onProgress(
+                                RaLaunchApp.getInstance().getString(
+                                    R.string.install_smapi_with_detail,
+                                    msg
+                                ),
+                                progressInt
+                            )
                         }
                     }
                 }
@@ -296,11 +363,21 @@ class SmapiInstallPlugin : BaseInstallPlugin() {
             
             when (datResult) {
                 is GameExtractorUtils.ExtractResult.Error -> 
-                    throw Exception("解压 install.dat 失败: ${datResult.message}")
+                    throw Exception(
+                        RaLaunchApp.getInstance().getString(
+                            R.string.install_extract_install_dat_failed,
+                            datResult.message
+                        )
+                    )
                 is GameExtractorUtils.ExtractResult.Success -> { /* 继续 */ }
             }
         } else {
-            withContext(Dispatchers.Main) { callback.onProgress("复制 SMAPI 文件...", 80) }
+            withContext(Dispatchers.Main) {
+                callback.onProgress(
+                    RaLaunchApp.getInstance().getString(R.string.install_copy_smapi_files),
+                    80
+                )
+            }
             copyInstallerFiles(tempDir, outputDir)
         }
         
@@ -308,17 +385,37 @@ class SmapiInstallPlugin : BaseInstallPlugin() {
         val gameDepsJson = File(outputDir, "Stardew Valley.deps.json")
         val smapiDepsJson = File(outputDir, "StardewModdingAPI.deps.json")
         if (gameDepsJson.exists() && !smapiDepsJson.exists()) {
-            withContext(Dispatchers.Main) { callback.onProgress("配置 SMAPI...", 88) }
+            withContext(Dispatchers.Main) {
+                callback.onProgress(
+                    RaLaunchApp.getInstance().getString(R.string.install_configure_smapi),
+                    88
+                )
+            }
             gameDepsJson.copyTo(smapiDepsJson, overwrite = true)
         }
         
-        withContext(Dispatchers.Main) { callback.onProgress("应用 MonoMod 补丁...", 89) }
+        withContext(Dispatchers.Main) {
+            callback.onProgress(
+                RaLaunchApp.getInstance().getString(R.string.install_apply_monomod_patch),
+                89
+            )
+        }
         installMonoMod(outputDir)
         
-        withContext(Dispatchers.Main) { callback.onProgress("修补 ARM64 架构...", 90) }
+        withContext(Dispatchers.Main) {
+            callback.onProgress(
+                RaLaunchApp.getInstance().getString(R.string.install_patch_arm64),
+                90
+            )
+        }
         patchDllsToArm64(outputDir)
         
-        withContext(Dispatchers.Main) { callback.onProgress("修补配置文件...", 93) }
+        withContext(Dispatchers.Main) {
+            callback.onProgress(
+                RaLaunchApp.getInstance().getString(R.string.install_patch_config),
+                93
+            )
+        }
         patchJsonConfigs(outputDir)
     }
     

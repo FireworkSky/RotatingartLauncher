@@ -4,11 +4,13 @@ import android.content.Context
 import com.app.ralaunch.shared.core.model.domain.ControlLayout
 import com.app.ralaunch.shared.core.contract.service.ControlLayoutService
 import com.app.ralaunch.shared.core.contract.service.ControlPackInfo
+import com.app.ralaunch.shared.generated.resources.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.withContext
+import org.jetbrains.compose.resources.getString
 
 /**
  * Android 平台控制布局服务实现
@@ -30,7 +32,7 @@ class AndroidControlLayoutService(
     // 当前选中的包 ID
     private val _selectedPackId = MutableStateFlow<String?>(null)
     override val selectedPackId: Flow<String?> = _selectedPackId.asStateFlow()
-    
+
     /**
      * 刷新已安装的包列表
      */
@@ -106,12 +108,20 @@ class AndroidControlLayoutService(
     
     override suspend fun importPack(filePath: String): Result<ControlPackInfo> = withContext(Dispatchers.IO) {
         // 桥接到 ControlPackManager.installFromFile
-        Result.failure(NotImplementedError("待实现"))
+        Result.failure(
+            NotImplementedError(
+                getString(Res.string.shared_feature_not_implemented)
+            )
+        )
     }
     
     override suspend fun exportPack(packId: String, outputPath: String): Result<String> = withContext(Dispatchers.IO) {
         // 桥接到 ControlPackManager.exportToFile
-        Result.failure(NotImplementedError("待实现"))
+        Result.failure(
+            NotImplementedError(
+                getString(Res.string.shared_feature_not_implemented)
+            )
+        )
     }
     
     override suspend fun getPackIconPath(packId: String): String? = withContext(Dispatchers.IO) {

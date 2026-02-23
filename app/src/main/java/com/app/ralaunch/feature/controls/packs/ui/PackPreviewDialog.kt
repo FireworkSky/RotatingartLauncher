@@ -207,7 +207,7 @@ private fun LandscapeLayout(
                 Spacer(modifier = Modifier.height(4.dp))
                 
                 Text(
-                    text = "v${info.version}",
+                    text = stringResource(R.string.pack_version_short, info.version),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -340,7 +340,7 @@ private fun PortraitLayout(
                 )
                 Spacer(modifier = Modifier.width(16.dp))
                 Text(
-                    text = "v${info.version}",
+                    text = stringResource(R.string.pack_version_short, info.version),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
