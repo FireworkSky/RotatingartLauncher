@@ -10,6 +10,7 @@ data class MainUiState(
     val isLoading: Boolean = true,
     val backgroundType: BackgroundType = BackgroundType.None,
     val isVideoPlaying: Boolean = true,
+    val showAnnouncementBadge: Boolean = false,
     val gamePendingDeletion: GameItemUi? = null,
     val deletePosition: Int = -1,
     val isDeletingGame: Boolean = false,
@@ -41,6 +42,7 @@ sealed interface MainUiEvent {
     data class ImportCompleted(val gameType: String, val game: GameItem) : MainUiEvent
     data object AppResumed : MainUiEvent
     data object AppPaused : MainUiEvent
+    data object AnnouncementTabOpened : MainUiEvent
 }
 
 sealed interface MainUiEffect {

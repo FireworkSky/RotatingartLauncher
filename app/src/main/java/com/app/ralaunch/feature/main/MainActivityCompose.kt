@@ -192,6 +192,7 @@ class MainActivityCompose : BaseActivity() {
                         state = state.copy(backgroundType = backgroundType),
                         importUiState = importState,
                         navState = navState,
+                        showAnnouncementBadge = state.showAnnouncementBadge,
                         pageAlpha = pageAlpha,
                         videoSpeed = videoSpeed,
                         onGameClick = { mainViewModel.onEvent(MainUiEvent.GameSelected(it)) },
@@ -217,7 +218,8 @@ class MainActivityCompose : BaseActivity() {
                             mainViewModel.startImport(gameFilePath, modLoaderFilePath)
                         },
                         onDismissImportError = { mainViewModel.clearImportError() },
-                        onImportCompletionHandled = { mainViewModel.resetImportCompletedFlag() }
+                        onImportCompletionHandled = { mainViewModel.resetImportCompletedFlag() },
+                        onAnnouncementsOpened = { mainViewModel.onEvent(MainUiEvent.AnnouncementTabOpened) }
                     )
 
                     // MD3 风格启动画面覆盖层
@@ -605,6 +607,7 @@ private fun MainActivityContent(
     state: MainUiState,
     importUiState: ImportUiState,
     navState: NavState,
+    showAnnouncementBadge: Boolean,
     pageAlpha: Float = 1f,
     videoSpeed: Float = 1f,
     onGameClick: (GameItemUi) -> Unit,
@@ -626,6 +629,7 @@ private fun MainActivityContent(
     onStartImport: (gameFilePath: String?, modLoaderFilePath: String?) -> Unit = { _, _ -> },
     onDismissImportError: () -> Unit = {},
     onImportCompletionHandled: () -> Unit = {},
+    onAnnouncementsOpened: () -> Unit = {},
     permissionManager: PermissionManager? = null
 ) {
     val context = LocalContext.current
@@ -646,6 +650,9 @@ private fun MainActivityContent(
     var hasFilePermission by remember(permissionManager) {
         mutableStateOf(permissionManager?.hasRequiredPermissions() ?: true)
     }
+    val currentDestination by remember {
+        derivedStateOf { navState.currentDestination }
+    }
     
     // 重置导入状态
     val resetImportState: () -> Unit = {
@@ -664,6 +671,12 @@ private fun MainActivityContent(
         onImportCompletionHandled()
         Log.d("MainActivityCompose", "Handled import completion for gameId=$completedGameId")
     }
+
+    LaunchedEffect(currentDestination, showAnnouncementBadge) {
+        if (currentDestination == NavDestination.ANNOUNCEMENTS && showAnnouncementBadge) {
+            onAnnouncementsOpened()
+        }
+    }
     
     Box(modifier = Modifier.fillMaxSize()) {
         // 主内容 - 背景层通过 backgroundLayer 传入，由 MainApp 自动标记为 hazeSource
@@ -673,6 +686,7 @@ private fun MainActivityContent(
                 .systemBarsPadding()
                 .graphicsLayer { alpha = pageAlpha },
             navState = navState,
+            showAnnouncementBadge = showAnnouncementBadge,
             externalHazeState = hazeState,
             backgroundLayer = {
                 // 背景层 - 沉浸式（作为毛玻璃模糊源）

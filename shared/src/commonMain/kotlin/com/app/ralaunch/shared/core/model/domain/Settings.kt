@@ -122,6 +122,10 @@ data class AppSettings(
     var multiplayerEnabled: Boolean = false,
     var multiplayerDisclaimerAccepted: Boolean = false,
 
+    // 公告
+    var lastAnnouncementId: String = "",
+    var isAnnouncementBadgeShown: Boolean = false,
+
     // Box64 设置
     var box64Enabled: Boolean = false,
     var box64GamePath: String = ""

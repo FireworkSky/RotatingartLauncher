@@ -49,6 +49,7 @@ fun MainApp(
     onLaunchClick: () -> Unit = {},
     onDeleteClick: () -> Unit = {},
     onEditClick: (updatedGame: GameItemUi) -> Unit = {},
+    showAnnouncementBadge: Boolean = false,
     gameRendererOptions: List<RendererOption> = emptyList(),
     iconLoader: @Composable (String?, Modifier) -> Unit = { _, _ -> },
     // 页面内容 Slots
@@ -109,6 +110,7 @@ fun MainApp(
                 AppNavigationRail(
                     currentDestination = currentDest,
                     onNavigate = { navState.navigateTo(it) },
+                    showAnnouncementBadge = showAnnouncementBadge,
                     labelProvider = { destination ->
                         when (destination) {
                             NavDestination.GAMES -> navGamesLabel

@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import com.app.ralaunch.R
 import com.app.ralaunch.core.common.SettingsAccess
 import com.app.ralaunch.core.common.util.AppLogger
+import com.app.ralaunch.feature.announcement.AnnouncementRepositoryService
 import com.app.ralaunch.feature.main.AddGameUseCase
 import com.app.ralaunch.feature.main.DeleteGameFilesUseCase
 import com.app.ralaunch.feature.main.DeleteGameUseCase
@@ -31,6 +32,7 @@ import com.app.ralaunch.feature.main.contracts.MainUiState
 import com.app.ralaunch.feature.main.update.LauncherUpdateChecker
 import com.app.ralaunch.feature.main.update.LauncherUpdateInfo
 import com.app.ralaunch.feature.main.update.LauncherUpdatePreferences
+import com.app.ralaunch.shared.core.contract.repository.SettingsRepositoryV2
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -51,6 +53,8 @@ class MainViewModel(
     private val deleteGameUseCase: DeleteGameUseCase,
     private val launchGameUseCase: LaunchGameUseCase,
     private val deleteGameFilesUseCase: DeleteGameFilesUseCase,
+    private val settingsRepository: SettingsRepositoryV2,
+    private val announcementRepositoryService: AnnouncementRepositoryService,
     private val launcherUpdateChecker: LauncherUpdateChecker
 ) : ViewModel() {
 
@@ -67,6 +71,7 @@ class MainViewModel(
     private var activeInstaller: GameInstaller? = null
     private var isUpdateCheckInProgress = false
     private var lastUpdateCheckAt: Long = 0L
+    private var latestAnnouncementId: String? = null
 
     companion object {
         private const val UPDATE_CHECK_INTERVAL_MS = 60_000L
@@ -75,6 +80,8 @@ class MainViewModel(
     init {
         onEvent(MainUiEvent.RefreshRequested)
         onEvent(MainUiEvent.CheckAppUpdate)
+        loadAnnouncementBadgeFromSettings()
+        checkAnnouncementUnreadOnStartup()
     }
 
     fun onEvent(event: MainUiEvent) {
@@ -101,6 +108,85 @@ class MainViewModel(
                 checkAppUpdate(force = false)
             }
             is MainUiEvent.AppPaused -> _uiState.update { it.copy(isVideoPlaying = false) }
+            is MainUiEvent.AnnouncementTabOpened -> markAnnouncementsAsRead()
+        }
+    }
+
+    private fun checkAnnouncementUnreadOnStartup() {
+        viewModelScope.launch(Dispatchers.IO) {
+            val result = announcementRepositoryService.fetchAnnouncements(forceRefresh = false)
+            result.onSuccess { announcements ->
+                val latestId = announcements.firstOrNull()
+                    ?.id
+                    ?.trim()
+                    ?.takeIf { it.isNotBlank() }
+                latestAnnouncementId = latestId
+
+                val settings = settingsRepository.getSettingsSnapshot()
+                val lastAnnouncementId = settings.lastAnnouncementId.trim()
+                val shouldShowBadge = latestId != null && latestId != lastAnnouncementId
+                if (settings.isAnnouncementBadgeShown != shouldShowBadge) {
+                    runCatching {
+                        settingsRepository.update {
+                            isAnnouncementBadgeShown = shouldShowBadge
+                        }
+                    }.onFailure { error ->
+                        AppLogger.warn(
+                            "MainViewModel",
+                            "Failed to persist isAnnouncementBadgeShown: ${error.message}",
+                            error
+                        )
+                    }
+                }
+
+                withContext(Dispatchers.Main) {
+                    _uiState.update { it.copy(showAnnouncementBadge = shouldShowBadge) }
+                }
+            }.onFailure { error ->
+                AppLogger.warn(
+                    "MainViewModel",
+                    "Failed to fetch announcements on startup: ${error.message}",
+                    error
+                )
+            }
+        }
+    }
+
+    private fun loadAnnouncementBadgeFromSettings() {
+        viewModelScope.launch(Dispatchers.IO) {
+            val shouldShowBadge = runCatching {
+                settingsRepository.getSettingsSnapshot().isAnnouncementBadgeShown
+            }.getOrDefault(false)
+            withContext(Dispatchers.Main) {
+                _uiState.update { it.copy(showAnnouncementBadge = shouldShowBadge) }
+            }
+        }
+    }
+
+    private fun markAnnouncementsAsRead() {
+        if (!_uiState.value.showAnnouncementBadge) return
+        val latestId = latestAnnouncementId
+            ?.trim()
+            ?.takeIf { it.isNotBlank() }
+
+        viewModelScope.launch(Dispatchers.IO) {
+            runCatching {
+                settingsRepository.update {
+                    isAnnouncementBadgeShown = false
+                    if (latestId != null) {
+                        lastAnnouncementId = latestId
+                    }
+                }
+            }.onFailure { error ->
+                AppLogger.warn(
+                    "MainViewModel",
+                    "Failed to persist announcement read state: ${error.message}",
+                    error
+                )
+            }
+            withContext(Dispatchers.Main) {
+                _uiState.update { it.copy(showAnnouncementBadge = false) }
+            }
         }
     }
 
@@ -500,6 +586,8 @@ class MainViewModelFactory(
         val deleteGameUseCase = DeleteGameUseCase(gameRepository)
         val launchGameUseCase = LaunchGameUseCase(GameLaunchManager(appContext))
         val deleteGameFilesUseCase = DeleteGameFilesUseCase(GameDeletionManager(appContext))
+        val settingsRepository: SettingsRepositoryV2 = KoinJavaComponent.get(SettingsRepositoryV2::class.java)
+        val announcementRepositoryService: AnnouncementRepositoryService = KoinJavaComponent.get(AnnouncementRepositoryService::class.java)
         val launcherUpdateChecker: LauncherUpdateChecker = KoinJavaComponent.get(LauncherUpdateChecker::class.java)
 
         return MainViewModel(
@@ -510,6 +598,8 @@ class MainViewModelFactory(
             deleteGameUseCase = deleteGameUseCase,
             launchGameUseCase = launchGameUseCase,
             deleteGameFilesUseCase = deleteGameFilesUseCase,
+            settingsRepository = settingsRepository,
+            announcementRepositoryService = announcementRepositoryService,
             launcherUpdateChecker = launcherUpdateChecker
         ) as T
     }
