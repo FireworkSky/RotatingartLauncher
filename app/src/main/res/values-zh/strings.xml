@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Rotating art Launcher</string>
+    <string name="app_name">Rotating Art Launcher</string>
 
     <!-- 主界面 -->
     <string name="main_no_game_selected">未选择游戏</string>
@@ -88,7 +88,7 @@
     <string name="language_spanish">Español</string>
     <string name="language_changed">语言已切换到 %s</string>
     <string name="app_info">应用信息</string>
-    <string name="app_version">版本 1.2.0-beta</string>
+    <string name="app_version">版本 %1$s</string>
     <string name="app_description">Rotating art Launcher - 游戏启动器</string>
     <string name="app_authors">作者:</string>
     <string name="restart_required">需要重启</string>
@@ -1695,6 +1695,7 @@
     <string name="announcement_empty">暂无公告</string>
     <string name="announcement_no_content">暂无内容</string>
     <string name="main_announcement_dialog_title">发现新公告</string>
+    <string name="main_announcement_dialog_action_learn_more">了解</string>
     <string name="main_announcement_dialog_action_view">查看公告</string>
     <string name="init_runtime_components_title">运行环境组件</string>
     <string name="init_runtime_components_subtitle">安装游戏所需的运行时组件</string>
@@ -1984,7 +1985,7 @@
     <string name="crash_error_message_label">错误信息</string>
     <string name="crash_exit_code_label">退出代码</string>
     <string name="crash_native_error_label">C层错误</string>
-    <string name="main_splash_brand">RALaunch</string>
+    <string name="main_splash_brand">Rotating Art Launcher</string>
     <string name="settings_fps_30">30 FPS</string>
     <string name="settings_fps_45">45 FPS</string>
     <string name="settings_fps_60">60 FPS</string>

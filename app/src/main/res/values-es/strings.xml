@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Rotating art Launcher</string>
+    <string name="app_name">Rotating Art Launcher</string>
 
     <!-- Pantalla Principal -->
     <string name="main_no_game_selected">No hay juego seleccionado</string>
@@ -88,7 +88,7 @@
     <string name="language_spanish">Español</string>
     <string name="language_changed">Idioma cambiado a %s</string>
     <string name="app_info">Información de la aplicación</string>
-    <string name="app_version">Versión 1.2.0-beta</string>
+    <string name="app_version">Versión %1$s</string>
     <string name="app_description">Rotating art Launcher - Lanzador de juegos</string>
     <string name="app_authors">Autores:</string>
     <string name="restart_required">Reinicio requerido</string>
@@ -1351,7 +1351,7 @@
     <string name="about_developer">Desarrollador</string>
     <string name="about_github">GitHub</string>
 
-    <string name="main_splash_brand">RALaunch</string>
+    <string name="main_splash_brand">Rotating Art Launcher</string>
     <string name="settings_select_category_prompt">Selecciona una categoría de configuración</string>
     <string name="settings_category_appearance_desc">Tema, fondo, idioma</string>
     <string name="settings_category_controls_desc">Configuración táctil y del controlador</string>

@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Rotating art Launcher</string>
+    <string name="app_name">Rotating Art Launcher</string>
 
     <!-- Main Screen -->
     <string name="main_no_game_selected">No Game Selected</string>
@@ -11,7 +11,7 @@
     <string name="main_control_layout">Control Layout</string>
     <string name="main_game_list_mode">Game List Mode</string>
     <string name="main_refresh_complete">Game list refreshed</string>
-    <string name="main_splash_brand">RALaunch</string>
+    <string name="main_splash_brand">Rotating Art Launcher</string>
 
     <!-- Game Info -->
     <string name="game_name">Game Name</string>
@@ -89,7 +89,7 @@
     <string name="language_spanish">Español</string>
     <string name="language_changed">Language changed to %s</string>
     <string name="app_info">App Information</string>
-    <string name="app_version">Version 1.2.0-beta</string>
+    <string name="app_version">Version %1$s</string>
     <string name="app_description">Rotating art Launcher - Game Launcher</string>
     <string name="app_authors">Authors:</string>
     <string name="restart_required">Restart Required</string>
@@ -1876,6 +1876,7 @@
     <string name="announcement_empty">No announcements</string>
     <string name="announcement_no_content">No content</string>
     <string name="main_announcement_dialog_title">New announcement</string>
+    <string name="main_announcement_dialog_action_learn_more">Learn more</string>
     <string name="main_announcement_dialog_action_view">View announcement</string>
 
     <string name="init_runtime_components_title">Runtime Components</string>

@@ -19,6 +19,8 @@ import androidx.activity.enableEdgeToEdge
 import androidx.core.content.FileProvider
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -31,12 +33,15 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.compose.runtime.collectAsState
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.ViewModelProvider
@@ -224,6 +229,9 @@ class MainActivityCompose : BaseActivity() {
                         onDismissImportError = { mainViewModel.clearImportError() },
                         onImportCompletionHandled = { mainViewModel.resetImportCompletedFlag() },
                         onAnnouncementsOpened = { mainViewModel.onEvent(MainUiEvent.AnnouncementTabOpened) },
+                        onForceAnnouncementLearnMore = {
+                            mainViewModel.onEvent(MainUiEvent.AnnouncementPopupConfirmed)
+                        },
                         onForceAnnouncementConfirm = {
                             navState.navigateToAnnouncements()
                             mainViewModel.onEvent(MainUiEvent.AnnouncementPopupConfirmed)
@@ -640,6 +648,7 @@ private fun MainActivityContent(
     onDismissImportError: () -> Unit = {},
     onImportCompletionHandled: () -> Unit = {},
     onAnnouncementsOpened: () -> Unit = {},
+    onForceAnnouncementLearnMore: () -> Unit = {},
     onForceAnnouncementConfirm: () -> Unit = {},
     permissionManager: PermissionManager? = null
 ) {
@@ -927,6 +936,7 @@ private fun MainActivityContent(
             forceAnnouncement?.let { announcement ->
                 ForceAnnouncementComposeDialog(
                     announcement = announcement,
+                    onLearnMore = onForceAnnouncementLearnMore,
                     onConfirm = onForceAnnouncementConfirm
                 )
             }
@@ -1107,67 +1117,113 @@ private fun AppUpdateComposeDialog(
 @Composable
 private fun ForceAnnouncementComposeDialog(
     announcement: ForceAnnouncementUiModel,
+    onLearnMore: () -> Unit,
     onConfirm: () -> Unit
 ) {
-    val previewMarkdown = remember(announcement.markdown) {
+    val markdownContent = remember(announcement.markdown) {
         announcement.markdown
             ?.trim()
             ?.takeIf { it.isNotBlank() }
-            ?.let { markdown ->
-                if (markdown.length <= 480) markdown else markdown.take(480) + "..."
-            }
     }
+    val markdownScrollState = rememberScrollState()
 
-    AlertDialog(
+    Dialog(
         onDismissRequest = {},
-        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-        shape = RoundedCornerShape(24.dp),
-        title = {
-            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text(
-                    text = stringResource(R.string.main_announcement_dialog_title),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.primary
-                )
-                Text(
-                    text = announcement.title,
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.SemiBold
-                )
-                Text(
-                    text = announcement.publishedAt,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                if (announcement.tags.isNotEmpty()) {
+        properties = DialogProperties(
+            usePlatformDefaultWidth = false,
+            dismissOnBackPress = false,
+            dismissOnClickOutside = false
+        )
+    ) {
+        BoxWithConstraints(
+            modifier = Modifier.fillMaxSize()
+        ) {
+            val compactHeight = maxHeight < 520.dp
+            val widthFraction = if (maxWidth >= 1000.dp) 0.78f else 0.92f
+            val heightFraction = if (compactHeight) 0.94f else 0.88f
+            val contentPadding = if (compactHeight) 16.dp else 24.dp
+            val contentSpacing = if (compactHeight) 8.dp else 10.dp
+            Surface(
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .fillMaxWidth(widthFraction)
+                    .fillMaxHeight(heightFraction),
+                color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                shape = RoundedCornerShape(24.dp)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(contentPadding),
+                    verticalArrangement = Arrangement.spacedBy(contentSpacing)
+                ) {
                     Text(
-                        text = announcement.tags.joinToString("  ·  "),
-                        style = MaterialTheme.typography.labelMedium,
+                        text = stringResource(R.string.main_announcement_dialog_title),
+                        style = MaterialTheme.typography.labelLarge,
                         color = MaterialTheme.colorScheme.primary
                     )
-                }
-                if (!previewMarkdown.isNullOrBlank()) {
-                    MarkdownText(markdown = previewMarkdown)
-                } else {
                     Text(
-                        text = stringResource(R.string.announcement_no_content),
-                        style = MaterialTheme.typography.bodyMedium,
+                        text = announcement.title,
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = if (compactHeight) 2 else 3,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Text(
+                        text = announcement.publishedAt,
+                        style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
+
+                    if (announcement.tags.isNotEmpty()) {
+                        Text(
+                            text = announcement.tags.joinToString("  ·  "),
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f),
+                        color = MaterialTheme.colorScheme.surfaceContainer,
+                        shape = RoundedCornerShape(16.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .verticalScroll(markdownScrollState)
+                                .padding(14.dp)
+                        ) {
+                            if (!markdownContent.isNullOrBlank()) {
+                                MarkdownText(markdown = markdownContent)
+                            } else {
+                                Text(
+                                    text = stringResource(R.string.announcement_no_content),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.End
+                    ) {
+                        TextButton(onClick = onLearnMore) {
+                            Text(stringResource(R.string.main_announcement_dialog_action_learn_more))
+                        }
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Button(onClick = onConfirm) {
+                            Text(stringResource(R.string.main_announcement_dialog_action_view))
+                        }
+                    }
                 }
             }
-        },
-        confirmButton = {
-            Button(onClick = onConfirm) {
-                Text(stringResource(R.string.main_announcement_dialog_action_view))
-            }
-        },
-        dismissButton = null
-    )
+        }
+    }
 }
 
 @Composable

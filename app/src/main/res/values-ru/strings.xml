@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Rotating art Launcher</string>
+    <string name="app_name">Rotating Art Launcher</string>
 
     <!-- Main Screen -->
     <string name="main_no_game_selected">Игра не выбрана</string>
@@ -88,7 +88,7 @@
     <string name="language_spanish">Español</string>
     <string name="language_changed">Язык изменен на %s</string>
     <string name="app_info">Информация о приложении</string>
-    <string name="app_version">Версия 1.2.0-beta</string>
+    <string name="app_version">Версия %1$s</string>
     <string name="app_description">Rotating art Launcher - Запускатель игр</string>
     <string name="app_authors">Авторы:</string>
     <string name="restart_required">Требуется перезапуск</string>
@@ -1353,7 +1353,7 @@
     <string name="about_project_author">Автор проекта</string>
     <string name="about_developer">Разработчик</string>
     <string name="about_github">GitHub</string>
-    <string name="main_splash_brand">RAЗапуск</string>
+    <string name="main_splash_brand">Rotating Art Launcher</string>
     <string name="settings_select_category_prompt">Выберите категорию настроек</string>
     <string name="settings_category_appearance_desc">Тема, фон, язык</string>
     <string name="settings_category_controls_desc">Настройки сенсорного экрана и контроллера</string>
