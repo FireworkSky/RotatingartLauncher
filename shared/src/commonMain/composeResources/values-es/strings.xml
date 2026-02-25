@@ -74,7 +74,7 @@
     <string name="filebrowser_select_prompt">Selecciona un archivo</string>
     <string name="filebrowser_unknown_time">Desconocido</string>
     <string name="multiplayer_settings">Configuración multijugador</string>
-    <string name="renderer_mobileglues">MobileGlues 1.3.3</string>
+    <string name="renderer_mobileglues">MobileGlues 1.3.4</string>
     <string name="renderer_mobileglues_desc">OpenGL 4.6 traducido a OpenGL ES 3.2 (capa de traducción moderna)</string>
     <string name="renderer_select">Seleccionar renderizador</string>
     <string name="renderer_zink">Zink (Mesa Vulkan)</string>

@@ -1989,7 +1989,7 @@
     <string name="settings_fps_30">30 FPS</string>
     <string name="settings_fps_45">45 FPS</string>
     <string name="settings_fps_60">60 FPS</string>
-    <string name="renderer_mobileglues">MobileGlues 1.3.3</string>
+    <string name="renderer_mobileglues">MobileGlues 1.3.4</string>
     <string name="renderer_mobileglues_desc">OpenGL 4.6 翻译到 OpenGL ES 3.2（现代翻译层）</string>
     <string name="renderer_zink">Zink (Mesa Vulkan)</string>
     <string name="renderer_zink_desc">基于 Vulkan 的桌面 OpenGL（Mesa Zink + Turnip）</string>

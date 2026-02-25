@@ -219,7 +219,7 @@
     <string name="renderer_gl4es_angle_desc">Translates to Vulkan backend, best balance of compatibility and performance (Recommended)</string>
     <string name="renderer_angle">ANGLE (Vulkan)</string>
     <string name="renderer_angle_desc">OpenGL ES over Vulkan (Google official, requires Android 7.0+)</string>
-    <string name="renderer_mobileglues">MobileGlues 1.3.3</string>
+    <string name="renderer_mobileglues">MobileGlues 1.3.4</string>
     <string name="renderer_mobileglues_desc">OpenGL 4.6 translated to OpenGL ES 3.2 (modern translation layer)</string>
     <string name="renderer_zink">Zink (Mesa Vulkan)</string>
     <string name="renderer_zink_desc">Desktop OpenGL over Vulkan (Mesa Zink + Turnip)</string>

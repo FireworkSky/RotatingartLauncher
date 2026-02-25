@@ -169,7 +169,7 @@
     <string name="select_file">选择文件</string>
     <string name="about_build_label">构建号</string>
     <string name="control_layout_created">新布局已创建</string>
-    <string name="renderer_mobileglues">MobileGlues 1.3.3</string>
+    <string name="renderer_mobileglues">MobileGlues 1.3.4</string>
     <string name="renderer_mobileglues_desc">OpenGL 4.6 翻译至 OpenGL ES 3.2（现代化翻译层）</string>
     <string name="renderer_zink">Zink (Mesa Vulkan)</string>
     <string name="renderer_zink_desc">桌面 OpenGL over Vulkan（Mesa Zink + Turnip）</string>

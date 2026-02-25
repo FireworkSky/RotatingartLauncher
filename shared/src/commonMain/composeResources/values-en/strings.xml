@@ -59,7 +59,7 @@
     <string name="renderer_gl4es_angle">GL4ES + ANGLE</string>
     <string name="renderer_gl4es_angle_desc">Translates to Vulkan backend, best balance of compatibility and performance (Recommended)</string>
     <string name="renderer_gl4es_desc">OpenGL translation layer, strong compatibility. Minor performance overhead from translation</string>
-    <string name="renderer_mobileglues">MobileGlues 1.3.3</string>
+    <string name="renderer_mobileglues">MobileGlues 1.3.4</string>
     <string name="renderer_mobileglues_desc">OpenGL 4.6 translated to OpenGL ES 3.2 (modern translation layer)</string>
     <string name="renderer_native">Native OpenGL ES 3</string>
     <string name="renderer_native_desc">Native hardware acceleration, best performance. Limited features, some games may have compatibility issues</string>

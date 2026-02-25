@@ -59,7 +59,7 @@
     <string name="renderer_gl4es_angle">GL4ES + ANGLE</string>
     <string name="renderer_gl4es_angle_desc">Перевод на Vulkan бэкенд, лучший баланс совместимости и производительности (рекомендуется)</string>
     <string name="renderer_gl4es_desc">Слой перевода OpenGL, сильная совместимость. Перевод имеет небольшие накладные расходы на производительность</string>
-    <string name="renderer_mobileglues">MobileGlues 1.3.3</string>
+    <string name="renderer_mobileglues">MobileGlues 1.3.4</string>
     <string name="renderer_mobileglues_desc">OpenGL 4.6 переведен в OpenGL ES 3.2 (современный слой трансляции)</string>
     <string name="renderer_native">Native OpenGL ES 3</string>
     <string name="renderer_native_desc">Нативная аппаратная акселерация, лучшая производительность. Но функциональность ограничена, некоторые игры могут иметь проблемы совместимости</string>

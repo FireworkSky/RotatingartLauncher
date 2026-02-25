@@ -1388,7 +1388,7 @@
     <string name="settings_game_shader_low_precision_subtitle">Уменьшите точность шейдеров, чтобы повысить производительность.</string>
     <string name="settings_game_fps_limit_title">Лимит ФПС</string>
     <string name="settings_game_fps_limit_subtitle">Ограничьте максимальный игровой FPS для экономии энергии.</string>
-    <string name="renderer_mobileglues">Мобильный клей 1.3.3</string>
+    <string name="renderer_mobileglues">Мобильный клей 1.3.4</string>
     <string name="renderer_mobileglues_desc">OpenGL 4.6 переведен в OpenGL ES 3.2 (современный уровень перевода)</string>
     <string name="renderer_zink">Цинк (Меса Вулкан)</string>
     <string name="renderer_zink_desc">Рабочий стол OpenGL поверх Vulkan (Mesa Zink + Turnip)</string>
