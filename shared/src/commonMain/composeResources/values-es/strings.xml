@@ -143,6 +143,8 @@
     <string name="settings_developer_server_gc_title">Servidor GC</string>
     <string name="settings_developer_tiered_compilation_subtitle">Habilitar optimización de compilación por niveles</string>
     <string name="settings_developer_tiered_compilation_title">Compilación por niveles</string>
+    <string name="settings_developer_coreclr_compat_title">Compatibilidad CoreCLR (Xiaomi)</string>
+    <string name="settings_developer_coreclr_compat_subtitle">Reintentar tModLoader con hooks de compatibilidad cuando falle la inicialización de CoreCLR en algunos dispositivos Xiaomi</string>
     <string name="settings_developer_verbose_logging_subtitle">Mostrar más información de depuración</string>
     <string name="settings_developer_verbose_logging_title">Registro detallado</string>
     <string name="settings_developer_view_logs_subtitle">Ver registros recientes de ejecución</string>

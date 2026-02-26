@@ -15,7 +15,7 @@ set(MAIN_SOURCES
         And64InlineHook/And64InlineHook.cpp
         shared_envvars.cpp
         dotnet/dotnet_launcher.cpp
-        dotnet/corehost_trace_redirect.cpp
+        dotnet/corehost_hooks.cpp
         utils/native_methods.cpp
         core/game_launcher.cpp
 )

@@ -7,6 +7,15 @@ object EnvVarsManager {
     const val TAG = "EnvVarsManager"
     private val INTERPOLATION_PATTERN = Regex("\\{([A-Za-z0-9_\\-]+)\\}")
 
+    fun getEnvVar(key: String): String? {
+        return try {
+            Os.getenv(key)
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to get env var $key: ${e.message}")
+            null
+        }
+    }
+
     fun quickSetEnvVars(vararg envVars: Pair<String, String?>) = quickSetEnvVars(envVars.toMap())
 
     fun quickSetEnvVars(envVars: Map<String, String?>) {

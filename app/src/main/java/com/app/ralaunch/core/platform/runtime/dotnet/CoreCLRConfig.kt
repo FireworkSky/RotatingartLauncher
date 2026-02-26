@@ -55,7 +55,7 @@ object CoreCLRConfig {
         )
 
         if (settings.isVerboseLogging) {
-            CoreHostTrace.initCoreHostTraceRedirect()
+            CoreHostHooks.initTraceHooks()
         }
     }
 

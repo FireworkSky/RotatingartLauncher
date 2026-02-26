@@ -188,6 +188,10 @@ object SettingsAccess {
         get() = settings.tieredCompilation
         set(value) = update { tieredCompilation = value }
 
+    var isCoreClrXiaomiCompatEnabled: Boolean
+        get() = settings.coreClrXiaomiCompatEnabled
+        set(value) = update { coreClrXiaomiCompatEnabled = value }
+
     val isQuickJIT: Boolean
         get() = settings.quickJIT
 

@@ -29,6 +29,7 @@ data class DeveloperState(
     val serverGCEnabled: Boolean = true,
     val concurrentGCEnabled: Boolean = true,
     val tieredCompilationEnabled: Boolean = true,
+    val coreClrXiaomiCompatEnabled: Boolean = true,
     
     // FNA 优化
     val fnaMapBufferRangeOptEnabled: Boolean = false,
@@ -55,6 +56,7 @@ fun DeveloperSettingsContent(
     onServerGCChange: (Boolean) -> Unit,
     onConcurrentGCChange: (Boolean) -> Unit,
     onTieredCompilationChange: (Boolean) -> Unit,
+    onCoreClrXiaomiCompatChange: (Boolean) -> Unit,
     // FNA 回调
     onFnaMapBufferRangeOptChange: (Boolean) -> Unit,
     onFnaGlPerfDiagnosticsChange: (Boolean) -> Unit,
@@ -94,9 +96,11 @@ fun DeveloperSettingsContent(
             serverGCEnabled = state.serverGCEnabled,
             concurrentGCEnabled = state.concurrentGCEnabled,
             tieredCompilationEnabled = state.tieredCompilationEnabled,
+            coreClrXiaomiCompatEnabled = state.coreClrXiaomiCompatEnabled,
             onServerGCChange = onServerGCChange,
             onConcurrentGCChange = onConcurrentGCChange,
-            onTieredCompilationChange = onTieredCompilationChange
+            onTieredCompilationChange = onTieredCompilationChange,
+            onCoreClrXiaomiCompatChange = onCoreClrXiaomiCompatChange
         )
 
         // FNA 优化设置
@@ -208,9 +212,11 @@ private fun DotNetRuntimeSection(
     serverGCEnabled: Boolean,
     concurrentGCEnabled: Boolean,
     tieredCompilationEnabled: Boolean,
+    coreClrXiaomiCompatEnabled: Boolean,
     onServerGCChange: (Boolean) -> Unit,
     onConcurrentGCChange: (Boolean) -> Unit,
-    onTieredCompilationChange: (Boolean) -> Unit
+    onTieredCompilationChange: (Boolean) -> Unit,
+    onCoreClrXiaomiCompatChange: (Boolean) -> Unit
 ) {
     SettingsSection(title = stringResource(Res.string.settings_developer_dotnet_section)) {
         SwitchSettingItem(
@@ -239,6 +245,16 @@ private fun DotNetRuntimeSection(
             icon = Icons.Default.Layers,
             checked = tieredCompilationEnabled,
             onCheckedChange = onTieredCompilationChange
+        )
+
+        SettingsDivider()
+
+        SwitchSettingItem(
+            title = stringResource(Res.string.settings_developer_coreclr_compat_title),
+            subtitle = stringResource(Res.string.settings_developer_coreclr_compat_subtitle),
+            icon = Icons.Default.Security,
+            checked = coreClrXiaomiCompatEnabled,
+            onCheckedChange = onCoreClrXiaomiCompatChange
         )
     }
 }

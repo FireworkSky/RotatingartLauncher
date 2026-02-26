@@ -1,11 +1,23 @@
 package com.app.ralaunch.core.platform.runtime.dotnet
 
+import android.os.Build
+import com.app.ralaunch.core.common.SettingsAccess
 import com.app.ralaunch.core.platform.runtime.EnvVarsManager
 import com.app.ralaunch.core.common.util.AppLogger
 import com.app.ralaunch.core.common.util.RuntimePreference
+import java.util.Locale
 
 object DotNetLauncher {
     const val TAG = "DotNetLauncher"
+    private const val CORECLR_INIT_FAILURE_EXIT_CODE = -2147450743
+    private val XIAOMI_COMPAT_ENV_KEYS = arrayOf(
+        "RAL_CORECLR_XIAOMI_COMPAT",
+        "DOTNET_EnableDiagnostics",
+        "DOTNET_gcConcurrent",
+        "DOTNET_TieredCompilation",
+        "DOTNET_TC_QuickJit",
+        "DOTNET_Thread_DefaultStackSize",
+    )
 
     val hostfxrLastErrorMsg: String
         get() = getNativeDotNetLauncherHostfxrLastErrorMsg()
@@ -31,17 +43,92 @@ object DotNetLauncher {
 
         EnvVarsManager.quickSetEnvVar("DOTNET_ROOT", dotnetRoot)
         CoreCLRConfig.applyConfigAndInitHooking()
+        val compatEnabled = SettingsAccess.isCoreClrXiaomiCompatEnabled
+        if (compatEnabled) {
+            CoreHostHooks.initCompatHooks()
+        }
         DotNetNativeLibraryLoader.loadAllLibraries(dotnetRoot)
 
-        val exitCode = nativeDotNetLauncherHostfxrLaunch(assemblyPath, args, dotnetRoot)
-        if (exitCode != 0) {
-            val errorMsg = getNativeDotNetLauncherHostfxrLastErrorMsg()
-            AppLogger.error(TAG, "Failed to launch .NET assembly. Exit code: $exitCode, Error: $errorMsg")
-        } else {
+        var exitCode = nativeDotNetLauncherHostfxrLaunch(assemblyPath, args, dotnetRoot)
+        if (exitCode == 0) {
             AppLogger.info(TAG, "Successfully launched .NET assembly.")
+            return exitCode
+        }
+
+        var errorMsg = getNativeDotNetLauncherHostfxrLastErrorMsg()
+        AppLogger.error(TAG, "Failed to launch .NET assembly. Exit code: $exitCode, Error: $errorMsg")
+
+        if (shouldRetryWithXiaomiCompat(assemblyPath, exitCode, errorMsg, compatEnabled)) {
+            AppLogger.warn(TAG, "Detected Xiaomi CoreCLR init failure on tModLoader, retrying with compat hooks and conservative runtime env")
+            val compatEnvSnapshot = captureXiaomiCoreClrCompatEnv()
+            applyXiaomiCoreClrCompatEnv()
+
+            try {
+                exitCode = nativeDotNetLauncherHostfxrLaunch(assemblyPath, args, dotnetRoot)
+                if (exitCode == 0) {
+                    AppLogger.info(TAG, "Compatibility retry succeeded.")
+                    return exitCode
+                }
+
+                errorMsg = getNativeDotNetLauncherHostfxrLastErrorMsg()
+                AppLogger.error(TAG, "Compatibility retry failed. Exit code: $exitCode, Error: $errorMsg")
+            } finally {
+                restoreXiaomiCoreClrCompatEnv(compatEnvSnapshot)
+            }
         }
 
         return exitCode
+    }
+
+    private fun shouldRetryWithXiaomiCompat(
+        assemblyPath: String,
+        exitCode: Int,
+        errorMsg: String,
+        compatEnabled: Boolean
+    ): Boolean {
+        if (!compatEnabled) return false
+        if (!isTModLoaderAssembly(assemblyPath)) return false
+        if (!isXiaomiFamilyDevice()) return false
+        if (exitCode != CORECLR_INIT_FAILURE_EXIT_CODE) return false
+
+        val normalizedError = errorMsg.lowercase(Locale.ROOT)
+        return normalizedError.contains("coreclr_initialize failed") ||
+            normalizedError.contains("failed to create coreclr") ||
+            normalizedError.contains("0x8007054f")
+    }
+
+    private fun isTModLoaderAssembly(assemblyPath: String): Boolean {
+        return assemblyPath.lowercase(Locale.ROOT).contains("tmodloader")
+    }
+
+    private fun isXiaomiFamilyDevice(): Boolean {
+        val manufacturer = Build.MANUFACTURER.orEmpty().lowercase(Locale.ROOT)
+        val brand = Build.BRAND.orEmpty().lowercase(Locale.ROOT)
+        return manufacturer.contains("xiaomi") ||
+            brand.contains("xiaomi") ||
+            brand.contains("redmi") ||
+            brand.contains("poco")
+    }
+
+    private fun applyXiaomiCoreClrCompatEnv() {
+        EnvVarsManager.quickSetEnvVars(
+            "RAL_CORECLR_XIAOMI_COMPAT" to "1",
+
+            // Keep diagnostics simple and reduce runtime init variance on affected devices.
+            "DOTNET_EnableDiagnostics" to "0",
+            "DOTNET_gcConcurrent" to "0",
+            "DOTNET_TieredCompilation" to "0",
+            "DOTNET_TC_QuickJit" to "0",
+            "DOTNET_Thread_DefaultStackSize" to "1048576",
+        )
+    }
+
+    private fun captureXiaomiCoreClrCompatEnv(): Map<String, String?> {
+        return XIAOMI_COMPAT_ENV_KEYS.associateWith { EnvVarsManager.getEnvVar(it) }
+    }
+
+    private fun restoreXiaomiCoreClrCompatEnv(snapshot: Map<String, String?>) {
+        EnvVarsManager.quickSetEnvVars(snapshot)
     }
 
     private external fun getNativeDotNetLauncherHostfxrLastErrorMsg(): String

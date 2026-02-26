@@ -131,6 +131,8 @@
     <string name="settings_developer_server_gc_title">Server GC</string>
     <string name="settings_developer_tiered_compilation_subtitle">启用分层编译优化</string>
     <string name="settings_developer_tiered_compilation_title">Tiered Compilation</string>
+    <string name="settings_developer_coreclr_compat_title">CoreCLR 小米兼容模式</string>
+    <string name="settings_developer_coreclr_compat_subtitle">在部分小米设备上 CoreCLR 初始化失败时，对 tModLoader 自动使用兼容 hooks 重试</string>
     <string name="settings_developer_verbose_logging_subtitle">输出更多调试信息</string>
     <string name="settings_developer_verbose_logging_title">详细日志</string>
     <string name="settings_developer_view_logs_subtitle">查看最近的运行日志</string>

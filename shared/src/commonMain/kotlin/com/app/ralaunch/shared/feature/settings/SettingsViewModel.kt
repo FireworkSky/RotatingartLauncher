@@ -55,6 +55,7 @@ data class SettingsUiState(
     val serverGCEnabled: Boolean = true,
     val concurrentGCEnabled: Boolean = true,
     val tieredCompilationEnabled: Boolean = true,
+    val coreClrXiaomiCompatEnabled: Boolean = true,
     val fnaMapBufferRangeOptEnabled: Boolean = false,
     val fnaGlPerfDiagnosticsEnabled: Boolean = false,
 
@@ -105,6 +106,7 @@ sealed class SettingsEvent {
     data class SetServerGC(val enabled: Boolean) : SettingsEvent()
     data class SetConcurrentGC(val enabled: Boolean) : SettingsEvent()
     data class SetTieredCompilation(val enabled: Boolean) : SettingsEvent()
+    data class SetCoreClrXiaomiCompat(val enabled: Boolean) : SettingsEvent()
     data class SetFnaMapBufferRangeOpt(val enabled: Boolean) : SettingsEvent()
     data class SetFnaGlPerfDiagnostics(val enabled: Boolean) : SettingsEvent()
     data object ForceReinstallPatches : SettingsEvent()
@@ -213,6 +215,7 @@ class SettingsViewModel(
             is SettingsEvent.SetServerGC -> setServerGC(event.enabled)
             is SettingsEvent.SetConcurrentGC -> setConcurrentGC(event.enabled)
             is SettingsEvent.SetTieredCompilation -> setTieredCompilation(event.enabled)
+            is SettingsEvent.SetCoreClrXiaomiCompat -> setCoreClrXiaomiCompat(event.enabled)
             is SettingsEvent.SetFnaMapBufferRangeOpt -> setFnaMapBufferRangeOpt(event.enabled)
             is SettingsEvent.SetFnaGlPerfDiagnostics -> setFnaGlPerfDiagnostics(event.enabled)
             is SettingsEvent.ViewLogs -> sendEffect(SettingsEffect.ViewLogsPage)
@@ -265,6 +268,7 @@ class SettingsViewModel(
                     serverGCEnabled = settings.serverGC,
                     concurrentGCEnabled = settings.concurrentGC,
                     tieredCompilationEnabled = settings.tieredCompilation,
+                    coreClrXiaomiCompatEnabled = settings.coreClrXiaomiCompatEnabled,
                     fnaMapBufferRangeOptEnabled = settings.fnaMapBufferRangeOptimization,
                     fnaGlPerfDiagnosticsEnabled = settings.fnaGlPerfDiagnosticsEnabled,
                     // 关于
@@ -505,6 +509,13 @@ class SettingsViewModel(
             settingsRepository.update { tieredCompilation = enabled }
             _uiState.update { it.copy(tieredCompilationEnabled = enabled) }
             sendEffect(SettingsEffect.ShowToast(getString(Res.string.settings_restart_required_toast)))
+        }
+    }
+
+    private fun setCoreClrXiaomiCompat(enabled: Boolean) {
+        viewModelScope.launch {
+            settingsRepository.update { coreClrXiaomiCompatEnabled = enabled }
+            _uiState.update { it.copy(coreClrXiaomiCompatEnabled = enabled) }
         }
     }
 

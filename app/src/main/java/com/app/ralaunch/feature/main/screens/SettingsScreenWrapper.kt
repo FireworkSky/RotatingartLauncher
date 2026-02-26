@@ -267,6 +267,7 @@ fun SettingsScreenWrapper(
                         serverGCEnabled = uiState.serverGCEnabled,
                         concurrentGCEnabled = uiState.concurrentGCEnabled,
                         tieredCompilationEnabled = uiState.tieredCompilationEnabled,
+                        coreClrXiaomiCompatEnabled = uiState.coreClrXiaomiCompatEnabled,
                         fnaMapBufferRangeOptEnabled = uiState.fnaMapBufferRangeOptEnabled,
                         fnaGlPerfDiagnosticsEnabled = uiState.fnaGlPerfDiagnosticsEnabled
                     ),
@@ -281,6 +282,7 @@ fun SettingsScreenWrapper(
                     onServerGCChange = { viewModel.onEvent(SettingsEvent.SetServerGC(it)) },
                     onConcurrentGCChange = { viewModel.onEvent(SettingsEvent.SetConcurrentGC(it)) },
                     onTieredCompilationChange = { viewModel.onEvent(SettingsEvent.SetTieredCompilation(it)) },
+                    onCoreClrXiaomiCompatChange = { viewModel.onEvent(SettingsEvent.SetCoreClrXiaomiCompat(it)) },
                     onFnaMapBufferRangeOptChange = { viewModel.onEvent(SettingsEvent.SetFnaMapBufferRangeOpt(it)) },
                     onFnaGlPerfDiagnosticsChange = { viewModel.onEvent(SettingsEvent.SetFnaGlPerfDiagnostics(it)) },
                     onForceReinstallPatchesClick = { viewModel.onEvent(SettingsEvent.ForceReinstallPatches) }

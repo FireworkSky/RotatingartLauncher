@@ -136,6 +136,8 @@
     <string name="settings_developer_server_gc_title">Server GC</string>
     <string name="settings_developer_tiered_compilation_subtitle">Включить оптимизацию многоуровневой компиляции</string>
     <string name="settings_developer_tiered_compilation_title">Многоуровневая компиляция</string>
+    <string name="settings_developer_coreclr_compat_title">Совместимость CoreCLR (Xiaomi)</string>
+    <string name="settings_developer_coreclr_compat_subtitle">Повторять запуск tModLoader с hooks совместимости при сбое инициализации CoreCLR на некоторых устройствах Xiaomi</string>
     <string name="settings_developer_verbose_logging_subtitle">Выводить больше отладочной информации</string>
     <string name="settings_developer_verbose_logging_title">Подробное логирование</string>
     <string name="settings_developer_view_logs_subtitle">Просмотр последних логов работы</string>

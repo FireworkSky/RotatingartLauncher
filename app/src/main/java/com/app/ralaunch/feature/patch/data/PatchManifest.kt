@@ -83,18 +83,18 @@ data class PatchManifest(
 
         @JvmStatic
         fun fromZip(pathToZip: Path): PatchManifest? {
-            Log.i(TAG, "加载 Patch 压缩包, pathToZip: $pathToZip")
+
             return fromZip(pathToZip.toFile())
         }
 
         @JvmStatic
         fun fromZip(file: File): PatchManifest? {
-            Log.i(TAG, "加载 Patch 压缩包, file: ${file.absolutePath}")
+            Log.i(TAG, "load Patch zip, file: ${file.absolutePath}")
             return try {
                 ZipFile(file).use { zip ->
                     val manifestEntry = zip.getEntry(MANIFEST_FILE_NAME)
                     if (manifestEntry == null) {
-                        Log.w(TAG, "未在压缩包中找到 $MANIFEST_FILE_NAME")
+                        Log.w(TAG, "Not found in the compressed file $MANIFEST_FILE_NAME")
                         return null
                     }
                     zip.getInputStream(manifestEntry).use { stream ->
@@ -130,7 +130,7 @@ data class PatchManifest(
 
         @JvmStatic
         fun fromJson(pathToJson: Path): PatchManifest? {
-            Log.i(TAG, "加载 $MANIFEST_FILE_NAME, pathToJson: $pathToJson")
+            Log.i(TAG, "load $MANIFEST_FILE_NAME, pathToJson: $pathToJson")
 
             if (!Files.exists(pathToJson) || !Files.isRegularFile(pathToJson)) {
                 Log.w(TAG, "路径不存在 $MANIFEST_FILE_NAME 文件")

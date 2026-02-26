@@ -138,6 +138,8 @@
     <string name="settings_developer_server_gc_title">Server GC</string>
     <string name="settings_developer_tiered_compilation_subtitle">Enable tiered compilation optimization</string>
     <string name="settings_developer_tiered_compilation_title">Tiered Compilation</string>
+    <string name="settings_developer_coreclr_compat_title">CoreCLR Xiaomi Compatibility</string>
+    <string name="settings_developer_coreclr_compat_subtitle">Retry tModLoader with compatibility hooks when CoreCLR initialization fails on some Xiaomi devices</string>
     <string name="settings_developer_verbose_logging_subtitle">Output more debug information</string>
     <string name="settings_developer_verbose_logging_title">Verbose Logging</string>
     <string name="settings_developer_view_logs_subtitle">View recent runtime logs</string>
