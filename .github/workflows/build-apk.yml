@@ -1,213 +1,75 @@
-# Rotating Art Launcher (RAL) 全自动APK构建工作流 - 精确匹配build.gradle版
-name: RAL Full Auto Build APK
+# Rotating Art Launcher (RAL) 全自动APK构建工作流
+name: Build RAL APK
 
 on:
   push:
     branches: [ main, master ]
-    paths-ignore:
-      - '**.md'
-      - '**.txt'
-      - 'LICENSE'
-      - 'icons/**'
-      - 'docs/**'
-  pull_request:
-    branches: [ main, master ]
   workflow_dispatch:
-    inputs:
-      build_type:
-        description: '构建类型 (debug/release/all)'
-        required: true
-        default: 'debug'
-        type: choice
-        options:
-          - debug
-          - release
-          - all
 
-# 关键修复：环境变量与 app/build.gradle 完全匹配
 env:
-  # 修复：compileSdk 36（不是28）
   ANDROID_COMPILE_SDK: "36"
-  # 修复：使用与compileSdk 36匹配的最新build-tools
   ANDROID_BUILD_TOOLS: "36.0.0"
-  # 匹配 build.gradle 中的 ndkVersion "28.0.13004108"
   ANDROID_NDK_VERSION: "28.0.13004108"
-  # 匹配 build.gradle 中的 cmake version '3.22.1'
   ANDROID_CMAKE_VERSION: "3.22.1"
-  GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.jvmargs=-Xmx6g -XX:MaxMetaspaceSize=512m"
 
 jobs:
-  build-apk:
+  build:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     permissions:
       contents: read
-      actions: write
+      actions: write  # 上传Artifacts所需权限
 
     steps:
-      # 1. 拉取代码（含子模块）
-      - name: Checkout Repository
+      - name: Checkout Code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
           submodules: recursive
 
-      # 2. 校验项目结构
-      - name: Validate Project Structure
-        run: |
-          echo "🔍 校验RAL项目核心文件..."
-          if [ ! -f "./gradlew" ]; then
-            echo "❌ 错误：未找到gradlew文件" && exit 1
-          fi
-          if [ ! -f "./app/build.gradle" ]; then
-            echo "❌ 错误：未找到app/build.gradle" && exit 1
-          fi
-          echo "✅ 项目结构校验通过"
-          echo "📋 构建配置："
-          echo "   - Compile SDK: ${ANDROID_COMPILE_SDK} (对应build.gradle中的compileSdk ${ANDROID_COMPILE_SDK})"
-          echo "   - NDK Version: ${ANDROID_NDK_VERSION}"
-          echo "   - Java Version: 21"
-
-      # 3. 配置JDK 21（匹配build.gradle中的JavaVersion.VERSION_21）
-      - name: Set Up JDK 21
+      - name: Setup JDK 21
         uses: actions/setup-java@v4
         with:
           java-version: '21'
           distribution: 'temurin'
           cache: 'gradle'
 
-      # 4. 设置Android环境
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
         with:
           cmdline-tools-version: "latest"
 
-      # 5. 安装SDK组件（精确匹配build.gradle）
-      - name: Install SDK Components
+      - name: Install SDK & NDK
         run: |
-          echo "📦 安装Android SDK组件..."
-          echo "   目标配置："
-          echo "   - compileSdk: ${ANDROID_COMPILE_SDK}"
-          echo "   - buildTools: ${ANDROID_BUILD_TOOLS}"
-          echo "   - ndkVersion: ${ANDROID_NDK_VERSION}"
-          echo "   - cmake: ${ANDROID_CMAKE_VERSION}"
-          
-          # 安装所有必需组件
           sdkmanager --install \
             "platforms;android-${ANDROID_COMPILE_SDK}" \
             "build-tools;${ANDROID_BUILD_TOOLS}" \
-            "platform-tools" \
             "ndk;${ANDROID_NDK_VERSION}" \
-            "cmake;${ANDROID_CMAKE_VERSION}" \
-            --channel=0
-          
-          echo "✅ SDK组件安装完成"
+            "cmake;${ANDROID_CMAKE_VERSION}"
+          yes | sdkmanager --licenses || true
 
-      # 6. 接受SDK许可证
-      - name: Accept SDK Licenses
-        run: yes | sdkmanager --licenses || true
-
-      # 7. 配置Local Properties（只设置sdk.dir，让Gradle自动处理NDK）
-      - name: Configure Local Properties
-        run: |
-          echo "sdk.dir=${ANDROID_SDK_ROOT}" > local.properties
-          # 注意：不设置ndk.dir，因为：
-          # 1. build.gradle中已明确指定 ndkVersion "28.0.13004108"
-          # 2. 避免Google弃用警告（CXX5106）
-          echo "cmake.dir=${ANDROID_SDK_ROOT}/cmake/${ANDROID_CMAKE_VERSION}" >> local.properties
-          echo "::group::Local Properties"
-          cat local.properties
-          echo "::endgroup::"
-
-      # 8. Gradle缓存
-      - name: Cache Gradle Dependencies
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-            .gradle/caches
-            .gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', '**/libs.versions.toml') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
-
-      # 9. 准备构建环境
-      - name: Prepare Build Environment
+      - name: Build Debug APK
         run: |
           chmod +x ./gradlew
-          echo "Java版本（需为21）："
-          java -version
-          echo "Gradle版本："
-          ./gradlew --version
-          ./gradlew clean --quiet
+          ./gradlew assembleDebug --no-daemon
 
-      # 10. 构建Debug版APK（匹配build.gradle中的debug配置）
-      - name: Build Debug APK
-        if: github.event.inputs.build_type == 'debug' || github.event.inputs.build_type == 'all' || github.event_name != 'workflow_dispatch'
-        id: build_debug
-        run: |
-          echo "🚀 开始构建Debug版APK（arm64-v8a）..."
-          ./gradlew assembleDebug --stacktrace --no-daemon --build-cache
-          
-          DEBUG_APK=$(find app/build/outputs/apk/debug -name "*.apk" -type f | head -n 1)
-          if [ -z "$DEBUG_APK" ]; then
-            echo "❌ 错误：未找到Debug APK"
-            exit 1
-          fi
-          
-          APK_SIZE=$(du -h "$DEBUG_APK" | cut -f1)
-          echo "✅ Debug APK构建成功"
-          echo "   路径: $DEBUG_APK"
-          echo "   大小: $APK_SIZE"
-          echo "debug_apk_path=$DEBUG_APK" >> $GITHUB_OUTPUT
-          echo "debug_apk_size=$APK_SIZE" >> $GITHUB_OUTPUT
-
-      # 11. 构建Release版APK（匹配build.gradle中的release配置）
-      - name: Build Release APK
-        if: github.event.inputs.build_type == 'release' || github.event.inputs.build_type == 'all'
-        id: build_release
-        continue-on-error: true
-        run: |
-          echo "🚀 开始构建Release版APK..."
-          ./gradlew assembleRelease --stacktrace --no-daemon --build-cache
-          
-          RELEASE_APK=$(find app/build/outputs/apk/release -name "*.apk" -type f | head -n 1)
-          if [ -z "$RELEASE_APK" ]; then
-            echo "⚠️ Release APK未生成"
-            exit 0
-          fi
-          
-          APK_SIZE=$(du -h "$RELEASE_APK" | cut -f1)
-          echo "✅ Release APK构建成功"
-          echo "   路径: $RELEASE_APK"
-          echo "   大小: $APK_SIZE"
-          echo "release_apk_path=$RELEASE_APK" >> $GITHUB_OUTPUT
-          echo "release_apk_size=$APK_SIZE" >> $GITHUB_OUTPUT
-
-      # 12. 上传构建产物
-      - name: Upload Build Artifacts
+      - name: Upload APK
         uses: actions/upload-artifact@v4
-        if: always()
         with:
-          name: RAL-APKs-${{ github.run_id }}
-          path: |
-            app/build/outputs/apk/**/*.apk
+          name: RAL-APK-${{ github.run_id }}
+          path: app/build/outputs/apk/debug/*.apk
           retention-days: 30
-          if-no-files-found: warn
 
-      # 13. 构建总结
-      - name: Build Summary
-        if: always()
+      - name: Display Download Link
+        if: success()
         run: |
-          echo "::group::📊 RAL构建总结"
-          echo "配置匹配检查："
-          echo "  ✓ compileSdk: ${ANDROID_COMPILE_SDK} (build.gradle: compileSdk 36)"
-          echo "  ✓ ndkVersion: ${ANDROID_NDK_VERSION} (build.gradle: ndkVersion \"28.0.13004108\")"
-          echo "  ✓ Java: 21 (build.gradle: JavaVersion.VERSION_21)"
-          echo "  ✓ CMake: ${ANDROID_CMAKE_VERSION} (build.gradle: version '3.22.1')"
-          echo "----------------------------------------"
-          echo "输出："
-          echo "Debug: ${{ steps.build_debug.outputs.debug_apk_path || '未构建' }}"
-          echo "Release: ${{ steps.build_release.outputs.release_apk_path || '未构建' }}"
-          echo "::endgroup::"
+          echo ""
+          echo "╔════════════════════════════════════════════════════════╗"
+          echo "║              ✅ APK 构建成功！                         ║"
+          echo "╠════════════════════════════════════════════════════════╣"
+          echo "║  📥 下载地址：                                         ║"
+          echo "║                                                        ║"
+          echo "║  ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID} ║"
+          echo "║                                                        ║"
+          echo "║  👆 点击上方链接，在页面底部找到 Artifacts 下载        ║"
+          echo "╚════════════════════════════════════════════════════════╝"
+          echo ""
