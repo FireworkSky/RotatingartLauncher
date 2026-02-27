@@ -17,6 +17,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Refresh
@@ -39,8 +40,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
 import com.app.ralaunch.R
+import com.app.ralaunch.core.common.util.LogExportHelper
 import java.io.File
-import java.io.FileWriter
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -54,6 +55,7 @@ import java.util.*
 fun CrashReportScreen(
     errorDetails: String?,
     stackTrace: String?,
+    onReturnToApp: () -> Unit,
     onClose: () -> Unit,
     onRestart: () -> Unit
 ) {
@@ -88,19 +90,29 @@ fun CrashReportScreen(
                     .weight(0.35f)
                     .fillMaxHeight()
             ) {
-                // 错误标题卡片
-                ErrorHeaderCard(parsedInfo)
+                val leftPaneScrollState = rememberScrollState()
+
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                        .verticalScroll(leftPaneScrollState)
+                ) {
+                    // 错误标题卡片
+                    ErrorHeaderCard(parsedInfo)
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // 设备信息卡片
+                    DeviceInfoCard(parsedInfo)
+                }
 
                 Spacer(modifier = Modifier.height(12.dp))
-
-                // 设备信息卡片
-                DeviceInfoCard(parsedInfo)
-
-                Spacer(modifier = Modifier.weight(1f))
 
                 // 操作按钮
                 ActionButtons(
                     onShare = { shareLog(context, errorDetails, stackTrace) },
+                    onReturnToApp = onReturnToApp,
                     onRestart = onRestart,
                     onClose = onClose
                 )
@@ -408,68 +420,101 @@ private fun LogSection(
 @Composable
 private fun ActionButtons(
     onShare: () -> Unit,
+    onReturnToApp: () -> Unit,
     onRestart: () -> Unit,
     onClose: () -> Unit
 ) {
-    Row(
+    Column(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        // 分享日志
-        Button(
-            onClick = onShare,
-            modifier = Modifier.weight(1f),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.primary
-            ),
-            shape = RoundedCornerShape(8.dp),
-            contentPadding = PaddingValues(vertical = 12.dp)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Icon(
-                imageVector = Icons.Default.Share,
-                contentDescription = null,
-                modifier = Modifier.size(18.dp)
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(stringResource(R.string.crash_share_log), fontSize = 14.sp)
+            // 分享日志
+            Button(
+                onClick = onShare,
+                modifier = Modifier.weight(1f),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary
+                ),
+                shape = RoundedCornerShape(8.dp),
+                contentPadding = PaddingValues(vertical = 12.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Share,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(stringResource(R.string.crash_share_log), fontSize = 14.sp, maxLines = 1)
+            }
+
+            // 返回应用
+            OutlinedButton(
+                onClick = onReturnToApp,
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(8.dp),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.onSurface),
+                border = ButtonDefaults.outlinedButtonBorder.copy(
+                    brush = Brush.horizontalGradient(listOf(MaterialTheme.colorScheme.outlineVariant, MaterialTheme.colorScheme.outlineVariant))
+                ),
+                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 12.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(stringResource(R.string.crash_return_app), fontSize = 14.sp, maxLines = 1)
+            }
         }
 
-        // 重启应用
-        OutlinedButton(
-            onClick = onRestart,
-            shape = RoundedCornerShape(8.dp),
-            colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.onSurface),
-            border = ButtonDefaults.outlinedButtonBorder.copy(
-                brush = Brush.horizontalGradient(listOf(MaterialTheme.colorScheme.outlineVariant, MaterialTheme.colorScheme.outlineVariant))
-            ),
-            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Icon(
-                imageVector = Icons.Default.Refresh,
-                contentDescription = null,
-                modifier = Modifier.size(18.dp)
-            )
-            Spacer(modifier = Modifier.width(6.dp))
-            Text(stringResource(R.string.crash_restart_app), fontSize = 14.sp)
-        }
+            // 重启应用
+            OutlinedButton(
+                onClick = onRestart,
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(8.dp),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.onSurface),
+                border = ButtonDefaults.outlinedButtonBorder.copy(
+                    brush = Brush.horizontalGradient(listOf(MaterialTheme.colorScheme.outlineVariant, MaterialTheme.colorScheme.outlineVariant))
+                ),
+                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 12.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Refresh,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(stringResource(R.string.crash_restart_app), fontSize = 14.sp, maxLines = 1)
+            }
 
-        // 关闭应用
-        OutlinedButton(
-            onClick = onClose,
-            shape = RoundedCornerShape(8.dp),
-            colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.onSurface),
-            border = ButtonDefaults.outlinedButtonBorder.copy(
-                brush = Brush.horizontalGradient(listOf(MaterialTheme.colorScheme.outlineVariant, MaterialTheme.colorScheme.outlineVariant))
-            ),
-            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Default.Close,
-                contentDescription = null,
-                modifier = Modifier.size(18.dp)
-            )
-            Spacer(modifier = Modifier.width(6.dp))
-            Text(stringResource(R.string.crash_close_app), fontSize = 14.sp)
+            // 关闭应用
+            OutlinedButton(
+                onClick = onClose,
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(8.dp),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.onSurface),
+                border = ButtonDefaults.outlinedButtonBorder.copy(
+                    brush = Brush.horizontalGradient(listOf(MaterialTheme.colorScheme.outlineVariant, MaterialTheme.colorScheme.outlineVariant))
+                ),
+                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 12.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Close,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(stringResource(R.string.crash_close_app), fontSize = 14.sp, maxLines = 1)
+            }
         }
     }
 }
@@ -542,6 +587,7 @@ private fun shareLog(
         }
         val sdf = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault())
         val logFile = File(logDir, "crash_${sdf.format(Date())}.log")
+        val exportedLogs = LogExportHelper.buildExportContent(context)
 
         val logContent = buildString {
             append("=" .repeat(60))
@@ -563,10 +609,18 @@ private fun shareLog(
                 append(it)
             }
 
-            if (isEmpty()) append(context.getString(R.string.crash_report_unavailable))
+            exportedLogs.takeIf { it.isNotBlank() }?.let {
+                append("\n\n")
+                append("【${context.getString(R.string.settings_developer_export_logs_title)}】\n")
+                append("-".repeat(40))
+                append("\n")
+                append(it)
+            }
+
+            if (isBlank()) append(context.getString(R.string.crash_report_unavailable))
         }
 
-        FileWriter(logFile).use { it.write(logContent) }
+        logFile.writeText(logContent, Charsets.UTF_8)
 
         val fileUri = FileProvider.getUriForFile(
             context,

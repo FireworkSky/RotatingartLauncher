@@ -9,7 +9,6 @@ import java.util.Locale
 
 object DotNetLauncher {
     const val TAG = "DotNetLauncher"
-    private const val CORECLR_INIT_FAILURE_EXIT_CODE = -2147450743
     private val XIAOMI_COMPAT_ENV_KEYS = arrayOf(
         "RAL_CORECLR_XIAOMI_COMPAT",
         "DOTNET_EnableDiagnostics",
@@ -47,54 +46,52 @@ object DotNetLauncher {
         if (compatEnabled) {
             CoreHostHooks.initCompatHooks()
         }
-        DotNetNativeLibraryLoader.loadAllLibraries(dotnetRoot)
 
-        var exitCode = nativeDotNetLauncherHostfxrLaunch(assemblyPath, args, dotnetRoot)
-        if (exitCode == 0) {
-            AppLogger.info(TAG, "Successfully launched .NET assembly.")
-            return exitCode
+        val shouldApplyCompatEnv = shouldApplyXiaomiCompatEnv(assemblyPath, compatEnabled)
+        val compatEnvSnapshot = if (shouldApplyCompatEnv) {
+            AppLogger.warn(
+                TAG,
+                "Applying Xiaomi CoreCLR compatibility env before first hostfxr initialization"
+            )
+            captureXiaomiCoreClrCompatEnv()
+        } else {
+            null
         }
 
-        var errorMsg = getNativeDotNetLauncherHostfxrLastErrorMsg()
-        AppLogger.error(TAG, "Failed to launch .NET assembly. Exit code: $exitCode, Error: $errorMsg")
-
-        if (shouldRetryWithXiaomiCompat(assemblyPath, exitCode, errorMsg, compatEnabled)) {
-            AppLogger.warn(TAG, "Detected Xiaomi CoreCLR init failure on tModLoader, retrying with compat hooks and conservative runtime env")
-            val compatEnvSnapshot = captureXiaomiCoreClrCompatEnv()
+        if (shouldApplyCompatEnv) {
             applyXiaomiCoreClrCompatEnv()
+        } else {
+            EnvVarsManager.quickSetEnvVar("RAL_CORECLR_XIAOMI_COMPAT", null)
+        }
 
-            try {
-                exitCode = nativeDotNetLauncherHostfxrLaunch(assemblyPath, args, dotnetRoot)
-                if (exitCode == 0) {
-                    AppLogger.info(TAG, "Compatibility retry succeeded.")
-                    return exitCode
-                }
+        DotNetNativeLibraryLoader.loadAllLibraries(dotnetRoot)
 
-                errorMsg = getNativeDotNetLauncherHostfxrLastErrorMsg()
-                AppLogger.error(TAG, "Compatibility retry failed. Exit code: $exitCode, Error: $errorMsg")
-            } finally {
+        try {
+            val exitCode = nativeDotNetLauncherHostfxrLaunch(assemblyPath, args, dotnetRoot)
+            if (exitCode == 0) {
+                AppLogger.info(TAG, "Successfully launched .NET assembly.")
+            } else {
+                val errorMsg = getNativeDotNetLauncherHostfxrLastErrorMsg()
+                AppLogger.error(
+                    TAG,
+                    "Failed to launch .NET assembly. Exit code: $exitCode, Error: $errorMsg"
+                )
+            }
+            return exitCode
+        } finally {
+            if (compatEnvSnapshot != null) {
                 restoreXiaomiCoreClrCompatEnv(compatEnvSnapshot)
             }
         }
-
-        return exitCode
     }
 
-    private fun shouldRetryWithXiaomiCompat(
+    private fun shouldApplyXiaomiCompatEnv(
         assemblyPath: String,
-        exitCode: Int,
-        errorMsg: String,
         compatEnabled: Boolean
     ): Boolean {
         if (!compatEnabled) return false
         if (!isTModLoaderAssembly(assemblyPath)) return false
-        if (!isXiaomiFamilyDevice()) return false
-        if (exitCode != CORECLR_INIT_FAILURE_EXIT_CODE) return false
-
-        val normalizedError = errorMsg.lowercase(Locale.ROOT)
-        return normalizedError.contains("coreclr_initialize failed") ||
-            normalizedError.contains("failed to create coreclr") ||
-            normalizedError.contains("0x8007054f")
+        return isXiaomiFamilyDevice()
     }
 
     private fun isTModLoaderAssembly(assemblyPath: String): Boolean {
@@ -119,7 +116,9 @@ object DotNetLauncher {
             "DOTNET_gcConcurrent" to "0",
             "DOTNET_TieredCompilation" to "0",
             "DOTNET_TC_QuickJit" to "0",
-            "DOTNET_Thread_DefaultStackSize" to "1048576",
+            // Thread_DefaultStackSize is parsed as hex by CoreCLR PAL.
+            // "100000" (hex) == 1 MiB. Avoid decimal "1048576" (treated as 0x1048576 ~= 16 MiB).
+            "DOTNET_Thread_DefaultStackSize" to "100000",
         )
     }
 

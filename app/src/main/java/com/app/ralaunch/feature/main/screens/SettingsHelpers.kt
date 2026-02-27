@@ -7,8 +7,8 @@ import android.widget.Toast
 import com.app.ralaunch.R
 import com.app.ralaunch.feature.patch.data.PatchManager
 import com.app.ralaunch.core.platform.runtime.renderer.RendererRegistry
+import com.app.ralaunch.core.common.util.LogExportHelper
 import com.app.ralaunch.shared.core.component.dialogs.RendererOption
-import com.app.ralaunch.shared.core.platform.AppConstants
 import com.app.ralaunch.shared.core.model.domain.BackgroundType
 import com.app.ralaunch.shared.core.contract.repository.SettingsRepositoryV2
 import com.app.ralaunch.shared.feature.settings.*
@@ -136,7 +136,7 @@ internal fun openSponsorsPage(context: Context) {
 
 internal fun loadLogs(context: Context): List<String> {
     return try {
-        getLatestLogFile(context)?.readLines()?.takeLast(LOG_VIEW_LIMIT) ?: emptyList()
+        LogExportHelper.getLatestLogFile(context)?.readLines()?.takeLast(LOG_VIEW_LIMIT) ?: emptyList()
     } catch (e: Exception) {
         listOf(context.getString(R.string.settings_logs_read_failed, e.message ?: ""))
     }
@@ -144,7 +144,7 @@ internal fun loadLogs(context: Context): List<String> {
 
 internal fun clearLogs(context: Context) {
     try {
-        getLogFiles(context).forEach { it.writeText("") }
+        LogExportHelper.getLogFiles(context).forEach { it.writeText("") }
     } catch (e: Exception) {
         AppLogger.error("Settings", "清除日志失败", e)
     }
@@ -153,7 +153,8 @@ internal fun clearLogs(context: Context) {
 internal suspend fun exportLogs(context: Context, uri: Uri) {
     withContext(Dispatchers.IO) {
         try {
-            val logs = buildExportContent(context)
+            val logs = LogExportHelper.buildExportContent(context)
+                .ifEmpty { loadLogs(context).joinToString("\n") }
             context.contentResolver.openOutputStream(uri)?.use { output ->
                 output.write(logs.toByteArray(Charsets.UTF_8))
             }
@@ -169,43 +170,6 @@ internal suspend fun exportLogs(context: Context, uri: Uri) {
 }
 
 private const val LOG_VIEW_LIMIT = 500
-
-private fun getLogsDir(context: Context): File? {
-    val baseDir = context.getExternalFilesDir(null) ?: return null
-    return File(baseDir, AppConstants.Dirs.LOGS).also {
-        if (!it.exists()) {
-            it.mkdirs()
-        }
-    }
-}
-
-private fun getLogFiles(context: Context): List<File> {
-    val logsDir = getLogsDir(context) ?: return emptyList()
-    return logsDir
-        .listFiles { file -> file.isFile && file.extension.equals("log", ignoreCase = true) }
-        ?.sortedByDescending { it.lastModified() }
-        ?: emptyList()
-}
-
-private fun getLatestLogFile(context: Context): File? = getLogFiles(context).firstOrNull()
-
-private fun buildExportContent(context: Context): String {
-    val files = getLogFiles(context).sortedBy { it.lastModified() }
-    if (files.isEmpty()) return loadLogs(context).joinToString("\n")
-
-    return buildString {
-        files.forEachIndexed { index, file ->
-            appendLine("===== ${file.name} =====")
-            append(file.readText())
-            if (!endsWith("\n")) {
-                appendLine()
-            }
-            if (index != files.lastIndex) {
-                appendLine()
-            }
-        }
-    }
-}
 
 internal fun clearAppCache(context: Context) {
     try {
