@@ -12,7 +12,7 @@ android {
 
     defaultConfig {
         applicationId "com.app.ralaunch"
-        minSdk 28
+        minSdk 25   // <--- ĐỔI TỪ 28 XUỐNG 25 (Android 7.1)
         targetSdk 35
         versionCode 3
         versionName "2.0.1"
@@ -33,17 +33,14 @@ android {
         debug {
             debuggable true
             minifyEnabled false
-            jniDebuggable true  // 启用 Native 调试
-            
-         
+            jniDebuggable true  
         }
         release {
             debuggable false
-            minifyEnabled false  // TODO: 修复类重复后启用 R8
+            minifyEnabled false  
             shrinkResources false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             
-            // Release 移除调试符号，减小 native 库体积
             externalNativeBuild {
                 cmake {
                     arguments "-DCMAKE_BUILD_TYPE=Release"
@@ -52,6 +49,7 @@ android {
         }
     }
     compileOptions {
+        coreLibraryDesugaringEnabled true  // <--- THÊM DÒNG NÀY: Bắt buộc để Android 7 chạy được Java 21 mà không đổi lõi
         sourceCompatibility JavaVersion.VERSION_21
         targetCompatibility JavaVersion.VERSION_21
     }
@@ -67,7 +65,6 @@ android {
         compose true
     }
 
-    // 禁止 AAPT 压缩这些文件类型，确保 AssetManager 能正确读取
     androidResources {
         noCompress += ['tar.gz', 'tar.xz', 'xz']
     }
@@ -75,13 +72,10 @@ android {
     packagingOptions {
         jniLibs {
             useLegacyPackaging = true
-            // Debug 版本保留符号便于调试，Release 版本移除符号减小体积
-            // keepDebugSymbols += ['**/*.so']  // 仅 debug 时启用
             pickFirsts += ['lib/arm64-v8a/libc++_shared.so', 'lib/arm64-v8a/libdotnethost.so']
         }
     }
 
-    // 临时只针对真机arm64-v8a编译
     splits {
         abi {
             enable true
@@ -91,7 +85,6 @@ android {
         }
     }
 
-    // 使用预编译的 System.Security.Cryptography jar，实现官方托管绑定
     sourceSets {
         main {
             java {
@@ -104,7 +97,6 @@ android {
         jvmTarget = '21'
     }
 
-    // 关闭 Lint 检查
     lint {
         abortOnError false
         checkReleaseBuilds false
@@ -112,6 +104,9 @@ android {
 }
 
 dependencies {
+    // <--- THÊM DÒNG NÀY: Thư viện thông dịch Java 21 cho Android 7
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.0.4' 
+
     // 本地 JAR/AAR 依赖
     implementation files('../app/libs/libSystem.Security.Cryptography.Native.Android.jar')
     implementation files('../external/libs/fmod.jar')
