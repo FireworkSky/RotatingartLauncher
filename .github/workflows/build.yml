@@ -1,4 +1,4 @@
-name: Build Android 7.1.1
+name: Fast Android Build
 
 on:
   workflow_dispatch:
@@ -6,74 +6,26 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
-      
-      - name: Set up JDK 17
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup JDK 17
         uses: actions/setup-java@v4
         with:
-          java-version: '17'
-          distribution: 'temurin'
+          distribution: temurin
+          java-version: 17
+          cache: gradle
 
-      - name: Debug - Xem cấu trúc project
-        run: |
-          echo "=== Tìm tất cả build.gradle ==="
-          find . -name "build.gradle*" -type f
-          echo ""
-          echo "=== Nội dung shared/build.gradle ==="
-          cat shared/build.gradle* 2>/dev/null || echo "Không tìm thấy shared/build.gradle"
-          echo ""
-          echo "=== Nội dung app/src/main/AndroidManifest.xml ==="
-          cat app/src/main/AndroidManifest.xml 2>/dev/null || echo "Không tìm thấy"
+      - name: Grant execute permission
+        run: chmod +x gradlew
 
-      - name: Ép hạ minSdk xuống 25 cho TOÀN BỘ project
-        run: |
-          # Tìm và sửa TẤT CẢ file build.gradle trong toàn bộ project
-          find . -name "build.gradle" -exec sed -i 's/minSdk\s*=\s*28/minSdk = 25/g' {} +
-          find . -name "build.gradle" -exec sed -i 's/minSdk\s*28/minSdk 25/g' {} +
-          find . -name "build.gradle" -exec sed -i 's/minSdkVersion\s*=\s*28/minSdkVersion = 25/g' {} +
-          find . -name "build.gradle" -exec sed -i 's/minSdkVersion\s*28/minSdkVersion 25/g' {} +
-          
-          # Làm tương tự cho file .kts (Kotlin DSL)
-          find . -name "build.gradle.kts" -exec sed -i 's/minSdk\s*=\s*28/minSdk = 25/g' {} +
-          find . -name "build.gradle.kts" -exec sed -i 's/minSdkVersion\s*=\s*28/minSdkVersion = 25/g' {} +
-          find . -name "build.gradle.kts" -exec sed -i "s/minSdk.set(28)/minSdk.set(25)/g" {} +
+      - name: Build Release APK (Fast)
+        run: ./gradlew assembleRelease --no-daemon --parallel --build-cache
 
-      - name: Thêm overrideLibrary vào AndroidManifest.xml
-        run: |
-          # Thêm tools namespace và overrideLibrary vào manifest của app
-          MANIFEST="app/src/main/AndroidManifest.xml"
-          
-          # Thêm xmlns:tools nếu chưa có
-          if ! grep -q 'xmlns:tools' "$MANIFEST"; then
-            sed -i 's|<manifest |<manifest xmlns:tools="http://schemas.android.com/tools" |' "$MANIFEST"
-          fi
-          
-          # Thêm tools:overrideLibrary vào uses-sdk nếu có
-          if grep -q '<uses-sdk' "$MANIFEST"; then
-            sed -i 's|<uses-sdk|<uses-sdk tools:overrideLibrary="com.app.ralaunch.shared"|' "$MANIFEST"
-          else
-            # Nếu không có uses-sdk, thêm vào sau <manifest ...>
-            sed -i '/<manifest/a\    <uses-sdk tools:overrideLibrary="com.app.ralaunch.shared" />' "$MANIFEST"
-          fi
-
-      - name: Debug - Kiểm tra đã sửa đúng chưa
-        run: |
-          echo "=== shared/build.gradle SAU KHI SỬA ==="
-          cat shared/build.gradle* 2>/dev/null || echo "Không tìm thấy"
-          echo ""
-          echo "=== AndroidManifest.xml SAU KHI SỬA ==="
-          cat app/src/main/AndroidManifest.xml 2>/dev/null || echo "Không tìm thấy"
-
-      - name: Cấp quyền chạy cho Gradle
-        run: chmod +x ./gradlew
-        
-      - name: Bắt đầu Build APK
-        run: ./gradlew assembleDebug --stacktrace
-        
-      - name: Xuất file APK
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Launcher-Android-7.1.1
-          path: |
-            app/build/outputs/apk/**/*.apk
+          name: RALauncher-Release
+          path: app/build/outputs/apk/release/*.apk
