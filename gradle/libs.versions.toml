@@ -95,4 +95,3 @@ kotlin-plugin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization"
 android-library = { id = "com.android.library", version.ref = "agp" }
 # KMP
 kmp = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
-composeMultiplatform = { id = "org.jetbrains.compose", version.ref = "composeMultiplatform" }
