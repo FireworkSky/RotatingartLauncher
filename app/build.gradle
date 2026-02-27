@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.plugin.serialization)
+    alias(libs.plugins.kotlin.compose)
 }
 
 android {
@@ -11,19 +12,23 @@ android {
 
     defaultConfig {
         applicationId "com.app.ralaunch"
-        minSdk 25   // <--- ĐỔI TỪ 28 XUỐNG 25 (Android 7.1)
+        
+        // --- THAY ĐỔI 1: Hạ minSdk xuống 25 (Android 7.1.1) ---
+        minSdk 25 
         targetSdk 35
         versionCode 3
         versionName "2.0.1"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-
-        // 只编译 arm64-v8a 架构
-        // 使用 splits 配置
+        
+        // Lưu ý: Một số thiết bị Android 7 cũ có thể là 32-bit (armeabi-v7a).
+        // Nếu thiết bị test của bạn là 32-bit, bạn cần bỏ cấu hình splits bên dưới.
 
         externalNativeBuild {
             cmake {
-
+                // --- THAY ĐỔI 2: Chỉ định platform cho Native code ---
+                // Điều này đảm bảo C++ không gọi các hàm chỉ có ở API 28+
+                arguments "-DANDROID_PLATFORM=android-25"
             }
         }
     }
@@ -32,26 +37,33 @@ android {
         debug {
             debuggable true
             minifyEnabled false
-            jniDebuggable true  
+            jniDebuggable true
         }
         release {
             debuggable false
-            minifyEnabled false  
+            minifyEnabled false 
             shrinkResources false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             
             externalNativeBuild {
                 cmake {
-                    arguments "-DCMAKE_BUILD_TYPE=Release"
+                    // Đảm bảo cả ở Release cũng dùng platform 25
+                    arguments "-DCMAKE_BUILD_TYPE=Release", "-DANDROID_PLATFORM=android-25"
                 }
             }
         }
     }
+
     compileOptions {
-        coreLibraryDesugaringEnabled true  // <--- THÊM DÒNG NÀY: Bắt buộc để Android 7 chạy được Java 21 mà không đổi lõi
+        // --- THAY ĐỔI 3: Bật Desugaring để chạy Java mới trên Android cũ ---
+        coreLibraryDesugaringEnabled true
+
+        // Nên hạ xuống Java 17 nếu không bắt buộc phải dùng tính năng "preview" của Java 21
+        // Java 17 ổn định hơn cho Android 7 khi dùng với Kotlin
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
     }
+
     externalNativeBuild {
         cmake {
             path file('src/main/cpp/CMakeLists.txt')
@@ -75,6 +87,9 @@ android {
         }
     }
 
+    // LƯU Ý QUAN TRỌNG:
+    // Android 7.1.1 hỗ trợ 64-bit, nhưng hãy chắc chắn thiết bị của bạn là 64-bit.
+    // Nếu cài APK này lên máy 32-bit sẽ bị lỗi "App not installed".
     splits {
         abi {
             enable true
@@ -93,6 +108,7 @@ android {
     }
 
     kotlinOptions {
+        // Đồng bộ với compileOptions
         jvmTarget = '17'
     }
 
@@ -103,41 +119,37 @@ android {
 }
 
 dependencies {
-    // <--- THÊM DÒNG NÀY: Thư viện thông dịch Java 21 cho Android 7
-    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.0.4' 
+    // --- THAY ĐỔI 4: Thêm thư viện Desugaring ---
+    // Điều này bắt buộc để chạy các API Java hiện đại trên Android 7
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.2'
 
-    // 本地 JAR/AAR 依赖
+    // Các dependency cũ giữ nguyên
     implementation files('../app/libs/libSystem.Security.Cryptography.Native.Android.jar')
     implementation files('../external/libs/fmod.jar')
     implementation files('libs/fishnet-release.aar')
 
-    // 项目模块
     implementation project(':shared')
 
-    // 从 ralib 迁移的依赖
     implementation 'com.github.omicronapps:7-Zip-JBinding-4Android:Release-16.02-2.03'
     implementation 'com.google.code.gson:gson:2.13.2'
 
-    // AndroidX 核心库
     implementation libs.core.ktx
     implementation libs.appcompat
     implementation libs.activity
     implementation libs.constraintlayout
     implementation libs.recyclerview
 
-    // Material Design
     implementation libs.material
 
-    // Kotlin 扩展
     implementation libs.kotlinx.coroutines.core
     implementation libs.kotlinx.coroutines.android
     implementation libs.kotlinx.serialization.json
 
-    // Haze (Glassmorphism blur)
+    // LƯU Ý: Thư viện 'Haze' (hiệu ứng kính mờ) thường yêu cầu Android 12 (API 31) để hoạt động đẹp.
+    // Trên Android 7, nó có thể sẽ không hiển thị hiệu ứng blur (fallback về transparent) nhưng không gây crash.
     implementation libs.haze
     implementation libs.haze.materials
 
-    // Compose
     implementation platform(libs.compose.bom)
     implementation libs.compose.ui
     implementation libs.compose.ui.graphics
@@ -151,19 +163,16 @@ dependencies {
     implementation 'com.github.jeziellago:compose-markdown:0.5.8'
     debugImplementation 'androidx.compose.ui:ui-tooling'
 
-    // Koin DI
     implementation libs.koin.core
     implementation libs.koin.android
     implementation libs.koin.compose
 
-    // 第三方工具库
     implementation libs.glide
     implementation libs.konfetti
     implementation libs.commons.compress
     implementation libs.xz
     implementation libs.android.svg
 
-    // 测试依赖
     testImplementation libs.junit
     androidTestImplementation libs.ext.junit
     androidTestImplementation libs.espresso.core
