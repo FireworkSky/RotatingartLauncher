@@ -1,5 +1,5 @@
 [versions]
-agp = "8.2.2"
+agp = "8.9.1"
 junit = "4.13.2"
 junitVersion = "1.3.0"
 espressoCore = "3.7.0"
@@ -7,11 +7,15 @@ appcompat = "1.7.1"
 material = "1.12.0"
 constraintlayout = "2.2.1"
 annotationJvm = "1.9.1"
-activity = "1.7.2"
-kotlin = "1.9.22"
-coreKtx = "1.12.0"
+activity = "1.10.1"
+kotlin = "2.0.21"
+coreKtx = "1.17.0"
 kotlinx-serialization-json = "1.7.3"
 kotlinx-coroutines = "1.9.0"
+
+# --- THÊM DÒNG NÀY (Hỗ trợ Java 8+ API trên Android cũ) ---
+desugarJdkLibs = "2.1.4" 
+
 # Third-party libraries
 glide = "4.16.0"
 konfetti = "2.0.5"
@@ -22,10 +26,10 @@ recyclerview = "1.3.2"
 # Compose Multiplatform
 composeMultiplatform = "1.7.1"
 # Android Compose
-composeBom = "2023.08.00"
-composeCompiler = "1.5.11"
+composeBom = "2025.01.01"
+composeCompiler = "1.5.15"
 activityCompose = "1.10.1"
-lifecycleRuntimeCompose = "2.6.2"
+lifecycleRuntimeCompose = "2.9.1"
 coil = "2.7.0"
 # KMP
 koin = "4.0.0"
@@ -33,11 +37,11 @@ kotlinxDatetime = "0.6.1"
 # Haze (Glassmorphism blur)
 haze = "1.0.0"
 # DataStore
-datastore = "1.0.0"
+datastore = "1.1.1"
 # Lifecycle ViewModel
-lifecycleViewmodel = "2.6.2"
+lifecycleViewmodel = "2.9.1"
 # Navigation
-navigationCompose = "2.7.3"
+navigationCompose = "2.8.5"
 
 [libraries]
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -53,6 +57,10 @@ kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-
 kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
 kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "kotlinx-coroutines" }
 kotlinx-datetime = { group = "org.jetbrains.kotlinx", name = "kotlinx-datetime", version.ref = "kotlinxDatetime" }
+
+# --- THÊM DÒNG NÀY (Thư viện Desugar) ---
+desugar-jdk-libs = { group = "com.android.tools", name = "desugar_jdk_libs", version.ref = "desugarJdkLibs" }
+
 # Android Compose
 compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
 compose-ui = { group = "androidx.compose.ui", name = "ui" }
@@ -92,6 +100,8 @@ haze-materials = { group = "dev.chrisbanes.haze", name = "haze-materials", versi
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-plugin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 android-library = { id = "com.android.library", version.ref = "agp" }
 # KMP
 kmp = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
+composeMultiplatform = { id = "org.jetbrains.compose", version.ref = "composeMultiplatform" }
