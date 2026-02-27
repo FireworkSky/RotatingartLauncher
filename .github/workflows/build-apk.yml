@@ -1,4 +1,4 @@
-# Rotating Art Launcher (RAL) 全自动APK构建工作流（修复参数错误版）
+# Rotating Art Launcher (RAL) 全自动APK构建工作流 - 最终修复版
 name: RAL Full Auto Build APK
 
 on:
@@ -24,12 +24,12 @@ on:
           - release
           - all
 
-# 全局环境变量（统一配置）
+# 全局环境变量
 env:
-  ANDROID_COMPILE_SDK: "28"          # RAL最低兼容Android 9.0
-  ANDROID_BUILD_TOOLS: "34.0.0"      # 稳定版构建工具
-  ANDROID_NDK_VERSION: "25.2.9519653" # RAL渲染器依赖的NDK版本
-  ANDROID_CMAKE_VERSION: "3.22.1"    # 适配RAL的CMake版本
+  ANDROID_COMPILE_SDK: "28"
+  ANDROID_BUILD_TOOLS: "34.0.0"
+  ANDROID_NDK_VERSION: "25.2.9519653"
+  ANDROID_CMAKE_VERSION: "3.22.1"
   GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.parallel=true"
 
 jobs:
@@ -41,28 +41,22 @@ jobs:
       actions: write
 
     steps:
-      # 1. 拉取代码
+      # 1. 拉取代码（含子模块）
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
           submodules: recursive
 
-      # 2. 环境校验
+      # 2. 项目结构校验
       - name: Validate Project Structure
         run: |
           echo "🔍 校验RAL项目核心文件..."
-          if [ ! -f "./gradlew" ]; then
-            echo "❌ 未找到gradlew文件，构建终止！"
-            exit 1
-          fi
-          if [ ! -d "./app" ]; then
-            echo "❌ 未找到app模块目录，构建终止！"
-            exit 1
-          fi
+          [ ! -f "./gradlew" ] && echo "❌ 未找到gradlew文件" && exit 1
+          [ ! -d "./app" ] && echo "❌ 未找到app模块目录" && exit 1
           echo "✅ 项目结构校验通过"
 
-      # 3. 配置JDK 17
+      # 3. 配置JDK 17（RAL必需）
       - name: Set Up JDK 17
         uses: actions/setup-java@v4
         with:
@@ -70,36 +64,32 @@ jobs:
           distribution: 'temurin'
           cache: 'gradle'
 
-      # 4. 配置Android SDK/NDK/CMake（修复参数错误核心步骤）
+      # 4. 手动静默接受Android SDK许可证（核心修复：替代Action的自动接受）
+      - name: Silent Accept Android SDK Licenses
+        run: |
+          mkdir -p $ANDROID_HOME/licenses
+          echo "24333f8a63b6825ea9c5514f83c2829b004d1fee" > $ANDROID_HOME/licenses/android-sdk-license
+          echo "8933bad161af4178b1185d1a37fbf41ea5269c55" > $ANDROID_HOME/licenses/android-sdk-preview-license
+          echo "d975f751698a77b662f1254ddbeed3901e976f5a" > $ANDROID_HOME/licenses/google-gdk-license
+          echo "33b6a2b64607f11b759f320ef9dff4ae5c47d97a" > $ANDROID_HOME/licenses/mips-android-sysimage-license
+          echo "✅ 已静默接受所有Android SDK许可证"
+
+      # 5. 配置Android SDK/NDK/CMake（移除废弃参数+纯行配置packages，无注释）
       - name: Set Up Android Environment
         uses: android-actions/setup-android@v3
         with:
-          # 仅保留新版支持的参数，所有组件通过packages指定
-          cmdline-tools-version: "11076708" # 最新版cmdline-tools
-          accept-android-sdk-licenses: true # 自动接受SDK许可
-          packages: |
-            # 基础SDK组件
-            platforms;android-${{ env.ANDROID_COMPILE_SDK }}
-            build-tools;${{ env.ANDROID_BUILD_TOOLS }}
-            # NDK组件（指定版本）
-            ndk;${{ env.ANDROID_NDK_VERSION }}
-            # CMake组件（指定版本）
-            cmake;${{ env.ANDROID_CMAKE_VERSION }}
-            # 其他依赖
-            platform-tools
-            extras;android;m2repository
-            extras;google;m2repository
+          cmdline-tools-version: "latest" # 使用预安装的最新版，避免版本冲突
+          packages: platforms;android-28;build-tools;34.0.0;ndk;25.2.9519653;cmake;3.22.1;platform-tools;extras;android;m2repository;extras;google;m2repository
 
-      # 5. 配置Local Properties
+      # 6. 配置Local Properties（指定NDK/SDK路径）
       - name: Configure Local Properties
         run: |
-          echo "📝 生成local.properties文件..."
           echo "sdk.dir=${ANDROID_SDK_ROOT}" > local.properties
           echo "ndk.dir=${ANDROID_SDK_ROOT}/ndk/${ANDROID_NDK_VERSION}" >> local.properties
           cat local.properties
           echo "✅ Local Properties配置完成"
 
-      # 6. 缓存优化
+      # 7. Gradle依赖缓存优化
       - name: Cache Gradle Dependencies
         uses: actions/cache@v3
         with:
@@ -113,49 +103,41 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
 
-      # 7. 准备构建环境
+      # 8. 构建环境准备（授权+清理）
       - name: Prepare Build Environment
         run: |
-          echo "🔧 配置构建环境..."
           chmod +x ./gradlew
           ./gradlew clean --quiet
           echo "✅ 构建环境准备完成"
 
-      # 8. 构建Debug版APK
+      # 9. 构建Debug版APK（核心，无签名可直接安装）
       - name: Build Debug APK
         if: github.event.inputs.build_type == 'debug' || github.event.inputs.build_type == 'all' || github.event_name != 'workflow_dispatch'
         id: build_debug
         continue-on-error: false
         run: |
           echo "🚀 开始构建Debug版APK..."
-          ./gradlew assembleDebug --stacktrace --info
-          # 验证APK是否生成
-          DEBUG_APK_PATH=$(find app/build/outputs/apk/debug -name "*.apk" | head -n 1)
-          if [ -z "$DEBUG_APK_PATH" ]; then
-            echo "❌ Debug APK构建失败，未找到产物文件"
-            exit 1
-          fi
-          echo "✅ Debug APK构建完成：$DEBUG_APK_PATH"
-          echo "debug_apk_path=$DEBUG_APK_PATH" >> $GITHUB_OUTPUT
+          ./gradlew assembleDebug --stacktrace
+          # 验证APK生成
+          DEBUG_APK=$(find app/build/outputs/apk/debug -name "*.apk" | head -n 1)
+          [ -z "$DEBUG_APK" ] && echo "❌ Debug APK构建失败" && exit 1
+          echo "✅ Debug APK构建完成：$DEBUG_APK"
+          echo "debug_apk_path=$DEBUG_APK" >> $GITHUB_OUTPUT
 
-      # 9. 构建Release版APK（可选）
+      # 10. 构建Release版APK（无签名，仅编译验证）
       - name: Build Release APK (UnSigned)
         if: github.event.inputs.build_type == 'release' || github.event.inputs.build_type == 'all'
         id: build_release
         continue-on-error: true
         run: |
           echo "🚀 开始构建Release版APK（无签名）..."
-          ./gradlew assembleRelease --stacktrace --info
-          # 验证APK是否生成
-          RELEASE_APK_PATH=$(find app/build/outputs/apk/release -name "*.apk" | head -n 1)
-          if [ -z "$RELEASE_APK_PATH" ]; then
-            echo "⚠️ Release APK构建失败（无签名），请配置签名后重试"
-            exit 0
-          fi
-          echo "✅ Release APK（无签名）构建完成：$RELEASE_APK_PATH"
-          echo "release_apk_path=$RELEASE_APK_PATH" >> $GITHUB_OUTPUT
+          ./gradlew assembleRelease --stacktrace
+          RELEASE_APK=$(find app/build/outputs/apk/release -name "*.apk" | head -n 1)
+          [ -z "$RELEASE_APK" ] && echo "⚠️ Release APK构建失败（需配置签名）" && exit 0
+          echo "✅ Release APK构建完成：$RELEASE_APK"
+          echo "release_apk_path=$RELEASE_APK" >> $GITHUB_OUTPUT
 
-      # 10. 上传构建产物
+      # 11. 上传构建产物
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -166,12 +148,12 @@ jobs:
           retention-days: 90
           if-no-files-found: warn
 
-      # 11. 输出构建总结
+      # 12. 构建总结
       - name: Build Summary
         run: |
           echo "📊 构建总结："
           echo "- 触发方式：${{ github.event_name }}"
           echo "- 构建类型：${{ github.event.inputs.build_type || 'debug' }}"
-          echo "- Debug APK路径：${{ steps.build_debug.outputs.debug_apk_path || '未构建' }}"
-          echo "- Release APK路径：${{ steps.build_release.outputs.release_apk_path || '未构建/失败' }}"
+          echo "- Debug APK：${{ steps.build_debug.outputs.debug_apk_path || '未构建' }}"
+          echo "- Release APK：${{ steps.build_release.outputs.release_apk_path || '未构建/失败' }}"
           echo "✅ 工作流执行完成！"
