@@ -1,0 +1,95 @@
+name: Build RAL APK (Debug Signed)
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+env:
+  ANDROID_COMPILE_SDK: "36"
+  ANDROID_BUILD_TOOLS: "36.0.0"
+  ANDROID_NDK_VERSION: "28.0.13004108"
+  ANDROID_CMAKE_VERSION: "3.22.1"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      actions: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          lfs: true
+
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'gradle'
+
+      - uses: android-actions/setup-android@v3
+
+      - name: Install SDK
+        run: |
+          sdkmanager --install \
+            "platforms;android-${ANDROID_COMPILE_SDK}" \
+            "build-tools;${ANDROID_BUILD_TOOLS}" \
+            "ndk;${ANDROID_NDK_VERSION}" \
+            "cmake;${ANDROID_CMAKE_VERSION}"
+          yes | sdkmanager --licenses || true
+
+      - name: Generate Debug Keystore
+        run: |
+          keytool -genkey -v \
+            -keystore debug.keystore \
+            -alias androiddebugkey \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000 \
+            -storepass android \
+            -keypass android \
+            -dname "CN=Android Debug, O=Android, C=US"
+          echo "Debug密钥生成完成"
+
+      - name: Build APK
+        run: |
+          chmod +x ./gradlew
+          ./gradlew clean
+          ./gradlew assembleRelease --no-daemon
+
+      - name: Sign APK with Debug Key
+        run: |
+          UNSIGNED_APK=$(find app/build/outputs/apk/release -name "*-unsigned.apk" | head -1)
+          SIGNED_APK="${UNSIGNED_APK%-unsigned.apk}-signed.apk"
+          
+          # 签名
+          ${ANDROID_SDK_ROOT}/build-tools/${ANDROID_BUILD_TOOLS}/apksigner sign \
+            --ks debug.keystore \
+            --ks-key-alias androiddebugkey \
+            --ks-pass pass:android \
+            --key-pass pass:android \
+            --out "${SIGNED_APK}" \
+            "${UNSIGNED_APK}"
+          
+          # 验证签名并清理未签名文件
+          ${ANDROID_SDK_ROOT}/build-tools/${ANDROID_BUILD_TOOLS}/apksigner verify -v "${SIGNED_APK}"
+          rm -f "${UNSIGNED_APK}"
+          
+          echo "APK已签名: ${SIGNED_APK}"
+          ls -la app/build/outputs/apk/release/
+
+      - name: Upload Signed APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: RAL-DebugSigned-${{ github.run_id }}
+          path: app/build/outputs/apk/release/*-signed.apk
+          retention-days: 30
+          if-no-files-found: error  # 找不到文件时让构建失败，避免静默错误
+
+      - run: |
+          echo "✅ 构建完成（Debug签名）"
+          echo "下载: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
