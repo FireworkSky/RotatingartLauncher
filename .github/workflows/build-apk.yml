@@ -1,4 +1,4 @@
-# Rotating Art Launcher (RAL) 全自动APK构建工作流
+# Rotating Art Launcher (RAL) 全自动APK构建工作流 - 带诊断信息
 name: Build RAL APK
 
 on:
@@ -18,7 +18,7 @@ jobs:
     timeout-minutes: 60
     permissions:
       contents: read
-      actions: write  # 上传Artifacts所需权限
+      actions: write
 
     steps:
       - name: Checkout Code
@@ -47,29 +47,81 @@ jobs:
             "cmake;${ANDROID_CMAKE_VERSION}"
           yes | sdkmanager --licenses || true
 
+      # 构建步骤（允许失败继续执行后续诊断）
       - name: Build Debug APK
+        id: build_step
+        continue-on-error: true
         run: |
           chmod +x ./gradlew
-          ./gradlew assembleDebug --no-daemon
+          ./gradlew assembleDebug --no-daemon --stacktrace
+          echo "exit_code=$?" >> $GITHUB_OUTPUT
 
+      # 捕获错误日志（构建失败时执行）
+      - name: Capture Error Logs
+        if: steps.build_step.outcome == 'failure'
+        run: |
+          echo "::group::❌ 构建错误摘要"
+          echo "失败步骤: Gradle 构建"
+          echo "常见原因:"
+          echo "  1. Java/NDK 版本不匹配"
+          echo "  2. 编译错误（Kotlin/C++）"
+          echo "  3. 依赖下载失败"
+          echo ""
+          echo "查看详细日志:"
+          echo "  1. 点击本页面顶部的 'Build Debug APK' 步骤"
+          echo "  2. 展开后搜索 'error:' 或 'FAILED'"
+          echo "::endgroup::"
+          
+          # 尝试定位具体错误行
+          echo "::group::🔍 最后 50 行关键日志"
+          # 这里只是示例，实际错误在步骤日志中查看
+          echo "请查看上方 'Build Debug APK' 步骤的完整日志"
+          echo "::endgroup::"
+
+      # 上传产物（仅成功时）
       - name: Upload APK
+        if: steps.build_step.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
           name: RAL-APK-${{ github.run_id }}
           path: app/build/outputs/apk/debug/*.apk
           retention-days: 30
 
-      - name: Display Download Link
-        if: success()
+      # 构建报告（成功或失败都显示）
+      - name: Build Report
+        if: always()
         run: |
           echo ""
           echo "╔════════════════════════════════════════════════════════╗"
-          echo "║              ✅ APK 构建成功！                         ║"
-          echo "╠════════════════════════════════════════════════════════╣"
-          echo "║  📥 下载地址：                                         ║"
-          echo "║                                                        ║"
-          echo "║  ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID} ║"
-          echo "║                                                        ║"
-          echo "║  👆 点击上方链接，在页面底部找到 Artifacts 下载        ║"
+          
+          if [ "${{ steps.build_step.outcome }}" == "success" ]; then
+            echo "║              ✅ APK 构建成功！                         ║"
+            echo "╠════════════════════════════════════════════════════════╣"
+            echo "║  📥 下载地址：                                         ║"
+            echo "║  ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID} ║"
+            echo "╠════════════════════════════════════════════════════════╣"
+            echo "║  📋 使用说明：                                         ║"
+            echo "║  1. 点击上方链接                                       ║"
+            echo "║  2. 在页面底部找到 'Artifacts' 区域                    ║"
+            echo "║  3. 点击 'RAL-APK-xxx' 下载 ZIP 文件                   ║"
+            echo "║  4. 解压 ZIP 得到 APK 文件                             ║"
+          else
+            echo "║              ❌ 构建失败                               ║"
+            echo "╠════════════════════════════════════════════════════════╣"
+            echo "║  🔍 查看错误：                                         ║"
+            echo "║  ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID} ║"
+            echo "╠════════════════════════════════════════════════════════╣"
+            echo "║  📋 排查步骤：                                         ║"
+            echo "║  1. 点击上方链接进入构建详情页                         ║"
+            echo "║  2. 找到红色 ❌ 标记的步骤（通常是 Build Debug APK）   ║"
+            echo "║  3. 点击该步骤展开查看详细错误日志                     ║"
+            echo "║  4. 搜索关键词：error、FAILED、Exception                ║"
+          fi
+          
           echo "╚════════════════════════════════════════════════════════╝"
           echo ""
+          
+          # 如果失败，让任务最终状态为失败
+          if [ "${{ steps.build_step.outcome }}" != "success" ]; then
+            exit 1
+          fi
