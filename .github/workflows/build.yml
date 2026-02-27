@@ -1,0 +1,40 @@
+      - name: Quét toàn bộ code dùng API 26-28+
+        run: |
+          echo "========== NotificationChannel =========="
+          grep -rn "NotificationChannel\|createNotificationChannel" --include="*.kt" --include="*.java" . || echo "KHÔNG CÓ"
+          
+          echo ""
+          echo "========== startForegroundService =========="
+          grep -rn "startForegroundService" --include="*.kt" --include="*.java" . || echo "KHÔNG CÓ"
+          
+          echo ""
+          echo "========== DisplayCutout =========="
+          grep -rn "DisplayCutout\|displayCutout" --include="*.kt" --include="*.java" . || echo "KHÔNG CÓ"
+          
+          echo ""
+          echo "========== ImageDecoder =========="
+          grep -rn "ImageDecoder" --include="*.kt" --include="*.java" . || echo "KHÔNG CÓ"
+          
+          echo ""
+          echo "========== VERSION_CODES =========="
+          grep -rn "VERSION_CODES\." --include="*.kt" --include="*.java" . || echo "KHÔNG CÓ"
+          
+          echo ""
+          echo "========== appCategory =========="
+          grep -rn "appCategory" --include="*.xml" . || echo "KHÔNG CÓ"
+          
+          echo ""
+          echo "========== foregroundServiceType =========="
+          grep -rn "foregroundServiceType" --include="*.xml" --include="*.kt" . || echo "KHÔNG CÓ"
+          
+          echo ""
+          echo "========== PackageInstaller =========="
+          grep -rn "PackageInstaller\|REQUEST_INSTALL" --include="*.kt" --include="*.java" . || echo "KHÔNG CÓ"
+          
+          echo ""
+          echo "========== usesCleartextTraffic =========="
+          grep -rn "usesCleartextTraffic" --include="*.xml" . || echo "KHÔNG CÓ"
+          
+          echo ""
+          echo "========== Danh sách toàn bộ file .kt =========="
+          find . -name "*.kt" | grep -v "build/" | sort
