@@ -63,14 +63,35 @@ jobs:
         if: github.event.inputs.build_debug == 'true'
         run: |
           echo "🛠️ 构建开发者版本..."
-          ./gradlew clean assembleDebug --no-daemon
+          ./gradlew clean assembleDebug --no-daemon --stacktrace
+
+      - name: Find & Upload Debug APK
+        if: github.event.inputs.build_debug == 'true'
+        run: |
+          DEBUG_DIR="app/build/outputs/apk/debug"
+          echo "📂 检查 Debug 目录内容:"
+          ls -la "$DEBUG_DIR" || echo "目录不存在"
+          
+          # 查找任何 .apk 文件
+          APK_FILE=$(find "$DEBUG_DIR" -name "*.apk" -type f | head -1)
+          
+          if [ -z "$APK_FILE" ]; then
+            echo "❌ 错误：在 $DEBUG_DIR 中未找到任何 APK 文件"
+            exit 1
+          fi
+          
+          echo "✅ 找到 APK: $APK_FILE"
+          echo "📊 文件大小: $(du -h "$APK_FILE" | cut -f1)"
+          
+          # 复制到标准名称（方便上传）
+          cp "$APK_FILE" "$DEBUG_DIR/app-debug.apk"
 
       - name: Upload Debug APK
         if: github.event.inputs.build_debug == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: 1-RAL-Developer-Debug
-          path: app/build/outputs/apk/debug/app-debug.apk
+          path: app/build/outputs/apk/debug/*.apk
           retention-days: 30
           if-no-files-found: error
 
@@ -92,23 +113,34 @@ jobs:
         if: github.event.inputs.build_safe == 'true'
         run: |
           echo "🚀 构建安全版本 (仅代码压缩)..."
-          ./gradlew assembleRelease --no-daemon
+          ./gradlew assembleRelease --no-daemon --stacktrace
 
-      - name: Sign & Upload Safe APK
+      - name: Sign Safe APK
         if: github.event.inputs.build_safe == 'true'
         run: |
-          UNSIGNED="app/build/outputs/apk/release/app-release-unsigned.apk"
-          [ ! -f "$UNSIGNED" ] && UNSIGNED=$(find app/build/outputs/apk/release -name "*-unsigned.apk" | head -1)
-          [ -f "$UNSIGNED" ] || exit 1
+          RELEASE_DIR="app/build/outputs/apk/release"
+          echo "📂 检查 Release 目录:"
+          ls -la "$RELEASE_DIR" || echo "目录不存在"
           
+          # 查找未签名 APK
+          UNSIGNED=$(find "$RELEASE_DIR" -name "*-unsigned.apk" -o -name "app-release.apk" | head -1)
+          
+          if [ -z "$UNSIGNED" ]; then
+            echo "❌ 未找到未签名 APK"
+            exit 1
+          fi
+          
+          echo "🔑 签名: $UNSIGNED"
           ${ANDROID_SDK_ROOT}/build-tools/${ANDROID_BUILD_TOOLS}/apksigner sign \
             --ks debug.keystore \
             --ks-key-alias androiddebugkey \
             --ks-pass pass:android \
             --key-pass pass:android \
-            --out "app/build/outputs/apk/release/app-release-safe.apk" \
+            --out "$RELEASE_DIR/app-release-safe.apk" \
             "$UNSIGNED"
-          rm -f "$UNSIGNED" "$UNSIGNED.idsig"
+          
+          rm -f "$UNSIGNED" "$UNSIGNED.idsig" 2>/dev/null || true
+          echo "✅ Safe APK 已生成"
 
       - name: Upload Safe APK
         if: github.event.inputs.build_safe == 'true'
@@ -123,10 +155,9 @@ jobs:
       - name: Enable Resource Shrinking
         if: github.event.inputs.build_strict == 'true'
         run: |
-          echo "⚠️  启用资源压缩 (shrinkResources)..."
+          echo "⚠️  启用资源压缩..."
           cp app/build.gradle app/build.gradle.bak
           
-          # 尝试启用 shrinkResources
           if grep -q "shrinkResources[[:space:]]*false" app/build.gradle; then
             sed -i 's/shrinkResources[[:space:]]*false/shrinkResources true/' app/build.gradle
           elif grep -q "minifyEnabled[[:space:]]*true" app/build.gradle; then
@@ -136,22 +167,21 @@ jobs:
           fi
           
           grep -q "shrinkResources[[:space:]]*true" app/build.gradle || exit 1
-          echo "✅ 已启用 shrinkResources"
+          echo "✅ shrinkResources 已启用"
 
       - name: Build Strict Release APK
         if: github.event.inputs.build_strict == 'true'
         id: build_strict
         run: |
-          echo "🔥 构建严格版本（启用资源压缩）..."
-          ./gradlew clean assembleRelease --no-daemon
+          echo "🔥 构建严格版本..."
+          ./gradlew clean assembleRelease --no-daemon --stacktrace
         continue-on-error: true
 
       - name: Sign Strict APK
         if: github.event.inputs.build_strict == 'true' && steps.build_strict.outcome == 'success'
-        id: sign_strict
         run: |
-          UNSIGNED="app/build/outputs/apk/release/app-release-unsigned.apk"
-          [ ! -f "$UNSIGNED" ] && UNSIGNED=$(find app/build/outputs/apk/release -name "*-unsigned.apk" | head -1)
+          RELEASE_DIR="app/build/outputs/apk/release"
+          UNSIGNED=$(find "$RELEASE_DIR" -name "*-unsigned.apk" -o -name "app-release.apk" | head -1)
           
           if [ -f "$UNSIGNED" ]; then
             ${ANDROID_SDK_ROOT}/build-tools/${ANDROID_BUILD_TOOLS}/apksigner sign \
@@ -159,21 +189,23 @@ jobs:
               --ks-key-alias androiddebugkey \
               --ks-pass pass:android \
               --key-pass pass:android \
-              --out "app/build/outputs/apk/release/app-release-strict.apk" \
+              --out "$RELEASE_DIR/app-release-strict.apk" \
               "$UNSIGNED"
-            rm -f "$UNSIGNED" "$UNSIGNED.idsig"
+            rm -f "$UNSIGNED" "$UNSIGNED.idsig" 2>/dev/null || true
             echo "success=true" >> $GITHUB_OUTPUT
           else
+            echo "❌ 未找到 APK"
             echo "success=false" >> $GITHUB_OUTPUT
           fi
 
       - name: Upload Strict APK
-        if: github.event.inputs.build_strict == 'true' && steps.sign_strict.outputs.success == 'true'
+        if: github.event.inputs.build_strict == 'true' && steps.build_strict.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
           name: 3-RAL-User-Strict-TEST
           path: app/build/outputs/apk/release/app-release-strict.apk
           retention-days: 30
+          if-no-files-found: warn
 
       - name: Restore build.gradle
         if: always() && github.event.inputs.build_strict == 'true'
@@ -184,13 +216,9 @@ jobs:
       - name: Summary
         run: |
           echo "=========================================="
-          echo "✅ 手动构建完成"
+          echo "✅ 构建完成"
           echo "=========================================="
-          echo ""
-          [ "${{ github.event.inputs.build_debug }}" == "true" ] && echo "📦 1-RAL-Developer-Debug    : 已构建"
-          [ "${{ github.event.inputs.build_safe }}" == "true" ] && echo "📦 2-RAL-User-Safe          : 已构建"
-          [ "${{ github.event.inputs.build_strict }}" == "true" ] && echo "📦 3-RAL-User-Strict-TEST   : 已构建 (⚠️ 需测试)"
-          echo ""
-          echo "📥 下载地址:"
-          echo "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          [ "${{ github.event.inputs.build_debug }}" == "true" ] && echo "📦 1-RAL-Developer-Debug"
+          [ "${{ github.event.inputs.build_safe }}" == "true" ] && echo "📦 2-RAL-User-Safe"
+          [ "${{ github.event.inputs.build_strict }}" == "true" ] && echo "📦 3-RAL-User-Strict-TEST"
           echo "=========================================="
