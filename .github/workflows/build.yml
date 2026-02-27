@@ -1,4 +1,4 @@
-name: Tim Loi Android 7
+name: Build Android 7.1.1
 
 on:
   workflow_dispatch:
@@ -7,20 +7,73 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+      
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
 
-      - name: 1. TIM LOI NOTIFICATION CHANNEL
-        run: grep -rn "NotificationChannel" . --include="*.kt" --include="*.java" || echo "Khong co"
+      - name: Debug - Xem cấu trúc project
+        run: |
+          echo "=== Tìm tất cả build.gradle ==="
+          find . -name "build.gradle*" -type f
+          echo ""
+          echo "=== Nội dung shared/build.gradle ==="
+          cat shared/build.gradle* 2>/dev/null || echo "Không tìm thấy shared/build.gradle"
+          echo ""
+          echo "=== Nội dung app/src/main/AndroidManifest.xml ==="
+          cat app/src/main/AndroidManifest.xml 2>/dev/null || echo "Không tìm thấy"
 
-      - name: 2. TIM LOI FOREGROUND SERVICE
-        run: grep -rn "startForegroundService" . --include="*.kt" --include="*.java" || echo "Khong co"
+      - name: Ép hạ minSdk xuống 25 cho TOÀN BỘ project
+        run: |
+          # Tìm và sửa TẤT CẢ file build.gradle trong toàn bộ project
+          find . -name "build.gradle" -exec sed -i 's/minSdk\s*=\s*28/minSdk = 25/g' {} +
+          find . -name "build.gradle" -exec sed -i 's/minSdk\s*28/minSdk 25/g' {} +
+          find . -name "build.gradle" -exec sed -i 's/minSdkVersion\s*=\s*28/minSdkVersion = 25/g' {} +
+          find . -name "build.gradle" -exec sed -i 's/minSdkVersion\s*28/minSdkVersion 25/g' {} +
+          
+          # Làm tương tự cho file .kts (Kotlin DSL)
+          find . -name "build.gradle.kts" -exec sed -i 's/minSdk\s*=\s*28/minSdk = 25/g' {} +
+          find . -name "build.gradle.kts" -exec sed -i 's/minSdkVersion\s*=\s*28/minSdkVersion = 25/g' {} +
+          find . -name "build.gradle.kts" -exec sed -i "s/minSdk.set(28)/minSdk.set(25)/g" {} +
 
-      - name: 3. TIM LOI DISPLAY CUTOUT (TAI THO)
-        run: grep -rn "DisplayCutout" . --include="*.kt" --include="*.java" || echo "Khong co"
+      - name: Thêm overrideLibrary vào AndroidManifest.xml
+        run: |
+          # Thêm tools namespace và overrideLibrary vào manifest của app
+          MANIFEST="app/src/main/AndroidManifest.xml"
+          
+          # Thêm xmlns:tools nếu chưa có
+          if ! grep -q 'xmlns:tools' "$MANIFEST"; then
+            sed -i 's|<manifest |<manifest xmlns:tools="http://schemas.android.com/tools" |' "$MANIFEST"
+          fi
+          
+          # Thêm tools:overrideLibrary vào uses-sdk nếu có
+          if grep -q '<uses-sdk' "$MANIFEST"; then
+            sed -i 's|<uses-sdk|<uses-sdk tools:overrideLibrary="com.app.ralaunch.shared"|' "$MANIFEST"
+          else
+            # Nếu không có uses-sdk, thêm vào sau <manifest ...>
+            sed -i '/<manifest/a\    <uses-sdk tools:overrideLibrary="com.app.ralaunch.shared" />' "$MANIFEST"
+          fi
 
-      - name: 4. DOC FILE INITIALIZATION (NOI GAY CRASH)
-        run: cat ./app/src/main/java/com/app/ralaunch/feature/init/InitializationActivity.kt || echo "Khong tim thay file nay"
+      - name: Debug - Kiểm tra đã sửa đúng chưa
+        run: |
+          echo "=== shared/build.gradle SAU KHI SỬA ==="
+          cat shared/build.gradle* 2>/dev/null || echo "Không tìm thấy"
+          echo ""
+          echo "=== AndroidManifest.xml SAU KHI SỬA ==="
+          cat app/src/main/AndroidManifest.xml 2>/dev/null || echo "Không tìm thấy"
 
-      - name: 5. DOC FILE MAIN ACTIVITY (NOI GAY CRASH)
-        run: cat ./app/src/main/java/com/app/ralaunch/feature/main/MainActivityCompose.kt || echo "Khong tim thay file nay"
+      - name: Cấp quyền chạy cho Gradle
+        run: chmod +x ./gradlew
+        
+      - name: Bắt đầu Build APK
+        run: ./gradlew assembleDebug --stacktrace
+        
+      - name: Xuất file APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Launcher-Android-7.1.1
+          path: |
+            app/build/outputs/apk/**/*.apk
