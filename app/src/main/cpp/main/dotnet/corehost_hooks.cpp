@@ -6,6 +6,7 @@
 #include <dlfcn.h>
 #include <errno.h>
 #include <pthread.h>
+#include <sched.h>
 #include <unistd.h>
 #include <time.h>
 #include <atomic>
@@ -25,6 +26,8 @@ static int (*original_pthread_create)(
     void* (*start_routine)(void*),
     void* arg
 ) = nullptr;
+static int (*original_sched_getaffinity)(pid_t pid, size_t cpusetsize, cpu_set_t* mask) = nullptr;
+static int (*original_sched_setaffinity)(pid_t pid, size_t cpusetsize, const cpu_set_t* mask) = nullptr;
 
 static std::atomic_bool g_compat_hooks_installed = false;
 
@@ -168,6 +171,77 @@ static int hooked_pthread_create(
     return rc;
 }
 
+static int hooked_sched_getaffinity(pid_t pid, size_t cpusetsize, cpu_set_t* mask) {
+    if (original_sched_getaffinity == nullptr) {
+        errno = ENOSYS;
+        return -1;
+    }
+
+    int rc = original_sched_getaffinity(pid, cpusetsize, mask);
+    if (rc == 0 || !is_xiaomi_compat_enabled()) {
+        return rc;
+    }
+
+    const int saved_errno = errno;
+    if ((pid == 0 || pid == getpid()) && mask != nullptr && cpusetsize > 0) {
+        CPU_ZERO(mask);
+        long cpu_count = sysconf(_SC_NPROCESSORS_ONLN);
+        if (cpu_count <= 0) {
+            cpu_count = 1;
+        }
+        const size_t max_cpus = cpusetsize * 8;
+        const size_t usable_cpus = static_cast<size_t>(cpu_count) < max_cpus
+            ? static_cast<size_t>(cpu_count)
+            : max_cpus;
+        for (size_t i = 0; i < usable_cpus; ++i) {
+            CPU_SET(i, mask);
+        }
+        __android_log_print(
+            ANDROID_LOG_WARN,
+            LOG_TAG,
+            "Compat: sched_getaffinity(pid=%d) failed errno=%d, fallback to synthetic cpu mask (%zu cpus)",
+            static_cast<int>(pid),
+            saved_errno,
+            usable_cpus
+        );
+        errno = 0;
+        return 0;
+    }
+
+    errno = saved_errno;
+    return rc;
+}
+
+static int hooked_sched_setaffinity(pid_t pid, size_t cpusetsize, const cpu_set_t* mask) {
+    if (original_sched_setaffinity == nullptr) {
+        errno = ENOSYS;
+        return -1;
+    }
+
+    int rc = original_sched_setaffinity(pid, cpusetsize, mask);
+    if (rc == 0 || !is_xiaomi_compat_enabled()) {
+        return rc;
+    }
+
+    const int saved_errno = errno;
+    if (pid == 0 || pid == getpid()) {
+        if (saved_errno == EPERM || saved_errno == EACCES || saved_errno == EINVAL || saved_errno == ENOSYS) {
+            __android_log_print(
+                ANDROID_LOG_WARN,
+                LOG_TAG,
+                "Compat: sched_setaffinity(pid=%d) failed errno=%d, treating as non-fatal",
+                static_cast<int>(pid),
+                saved_errno
+            );
+            errno = 0;
+            return 0;
+        }
+    }
+
+    errno = saved_errno;
+    return rc;
+}
+
 extern "C" void init_corehost_compat_hooks() {
     if (g_compat_hooks_installed.exchange(true)) {
         return;
@@ -214,6 +288,30 @@ extern "C" void init_corehost_compat_hooks() {
         __android_log_print(ANDROID_LOG_INFO, LOG_TAG, "Compat: hooked pthread_create");
     } else {
         __android_log_print(ANDROID_LOG_WARN, LOG_TAG, "Compat: symbol pthread_create not found");
+    }
+
+    void* sched_getaffinity_addr = dlsym(libc, "sched_getaffinity");
+    if (sched_getaffinity_addr) {
+        A64HookFunction(
+            sched_getaffinity_addr,
+            (void*)hooked_sched_getaffinity,
+            (void**)&original_sched_getaffinity
+        );
+        __android_log_print(ANDROID_LOG_INFO, LOG_TAG, "Compat: hooked sched_getaffinity");
+    } else {
+        __android_log_print(ANDROID_LOG_WARN, LOG_TAG, "Compat: symbol sched_getaffinity not found");
+    }
+
+    void* sched_setaffinity_addr = dlsym(libc, "sched_setaffinity");
+    if (sched_setaffinity_addr) {
+        A64HookFunction(
+            sched_setaffinity_addr,
+            (void*)hooked_sched_setaffinity,
+            (void**)&original_sched_setaffinity
+        );
+        __android_log_print(ANDROID_LOG_INFO, LOG_TAG, "Compat: hooked sched_setaffinity");
+    } else {
+        __android_log_print(ANDROID_LOG_WARN, LOG_TAG, "Compat: symbol sched_setaffinity not found");
     }
 
     dlclose(libc);

@@ -1914,6 +1914,7 @@
     <string name="crash_android_version">Android 版本</string>
     <string name="crash_share_log">分享日志</string>
     <string name="crash_restart_app">重启应用</string>
+    <string name="crash_return_app">返回应用</string>
     <string name="crash_close_app">关闭应用</string>
     <string name="crash_report_file_title">RaLaunch 崩溃报告</string>
     <string name="crash_report_basic_info_section">基本信息</string>

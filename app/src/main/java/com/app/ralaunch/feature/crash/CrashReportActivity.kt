@@ -41,11 +41,24 @@ class CrashReportActivity : ComponentActivity() {
                 CrashReportScreen(
                     errorDetails = errorDetails,
                     stackTrace = stackTrace,
+                    onReturnToApp = { returnToApp() },
                     onClose = { finishApp() },
                     onRestart = { restartApp() }
                 )
             }
         }
+    }
+
+    private fun returnToApp() {
+        packageManager.getLaunchIntentForPackage(packageName)?.let { intent ->
+            intent.addFlags(
+                Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                    Intent.FLAG_ACTIVITY_NEW_TASK or
+                    Intent.FLAG_ACTIVITY_SINGLE_TOP
+            )
+            startActivity(intent)
+        }
+        finish()
     }
 
     private fun finishApp() {
