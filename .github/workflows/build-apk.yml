@@ -136,32 +136,54 @@ jobs:
             -keypass android \
             -dname "CN=Android Debug, O=Android, C=US"
 
-      - name: Sign APK
+            - name: Sign APK
         id: sign
         if: steps.build_release.outcome == 'success'
         run: |
           RELEASE_DIR="app/build/outputs/apk/release"
-          UNSIGNED=$(find "$RELEASE_DIR" -name "*-unsigned.apk" | head -1)
+          
+          # Debug: Xem tất cả APK được tạo ra
+          echo "=== All APK files ==="
+          find app/build/outputs/apk/ -name "*.apk" 2>/dev/null || echo "No APK found!"
+          echo "=== Release dir content ==="
+          ls -la "$RELEASE_DIR" 2>/dev/null || echo "Release dir not found!"
 
-          if [ -z "$UNSIGNED" ]; then
-            echo "::error::Unsigned APK not found"
-            ls -la "$RELEASE_DIR" || true
+          # Tim bat ky APK nao (ca signed lan unsigned)
+          APK=$(find "$RELEASE_DIR" -name "*.apk" | head -1)
+
+          if [ -z "$APK" ]; then
+            echo "::error::No APK found in release dir!"
+            echo "=== All build outputs ==="
+            find app/build/outputs/ -type f 2>/dev/null
             exit 1
           fi
 
-          ${ANDROID_SDK_ROOT}/build-tools/${ANDROID_BUILD_TOOLS}/apksigner sign \
-            --ks debug.keystore \
-            --ks-key-alias androiddebugkey \
-            --ks-pass pass:android \
-            --key-pass pass:android \
-            --out "$RELEASE_DIR/RAL-release.apk" \
-            "$UNSIGNED"
+          echo "Found APK: $APK"
 
-          rm -f "$UNSIGNED" "$UNSIGNED.idsig" debug.keystore
+          # Kiem tra da duoc sign chua
+          if echo "$APK" | grep -q "unsigned"; then
+            # Chua sign -> sign no
+            ${ANDROID_SDK_ROOT}/build-tools/${ANDROID_BUILD_TOOLS}/apksigner sign \
+              --ks debug.keystore \
+              --ks-key-alias androiddebugkey \
+              --ks-pass pass:android \
+              --key-pass pass:android \
+              --out "$RELEASE_DIR/RAL-release.apk" \
+              "$APK"
+            rm -f "$APK" "$APK.idsig"
+          else
+            # Da duoc sign boi Gradle -> doi ten thoi
+            mv "$APK" "$RELEASE_DIR/RAL-release.apk"
+          fi
+
+          if [ ! -f "$RELEASE_DIR/RAL-release.apk" ]; then
+            echo "::error::Signing failed!"
+            exit 1
+          fi
 
           echo "file=$RELEASE_DIR/RAL-release.apk" >> $GITHUB_OUTPUT
           echo "size=$(du -h "$RELEASE_DIR/RAL-release.apk" | cut -f1)" >> $GITHUB_OUTPUT
-          echo "✅ Signed: $(ls -lh "$RELEASE_DIR/RAL-release.apk")"
+          echo "Done: $(ls -lh "$RELEASE_DIR/RAL-release.apk")"
 
       # ==================== Upload ====================
       - name: Upload APK
