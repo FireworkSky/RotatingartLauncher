@@ -43,6 +43,8 @@ jobs:
         with:
           fetch-depth: 0  # Full history để submodules hoạt động đúng
           lfs: true
+          # 浅克隆节省时间和空间
+          fetch-depth: 1
 
       # === FIX: Convert SSH URLs sang HTTPS (quan trọng!) ===
       - name: Configure Git for submodules
@@ -148,7 +150,7 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
-          cache: 'gradle'
+          cache: 'gradle'  # 与上面的缓存互补
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
