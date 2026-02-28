@@ -1,6 +1,9 @@
 name: Build RAL APK (Debug & Safe)
 
 on:
+  push:
+    branches:
+       - main
   workflow_dispatch:
     inputs:
       build_debug:
