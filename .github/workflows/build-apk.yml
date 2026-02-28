@@ -17,6 +17,19 @@ env:
   ANDROID_BUILD_TOOLS: "36.0.0"
   ANDROID_NDK_VERSION: "28.0.13004108"
   ANDROID_CMAKE_VERSION: "3.22.1"
+  # ===== 新增：Gradle 优化配置 =====
+  GRADLE_OPTS: >-
+    -Dorg.gradle.daemon=false
+    -Dorg.gradle.configureondemand=true
+    -Dorg.gradle.parallel=true
+    -Dorg.gradle.caching=true
+    -Dorg.gradle.workers.max=4
+    -Dkotlin.incremental=true
+    -Dkotlin.compiler.execution.strategy="in-process"
+    -Dfile.encoding=UTF-8
+  # ===== 新增：Android 构建优化 =====
+  ANDROID_NON_TRANSITIVE_R_CLASS: true
+  ANDROID_USE_LATEST_PLATFORM_TOOLS: false
 
 jobs:
   build:
@@ -26,13 +39,11 @@ jobs:
       contents: read
       actions: write
     
-    # 并发控制：防止同时运行多个构建
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}
       cancel-in-progress: false
 
     steps:
-      # ==================== 初始化与缓存 ====================
       - name: Check Disk Space Before
         run: |
           echo "📊 初始磁盘空间:"
@@ -42,45 +53,69 @@ jobs:
         with:
           submodules: recursive
           lfs: true
-          # 浅克隆节省时间和空间
           fetch-depth: 1
 
-      # 多级缓存策略：Gradle Wrapper
-      - name: Cache Gradle Wrapper
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/wrapper
-            ~/.gradle/caches/wrapper
-          key: ${{ runner.os }}-gradle-wrapper-${{ hashFiles('**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-wrapper-
+      # ===== 新增：全局 Gradle 缓存 =====
+      - name: Setup Gradle Cache Directory
+        run: |
+          mkdir -p ~/.gradle/caches
+          mkdir -p ~/.gradle/wrapper
+          mkdir -p ~/.gradle/daemon
+          mkdir -p ~/.gradle/native
 
-      # 多级缓存策略：Gradle 依赖（严格匹配 build.gradle）
-      - name: Cache Gradle Dependencies
+      # 优化：合并并精简缓存策略
+      - name: Cache Gradle (All-in-One)
         uses: actions/cache@v4
         with:
           path: |
             ~/.gradle/caches/modules-2
             ~/.gradle/caches/build-cache-1
-            ~/.gradle/caches/jars-3
-          key: ${{ runner.os }}-gradle-deps-${{ hashFiles('**/*.gradle*', '**/gradle.properties') }}
+            ~/.gradle/caches/transforms-*
+            ~/.gradle/caches/jars-*
+            ~/.gradle/caches/8.*
+            ~/.gradle/daemon
+            ~/.gradle/native
+          key: ${{ runner.os }}-gradle-all-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}-${{ hashFiles('**/libs.versions.toml') }}
           restore-keys: |
-            ${{ runner.os }}-gradle-deps-
+            ${{ runner.os }}-gradle-all-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}-
+            ${{ runner.os }}-gradle-all-
 
-      # 多级缓存策略：Android SDK 组件
-      - name: Cache Android SDK
+      - name: Cache Gradle Wrapper (独立)
+        uses: actions/cache@v4
+        with:
+          path: ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-wrapper-${{ hashFiles('**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-wrapper-
+
+      # 优化：更全面的 Android SDK 缓存
+      - name: Cache Android SDK & NDK
         uses: actions/cache@v4
         with:
           path: |
             /usr/local/lib/android/sdk/build-tools/${{ env.ANDROID_BUILD_TOOLS }}
             /usr/local/lib/android/sdk/platforms/android-${{ env.ANDROID_COMPILE_SDK }}
             /usr/local/lib/android/sdk/ndk/${{ env.ANDROID_NDK_VERSION }}
-          key: ${{ runner.os }}-android-sdk-${{ env.ANDROID_COMPILE_SDK }}-${{ env.ANDROID_BUILD_TOOLS }}-${{ env.ANDROID_NDK_VERSION }}
+            /usr/local/lib/android/sdk/cmake/${{ env.ANDROID_CMAKE_VERSION }}
+            /usr/local/lib/android/sdk/licenses
+            /usr/local/lib/android/sdk/cmdline-tools
+            ~/.android/debug.keystore
+          key: ${{ runner.os }}-android-sdk-${{ env.ANDROID_COMPILE_SDK }}-${{ env.ANDROID_BUILD_TOOLS }}-${{ env.ANDROID_NDK_VERSION }}-${{ env.ANDROID_CMAKE_VERSION }}
           restore-keys: |
+            ${{ runner.os }}-android-sdk-${{ env.ANDROID_COMPILE_SDK }}-
             ${{ runner.os }}-android-sdk-
 
-      # ==================== 环境设置 ====================
+      # 新增：NDK 特定缓存（符号和预编译库）
+      - name: Cache NDK Toolchains
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches/transforms-*/transforms-*
+            ~/android-ndk-r*
+          key: ${{ runner.os }}-ndk-toolchain-${{ env.ANDROID_NDK_VERSION }}-${{ hashFiles('**/CMakeLists.txt', '**/build.gradle') }}
+          restore-keys: |
+            ${{ runner.os }}-ndk-toolchain-${{ env.ANDROID_NDK_VERSION }}-
+
       - name: Setup JDK 21
         uses: actions/setup-java@v4
         with:
@@ -91,16 +126,23 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Install SDK Components
+      - name: Install SDK Components (带缓存检查)
         id: install_sdk
         run: |
           echo "::group::安装 SDK 组件"
-          sdkmanager --install \
-            "platforms;android-${ANDROID_COMPILE_SDK}" \
-            "build-tools;${ANDROID_BUILD_TOOLS}" \
-            "ndk;${ANDROID_NDK_VERSION}" \
-            "cmake;${ANDROID_CMAKE_VERSION}" \
-            2>&1 | tee sdk-install.log
+          # 检查是否已缓存
+          if [ -d "/usr/local/lib/android/sdk/ndk/${ANDROID_NDK_VERSION}" ] && [ -d "/usr/local/lib/android/sdk/build-tools/${ANDROID_BUILD_TOOLS}" ]; then
+            echo "✅ SDK 组件已从缓存恢复，跳过下载"
+            echo "cached=true" >> $GITHUB_OUTPUT
+          else
+            sdkmanager --install \
+              "platforms;android-${ANDROID_COMPILE_SDK}" \
+              "build-tools;${ANDROID_BUILD_TOOLS}" \
+              "ndk;${ANDROID_NDK_VERSION}" \
+              "cmake;${ANDROID_CMAKE_VERSION}" \
+              2>&1 | tee sdk-install.log
+            echo "cached=false" >> $GITHUB_OUTPUT
+          fi
           echo "::endgroup::"
           
           yes | sdkmanager --licenses || true
@@ -109,13 +151,22 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x ./gradlew
 
+      # 新增：预下载依赖（节省构建时的带宽）
+      - name: Pre-download Dependencies
+        run: |
+          echo "::group::预下载依赖"
+          ./gradlew dependencies --configuration compileClasspath --no-daemon --quiet || true
+          ./gradlew dependencies --configuration releaseCompileClasspath --no-daemon --quiet || true
+          echo "✅ 依赖已缓存到本地"
+          echo "::endgroup::"
+
       # ==================== Debug 版本构建 ====================
       - name: Build Developer APK (Debug)
         id: build_debug
         if: github.event.inputs.build_debug == 'true'
         run: |
           echo "::group::构建 Debug 版本"
-          ./gradlew clean assembleDebug --no-daemon --stacktrace 2>&1 | tee debug-build.log
+          ./gradlew clean assembleDebug --no-daemon --build-cache --stacktrace 2>&1 | tee debug-build.log
           echo "::endgroup::"
         continue-on-error: true
 
@@ -124,7 +175,6 @@ jobs:
         run: |
           echo "::error::Debug 构建失败！查看日志: debug-build.log"
           tail -100 debug-build.log || true
-          # 上传错误日志
           exit 1
 
       - name: Prepare Debug APK
@@ -146,7 +196,6 @@ jobs:
             exit 1
           fi
           
-          # 清理多余 APK
           find "$DEBUG_DIR" -name "*.apk" ! -path "$FIRST_APK" -type f -delete
           mv "$FIRST_APK" "$DEBUG_DIR/app-debug.apk"
           
@@ -191,7 +240,7 @@ jobs:
         if: github.event.inputs.build_safe == 'true' && steps.gen_key.outcome == 'success'
         run: |
           echo "::group::构建 Safe Release 版本"
-          ./gradlew assembleRelease --no-daemon --stacktrace 2>&1 | tee release-build.log
+          ./gradlew assembleRelease --no-daemon --build-cache --stacktrace 2>&1 | tee release-build.log
           echo "::endgroup::"
         continue-on-error: true
 
@@ -230,7 +279,6 @@ jobs:
             exit 1
           fi
           
-          # 验证签名
           ${ANDROID_SDK_ROOT}/build-tools/${ANDROID_BUILD_TOOLS}/apksigner verify -v "$RELEASE_DIR/app-release-safe.apk" | head -5
           
           rm -f "$UNSIGNED" "$UNSIGNED.idsig" debug.keystore
@@ -254,44 +302,15 @@ jobs:
         if: always()
         run: |
           echo "::group::清理临时文件"
-          # 清理 Gradle Daemon（如果在运行）
           ./gradlew --stop 2>/dev/null || true
           
-          # 清理构建产物（保留已上传的 artifact）
+          # 只清理构建产物，保留 Gradle 缓存
           rm -rf app/build/outputs/apk/*/temp_* 2>/dev/null || true
           rm -rf app/build/intermediates 2>/dev/null || true
           rm -f *.log debug.keystore 2>/dev/null || true
           
-          # 清理 SDK 安装日志
-          rm -f sdk-install.log keygen.log sign.log 2>/dev/null || true
-          
-          echo "✅ 临时文件已清理"
-
-      - name: System Cleanup
-        if: always()
-        run: |
-          echo "::group::系统级清理"
-          # 清理 apt 缓存
-          sudo apt-get clean || true
-          sudo rm -rf /var/lib/apt/lists/* 2>/dev/null || true
-          
-          # 清理 Docker（如果使用）
-          docker system prune -f 2>/dev/null || true
-          
-          echo "📊 最终磁盘空间:"
-          df -h /
-          echo "::endgroup::"
-
-      - name: Error Log Upload (On Failure)
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-error-logs-${{ github.run_id }}
-          path: |
-            *.log
-            app/build/outputs/**/*.log
-          retention-days: 7
-          if-no-files-found: ignore
+          # 保留 SDK 日志用于调试
+          echo "✅ 临时文件已清理（Gradle 缓存已保留）"
 
       - name: Build Summary & Notification
         if: always()
@@ -300,9 +319,9 @@ jobs:
           echo "📊 构建报告"
           echo "=========================================="
           echo "⏱️  耗时: $(($SECONDS / 60)) 分 $(($SECONDS % 60)) 秒"
+          echo "💾 SDK 缓存: ${{ steps.install_sdk.outputs.cached == 'true' && '命中 ✅' || '未命中 ❌' }}"
           echo ""
           
-          # Debug 状态
           if [ "${{ github.event.inputs.build_debug }}" == "true" ]; then
             if [ "${{ steps.build_debug.outcome }}" == "success" ] && [ "${{ steps.prepare_debug.outcome }}" == "success" ]; then
               echo "✅ Debug 版本: 成功 (${{ steps.prepare_debug.outputs.size }})"
@@ -311,7 +330,6 @@ jobs:
             fi
           fi
           
-          # Safe 状态
           if [ "${{ github.event.inputs.build_safe }}" == "true" ]; then
             if [ "${{ steps.build_safe.outcome }}" == "success" ] && [ "${{ steps.sign_safe.outcome }}" == "success" ]; then
               echo "✅ Safe 版本:  成功 (${{ steps.sign_safe.outputs.size }}) ⭐ 推荐"
@@ -329,10 +347,17 @@ jobs:
           echo "     无优化，可调试，适合排查问题"
           echo ""
           
-          if [ "${{ job.status }}" == "failure" ]; then
-            echo "⚠️  构建遇到错误，已上传日志: build-error-logs-${{ github.run_id }}"
-          fi
-          
           echo "📥 下载地址:"
           echo "   ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
           echo "=========================================="
+
+      - name: Error Log Upload (On Failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-error-logs-${{ github.run_id }}
+          path: |
+            *.log
+            app/build/outputs/**/*.log
+          retention-days: 7
+          if-no-files-found: ignore
