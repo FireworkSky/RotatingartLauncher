@@ -89,8 +89,15 @@ actual object RendererRegistry {
                 env["MOBILEGLUES_GLES_VERSION"] = "3.2"
                 env["FNA3D_MOJOSHADER_PROFILE"] = "glsles3"
                 env["MG_DIR_PATH"] =
-                    Path(Environment.getExternalStorageDirectory().absolutePath).resolve("MG").toString()
+                  // Xóa Path(Environment.getExternalStorageDirectory().absolutePath).resolve("MG").toString()
+                  // Thêm 
+                File(..., "MG").absolutePath
+                env["MG_DIR_PATH"] = File(
+                    Environment.getExternalStorageDirectory().absolutePath,
+                    "MG"
+                ).absolutePath
             }
+        )
         )
 
         register(
