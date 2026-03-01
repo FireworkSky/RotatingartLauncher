@@ -42,13 +42,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.koin.java.KoinJavaComponent
 import java.io.File
-import java.nio.file.Files
-import java.nio.file.Paths
+import java.io.FileOutputStream
 
-/**
- * 补丁管理对话框 - Compose 版本
- * 横屏双栏布局：左侧游戏列表，右侧补丁列表
- */
 @Composable
 fun PatchManagementDialogCompose(
     onDismiss: () -> Unit
@@ -68,19 +63,16 @@ fun PatchManagementDialogCompose(
     var selectedGameIndex by remember { mutableIntStateOf(-1) }
     var patches by remember { mutableStateOf<List<Patch>>(emptyList()) }
     
-    // 加载游戏列表
     LaunchedEffect(Unit) {
         games = gameRepository?.games?.value ?: emptyList()
     }
     
-    // 当选择游戏改变时加载补丁
     LaunchedEffect(selectedGame) {
         patches = selectedGame?.let { game ->
             patchManager?.getApplicablePatches(game.gameId) ?: emptyList()
         } ?: emptyList()
     }
     
-    // 文件选择器
     val patchFilePicker = rememberLauncherForActivityResult(
         ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
@@ -88,7 +80,6 @@ fun PatchManagementDialogCompose(
             scope.launch {
                 importPatchFile(context, patchManager, it) { success ->
                     if (success) {
-                        // 刷新补丁列表
                         selectedGame?.let { game ->
                             patches = patchManager?.getApplicablePatches(game.gameId) ?: emptyList()
                         }
@@ -120,7 +111,6 @@ fun PatchManagementDialogCompose(
                     .fillMaxSize()
                     .padding(24.dp)
             ) {
-                // 顶部标题栏
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -137,7 +127,6 @@ fun PatchManagementDialogCompose(
                     Row {
                         TextButton(
                             onClick = {
-                                // 显示导入说明对话框后打开选择器
                                 patchFilePicker.launch("application/zip")
                             }
                         ) {
@@ -156,14 +145,12 @@ fun PatchManagementDialogCompose(
                     }
                 }
                 
-                // 主内容区域 - 横向双栏
                 Row(
                     modifier = Modifier
                         .fillMaxSize()
                         .weight(1f),
                     horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    // 左侧：游戏列表
                     GameListPanel(
                         games = games,
                         selectedIndex = selectedGameIndex,
@@ -174,7 +161,6 @@ fun PatchManagementDialogCompose(
                         modifier = Modifier.weight(1f)
                     )
                     
-                    // 右侧：补丁列表
                     PatchListPanel(
                         patches = patches,
                         selectedGame = selectedGame,
@@ -231,7 +217,7 @@ private fun GameListPanel(
                     itemsIndexed(games) { index, game ->
                         GameSelectableItem(
                             game = game,
-                            isSelected = index == selectedIndex,
+                            isSelected = index == selectedIndex, // FIXED
                             onClick = { onGameSelected(game, index) }
                         )
                     }
@@ -273,7 +259,6 @@ private fun GameSelectableItem(
                 .padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // 游戏图标
             Box(
                 modifier = Modifier
                     .size(40.dp)
@@ -281,7 +266,7 @@ private fun GameSelectableItem(
                     .background(MaterialTheme.colorScheme.surfaceVariant),
                 contentAlignment = Alignment.Center
             ) {
-                val iconPathFull = game.iconPathFull  // Use absolute path
+                val iconPathFull = game.iconPathFull
                 if (!iconPathFull.isNullOrEmpty() && File(iconPathFull).exists()) {
                     val bitmap = remember(iconPathFull) {
                         BitmapFactory.decodeFile(iconPathFull)?.asImageBitmap()
@@ -400,9 +385,8 @@ private fun PatchItem(
     patchManager: PatchManager?,
     context: android.content.Context
 ) {
-    // Use absolute path for patch config, not relative path
     val gameAsmPath = remember(selectedGame) {
-        selectedGame.gameExePathFull?.let { Paths.get(it) } ?: Paths.get(selectedGame.gameExePathRelative)
+        selectedGame.gameExePathFull?.let { File(it) } ?: File(selectedGame.gameExePathRelative)
     }
     var isEnabled by remember(patch, selectedGame) {
         mutableStateOf(patchManager?.isPatchEnabled(gameAsmPath, patch.manifest.id) ?: false)
@@ -474,13 +458,13 @@ private suspend fun importPatchFile(
     withContext(Dispatchers.IO) {
         try {
             TemporaryFileAcquirer().use { tfa ->
-                val tempPatchPath = tfa.acquireTempFilePath("imported_patch.zip")
+                val tempPatchFile = tfa.acquireTempFilePath("imported_patch.zip")
                 context.contentResolver.openInputStream(uri)?.use { inputStream ->
-                    Files.newOutputStream(tempPatchPath).use { outputStream ->
+                    FileOutputStream(tempPatchFile).use { outputStream ->
                         StreamUtils.transferTo(inputStream, outputStream)
                     }
                 }
-                val result = patchManager?.installPatch(tempPatchPath) ?: false
+                val result = patchManager?.installPatch(tempPatchFile) ?: false
                 withContext(Dispatchers.Main) {
                     if (result) {
                         Toast.makeText(context, R.string.patch_dialog_import_successful, Toast.LENGTH_SHORT).show()

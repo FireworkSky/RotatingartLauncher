@@ -11,9 +11,16 @@ compose.resources {
 }
 
 kotlin {
-    androidTarget()
+    androidTarget {
+        // Cấu hình compiler options cho Android nếu cần thiết
+        compilerOptions {
+            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+        }
+    }
 
-    jvmToolchain(21)
+    // THAY ĐỔI 1: Hạ xuống Java 17
+    // Java 21 có thể chạy được nhưng Java 17 ổn định hơn cho Android 7 khi dùng KMP
+    jvmToolchain(17)
 
     sourceSets {
         val commonMain by getting {
@@ -30,9 +37,11 @@ kotlin {
                 // Kotlinx
                 implementation(libs.kotlinx.coroutines.core)
                 implementation(libs.kotlinx.serialization.json)
+                
+                // DateTime: Rất quan trọng cần Desugaring trên Android < 8
                 implementation(libs.kotlinx.datetime)
 
-                // Haze (Glassmorphism blur)
+                // Haze (Glassmorphism blur) - Lưu ý: Sẽ không có blur trên Android 7
                 implementation(libs.haze)
                 implementation(libs.haze.materials)
 
@@ -64,6 +73,22 @@ android {
     compileSdk = 36
 
     defaultConfig {
-        minSdk = 28
+        // THAY ĐỔI 2: Hạ minSdk xuống 25 (Android 7.1.1)
+        minSdk = 25
     }
+
+    // THAY ĐỔI 3: Cấu hình Java và Desugaring
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+        // Bắt buộc bật để dùng kotlinx-datetime và các API hiện đại trên Android 7
+        isCoreLibraryDesugaringEnabled = true
+    }
+}
+
+// THAY ĐỔI 4: Thêm thư viện Desugaring cho module Shared
+dependencies {
+    // Bạn có thể thay bằng alias libs.desugar.jdk.libs nếu đã khai báo trong toml
+    // Hoặc dùng trực tiếp chuỗi này:
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.2")
 }

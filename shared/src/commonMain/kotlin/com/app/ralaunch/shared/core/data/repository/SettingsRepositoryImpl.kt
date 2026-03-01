@@ -11,19 +11,8 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
-import kotlin.io.path.Path
-import kotlin.io.path.createDirectories
-import kotlin.io.path.exists
-import kotlin.io.path.moveTo
-import kotlin.io.path.name
-import kotlin.io.path.readText
-import kotlin.io.path.writeText
+import java.io.File  // ← Thay kotlin.io.path.* bằng java.io.File
 
-/**
- * 设置仓库实现（V2）
- *
- * 单一持久化来源：JSON 文件（settings.json）。
- */
 class SettingsRepositoryImpl(
     private val storagePathsProvider: StoragePathsProvider
 ) : SettingsRepositoryV2 {
@@ -35,7 +24,9 @@ class SettingsRepositoryImpl(
         encodeDefaults = true
     }
 
-    private val settingsFilePathFull = Path(storagePathsProvider.settingsFilePathFull())
+    // Dùng java.io.File thay vì kotlin.io.path.Path
+    private val settingsFile = File(storagePathsProvider.settingsFilePathFull())
+
     @Volatile
     private var currentSettings: AppSettings = loadSettingsFromDisk()
     private val _settings = MutableStateFlow(currentSettings.copy())
@@ -68,9 +59,9 @@ class SettingsRepositoryImpl(
     private fun loadSettingsFromDisk(): AppSettings {
         return runCatching {
             ensureParentDirectory()
-            if (!settingsFilePathFull.exists()) return@runCatching AppSettings.Default
+            if (!settingsFile.exists()) return@runCatching AppSettings.Default
 
-            val raw = settingsFilePathFull.readText()
+            val raw = settingsFile.readText()
             json.decodeFromString<AppSettings>(raw)
         }.getOrElse {
             backupCorruptedFile()
@@ -82,23 +73,33 @@ class SettingsRepositoryImpl(
         ensureParentDirectory()
         val serialized = json.encodeToString(settings)
 
-        val tempPathFull = settingsFilePathFull.resolveSibling("${settingsFilePathFull.name}.tmp")
-        tempPathFull.writeText(serialized)
-        tempPathFull.moveTo(settingsFilePathFull, overwrite = true)
+        // Dùng File thay vì Path
+        val tempFile = File(settingsFile.parent, "${settingsFile.name}.tmp")
+        tempFile.writeText(serialized)
+
+        // Atomic move
+        if (!tempFile.renameTo(settingsFile)) {
+            // Nếu renameTo thất bại (khác partition), dùng copy + delete
+            settingsFile.writeText(serialized)
+            tempFile.delete()
+        }
+
         return settings
     }
 
     private fun ensureParentDirectory() {
-        settingsFilePathFull.parent?.createDirectories()
+        settingsFile.parentFile?.mkdirs()
     }
 
     private fun backupCorruptedFile() {
         runCatching {
-            if (!settingsFilePathFull.exists()) return
-            val backupPathFull = settingsFilePathFull.resolveSibling(
-                "${settingsFilePathFull.name}.corrupt.${System.currentTimeMillis()}"
+            if (!settingsFile.exists()) return
+            val backupFile = File(
+                settingsFile.parent,
+                "${settingsFile.name}.corrupt.${System.currentTimeMillis()}"
             )
-            settingsFilePathFull.moveTo(backupPathFull, overwrite = true)
+            // Dùng renameTo thay vì moveTo
+            settingsFile.renameTo(backupFile)
         }
     }
 }

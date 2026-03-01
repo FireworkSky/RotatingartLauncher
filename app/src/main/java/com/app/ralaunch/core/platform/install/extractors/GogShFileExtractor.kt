@@ -4,43 +4,41 @@ import android.util.Log
 import com.app.ralaunch.R
 import com.app.ralaunch.RaLaunchApp
 import com.app.ralaunch.core.common.util.TemporaryFileAcquirer
+import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.IOException
 import java.io.InputStream
 import java.io.RandomAccessFile
 import java.nio.charset.StandardCharsets
-import java.nio.file.Files
-import java.nio.file.Path
-import java.nio.file.Paths
 import java.util.zip.ZipFile
 
 /**
- * GOG .sh 文件提取器
+ * GOG .sh File Extractor
  */
 class GogShFileExtractor(
-    sourcePath: Path,
-    destinationPath: Path,
+    sourceFile: File,
+    destinationFile: File,
     listener: ExtractorCollection.ExtractionListener?
 ) : ExtractorCollection.IExtractor {
 
-    private lateinit var sourcePath: Path
-    private lateinit var destinationPath: Path
+    private lateinit var sourceFile: File
+    private lateinit var destinationFile: File
     private var extractionListener: ExtractorCollection.ExtractionListener? = null
     override var state: HashMap<String, Any?> = hashMapOf()
 
     init {
-        setSourcePath(sourcePath)
-        setDestinationPath(destinationPath)
+        setSourcePath(sourceFile)
+        setDestinationPath(destinationFile)
         setExtractionListener(listener)
     }
 
-    override fun setSourcePath(sourcePath: Path) {
-        this.sourcePath = sourcePath
+    override fun setSourcePath(sourcePath: File) {
+        this.sourceFile = sourcePath
     }
 
-    override fun setDestinationPath(destinationPath: Path) {
-        this.destinationPath = destinationPath
+    override fun setDestinationPath(destinationPath: File) {
+        this.destinationFile = destinationPath
     }
 
     override fun setExtractionListener(listener: ExtractorCollection.ExtractionListener?) {
@@ -50,26 +48,26 @@ class GogShFileExtractor(
     override fun extract(): Boolean {
         return try {
             TemporaryFileAcquirer().use { tfa ->
-                // 获取 MakeSelf SH 文件的头部信息
+                // Get header info from MakeSelf SH file
                 extractionListener?.onProgress(
                     RaLaunchApp.getInstance().getString(R.string.extract_gog_script),
                     0.01f,
                     state
                 )
-                val shFile = MakeSelfShFile.parse(sourcePath)
-                    ?: throw IOException("解析 MakeSelf Sh 文件头部失败")
+                val shFile = MakeSelfShFile.parse(sourceFile)
+                    ?: throw IOException("Failed to parse MakeSelf Sh file header")
 
                 Log.d(TAG, "Successfully parsed header - offset: ${shFile.offset}, filesize: ${shFile.filesize}")
 
-                FileInputStream(sourcePath.toFile()).use { fis ->
-                    Log.d(TAG, "Starting extraction: $sourcePath to $destinationPath")
+                FileInputStream(sourceFile).use { fis ->
+                    Log.d(TAG, "Starting extraction: $sourceFile to $destinationFile")
 
-                    Files.createDirectories(destinationPath)
+                    destinationFile.mkdirs()
                     val srcChannel = fis.channel
 
                     // sanity check
                     if (shFile.offset + shFile.filesize > srcChannel.size()) {
-                        throw IOException("MakeSelf Sh 文件头部信息无效，超出文件总大小")
+                        throw IOException("MakeSelf Sh file header is invalid, exceeds total file size")
                     }
 
                     extractionListener?.onProgress(
@@ -78,11 +76,11 @@ class GogShFileExtractor(
                         state
                     )
 
-                    // 提取 mojosetup.tar.gz
-                    val mojosetupPath = tfa.acquireTempFilePath(EXTRACTED_MOJOSETUP_TAR_GZ_FILENAME)
-                    FileOutputStream(mojosetupPath.toFile()).use { mojosetupFos ->
+                    // Extract mojosetup.tar.gz
+                    val mojosetupFile = tfa.acquireTempFilePath(EXTRACTED_MOJOSETUP_TAR_GZ_FILENAME)
+                    FileOutputStream(mojosetupFile).use { mojosetupFos ->
                         val mojosetupChannel = mojosetupFos.channel
-                        Log.d(TAG, "Extracting mojosetup.tar.gz to $mojosetupPath")
+                        Log.d(TAG, "Extracting mojosetup.tar.gz to $mojosetupFile")
                         srcChannel.transferTo(shFile.offset, shFile.filesize, mojosetupChannel)
                     }
 
@@ -92,11 +90,11 @@ class GogShFileExtractor(
                         state
                     )
 
-                    // 提取 game_data.zip
-                    val gameDataPath = tfa.acquireTempFilePath(EXTRACTED_GAME_DATA_ZIP_FILENAME)
-                    FileOutputStream(gameDataPath.toFile()).use { gameDataFos ->
+                    // Extract game_data.zip
+                    val gameDataFile = tfa.acquireTempFilePath(EXTRACTED_GAME_DATA_ZIP_FILENAME)
+                    FileOutputStream(gameDataFile).use { gameDataFos ->
                         val gameDataChannel = gameDataFos.channel
-                        Log.d(TAG, "Extracting game_data.zip to $gameDataPath")
+                        Log.d(TAG, "Extracting game_data.zip to $gameDataFile")
                         srcChannel.transferTo(
                             shFile.offset + shFile.filesize,
                             srcChannel.size() - (shFile.offset + shFile.filesize),
@@ -111,10 +109,10 @@ class GogShFileExtractor(
                     )
                     Log.d(TAG, "Extraction from MakeSelf SH file completed successfully")
 
-                    // 解压 game_data.zip
+                    // Decompress game_data.zip
                     Log.d(TAG, "Trying to extract game_data.zip...")
-                    val gdzf = GameDataZipFile.parse(gameDataPath)
-                        ?: throw IOException("解析 game_data.zip 失败")
+                    val gdzf = GameDataZipFile.parse(gameDataFile)
+                        ?: throw IOException("Failed to parse game_data.zip")
 
                     extractionListener?.onProgress(
                         RaLaunchApp.getInstance().getString(R.string.extract_gog_decompress_game_data),
@@ -122,11 +120,11 @@ class GogShFileExtractor(
                         state
                     )
 
-                    val gamePath = destinationPath.resolve(Paths.get("GoG Games", gdzf.id))
+                    val gameDir = File(File(destinationFile, "GoG Games"), gdzf.id ?: "")
                     val zipExtractor = BasicSevenZipExtractor(
-                        gameDataPath,
-                        Paths.get("data/noarch/game"),
-                        gamePath,
+                        gameDataFile,
+                        File("data/noarch/game"),
+                        gameDir,
                         object : ExtractorCollection.ExtractionListener {
                             override fun onProgress(message: String, progress: Float, state: HashMap<String, Any?>?) {
                                 extractionListener?.onProgress(message, 0.1f + progress * 0.9f, state)
@@ -142,15 +140,15 @@ class GogShFileExtractor(
                     zipExtractor.state = state
                     val isGameDataExtracted = zipExtractor.extract()
                     if (!isGameDataExtracted) {
-                        throw IOException("解压 game_data.zip 失败")
+                        throw IOException("Failed to decompress game_data.zip")
                     }
 
-                    // 提取图标
+                    // Extract icon
                     try {
                         val iconExtractor = BasicSevenZipExtractor(
-                            gameDataPath,
-                            Paths.get("data/noarch/support"),
-                            gamePath.resolve("support"),
+                            gameDataFile,
+                            File("data/noarch/support"),
+                            File(gameDir, "support"),
                             null
                         )
                         iconExtractor.extract()
@@ -160,7 +158,7 @@ class GogShFileExtractor(
                     val completedMessage = RaLaunchApp.getInstance()
                         .getString(R.string.extract_gog_game_data_complete)
                     extractionListener?.onProgress(completedMessage, 1.0f, state)
-                    state[STATE_KEY_GAME_PATH] = gamePath
+                    state[STATE_KEY_GAME_PATH] = gameDir
                     state[STATE_KEY_GAME_DATA_ZIP_FILE] = gdzf
                     extractionListener?.onComplete(completedMessage, state)
 
@@ -179,19 +177,19 @@ class GogShFileExtractor(
     }
 
     /**
-     * MakeSelf SH 文件解析器
+     * MakeSelf SH File Parser
      */
     data class MakeSelfShFile(
         val offset: Long,
         val filesize: Long
     ) {
         companion object {
-            fun parse(filePath: Path): MakeSelfShFile? {
+            fun parse(file: File): MakeSelfShFile? {
                 val headerBuffer = ByteArray(HEADER_SIZE)
                 val headerContent: String
 
                 try {
-                    FileInputStream(filePath.toFile()).use { fis ->
+                    FileInputStream(file).use { fis ->
                         val bytesRead = fis.read(headerBuffer)
                         Log.d(TAG, "Read $bytesRead bytes from header")
                         headerContent = String(headerBuffer, 0, bytesRead, StandardCharsets.UTF_8)
@@ -286,7 +284,7 @@ class GogShFileExtractor(
     }
 
     /**
-     * 游戏数据 ZIP 文件解析器
+     * Game Data ZIP File Parser
      */
     data class GameDataZipFile(
         var id: String? = null,
@@ -307,8 +305,8 @@ class GogShFileExtractor(
             const val GAMEINFO_PATH = "data/noarch/gameinfo"
             const val ICON_PATH = "data/noarch/support/icon.png"
 
-            fun parseFromGogShFile(filePath: Path): GameDataZipFile? {
-                val shFile = MakeSelfShFile.parse(filePath) ?: run {
+            fun parseFromGogShFile(file: File): GameDataZipFile? {
+                val shFile = MakeSelfShFile.parse(file) ?: run {
                     Log.e(TAG, "MakeSelf SH file is null")
                     return null
                 }
@@ -317,8 +315,8 @@ class GogShFileExtractor(
                     TemporaryFileAcquirer().use { tfa ->
                         val tempZipFile = tfa.acquireTempFilePath("temp_game_data.zip")
 
-                        RandomAccessFile(filePath.toFile(), "r").use { raf ->
-                            FileOutputStream(tempZipFile.toFile()).use { fos ->
+                        RandomAccessFile(file, "r").use { raf ->
+                            FileOutputStream(tempZipFile).use { fos ->
                                 val gameDataStart = shFile.offset + shFile.filesize
                                 raf.seek(gameDataStart)
 
@@ -333,14 +331,14 @@ class GogShFileExtractor(
                         parse(tempZipFile)
                     }
                 } catch (ex: Exception) {
-                    Log.e(TAG, "Error when reading GOG SH file: $filePath", ex)
+                    Log.e(TAG, "Error when reading GOG SH file: $file", ex)
                     null
                 }
             }
 
-            fun parse(filePath: Path): GameDataZipFile? {
+            fun parse(file: File): GameDataZipFile? {
                 return try {
-                    ZipFile(filePath.toFile()).use { zip ->
+                    ZipFile(file).use { zip ->
                         val gameDataZipFile = GameDataZipFile()
 
                         val gameInfoContent = getFileContent(zip, GAMEINFO_PATH)
@@ -371,7 +369,7 @@ class GogShFileExtractor(
             private fun getFileContent(zip: ZipFile, entryPath: String): String? {
                 val entry = zip.getEntry(entryPath)
                 if (entry == null) {
-                    Log.w(TAG, "未在压缩包中找到 $entryPath")
+                    Log.w(TAG, "Entry not found in zip: $entryPath")
                     return null
                 }
                 return try {

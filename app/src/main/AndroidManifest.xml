@@ -1,35 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:enableOnBackInvokedCallback="false">
+    xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
-    <!-- VPN 权限 (EasyTier 联机功能) -->
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" tools:targetApi="34" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-    <!-- Android 10+ 所有文件访问权限 -->
-    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" tools:targetApi="30" />
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
-    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO"/>
-    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
-    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO"/>
-    <!-- 振动权限 -->
+    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" tools:targetApi="33" />
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" tools:targetApi="33" />
+    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" tools:targetApi="33" />
     <uses-permission android:name="android.permission.VIBRATE" />
-    <!-- 前台服务权限 (Host & Play 服务器进程) -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
-    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-    <!-- gles 声明 -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" tools:targetApi="34" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" tools:targetApi="33" />
+
     <uses-feature android:glEsVersion="0x00020000" android:required="true" />
+
+    <uses-sdk tools:overrideLibrary="com.app.ralaunch.shared" />
 
     <application
         android:name=".RaLaunchApp"
         android:allowBackup="true"
-        android:dataExtractionRules="@xml/data_extraction_rules"
-        android:enableOnBackInvokedCallback="false"
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
@@ -39,7 +34,7 @@
         android:usesCleartextTraffic="true"
         android:networkSecurityConfig="@xml/network_security_config"
         tools:targetApi="31">
-        <!-- 初始化 Activity - 应用启动入口 -->
+
         <activity
             android:name=".feature.init.InitializationActivity"
             android:configChanges="orientation|screenSize|keyboardHidden|screenLayout|smallestScreenSize|uiMode"
@@ -52,86 +47,75 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        
-        <!-- 主活动 (纯 Compose 版本) -->
+
         <activity
             android:name=".feature.main.MainActivityCompose"
             android:configChanges="orientation|screenSize|keyboardHidden|screenLayout|smallestScreenSize|uiMode"
             android:exported="false"
             android:screenOrientation="sensorLandscape"
             android:theme="@style/FullScreenTheme"
-            android:windowSoftInputMode="adjustPan" /> <!-- 添加 GameActivity 声明 -->
+            android:windowSoftInputMode="adjustPan" />
+
         <activity
             android:name=".feature.game.legacy.GameActivity"
-            android:exported="true"
             android:configChanges="orientation|keyboardHidden|screenSize|screenLayout|smallestScreenSize|uiMode"
+            android:exported="true"
+            android:hardwareAccelerated="true"
+            android:process=":game"
             android:screenOrientation="sensorLandscape"
             android:theme="@style/GameTheme"
-            android:hardwareAccelerated="true"
-            android:windowSoftInputMode="adjustPan"
-            android:process=":game">
-            <!-- 启用硬件加速以支持 RippleDrawable 等 Material 组件动画 -->
-            <!-- 强制 SDL 使用横屏方向 -->
+            android:windowSoftInputMode="adjustPan">
             <meta-data android:name="SDL_ORIENTATION" android:value="Landscape" />
             <meta-data android:name="SDL_HINT_ORIENTATIONS" android:value="LandscapeLeft LandscapeRight" />
         </activity>
 
-        <!-- 控制布局编辑器 -->
         <activity
             android:name=".feature.controls.editors.ControlEditorActivity"
             android:exported="false"
             android:label="@string/control_editor_activity_label"
-            android:screenOrientation="sensorLandscape"
             android:launchMode="singleTop"
+            android:screenOrientation="sensorLandscape"
             android:theme="@style/Theme.raLaunch" />
 
-        <!-- DocumentsProvider 唤醒活动 -->
         <activity
             android:name=".core.platform.android.provider.RaLaunchWakeUpActivity"
             android:exported="false"
             android:theme="@android:style/Theme.NoDisplay" />
 
-        <!-- 崩溃报告活动 -->
         <activity
             android:name=".feature.crash.CrashReportActivity"
+            android:configChanges="orientation|screenSize|keyboardHidden|screenLayout|smallestScreenSize|uiMode"
             android:exported="false"
-            android:theme="@style/Theme.raLaunch"
             android:launchMode="singleTask"
             android:screenOrientation="sensorLandscape"
-            android:configChanges="orientation|screenSize|keyboardHidden|screenLayout|smallestScreenSize|uiMode" />
+            android:theme="@style/Theme.raLaunch" />
 
-        <!-- 赞助商展示页面 -->
         <activity
             android:name=".feature.sponsor.SponsorsActivity"
+            android:configChanges="orientation|screenSize|keyboardHidden|screenLayout|smallestScreenSize|uiMode"
             android:exported="false"
-            android:theme="@style/Theme.raLaunch"
             android:screenOrientation="sensorLandscape"
-            android:configChanges="orientation|screenSize|keyboardHidden|screenLayout|smallestScreenSize|uiMode" />
+            android:theme="@style/Theme.raLaunch" />
 
-        <!-- 通用进程启动服务 -->
         <service
             android:name=".core.platform.android.ProcessLauncherService"
-            android:process=":launcher"
             android:exported="false"
-            android:foregroundServiceType="dataSync" />
+            android:foregroundServiceType="dataSync"
+            android:process=":launcher"
+            tools:targetApi="29" />
 
-        <!-- EasyTier VPN 服务 (联机功能) -->
-        <!-- 必须运行在 :game 进程中，与游戏共享 TUN fd -->
         <service
             android:name=".core.platform.network.easytier.EasyTierVpnService"
-            android:process=":game"
             android:exported="false"
             android:foregroundServiceType="specialUse"
-            android:permission="android.permission.BIND_VPN_SERVICE">
+            android:permission="android.permission.BIND_VPN_SERVICE"
+            android:process=":game"
+            tools:targetApi="29">
             <intent-filter>
                 <action android:name="android.net.VpnService" />
             </intent-filter>
-            <property
-                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
-                android:value="vpn" />
         </service>
 
-        <!-- RaLaunch 文件提供器 - 用于安全地分享文件 -->
         <provider
             android:name=".core.platform.android.provider.RaLaunchFileProvider"
             android:authorities="com.app.ralaunch.fileprovider"
@@ -142,7 +126,6 @@
                 android:resource="@xml/file_paths" />
         </provider>
 
-        <!-- RaLaunch 文档提供器 - 在系统文件管理器中显示 -->
         <provider
             android:name=".core.platform.android.provider.RaLaunchDocumentsProvider"
             android:authorities="com.app.ralaunch.documents"
@@ -153,6 +136,7 @@
                 <action android:name="android.content.action.DOCUMENTS_PROVIDER" />
             </intent-filter>
         </provider>
+
     </application>
 
 </manifest>

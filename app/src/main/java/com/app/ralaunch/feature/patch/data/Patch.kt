@@ -1,38 +1,36 @@
 package com.app.ralaunch.feature.patch.data
 
 import android.util.Log
-import java.nio.file.Files
-import java.nio.file.Path
+import java.io.File  // Thay java.nio.file.*
 
-/**
- * 补丁数据类
- */
 data class Patch(
-    val patchPath: Path,
+    val patchDir: File,
     val manifest: PatchManifest
 ) {
-    fun getEntryAssemblyAbsolutePath(): Path {
-        return patchPath.resolve(manifest.entryAssemblyFile).toAbsolutePath().normalize()
+    fun getEntryAssemblyAbsolutePath(): File {
+        return File(patchDir, manifest.entryAssemblyFile).canonicalFile
     }
 
     companion object {
         private const val TAG = "Patch"
 
         @JvmStatic
-        fun fromPatchPath(patchPath: Path): Patch? {
-            val normalizedPath = patchPath.normalize()
-            if (!Files.exists(normalizedPath) || !Files.isDirectory(normalizedPath)) {
-                Log.w(TAG, "fromPatchPath: Patch path does not exist or is not a directory: $normalizedPath")
+        fun fromPatchPath(patchDir: File): Patch? {
+            val normalizedDir = patchDir.canonicalFile
+            if (!normalizedDir.exists() || !normalizedDir.isDirectory) {
+                Log.w(TAG, "fromPatchPath: Path does not exist or is not a directory: $normalizedDir")
                 return null
             }
 
-            val manifest = PatchManifest.fromJson(normalizedPath.resolve(PatchManifest.MANIFEST_FILE_NAME))
+            val manifest = PatchManifest.fromJson(
+                File(normalizedDir, PatchManifest.MANIFEST_FILE_NAME)
+            )
             if (manifest == null) {
-                Log.w(TAG, "fromPatchPath: Failed to load manifest from path: $normalizedPath")
+                Log.w(TAG, "fromPatchPath: Failed to load manifest from: $normalizedDir")
                 return null
             }
 
-            return Patch(normalizedPath, manifest)
+            return Patch(normalizedDir, manifest)
         }
     }
 }

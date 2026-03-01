@@ -6,41 +6,30 @@ import com.app.ralaunch.RaLaunchApp
 import com.app.ralaunch.core.platform.runtime.RuntimeLibraryLoader
 import net.sf.sevenzipjbinding.*
 import net.sf.sevenzipjbinding.impl.RandomAccessFileInStream
+import java.io.File
 import java.io.FileNotFoundException
 import java.io.FileOutputStream
 import java.io.IOException
 import java.io.RandomAccessFile
-import java.nio.file.Files
-import java.nio.file.Path
-import java.nio.file.Paths
 
-/**
- * 基础 7-Zip 解压器
- */
 class BasicSevenZipExtractor : ExtractorCollection.IExtractor {
-    
+
     companion object {
         private const val TAG = "BasicSevenZipExtractor"
-        
+
         @Volatile
         private var libraryLoaded = false
-        
-        /**
-         * 确保 7-Zip 原生库已加载
-         * 7-Zip 库保留在 APK 中，直接使用 System.loadLibrary 加载
-         */
+
         @Synchronized
         fun ensureLibraryLoaded(): Boolean {
             if (libraryLoaded) return true
-            
+
             try {
-                // 7-Zip 库在 APK 的 lib 目录中，直接加载
                 System.loadLibrary("7-Zip-JBinding")
                 libraryLoaded = true
                 Log.i(TAG, "7-Zip native library loaded successfully via System.loadLibrary")
             } catch (e: UnsatisfiedLinkError) {
                 Log.e(TAG, "Failed to load 7-Zip native library: ${e.message}")
-                // 尝试从 runtime_libs 加载作为备选
                 try {
                     val context = RaLaunchApp.getInstance()
                     libraryLoaded = RuntimeLibraryLoader.load7Zip(context)
@@ -57,45 +46,45 @@ class BasicSevenZipExtractor : ExtractorCollection.IExtractor {
         }
     }
 
-    private lateinit var sourcePath: Path
-    private var sourceExtractionPrefix: Path = Paths.get("")
-    private lateinit var destinationPath: Path
+    private lateinit var sourceFile: File
+    private var sourceExtractionPrefix: File = File("")
+    private lateinit var destinationFile: File
     private var extractionListener: ExtractorCollection.ExtractionListener? = null
     override var state: HashMap<String, Any?> = hashMapOf()
 
-    constructor(sourcePath: Path, destinationPath: Path) {
-        setSourcePath(sourcePath)
-        setDestinationPath(destinationPath)
+    constructor(sourceFile: File, destinationFile: File) {
+        setSourcePath(sourceFile)
+        setDestinationPath(destinationFile)
     }
 
-    constructor(sourcePath: Path, destinationPath: Path, listener: ExtractorCollection.ExtractionListener?) {
-        setSourcePath(sourcePath)
-        setDestinationPath(destinationPath)
+    constructor(sourceFile: File, destinationFile: File, listener: ExtractorCollection.ExtractionListener?) {
+        setSourcePath(sourceFile)
+        setDestinationPath(destinationFile)
         setExtractionListener(listener)
     }
 
     constructor(
-        sourcePath: Path,
-        sourceExtractionPrefix: Path,
-        destinationPath: Path,
+        sourceFile: File,
+        sourceExtractionPrefix: File,
+        destinationFile: File,
         listener: ExtractorCollection.ExtractionListener?
     ) {
-        setSourcePath(sourcePath)
-        setDestinationPath(destinationPath)
+        setSourcePath(sourceFile)
+        setDestinationPath(destinationFile)
         setExtractionListener(listener)
         setSourceExtractionPrefix(sourceExtractionPrefix)
     }
 
-    override fun setSourcePath(sourcePath: Path) {
-        this.sourcePath = sourcePath
+    override fun setSourcePath(sourcePath: File) {
+        this.sourceFile = sourcePath
     }
 
-    fun setSourceExtractionPrefix(sourceExtractionPrefix: Path) {
+    fun setSourceExtractionPrefix(sourceExtractionPrefix: File) {
         this.sourceExtractionPrefix = sourceExtractionPrefix
     }
 
-    override fun setDestinationPath(destinationPath: Path) {
-        this.destinationPath = destinationPath
+    override fun setDestinationPath(destinationPath: File) {
+        this.destinationFile = destinationPath
     }
 
     override fun setExtractionListener(listener: ExtractorCollection.ExtractionListener?) {
@@ -103,7 +92,6 @@ class BasicSevenZipExtractor : ExtractorCollection.IExtractor {
     }
 
     override fun extract(): Boolean {
-        // 确保 7-Zip 原生库已加载
         if (!ensureLibraryLoaded()) {
             extractionListener?.onError(
                 RaLaunchApp.getInstance().getString(R.string.extract_7zip_library_load_failed),
@@ -112,13 +100,13 @@ class BasicSevenZipExtractor : ExtractorCollection.IExtractor {
             )
             return false
         }
-        
+
         return try {
-            if (!Files.exists(destinationPath)) {
-                Files.createDirectories(destinationPath)
+            if (!destinationFile.exists()) {
+                destinationFile.mkdirs()
             }
 
-            RandomAccessFile(sourcePath.toString(), "r").use { raf ->
+            RandomAccessFile(sourceFile, "r").use { raf ->
                 RandomAccessFileInStream(raf).use { inStream ->
                     SevenZip.openInArchive(null, inStream).use { archive ->
                         val totalItems = archive.numberOfItems
@@ -145,15 +133,12 @@ class BasicSevenZipExtractor : ExtractorCollection.IExtractor {
         }
     }
 
-    /**
-     * SevenZipJBinding 提取回调实现
-     */
     private inner class ArchiveExtractCallback(
         private val archive: IInArchive
     ) : IArchiveExtractCallback {
 
         private var outputStream: SequentialFileOutputStream? = null
-        private var currentProcessingFilePath: Path? = null
+        private var currentProcessingFile: File? = null
         private var totalBytes: Long = 0
         private var totalBytesExtracted: Long = 0
 
@@ -162,33 +147,34 @@ class BasicSevenZipExtractor : ExtractorCollection.IExtractor {
             try {
                 closeOutputStream()
 
-                val filePath = Paths.get(archive.getStringProperty(index, PropID.PATH))
+                val filePath = archive.getStringProperty(index, PropID.PATH)
                 val isFolder = archive.getProperty(index, PropID.IS_FOLDER) as Boolean
 
-                // 跳过非指定前缀的文件
-                val relativeFilePath = sourceExtractionPrefix.relativize(filePath).normalize()
-                if (relativeFilePath.toString().startsWith("..")) {
+                // Thay Path.relativize bang xu ly String
+                val prefix = sourceExtractionPrefix.path
+                val relativeFilePath = if (prefix.isEmpty() || prefix == ".") {
+                    filePath
+                } else if (filePath.startsWith(prefix)) {
+                    filePath.substring(prefix.length).trimStart('/', '\\')
+                } else {
                     return null
                 }
 
-                // 计算目标文件路径并防止路径遍历攻击
-                val targetFilePath = destinationPath.resolve(relativeFilePath).normalize()
-                if (destinationPath.relativize(targetFilePath).toString().startsWith("..")) {
-                    throw SevenZipException("Attempting to write outside of destination directory: $targetFilePath")
+                // Tinh toan target file va chong path traversal
+                val targetFile = File(destinationFile, relativeFilePath).canonicalFile
+                if (!targetFile.path.startsWith(destinationFile.canonicalPath)) {
+                    throw SevenZipException("Path traversal detected: $targetFile")
                 }
 
-                // 对于文件夹只创建文件夹
                 if (isFolder) {
-                    Files.createDirectories(targetFilePath)
+                    targetFile.mkdirs()
                     return null
                 }
 
-                // 创建文件的父目录
-                currentProcessingFilePath = targetFilePath
-                val targetFileParentPath = targetFilePath.normalize().parent
-                if (!Files.exists(targetFileParentPath)) {
-                    Files.createDirectories(targetFileParentPath)
-                }
+                currentProcessingFile = targetFile
+
+                // Tao thu muc cha
+                targetFile.parentFile?.mkdirs()
 
                 val progress = if (totalBytes > 0) totalBytesExtracted.toFloat() / totalBytes else 0f
                 extractionListener?.onProgress(
@@ -197,8 +183,7 @@ class BasicSevenZipExtractor : ExtractorCollection.IExtractor {
                     state
                 )
 
-                // 返回输出流
-                outputStream = SequentialFileOutputStream(targetFilePath)
+                outputStream = SequentialFileOutputStream(targetFile)
                 return outputStream
             } catch (e: Exception) {
                 throw SevenZipException("Error getting stream for index $index", e)
@@ -206,8 +191,7 @@ class BasicSevenZipExtractor : ExtractorCollection.IExtractor {
         }
 
         @Throws(SevenZipException::class)
-        override fun prepareOperation(extractAskMode: ExtractAskMode) {
-        }
+        override fun prepareOperation(extractAskMode: ExtractAskMode) {}
 
         @Throws(SevenZipException::class)
         override fun setOperationResult(extractOperationResult: ExtractOperationResult) {
@@ -231,17 +215,14 @@ class BasicSevenZipExtractor : ExtractorCollection.IExtractor {
                     it.close()
                     outputStream = null
                 } catch (e: IOException) {
-                    throw SevenZipException("Error closing file: $currentProcessingFilePath")
+                    throw SevenZipException("Error closing file: $currentProcessingFile")
                 }
             }
         }
     }
 
-    /**
-     * SevenZipJBinding 输出流实现
-     */
-    private class SequentialFileOutputStream(targetFilePath: Path) : ISequentialOutStream {
-        private val fileStream = FileOutputStream(targetFilePath.toFile())
+    private class SequentialFileOutputStream(targetFile: File) : ISequentialOutStream {
+        private val fileStream = FileOutputStream(targetFile)
 
         @Throws(SevenZipException::class)
         override fun write(data: ByteArray): Int {

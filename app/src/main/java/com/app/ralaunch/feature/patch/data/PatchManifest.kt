@@ -8,13 +8,8 @@ import java.io.File
 import java.io.FileInputStream
 import java.io.InputStreamReader
 import java.nio.charset.StandardCharsets
-import java.nio.file.Files
-import java.nio.file.Path
 import java.util.zip.ZipFile
 
-/**
- * 补丁清单
- */
 data class PatchManifest(
     @SerializedName("id")
     var id: String = "",
@@ -49,18 +44,11 @@ data class PatchManifest(
     @SerializedName("dependencies")
     var dependencies: Dependencies? = null
 ) {
-    /**
-     * 补丁依赖配置
-     */
     data class Dependencies(
-        /**
-         * 补丁特定的库文件列表（相对于补丁目录）
-         */
         @SerializedName("libs")
         var libs: List<String>? = null
     )
 
-    // 为了向后兼容，entryAssemblyFile 指向 dllFileName
     val entryAssemblyFile: String
         get() = if (!dllFileName.isNullOrEmpty()) dllFileName else ""
 
@@ -81,12 +69,7 @@ data class PatchManifest(
             .setPrettyPrinting()
             .create()
 
-        @JvmStatic
-        fun fromZip(pathToZip: Path): PatchManifest? {
-
-            return fromZip(pathToZip.toFile())
-        }
-
+        // Xoa ham nhan Path, chi giu ham nhan File
         @JvmStatic
         fun fromZip(file: File): PatchManifest? {
             Log.i(TAG, "load Patch zip, file: ${file.absolutePath}")
@@ -109,12 +92,6 @@ data class PatchManifest(
             }
         }
 
-        /**
-         * 比较两个版本号字符串。
-         * 按 "." 分割后逐段比较数字大小。
-         *
-         * @return 正数表示 v1 > v2，负数表示 v1 < v2，0 表示相等
-         */
         @JvmStatic
         fun compareVersions(v1: String, v2: String): Int {
             val parts1 = v1.split(".").map { it.toIntOrNull() ?: 0 }
@@ -128,17 +105,18 @@ data class PatchManifest(
             return 0
         }
 
+        // Thay Path bang File
         @JvmStatic
-        fun fromJson(pathToJson: Path): PatchManifest? {
-            Log.i(TAG, "load $MANIFEST_FILE_NAME, pathToJson: $pathToJson")
+        fun fromJson(jsonFile: File): PatchManifest? {
+            Log.i(TAG, "load $MANIFEST_FILE_NAME, path: ${jsonFile.absolutePath}")
 
-            if (!Files.exists(pathToJson) || !Files.isRegularFile(pathToJson)) {
-                Log.w(TAG, "路径不存在 $MANIFEST_FILE_NAME 文件")
+            if (!jsonFile.exists() || !jsonFile.isFile) {
+                Log.w(TAG, "File not found: ${jsonFile.absolutePath}")
                 return null
             }
 
             return try {
-                FileInputStream(pathToJson.toFile()).use { stream ->
+                FileInputStream(jsonFile).use { stream ->
                     InputStreamReader(stream, StandardCharsets.UTF_8).use { reader ->
                         gson.fromJson(reader, PatchManifest::class.java)
                     }

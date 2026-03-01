@@ -1,11 +1,8 @@
 package com.app.ralaunch.core.platform.install.extractors
 
 import android.util.Log
-import java.nio.file.Path
+import java.io.File  // Thay java.nio.file.Path
 
-/**
- * 提取器集合
- */
 class ExtractorCollection {
     private val extractors = mutableListOf<IExtractor>()
 
@@ -33,29 +30,21 @@ class ExtractorCollection {
         }.start()
     }
 
-    /**
-     * 提取监听器接口
-     */
     interface ExtractionListener {
         fun onProgress(message: String, progress: Float, state: HashMap<String, Any?>?)
         fun onComplete(message: String, state: HashMap<String, Any?>?)
         fun onError(message: String, ex: Exception?, state: HashMap<String, Any?>?)
     }
 
-    /**
-     * 提取器接口
-     */
     interface IExtractor {
-        fun setSourcePath(sourcePath: Path)
-        fun setDestinationPath(destinationPath: Path)
+        // Thay Path bang File
+        fun setSourcePath(sourcePath: File)
+        fun setDestinationPath(destinationPath: File)
         fun setExtractionListener(listener: ExtractionListener?)
         var state: HashMap<String, Any?>
         fun extract(): Boolean
     }
 
-    /**
-     * 构建器
-     */
     class Builder {
         private val extractorCollection = ExtractorCollection()
         private val state = HashMap<String, Any?>()
@@ -79,7 +68,6 @@ class ExtractorCollection {
 
     companion object {
         private const val TAG = "ExtractorCollection"
-
         const val STATE_KEY_EXTRACTOR_INDEX = "extractor_index"
         const val STATE_KEY_EXTRACTORS = "extractors"
     }

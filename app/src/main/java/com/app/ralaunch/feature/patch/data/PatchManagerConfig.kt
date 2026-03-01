@@ -4,13 +4,14 @@ import android.util.Log
 import com.google.gson.FieldNamingPolicy
 import com.google.gson.GsonBuilder
 import com.google.gson.annotations.SerializedName
+import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.InputStreamReader
 import java.io.OutputStreamWriter
 import java.nio.charset.StandardCharsets
-import java.nio.file.Files
-import java.nio.file.Path
+// REMOVED: import java.nio.file.Files
+// REMOVED: import java.nio.file.Path
 
 /**
  * 补丁管理器配置
@@ -28,34 +29,35 @@ class PatchManagerConfig {
 
     /**
      * Get enabled patch IDs for a specific game
-     * @param gameAsmPath The game assembly file path
+     * @param gameAsmFile The game assembly file // CHANGED: Renamed from gameAsmPath
      * @return List of enabled patch IDs, or empty list if none
      */
-    fun getEnabledPatchIds(gameAsmPath: Path): ArrayList<String> {
+    fun getEnabledPatchIds(gameAsmFile: File): ArrayList<String> { // CHANGED: Path to File
         return enabledPatches.getOrDefault(
-            gameAsmPath.toAbsolutePath().normalize().toString(),
+            // CHANGED: toAbsolutePath().normalize().toString() to canonicalFile.absolutePath
+            gameAsmFile.canonicalFile.absolutePath,
             arrayListOf()
         )
     }
 
     /**
      * Set enabled patch IDs for a specific game
-     * @param gameAsmPath The game assembly file path
+     * @param gameAsmFile The game assembly file // CHANGED
      * @param patchIds List of patch IDs to enable
      */
-    fun setEnabledPatchIds(gameAsmPath: Path, patchIds: ArrayList<String>) {
-        enabledPatches[gameAsmPath.toAbsolutePath().normalize().toString()] = patchIds
+    fun setEnabledPatchIds(gameAsmFile: File, patchIds: ArrayList<String>) { // CHANGED: Path to File
+        enabledPatches[gameAsmFile.canonicalFile.absolutePath] = patchIds
     }
 
     /**
      * Set whether a patch is enabled for a specific game
      * 默认所有补丁都是启用的，这里只记录被禁用的补丁
-     * @param gameAsmPath The game assembly file path
+     * @param gameAsmFile The game assembly file // CHANGED
      * @param patchId The patch ID
      * @param enabled true to enable the patch (remove from disabled list), false to disable it (add to disabled list)
      */
-    fun setPatchEnabled(gameAsmPath: Path, patchId: String, enabled: Boolean) {
-        val key = gameAsmPath.toAbsolutePath().normalize().toString()
+    fun setPatchEnabled(gameAsmFile: File, patchId: String, enabled: Boolean) { // CHANGED: Path to File
+        val key = gameAsmFile.canonicalFile.absolutePath
         if (enabled) {
             // 启用补丁：从禁用列表中移除
             disabledPatches[key]?.remove(patchId)
@@ -78,12 +80,12 @@ class PatchManagerConfig {
     /**
      * Check if a patch is enabled for a specific game
      * 默认所有补丁都是启用的，只有被显式禁用的才返回false
-     * @param gameAsmPath The game assembly file path
+     * @param gameAsmFile The game assembly file // CHANGED
      * @param patchId The patch ID
      * @return true if the patch is enabled (not in disabled list), false if explicitly disabled
      */
-    fun isPatchEnabled(gameAsmPath: Path, patchId: String): Boolean {
-        val key = gameAsmPath.toAbsolutePath().normalize().toString()
+    fun isPatchEnabled(gameAsmFile: File, patchId: String): Boolean { // CHANGED: Path to File
+        val key = gameAsmFile.canonicalFile.absolutePath
         // 检查是否在禁用列表中
         val disabled = disabledPatches[key]
         if (disabled != null && disabled.contains(patchId)) {
@@ -95,17 +97,19 @@ class PatchManagerConfig {
 
     /**
      * Save config to JSON file
-     * @param pathToJson Path to save the config JSON file
+     * @param jsonFile Path to save the config JSON file // CHANGED
      * @return true if save succeeds, false otherwise
      */
-    fun saveToJson(pathToJson: Path): Boolean {
-        Log.i(TAG, "Save $CONFIG_FILE_NAME, pathToJson: $pathToJson")
+    fun saveToJson(jsonFile: File): Boolean { // CHANGED: Path to File
+        Log.i(TAG, "Save $CONFIG_FILE_NAME, pathToJson: ${jsonFile.absolutePath}")
 
         return try {
             // Ensure parent directory exists
-            pathToJson.parent?.let { Files.createDirectories(it) }
+            // CHANGED: Replaced Files.createDirectories(it) with mkdirs()
+            jsonFile.parentFile?.mkdirs()
 
-            FileOutputStream(pathToJson.toFile()).use { stream ->
+            // CHANGED: Replaced pathToJson.toFile() with jsonFile
+            FileOutputStream(jsonFile).use { stream ->
                 OutputStreamWriter(stream, StandardCharsets.UTF_8).use { writer ->
                     gson.toJson(this, writer)
                     writer.flush()
@@ -130,20 +134,22 @@ class PatchManagerConfig {
 
         /**
          * Load config from JSON file
-         * @param pathToJson Path to the config JSON file
+         * @param jsonFile Path to the config JSON file // CHANGED
          * @return PatchManagerConfig instance, or null if loading fails
          */
         @JvmStatic
-        fun fromJson(pathToJson: Path): PatchManagerConfig? {
-            Log.i(TAG, "加载 $CONFIG_FILE_NAME, pathToJson: $pathToJson")
+        fun fromJson(jsonFile: File): PatchManagerConfig? { // CHANGED: Path to File
+            Log.i(TAG, "加载 $CONFIG_FILE_NAME, pathToJson: ${jsonFile.absolutePath}")
 
-            if (!Files.exists(pathToJson) || !Files.isRegularFile(pathToJson)) {
+            // CHANGED: Replaced Files.exists and Files.isRegularFile with File methods
+            if (!jsonFile.exists() || !jsonFile.isFile) {
                 Log.w(TAG, "路径不存在 $CONFIG_FILE_NAME 文件")
                 return null
             }
 
             return try {
-                FileInputStream(pathToJson.toFile()).use { stream ->
+                // CHANGED: Replaced pathToJson.toFile() with jsonFile
+                FileInputStream(jsonFile).use { stream ->
                     InputStreamReader(stream, StandardCharsets.UTF_8).use { reader ->
                         gson.fromJson(reader, PatchManagerConfig::class.java)
                     }
