@@ -7,51 +7,34 @@ import com.app.ralaunch.core.platform.install.extractors.ExtractorCollection
 import com.app.ralaunch.core.common.util.FileUtils
 import com.app.ralaunch.core.common.util.TemporaryFileAcquirer
 import org.koin.java.KoinJavaComponent
+import java.io.File
 import java.io.IOException
-import java.nio.file.Files
-import java.nio.file.Path
-import java.nio.file.Paths
-import java.util.Objects
-import java.util.stream.Collectors
 
-/**
- * 补丁管理器
- */
 class PatchManager @JvmOverloads constructor(
     customStoragePath: String? = null,
     installPatchesImmediately: Boolean = false
 ) {
-    private val patchStoragePath: Path
-    private val configFilePath: Path
+    private val patchStorageDir: File
+    private val configFile: File
     private var config: PatchManagerConfig
 
     init {
-        patchStoragePath = getDefaultPatchStorageDirectories(customStoragePath)
-        if (!Files.isDirectory(patchStoragePath) || !Files.exists(patchStoragePath)) {
-            Files.deleteIfExists(patchStoragePath)
-            Files.createDirectories(patchStoragePath)
+        patchStorageDir = getDefaultPatchStorageDirectories(customStoragePath)
+        if (!patchStorageDir.isDirectory || !patchStorageDir.exists()) {
+            patchStorageDir.deleteRecursively()
+            patchStorageDir.mkdirs()
         }
-        configFilePath = patchStoragePath.resolve(PatchManagerConfig.CONFIG_FILE_NAME)
+        configFile = File(patchStorageDir, PatchManagerConfig.CONFIG_FILE_NAME)
         config = loadConfig()
 
-        // 清理旧的共享 DLL 文件 (MonoMod/Harmony 现在在游戏目录中按版本管理)
         cleanLegacySharedDlls()
 
-        // 如果指定立即安装，则在当前线程安装补丁（用于向后兼容）
         if (installPatchesImmediately) {
             installBuiltInPatches(this)
         }
     }
 
-    //region Patch Querying
-
-    /**
-     * Returns all patches that are applicable to the specified game and are enabled for
-     * the provided game assembly path. Results are sorted by priority in descending order.
-     */
-    fun getApplicableAndEnabledPatches(gameId: String, gameAsmPath: Path): ArrayList<Patch> {
-        val installedPatches = installedPatches
-
+    fun getApplicableAndEnabledPatches(gameId: String, gameAsmPath: File): ArrayList<Patch> {
         return installedPatches
             .filter { isPatchApplicableToGame(it, gameId) }
             .filter { config.isPatchEnabled(gameAsmPath, it.manifest.id) }
@@ -59,9 +42,6 @@ class PatchManager @JvmOverloads constructor(
             .toCollection(ArrayList())
     }
 
-    /**
-     * Returns all patches that are applicable to the specified game, regardless of enabled status.
-     */
     fun getApplicablePatches(gameId: String): ArrayList<Patch> {
         return installedPatches
             .filter { isPatchApplicableToGame(it, gameId) }
@@ -75,45 +55,30 @@ class PatchManager @JvmOverloads constructor(
         return targetGames.contains("*") || targetGames.contains(gameId)
     }
 
-    /**
-     * Returns all patches that are enabled for the specified game assembly path.
-     */
-    fun getEnabledPatches(gameAsmPath: Path): ArrayList<Patch> {
+    fun getEnabledPatches(gameAsmPath: File): ArrayList<Patch> {
         return installedPatches
             .filter { config.isPatchEnabled(gameAsmPath, it.manifest.id) }
             .sortedByDescending { it.manifest.priority }
             .toCollection(ArrayList())
     }
 
-    /**
-     * Get IDs of all patches that are enabled for the specified game assembly path.
-     */
-    fun getEnabledPatchIds(gameAsmPath: Path): ArrayList<String> {
+    fun getEnabledPatchIds(gameAsmPath: File): ArrayList<String> {
         return config.getEnabledPatchIds(gameAsmPath)
     }
 
-    /**
-     * Scans the patch storage directory and returns all currently installed (valid) patches.
-     */
     val installedPatches: ArrayList<Patch>
         get() {
             return try {
-                Files.list(patchStoragePath).use { pathsStream ->
-                    pathsStream
-                        .filter { Files.isDirectory(it) }
-                        .map { Patch.fromPatchPath(it) }
-                        .filter { it != null }
-                        .map { it!! }
-                        .collect(Collectors.toCollection(::ArrayList))
-                }
+                patchStorageDir.listFiles()
+                    ?.filter { it.isDirectory }
+                    ?.mapNotNull { Patch.fromPatchPath(it) }
+                    ?.toCollection(ArrayList())
+                    ?: ArrayList()
             } catch (e: IOException) {
                 throw RuntimeException(e)
             }
         }
 
-    /**
-     * Returns patches from the installed patches that match the provided IDs.
-     */
     fun getPatchesByIds(patchIds: List<String>): ArrayList<Patch> {
         return installedPatches
             .filter { patchIds.contains(it.manifest.id) }
@@ -121,42 +86,35 @@ class PatchManager @JvmOverloads constructor(
             .toCollection(ArrayList())
     }
 
-    //endregion
-
-    //region Patch Installation
-
-    /**
-     * Install a patch archive (ZIP/7z).
-     */
-    fun installPatch(patchZipPath: Path): Boolean {
-        if (!Files.exists(patchZipPath) || !Files.isRegularFile(patchZipPath)) {
-            Log.w(TAG, "补丁安装失败: 补丁文件不存在或不是一个有效的文件, path: $patchZipPath")
+    fun installPatch(patchZipFile: File): Boolean {
+        if (!patchZipFile.exists() || !patchZipFile.isFile) {
+            Log.w(TAG, "Patch install failed: file not found: $patchZipFile")
             return false
         }
 
-        val manifest = PatchManifest.fromZip(patchZipPath)
+        val manifest = PatchManifest.fromZip(patchZipFile)
         if (manifest == null) {
-            Log.w(TAG, "补丁安装失败: 无法读取补丁清单, path: $patchZipPath")
+            Log.w(TAG, "Patch install failed: cannot read manifest: $patchZipFile")
             return false
         }
 
-        val patchPath = patchStoragePath.resolve(manifest.id)
+        val patchDir = File(patchStorageDir, manifest.id)
 
-        if (Files.exists(patchPath)) {
-            Log.i(TAG, "补丁已存在, 将删除原补丁目录，重新安装, patch id: ${manifest.id}")
-            if (!FileUtils.deleteDirectoryRecursively(patchPath)) {
-                Log.w(TAG, "删除原补丁目录时发生错误")
+        if (patchDir.exists()) {
+            Log.i(TAG, "Patch exists, reinstalling: ${manifest.id}")
+            if (!FileUtils.deleteDirectoryRecursively(patchDir)) {
+                Log.w(TAG, "Failed to delete old patch dir")
                 return false
             }
         } else {
-            Log.i(TAG, "正在安装新补丁, patch id: ${manifest.id}")
+            Log.i(TAG, "Installing new patch: ${manifest.id}")
         }
 
-        Log.i(TAG, "正在解压补丁文件到补丁目录...")
+        Log.i(TAG, "Extracting patch...")
         BasicSevenZipExtractor(
-            patchZipPath,
-            Paths.get(""),
-            patchPath,
+            patchZipFile,
+            File(""),
+            patchDir,
             object : ExtractorCollection.ExtractionListener {
                 override fun onProgress(message: String, progress: Float, state: HashMap<String, Any?>?) {}
                 override fun onComplete(message: String, state: HashMap<String, Any?>?) {}
@@ -169,65 +127,45 @@ class PatchManager @JvmOverloads constructor(
         return true
     }
 
-    //endregion
-
-    //region Config Value Setting and Getting
-
-    /**
-     * Set whether a patch is enabled for a specific game.
-     */
-    fun setPatchEnabled(gameAsmPath: Path, patchId: String, enabled: Boolean) {
+    fun setPatchEnabled(gameAsmPath: File, patchId: String, enabled: Boolean) {
         config.setPatchEnabled(gameAsmPath, patchId, enabled)
         saveConfig()
     }
 
-    /**
-     * Check if a patch is enabled for a specific game.
-     */
-    fun isPatchEnabled(gameAsmPath: Path, patchId: String): Boolean {
+    fun isPatchEnabled(gameAsmPath: File, patchId: String): Boolean {
         return config.isPatchEnabled(gameAsmPath, patchId)
     }
 
-    //endregion
-
-    //region Configuration Management
-
     private fun loadConfig(): PatchManagerConfig {
-        val loadedConfig = PatchManagerConfig.fromJson(configFilePath)
+        val loadedConfig = PatchManagerConfig.fromJson(configFile)
         return if (loadedConfig == null) {
-            Log.i(TAG, "配置文件不存在或加载失败，创建新配置")
-            PatchManagerConfig().also { it.saveToJson(configFilePath) }
+            Log.i(TAG, "Config not found, creating new")
+            PatchManagerConfig().also { it.saveToJson(configFile) }
         } else {
-            Log.i(TAG, "配置文件加载成功")
+            Log.i(TAG, "Config loaded")
             loadedConfig
         }
     }
 
     private fun saveConfig() {
-        if (!config.saveToJson(configFilePath)) {
-            Log.w(TAG, "保存配置文件失败")
+        if (!config.saveToJson(configFile)) {
+            Log.w(TAG, "Failed to save config")
         }
     }
-
-    //endregion
-
-    //region Legacy Cleanup
 
     private fun cleanLegacySharedDlls() {
         for (dllName in LEGACY_SHARED_DLLS) {
-            val dllPath = patchStoragePath.resolve(dllName)
+            val dllFile = File(patchStorageDir, dllName)
             try {
-                if (Files.exists(dllPath)) {
-                    Files.delete(dllPath)
-                    Log.i(TAG, "已清理旧的共享 DLL: $dllName")
+                if (dllFile.exists()) {
+                    dllFile.delete()
+                    Log.i(TAG, "Cleaned legacy DLL: $dllName")
                 }
             } catch (e: IOException) {
-                Log.w(TAG, "清理 $dllName 失败: ${e.message}")
+                Log.w(TAG, "Failed to clean $dllName: ${e.message}")
             }
         }
     }
-
-    //endregion
 
     companion object {
         private const val TAG = "PatchManager"
@@ -241,15 +179,16 @@ class PatchManager @JvmOverloads constructor(
         )
 
         @Throws(IOException::class)
-        private fun getDefaultPatchStorageDirectories(customStoragePath: String?): Path {
+        private fun getDefaultPatchStorageDirectories(customStoragePath: String?): File {
             val context: Context = KoinJavaComponent.get(Context::class.java)
             val baseDir = customStoragePath ?: if (IS_DEFAULT_PATCH_STORAGE_DIR_EXTERNAL) {
-                Objects.requireNonNull(context.getExternalFilesDir(null))?.absolutePath
+                context.getExternalFilesDir(null)?.absolutePath
                     ?: context.filesDir.absolutePath
             } else {
                 context.filesDir.absolutePath
             }
-            return Paths.get(baseDir, PATCH_STORAGE_DIR).normalize()
+            // Thay Paths.get().normalize() bang File()
+            return File(baseDir, PATCH_STORAGE_DIR).canonicalFile
         }
 
         @JvmStatic
@@ -260,14 +199,14 @@ class PatchManager @JvmOverloads constructor(
         @JvmStatic
         fun installBuiltInPatches(patchManager: PatchManager, forceReinstall: Boolean) {
             val context: Context = KoinJavaComponent.get(Context::class.java)
-            val apkPath = Paths.get(context.applicationInfo.sourceDir)
+            val apkFile = File(context.applicationInfo.sourceDir)
 
             TemporaryFileAcquirer().use { tfa ->
                 val extractedPatches = tfa.acquireTempFilePath("extracted_patches")
 
                 BasicSevenZipExtractor(
-                    apkPath,
-                    Paths.get("assets/patches"),
+                    apkFile,
+                    File("assets/patches"),
                     extractedPatches,
                     object : ExtractorCollection.ExtractionListener {
                         override fun onProgress(message: String, progress: Float, state: HashMap<String, Any?>?) {}
@@ -278,75 +217,54 @@ class PatchManager @JvmOverloads constructor(
                     }
                 ).extract()
 
-                // 获取已安装补丁的 ID -> 清单映射（用于版本比较）
                 val installedPatchMap = patchManager.installedPatches
                     .associateBy { it.manifest.id }
 
-                // 安装缺失或版本更新的内置补丁
                 try {
-                    Files.list(extractedPatches).use { pathsStream ->
-                        pathsStream
-                            .filter { Files.isRegularFile(it) && it.toString().endsWith(".zip") }
-                            .forEach { patchZip ->
-                                val manifest = PatchManifest.fromZip(patchZip)
-                                if (manifest == null) return@forEach
+                    extractedPatches.listFiles()
+                        ?.filter { it.isFile && it.name.endsWith(".zip") }
+                        ?.forEach { patchZip ->
+                            val manifest = PatchManifest.fromZip(patchZip)
+                                ?: return@forEach
 
-                                val installedPatch = installedPatchMap[manifest.id]
+                            val installedPatch = installedPatchMap[manifest.id]
 
-                                when {
-                                    forceReinstall -> {
-                                        Log.i(TAG, "正在强制重新安装内置补丁: ${patchZip.fileName} (id: ${manifest.id})")
+                            when {
+                                forceReinstall -> {
+                                    Log.i(TAG, "Force reinstalling: ${patchZip.name}")
+                                    patchManager.installPatch(patchZip)
+                                }
+                                installedPatch == null -> {
+                                    Log.i(TAG, "Installing: ${patchZip.name}")
+                                    patchManager.installPatch(patchZip)
+                                }
+                                else -> {
+                                    val installedVersion = installedPatch.manifest.version
+                                    val bundledVersion = manifest.version
+                                    val cmp = PatchManifest.compareVersions(bundledVersion, installedVersion)
+                                    if (cmp > 0) {
+                                        Log.i(TAG, "Updating patch: ${manifest.id} ($installedVersion -> $bundledVersion)")
                                         patchManager.installPatch(patchZip)
-                                    }
-                                    installedPatch == null -> {
-                                        Log.i(TAG, "正在安装内置补丁: ${patchZip.fileName} (id: ${manifest.id}, version: ${manifest.version})")
-                                        patchManager.installPatch(patchZip)
-                                    }
-                                    else -> {
-                                        val installedVersion = installedPatch.manifest.version
-                                        val bundledVersion = manifest.version
-                                        val cmp = PatchManifest.compareVersions(bundledVersion, installedVersion)
-                                        if (cmp > 0) {
-                                            Log.i(TAG, "检测到补丁更新: ${manifest.id} (${installedVersion} -> ${bundledVersion})，正在自动更新...")
-                                            patchManager.installPatch(patchZip)
-                                        } else {
-                                            Log.d(TAG, "补丁已是最新版本，跳过: ${manifest.id} (installed: ${installedVersion}, bundled: ${bundledVersion})")
-                                        }
+                                    } else {
+                                        Log.d(TAG, "Patch up to date: ${manifest.id}")
                                     }
                                 }
                             }
-                    }
+                        }
                 } catch (e: IOException) {
                     throw RuntimeException(e)
                 }
             }
         }
 
-        /**
-         * Construct the environment variable string for startup hooks from a list of patches.
-         */
         @JvmStatic
         fun constructStartupHooksEnvVar(patches: List<Patch>): String {
-            Log.d(TAG, "constructStartupHooksEnvVar: Input patches count = ${patches.size}")
-            patches.forEachIndexed { index, p ->
-                Log.d(TAG, "  [$index] id=${p.manifest.id}, path=${p.getEntryAssemblyAbsolutePath()}")
-            }
-
             val seenPatchIds = linkedSetOf<String>()
-            val result = patches
-                .filter { p ->
-                    val isNew = seenPatchIds.add(p.manifest.id)
-                    if (!isNew) {
-                        Log.w(TAG, "constructStartupHooksEnvVar: Duplicate patch ID filtered: ${p.manifest.id}")
-                    }
-                    isNew
-                }
+            return patches
+                .filter { seenPatchIds.add(it.manifest.id) }
                 .map { it.getEntryAssemblyAbsolutePath().toString() }
                 .distinct()
                 .joinToString(":")
-
-            Log.d(TAG, "constructStartupHooksEnvVar: Result = $result")
-            return result
         }
     }
 }
