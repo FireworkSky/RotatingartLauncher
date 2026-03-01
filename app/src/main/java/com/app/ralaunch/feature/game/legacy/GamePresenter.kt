@@ -1,6 +1,8 @@
+
 package com.app.ralaunch.feature.game.legacy
 
 import android.os.Build
+import android.os.Build.VERSION_CODES // ADDED IMPORT
 import com.app.ralaunch.R
 import com.app.ralaunch.core.platform.runtime.GameLauncher
 import com.app.ralaunch.feature.patch.data.Patch
@@ -16,10 +18,6 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-/**
- * Game Presenter
- * Handles business logic related to game launch and crash reporting
- */
 class GamePresenter : GameContract.Presenter {
 
     companion object {
@@ -42,7 +40,6 @@ class GamePresenter : GameContract.Presenter {
     override fun launchGame(): Int {
         val view = this.view ?: return -1
 
-        // Reset GameLauncher initialization state
         GameLauncher.resetInitializationState()
 
         return try {
@@ -120,7 +117,6 @@ class GamePresenter : GameContract.Presenter {
             null
         }
         
-        // Pass File directly instead of Path
         val enabledPatches = patchManager
             ?.getApplicableAndEnabledPatches(game.gameId, assemblyFile)
             ?: emptyList()
@@ -161,7 +157,6 @@ class GamePresenter : GameContract.Presenter {
             null
         }
         
-        // Pass File directly instead of Path
         val enabledPatches = if (gameId != null) {
             patchManager?.getApplicableAndEnabledPatches(gameId, assemblyFile) ?: emptyList()
         } else {
@@ -212,7 +207,7 @@ class GamePresenter : GameContract.Presenter {
 
     @Suppress("UNCHECKED_CAST", "DEPRECATION")
     private fun parseGameEnvVars(intent: android.content.Intent): Map<String, String?> {
-        val rawMap = if (Build.VERSION.SDK_INT >= Build.VERSION.CODES.TIRAMISU) {
+        val rawMap = if (Build.VERSION.SDK_INT >= VERSION_CODES.TIRAMISU) {
             intent.getSerializableExtra(GameActivity.EXTRA_GAME_ENV_VARS, HashMap::class.java)
         } else {
             intent.getSerializableExtra(GameActivity.EXTRA_GAME_ENV_VARS)
