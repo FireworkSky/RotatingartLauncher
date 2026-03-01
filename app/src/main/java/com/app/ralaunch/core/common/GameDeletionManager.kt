@@ -6,13 +6,7 @@ import com.app.ralaunch.shared.core.platform.AppConstants
 import com.app.ralaunch.core.common.util.AppLogger
 import com.app.ralaunch.core.common.util.FileUtils
 import java.io.File
-import java.nio.file.Paths
 
-/**
- * 游戏删除管理器
- *
- * 使用新的存储结构: games/{GameDirName}/game_info.json
- */
 class GameDeletionManager(private val context: Context) {
 
     fun deleteGameFiles(game: GameItem): Boolean {
@@ -24,9 +18,10 @@ class GameDeletionManager(private val context: Context) {
                 return false
             }
 
-            FileUtils.deleteDirectoryRecursively(Paths.get(gameDir.absolutePath))
+            // Thay Paths.get() bang File
+            FileUtils.deleteDirectoryRecursively(gameDir)
         } catch (e: Exception) {
-            AppLogger.error("GameDeletionManager", "删除游戏文件时发生错误: ${e.message}")
+            AppLogger.error("GameDeletionManager", "Error deleting game files: ${e.message}")
             false
         }
     }
@@ -34,17 +29,14 @@ class GameDeletionManager(private val context: Context) {
     fun deleteGame(path: String?): Boolean {
         if (path.isNullOrEmpty()) return false
         return try {
-            FileUtils.deleteDirectoryRecursively(Paths.get(path))
+            // Thay Paths.get() bang File
+            FileUtils.deleteDirectoryRecursively(File(path))
         } catch (e: Exception) {
-            AppLogger.error("GameDeletionManager", "删除游戏文件时发生错误: ${e.message}")
+            AppLogger.error("GameDeletionManager", "Error deleting game: ${e.message}")
             false
         }
     }
 
-    /**
-     * 获取游戏目录
-     * 根据新的存储结构，目录名就是 storageBasePathRelative
-     */
     private fun getGameDirectory(game: GameItem): File? {
         if (game.storageRootPathRelative.isBlank()) return null
 
