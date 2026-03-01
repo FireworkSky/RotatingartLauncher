@@ -19,18 +19,8 @@ import com.app.ralaunch.core.common.util.FileUtils
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.IOException
-import java.nio.file.Paths
+// XOA: import java.nio.file.Paths
 
-/**
- * RaLaunch 文档提供器
- * 在系统文件管理器中显示启动器的所有文件目录
- *
- * 显示的目录结构：
- * - data/          内部数据目录 (/data/data/com.app.ralaunch/)
- * - android_data/  外部数据目录 (/Android/data/com.app.ralaunch/files/)
- * - android_obb/   OBB 目录 (/Android/obb/com.app.ralaunch/)
- * - user_de_data/  设备加密数据目录（如果存在）
- */
 class RaLaunchDocumentsProvider : DocumentsProvider() {
 
     private lateinit var mPackageName: String
@@ -45,18 +35,15 @@ class RaLaunchDocumentsProvider : DocumentsProvider() {
         mPackageName = context.packageName
         mDataDir = context.filesDir.parentFile!!
 
-        // 设备加密数据目录（Android 7.0+）
         val dataDirPath = mDataDir.path
         if (dataDirPath.startsWith("/data/user/")) {
             mUserDeDataDir = File("/data/user_de/" + dataDirPath.substring(11))
         }
 
-        // 外部数据目录
         context.getExternalFilesDir(null)?.let {
             mAndroidDataDir = it.parentFile
         }
 
-        // OBB 目录
         mAndroidObbDir = context.obbDir
     }
 
@@ -100,7 +87,6 @@ class RaLaunchDocumentsProvider : DocumentsProvider() {
         val parent = getFileForDocId(docId)
 
         if (parent == null) {
-            // 根目录：显示所有主要目录
             includeFile(result, "$docId/data", mDataDir)
 
             mAndroidDataDir?.takeIf { it.exists() }?.let {
@@ -173,7 +159,6 @@ class RaLaunchDocumentsProvider : DocumentsProvider() {
         val file = getFileForDocId(documentId)
             ?: throw FileNotFoundException("Failed to delete document $documentId")
 
-        // 对于符号链接，直接删除
         if (isSymbolicLink(file)) {
             if (!file.delete()) {
                 throw FileNotFoundException("Failed to delete document $documentId")
@@ -181,8 +166,8 @@ class RaLaunchDocumentsProvider : DocumentsProvider() {
             return
         }
 
-        // 使用 ralib 的 FileUtils 删除目录
-        val success = FileUtils.deleteDirectoryRecursively(Paths.get(file.absolutePath))
+        // Thay Paths.get(file.absolutePath) bang file truc tiep
+        val success = FileUtils.deleteDirectoryRecursively(file)
         if (!success) {
             throw FileNotFoundException("Failed to delete document $documentId")
         }
@@ -298,14 +283,12 @@ class RaLaunchDocumentsProvider : DocumentsProvider() {
         return out
     }
 
-    @Suppress("SameParameterValue")
     private fun includeFile(result: MatrixCursor, docId: String, file: File?) {
         var targetFile = file
         if (targetFile == null) {
             targetFile = getFileForDocId(docId)
         }
 
-        // 根目录
         if (targetFile == null) {
             result.newRow().apply {
                 add(Document.COLUMN_DOCUMENT_ID, mPackageName)
@@ -318,7 +301,6 @@ class RaLaunchDocumentsProvider : DocumentsProvider() {
             return
         }
 
-        // 计算标志位
         var flags = 0
         if (targetFile.isDirectory) {
             if (targetFile.canWrite()) {
@@ -334,14 +316,13 @@ class RaLaunchDocumentsProvider : DocumentsProvider() {
             flags = flags or Document.FLAG_SUPPORTS_MOVE
         }
 
-        // 确定显示名称
         val path = targetFile.path
         var addExtras = false
         val displayName = when (path) {
             mDataDir.path -> "data"
             mAndroidDataDir?.path -> "android_data"
             mAndroidObbDir?.path -> "android_obb"
-            mUserDeDataDir?.path -> "user_de_data "
+            mUserDeDataDir?.path -> "user_de_data"
             else -> {
                 addExtras = true
                 targetFile.name
@@ -357,7 +338,6 @@ class RaLaunchDocumentsProvider : DocumentsProvider() {
             add(Document.COLUMN_FLAGS, flags)
             add(COLUMN_FILE_PATH, targetFile.absolutePath)
 
-            // 添加扩展信息
             if (addExtras) {
                 try {
                     val stat = Os.lstat(path)
@@ -366,9 +346,8 @@ class RaLaunchDocumentsProvider : DocumentsProvider() {
                         .append("|").append(stat.st_uid)
                         .append("|").append(stat.st_gid)
 
-                    // 如果是符号链接，添加链接目标
                     @Suppress("OctalInteger")
-                    if ((stat.st_mode and 0x1F000) == 0xA000) { // S_IFLNK
+                    if ((stat.st_mode and 0x1F000) == 0xA000) {
                         sb.append("|").append(Os.readlink(path))
                     }
                     add(COLUMN_FILE_EXTRAS, sb.toString())
@@ -382,24 +361,18 @@ class RaLaunchDocumentsProvider : DocumentsProvider() {
     private fun getFileForDocId(docId: String, checkExists: Boolean = true): File? {
         var filename = docId
 
-        // 移除包名前缀
         if (filename.startsWith(mPackageName)) {
             filename = filename.substring(mPackageName.length)
         } else {
             throw FileNotFoundException("$docId not found")
         }
 
-        // 移除开头的斜杠
         if (filename.startsWith("/")) {
             filename = filename.substring(1)
         }
 
-        // 根目录
-        if (filename.isEmpty()) {
-            return null
-        }
+        if (filename.isEmpty()) return null
 
-        // 解析路径类型和子路径
         val i = filename.indexOf('/')
         val type: String
         val subPath: String
@@ -411,7 +384,6 @@ class RaLaunchDocumentsProvider : DocumentsProvider() {
             subPath = filename.substring(i + 1)
         }
 
-        // 根据类型获取基础目录
         val file: File? = when {
             type.equals("data", ignoreCase = true) -> File(mDataDir, subPath)
             type.equals("android_data", ignoreCase = true) && mAndroidDataDir != null ->
@@ -423,11 +395,8 @@ class RaLaunchDocumentsProvider : DocumentsProvider() {
             else -> null
         }
 
-        if (file == null) {
-            throw FileNotFoundException("$docId not found")
-        }
+        if (file == null) throw FileNotFoundException("$docId not found")
 
-        // 检查文件是否存在
         if (checkExists) {
             try {
                 Os.lstat(file.path)
@@ -487,25 +456,21 @@ class RaLaunchDocumentsProvider : DocumentsProvider() {
         private fun isSymbolicLink(file: File): Boolean {
             return try {
                 val stat = Os.lstat(file.path)
-                (stat.st_mode and 0x1F000) == 0xA000 // S_IFLNK = 0120000
+                (stat.st_mode and 0x1F000) == 0xA000
             } catch (e: ErrnoException) {
                 false
             }
         }
 
         private fun getMimeTypeForFile(file: File): String {
-            if (file.isDirectory) {
-                return Document.MIME_TYPE_DIR
-            }
+            if (file.isDirectory) return Document.MIME_TYPE_DIR
 
             val name = file.name
             val lastDot = name.lastIndexOf('.')
             if (lastDot >= 0) {
                 val extension = name.substring(lastDot + 1).lowercase()
                 val mime = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension)
-                if (mime != null) {
-                    return mime
-                }
+                if (mime != null) return mime
             }
 
             return "application/octet-stream"
