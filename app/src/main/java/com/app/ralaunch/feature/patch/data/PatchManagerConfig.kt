@@ -19,24 +19,20 @@ class PatchManagerConfig {
     @SerializedName("disabled_patches")
     var disabledPatches: HashMap<String, ArrayList<String>> = hashMapOf()
 
-    private fun getSafeKey(file: File): String {
-        return try {
-            file.canonicalPath
-        } catch (e: Exception) {
-            file.absolutePath
-        }
-    }
-
     fun getEnabledPatchIds(gameAsmFile: File): ArrayList<String> {
-        return enabledPatches.getOrDefault(getSafeKey(gameAsmFile), arrayListOf())
+        return enabledPatches.getOrDefault(
+            // CHANGED: Use absolutePath to avoid IOException
+            gameAsmFile.absolutePath,
+            arrayListOf()
+        )
     }
 
     fun setEnabledPatchIds(gameAsmFile: File, patchIds: ArrayList<String>) {
-        enabledPatches[getSafeKey(gameAsmFile)] = patchIds
+        enabledPatches[gameAsmFile.absolutePath] = patchIds
     }
 
     fun setPatchEnabled(gameAsmFile: File, patchId: String, enabled: Boolean) {
-        val key = getSafeKey(gameAsmFile)
+        val key = gameAsmFile.absolutePath
         if (enabled) {
             disabledPatches[key]?.remove(patchId)
             val patches = enabledPatches.getOrPut(key) { arrayListOf() }
@@ -53,7 +49,7 @@ class PatchManagerConfig {
     }
 
     fun isPatchEnabled(gameAsmFile: File, patchId: String): Boolean {
-        val key = getSafeKey(gameAsmFile)
+        val key = gameAsmFile.absolutePath
         val disabled = disabledPatches[key]
         if (disabled != null && disabled.contains(patchId)) {
             return false
@@ -63,6 +59,7 @@ class PatchManagerConfig {
 
     fun saveToJson(jsonFile: File): Boolean {
         Log.i(TAG, "Save $CONFIG_FILE_NAME, path: ${jsonFile.absolutePath}")
+
         return try {
             jsonFile.parentFile?.mkdirs()
 
