@@ -1,125 +1,42 @@
-package com.app.ralaunch.core.common.util
+package com.app.ralaunch.feature.patch.data
 
-import android.content.Context
-import com.app.ralaunch.core.platform.runtime.AssemblyPatcher
-import com.app.ralaunch.shared.core.contract.repository.GameRepositoryV2
-import org.koin.java.KoinJavaComponent
-// ... removed the problematic Apache Commons Compress import ...
-import java.io.BufferedInputStream
-import java.io.BufferedOutputStream
+import android.util.Log
 import java.io.File
-import java.io.FileOutputStream
-// ... added standard Java Zip import that works on all Android versions ...
-import java.util.zip.ZipInputStream
 
 /**
- * 补丁提取工具
+ * 补丁数据类
  */
-object PatchExtractor {
-    private const val TAG = "PatchExtractor"
-    private const val PREFS_NAME = "patch_extractor_prefs"
-    private const val KEY_MONOMOD_EXTRACTED = "monomod_extracted"
+data class Patch(
+    val patchDir: File,
+    val manifest: PatchManifest
+) {
+    fun getEntryAssemblyAbsolutePath(): File {
+        // CHANGED: Use absoluteFile instead of canonicalFile to prevent IOException during launch flow
+        return File(patchDir, manifest.entryAssemblyFile).absoluteFile
+    }
 
-    @JvmStatic
-    fun extractPatchesIfNeeded(context: Context) {
-        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        var needExtractMonoMod = !prefs.getBoolean(KEY_MONOMOD_EXTRACTED, false)
+    companion object {
+        private const val TAG = "Patch"
 
-        if (!needExtractMonoMod) {
-            val monoModDir = File(context.filesDir, "MonoMod")
-            needExtractMonoMod = !monoModDir.exists() || !monoModDir.isDirectory ||
-                monoModDir.listFiles()?.isEmpty() != false
-        }
-
-        if (!needExtractMonoMod) return
-
-        Thread {
-            try {
-                extractAndApplyMonoMod(context)
-                prefs.edit().putBoolean(KEY_MONOMOD_EXTRACTED, true).apply()
-            } catch (e: Exception) {
-                AppLogger.error(TAG, "提取失败", e)
+        @JvmStatic
+        fun fromPatchPath(patchDir: File): Patch? {
+            // CHANGED: Use absoluteFile to prevent IOException during patch discovery gracefully
+            val normalizedDir = patchDir.absoluteFile
+            
+            if (!normalizedDir.exists() || !normalizedDir.isDirectory) {
+                Log.w(TAG, "fromPatchPath: Patch path does not exist or is not a directory: $normalizedDir")
+                return null
             }
-        }.start()
-    }
 
-    private fun extractAndApplyMonoMod(context: Context) {
-        val monoModDir = File(context.filesDir, "MonoMod")
-        if (monoModDir.exists()) FileUtils.deleteDirectoryRecursively(monoModDir)
-        monoModDir.mkdirs()
-
-        // ... use standard Android ZipInputStream instead of Apache Commons ...
-        context.assets.open("MonoMod.zip").use { inputStream ->
-            BufferedInputStream(inputStream, 16384).use { bis ->
-                ZipInputStream(bis).use { zis ->
-                    // ... use a robust while loop instead of sequence to prevent lambda crashes on older devices ...
-                    var entry = zis.nextEntry
-                    while (entry != null) {
-                        var entryName = entry.name
-                        
-                        // ... strip the root folder name from the zip entry ...
-                        if (entryName.startsWith("MonoMod/") || entryName.startsWith("MonoMod\\")) {
-                            entryName = entryName.substring(8)
-                        }
-                        
-                        if (entryName.isNotEmpty()) {
-                            val targetFile = File(monoModDir, entryName)
-                            val canonicalDestPath = monoModDir.canonicalPath
-                            val canonicalEntryPath = targetFile.canonicalPath
-                            
-                            // ... security check to prevent Zip Path Traversal vulnerability ...
-                            if (canonicalEntryPath.startsWith("$canonicalDestPath${File.separator}")) {
-                                if (entry.isDirectory) {
-                                    targetFile.mkdirs()
-                                } else {
-                                    targetFile.parentFile?.mkdirs()
-                                    FileOutputStream(targetFile).use { fos ->
-                                        BufferedOutputStream(fos).use { bos ->
-                                            // ... standard stream copy ...
-                                            zis.copyTo(bos, 8192)
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        // ... close current entry and move to the next one ...
-                        zis.closeEntry()
-                        entry = zis.nextEntry
-                    }
-                }
+            val manifest = PatchManifest.fromJson(
+                File(normalizedDir, PatchManifest.MANIFEST_FILE_NAME)
+            )
+            if (manifest == null) {
+                Log.w(TAG, "fromPatchPath: Failed to load manifest from path: $normalizedDir")
+                return null
             }
+
+            return Patch(normalizedDir, manifest)
         }
-
-        applyMonoModToAllGames(context, monoModDir)
-    }
-
-    private fun applyMonoModToAllGames(context: Context, monoModDir: File) {
-        try {
-            val gameRepository: GameRepositoryV2? = try {
-                KoinJavaComponent.getOrNull(GameRepositoryV2::class.java)
-            } catch (e: Exception) { null }
-            if (gameRepository == null) return
-            val games = gameRepository.games.value
-            if (games.isEmpty()) return
-
-            games.forEach { game ->
-                val gameDir = getGameDirectory(game.gameExePathRelative) ?: return@forEach
-                AssemblyPatcher.applyMonoModPatches(context, gameDir, false)
-            }
-        } catch (e: Exception) {
-            AppLogger.error(TAG, "应用 MonoMod 补丁失败", e)
-        }
-    }
-
-    private fun getGameDirectory(gamePath: String?): String? {
-        if (gamePath.isNullOrEmpty()) return null
-        return File(gamePath).parentFile?.takeIf { it.exists() }?.absolutePath
-    }
-
-    @JvmStatic
-    fun resetExtractionStatus(context: Context) {
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit()
-            .remove(KEY_MONOMOD_EXTRACTED)
-            .apply()
     }
 }
