@@ -13,7 +13,7 @@ android {
     defaultConfig {
         applicationId "com.app.ralaunch"
         
-        // --- THAY ĐỔI 1: Hạ minSdk xuống 25 (Android 7.1.1) ---
+        // ... CHANGE 1: Downgrade minSdk to 25 (Android 7.1.1) ...
         minSdk 25 
         targetSdk 35
         versionCode 3
@@ -21,13 +21,15 @@ android {
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         
-        // Lưu ý: Một số thiết bị Android 7 cũ có thể là 32-bit (armeabi-v7a).
-        // Nếu thiết bị test của bạn là 32-bit, bạn cần bỏ cấu hình splits bên dưới.
-
+        // ... Enable multidex since minSdk is 25 and we added the multidex dependency ...
+        multiDexEnabled true
+        
+        // ... Note: Some older Android 7 devices might be 32-bit (armeabi-v7a). ...
+        // ... If your test device is 32-bit, you need to remove the splits config below. ...
         externalNativeBuild {
             cmake {
-                // --- THAY ĐỔI 2: Chỉ định platform cho Native code ---
-                // Điều này đảm bảo C++ không gọi các hàm chỉ có ở API 28+
+                // ... CHANGE 2: Specify platform for Native code ...
+                // ... This ensures C++ does not call functions only available in API 28+ ...
                 arguments "-DANDROID_PLATFORM=android-25"
             }
         }
@@ -47,7 +49,7 @@ android {
             
             externalNativeBuild {
                 cmake {
-                    // Đảm bảo cả ở Release cũng dùng platform 25
+                    // ... Ensure Release build also uses platform 25 ...
                     arguments "-DCMAKE_BUILD_TYPE=Release", "-DANDROID_PLATFORM=android-25"
                 }
             }
@@ -55,19 +57,12 @@ android {
     }
 
     compileOptions {
-        // --- THAY ĐỔI 3: Bật Desugaring để chạy Java mới trên Android cũ ---
+        // ... CHANGE 3: Enable Desugaring to run modern Java APIs on older Androids ...
         coreLibraryDesugaringEnabled true
 
-        // Nên hạ xuống Java 17 nếu không bắt buộc phải dùng tính năng "preview" của Java 21
-        // Java 17 ổn định hơn cho Android 7 khi dùng với Kotlin
+        // ... Java 17 is more stable for Android 7 when used with Kotlin ...
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
-    }
-
-
-    dependencies {
-    coreLibraryDesugaring(libs.desugar.jdk.libs)
-    implementation 'androidx.multidex:multidex:2.0.1'
     }
 
     externalNativeBuild {
@@ -76,6 +71,7 @@ android {
             version '3.22.1'
         }
     }
+    
     buildFeatures {
         viewBinding true
         prefab true
@@ -93,9 +89,9 @@ android {
         }
     }
 
-    // LƯU Ý QUAN TRỌNG:
-    // Android 7.1.1 hỗ trợ 64-bit, nhưng hãy chắc chắn thiết bị của bạn là 64-bit.
-    // Nếu cài APK này lên máy 32-bit sẽ bị lỗi "App not installed".
+    // ... IMPORTANT NOTE: ...
+    // ... Android 7.1.1 supports 64-bit, but ensure your device is actually 64-bit. ...
+    // ... If you install this APK on a 32-bit device, it will show "App not installed". ...
     splits {
         abi {
             enable true
@@ -114,7 +110,7 @@ android {
     }
 
     kotlinOptions {
-        // Đồng bộ với compileOptions
+        // ... Synchronize with compileOptions ...
         jvmTarget = '17'
     }
 
@@ -124,11 +120,15 @@ android {
     }
 }
 
+// ... ALL dependencies must be outside and at the bottom ...
 dependencies {
-    // Điều này bắt buộc để chạy các API Java hiện đại trên Android 7
+    // ... This is required to run modern Java APIs (like java.nio.file) on Android 7 ...
     coreLibraryDesugaring libs.desugar.jdk.libs
+    
+    // ... Multidex support ...
+    implementation 'androidx.multidex:multidex:2.0.1'
 
-    // Các dependency cũ giữ nguyên
+    // ... Keep existing local jars ...
     implementation files('../app/libs/libSystem.Security.Cryptography.Native.Android.jar')
     implementation files('../external/libs/fmod.jar')
     implementation files('libs/fishnet-release.aar')
@@ -150,8 +150,8 @@ dependencies {
     implementation libs.kotlinx.coroutines.android
     implementation libs.kotlinx.serialization.json
 
-    // LƯU Ý: Thư viện 'Haze' (hiệu ứng kính mờ) thường yêu cầu Android 12 (API 31) để hoạt động đẹp.
-    // Trên Android 7, nó có thể sẽ không hiển thị hiệu ứng blur (fallback về transparent) nhưng không gây crash.
+    // ... NOTE: 'Haze' library (glass blur effect) usually requires Android 12 (API 31). ...
+    // ... On Android 7, it might just fallback to transparent without crashing. ...
     implementation libs.haze
     implementation libs.haze.materials
 
