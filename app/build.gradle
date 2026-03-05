@@ -174,7 +174,7 @@ dependencies {
 
     implementation libs.glide
     implementation libs.konfetti
-    implementation libs.commons.compress
+    implementation 'org.apache.commons:commons-compress:1.21'
     implementation libs.xz
     implementation libs.android.svg
 
