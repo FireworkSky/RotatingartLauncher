@@ -4,8 +4,7 @@ import android.content.Context
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
 import org.apache.commons.compress.compressors.xz.XZCompressorInputStream
 import java.io.*
-import java.nio.file.Files
-import java.nio.file.StandardCopyOption
+// ... REMOVED java.nio.file IMPORTS completely to prevent crashes on Android 7 ...
 import java.util.zip.GZIPInputStream
 
 /**
@@ -65,13 +64,16 @@ object ArchiveExtractor {
     ): Int {
         var processedFiles = 0
 
-        generateSequence { tarIn.nextTarEntry }.forEach { entry ->
-            if (!tarIn.canReadEntryData(entry)) return@forEach
+        // ... Replace sequence with a robust while loop to ensure stability on older devices ...
+        while (true) {
+            val entry = tarIn.nextTarEntry ?: break
+            
+            if (!tarIn.canReadEntryData(entry)) continue
 
-            val entryName = normalizeEntryName(entry.name, stripPrefix) ?: return@forEach
+            val entryName = normalizeEntryName(entry.name, stripPrefix) ?: continue
             val targetFile = File(targetDir, entryName)
 
-            if (!isPathSafe(targetDir, targetFile)) return@forEach
+            if (!isPathSafe(targetDir, targetFile)) continue
 
             when {
                 entry.isDirectory -> extractDirectory(targetFile)
@@ -134,7 +136,8 @@ object ArchiveExtractor {
                 val linkTargetFile = File(parent, linkTarget)
                 if (linkTargetFile.exists()) {
                     try {
-                        Files.copy(linkTargetFile.toPath(), targetFile.toPath(), StandardCopyOption.REPLACE_EXISTING)
+                        // ... Use standard Kotlin File copy to replace java.nio.file.Files ...
+                        linkTargetFile.copyTo(targetFile, overwrite = true)
                     } catch (copyEx: Exception) {
                         AppLogger.warn(TAG, "Failed to copy symlink target: ${copyEx.message}")
                     }
