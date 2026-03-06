@@ -7,10 +7,12 @@ import com.app.ralaunch.core.platform.runtime.RuntimeLibraryLoader
 import net.sf.sevenzipjbinding.*
 import net.sf.sevenzipjbinding.impl.RandomAccessFileInStream
 import java.io.File
-import java.io.FileNotFoundException
+import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.IOException
 import java.io.RandomAccessFile
+// ... Added standard Java Zip imports for the fallback lifeboat ...
+import java.util.zip.ZipInputStream
 
 class BasicSevenZipExtractor : ExtractorCollection.IExtractor {
 
@@ -26,21 +28,25 @@ class BasicSevenZipExtractor : ExtractorCollection.IExtractor {
 
             try {
                 System.loadLibrary("7-Zip-JBinding")
+                // ... CRITICAL FIX: Initialize SevenZip engine after loading the library ...
+                SevenZip.initSevenZipFromPlatformNative()
                 libraryLoaded = true
-                Log.i(TAG, "7-Zip native library loaded successfully via System.loadLibrary")
+                Log.i(TAG, "7-Zip native library loaded and initialized successfully")
             } catch (e: UnsatisfiedLinkError) {
                 Log.e(TAG, "Failed to load 7-Zip native library: ${e.message}")
                 try {
                     val context = RaLaunchApp.getInstance()
                     libraryLoaded = RuntimeLibraryLoader.load7Zip(context)
                     if (libraryLoaded) {
+                        // ... Also initialize if loaded from runtime_libs ...
+                        SevenZip.initSevenZipFromPlatformNative()
                         Log.i(TAG, "7-Zip native library loaded from runtime_libs")
                     }
                 } catch (e2: Exception) {
                     Log.e(TAG, "Cannot load 7-Zip library from runtime_libs: ${e2.message}")
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "Cannot load 7-Zip library: ${e.message}")
+                Log.e(TAG, "Cannot initialize 7-Zip engine: ${e.message}")
             }
             return libraryLoaded
         }
@@ -92,31 +98,110 @@ class BasicSevenZipExtractor : ExtractorCollection.IExtractor {
     }
 
     override fun extract(): Boolean {
-        if (!ensureLibraryLoaded()) {
-            extractionListener?.onError(
-                RaLaunchApp.getInstance().getString(R.string.extract_7zip_library_load_failed),
-                RuntimeException("Failed to load 7-Zip native library"),
-                state
-            )
-            return false
+        if (!destinationFile.exists()) {
+            destinationFile.mkdirs()
         }
 
-        return try {
-            if (!destinationFile.exists()) {
-                destinationFile.mkdirs()
-            }
+        // ... Try 7-Zip first ...
+        if (ensureLibraryLoaded()) {
+            try {
+                RandomAccessFile(sourceFile, "r").use { raf ->
+                    RandomAccessFileInStream(raf).use { inStream ->
+                        SevenZip.openInArchive(null, inStream).use { archive ->
+                            val totalItems = archive.numberOfItems
+                            Log.d(TAG, "Archive contains $totalItems items")
+                            archive.extract(null, false, ArchiveExtractCallback(archive))
+                        }
+                    }
+                }
 
-            RandomAccessFile(sourceFile, "r").use { raf ->
-                RandomAccessFileInStream(raf).use { inStream ->
-                    SevenZip.openInArchive(null, inStream).use { archive ->
-                        val totalItems = archive.numberOfItems
-                        Log.d(TAG, "Archive contains $totalItems items")
-                        archive.extract(null, false, ArchiveExtractCallback(archive))
+                Log.d(TAG, "SevenZip extraction completed successfully")
+                extractionListener?.apply {
+                    val completeMessage = RaLaunchApp.getInstance().getString(R.string.extract_complete)
+                    onProgress(completeMessage, 1.0f, state)
+                    onComplete(completeMessage, state)
+                }
+                return true
+            } catch (ex: Exception) {
+                Log.e(TAG, "7-Zip extraction failed: ${ex.message}", ex)
+                // ... DO NOT RETURN FALSE YET, FALLTHROUGH TO LIFEBOAT ...
+            }
+        } else {
+            Log.e(TAG, "7-Zip library is not loaded. Proceeding to fallback.")
+        }
+
+        // =====================================================================
+        // ... THE LIFEBOAT: Pure Java Zip Fallback for older Android devices ...
+        // =====================================================================
+        if (sourceFile.name.lowercase().endsWith(".zip")) {
+            Log.w(TAG, "Using Standard Java Zip Fallback for: ${sourceFile.name}")
+            return fallbackExtractZip()
+        }
+
+        // ... If it's not a zip and 7-zip failed, then we truly failed ...
+        extractionListener?.onError(
+            RaLaunchApp.getInstance().getString(R.string.extract_7zip_failed),
+            RuntimeException("Both 7-Zip and Fallback failed"),
+            state
+        )
+        return false
+    }
+
+    // ... Standard Android Zip Extractor (Bulletproof on Android 7) ...
+    private fun fallbackExtractZip(): Boolean {
+        return try {
+            FileInputStream(sourceFile).use { fis ->
+                ZipInputStream(fis).use { zis ->
+                    var bytesExtracted = 0L
+                    while (true) {
+                        val entry = zis.nextEntry ?: break
+                        
+                        val filePath = entry.name
+                        val prefix = sourceExtractionPrefix.path
+                        
+                        val relativeFilePath = if (prefix.isEmpty() || prefix == ".") {
+                            filePath
+                        } else if (filePath.startsWith(prefix)) {
+                            filePath.substring(prefix.length).trimStart('/', '\\')
+                        } else {
+                            zis.closeEntry()
+                            continue
+                        }
+
+                        // ... Calculate target file and prevent path traversal attacks ...
+                        val targetFile = File(destinationFile, relativeFilePath).canonicalFile
+                        if (!targetFile.path.startsWith(destinationFile.canonicalPath)) {
+                            throw IOException("Path traversal detected: $targetFile")
+                        }
+
+                        if (entry.isDirectory) {
+                            targetFile.mkdirs()
+                        } else {
+                            // ... Create parent directories ...
+                            targetFile.parentFile?.mkdirs()
+
+                            extractionListener?.onProgress(
+                                RaLaunchApp.getInstance().getString(R.string.extract_in_progress, filePath),
+                                0.5f, // Fake progress for fallback
+                                state
+                            )
+
+                            FileOutputStream(targetFile).use { fos ->
+                                val buffer = ByteArray(8192)
+                                while (true) {
+                                    val read = zis.read(buffer)
+                                    if (read <= 0) break
+                                    fos.write(buffer, 0, read)
+                                    bytesExtracted += read
+                                }
+                            }
+                        }
+                        zis.closeEntry()
                     }
                 }
             }
 
-            Log.d(TAG, "SevenZip extraction completed successfully")
+            Log.d(TAG, "Fallback extraction completed successfully")
             extractionListener?.apply {
                 val completeMessage = RaLaunchApp.getInstance().getString(R.string.extract_complete)
                 onProgress(completeMessage, 1.0f, state)
@@ -124,8 +209,9 @@ class BasicSevenZipExtractor : ExtractorCollection.IExtractor {
             }
             true
         } catch (ex: Exception) {
+            Log.e(TAG, "Fallback ZIP extraction also failed", ex)
             extractionListener?.onError(
-                RaLaunchApp.getInstance().getString(R.string.extract_7zip_failed),
+                "Zip Fallback Extraction Failed",
                 ex,
                 state
             )
@@ -150,7 +236,7 @@ class BasicSevenZipExtractor : ExtractorCollection.IExtractor {
                 val filePath = archive.getStringProperty(index, PropID.PATH)
                 val isFolder = archive.getProperty(index, PropID.IS_FOLDER) as Boolean
 
-                // Thay Path.relativize bang xu ly String
+                // ... Replace Path.relativize with String manipulation to support older Android versions ...
                 val prefix = sourceExtractionPrefix.path
                 val relativeFilePath = if (prefix.isEmpty() || prefix == ".") {
                     filePath
@@ -160,7 +246,7 @@ class BasicSevenZipExtractor : ExtractorCollection.IExtractor {
                     return null
                 }
 
-                // Tinh toan target file va chong path traversal
+                // ... Calculate target file and prevent path traversal attacks ...
                 val targetFile = File(destinationFile, relativeFilePath).canonicalFile
                 if (!targetFile.path.startsWith(destinationFile.canonicalPath)) {
                     throw SevenZipException("Path traversal detected: $targetFile")
@@ -173,7 +259,7 @@ class BasicSevenZipExtractor : ExtractorCollection.IExtractor {
 
                 currentProcessingFile = targetFile
 
-                // Tao thu muc cha
+                // ... Create parent directories ...
                 targetFile.parentFile?.mkdirs()
 
                 val progress = if (totalBytes > 0) totalBytesExtracted.toFloat() / totalBytes else 0f
