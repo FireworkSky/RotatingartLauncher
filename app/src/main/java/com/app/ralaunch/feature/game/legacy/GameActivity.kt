@@ -9,6 +9,7 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.os.Process
+import android.system.Os
 import android.util.Log
 import android.view.KeyEvent
 import android.view.MotionEvent
@@ -28,6 +29,8 @@ import com.app.ralaunch.core.common.util.LocaleManager
 import com.app.ralaunch.core.common.ErrorHandler
 import com.app.ralaunch.shared.core.platform.AppConstants
 import org.libsdl.app.SDLActivity
+// ... CRITICAL AUDIO FIX: Import FMOD ...
+import org.fmod.FMOD
 
 /**
  * 游戏运行界面
@@ -182,6 +185,28 @@ class GameActivity : SDLActivity(), GameContract.View {
         instance = this
         presenter.attach(this)
 
+        // ===================================================================
+        // ... CRITICAL AUDIO FIX FOR TERRARIA ON ANDROID 7 ...
+        // ===================================================================
+        try {
+            // 1. Initialize FMOD (Required for FNA/Terraria sound engine)
+            FMOD.init(this)
+            Log.i(TAG, "✅ FMOD Audio Engine Initialized Successfully!")
+
+            // 2. Set safe environment variables for OpenAL / SDL Audio
+            // Force safe sample rate to prevent buffer overflow crash
+            Os.setenv("FAUDIO_FMT_WBUFFER", "1", true)
+            Os.setenv("ALSOFT_REQCHANNELS", "2", true) 
+            Os.setenv("ALSOFT_REQSAMPLERATE", "44100", true)
+            // Use OpenSL ES which is the most stable driver for old Androids
+            Os.setenv("SDL_AUDIODRIVER", "opensl", true)
+            
+            Log.i(TAG, "✅ Audio Environment Variables Injected!")
+        } catch (e: Exception) {
+            Log.e(TAG, "❌ Failed to init Audio fixes: ${e.message}")
+        }
+        // ===================================================================
+
         // 初始化日志系统 (游戏进程独立于主进程)
         initializeLogger()
         
@@ -277,6 +302,14 @@ class GameActivity : SDLActivity(), GameContract.View {
 
         virtualControlsManager.stop()
         presenter.detach()
+
+        // ... CRITICAL AUDIO FIX: Safely close FMOD to prevent zombie audio processes ...
+        try {
+            FMOD.close()
+            Log.i(TAG, "FMOD Audio Engine Closed.")
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to close FMOD: ${e.message}")
+        }
 
         super.onDestroy()
 
