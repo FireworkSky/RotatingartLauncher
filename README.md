@@ -10,7 +10,7 @@
 
 <br/><br/>
 
-[![Android](https://img.shields.io/badge/Android_9.0+-34A853?style=for-the-badge&logo=android&logoColor=white)](https://www.android.com)
+[![Android](https://img.shields.io/badge/Android_7.1+-34A853?style=for-the-badge&logo=android&logoColor=white)](https://www.android.com)
 [![.NET](https://img.shields.io/badge/.NET_10.0-512BD4?style=for-the-badge&logo=dotnet&logoColor=white)](https://dotnet.microsoft.com)
 [![Kotlin](https://img.shields.io/badge/Kotlin_2.0-7F52FF?style=for-the-badge&logo=kotlin&logoColor=white)](https://kotlinlang.org)
 [![Compose](https://img.shields.io/badge/Jetpack_Compose-4285F4?style=for-the-badge&logo=jetpackcompose&logoColor=white)](https://developer.android.com/jetpack/compose)
@@ -24,6 +24,8 @@
 
 **Rotating Art Launcher** is an Android application that lets you run .NET-based desktop games on mobile devices.<br/>
 Supports FNA/XNA framework games and mod loaders like tModLoader, SMAPI, and Everest.
+
+⚠️Warning⚠️: This is a modified version for Android 7.1+
 
 </div>
 
@@ -115,7 +117,7 @@ Supports FNA/XNA framework games and mod loaders like tModLoader, SMAPI, and Eve
 
 ### Requirements
 
-> - 📱 Android 9.0 (API 28) or higher
+> - 📱 Android 7.1(API 25) or higher
 > - 🏗️ ARM64-v8a architecture device
 > - 💾 At least 2GB free storage
 

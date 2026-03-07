@@ -8,13 +8,9 @@ import com.app.ralaunch.core.common.util.TemporaryFileAcquirer
 import org.koin.java.KoinJavaComponent
 import java.io.File
 import java.io.FileOutputStream
-import java.nio.file.Files
-import java.nio.file.Path
-import java.nio.file.Paths
-import java.nio.file.StandardCopyOption
 
 /**
- * 程序集补丁工具
+ * Assembly patcher utility
  */
 object AssemblyPatcher {
     private const val TAG = "AssemblyPatcher"
@@ -22,46 +18,48 @@ object AssemblyPatcher {
     private const val ASSETS_MONOMOD_ZIP = "MonoMod.zip"
 
     @JvmStatic
-    fun getMonoModInstallPath(): Path {
+    fun getMonoModInstallPath(): File {
         val context: Context = KoinJavaComponent.get(Context::class.java)
         val externalFilesDir = context.getExternalFilesDir(null)
-        return Paths.get(externalFilesDir?.absolutePath ?: "", MONOMOD_DIR)
+        return File(externalFilesDir?.absolutePath ?: "", MONOMOD_DIR)
     }
 
     @JvmStatic
     fun extractMonoMod(context: Context): Boolean {
         val targetDir = getMonoModInstallPath()
-        AppLogger.info(TAG, "正在解压 MonoMod 到 $targetDir")
+        AppLogger.info(TAG, "Extracting MonoMod to $targetDir")
 
         return try {
             TemporaryFileAcquirer().use { tfa ->
-                Files.createDirectories(targetDir)
+                targetDir.mkdirs()
                 val tempZip = tfa.acquireTempFilePath("monomod.zip")
 
                 context.assets.open(ASSETS_MONOMOD_ZIP).use { input ->
-                    Files.copy(input, tempZip, StandardCopyOption.REPLACE_EXISTING)
+                    FileOutputStream(tempZip).use { output ->
+                        input.copyTo(output)
+                    }
                 }
 
                 BasicSevenZipExtractor(
-                    tempZip, Paths.get(""), targetDir,
+                    tempZip, File(""), targetDir,
                     object : ExtractorCollection.ExtractionListener {
                         override fun onProgress(message: String, progress: Float, state: HashMap<String, Any?>?) {
-                            AppLogger.debug(TAG, "解压中: $message (${(progress * 100).toInt()}%)")
+                            AppLogger.debug(TAG, "Extracting: $message (${(progress * 100).toInt()}%)")
                         }
                         override fun onComplete(message: String, state: HashMap<String, Any?>?) {
-                            AppLogger.info(TAG, "MonoMod 解压完成")
+                            AppLogger.info(TAG, "MonoMod extraction complete")
                         }
                         override fun onError(message: String, ex: Exception?, state: HashMap<String, Any?>?) {
-                            AppLogger.error(TAG, "解压错误: $message", ex)
+                            AppLogger.error(TAG, "Extraction error: $message", ex)
                         }
                     }
                 ).extract()
 
-                AppLogger.info(TAG, "MonoMod 已解压到 $targetDir")
+                AppLogger.info(TAG, "MonoMod extracted to $targetDir")
                 true
             }
         } catch (e: Exception) {
-            AppLogger.error(TAG, "解压 MonoMod 失败", e)
+            AppLogger.error(TAG, "Failed to extract MonoMod", e)
             false
         }
     }
@@ -76,7 +74,7 @@ object AssemblyPatcher {
         return try {
             val patchAssemblies = loadPatchArchive(context)
             if (patchAssemblies.isEmpty()) {
-                if (verboseLog) AppLogger.warn(TAG, "MonoMod 目录为空或不存在")
+                if (verboseLog) AppLogger.warn(TAG, "MonoMod directory is empty or does not exist")
                 return 0
             }
 
@@ -88,16 +86,16 @@ object AssemblyPatcher {
                 val assemblyName = assemblyFile.name
                 patchAssemblies[assemblyName]?.let { data ->
                     if (replaceAssembly(assemblyFile, data)) {
-                        if (verboseLog) AppLogger.debug(TAG, "已替换: $assemblyName")
+                        if (verboseLog) AppLogger.debug(TAG, "Replaced: $assemblyName")
                         patchedCount++
                     }
                 }
             }
 
-            if (verboseLog) AppLogger.info(TAG, "已应用 MonoMod 补丁，替换了 $patchedCount 个文件")
+            if (verboseLog) AppLogger.info(TAG, "MonoMod patches applied, replaced $patchedCount files")
             patchedCount
         } catch (e: Exception) {
-            AppLogger.error(TAG, "应用补丁失败", e)
+            AppLogger.error(TAG, "Failed to apply patches", e)
             -1
         }
     }
@@ -105,27 +103,26 @@ object AssemblyPatcher {
     private fun loadPatchArchive(context: Context): Map<String, ByteArray> {
         val assemblies = mutableMapOf<String, ByteArray>()
         try {
-            val monoModPath = getMonoModInstallPath()
-            val monoModDir = monoModPath.toFile()
+            val monoModDir = getMonoModInstallPath()
 
             if (!monoModDir.exists() || !monoModDir.isDirectory) {
-                AppLogger.warn(TAG, "MonoMod 目录不存在: $monoModPath")
+                AppLogger.warn(TAG, "MonoMod directory does not exist: $monoModDir")
                 return assemblies
             }
 
             val dllFiles = findDllFiles(monoModDir)
-            AppLogger.debug(TAG, "从 $monoModPath 找到 ${dllFiles.size} 个 DLL 文件")
+            AppLogger.debug(TAG, "Found ${dllFiles.size} DLL files from $monoModDir")
 
             for (dllFile in dllFiles) {
                 try {
-                    val assemblyData = Files.readAllBytes(dllFile.toPath())
+                    val assemblyData = dllFile.readBytes()
                     assemblies[dllFile.name] = assemblyData
                 } catch (e: Exception) {
-                    AppLogger.warn(TAG, "读取 DLL 失败: ${dllFile.name}", e)
+                    AppLogger.warn(TAG, "Failed to read DLL: ${dllFile.name}", e)
                 }
             }
         } catch (e: Exception) {
-            AppLogger.error(TAG, "加载 MonoMod 补丁失败", e)
+            AppLogger.error(TAG, "Failed to load MonoMod patches", e)
         }
         return assemblies
     }
@@ -161,7 +158,7 @@ object AssemblyPatcher {
             FileOutputStream(targetFile).use { it.write(assemblyData) }
             true
         } catch (e: Exception) {
-            AppLogger.error(TAG, "替换失败: ${targetFile.name}", e)
+            AppLogger.error(TAG, "Replacement failed: ${targetFile.name}", e)
             false
         }
     }

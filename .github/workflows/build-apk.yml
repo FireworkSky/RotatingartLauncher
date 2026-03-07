@@ -1,16 +1,10 @@
-name: Build RAL APK (Debug & Safe)
+name: Build RAL APK
 
 on:
+  push:
+    branches:
+      - main
   workflow_dispatch:
-    inputs:
-      build_debug:
-        description: '构建开发者版本 (Debug)'
-        type: boolean
-        default: true
-      build_safe:
-        description: '构建用户版本 Safe (推荐✅)'
-        type: boolean
-        default: true
 
 env:
   ANDROID_COMPILE_SDK: "36"
@@ -25,50 +19,51 @@ jobs:
     permissions:
       contents: read
       actions: write
-    
-    # 并发控制：防止同时运行多个构建
-    concurrency:
-      group: ${{ github.workflow }}-${{ github.ref }}
-      cancel-in-progress: false
 
     steps:
-      # ==================== 初始化与缓存 ====================
-      - name: Check Disk Space Before
-        run: |
-          echo "📊 初始磁盘空间:"
-          df -h /
-
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
         with:
-          submodules: recursive
-          lfs: true
-          # 浅克隆节省时间和空间
           fetch-depth: 1
+          lfs: true
 
-      # 多级缓存策略：Gradle Wrapper
-      - name: Cache Gradle Wrapper
+      - name: Configure Git for submodules
+        run: |
+          git config --global url."https://github.com/".insteadOf "git@github.com:"
+          git config --global url."https://github.com/".insteadOf "ssh://git@github.com/"
+
+      - name: Initialize submodules
+        run: |
+          git submodule sync --recursive
+          git submodule update --init --recursive --force --depth 1
+
+      - name: Verify native dependencies
+        run: |
+          MISSING=0
+          for dir in SDL gl4es FAudio FNA3D dotnethost liblinkernsbypass; do
+            FULL_PATH="app/src/main/cpp/$dir"
+            if [ -d "$FULL_PATH" ] && [ "$(ls -A $FULL_PATH 2>/dev/null)" ]; then
+              echo "OK: $dir"
+            else
+              echo "MISSING: $dir"
+              MISSING=$((MISSING + 1))
+            fi
+          done
+          if [ $MISSING -gt 0 ]; then
+            echo "::error::$MISSING submodules missing!"
+            exit 1
+          fi
+
+      - name: Cache Gradle
         uses: actions/cache@v4
         with:
           path: |
             ~/.gradle/wrapper
-            ~/.gradle/caches/wrapper
-          key: ${{ runner.os }}-gradle-wrapper-${{ hashFiles('**/gradle-wrapper.properties') }}
+            ~/.gradle/caches
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: |
-            ${{ runner.os }}-gradle-wrapper-
+            ${{ runner.os }}-gradle-
 
-      # 多级缓存策略：Gradle 依赖（严格匹配 build.gradle）
-      - name: Cache Gradle Dependencies
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches/modules-2
-            ~/.gradle/caches/build-cache-1
-            ~/.gradle/caches/jars-3
-          key: ${{ runner.os }}-gradle-deps-${{ hashFiles('**/*.gradle*', '**/gradle.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-deps-
-
-      # 多级缓存策略：Android SDK 组件
       - name: Cache Android SDK
         uses: actions/cache@v4
         with:
@@ -76,98 +71,63 @@ jobs:
             /usr/local/lib/android/sdk/build-tools/${{ env.ANDROID_BUILD_TOOLS }}
             /usr/local/lib/android/sdk/platforms/android-${{ env.ANDROID_COMPILE_SDK }}
             /usr/local/lib/android/sdk/ndk/${{ env.ANDROID_NDK_VERSION }}
-          key: ${{ runner.os }}-android-sdk-${{ env.ANDROID_COMPILE_SDK }}-${{ env.ANDROID_BUILD_TOOLS }}-${{ env.ANDROID_NDK_VERSION }}
+            /usr/local/lib/android/sdk/cmake/${{ env.ANDROID_CMAKE_VERSION }}
+          key: ${{ runner.os }}-sdk-${{ env.ANDROID_COMPILE_SDK }}-${{ env.ANDROID_NDK_VERSION }}
           restore-keys: |
-            ${{ runner.os }}-android-sdk-
+            ${{ runner.os }}-sdk-
 
-      # ==================== 环境设置 ====================
-      - name: Setup JDK 21
+      - name: Cache Native Build
+        uses: actions/cache@v4
+        with:
+          path: |
+            app/.cxx
+            app/build/intermediates/cxx
+          key: ${{ runner.os }}-native-${{ hashFiles('app/src/main/cpp/**/*.cpp', 'app/src/main/cpp/**/*.c', 'app/src/main/cpp/**/CMakeLists.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-native-
+
+      - name: Setup JDK 17
         uses: actions/setup-java@v4
         with:
-          java-version: '21'
+          java-version: '17'
           distribution: 'temurin'
-          cache: 'gradle'  # 与上面的缓存互补
+          cache: 'gradle'
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
       - name: Install SDK Components
-        id: install_sdk
         run: |
-          echo "::group::安装 SDK 组件"
           sdkmanager --install \
             "platforms;android-${ANDROID_COMPILE_SDK}" \
             "build-tools;${ANDROID_BUILD_TOOLS}" \
             "ndk;${ANDROID_NDK_VERSION}" \
-            "cmake;${ANDROID_CMAKE_VERSION}" \
-            2>&1 | tee sdk-install.log
-          echo "::endgroup::"
-          
+            "cmake;${ANDROID_CMAKE_VERSION}"
           yes | sdkmanager --licenses || true
-          echo "installed=true" >> $GITHUB_OUTPUT
 
       - name: Make gradlew executable
         run: chmod +x ./gradlew
 
-      # ==================== Debug 版本构建 ====================
-      - name: Build Developer APK (Debug)
-        id: build_debug
-        if: github.event.inputs.build_debug == 'true'
+      # ==================== Build Release ====================
+      - name: Generate Dummy Keystore
+        run: keytool -genkey -v -keystore app/dummy.keystore -alias ralaunch -keyalg RSA -keysize 2048 -validity 10000 -storepass 123456 -keypass 123456 -dname "CN=Hacker, OU=Dev, O=RaLaunch, C=VN"
+
+      - name: Build Release APK
+        id: build_release
         run: |
-          echo "::group::构建 Debug 版本"
-          ./gradlew clean assembleDebug --no-daemon --stacktrace 2>&1 | tee debug-build.log
-          echo "::endgroup::"
+          ./gradlew assembleRelease --no-daemon --stacktrace 2>&1 | tee release-build.log
         continue-on-error: true
 
-      - name: Debug Build Error Report
-        if: steps.build_debug.outcome == 'failure'
+      - name: Show error if build failed
+        if: steps.build_release.outcome == 'failure'
         run: |
-          echo "::error::Debug 构建失败！查看日志: debug-build.log"
-          tail -100 debug-build.log || true
-          # 上传错误日志
+          echo "::error::Build failed!"
+          tail -150 release-build.log || true
           exit 1
 
-      - name: Prepare Debug APK
-        id: prepare_debug
-        if: github.event.inputs.build_debug == 'true' && steps.build_debug.outcome == 'success'
-        run: |
-          DEBUG_DIR="app/build/outputs/apk/debug"
-          
-          if [ ! -d "$DEBUG_DIR" ]; then
-            echo "::error::Debug 输出目录不存在"
-            exit 1
-          fi
-          
-          FIRST_APK=$(find "$DEBUG_DIR" -name "*.apk" -type f | head -1)
-          
-          if [ -z "$FIRST_APK" ]; then
-            echo "::error::未找到 Debug APK 文件"
-            ls -la "$DEBUG_DIR" || true
-            exit 1
-          fi
-          
-          # 清理多余 APK
-          find "$DEBUG_DIR" -name "*.apk" ! -path "$FIRST_APK" -type f -delete
-          mv "$FIRST_APK" "$DEBUG_DIR/app-debug.apk"
-          
-          echo "file=$DEBUG_DIR/app-debug.apk" >> $GITHUB_OUTPUT
-          echo "size=$(du -h "$DEBUG_DIR/app-debug.apk" | cut -f1)" >> $GITHUB_OUTPUT
-          echo "✅ Debug APK 准备完成: $(ls -lh "$DEBUG_DIR/app-debug.apk")"
-
-      - name: Upload Debug APK
-        if: github.event.inputs.build_debug == 'true' && steps.prepare_debug.outcome == 'success'
-        uses: actions/upload-artifact@v4
-        with:
-          name: 1-RAL-Developer-Debug
-          path: ${{ steps.prepare_debug.outputs.file }}
-          retention-days: 30
-          if-no-files-found: error
-          compression-level: 6
-
-      # ==================== Safe Release 版本构建 ====================
+      # ==================== Sign APK ====================
       - name: Generate Signing Key
-        id: gen_key
-        if: github.event.inputs.build_safe == 'true'
+        if: steps.build_release.outcome == 'success'
         run: |
           keytool -genkey -v \
             -keystore debug.keystore \
@@ -177,162 +137,93 @@ jobs:
             -validity 10000 \
             -storepass android \
             -keypass android \
-            -dname "CN=Android Debug, O=Android, C=US" 2>&1 | tee keygen.log
-          
-          if [ ! -f "debug.keystore" ]; then
-            echo "::error::密钥生成失败"
-            exit 1
-          fi
-          
-          echo "keystore_generated=true" >> $GITHUB_OUTPUT
+            -dname "CN=Android Debug, O=Android, C=US"
 
-      - name: Build Safe Release APK
-        id: build_safe
-        if: github.event.inputs.build_safe == 'true' && steps.gen_key.outcome == 'success'
-        run: |
-          echo "::group::构建 Safe Release 版本"
-          ./gradlew assembleRelease --no-daemon --stacktrace 2>&1 | tee release-build.log
-          echo "::endgroup::"
-        continue-on-error: true
-
-      - name: Safe Build Error Report
-        if: steps.build_safe.outcome == 'failure'
-        run: |
-          echo "::error::Safe Release 构建失败！"
-          tail -100 release-build.log || true
-          exit 1
-
-      - name: Sign Safe APK
-        id: sign_safe
-        if: github.event.inputs.build_safe == 'true' && steps.build_safe.outcome == 'success'
+      - name: Find and Sign APK
+        id: sign
+        if: steps.build_release.outcome == 'success'
         run: |
           RELEASE_DIR="app/build/outputs/apk/release"
-          UNSIGNED=$(find "$RELEASE_DIR" -name "*-unsigned.apk" | head -1)
-          
-          if [ -z "$UNSIGNED" ] || [ ! -f "$UNSIGNED" ]; then
-            echo "::error::未找到未签名 APK"
-            ls -la "$RELEASE_DIR" || true
-            exit 1
-          fi
-          
-          echo "签名文件: $UNSIGNED"
-          
-          ${ANDROID_SDK_ROOT}/build-tools/${ANDROID_BUILD_TOOLS}/apksigner sign \
-            --ks debug.keystore \
-            --ks-key-alias androiddebugkey \
-            --ks-pass pass:android \
-            --key-pass pass:android \
-            --out "$RELEASE_DIR/app-release-safe.apk" \
-            "$UNSIGNED" 2>&1 | tee sign.log
-          
-          if [ ! -f "$RELEASE_DIR/app-release-safe.apk" ]; then
-            echo "::error::签名失败，未生成签名 APK"
-            exit 1
-          fi
-          
-          # 验证签名
-          ${ANDROID_SDK_ROOT}/build-tools/${ANDROID_BUILD_TOOLS}/apksigner verify -v "$RELEASE_DIR/app-release-safe.apk" | head -5
-          
-          rm -f "$UNSIGNED" "$UNSIGNED.idsig" debug.keystore
-          
-          echo "file=$RELEASE_DIR/app-release-safe.apk" >> $GITHUB_OUTPUT
-          echo "size=$(du -h "$RELEASE_DIR/app-release-safe.apk" | cut -f1)" >> $GITHUB_OUTPUT
-          echo "✅ Safe APK 签名完成"
 
-      - name: Upload Safe APK
-        if: github.event.inputs.build_safe == 'true' && steps.sign_safe.outcome == 'success'
+          echo "=== All APK files ==="
+          find app/build/outputs/ -name "*.apk" 2>/dev/null || echo "No APK found!"
+
+          FOUND_APK=$(find "$RELEASE_DIR" -name "*.apk" 2>/dev/null | head -1)
+
+          if [ -z "$FOUND_APK" ]; then
+            echo "::error::No APK found!"
+            find app/build/outputs/ -type f 2>/dev/null
+            exit 1
+          fi
+
+          echo "Found APK: $FOUND_APK"
+
+          OUTPUT_APK="$RELEASE_DIR/RAL-release.apk"
+
+          IS_UNSIGNED=$(echo "$FOUND_APK" | grep -c "unsigned" || true)
+
+          if [ "$IS_UNSIGNED" -gt 0 ]; then
+            echo "Signing unsigned APK..."
+            ${ANDROID_SDK_ROOT}/build-tools/${ANDROID_BUILD_TOOLS}/apksigner sign \
+              --ks debug.keystore \
+              --ks-key-alias androiddebugkey \
+              --ks-pass pass:android \
+              --key-pass pass:android \
+              --out "$OUTPUT_APK" \
+              "$FOUND_APK"
+            rm -f "$FOUND_APK" "$FOUND_APK.idsig"
+          else
+            echo "APK already signed, renaming..."
+            mv "$FOUND_APK" "$OUTPUT_APK"
+          fi
+
+          if [ ! -f "$OUTPUT_APK" ]; then
+            echo "::error::Final APK not found!"
+            exit 1
+          fi
+
+          echo "file=$OUTPUT_APK" >> $GITHUB_OUTPUT
+          echo "size=$(du -h "$OUTPUT_APK" | cut -f1)" >> $GITHUB_OUTPUT
+          echo "Done: $(ls -lh "$OUTPUT_APK")"
+
+      # ==================== Upload ====================
+      - name: Upload APK
+        if: steps.sign.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
-          name: 2-RAL-User-Safe-RECOMMENDED
-          path: ${{ steps.sign_safe.outputs.file }}
+          name: RAL-release
+          path: ${{ steps.sign.outputs.file }}
           retention-days: 30
           if-no-files-found: error
           compression-level: 6
 
-      # ==================== 构建后清理与通知 ====================
-      - name: Cleanup Build Artifacts
+      # ==================== Cleanup ====================
+      - name: Cleanup
         if: always()
         run: |
-          echo "::group::清理临时文件"
-          # 清理 Gradle Daemon（如果在运行）
           ./gradlew --stop 2>/dev/null || true
-          
-          # 清理构建产物（保留已上传的 artifact）
-          rm -rf app/build/outputs/apk/*/temp_* 2>/dev/null || true
           rm -rf app/build/intermediates 2>/dev/null || true
           rm -f *.log debug.keystore 2>/dev/null || true
-          
-          # 清理 SDK 安装日志
-          rm -f sdk-install.log keygen.log sign.log 2>/dev/null || true
-          
-          echo "✅ 临时文件已清理"
 
-      - name: System Cleanup
-        if: always()
-        run: |
-          echo "::group::系统级清理"
-          # 清理 apt 缓存
-          sudo apt-get clean || true
-          sudo rm -rf /var/lib/apt/lists/* 2>/dev/null || true
-          
-          # 清理 Docker（如果使用）
-          docker system prune -f 2>/dev/null || true
-          
-          echo "📊 最终磁盘空间:"
-          df -h /
-          echo "::endgroup::"
-
-      - name: Error Log Upload (On Failure)
+      - name: Upload Error Logs
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: build-error-logs-${{ github.run_id }}
-          path: |
-            *.log
-            app/build/outputs/**/*.log
+          name: error-logs-${{ github.run_id }}
+          path: "*.log"
           retention-days: 7
           if-no-files-found: ignore
 
-      - name: Build Summary & Notification
+      - name: Build Summary
         if: always()
         run: |
           echo "=========================================="
-          echo "📊 构建报告"
+          echo "Build Report ($(($SECONDS / 60))m $(($SECONDS % 60))s)"
           echo "=========================================="
-          echo "⏱️  耗时: $(($SECONDS / 60)) 分 $(($SECONDS % 60)) 秒"
-          echo ""
-          
-          # Debug 状态
-          if [ "${{ github.event.inputs.build_debug }}" == "true" ]; then
-            if [ "${{ steps.build_debug.outcome }}" == "success" ] && [ "${{ steps.prepare_debug.outcome }}" == "success" ]; then
-              echo "✅ Debug 版本: 成功 (${{ steps.prepare_debug.outputs.size }})"
-            else
-              echo "❌ Debug 版本: 失败"
-            fi
+          if [ "${{ steps.sign.outcome }}" == "success" ]; then
+            echo "Release: ${{ steps.sign.outputs.size }} - OK"
+          else
+            echo "Release: FAILED"
           fi
-          
-          # Safe 状态
-          if [ "${{ github.event.inputs.build_safe }}" == "true" ]; then
-            if [ "${{ steps.build_safe.outcome }}" == "success" ] && [ "${{ steps.sign_safe.outcome }}" == "success" ]; then
-              echo "✅ Safe 版本:  成功 (${{ steps.sign_safe.outputs.size }}) ⭐ 推荐"
-            else
-              echo "❌ Safe 版本:  失败"
-            fi
-          fi
-          
-          echo ""
-          echo "💡 使用建议："
-          echo "   • 日常用户 → 下载 2-RAL-User-Safe-RECOMMENDED"
-          echo "     已启用代码优化，无资源压缩风险"
-          echo ""
-          echo "   • 开发者   → 下载 1-RAL-Developer-Debug"
-          echo "     无优化，可调试，适合排查问题"
-          echo ""
-          
-          if [ "${{ job.status }}" == "failure" ]; then
-            echo "⚠️  构建遇到错误，已上传日志: build-error-logs-${{ github.run_id }}"
-          fi
-          
-          echo "📥 下载地址:"
-          echo "   ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          echo "Download: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
           echo "=========================================="

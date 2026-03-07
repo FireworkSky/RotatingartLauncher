@@ -28,6 +28,8 @@ import com.app.ralaunch.core.common.util.LocaleManager
 import com.app.ralaunch.core.common.ErrorHandler
 import com.app.ralaunch.shared.core.platform.AppConstants
 import org.libsdl.app.SDLActivity
+// ... Import our custom SDL Audio Optimizer ...
+import com.app.ralaunch.core.platform.runtime.SDLOptimizer
 
 /**
  * 游戏运行界面
@@ -181,6 +183,11 @@ class GameActivity : SDLActivity(), GameContract.View {
 
         instance = this
         presenter.attach(this)
+
+        // ===================================================================
+        // ... APPLY SDL AUDIO CRASH FIXES VIA OPTIMIZER MODULE ...
+        // ===================================================================
+        SDLOptimizer.applyAudioFixes(this)
 
         // 初始化日志系统 (游戏进程独立于主进程)
         initializeLogger()

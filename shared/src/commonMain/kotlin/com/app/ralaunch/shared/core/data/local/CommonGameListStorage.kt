@@ -6,25 +6,9 @@ import com.app.ralaunch.shared.core.model.domain.GameItem
 import com.app.ralaunch.shared.core.model.domain.GameList
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import kotlin.io.path.Path
-import kotlin.io.path.ExperimentalPathApi
-import kotlin.io.path.createDirectories
-import kotlin.io.path.deleteRecursively
-import kotlin.io.path.exists
-import kotlin.io.path.isDirectory
-import kotlin.io.path.listDirectoryEntries
-import kotlin.io.path.name
-import kotlin.io.path.readText
-import kotlin.io.path.writeText
+import java.io.File  // Thay kotlin.io.path.*
 import kotlin.random.Random
 
-/**
- * 跨平台游戏列表管理逻辑。
- *
- * 平台层只提供目录路径，具体的列表索引、游戏信息序列化、
- * 存储 ID 生成和清理逻辑都在 commonMain 中统一处理。
- */
-@OptIn(ExperimentalPathApi::class)
 class CommonGameListStorage(
     private val pathsProvider: StoragePathsProvider
 ) : GameListStorage {
@@ -37,9 +21,9 @@ class CommonGameListStorage(
 
     override fun loadGameList(): List<GameItem> {
         return try {
-            if (!gameListPathFull.exists()) return emptyList()
+            if (!gameListFile.exists()) return emptyList()
 
-            val gameList = json.decodeFromString<GameList>(gameListPathFull.readText())
+            val gameList = json.decodeFromString<GameList>(gameListFile.readText())
             gameList.games.mapNotNull { storageRootPathRelative ->
                 loadGameInfo(storageRootPathRelative)
             }
@@ -51,10 +35,10 @@ class CommonGameListStorage(
 
     override fun saveGameList(games: List<GameItem>) {
         try {
-            gamesDirPathFull.createDirectories()
+            gamesDirFile.mkdirs()
 
             val gameList = GameList(games = games.map { it.id })
-            gameListPathFull.writeText(json.encodeToString(gameList))
+            gameListFile.writeText(json.encodeToString(gameList))
 
             games.forEach { saveGameInfo(it) }
             cleanupDeletedGameStorageRoots(games.map { it.id })
@@ -63,25 +47,25 @@ class CommonGameListStorage(
         }
     }
 
-    override fun getGameGlobalStorageDirFull(): String = gamesDirPathFull.toString()
+    override fun getGameGlobalStorageDirFull(): String = gamesDirFile.absolutePath
 
     override fun createGameStorageRoot(gameId: String): Pair<String, String> {
         val baseName = gameId.replace(Regex("[^a-zA-Z0-9\\u4e00-\\u9fa5]"), "_")
         val storageRootPathRelative = "${baseName}_${randomHex(8)}"
-        val storageRootPathFull = gamesDirPathFull.resolve(storageRootPathRelative)
-        storageRootPathFull.createDirectories()
-        return Pair(storageRootPathFull.toString(), storageRootPathRelative)
+        val storageRootFile = File(gamesDirFile, storageRootPathRelative)
+        storageRootFile.mkdirs()
+        return Pair(storageRootFile.absolutePath, storageRootPathRelative)
     }
 
     private fun loadGameInfo(storageRootPathRelative: String): GameItem? {
         return try {
-            val gameInfoPathFull = gamesDirPathFull
-                .resolve(storageRootPathRelative)
-                .resolve(AppConstants.Files.GAME_INFO)
-            if (!gameInfoPathFull.exists()) return null
+            val gameInfoFile = File(
+                File(gamesDirFile, storageRootPathRelative),
+                AppConstants.Files.GAME_INFO
+            )
+            if (!gameInfoFile.exists()) return null
 
-            val content = gameInfoPathFull.readText()
-            json.decodeFromString<GameItem>(content).also {
+            json.decodeFromString<GameItem>(gameInfoFile.readText()).also {
                 it.gameListStorageParent = this
             }
         } catch (e: Exception) {
@@ -92,26 +76,25 @@ class CommonGameListStorage(
 
     private fun saveGameInfo(game: GameItem) {
         try {
-            val storageRootPathRelative = game.id
-            val storageRootPathFull = gamesDirPathFull.resolve(storageRootPathRelative)
-            val gameInfoPathFull = storageRootPathFull.resolve(AppConstants.Files.GAME_INFO)
+            val storageRootFile = File(gamesDirFile, game.id)
+            val gameInfoFile = File(storageRootFile, AppConstants.Files.GAME_INFO)
 
-            storageRootPathFull.createDirectories()
-            gameInfoPathFull.writeText(json.encodeToString(game))
+            storageRootFile.mkdirs()
+            gameInfoFile.writeText(json.encodeToString(game))
         } catch (e: Exception) {
             e.printStackTrace()
         }
     }
 
     private fun cleanupDeletedGameStorageRoots(keepRoots: List<String>) {
-        if (!gamesDirPathFull.exists()) return
+        if (!gamesDirFile.exists()) return
 
-        val keepStorageRootsRelative = keepRoots.toSet()
-        gamesDirPathFull.listDirectoryEntries()
-            .filter { it.isDirectory() }
-            .filter { it.name !in keepStorageRootsRelative }
-            .forEach {
-                runCatching { it.deleteRecursively() }
+        val keepSet = keepRoots.toSet()
+        gamesDirFile.listFiles()
+            ?.filter { it.isDirectory }
+            ?.filter { it.name !in keepSet }
+            ?.forEach { dir ->
+                runCatching { dir.deleteRecursively() }
             }
     }
 
@@ -124,10 +107,9 @@ class CommonGameListStorage(
         }
     }
 
-    private val gamesDirPathFull
-        get() = Path(pathsProvider.gamesDirPathFull())
+    private val gamesDirFile
+        get() = File(pathsProvider.gamesDirPathFull())
 
-    private val gameListPathFull
-        get() = gamesDirPathFull.resolve(AppConstants.Files.GAME_LIST)
-
+    private val gameListFile
+        get() = File(gamesDirFile, AppConstants.Files.GAME_LIST)
 }

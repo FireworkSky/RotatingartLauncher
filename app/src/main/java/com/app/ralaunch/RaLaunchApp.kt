@@ -1,8 +1,12 @@
 package com.app.ralaunch
 
+import android.app.Activity
 import android.app.Application
 import android.content.Context
 import android.content.res.Configuration
+import android.os.Build
+import android.os.Bundle
+import android.os.Looper
 import android.system.Os
 import android.util.Log
 import androidx.appcompat.app.AppCompatDelegate
@@ -17,6 +21,8 @@ import com.kyant.fishnet.Fishnet
 import org.koin.android.ext.android.inject
 import org.koin.core.component.KoinComponent
 import java.io.File
+import java.util.Date
+import kotlin.system.exitProcess
 
 /**
  * 应用程序 Application 类 (Kotlin 重构版)
@@ -30,6 +36,9 @@ class RaLaunchApp : Application(), KoinComponent {
 
         @Volatile
         private var instance: RaLaunchApp? = null
+
+        // ... Keep track of the last active screen for advanced crash reporting ...
+        var lastResumedActivityName: String = "None"
 
         /**
          * 获取全局 Application 实例
@@ -51,6 +60,10 @@ class RaLaunchApp : Application(), KoinComponent {
     private val _patchManager: PatchManager? by inject()
 
     override fun onCreate() {
+        // ... 1. Initialize the ultimate crash catchers BEFORE anything else can crash ...
+        setupGlobalCrashCatcher()
+        setupComponentErrorTrackers()
+
         super.onCreate()
         instance = this
 
@@ -71,6 +84,108 @@ class RaLaunchApp : Application(), KoinComponent {
 
         // 6. 设置环境变量
         setupEnvironmentVariables()
+    }
+
+    // ... ULTIMATE COMPONENT ERROR TRACKER ...
+    private fun setupComponentErrorTrackers() {
+        // ... 1. Track Activity Lifecycle to know WHICH screen caused the crash ...
+        registerActivityLifecycleCallbacks(object : ActivityLifecycleCallbacks {
+            override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {}
+            override fun onActivityStarted(activity: Activity) {}
+            override fun onActivityResumed(activity: Activity) {
+                lastResumedActivityName = activity.javaClass.simpleName
+                Log.d(TAG, "Current Active Screen: $lastResumedActivityName")
+            }
+            override fun onActivityPaused(activity: Activity) {}
+            override fun onActivityStopped(activity: Activity) {}
+            override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) {}
+            override fun onActivityDestroyed(activity: Activity) {}
+        })
+
+        // ... 2. Prevent RxJava UndeliverableExceptions from crashing the app (if RxJava is used) ...
+        try {
+            val rxPluginsClass = Class.forName("io.reactivex.plugins.RxJavaPlugins")
+            val consumerClass = Class.forName("io.reactivex.functions.Consumer")
+            val method = rxPluginsClass.getMethod("setErrorHandler", consumerClass)
+            
+            val handler = java.lang.reflect.Proxy.newProxyInstance(
+                consumerClass.classLoader,
+                arrayOf(consumerClass)
+            ) { _, _, args ->
+                val error = args[0] as? Throwable
+                Log.e(TAG, "Unhandled RxJava Error Caught: ${error?.message}", error)
+                null
+            }
+            method.invoke(null, handler)
+        } catch (e: Exception) {
+            // ... Safe to ignore if RxJava is not in the project ...
+        }
+
+        // ... 3. Main Thread (UI) lag/block warning (Simple ANR detection) ...
+        Looper.getMainLooper().setMessageLogging { logMessage ->
+            if (logMessage.startsWith(">>>>> Dispatching to")) {
+                // ... ANR timer could be implemented here ...
+            }
+        }
+    }
+
+    // ... ROBUST GLOBAL CRASH CATCHER ...
+    private fun setupGlobalCrashCatcher() {
+        val defaultHandler = Thread.getDefaultUncaughtExceptionHandler()
+        Thread.setDefaultUncaughtExceptionHandler { thread, exception ->
+            try {
+                val appVersion = try {
+                    packageManager.getPackageInfo(packageName, 0).versionName
+                } catch (e: Exception) { "Unknown" }
+
+                // ... Build a highly detailed crash report ...
+                val crashReport = buildString {
+                    appendLine("\n=========================================")
+                    appendLine("CRASH TIME: ${Date()}")
+                    appendLine("DEVICE: ${Build.MANUFACTURER} ${Build.MODEL} (API ${Build.VERSION.SDK_INT})")
+                    appendLine("APP VERSION: $appVersion")
+                    appendLine("LAST ACTIVE SCREEN: $lastResumedActivityName")
+                    appendLine("THREAD: ${thread.name}")
+                    appendLine("ERROR TYPE: ${exception.javaClass.name}")
+                    appendLine("MESSAGE: ${exception.message}")
+                    appendLine("CAUSE: ${exception.cause?.message}")
+                    appendLine("STACKTRACE:")
+                    exception.stackTrace.forEach { appendLine("  at $it") }
+                    
+                    var cause = exception.cause
+                    while (cause != null) {
+                        appendLine("\nCAUSED BY: ${cause.javaClass.name}: ${cause.message}")
+                        cause.stackTrace.forEach { appendLine("  at $it") }
+                        cause = cause.cause
+                    }
+                    appendLine("=========================================\n")
+                }
+
+                // ... Save to internal storage (always works) ...
+                val internalLogFile = File(filesDir, "FATAL_CRASH.txt")
+                internalLogFile.appendText(crashReport)
+
+                // ... Save to external storage (Android/data/.../files/) so dev can read via PC without Root ...
+                val externalDir = getExternalFilesDir(null)
+                if (externalDir != null) {
+                    val externalLogFile = File(externalDir, "FATAL_CRASH_ACCESSIBLE.txt")
+                    externalLogFile.appendText(crashReport)
+                }
+
+                Log.e(TAG, "FATAL CRASH INTERCEPTED:\n$crashReport")
+
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to write crash log", e)
+            } finally {
+                // ... Pass it to Fishnet or System default handler ...
+                if (defaultHandler != null) {
+                    defaultHandler.uncaughtException(thread, exception)
+                } else {
+                    android.os.Process.killProcess(android.os.Process.myPid())
+                    exitProcess(1)
+                }
+            }
+        }
     }
 
     override fun attachBaseContext(base: Context) {

@@ -9,23 +9,8 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import kotlin.io.path.ExperimentalPathApi
-import kotlin.io.path.Path
-import kotlin.io.path.createDirectories
-import kotlin.io.path.deleteIfExists
-import kotlin.io.path.exists
-import kotlin.io.path.isDirectory
-import kotlin.io.path.listDirectoryEntries
-import kotlin.io.path.name
-import kotlin.io.path.readText
-import kotlin.io.path.writeText
+import java.io.File  // Thay kotlin.io.path.*
 
-/**
- * 控制布局存储通用实现。
- *
- * 平台层仅提供目录路径。
- */
-@OptIn(ExperimentalPathApi::class)
 class CommonControlLayoutStorage(
     private val pathsProvider: StoragePathsProvider
 ) : ControlLayoutStorage {
@@ -36,49 +21,49 @@ class CommonControlLayoutStorage(
     }
 
     override suspend fun loadAllLayouts(): List<ControlLayout> = withContext(Dispatchers.Default) {
-        layoutsDirPathFull.createDirectories()
-        layoutsDirPathFull.listDirectoryEntries()
-            .filter { it.isDirectory().not() }
-            .filter { it.name.endsWith(".json") }
-            .filter { it.name != AppConstants.Files.CONTROL_LAYOUT_STATE }
-            .mapNotNull { filePathFull ->
+        layoutsDirFull.mkdirs()
+        layoutsDirFull.listFiles()
+            ?.filter { it.isFile }
+            ?.filter { it.name.endsWith(".json") }
+            ?.filter { it.name != AppConstants.Files.CONTROL_LAYOUT_STATE }
+            ?.mapNotNull { file ->
                 runCatching {
-                    json.decodeFromString<ControlLayout>(filePathFull.readText())
+                    json.decodeFromString<ControlLayout>(file.readText())
                 }.getOrNull()
-            }
+            } ?: emptyList()
     }
 
     override suspend fun saveLayout(layout: ControlLayout) = withContext(Dispatchers.Default) {
-        layoutsDirPathFull.createDirectories()
-        layoutFilePathFull(layout.id).writeText(json.encodeToString(layout))
+        layoutsDirFull.mkdirs()
+        layoutFileFull(layout.id).writeText(json.encodeToString(layout))
     }
 
     override suspend fun deleteLayout(id: String) = withContext(Dispatchers.Default) {
-        layoutFilePathFull(id).deleteIfExists()
+        val file = layoutFileFull(id)
+        if (file.exists()) file.delete()
         Unit
     }
 
     override suspend fun loadCurrentLayoutId(): String? = withContext(Dispatchers.Default) {
-        if (!layoutStatePathFull.exists()) return@withContext null
+        if (!layoutStateFull.exists()) return@withContext null
         runCatching {
-            json.decodeFromString<ControlLayoutState>(layoutStatePathFull.readText()).currentLayoutId
+            json.decodeFromString<ControlLayoutState>(layoutStateFull.readText()).currentLayoutId
         }.getOrNull()
     }
 
     override suspend fun saveCurrentLayoutId(id: String) = withContext(Dispatchers.Default) {
-        layoutsDirPathFull.createDirectories()
+        layoutsDirFull.mkdirs()
         val state = ControlLayoutState(currentLayoutId = id)
-        layoutStatePathFull.writeText(json.encodeToString(state))
+        layoutStateFull.writeText(json.encodeToString(state))
     }
 
     override suspend fun importPack(packPath: String): Result<ControlLayout> = withContext(Dispatchers.Default) {
         runCatching {
-            val packPathFull = Path(packPath)
-            if (!packPathFull.exists()) {
+            val packFile = File(packPath)
+            if (!packFile.exists()) {
                 throw IllegalArgumentException("File not found: $packPath")
             }
-
-            val layout = json.decodeFromString<ControlLayout>(packPathFull.readText())
+            val layout = json.decodeFromString<ControlLayout>(packFile.readText())
             saveLayout(layout)
             layout
         }
@@ -87,26 +72,25 @@ class CommonControlLayoutStorage(
     override suspend fun exportLayout(layout: ControlLayout, outputPath: String): Result<String> =
         withContext(Dispatchers.Default) {
             runCatching {
-                val outputPathFull = Path(outputPath)
-                outputPathFull.parent?.createDirectories()
-                outputPathFull.writeText(json.encodeToString(layout))
+                val outputFile = File(outputPath)
+                outputFile.parentFile?.mkdirs()
+                outputFile.writeText(json.encodeToString(layout))
                 outputPath
             }
         }
 
     override suspend fun fetchRemotePacks(): Result<List<ControlPackManifest>> {
-        // 远程获取控件包功能暂未实现
         return Result.success(emptyList())
     }
 
-    private val layoutsDirPathFull
-        get() = Path(pathsProvider.controlLayoutsDirPathFull())
+    private val layoutsDirFull
+        get() = File(pathsProvider.controlLayoutsDirPathFull())
 
-    private fun layoutFilePathFull(layoutId: String) =
-        layoutsDirPathFull.resolve("$layoutId.json")
+    private fun layoutFileFull(layoutId: String) =
+        File(layoutsDirFull, "$layoutId.json")
 
-    private val layoutStatePathFull
-        get() = layoutsDirPathFull.resolve(AppConstants.Files.CONTROL_LAYOUT_STATE)
+    private val layoutStateFull
+        get() = File(layoutsDirFull, AppConstants.Files.CONTROL_LAYOUT_STATE)
 }
 
 @Serializable

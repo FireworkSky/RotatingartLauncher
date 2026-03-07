@@ -1,3 +1,4 @@
+
 package com.app.ralaunch.core.platform.runtime.renderer
 
 import android.content.Context
@@ -5,7 +6,6 @@ import android.os.Build
 import android.os.Environment
 import com.app.ralaunch.shared.generated.resources.*
 import java.io.File
-import kotlin.io.path.Path
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.getString
@@ -88,8 +88,12 @@ actual object RendererRegistry {
                 env["FNA3D_OPENGL_DRIVER"] = "mobileglues"
                 env["MOBILEGLUES_GLES_VERSION"] = "3.2"
                 env["FNA3D_MOJOSHADER_PROFILE"] = "glsles3"
-                env["MG_DIR_PATH"] =
-                    Path(Environment.getExternalStorageDirectory().absolutePath).resolve("MG").toString()
+                // Sua: Thay Path(...).resolve("MG").toString()
+                val mgDir = File(
+                    Environment.getExternalStorageDirectory().absolutePath,
+                    "MG"
+                ).absolutePath
+                env["MG_DIR_PATH"] = mgDir
             }
         )
 
@@ -185,9 +189,7 @@ actual object RendererRegistry {
 
         val renderers = synchronized(rendererStore) { rendererStore.values.toList() }
         for (renderer in renderers) {
-            if (Build.VERSION.SDK_INT < renderer.minAndroidVersion) {
-                continue
-            }
+            if (Build.VERSION.SDK_INT < renderer.minAndroidVersion) continue
 
             var hasLibraries = true
             if (renderer.eglLibrary != null) {
@@ -206,9 +208,7 @@ actual object RendererRegistry {
                 }
             }
 
-            if (hasLibraries) {
-                compatible.add(renderer)
-            }
+            if (hasLibraries) compatible.add(renderer)
         }
 
         return compatible
