@@ -31,18 +31,32 @@ android {
             }
         }
     }
+        // ===================================================================
+    // ... Hacky way: Use a hardcoded dummy keystore for CI/CD ...
+    // ... This ensures the signature is identical every time! ...
+    // ===================================================================
+    signingConfigs {
+        release {
+            storeFile file("dummy.keystore")
+            storePassword "123456"
+            keyAlias "ralaunch"
+            keyPassword "123456"
+
+            enableV1Signing true
+            enableV2Signing true
+            enableV3Signing true
+        }
+    }
 
     buildTypes {
-        debug {
-            debuggable true
-            minifyEnabled false
-            jniDebuggable true
-        }
         release {
             debuggable false
             minifyEnabled false 
             shrinkResources false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            
+            // ... Apply the dummy signing config ...
+            signingConfig signingConfigs.release
             
             externalNativeBuild {
                 cmake {
