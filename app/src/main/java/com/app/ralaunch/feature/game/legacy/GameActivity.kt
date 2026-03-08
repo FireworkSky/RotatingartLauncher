@@ -184,10 +184,9 @@ class GameActivity : SDLActivity(), GameContract.View {
         instance = this
         presenter.attach(this)
 
-        // ===================================================================
-        // ... APPLY SDL AUDIO CRASH FIXES VIA OPTIMIZER MODULE ...
-        // ===================================================================
         SDLOptimizer.applyAudioFixes(this)
+
+        GameBoost.applyMaxPerformance()
 
         // 初始化日志系统 (游戏进程独立于主进程)
         initializeLogger()
