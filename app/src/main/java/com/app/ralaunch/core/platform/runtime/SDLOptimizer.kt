@@ -1,4 +1,4 @@
-package com.app.ralaunch.core.platform.runtime
+ package com.app.ralaunch.core.platform.runtime
 
 import android.content.Context
 import android.media.AudioManager
@@ -9,7 +9,7 @@ import android.util.Log
  * SDL & Audio Optimizer
  * 
  * Specifically designed to resolve Audio (SDL2 / OpenAL / FNA) related 
- * crashes on older Android devices (especially Android 7.1.1).
+ * crashes and Graphics issues on older Android devices (Android 7.1.1).
  */
 object SDLOptimizer {
 
@@ -57,7 +57,7 @@ object SDLOptimizer {
         }
     }
 
-        // ===================================================================
+    // ===================================================================
     // ... THE VACCINE: Inject environment variables for Audio & Graphics ...
     // ===================================================================
     private fun injectEnvironmentVariables() {
@@ -70,21 +70,24 @@ object SDLOptimizer {
             Os.setenv("ALSOFT_REQCHANNELS", "2", true) 
             Os.setenv("ALSOFT_REQSAMPLERATE", "44100", true)
 
-            // --- 2. GRAPHICS FIXES (Prevent Stretched/Squeezed rendering) ---
-            // ... Force SDL to maintain the original aspect ratio (Letterboxing) ...
+            // --- 2. SDL GRAPHICS FIXES (Prevent Stretched rendering) ---
             Os.setenv("SDL_VIDEO_ALLOW_SCREENSAVER", "0", true)
             Os.setenv("SDL_HINT_RENDER_LOGICAL_SIZE_MODE", "letterbox", true)
-            
-            // ... Prevent FNA engine from stretching the window manually ...
             Os.setenv("FNA_GRAPHICS_ENABLE_HIGHDPI", "1", true)
             
-            // ... Optional: Force 1280x720 (16:9 HD) resolution for better performance ...
-            // ... Uncomment these if the game still looks stretched ...
-            // Os.setenv("FNA_GRAPHICS_DISPLAY_WIDTH", "1280", true)
-            // Os.setenv("FNA_GRAPHICS_DISPLAY_HEIGHT", "720", true)
+            // --- 3. RENDERER COMPATIBILITY HACKS (Fix Black Screen / Crash) ---
+            // ... When users select GL4ES or other renderers instead of Native GLES3,
+            // ... these variables force the translator to use safe, older API calls
+            // ... that won't crash older Android 7 GPUs.
+            Os.setenv("LIBGL_ES", "2", true) 
+            Os.setenv("LIBGL_NOHASH", "1", true)
+            Os.setenv("LIBGL_HARDWARE_TL", "1", true)
+            Os.setenv("LIBGL_SOFTWARE", "0", true) 
+            Os.setenv("LIBGL_BATCH", "1", true)
 
-            Log.i(TAG, "✅ Audio and Graphics environment variables injected successfully!")
+            Log.i(TAG, "✅ Audio, SDL, and GL4ES environment variables injected successfully!")
         } catch (e: Exception) {
             Log.e(TAG, "❌ Failed to inject environment variables: ${e.message}")
         }
     }
+} 
