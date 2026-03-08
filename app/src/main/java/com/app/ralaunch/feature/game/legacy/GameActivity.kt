@@ -31,6 +31,7 @@ import org.libsdl.app.SDLActivity
 import com.app.ralaunch.core.platform.runtime.SDLOptimizer
 import com.app.ralaunch.core.platform.runtime.GameBoost
 import com.app.ralaunch.core.platform.runtime.RendererFramework
+import com.app.ralaunch.core.platform.runtime.TurboPatchLoader
 
 /**
  * 游戏运行界面
@@ -189,6 +190,8 @@ class GameActivity : SDLActivity(), GameContract.View {
 
         val selectedRenderer = intent.getStringExtra(EXTRA_GAME_RENDERER_OVERRIDE) ?: "native"
         RendererFramework.injectCustomDriverPaths(this, selectedRenderer)
+
+        TurboPatchLoader.injectTurboWrapper()
 
         GameBoost.applyMaxPerformance()
 
