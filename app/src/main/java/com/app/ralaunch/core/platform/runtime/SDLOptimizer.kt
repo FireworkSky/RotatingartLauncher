@@ -81,6 +81,7 @@ object SDLOptimizer {
             Log.i(TAG, "✅ Injected all environment variables successfully!")
             
         } catch (e: Exception) {
-            Log.e(TAG, "❌ Failed to inject variables: ${e.message}")
+            Log.e(TAG, "❌ Failed to inject environment variables: ${e.message}")
+        }
     }
-} 
+}  
