@@ -236,27 +236,10 @@ class GameActivity : SDLActivity(), GameContract.View {
         }
     }
 
-        // ===================================================================
-    // ... UI INITIALIZATION & IMMERSIVE MODE ...
-    // ===================================================================
     private fun initializeFullscreenManager() {
         fullscreenManager = GameFullscreenManager(this).apply {
             enableFullscreen()
             configureIME()
-        }
-        
-        // ... Hide Navigation Bar (Immersive Mode) to prevent UI overlap ...
-        try {
-            window.decorView.systemUiVisibility = (
-                android.view.View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-                or android.view.View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                or android.view.View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                or android.view.View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                or android.view.View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                or android.view.View.SYSTEM_UI_FLAG_FULLSCREEN
-            )
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to hide navigation bar: ${e.message}")
         }
     }
 
@@ -277,6 +260,11 @@ class GameActivity : SDLActivity(), GameContract.View {
 
     private fun hideNavigationBarDefinitively() {
         try {
+            // ... 1. Tell the window to resize itself when the keyboard appears ...
+            // This prevents the keyboard from covering text inputs in the game
+            window.setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
+
+            // ... 2. Apply standard Immersive Mode flags ...
             val flags = (
                 android.view.View.SYSTEM_UI_FLAG_LAYOUT_STABLE
                 or android.view.View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
@@ -285,12 +273,33 @@ class GameActivity : SDLActivity(), GameContract.View {
                 or android.view.View.SYSTEM_UI_FLAG_FULLSCREEN
                 or android.view.View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
             )
+            
             window.decorView.systemUiVisibility = flags
+
+            // ... 3. Listen for window size changes (e.g., Keyboard popping up) ...
+            // When the keyboard closes, we FORCE the navigation bar to hide again!
+            window.decorView.setOnSystemUiVisibilityChangeListener { visibility ->
+                if ((visibility and android.view.View.SYSTEM_UI_FLAG_FULLSCREEN) == 0) {
+                    // ... The system UI (Status bar or Nav bar) appeared! 
+                    // Let's hide it again after a tiny delay to let the keyboard close cleanly ...
+                    Handler(Looper.getMainLooper()).postDelayed({
+                        window.decorView.systemUiVisibility = flags
+                    }, 300)
+                }
+            }
+
         } catch (e: Exception) {
             Log.e(TAG, "Failed to hide navigation bar: ${e.message}")
         }
     }
 
+    // ... Ensure it stays hidden when resuming ...
+    override fun onResume() {
+        super.onResume()
+        hideNavigationBarDefinitively()
+    }
+
+    // ... Ensure it stays hidden when focusing ...
     override fun onWindowFocusChanged(hasFocus: Boolean) {
         super.onWindowFocusChanged(hasFocus)
         fullscreenManager?.onWindowFocusChanged(hasFocus)
