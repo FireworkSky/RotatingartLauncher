@@ -57,30 +57,34 @@ object SDLOptimizer {
         }
     }
 
-    // ===================================================================
-    // ... THE VACCINE: Inject environment variables to prevent SDL crashes ...
+        // ===================================================================
+    // ... THE VACCINE: Inject environment variables for Audio & Graphics ...
     // ===================================================================
     private fun injectEnvironmentVariables() {
         try {
-            // ... Level 1: Force Android AudioTrack (Most stable for old OS) ...
+            // --- 1. AUDIO FIXES (Android 7 compatibility) ---
             Os.setenv("SDL_AUDIODRIVER", "android", true)
-            
-            // ... Level 2: Fix Buffer Overflow (The real cause of "Already Open" error) ...
-            // Reduce sample size so the old Android buffer doesn't choke
             Os.setenv("SDL_AUDIO_SAMPLES", "512", true) 
             Os.setenv("FAUDIO_FMT_WBUFFER", "1", true)
-            
-            // ... Level 3: Force FNA/OpenAL to use a very standard sample rate ...
             Os.setenv("FNA_AUDIO_SAMPLE_RATE", "44100", true)
             Os.setenv("ALSOFT_REQCHANNELS", "2", true) 
             Os.setenv("ALSOFT_REQSAMPLERATE", "44100", true)
 
-            // ... Optional: If it still crashes, uncomment the line below to mute the game entirely ...
-            // Os.setenv("FNA_AUDIO_DISABLE_SOUND", "1", true)
+            // --- 2. GRAPHICS FIXES (Prevent Stretched/Squeezed rendering) ---
+            // ... Force SDL to maintain the original aspect ratio (Letterboxing) ...
+            Os.setenv("SDL_VIDEO_ALLOW_SCREENSAVER", "0", true)
+            Os.setenv("SDL_HINT_RENDER_LOGICAL_SIZE_MODE", "letterbox", true)
+            
+            // ... Prevent FNA engine from stretching the window manually ...
+            Os.setenv("FNA_GRAPHICS_ENABLE_HIGHDPI", "1", true)
+            
+            // ... Optional: Force 1280x720 (16:9 HD) resolution for better performance ...
+            // ... Uncomment these if the game still looks stretched ...
+            // Os.setenv("FNA_GRAPHICS_DISPLAY_WIDTH", "1280", true)
+            // Os.setenv("FNA_GRAPHICS_DISPLAY_HEIGHT", "720", true)
 
-            Log.i(TAG, "✅ Anti-crash Audio Environment Variables injected!")
+            Log.i(TAG, "✅ Audio and Graphics environment variables injected successfully!")
         } catch (e: Exception) {
             Log.e(TAG, "❌ Failed to inject environment variables: ${e.message}")
         }
     }
-}
