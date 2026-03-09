@@ -13,8 +13,8 @@ android {
     defaultConfig {
         applicationId "com.app.ralaunch"
         
-        // ... Support for Android 7.1.1 ...
-        minSdk 25 
+        // ... Support for Android 7...
+        minSdk 24 
         targetSdk 35
         versionCode 3
         versionName "2.0.1"
