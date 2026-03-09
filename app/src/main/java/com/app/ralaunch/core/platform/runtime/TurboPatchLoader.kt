@@ -1,7 +1,6 @@
 package com.app.ralaunch.core.platform.runtime
 
 import android.app.ActivityManager
-import android.content.ComponentCallbacks2
 import android.content.Context
 import android.os.Build
 import android.os.Process
@@ -26,20 +25,22 @@ object TurboPatchLoader {
         Log.i(TAG, "🔥 IGNITING TURBO PATCH LOADER (COOL RUNNING MODE)...")
 
         try {
-            // ... 1. AGGRESSIVE RAM CLEANUP (Fake Low-Memory Alert) ...
+            // ... 1. AGGRESSIVE RAM CLEANUP ...
             val am = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                // Ignore deprecation warning, we target old Androids anyway
+                // ... Kill heavy background apps to free up physical RAM ...
                 @Suppress("DEPRECATION")
-                am.killBackgroundProcesses("com.android.chrome") // Kill known heavy hitters
+                am.killBackgroundProcesses("com.android.chrome") 
             }
-            // Trigger OS garbage collection forcefully
-            context.applicationContext.onTrimMemory(ComponentCallbacks2.TRIM_MEMORY_RUNNING_CRITICAL)
+            
+            // ... Force the Java Virtual Machine to aggressively clear garbage ...
             Runtime.getRuntime().gc()
+            Runtime.getRuntime().runFinalization()
             Log.i(TAG, "🧹 RAM violently purged! Field is clear for gaming.")
 
             // ... 2. SMART THREAD PRIORITY (Fast but cool) ...
-            // Priority -8 (URGENT_AUDIO). Not as aggressive as -19, so it won't overheat the chip.
+            // Priority -8 (URGENT_AUDIO). Fast enough to prevent stutter,
+            // but not so aggressive that it overheats the device.
             Process.setThreadPriority(Process.THREAD_PRIORITY_URGENT_AUDIO)
 
             // ... 3. THERMAL THROTTLING PREVENTION ...
