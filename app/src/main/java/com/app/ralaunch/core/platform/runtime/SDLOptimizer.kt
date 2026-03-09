@@ -73,6 +73,17 @@ object SDLOptimizer {
             Os.setenv("SDL_AUDIO_FORMAT", "s16", true)
             Os.setenv("FNA_AUDIO_DISABLE_FLOAT", "1", true)
 
+            Os.setenv("SDL_VIDEO_ALLOW_SCREENSAVER", "0", true)
+            Os.setenv("SDL_HINT_RENDER_LOGICAL_SIZE_MODE", "letterbox", true)
+            Os.setenv("FNA_GRAPHICS_ENABLE_HIGHDPI", "1", true)
+            
+            // Tell SDL NOT to touch the Android System UI visibility!
+            // This prevents SDL from overriding our Kotlin Immersive Mode.
+            Os.setenv("SDL_ANDROID_TRAP_BACK_BUTTON", "1", true)
+            Os.setenv("SDL_ANDROID_BLOCK_ON_PAUSE", "0", true)
+            // Force SDL to respect fullscreen borders
+            Os.setenv("SDL_VIDEO_MINIMIZE_ON_FOCUS_LOSS", "0", true) 
+
             // --- 2. SDL GRAPHICS FIXES (Prevent Stretched rendering) ---
             Os.setenv("SDL_VIDEO_ALLOW_SCREENSAVER", "0", true)
             Os.setenv("SDL_HINT_RENDER_LOGICAL_SIZE_MODE", "letterbox", true)
