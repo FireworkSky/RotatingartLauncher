@@ -6,14 +6,15 @@ import android.util.Log
 import java.io.BufferedReader
 import java.io.File
 import java.io.InputStreamReader
+import java.text.SimpleDateFormat
 import java.util.Date
+import java.util.Locale
 import kotlin.system.exitProcess
 
 /**
  * The Ultimate Crash Sentinel 🗿🧬
  * 
- * A unified crash detection system that catches both high-level Java/Kotlin app crashes
- * AND deep-level native C++/OOM game crashes without bloating the main Application class.
+ * Catches all crashes and generates highly detailed forensic reports.
  */
 object CrashSentinel {
 
@@ -21,26 +22,27 @@ object CrashSentinel {
     private var isArmed = false
 
     // ===================================================================
-    // ... ARM THE DEFENSES (Call this once when app starts) ...
+    // ... ARM THE DEFENSES ...
     // ===================================================================
     fun armDefenses(context: Context) {
         if (isArmed) return
         isArmed = true
 
-        val crashDir = File(context.getExternalFilesDir(null), "CrashReports")
+        // ... Rename directory to "crashreport" (all lowercase) as requested ...
+        val crashDir = File(context.getExternalFilesDir(null), "crashreport")
         if (!crashDir.exists()) crashDir.mkdirs()
 
         Log.i(TAG, "🛡️ Arming the Ultimate Crash Sentinel...")
 
-        // ... 1. Setup Java/Kotlin Exception Catcher (For App Crashes) ...
+        // ... 1. Setup Java/Kotlin Exception Catcher ...
         setupJavaCrashCatcher(context, crashDir)
 
-        // ... 2. Setup Native/Logcat Reader (For Game/C++/OOM Crashes) ...
+        // ... 2. Setup Native/Logcat Reader ...
         setupNativeCrashCatcher(crashDir)
     }
 
     // ===================================================================
-    // ... LAYER 1: APP CRASHES (Kotlin/Java) ...
+    // ... LAYER 1: APP CRASHES (Highly Detailed Forensic Report) ...
     // ===================================================================
     private fun setupJavaCrashCatcher(context: Context, crashDir: File) {
         val defaultHandler = Thread.getDefaultUncaughtExceptionHandler()
@@ -51,27 +53,45 @@ object CrashSentinel {
                     context.packageManager.getPackageInfo(context.packageName, 0).versionName
                 } catch (e: Exception) { "Unknown" }
 
+                // ... Extract the exact file and line number where the crash originated ...
+                val rootCauseElement = exception.stackTrace.firstOrNull()
+                val errorFile = rootCauseElement?.fileName ?: "Unknown File"
+                val errorLine = rootCauseElement?.lineNumber?.toString() ?: "Unknown Line"
+                val errorMethod = "${rootCauseElement?.className}.${rootCauseElement?.methodName}"
+
+                // ... Format the date nicely ...
+                val timeFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+                val crashTime = timeFormat.format(Date())
+
                 val reportFile = File(crashDir, "APP_CRASH_${System.currentTimeMillis()}.txt")
                 
+                // ... Build the professional forensic crash report ...
                 val crashReport = buildString {
                     appendLine("=========================================")
-                    appendLine("🔥 JAVA/KOTLIN APP CRASH REPORT")
-                    appendLine("CRASH TIME: ${Date()}")
-                    appendLine("DEVICE: ${Build.MANUFACTURER} ${Build.MODEL} (API ${Build.VERSION.SDK_INT})")
-                    appendLine("APP VERSION: $appVersion")
-                    appendLine("THREAD: ${thread.name}")
-                    appendLine("ERROR TYPE: ${exception.javaClass.name}")
-                    appendLine("MESSAGE: ${exception.message}")
+                    appendLine("🚨 RALAUNCHER FATAL CRASH REPORT 🚨")
                     appendLine("=========================================")
-                    appendLine("STACKTRACE:")
+                    appendLine("🕒 CRASH TIME   : $crashTime")
+                    appendLine("📱 DEVICE       : ${Build.MANUFACTURER} ${Build.MODEL} (API ${Build.VERSION.SDK_INT})")
+                    appendLine("📦 APP VERSION  : $appVersion")
+                    appendLine("-----------------------------------------")
+                    appendLine("📁 ERROR FILE   : $errorFile")
+                    appendLine("🔢 ERROR LINE   : Line $errorLine")
+                    appendLine("⚙️ ERROR METHOD : $errorMethod")
+                    appendLine("-----------------------------------------")
+                    appendLine("💀 ERROR TYPE   : ${exception.javaClass.name}")
+                    appendLine("💬 MESSAGE      : ${exception.message}")
+                    appendLine("=========================================")
+                    appendLine("📚 FULL STACKTRACE:")
+                    
                     exception.stackTrace.forEach { appendLine("  at $it") }
                     
                     var cause = exception.cause
                     while (cause != null) {
-                        appendLine("\nCAUSED BY: ${cause.javaClass.name}: ${cause.message}")
+                        appendLine("\n🔄 CAUSED BY: ${cause.javaClass.name}: ${cause.message}")
                         cause.stackTrace.forEach { appendLine("  at $it") }
                         cause = cause.cause
                     }
+                    appendLine("=========================================")
                 }
 
                 reportFile.writeText(crashReport)
@@ -97,17 +117,17 @@ object CrashSentinel {
     private fun setupNativeCrashCatcher(crashDir: File) {
         Thread {
             try {
-                // ... Clear old logcat to prevent reading stale crashes ...
+                // ... Clear old logcat ...
                 Runtime.getRuntime().exec("logcat -c").waitFor()
 
-                // ... Start reading logcat continuously in the background ...
+                // ... Start reading logcat continuously with timestamps ...
                 val process = Runtime.getRuntime().exec("logcat -v time")
                 val reader = BufferedReader(InputStreamReader(process.inputStream))
                 
                 val nativeReportFile = File(crashDir, "GAME_NATIVE_CRASH_LOG.txt")
                 
-                // ... Recreate the file for the new session ...
-                nativeReportFile.writeText("=== GAME BACKGROUND LOGGING STARTED AT ${Date()} ===\n\n")
+                val timeFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+                nativeReportFile.writeText("=== GAME BACKGROUND LOGGING STARTED AT ${timeFormat.format(Date())} ===\n\n")
 
                 while (true) {
                     val line = reader.readLine() ?: break
