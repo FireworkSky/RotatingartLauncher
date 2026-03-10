@@ -43,10 +43,13 @@ class RaLaunchApp : Application(), KoinComponent {
     private val _controlPackManager: ControlPackManager by inject()
     private val _patchManager: PatchManager? by inject()
 
-    override fun onCreate() {
+        override fun onCreate() {
         val defaultHandler = Thread.getDefaultUncaughtExceptionHandler()
         Thread.setDefaultUncaughtExceptionHandler { thread, exception ->
             try {
+                // -----------------------------------------------------------
+                // ... TYPE 1: THE ORIGINAL DEV'S REPORT (Kept 100% intact) ...
+                // -----------------------------------------------------------
                 val logFile = File(filesDir, "FATAL_CRASH.txt")
                 logFile.appendText("\n\n=========================================\n")
                 logFile.appendText("CRASH TIME: ${Date()}\n")
@@ -58,47 +61,64 @@ class RaLaunchApp : Application(), KoinComponent {
                 logFile.appendText("STACKTRACE:\n")
                 exception.stackTrace.forEach { logFile.appendText("  at $it\n") }
                 logFile.appendText("=========================================\n")
+
+                // -----------------------------------------------------------
+                // ... TYPE 2: MY NEW VIP FORENSIC REPORT (Injected here) ...
+                // -----------------------------------------------------------
+                try {
+                    val appVersion = packageManager.getPackageInfo(packageName, 0).versionName
+                    val rootCauseElement = exception.stackTrace.firstOrNull()
+                    val errorFile = rootCauseElement?.fileName ?: "Unknown File"
+                    val errorLine = rootCauseElement?.lineNumber?.toString() ?: "Unknown Line"
+                    
+                    val crashDir = File(getExternalFilesDir(null), "crashreport")
+                    if (!crashDir.exists()) crashDir.mkdirs()
+                    
+                    val vipLogFile = File(crashDir, "APP_CRASH_${System.currentTimeMillis()}.txt")
+                    
+                    val vipReport = buildString {
+                        appendLine("=========================================")
+                        appendLine("🚨 RALAUNCHER VIP CRASH REPORT 🚨")
+                        appendLine("=========================================")
+                        appendLine("🕒 CRASH TIME   : ${java.util.Date()}")
+                        appendLine("📱 DEVICE       : ${Build.MODEL} (API ${Build.VERSION.SDK_INT})")
+                        appendLine("📦 APP VERSION  : $appVersion")
+                        appendLine("-----------------------------------------")
+                        appendLine("📁 ERROR FILE   : $errorFile")
+                        appendLine("🔢 ERROR LINE   : Line $errorLine")
+                        appendLine("-----------------------------------------")
+                        appendLine("💀 ERROR TYPE   : ${exception.javaClass.name}")
+                        appendLine("💬 MESSAGE      : ${exception.message}")
+                        appendLine("=========================================")
+                        exception.stackTrace.forEach { appendLine("  at $it") }
+                        
+                        var cause = exception.cause
+                        while (cause != null) {
+                            appendLine("\n🔄 CAUSED BY: ${cause.javaClass.name}: ${cause.message}")
+                            cause.stackTrace.forEach { appendLine("  at $it") }
+                            cause = cause.cause
+                        }
+                    }
+                    vipLogFile.writeText(vipReport)
+                } catch (vipException: Exception) {
+                    // If VIP report fails, do nothing, let the original report survive!
+                }
+
             } catch (e: Exception) {
                 // Ignore if we can't write
             }
-            // Let the app crash normally after saving the log
+            // Let the app crash normally after saving the logs
             defaultHandler?.uncaughtException(thread, exception)
         }
 
         super.onCreate()
         instance = this
 
-        CrashSentinel.armDefenses(this)
+        com.app.ralaunch.core.platform.runtime.BlackBoxLogger.startRecording(this)
 
         val startupLogFile = File(filesDir, "startup_log.txt")
         startupLogFile.delete()
-
-        fun writeLog(msg: String) {
-            Log.i(TAG, msg)
-            try { startupLogFile.appendText("$msg\n") } catch (e: Exception) { }
-        }
-
-        fun step(name: String, block: () -> Unit) {
-            writeLog("▶ $name...")
-            try {
-                block()
-                writeLog("✅ $name OK")
-            } catch (e: Throwable) {
-                writeLog("❌ $name FAILED: ${e.javaClass.name} - ${e.message}")
-            }
-        }
-
-        writeLog("=== App Start: Android ${Build.VERSION.SDK_INT} ===")
         
-        step("DensityAdapter")  { DensityAdapter.init(this) }
-        step("KoinInitializer") { KoinInitializer.init(this) }
-        step("Theme")           { applyThemeFromSettings() }
-        step("Fishnet")         { initCrashHandler() }
-        step("Patches")         { installPatchesInBackground() }
-        step("EnvVars")         { setupEnvironmentVariables() }
-
-        writeLog("=== Init Complete ===")
-    }
 
     override fun attachBaseContext(base: Context) {
         super.attachBaseContext(LocaleManager.applyLanguage(base))
