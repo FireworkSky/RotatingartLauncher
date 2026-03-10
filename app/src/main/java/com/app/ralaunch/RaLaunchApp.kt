@@ -21,7 +21,7 @@ import org.koin.android.ext.android.inject
 import org.koin.core.component.KoinComponent
 import java.io.File
 import java.util.Date
-import com.app.ralaunch.core.platform.runtime.CrashSentinel
+import com.app.ralaunch.core.platform.runtime.BlackBoxLogger
 
 class RaLaunchApp : Application(), KoinComponent {
 
@@ -46,25 +46,6 @@ class RaLaunchApp : Application(), KoinComponent {
         override fun onCreate() {
         val defaultHandler = Thread.getDefaultUncaughtExceptionHandler()
         Thread.setDefaultUncaughtExceptionHandler { thread, exception ->
-            try {
-                // -----------------------------------------------------------
-                // ... TYPE 1: THE ORIGINAL DEV'S REPORT (Kept 100% intact) ...
-                // -----------------------------------------------------------
-                val logFile = File(filesDir, "FATAL_CRASH.txt")
-                logFile.appendText("\n\n=========================================\n")
-                logFile.appendText("CRASH TIME: ${Date()}\n")
-                logFile.appendText("DEVICE: ${Build.MANUFACTURER} ${Build.MODEL} (API ${Build.VERSION.SDK_INT})\n")
-                logFile.appendText("THREAD: ${thread.name}\n")
-                logFile.appendText("ERROR TYPE: ${exception.javaClass.name}\n")
-                logFile.appendText("MESSAGE: ${exception.message}\n")
-                logFile.appendText("CAUSE: ${exception.cause?.message}\n")
-                logFile.appendText("STACKTRACE:\n")
-                exception.stackTrace.forEach { logFile.appendText("  at $it\n") }
-                logFile.appendText("=========================================\n")
-
-                // -----------------------------------------------------------
-                // ... TYPE 2: MY NEW VIP FORENSIC REPORT (Injected here) ...
-                // -----------------------------------------------------------
                 try {
                     val appVersion = packageManager.getPackageInfo(packageName, 0).versionName
                     val rootCauseElement = exception.stackTrace.firstOrNull()
