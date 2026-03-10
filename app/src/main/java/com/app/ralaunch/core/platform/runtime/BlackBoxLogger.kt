@@ -1,85 +1,220 @@
-package com.app.ralaunch.core.platform.runtime
+package com.app.ralaunch
 
+import android.app.Application
 import android.content.Context
+import android.content.res.Configuration
+import android.os.Build
+import android.system.Os
 import android.util.Log
-import java.io.BufferedReader
+import androidx.appcompat.app.AppCompatDelegate
+import com.app.ralaunch.feature.controls.packs.ControlPackManager
+import com.app.ralaunch.core.common.SettingsAccess
+import com.app.ralaunch.core.di.KoinInitializer
+import com.app.ralaunch.core.common.VibrationManager
+import com.app.ralaunch.core.common.util.DensityAdapter
+import com.app.ralaunch.core.common.util.LocaleManager
+import com.app.ralaunch.feature.patch.data.PatchManager
+import com.kyant.fishnet.Fishnet
+import org.koin.android.ext.android.inject
+import org.koin.core.component.KoinComponent
 import java.io.File
-import java.io.InputStreamReader
-import java.text.SimpleDateFormat
 import java.util.Date
-import java.util.Locale
 
 /**
- * The Black Box Logger (Native & Background Crash Catcher)
- * 
- * Runs a background thread that continuously records the deep Linux system log (Logcat).
- * If the app is killed instantly by the OS (OOM, SIGSEGV, or Native C++ crashes) bypassing 
- * the normal Java crash handler, this file will contain the exact final moments of the engine.
+ * 应用程序 Application 类
  */
-object BlackBoxLogger {
+class RaLaunchApp : Application(), KoinComponent {
 
-    private const val TAG = "BlackBoxLogger"
-    private var isRecording = false
+    companion object {
+        private const val TAG = "RaLaunchApp"
 
-    // ===================================================================
-    // ... MAIN TRIGGER: Start recording system logs ...
-    // ===================================================================
-    fun startRecording(context: Context) {
-        if (isRecording) return
+        @Volatile
+        private var instance: RaLaunchApp? = null
 
-        Thread {
+        @JvmStatic
+        fun getInstance(): RaLaunchApp = instance
+            ?: throw IllegalStateException("Application not initialized")
+
+        @JvmStatic
+        fun getAppContext(): Context = getInstance().applicationContext
+    }
+
+    private val _vibrationManager: VibrationManager by inject()
+    private val _controlPackManager: ControlPackManager by inject()
+    private val _patchManager: PatchManager? by inject()
+
+    override fun onCreate() {
+        // ===================================================================
+        // ... THE ORIGINAL CRASH CATCHER (With Dual-Reporting System) ...
+        // ===================================================================
+        val defaultHandler = Thread.getDefaultUncaughtExceptionHandler()
+        Thread.setDefaultUncaughtExceptionHandler { thread, exception ->
             try {
-                isRecording = true
-                
-                // ... 1. Setup the Black Box directory and file ...
-                val crashDir = File(context.getExternalFilesDir(null), "crashreport")
-                if (!crashDir.exists()) crashDir.mkdirs()
-                
-                val logFile = File(crashDir, "Crash.txt")
-                
-                Log.i(TAG, "✈️ Black Box activated! Recording flight data to: ${logFile.absolutePath}")
+                // -----------------------------------------------------------
+                // ... TYPE 1: THE ORIGINAL DEV'S REPORT (Kept intact) ...
+                // -----------------------------------------------------------
+                val logFile = File(filesDir, "FATAL_CRASH.txt")
+                logFile.appendText("\n\n=========================================\n")
+                logFile.appendText("CRASH TIME: ${Date()}\n")
+                logFile.appendText("DEVICE: ${Build.MANUFACTURER} ${Build.MODEL} (API ${Build.VERSION.SDK_INT})\n")
+                logFile.appendText("THREAD: ${thread.name}\n")
+                logFile.appendText("ERROR TYPE: ${exception.javaClass.name}\n")
+                logFile.appendText("MESSAGE: ${exception.message}\n")
+                logFile.appendText("CAUSE: ${exception.cause?.message}\n")
+                logFile.appendText("STACKTRACE:\n")
+                exception.stackTrace.forEach { logFile.appendText("  at $it\n") }
+                logFile.appendText("=========================================\n")
 
-                // ... 2. Clear old logs to ensure we only capture current session data ...
-                Runtime.getRuntime().exec("logcat -c").waitFor()
-
-                // ... 3. Start continuous log capture (using threadtime for high precision) ...
-                val process = Runtime.getRuntime().exec("logcat -v threadtime")
-                
-                process.inputStream.bufferedReader().use { reader ->
-                    logFile.printWriter().use { writer ->
-                        val timeFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
-                        writer.println("=========================================")
-                        writer.println("✈️ BLACK BOX FLIGHT RECORDER STARTED")
-                        writer.println("🕒 TIME: ${timeFormat.format(Date())}")
-                        writer.println("=========================================")
+                // -----------------------------------------------------------
+                // ... TYPE 2: THE VIP FORENSIC REPORT 🚨 ...
+                // -----------------------------------------------------------
+                try {
+                    val appVersion = packageManager.getPackageInfo(packageName, 0).versionName
+                    val rootCauseElement = exception.stackTrace.firstOrNull()
+                    val errorFile = rootCauseElement?.fileName ?: "Unknown File"
+                    val errorLine = rootCauseElement?.lineNumber?.toString() ?: "Unknown Line"
+                    
+                    val crashDir = File(getExternalFilesDir(null), "crashreport")
+                    if (!crashDir.exists()) crashDir.mkdirs()
+                    
+                    val vipLogFile = File(crashDir, "APP_CRASH_${System.currentTimeMillis()}.txt")
+                    
+                    val vipReport = buildString {
+                        appendLine("=========================================")
+                        appendLine("🚨 RALAUNCHER VIP CRASH REPORT 🚨")
+                        appendLine("=========================================")
+                        appendLine("🕒 CRASH TIME   : ${java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault()).format(Date())}")
+                        appendLine("📱 DEVICE       : ${Build.MANUFACTURER} ${Build.MODEL} (API ${Build.VERSION.SDK_INT})")
+                        appendLine("📦 APP VERSION  : $appVersion")
+                        appendLine("-----------------------------------------")
+                        appendLine("📁 ERROR FILE   : $errorFile")
+                        appendLine("🔢 ERROR LINE   : Line $errorLine")
+                        appendLine("-----------------------------------------")
+                        appendLine("💀 ERROR TYPE   : ${exception.javaClass.name}")
+                        appendLine("💬 MESSAGE      : ${exception.message}")
+                        appendLine("=========================================")
+                        appendLine("📚 FULL STACKTRACE:")
+                        exception.stackTrace.forEach { appendLine("  at $it") }
                         
-                        while (isRecording) {
-                            val line = reader.readLine() ?: break
-                            
-                            // ... 4. FORENSIC FILTERING ...
-                            // We don't want to save everything (it would be gigabytes of junk).
-                            // We ONLY intercept lines containing critical keywords:
-                            if (line.contains("F libc") ||      // Native C++ Segfaults (The true silent killer)
-                                line.contains("DEBUG") ||       // Android Tombstone/Crash dumper
-                                line.contains("Fatal") ||       // General fatal errors
-                                line.contains("OOM") ||         // Out of memory panics
-                                line.contains("LowMemory") ||   // OS killing processes to save RAM
-                                line.contains("SDL") ||         // SDL engine internal errors
-                                line.contains("mono") ||        // .NET/tModLoader runtime errors
-                                line.contains("ralaunch") ||    // Our app's logs
-                                line.contains("Exception")) {   // Unhandled exceptions
-                                
-                                writer.println(line)
-                                writer.flush() // Force save to disk immediately before OS kills us!
-                            }
+                        var cause = exception.cause
+                        while (cause != null) {
+                            appendLine("\n🔄 CAUSED BY: ${cause.javaClass.name}: ${cause.message}")
+                            cause.stackTrace.forEach { appendLine("  at $it") }
+                            cause = cause.cause
                         }
                     }
+                    vipLogFile.writeText(vipReport)
+                    Log.e(TAG, "FATAL APP CRASH SAVED TO: ${vipLogFile.absolutePath}")
+                } catch (vipException: Exception) {
+                    // Ignored to protect the main process
                 }
+
             } catch (e: Exception) {
-                Log.e(TAG, "❌ Black Box Recorder malfunction: ${e.message}")
-            } finally {
-                isRecording = false
+                // Ignore if we can't write
             }
-        }.start()
+            // Let the app crash normally after saving the logs
+            defaultHandler?.uncaughtException(thread, exception)
+        }
+
+        super.onCreate()
+        instance = this
+
+        // ===================================================================
+        // ✈️ ACTIVATE THE BLACK BOX LOGGER FOR NATIVE/GAME CRASHES ...
+        // ===================================================================
+        com.app.ralaunch.core.platform.runtime.BlackBoxLogger.startRecording(this)
+
+        val startupLogFile = File(filesDir, "startup_log.txt")
+        startupLogFile.delete()
+
+        fun writeLog(msg: String) {
+            Log.i(TAG, msg)
+            try { startupLogFile.appendText("$msg\n") } catch (e: Exception) { }
+        }
+
+        fun step(name: String, block: () -> Unit) {
+            writeLog("▶ $name...")
+            try {
+                block()
+                writeLog("✅ $name OK")
+            } catch (e: Throwable) {
+                writeLog("❌ $name FAILED: ${e.javaClass.name} - ${e.message}")
+                Log.e(TAG, "Init step failed: $name", e)
+            }
+        }
+
+        writeLog("=== App Start: Android ${Build.VERSION.SDK_INT} ===")
+        
+        step("DensityAdapter")  { DensityAdapter.init(this) }
+        step("KoinInitializer") { KoinInitializer.init(this) }
+        step("Theme")           { applyThemeFromSettings() }
+        step("Fishnet")         { initCrashHandler() }
+        step("Patches")         { installPatchesInBackground() }
+        step("EnvVars")         { setupEnvironmentVariables() }
+
+        writeLog("=== Init Complete ===")
     }
+
+    override fun attachBaseContext(base: Context) {
+        super.attachBaseContext(LocaleManager.applyLanguage(base))
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        LocaleManager.applyLanguage(this)
+    }
+
+    private fun applyThemeFromSettings() {
+        try {
+            val nightMode = when (SettingsAccess.themeMode) {
+                0 -> AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
+                1 -> AppCompatDelegate.MODE_NIGHT_YES
+                2 -> AppCompatDelegate.MODE_NIGHT_NO
+                else -> AppCompatDelegate.MODE_NIGHT_NO
+            }
+            AppCompatDelegate.setDefaultNightMode(nightMode)
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to apply theme: ${e.message}")
+        }
+    }
+
+    private fun initCrashHandler() {
+        try {
+            val logDir = File(filesDir, "crash_logs").apply {
+                if (!exists()) mkdirs()
+            }
+            Fishnet.init(applicationContext, logDir.absolutePath)
+        } catch (e: Exception) {
+            Log.e(TAG, "Fishnet init failed: ${e.message}")
+        }
+    }
+
+    private fun installPatchesInBackground() {
+        _patchManager?.let { manager ->
+            Thread({
+                try {
+                    com.app.ralaunch.core.common.util.PatchExtractor.extractPatchesIfNeeded(applicationContext)
+                    PatchManager.installBuiltInPatches(manager, false)
+                } catch (e: Exception) {
+                    Log.e(TAG, "Failed to install patches: ${e.message}")
+                }
+            }, "PatchInstaller").start()
+        }
+    }
+
+    private fun setupEnvironmentVariables() {
+        try {
+            Os.setenv("PACKAGE_NAME", packageName, true)
+            val externalStorage = android.os.Environment.getExternalStorageDirectory()
+            externalStorage?.let {
+                Os.setenv("EXTERNAL_STORAGE_DIRECTORY", it.absolutePath, true)
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to set environment variables: ${e.message}")
+        }
+    }
+
+    fun getVibrationManager(): VibrationManager = _vibrationManager
+    fun getControlPackManager(): ControlPackManager = _controlPackManager
+    fun getPatchManager(): PatchManager? = _patchManager
 }
