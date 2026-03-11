@@ -17,6 +17,7 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" tools:targetApi="34" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" tools:targetApi="33" />
+    <uses-permission android:name="android.permission.KILL_BACKGROUND_PROCESSES" />
 
     <uses-feature android:glEsVersion="0x00020000" android:required="true" />
 
