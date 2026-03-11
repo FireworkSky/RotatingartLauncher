@@ -60,7 +60,7 @@ android {
             
             externalNativeBuild {
                 cmake {
-                    arguments "-DCMAKE_BUILD_TYPE=Release", "-DANDROID_PLATFORM=android-25"
+                    arguments "-DCMAKE_BUILD_TYPE=Release", "-DANDROID_PLATFORM=android-24"
                 }
             }
         }
