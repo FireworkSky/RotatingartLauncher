@@ -1,11 +1,11 @@
 # ===================================================================
-# CODEMAGIC CI/CD CONFIGURATION FOR RALAUNCHER (TURBO LINUX)
+# CODEMAGIC CI/CD CONFIGURATION FOR RALAUNCHER (MAC MINI M1 FREE)
 # ===================================================================
 workflows:
   android-release-workflow:
     name: RotatingartLauncher Release Build
     
-    instance_type: linux
+    instance_type: mac_mini_m1 
     
     environment:
       java: 17
@@ -21,13 +21,17 @@ workflows:
           # 1. Force remove the fake 130-byte LFS pointer files
           rm -f MonoMod.zip
           rm -f runtime_libs.tar.xz
+          rm -f dotnet.tar.xz
           
           # 2. Download the REAL zip/tar files directly from Github's raw media server
-          # MonoMod Patch
+          echo "Downloading MonoMod..."
           wget -O MonoMod.zip "https://media.githubusercontent.com/media/WinterWolfVN/RotatingartLauncher/main/app/src/main/assets/MonoMod.zip"
           
-          # Runtime Libraries (GL4ES, Zink, etc.) - THIS FIXES THE 30% STUCK ISSUE!
+          echo "Downloading Runtime Libraries..."
           wget -O runtime_libs.tar.xz "https://media.githubusercontent.com/media/WinterWolfVN/RotatingartLauncher/main/app/src/main/assets/runtime_libs.tar.xz"
+          
+          echo "Downloading .NET Core Engine..."
+          wget -O dotnet.tar.xz "https://media.githubusercontent.com/media/WinterWolfVN/RotatingartLauncher/main/app/src/main/assets/dotnet.tar.xz"
           
           echo "✅ All heavy LFS files successfully injected into assets!"
           
@@ -42,7 +46,7 @@ workflows:
 
       - name: 🔨 Build Android Release APK
         script: |
-          echo "Starting Gradle Build Process on Linux..."
+          echo "Starting Gradle Build Process on Mac M1..."
           export GRADLE_OPTS="-Dorg.gradle.daemon=true -Dorg.gradle.parallel=true -Dorg.gradle.workers.max=4"
           chmod +x gradlew
           ./gradlew assembleRelease
