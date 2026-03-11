@@ -5,9 +5,6 @@ workflows:
   android-release-workflow:
     name: RotatingartLauncher Release Build
     
-    # 🏎️ ENGINE SWAP: Switch to standard Linux machine. 
-    # Android builds natively on Linux, which makes NDK/C++ compilation MUCH faster
-    # and avoids any macOS virtualization overhead.
     instance_type: linux
     
     environment:
@@ -18,13 +15,24 @@ workflows:
         script: |
           echo "Bypassing Git LFS entirely..."
           
-          # Force remove the LFS pointer file
-          rm -f app/src/main/assets/MonoMod.zip
+          # Go to the assets folder
+          cd app/src/main/assets/
+
+          # 1. Force remove the fake 130-byte LFS pointer files
+          rm -f MonoMod.zip
+          rm -f runtime_libs.tar.xz
           
-          # Download the REAL zip file directly from Github's raw media server
-          wget -O app/src/main/assets/MonoMod.zip "https://media.githubusercontent.com/media/WinterWolfVN/RotatingartLauncher/main/app/src/main/assets/MonoMod.zip"
+          # 2. Download the REAL zip/tar files directly from Github's raw media server
+          # MonoMod Patch
+          wget -O MonoMod.zip "https://media.githubusercontent.com/media/WinterWolfVN/RotatingartLauncher/main/app/src/main/assets/MonoMod.zip"
           
-          echo "✅ MonoMod.zip successfully injected into assets!"
+          # Runtime Libraries (GL4ES, Zink, etc.) - THIS FIXES THE 30% STUCK ISSUE!
+          wget -O runtime_libs.tar.xz "https://media.githubusercontent.com/media/WinterWolfVN/RotatingartLauncher/main/app/src/main/assets/runtime_libs.tar.xz"
+          
+          echo "✅ All heavy LFS files successfully injected into assets!"
+          
+          # Go back to root folder for building
+          cd ../../../../
 
       - name: 🔑 Generate Dummy Keystore
         script: |
@@ -35,13 +43,9 @@ workflows:
       - name: 🔨 Build Android Release APK
         script: |
           echo "Starting Gradle Build Process on Linux..."
-          
-          # Enable Gradle Daemon and parallel building to maximize CPU usage
           export GRADLE_OPTS="-Dorg.gradle.daemon=true -Dorg.gradle.parallel=true -Dorg.gradle.workers.max=4"
-          
           chmod +x gradlew
           ./gradlew assembleRelease
-          
           echo "✅ APK Built Successfully!"
 
     artifacts:
