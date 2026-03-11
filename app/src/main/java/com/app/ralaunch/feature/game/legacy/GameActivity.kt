@@ -138,7 +138,10 @@ class GameActivity : SDLActivity(), GameContract.View {
         instance = this
         presenter.attach(this)
 
-        DeviceOptimizationEngine.prepareGameEnvironment(this)
+        val gameExePath = intent.getStringExtra(EXTRA_GAME_EXE_PATH)
+        val gameDir = gameExePath?.let { java.io.File(it).parent }
+
+        DeviceOptimizationEngine.prepareGameEnvironment(this, gameDir)
         TurboPatchLoader.injectTurboWrapper(this)
 
         initializeLogger()
