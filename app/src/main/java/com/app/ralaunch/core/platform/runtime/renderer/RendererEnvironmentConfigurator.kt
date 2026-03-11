@@ -90,9 +90,9 @@ object RendererEnvironmentConfigurator {
         envVars["FNA3D_OPENGL_DRIVER"] = renderer
         envVars["FNA3D_FORCE_DRIVER"] = "OpenGL"
         envVars.putAll(getOpenGlVersionConfig(renderer))
-        envVars["FNA3D_OPENGL_USE_MAP_BUFFER_RANGE"] = getMapBufferRangeValue(renderer)
+//        envVars["FNA3D_OPENGL_USE_MAP_BUFFER_RANGE"] = getMapBufferRangeValue(renderer)
         envVars.putAll(getQualityConfig())
-        envVars["FORCE_VSYNC"] = "true"
+//        envVars["SDL_RENDER_VSYNC"] = "1"
 
         return envVars
     }

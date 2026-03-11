@@ -160,7 +160,12 @@ public class SDLSurface extends SurfaceView implements SurfaceHolder.Callback,
             SDLActivity.getContext().notifyAll();
         }
 
-        SDLActivity.nativeSetScreenResolution(width, height, nDeviceWidth, nDeviceHeight, mDisplay.getRefreshRate());
+        float refreshRate = mDisplay.getRefreshRate();
+        Log.i(TAG, "surfaceChanged: " +
+                width + "x" + height +
+                " (device " + nDeviceWidth + "x" + nDeviceHeight + "), refresh=" + refreshRate + "Hz");
+
+        SDLActivity.nativeSetScreenResolution(width, height, nDeviceWidth, nDeviceHeight, refreshRate);
         SDLActivity.onNativeResize();
 
         // Prevent a screen distortion glitch,
