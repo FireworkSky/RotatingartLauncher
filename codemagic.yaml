@@ -1,0 +1,43 @@
+# ===================================================================
+# CODEMAGIC CI/CD CONFIGURATION FOR RALAUNCHER
+# ===================================================================
+workflows:
+  android-release-workflow:
+    name: RotatingartLauncher Release Build
+    # Use Linux machine for faster Android builds
+    instance_type: linux_x2 
+    environment:
+      java: 17
+    
+    scripts:
+      - name: 🥷 Bypass GitHub LFS Quota (The Great Heist)
+        script: |
+          echo "Intercepting Git LFS configuration..."
+          # Remove current LFS config linked to the blocked repo
+          git config --remove-section lfs || true
+          
+          # Point to the original dev's repo to download the heavy files
+          git config lfs.url "https://github.com/WinterWolfVN/RotatingartLauncher.git/info/lfs"
+          
+          echo "Pulling LFS objects from upstream..."
+          git lfs pull
+          echo "✅ LFS files downloaded successfully!"
+
+      - name: 🔑 Generate Dummy Keystore (For seamless APK updates)
+        script: |
+          echo "Forging a dummy keystore to sign the APK..."
+          # This creates 'dummy.keystore' inside the 'app' folder with password '123456'
+          # Matches the configuration we set in app/build.gradle
+          keytool -genkeypair -v -keystore app/dummy.keystore -alias ralaunch -keyalg RSA -keysize 2048 -validity 10000 -storepass 123456 -keypass 123456 -dname "CN=MobileHacker, OU=Dev, O=RaLaunch, C=VN"
+          echo "✅ Dummy Keystore forged successfully!"
+
+      - name: 🔨 Build Android Release APK
+        script: |
+          echo "Starting Gradle Build Process..."
+          chmod +x gradlew
+          ./gradlew assembleRelease
+          echo "✅ APK Built Successfully!"
+
+    # Tell Codemagic where to find the finished APK so it can give you a download link
+    artifacts:
+      - app/build/outputs/apk/release/*.apk
