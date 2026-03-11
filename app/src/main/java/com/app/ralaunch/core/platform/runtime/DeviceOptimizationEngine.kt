@@ -5,7 +5,7 @@ import android.os.Build
 import android.util.Log
 
 /**
- * Device Optimization Engine
+ * Device Optimization Engine (The Central Hub)
  * 
  * Intelligently applies aggressive hacks only on older Android devices 
  * (like Android 7.1.1) to prevent SDL Audio crashes.
@@ -17,7 +17,7 @@ object DeviceOptimizationEngine {
     // ===================================================================
     // ... MAIN TRIGGER: Call this ONCE before game launch ...
     // ===================================================================
-    fun prepareGameEnvironment(context: Context, gameDirString: String?)) {
+    fun prepareGameEnvironment(context: Context) {
         Log.i(TAG, "⚙️ Initializing Device Optimization Engine for API ${Build.VERSION.SDK_INT}...")
 
         try {
@@ -37,6 +37,8 @@ object DeviceOptimizationEngine {
         } catch (e: Exception) {
             Log.e(TAG, "❌ Critical failure in Optimization Engine: ${e.message}")
         }
+    }
+} 
 
             if (!gameDirString.isNullOrEmpty()) {
                 val gameDir = java.io.File(gameDirString)
@@ -72,4 +74,4 @@ object DeviceOptimizationEngine {
         } catch (e: Exception) {
             Log.e(TAG, "❌ Critical failure in Optimization Engine: ${e.message}")
         }
-    } 
+            }
