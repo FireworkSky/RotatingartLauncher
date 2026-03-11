@@ -1,26 +1,27 @@
 # ===================================================================
-# CODEMAGIC CI/CD CONFIGURATION FOR RALAUNCHER
+# CODEMAGIC CI/CD CONFIGURATION FOR RALAUNCHER (TURBO LINUX)
 # ===================================================================
 workflows:
   android-release-workflow:
     name: RotatingartLauncher Release Build
     
-    # 🚨 FIX: Removed 'linux_x2' which requires a paid plan.
-    # Use the default mac_mini_m1 which is FREE and blazing fast for Android!
-    instance_type: mac_mini_m1 
+    # 🏎️ ENGINE SWAP: Switch to standard Linux machine. 
+    # Android builds natively on Linux, which makes NDK/C++ compilation MUCH faster
+    # and avoids any macOS virtualization overhead.
+    instance_type: linux
     
     environment:
       java: 17
     
     scripts:
-      - name: 🥷 Bypass GitHub LFS Quota (Wget Brute Force)
+      - name: 🥷 The Ultimate LFS Bypass (Wget)
         script: |
-          echo "Bypassing Git LFS restrictions..."
+          echo "Bypassing Git LFS entirely..."
           
-          # Remove dummy 130-byte LFS pointer file
+          # Force remove the LFS pointer file
           rm -f app/src/main/assets/MonoMod.zip
           
-          # Force download the REAL 10MB+ zip file directly from Github's raw media server
+          # Download the REAL zip file directly from Github's raw media server
           wget -O app/src/main/assets/MonoMod.zip "https://media.githubusercontent.com/media/WinterWolfVN/RotatingartLauncher/main/app/src/main/assets/MonoMod.zip"
           
           echo "✅ MonoMod.zip successfully injected into assets!"
@@ -28,17 +29,20 @@ workflows:
       - name: 🔑 Generate Dummy Keystore
         script: |
           echo "Forging a dummy keystore to sign the APK..."
-          # Creates 'dummy.keystore' with password '123456'
           keytool -genkeypair -v -keystore app/dummy.keystore -alias ralaunch -keyalg RSA -keysize 2048 -validity 10000 -storepass 123456 -keypass 123456 -dname "CN=MobileHacker, OU=Dev, O=RaLaunch, C=VN"
           echo "✅ Dummy Keystore forged successfully!"
 
       - name: 🔨 Build Android Release APK
         script: |
-          echo "Starting Gradle Build Process..."
+          echo "Starting Gradle Build Process on Linux..."
+          
+          # Enable Gradle Daemon and parallel building to maximize CPU usage
+          export GRADLE_OPTS="-Dorg.gradle.daemon=true -Dorg.gradle.parallel=true -Dorg.gradle.workers.max=4"
+          
           chmod +x gradlew
           ./gradlew assembleRelease
+          
           echo "✅ APK Built Successfully!"
 
-    # Tell Codemagic where to find the finished APK
     artifacts:
       - app/build/outputs/apk/release/*.apk
