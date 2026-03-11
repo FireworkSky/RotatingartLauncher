@@ -70,7 +70,7 @@ android {
     compileSdk = 36
 
     defaultConfig {
-        minSdk = 25
+        minSdk = 24
     }
 
     compileOptions {
