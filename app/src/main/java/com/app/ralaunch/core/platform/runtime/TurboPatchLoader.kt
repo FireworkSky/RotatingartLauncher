@@ -1,7 +1,6 @@
 package com.app.ralaunch.core.platform.runtime
 
 import android.app.ActivityManager
-import android.content.ComponentCallbacks2
 import android.content.Context
 import android.os.Build
 import android.os.Process
@@ -22,7 +21,7 @@ object TurboPatchLoader {
                 @Suppress("DEPRECATION")
                 am.killBackgroundProcesses("com.android.chrome") 
             }
-            context.applicationContext.onTrimMemory(ComponentCallbacks2.TRIM_MEMORY_RUNNING_CRITICAL)
+            // ... REMOVED INVALID onTrimMemory CALL ...
             Log.i(TAG, "🧹 System RAM aggressively purged.")
         } catch (securityEx: SecurityException) {
             Log.w(TAG, "⚠️ Missing KILL_BACKGROUND_PROCESSES permission. Skipping deep RAM purge.")
@@ -35,6 +34,10 @@ object TurboPatchLoader {
             Runtime.getRuntime().gc()
             Runtime.getRuntime().runFinalization()
 
+            // ===================================================================
+            // 🚨 CRITICAL FIX: DO NOT BOOST THE MAIN UI THREAD! 🚨
+            // Spawn a detached background thread and boost its priority instead.
+            // ===================================================================
             Thread {
                 try {
                     Process.setThreadPriority(Process.THREAD_PRIORITY_URGENT_AUDIO)
