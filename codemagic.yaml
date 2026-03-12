@@ -7,27 +7,26 @@ workflows:
     
     instance_type: mac_mini_m1 
     
+    # ===============================================================
+    # 🚨 THE MASTER HACK: INJECT LFS BLOCKER GLOBALLY! 🚨
+    # By placing GIT_LFS_SKIP_SMUDGE here, Codemagic will ignore LFS 
+    # DURING the automatic "Fetching app sources" step!
+    # ===============================================================
     environment:
       java: 17
+      vars:
+        GIT_LFS_SKIP_SMUDGE: "1"
     
     scripts:
-      - name: 🥷 Submodule & LFS Total Bypass (The Iron Shield)
+      - name: 🥷 Fetch Submodules & Bypass Heavy Files (Wget)
         script: |
-          echo "Step 1: Blocking Git LFS at the system level..."
-          # This environment variable forces Git to IGNORE ALL LFS files
-          # during any clone or checkout operation. No budget checks will occur!
-          export GIT_LFS_SKIP_SMUDGE=1
-          
-          # Just to be extra safe, remove global LFS hooks
-          git config --global --remove-section lfs || true
-          
-          echo "Step 2: Fetching Submodules (MojoShader, etc.) without LFS..."
-          # Now, when we fetch submodules, they will only download code, NO LFS FILES!
+          echo "Step 1: Fetching Submodules (MojoShader, etc.) safely..."
+          # Since LFS is disabled globally above, this will ONLY download source code!
           git submodule sync
           git submodule update --init --recursive --depth 1
           echo "✅ Submodules fetched successfully!"
 
-          echo "Step 3: Manually downloading our REQUIRED heavy files via direct web link..."
+          echo "Step 2: Manually downloading our REQUIRED heavy files via direct web link..."
           cd app/src/main/assets/
           
           # Delete the fake 130-byte text files that Git created
