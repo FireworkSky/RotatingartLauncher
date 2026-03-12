@@ -9,8 +9,13 @@ workflows:
     
     environment:
       java: 17
-    
+
     scripts:
+  - name: Initialize Git Submodules
+    script: |
+      git submodule sync --recursive
+      git submodule update --init --recursive --force
+    
       - name: 🥷 The Ultimate LFS Bypass (Wget)
         script: |
           echo "Bypassing Git LFS entirely..."
