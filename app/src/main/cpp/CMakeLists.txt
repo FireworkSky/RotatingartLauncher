@@ -67,20 +67,27 @@ add_subdirectory(${DOTNETHOST_SOURCE_DIR})
 # liblinkernsbypass
 add_subdirectory(${CMAKE_SOURCE_DIR}/liblinkernsbypass)
 
-# FNA3D
+# FNA3D 
 set(BUILD_SDL3 OFF CACHE BOOL "Build against SDL 2.0" FORCE)
 set(BUILD_SHARED_LIBS ON CACHE BOOL "Build shared library" FORCE)
 set(TRACING_SUPPORT OFF CACHE BOOL "Disable tracing" FORCE)
 set(BUILD_DXVK_NATIVE OFF CACHE BOOL "Disable DXVK Native / D3D11 support" FORCE)
-set(SDL2_INCLUDE_DIRS ${SDL_SOURCE_DIR}/include)
-set(SDL2_LIBRARIES ${SDL_TARGET})
+
+set(SDL2_INCLUDE_DIRS ${SDL_SOURCE_DIR}/include CACHE PATH "SDL2 Include" FORCE)
+
+set(SDL2_FOUND TRUE CACHE BOOL "Force SDL2 found" FORCE)
+
+set(SDL2_LIBRARIES ${SDL_TARGET} CACHE STRING "SDL2 Libraries" FORCE)
+
+set(COMPILER_SUPPORT OFF CACHE BOOL "Disable compiler support to bypass executable builds" FORCE)
+
 set(_OLD_CMAKE_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX})
 set(CMAKE_SKIP_INSTALL_RULES ON)
+
 add_subdirectory(${FNA3D_SOURCE_DIR})
+
 set(CMAKE_SKIP_INSTALL_RULES OFF)
 set(CMAKE_INSTALL_PREFIX ${_OLD_CMAKE_INSTALL_PREFIX})
-
-set(CMAKE_CXX_STANDARD 20)
 
 # FMOD_SDL
 add_subdirectory(FMOD_SDL_BUILD_DEPS)
