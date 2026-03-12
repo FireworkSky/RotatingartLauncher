@@ -21,60 +21,37 @@ jobs:
       actions: write
 
     steps:
+      # ==========================================
+      # 1. Checkout Code & Standard Submodules
+      # ==========================================
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 1
           lfs: true
+          # Phục hồi cách gọi Submodule chuẩn của GitHub Actions
+          submodules: recursive 
 
-      - name: Configure Git for submodules
+      # (Tùy chọn) Thêm một lớp bảo hiểm: Nếu có submodule nào bị sót hoặc cập nhật lỗi do SSH, ép nó chạy lại bằng HTTPS
+      - name: Fallback Submodule Update
         run: |
           git config --global url."https://github.com/".insteadOf "git@github.com:"
           git config --global url."https://github.com/".insteadOf "ssh://git@github.com/"
+          git submodule sync --recursive
+          git submodule update --init --recursive --force
 
-            - name: Initialize submodules (Brute Force)
-        run: |
-          # 1. Bỏ qua cấu hình URL SSH, ép dùng HTTPS cho tất cả
-          git config --global url."https://github.com/".insteadOf "git@github.com:"
-          git config --global url."https://github.com/".insteadOf "ssh://git@github.com/"
-
-          # 2. Xóa toàn bộ các thư mục Submodule hiện tại để làm sạch
-          rm -rf app/src/main/cpp/SDL
-          rm -rf app/src/main/cpp/FNA3D
-          rm -rf app/src/main/cpp/FAudio
-          rm -rf app/src/main/cpp/gl4es
-
-          # 3. Kéo TRỰC TIẾP mã nguồn mới nhất từ các repo chính thức (không qua cơ chế submodule)
-          # Điều này chặn đứng hoàn toàn lỗi "not our ref" vì ta tải bản mới nhất, không tải bản cũ!
-          
-          echo "Cloning SDL2..."
-          git clone --depth 1 -b SDL2 https://github.com/libsdl-org/SDL.git app/src/main/cpp/SDL
-          
-          echo "Cloning gl4es..."
-          git clone --depth 1 https://github.com/ptitSeb/gl4es.git app/src/main/cpp/gl4es
-          
-          echo "Cloning FAudio..."
-          git clone --depth 1 https://github.com/FNA-XNA/FAudio.git app/src/main/cpp/FAudio
-          
-          echo "Cloning FNA3D (and MojoShader)..."
-          # Clone FNA3D và ĐỒNG THỜI clone luôn submodule bên trong nó (MojoShader)
-          git clone --depth 1 --recurse-submodules https://github.com/FNA-XNA/FNA3D.git app/src/main/cpp/FNA3D
-
-          # 4. (Tùy chọn) Clone các thành phần khác nếu dự án bạn có
-          # git clone --depth 1 https://github.com/xxxxx/dotnethost.git app/src/main/cpp/dotnethost
-          # git clone --depth 1 https://github.com/xxxxx/liblinkernsbypass.git app/src/main/cpp/liblinkernsbypass
-
-          echo "=== Native directories status ==="
-          ls -la app/src/main/cpp/
+      # ==========================================
+      # 2. Verify Native Dependencies
+      # ==========================================
       - name: Verify native dependencies
         run: |
           MISSING=0
           for dir in SDL gl4es FAudio FNA3D dotnethost liblinkernsbypass; do
             FULL_PATH="app/src/main/cpp/$dir"
             if [ -d "$FULL_PATH" ] && [ "$(ls -A $FULL_PATH 2>/dev/null)" ]; then
-              echo "OK: $dir"
+              echo "✅ $dir OK"
             else
-              echo "MISSING: $dir"
+              echo "❌ $dir MISSING!"
               MISSING=$((MISSING + 1))
             fi
           done
@@ -83,6 +60,9 @@ jobs:
             exit 1
           fi
 
+      # ==========================================
+      # 3. Caching (Gradle, SDK, Native)
+      # ==========================================
       - name: Cache Gradle
         uses: actions/cache@v4
         with:
@@ -115,6 +95,9 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-native-
 
+      # ==========================================
+      # 4. Setup Environment
+      # ==========================================
       - name: Setup JDK 17
         uses: actions/setup-java@v4
         with:
@@ -137,10 +120,9 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x ./gradlew
 
-      # ==================== Build Release ====================
-      - name: Generate Dummy Keystore
-        run: keytool -genkey -v -keystore app/dummy.keystore -alias ralaunch -keyalg RSA -keysize 2048 -validity 10000 -storepass 123456 -keypass 123456 -dname "CN=Hacker, OU=Dev, O=RaLaunch, C=VN"
-
+      # ==========================================
+      # 5. Build Release APK
+      # ==========================================
       - name: Build Release APK
         id: build_release
         run: |
@@ -154,7 +136,9 @@ jobs:
           tail -150 release-build.log || true
           exit 1
 
-      # ==================== Sign APK ====================
+      # ==========================================
+      # 6. Sign APK & Upload
+      # ==========================================
       - name: Generate Signing Key
         if: steps.build_release.outcome == 'success'
         run: |
@@ -215,7 +199,6 @@ jobs:
           echo "size=$(du -h "$OUTPUT_APK" | cut -f1)" >> $GITHUB_OUTPUT
           echo "Done: $(ls -lh "$OUTPUT_APK")"
 
-      # ==================== Upload ====================
       - name: Upload APK
         if: steps.sign.outcome == 'success'
         uses: actions/upload-artifact@v4
@@ -226,7 +209,9 @@ jobs:
           if-no-files-found: error
           compression-level: 6
 
-      # ==================== Cleanup ====================
+      # ==========================================
+      # 7. Cleanup & Reporting
+      # ==========================================
       - name: Cleanup
         if: always()
         run: |
