@@ -32,11 +32,40 @@ jobs:
           git config --global url."https://github.com/".insteadOf "git@github.com:"
           git config --global url."https://github.com/".insteadOf "ssh://git@github.com/"
 
-      - name: Initialize submodules
+            - name: Initialize submodules (Brute Force)
         run: |
-          git submodule sync --recursive
-          git submodule update --init --recursive --force --remote
+          # 1. Bỏ qua cấu hình URL SSH, ép dùng HTTPS cho tất cả
+          git config --global url."https://github.com/".insteadOf "git@github.com:"
+          git config --global url."https://github.com/".insteadOf "ssh://git@github.com/"
 
+          # 2. Xóa toàn bộ các thư mục Submodule hiện tại để làm sạch
+          rm -rf app/src/main/cpp/SDL
+          rm -rf app/src/main/cpp/FNA3D
+          rm -rf app/src/main/cpp/FAudio
+          rm -rf app/src/main/cpp/gl4es
+
+          # 3. Kéo TRỰC TIẾP mã nguồn mới nhất từ các repo chính thức (không qua cơ chế submodule)
+          # Điều này chặn đứng hoàn toàn lỗi "not our ref" vì ta tải bản mới nhất, không tải bản cũ!
+          
+          echo "Cloning SDL2..."
+          git clone --depth 1 -b SDL2 https://github.com/libsdl-org/SDL.git app/src/main/cpp/SDL
+          
+          echo "Cloning gl4es..."
+          git clone --depth 1 https://github.com/ptitSeb/gl4es.git app/src/main/cpp/gl4es
+          
+          echo "Cloning FAudio..."
+          git clone --depth 1 https://github.com/FNA-XNA/FAudio.git app/src/main/cpp/FAudio
+          
+          echo "Cloning FNA3D (and MojoShader)..."
+          # Clone FNA3D và ĐỒNG THỜI clone luôn submodule bên trong nó (MojoShader)
+          git clone --depth 1 --recurse-submodules https://github.com/FNA-XNA/FNA3D.git app/src/main/cpp/FNA3D
+
+          # 4. (Tùy chọn) Clone các thành phần khác nếu dự án bạn có
+          # git clone --depth 1 https://github.com/xxxxx/dotnethost.git app/src/main/cpp/dotnethost
+          # git clone --depth 1 https://github.com/xxxxx/liblinkernsbypass.git app/src/main/cpp/liblinkernsbypass
+
+          echo "=== Native directories status ==="
+          ls -la app/src/main/cpp/
       - name: Verify native dependencies
         run: |
           MISSING=0
