@@ -1,61 +1,99 @@
-# ===================================================================
-# CODEMAGIC CI/CD CONFIGURATION FOR RALAUNCHER (MAC MINI M1 FREE)
-# ===================================================================
 workflows:
   android-release-workflow:
-    name: RotatingartLauncher Release Build
-    
-    instance_type: mac_mini_m1 
+    name: Build RAL Release APK
+    # Use standard Linux machine (faster for Android builds)
+    instance_type: linux_x2 
     
     environment:
       java: 17
+      vars:
+        ANDROID_COMPILE_SDK: "36"
+        ANDROID_BUILD_TOOLS: "36.0.0"
+        ANDROID_NDK_VERSION: "28.0.13004108"
+        ANDROID_CMAKE_VERSION: "3.22.1"
+
+    # Cache Gradle and Native build files to speed up subsequent builds
+    cache:
+      cache_paths:
+        - ~/.gradle/caches
+        - ~/.gradle/wrapper
+        - app/.cxx
+        - app/build/intermediates/cxx
 
     scripts:
-  - name: Initialize Git Submodules
-    script: |
-      git submodule sync --recursive
-      git submodule update --init --recursive --force
-    
-      - name: 🥷 The Ultimate LFS Bypass (Wget)
+      - name: Initialize Git Submodules
         script: |
-          echo "Bypassing Git LFS entirely..."
+          echo "Setting up HTTPS fallback for submodules..."
+          git config --global url."https://github.com/".insteadOf "git@github.com:"
+          git config --global url."https://github.com/".insteadOf "ssh://git@github.com/"
           
-          # Go to the assets folder
-          cd app/src/main/assets/
+          echo "Syncing and updating submodules..."
+          git submodule sync --recursive
+          git submodule update --init --recursive --force
 
-          # 1. Force remove the fake 130-byte LFS pointer files
-          rm -f MonoMod.zip
-          rm -f runtime_libs.tar.xz
-          rm -f dotnet.tar.xz
-          
-          # 2. Download the REAL zip/tar files directly from Github's raw media server
-          echo "Downloading MonoMod..."
-          wget -O MonoMod.zip "https://media.githubusercontent.com/media/WinterWolfVN/RotatingartLauncher/main/app/src/main/assets/MonoMod.zip"
-          
-          echo "Downloading Runtime Libraries..."
-          wget -O runtime_libs.tar.xz "https://media.githubusercontent.com/media/WinterWolfVN/RotatingartLauncher/main/app/src/main/assets/runtime_libs.tar.xz"
-          
-          echo "Downloading .NET Core Engine..."
-          wget -O dotnet.tar.xz "https://media.githubusercontent.com/media/WinterWolfVN/RotatingartLauncher/main/app/src/main/assets/dotnet.tar.xz"
-          
-          echo "✅ All heavy LFS files successfully injected into assets!"
-          
-          # Go back to root folder for building
-          cd ../../../../
-
-      - name: 🔑 Generate Dummy Keystore
+      - name: Install SDK, NDK and CMake
         script: |
-          echo "Forging a dummy keystore to sign the APK..."
-          keytool -genkeypair -v -keystore app/dummy.keystore -alias ralaunch -keyalg RSA -keysize 2048 -validity 10000 -storepass 123456 -keypass 123456 -dname "CN=MobileHacker, OU=Dev, O=RaLaunch, C=VN"
-          echo "✅ Dummy Keystore forged successfully!"
+          echo "Accepting licenses..."
+          yes | sdkmanager --licenses || true
+          
+          echo "Installing specific NDK and CMake versions..."
+          sdkmanager --install "ndk;${ANDROID_NDK_VERSION}" "cmake;${ANDROID_CMAKE_VERSION}" "platforms;android-${ANDROID_COMPILE_SDK}" "build-tools;${ANDROID_BUILD_TOOLS}"
 
-      - name: 🔨 Build Android Release APK
+      - name: Build Android Release APK
         script: |
-          echo "Starting Gradle Build Process on Mac M1..."
-          export GRADLE_OPTS="-Dorg.gradle.daemon=true -Dorg.gradle.parallel=true -Dorg.gradle.workers.max=4"
+          echo "Making gradlew executable..."
           chmod +x gradlew
-          ./gradlew assembleRelease
-          echo "✅ APK Built Successfully!"
+          
+          echo "Building Release APK..."
+          ./gradlew assembleRelease --no-daemon --stacktrace
+
+      - name: Sign Release APK
+        script: |
+          echo "Generating temporary keystore..."
+          keytool -genkey -v \
+            -keystore debug.keystore \
+            -alias androiddebugkey \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000 \
+            -storepass android \
+            -keypass android \
+            -dname "CN=Android Debug, O=Android, C=US"
+
+          RELEASE_DIR="app/build/outputs/apk/release"
+          
+          # Find the generated APK
+          FOUND_APK=$(find "$RELEASE_DIR" -name "*.apk" | head -1)
+
+          if [ -z "$FOUND_APK" ]; then
+            echo "Error: No APK found!"
+            exit 1
+          fi
+
+          echo "Found APK: $FOUND_APK"
+          OUTPUT_APK="$RELEASE_DIR/RAL-release.apk"
+
+          # Sign the APK
+          echo "Signing APK..."
+          $ANDROID_SDK_ROOT/build-tools/${ANDROID_BUILD_TOOLS}/apksigner sign \
+            --ks debug.keystore \
+            --ks-key-alias androiddebugkey \
+            --ks-pass pass:android \
+            --key-pass pass:android \
+            --out "$OUTPUT_APK" \
+            "$FOUND_APK"
+
+          echo "APK signed successfully: $OUTPUT_APK"
 
     artifacts:
-      - app/build/outputs/apk/release/*.apk
+      - app/build/outputs/apk/release/RAL-release.apk
+      - app/build/outputs/mapping/**/mapping.txt # Upload Proguard/R8 mapping if exists
+
+    publishing:
+      email:
+        recipients:
+          # Thêm email của bạn vào đây nếu muốn Codemagic gửi mail khi build xong
+          # - your_email@example.com 
+        notify:
+          success: true
+          failure: true
