@@ -5,7 +5,7 @@ workflows:
   android-release-workflow:
     name: RotatingartLauncher Release Build
     
-    instance_type: mac_mini_m3
+    instance_type: mac_mini_m4
     
     environment:
       java: 17
