@@ -97,14 +97,23 @@ jobs:
 
       - name: Find, Zipalign and Sign APK
         run: |
+          echo "Locating the compiled unsigned/aligned APK..."
           APK_PATH=$(find app/build/outputs/apk/release -name "*.apk" | head -n 1)
+          echo "Found APK at: $APK_PATH"
+          
+          echo "Setting up Android Build Tools..."
           BUILD_TOOLS_PATH="$ANDROID_HOME/build-tools/34.0.0"
           
+          echo "Zipaligning the APK for memory optimization..."
           $BUILD_TOOLS_PATH/zipalign -v -p 4 $APK_PATH app/build/outputs/apk/release/aligned.apk
-          $BUILD_TOOLS_PATH/apksigner sign --ks app/dummy.keystore --ks-pass pass:123456 --ks-key-alias ralaunch --key-pass pass:123456 --v1-signing-enabled true --v2-signing-enabled true --v3-signing-enabled true --out app/build/outputs/apk/release/RaLaunch-Optimized-Signed.apk app/build/outputs/apk/release/aligned.apk
+          
+          echo "Signing the APK and renaming to RAL_release.apk..."
+          $BUILD_TOOLS_PATH/apksigner sign --ks app/dummy.keystore --ks-pass pass:123456 --ks-key-alias ralaunch --key-pass pass:123456 --v1-signing-enabled true --v2-signing-enabled true --v3-signing-enabled true --out app/build/outputs/apk/release/RAL_release.apk app/build/outputs/apk/release/aligned.apk
+          
+          echo "✅ APK successfully aligned, signed, and renamed!"
 
       - name: Upload Final Signed Artifact
         uses: actions/upload-artifact@v4
         with:
           name: RaLaunch-Release-Signed
-          path: app/build/outputs/apk/release/RaLaunch-Signed.apk
+          path: app/build/outputs/apk/release/RAL_release.apk
