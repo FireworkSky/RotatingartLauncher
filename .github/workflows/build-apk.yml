@@ -1,243 +1,64 @@
-name: Build RAL APK
+name: RotatingartLauncher
 
 on:
   push:
-    branches:
-      - main
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
   workflow_dispatch:
-
-env:
-  ANDROID_COMPILE_SDK: "36"
-  ANDROID_BUILD_TOOLS: "36.0.0"
-  ANDROID_NDK_VERSION: "28.0.13004108"
-  ANDROID_CMAKE_VERSION: "3.22.1"
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
-    permissions:
-      contents: read
-      actions: write
 
     steps:
-      # ==========================================
-      # 1. Checkout Code & Standard Submodules
-      # ==========================================
-      - name: Checkout repository
+      - name: Checkout Source Code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 1
-          lfs: true
-          # Phục hồi cách gọi Submodule chuẩn của GitHub Actions
-          submodules: recursive 
+          lfs: false
+          submodules: recursive
 
-      # (Tùy chọn) Thêm một lớp bảo hiểm: Nếu có submodule nào bị sót hoặc cập nhật lỗi do SSH, ép nó chạy lại bằng HTTPS
-      - name: Fallback Submodule Update
+      - name: Disable Git LFS Globally
         run: |
-          git config --global url."https://github.com/".insteadOf "git@github.com:"
-          git config --global url."https://github.com/".insteadOf "ssh://git@github.com/"
-          git submodule sync --recursive
-          git submodule update --init --recursive --force
+          git config --global filter.lfs.smudge "git-lfs smudge --skip -- %f"
+          git config --global filter.lfs.process "git-lfs filter-process --skip"
 
-      # ==========================================
-      # 2. Verify Native Dependencies
-      # ==========================================
-      - name: Verify native dependencies
-        run: |
-          MISSING=0
-          for dir in SDL gl4es FAudio FNA3D dotnethost liblinkernsbypass; do
-            FULL_PATH="app/src/main/cpp/$dir"
-            if [ -d "$FULL_PATH" ] && [ "$(ls -A $FULL_PATH 2>/dev/null)" ]; then
-              echo "✅ $dir OK"
-            else
-              echo "❌ $dir MISSING!"
-              MISSING=$((MISSING + 1))
-            fi
-          done
-          if [ $MISSING -gt 0 ]; then
-            echo "::error::$MISSING submodules missing!"
-            exit 1
-          fi
-
-      # ==========================================
-      # 3. Caching (Gradle, SDK, Native)
-      # ==========================================
-      - name: Cache Gradle
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/wrapper
-            ~/.gradle/caches
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
-
-      - name: Cache Android SDK
-        uses: actions/cache@v4
-        with:
-          path: |
-            /usr/local/lib/android/sdk/build-tools/${{ env.ANDROID_BUILD_TOOLS }}
-            /usr/local/lib/android/sdk/platforms/android-${{ env.ANDROID_COMPILE_SDK }}
-            /usr/local/lib/android/sdk/ndk/${{ env.ANDROID_NDK_VERSION }}
-            /usr/local/lib/android/sdk/cmake/${{ env.ANDROID_CMAKE_VERSION }}
-          key: ${{ runner.os }}-sdk-${{ env.ANDROID_COMPILE_SDK }}-${{ env.ANDROID_NDK_VERSION }}
-          restore-keys: |
-            ${{ runner.os }}-sdk-
-
-      - name: Cache Native Build
-        uses: actions/cache@v4
-        with:
-          path: |
-            app/.cxx
-            app/build/intermediates/cxx
-          key: ${{ runner.os }}-native-${{ hashFiles('app/src/main/cpp/**/*.cpp', 'app/src/main/cpp/**/*.c', 'app/src/main/cpp/**/CMakeLists.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-native-
-
-      # ==========================================
-      # 4. Setup Environment
-      # ==========================================
-      - name: Setup JDK 17
+      - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
-          cache: 'gradle'
+          cache: gradle
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Install SDK Components
+      - name: Inject Heavy LFS Files via Wget
         run: |
-          sdkmanager --install \
-            "platforms;android-${ANDROID_COMPILE_SDK}" \
-            "build-tools;${ANDROID_BUILD_TOOLS}" \
-            "ndk;${ANDROID_NDK_VERSION}" \
-            "cmake;${ANDROID_CMAKE_VERSION}"
-          yes | sdkmanager --licenses || true
+          cd app/src/main/assets/
+          
+          rm -f MonoMod.zip runtime_libs.tar.xz dotnet.tar.xz
+          
+          wget -q -O MonoMod.zip "https://media.githubusercontent.com/media/WinterWolfVN/RotatingartLauncher/main/app/src/main/assets/MonoMod.zip"
+          wget -q -O runtime_libs.tar.xz "https://media.githubusercontent.com/media/WinterWolfVN/RotatingartLauncher/main/app/src/main/assets/runtime_libs.tar.xz"
+          wget -q -O dotnet.tar.xz "https://media.githubusercontent.com/media/WinterWolfVN/RotatingartLauncher/main/app/src/main/assets/dotnet.tar.xz"
 
-      - name: Make gradlew executable
-        run: chmod +x ./gradlew
+      - name: Forge Dummy Keystore
+        run: |
+          keytool -genkeypair -v -keystore app/dummy.keystore -alias ralaunch -keyalg RSA -keysize 2048 -validity 10000 -storepass 123456 -keypass 123456 -dname "CN=MobileHacker, OU=Dev, O=RaLaunch, C=VN"
 
-      # ==========================================
-      # 5. Build Release APK
-      # ==========================================
       - name: Build Release APK
-        id: build_release
         run: |
-          ./gradlew assembleRelease --no-daemon --stacktrace 2>&1 | tee release-build.log
-        continue-on-error: true
+          chmod +x gradlew
+          ./gradlew assembleRelease --no-daemon
 
-      - name: Show error if build failed
-        if: steps.build_release.outcome == 'failure'
+      - name: Find, Zipalign and Sign APK
         run: |
-          echo "::error::Build failed!"
-          tail -150 release-build.log || true
-          exit 1
+          APK_PATH=$(find app/build/outputs/apk/release -name "*.apk" | head -n 1)
+          BUILD_TOOLS_PATH="$ANDROID_HOME/build-tools/34.0.0"
+          
+          $BUILD_TOOLS_PATH/zipalign -v -p 4 $APK_PATH app/build/outputs/apk/release/aligned.apk
+          $BUILD_TOOLS_PATH/apksigner sign --ks app/dummy.keystore --ks-pass pass:123456 --ks-key-alias ralaunch --key-pass pass:123456 --v1-signing-enabled true --v2-signing-enabled true --v3-signing-enabled true --out app/build/outputs/apk/release/RaLaunch-Optimized-Signed.apk app/build/outputs/apk/release/aligned.apk
 
-      # ==========================================
-      # 6. Sign APK & Upload
-      # ==========================================
-      - name: Generate Signing Key
-        if: steps.build_release.outcome == 'success'
-        run: |
-          keytool -genkey -v \
-            -keystore debug.keystore \
-            -alias androiddebugkey \
-            -keyalg RSA \
-            -keysize 2048 \
-            -validity 10000 \
-            -storepass android \
-            -keypass android \
-            -dname "CN=Android Debug, O=Android, C=US"
-
-      - name: Find and Sign APK
-        id: sign
-        if: steps.build_release.outcome == 'success'
-        run: |
-          RELEASE_DIR="app/build/outputs/apk/release"
-
-          echo "=== All APK files ==="
-          find app/build/outputs/ -name "*.apk" 2>/dev/null || echo "No APK found!"
-
-          FOUND_APK=$(find "$RELEASE_DIR" -name "*.apk" 2>/dev/null | head -1)
-
-          if [ -z "$FOUND_APK" ]; then
-            echo "::error::No APK found!"
-            find app/build/outputs/ -type f 2>/dev/null
-            exit 1
-          fi
-
-          echo "Found APK: $FOUND_APK"
-
-          OUTPUT_APK="$RELEASE_DIR/RAL-release.apk"
-
-          IS_UNSIGNED=$(echo "$FOUND_APK" | grep -c "unsigned" || true)
-
-          if [ "$IS_UNSIGNED" -gt 0 ]; then
-            echo "Signing unsigned APK..."
-            ${ANDROID_SDK_ROOT}/build-tools/${ANDROID_BUILD_TOOLS}/apksigner sign \
-              --ks debug.keystore \
-              --ks-key-alias androiddebugkey \
-              --ks-pass pass:android \
-              --key-pass pass:android \
-              --out "$OUTPUT_APK" \
-              "$FOUND_APK"
-            rm -f "$FOUND_APK" "$FOUND_APK.idsig"
-          else
-            echo "APK already signed, renaming..."
-            mv "$FOUND_APK" "$OUTPUT_APK"
-          fi
-
-          if [ ! -f "$OUTPUT_APK" ]; then
-            echo "::error::Final APK not found!"
-            exit 1
-          fi
-
-          echo "file=$OUTPUT_APK" >> $GITHUB_OUTPUT
-          echo "size=$(du -h "$OUTPUT_APK" | cut -f1)" >> $GITHUB_OUTPUT
-          echo "Done: $(ls -lh "$OUTPUT_APK")"
-
-      - name: Upload APK
-        if: steps.sign.outcome == 'success'
+      - name: Upload Final Signed Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: RAL-release
-          path: ${{ steps.sign.outputs.file }}
-          retention-days: 30
-          if-no-files-found: error
-          compression-level: 6
-
-      # ==========================================
-      # 7. Cleanup & Reporting
-      # ==========================================
-      - name: Cleanup
-        if: always()
-        run: |
-          ./gradlew --stop 2>/dev/null || true
-          rm -rf app/build/intermediates 2>/dev/null || true
-          rm -f *.log debug.keystore 2>/dev/null || true
-
-      - name: Upload Error Logs
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: error-logs-${{ github.run_id }}
-          path: "*.log"
-          retention-days: 7
-          if-no-files-found: ignore
-
-      - name: Build Summary
-        if: always()
-        run: |
-          echo "=========================================="
-          echo "Build Report ($(($SECONDS / 60))m $(($SECONDS % 60))s)"
-          echo "=========================================="
-          if [ "${{ steps.sign.outcome }}" == "success" ]; then
-            echo "Release: ${{ steps.sign.outputs.size }} - OK"
-          else
-            echo "Release: FAILED"
-          fi
-          echo "Download: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
-          echo "=========================================="
+          name: RaLaunch-Release-Signed
+          path: app/build/outputs/apk/release/RaLaunch-Optimized-Signed.apk
