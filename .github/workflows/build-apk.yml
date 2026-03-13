@@ -65,13 +65,26 @@ jobs:
           echo "Initiating manual submodule synchronization..."
           git submodule sync
           
-          # 1. Update submodules dynamically.
-          # The --remote flag forces Git to ignore the broken/missing commit hash
-          # and simply download the LATEST code from the default branch of the submodule!
-          git submodule update --init --recursive --remote
+          # 1. Fetch other submodules (FAudio, FNA3D, etc.) normally
+          git submodule update --init --recursive || true
+          
+          # 2. THE BULLDOZER: Forcefully replace the broken SDL submodule
+          echo "Purging corrupted SDL submodule..."
+          rm -rf app/src/main/cpp/SDL/*
+          rm -rf app/src/main/cpp/SDL/.git*
+          
+          echo "Downloading STABLE SDL2 release source code..."
+          # Download official SDL 2.28.5 (Highly stable for Android/CMake)
+          wget -q -O sdl.tar.gz "https://github.com/libsdl-org/SDL/archive/refs/tags/release-2.28.5.tar.gz"
+          
+          echo "Extracting SDL payload..."
+          tar -xzf sdl.tar.gz
+          
+          echo "Moving payload into place..."
+          cp -r SDL-release-2.28.5/* app/src/main/cpp/SDL/
           
           echo "Verifying SDL source directory integrity..."
-          ls -la app/src/main/cpp/SDL/ || echo "WARNING: SDL folder not found!"
+          ls -la app/src/main/cpp/SDL/CMakeLists.txt || echo "❌ FATAL: SDL CMakeLists.txt still missing!"
           
       - name: Forge Dummy Keystore
         run: |
