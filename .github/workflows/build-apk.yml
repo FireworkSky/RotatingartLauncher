@@ -16,12 +16,17 @@ jobs:
         uses: actions/checkout@v4
         with:
           lfs: false
-          submodules: recursive
+          submodules: false
 
-      - name: Disable Git LFS Globally
+      - name: Disable Git LFS Globally & Fetch Submodules Safely
         run: |
+          # 1. Kill LFS completely before touching submodules
           git config --global filter.lfs.smudge "git-lfs smudge --skip -- %f"
           git config --global filter.lfs.process "git-lfs filter-process --skip"
+          
+          # 2. Now manually fetch Submodules safely without LFS crashes
+          git submodule sync
+          git submodule update --init --recursive --depth 1 || true
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -61,4 +66,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: RaLaunch-Release-Signed
-          path: app/build/outputs/apk/release/RaLaunch-Optimized-Signed.apk
+          path: app/build/outputs/apk/release/RaLaunch-Signed.apk
