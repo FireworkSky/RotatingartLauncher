@@ -65,8 +65,10 @@ jobs:
           echo "Initiating manual submodule synchronization..."
           git submodule sync
           
-          # Initialize and update submodules recursively with depth 1 to save time
-          git submodule update --init --recursive --depth 1
+          # 1. Update submodules dynamically.
+          # The --remote flag forces Git to ignore the broken/missing commit hash
+          # and simply download the LATEST code from the default branch of the submodule!
+          git submodule update --init --recursive --remote
           
           echo "Verifying SDL source directory integrity..."
           ls -la app/src/main/cpp/SDL/ || echo "WARNING: SDL folder not found!"
