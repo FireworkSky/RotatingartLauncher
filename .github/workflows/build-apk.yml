@@ -60,31 +60,20 @@ jobs:
           
           echo "✅ All required payloads successfully acquired!"
 
-      - name: Fetch Submodules Manually (SDL, MojoShader)
+      - name: Fetch Submodules from Upstream Repo
         run: |
-          echo "Initiating manual submodule synchronization..."
+          echo "Initiating cross-repository submodule synchronization..."
+          
+          sed -i 's/github.com\/WinterWolfVN/github.com\/FireworkSky/g' .gitmodules
+
           git submodule sync
           
-          # 1. Fetch other submodules (FAudio, FNA3D, etc.) normally
-          git submodule update --init --recursive || true
+          git submodule update --init --recursive --remote || true
           
-          # 2. THE BULLDOZER: Forcefully replace the broken SDL submodule
-          echo "Purging corrupted SDL submodule..."
-          rm -rf app/src/main/cpp/SDL/*
-          rm -rf app/src/main/cpp/SDL/.git*
-          
-          echo "Downloading STABLE SDL2 release source code..."
-          # Download official SDL 2.28.5 (Highly stable for Android/CMake)
-          wget -q -O sdl.tar.gz "https://github.com/libsdl-org/SDL/archive/refs/tags/release-2.28.5.tar.gz"
-          
-          echo "Extracting SDL payload..."
-          tar -xzf sdl.tar.gz
-          
-          echo "Moving payload into place..."
-          cp -r SDL-release-2.28.5/* app/src/main/cpp/SDL/
-          
-          echo "Verifying SDL source directory integrity..."
-          ls -la app/src/main/cpp/SDL/CMakeLists.txt || echo "❌ FATAL: SDL CMakeLists.txt still missing!"
+          echo "Verifying critical C++ directories..."
+          ls -la app/src/main/cpp/SDL/CMakeLists.txt || echo "❌ FATAL: SDL missing!"
+          ls -la app/src/main/cpp/gl4es/CMakeLists.txt || echo "❌ FATAL: GL4ES missing!"
+          echo "✅ All C++ Submodules hijacked successfully!"
           
       - name: Forge Dummy Keystore
         run: |
