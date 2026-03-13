@@ -59,6 +59,17 @@ jobs:
           ls -lh
           
           echo "✅ All required payloads successfully acquired!"
+
+          name: Fetch Submodules Manually (SDL, MojoShader)
+        run: |
+          echo "Initiating manual submodule synchronization..."
+          git submodule sync
+          
+          # Initialize and update submodules recursively with depth 1 to save time
+          git submodule update --init --recursive --depth 1
+          
+          echo "Verifying SDL source directory integrity..."
+          ls -la app/src/main/cpp/SDL/ || echo "WARNING: SDL folder not found!"
           
       - name: Forge Dummy Keystore
         run: |
