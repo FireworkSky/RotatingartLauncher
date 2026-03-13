@@ -37,6 +37,8 @@ jobs:
 
       - name: Inject Heavy LFS Files via Wget
         run: |
+          # Create the directory if it doesn't exist, then enter it
+          mkdir -p app/src/main/assets/
           cd app/src/main/assets/
           
           rm -f MonoMod.zip runtime_libs.tar.xz dotnet.tar.xz
