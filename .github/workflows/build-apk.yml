@@ -60,7 +60,7 @@ jobs:
           
           echo "✅ All required payloads successfully acquired!"
 
-          name: Fetch Submodules Manually (SDL, MojoShader)
+      - name: Fetch Submodules Manually (SDL, MojoShader)
         run: |
           echo "Initiating manual submodule synchronization..."
           git submodule sync
