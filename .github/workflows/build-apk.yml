@@ -1,4 +1,4 @@
-name: RotatingartLauncher
+name: RotatingartLauncher 🚀
 
 on:
   push:
@@ -12,39 +12,39 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: 🔍Checkout Source Code
+      - name: 📦 Checkout Source Code
         uses: actions/checkout@v4
         with:
           lfs: false               
           submodules: false
 
-      - name: ❌Disable Global Git LFS
+      - name: 🛑 Disable Global Git LFS
         run: |
           git config --global filter.lfs.smudge "git-lfs smudge --skip -- %f"
           git config --global filter.lfs.process "git-lfs filter-process --skip"
 
-      - name: 🔧Force Update Broken Submodules
+      - name: 🔄 Force Update Broken Submodules
         run: |
           git submodule update --remote --init --recursive || true
 
-      - name: 🔨Set up JDK 17
+      - name: ☕ Set up JDK 17
         uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
           cache: gradle
 
-      - name: 🧬Inject Heavy LFS Payloads
+      - name: 📥 Inject Heavy LFS Payloads (ZIP/TAR)
         run: |
           mkdir -p app/src/main/assets/
           cd app/src/main/assets/
           rm -f MonoMod.zip runtime_libs.tar.xz dotnet.tar.xz
           
-          wget -q -O MonoMod.zip "https://raw.githubusercontent.com/FireworkSky/FWS-Launcher/main/app/src/main/assets/MonoMod.zip"
-          wget -q -O runtime_libs.tar.xz "https://raw.githubusercontent.com/FireworkSky/FWS-Launcher/main/app/src/main/assets/runtime_libs.tar.xz"
-          wget -q -O dotnet.tar.xz "https://raw.githubusercontent.com/FireworkSky/FWS-Launcher/main/app/src/main/assets/dotnet.tar.xz"
+          wget -q -O MonoMod.zip "https://github.com/WinterWolfVN/RotatingartLauncher/raw/refs/heads/main/app/src/main/assets/MonoMod.zip"
+          wget -q -O runtime_libs.tar.xz "https://github.com/WinterWolfVN/RotatingartLauncher/raw/refs/heads/main/app/src/main/assets/runtime_libs.tar.xz"
+          wget -q -O dotnet.tar.xz "https://github.com/WinterWolfVN/RotatingartLauncher/raw/refs/heads/main/app/src/main/assets/dotnet.tar.xz"
 
-      - name: 🏗️Inject Pre-compiled C++ Libraries (JNI)
+      - name: 🧬 The Great JNI Heist (Inject .so files)
         run: |
           mkdir -p app/src/main/jniLibs/arm64-v8a/
           cd app/src/main/jniLibs/arm64-v8a/
@@ -74,14 +74,14 @@ jobs:
           )
           
           for FILE in "${SO_FILES[@]}"; do
-            wget -q -O "$FILE" "https://raw.githubusercontent.com/FireworkSky/FWS-Launcher/main/app/src/main/jniLibs/arm64-v8a/$FILE"
+            wget -q -O "$FILE" "https://github.com/WinterWolfVN/RotatingartLauncher/raw/refs/heads/main/app/src/main/jniLibs/arm64-v8a/$FILE"
           done
 
-      - name: 🔌Forge Dummy Keystore
+      - name: 🔑 Forge Dummy Keystore
         run: |
           keytool -genkeypair -v -keystore app/dummy.keystore -alias ralaunch -keyalg RSA -keysize 2048 -validity 10000 -storepass 123456 -keypass 123456 -dname "CN=Hacker, OU=Dev, O=RaLaunch, C=VN"
 
-      - name: ⚒️Build Release APK
+      - name: 🔨 Build Release APK (No CMake)
         run: |
           chmod +x gradlew
           ./gradlew clean assembleRelease --no-daemon \
@@ -91,7 +91,7 @@ jobs:
             -x buildCMakeRelease \
             -x stripReleaseDebugSymbols
 
-      - name: ⚙️Optimize and Sign APK
+      - name: 🛡️ Optimize and Sign APK
         run: |
           APK_PATH=$(find app/build/outputs/apk/release -name "*.apk" | head -n 1)
           BUILD_TOOLS_PATH="$ANDROID_HOME/build-tools/34.0.0"
@@ -99,7 +99,7 @@ jobs:
           $BUILD_TOOLS_PATH/zipalign -v -p 4 $APK_PATH app/build/outputs/apk/release/aligned.apk
           $BUILD_TOOLS_PATH/apksigner sign --ks app/dummy.keystore --ks-pass pass:123456 --ks-key-alias ralaunch --key-pass pass:123456 --v1-signing-enabled true --v2-signing-enabled true --v3-signing-enabled true --out app/build/outputs/apk/release/RAL_release.apk app/build/outputs/apk/release/aligned.apk
 
-      - name: 📥Upload Final Artifact
+      - name: 🎉 Upload Final Artifact
         uses: actions/upload-artifact@v4
         with:
           name: RAL_release
