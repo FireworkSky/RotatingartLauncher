@@ -152,7 +152,6 @@ class GameActivity : SDLActivity(), GameContract.View {
         initializeErrorHandler()
         forceLandscapeOrientation()
         initializeFullscreenManager()
-        initializeVirtualControls()
         requestHighRefreshRate("onCreate")
         
         AppLogger.info(TAG, "GameActivity onCreate completed")
@@ -189,7 +188,11 @@ class GameActivity : SDLActivity(), GameContract.View {
     override fun onResume() {
         super.onResume()
         hideNavigationBarDefinitively()
-    }
+        
+        if (mLayout != null) {
+            initializeVirtualControls()
+        }
+    }    
     
     private fun initializeLogger() {
         try {
