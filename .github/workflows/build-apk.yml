@@ -60,15 +60,10 @@ jobs:
         run: |
           keytool -genkeypair -v -keystore app/dummy.keystore -alias ralaunch -keyalg RSA -keysize 2048 -validity 10000 -storepass 123456 -keypass 123456 -dname "CN=Hacker, OU=Dev, O=RaLaunch, C=VN"
 
-      - name: 🔨 Build Release APK (No CMake)
+      - name: 🔨 Build Release APK
         run: |
           chmod +x gradlew
-          ./gradlew clean assembleRelease --no-daemon \
-            -x externalNativeBuildRelease \
-            -x generateJsonModelRelease \
-            -x configureCMakeRelease \
-            -x buildCMakeRelease \
-            -x stripReleaseDebugSymbols
+          ./gradlew clean assembleRelease --no-daemon
 
       - name: 🛡️ Optimize and Sign APK
         run: |
