@@ -1,4 +1,4 @@
-name: RotatingartLauncher Release Build 🚀
+name: RotatingartLauncher 🚀
 
 on:
   push:
@@ -12,18 +12,18 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: 📦 Checkout Source Code
+      - name: 🔎 Checkout Source Code
         uses: actions/checkout@v4
         with:
           lfs: false               
           submodules: false
 
-      - name: 🛑 Disable Global Git LFS
+      - name: 🚫 Disable Global Git LFS
         run: |
           git config --global filter.lfs.smudge "git-lfs smudge --skip -- %f"
           git config --global filter.lfs.process "git-lfs filter-process --skip"
 
-      - name: 🔄 Force Update Broken Submodules
+      - name: 🔁 Force Update Broken Submodules
         run: |
           git submodule update --remote --init --recursive || true
 
@@ -34,7 +34,7 @@ jobs:
           distribution: 'temurin'
           cache: gradle
 
-      - name: 📥 Inject Heavy LFS Payloads (ZIP/TAR)
+      - name: 🧪 Inject Heavy LFS Payloads
         run: |
           mkdir -p app/src/main/assets/
           cd app/src/main/assets/
@@ -44,19 +44,51 @@ jobs:
           wget -q -O runtime_libs.tar.xz "https://github.com/WinterWolfVN/RotatingartLauncher/raw/refs/heads/main/app/src/main/assets/runtime_libs.tar.xz"
           wget -q -O dotnet.tar.xz "https://github.com/WinterWolfVN/RotatingartLauncher/raw/refs/heads/main/app/src/main/assets/dotnet.tar.xz"
 
-      - name: 🧬 Inject C++ Source (For Local CMake Build)
+      - name: 💉 Inject C++ Source (For Local CMake Build)
         run: |
           wget -q -O src.zip "https://github.com/WinterWolfVN/RotatingartLauncher/archive/refs/heads/main.zip"
           unzip -q src.zip
           cp -arf RotatingartLauncher-main/app/src/main/cpp/* app/src/main/cpp/
           rm -rf RotatingartLauncher-main src.zip
-          rm -f app/src/main/jniLibs/arm64-v8a/*.so
 
-      - name: 🔑 Forge Dummy Keystore
+      - name: 🧬 The Great JNI Heist (Steal Pre-compiled .so files)
+        run: |
+          mkdir -p app/src/main/jniLibs/arm64-v8a/
+          cd app/src/main/jniLibs/arm64-v8a/
+          rm -f *.so
+          
+          SO_FILES=(
+            "libEGL_angle.so"
+            "libGLESv2_angle.so"
+            "libOSMBridge.so"
+            "libOSMesa.so"
+            "libSkiaSharp.so"
+            "libc++_shared.so"
+            "libeasytier_android_jni.so"
+            "libfmod.so"
+            "libfmodL.so"
+            "libfmodstudio.so"
+            "libfmodstudioL.so"
+            "libhardware.so"
+            "liblua54.so"
+            "liblwjgl_lz4.so"
+            "libmobileglues.so"
+            "libopenal32.so"
+            "libspirv-cross-c-shared.so"
+            "libsync.so"
+            "libtheorafile.so"
+            "libvulkan_freedreno.so"
+          )
+          
+          for FILE in "${SO_FILES[@]}"; do
+            wget -q -O "$FILE" "https://github.com/WinterWolfVN/RotatingartLauncher/raw/refs/heads/main/app/src/main/jniLibs/arm64-v8a/$FILE"
+          done
+
+      - name: 🗝️ Forge Dummy Keystore
         run: |
           keytool -genkeypair -v -keystore app/dummy.keystore -alias ralaunch -keyalg RSA -keysize 2048 -validity 10000 -storepass 123456 -keypass 123456 -dname "CN=Hacker, OU=Dev, O=RaLaunch, C=VN"
 
-      - name: 🔨 Build Release APK (With CMake)
+      - name: ⚒️ Build Release APK (With CMake Active)
         run: |
           chmod +x gradlew
           ./gradlew clean assembleRelease --no-daemon
