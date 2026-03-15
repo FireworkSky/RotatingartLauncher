@@ -2,7 +2,7 @@ package com.app.ralaunch.core.platform.runtime.dotnet
 
 import android.util.Log
 import java.io.File
-import java.nio.file.Paths
+// ... REMOVED: import java.nio.file.Paths to prevent Android 7 crash ...
 
 /**
  * .NET Native 库加载器
@@ -42,7 +42,8 @@ object DotNetNativeLibraryLoader {
             return true
         }
         return try {
-            val runtimePath = Paths.get(dotnetRoot, "shared/Microsoft.NETCore.App/$runtimeVersion").toString()
+            // ... REPLACED: Paths.get(...) with standard File constructors ...
+            val runtimePath = File(File(dotnetRoot, "shared/Microsoft.NETCore.App"), runtimeVersion).absolutePath
             loadAllLibrariesInternal(runtimePath)
         } catch (e: Exception) {
             Log.e(TAG, "❌ 加载 .NET Native 库失败", e)
@@ -72,7 +73,8 @@ object DotNetNativeLibraryLoader {
 
     private fun loadLibrary(basePath: String, libName: String, required: Boolean) {
         try {
-            val fullPath = Paths.get(basePath, libName).toString()
+            // ... REPLACED: Paths.get(...) with standard File constructors ...
+            val fullPath = File(basePath, libName).absolutePath
             Log.i(TAG, "正在加载: $libName")
             System.load(fullPath)
             Log.i(TAG, "  ✓ $libName 加载成功")
@@ -102,7 +104,9 @@ object DotNetNativeLibraryLoader {
 
             val version = versions[0]
             Log.i(TAG, "检测到运行时版本: $version")
-            Paths.get(dotnetRoot, "shared/Microsoft.NETCore.App/$version").toString()
+            
+            // ... REPLACED: Paths.get(...) with standard File constructors ...
+            File(runtimeDir, version).absolutePath
         } catch (e: Exception) {
             Log.e(TAG, "查找运行时路径失败", e)
             null

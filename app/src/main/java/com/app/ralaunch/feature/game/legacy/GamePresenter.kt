@@ -1,6 +1,8 @@
+
 package com.app.ralaunch.feature.game.legacy
 
 import android.os.Build
+import android.os.Build.VERSION_CODES // ADDED IMPORT
 import com.app.ralaunch.R
 import com.app.ralaunch.core.platform.runtime.GameLauncher
 import com.app.ralaunch.feature.patch.data.Patch
@@ -16,10 +18,6 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-/**
- * 游戏界面 Presenter
- * 处理游戏启动和崩溃报告相关的业务逻辑
- */
 class GamePresenter : GameContract.Presenter {
 
     companion object {
@@ -42,7 +40,6 @@ class GamePresenter : GameContract.Presenter {
     override fun launchGame(): Int {
         val view = this.view ?: return -1
 
-        // 重置 GameLauncher 初始化状态，确保每次启动都重新初始化
         GameLauncher.resetInitializationState()
 
         return try {
@@ -119,8 +116,9 @@ class GamePresenter : GameContract.Presenter {
         } catch (_: Exception) {
             null
         }
+        
         val enabledPatches = patchManager
-            ?.getApplicableAndEnabledPatches(game.gameId, assemblyFile.toPath())
+            ?.getApplicableAndEnabledPatches(game.gameId, assemblyFile)
             ?: emptyList()
 
         return launchAssembly(
@@ -158,8 +156,9 @@ class GamePresenter : GameContract.Presenter {
         } catch (_: Exception) {
             null
         }
+        
         val enabledPatches = if (gameId != null) {
-            patchManager?.getApplicableAndEnabledPatches(gameId, assemblyFile.toPath()) ?: emptyList()
+            patchManager?.getApplicableAndEnabledPatches(gameId, assemblyFile) ?: emptyList()
         } else {
             emptyList()
         }
@@ -208,7 +207,7 @@ class GamePresenter : GameContract.Presenter {
 
     @Suppress("UNCHECKED_CAST", "DEPRECATION")
     private fun parseGameEnvVars(intent: android.content.Intent): Map<String, String?> {
-        val rawMap = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        val rawMap = if (Build.VERSION.SDK_INT >= VERSION_CODES.TIRAMISU) {
             intent.getSerializableExtra(GameActivity.EXTRA_GAME_ENV_VARS, HashMap::class.java)
         } else {
             intent.getSerializableExtra(GameActivity.EXTRA_GAME_ENV_VARS)
@@ -335,23 +334,15 @@ class GamePresenter : GameContract.Presenter {
 
     private fun getRecentLogcatLogs(view: GameContract.View): String? {
         return try {
-            // 关键日志标签列表 - 用于捕获所有重要的运行时信息
             val importantTags = listOf(
-                // 核心组件
                 "GameLauncher", "GamePresenter", "RuntimeLibLoader", "RuntimeLibraryLoader",
-                // 渲染器
                 "RendererEnvironmentConfigurator", "RendererRegistry", "RendererLoader",
-                // .NET 运行时
                 "DotNetHost", "DotNetLauncher", "CoreCLR", "MonoGame",
-                // SDL 和音频
                 "SDL", "SDL_android", "SDLSurface", "FNA3D", "OpenAL", "FMOD",
-                // 系统层
                 "libc", "linker", "art", "dalvikvm",
-                // 错误相关
                 "FATAL", "AndroidRuntime", "System.err"
             )
             
-            // 构建 logcat 过滤器
             val tagFilters = importantTags.flatMap { listOf("$it:V") }.toTypedArray()
             val cmd = arrayOf("logcat", "-d", "-v", "threadtime", "-t", "500", "*:S") + tagFilters
             
@@ -360,10 +351,8 @@ class GamePresenter : GameContract.Presenter {
             val allLogs = reader.readLines()
             process.destroy()
 
-            // 过滤和整理日志
             val filteredLogs = allLogs
                 .filter { line ->
-                    // 过滤掉空行和无关的系统日志
                     line.isNotBlank() && 
                     !line.contains("GC_") && 
                     !line.contains("Choreographer") &&
@@ -372,7 +361,6 @@ class GamePresenter : GameContract.Presenter {
                 .takeLast(MAX_LOG_LINES)
                 .joinToString("\n")
 
-            // 如果没有找到有用的日志，尝试获取所有错误级别的日志
             if (filteredLogs.isEmpty()) {
                 return getErrorLevelLogs()
             }
@@ -389,9 +377,6 @@ class GamePresenter : GameContract.Presenter {
         }
     }
 
-    /**
-     * 获取错误级别的日志（备用方案）
-     */
     private fun getErrorLevelLogs(): String? {
         return try {
             val process = Runtime.getRuntime().exec(

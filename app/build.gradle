@@ -12,62 +12,75 @@ android {
 
     defaultConfig {
         applicationId "com.app.ralaunch"
-        minSdk 28
+        
+        // ... Support for Android 7...
+        minSdk 24 
         targetSdk 35
         versionCode 3
         versionName "2.0.1"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-
-        // 只编译 arm64-v8a 架构
-        // 使用 splits 配置
-
+        
+        // ... Enable multidex to prevent method limit issues on older devices ...
+        multiDexEnabled true
+        
         externalNativeBuild {
             cmake {
-
+                arguments "-DANDROID_PLATFORM=android-24"
             }
+        }
+    }
+    signingConfigs {
+        release {
+            storeFile file("dummy.keystore")
+            storePassword "123456"
+            keyAlias "ralaunch"
+            keyPassword "123456"
+
+            enableV1Signing true
+            enableV2Signing true
+            enableV3Signing true
         }
     }
 
     buildTypes {
-        debug {
-            debuggable true
-            minifyEnabled false
-            jniDebuggable true  // 启用 Native 调试
-            
-         
-        }
         release {
             debuggable false
-            minifyEnabled false  // TODO: 修复类重复后启用 R8
+            minifyEnabled false 
             shrinkResources false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             
-            // Release 移除调试符号，减小 native 库体积
+            // ... Apply the dummy signing config ...
+            signingConfig signingConfigs.release
+            
             externalNativeBuild {
                 cmake {
-                    arguments "-DCMAKE_BUILD_TYPE=Release"
+                    arguments "-DCMAKE_BUILD_TYPE=Release", "-DANDROID_PLATFORM=android-24"
                 }
             }
         }
     }
+
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_21
-        targetCompatibility JavaVersion.VERSION_21
+        // ... Keep desugaring enabled for other modern Java APIs safely ...
+        coreLibraryDesugaringEnabled true
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
+
     externalNativeBuild {
         cmake {
             path file('src/main/cpp/CMakeLists.txt')
             version '3.22.1'
         }
     }
+    
     buildFeatures {
         viewBinding true
         prefab true
         compose true
     }
 
-    // 禁止 AAPT 压缩这些文件类型，确保 AssetManager 能正确读取
     androidResources {
         noCompress += ['tar.gz', 'tar.xz', 'xz']
     }
@@ -75,13 +88,10 @@ android {
     packagingOptions {
         jniLibs {
             useLegacyPackaging = true
-            // Debug 版本保留符号便于调试，Release 版本移除符号减小体积
-            // keepDebugSymbols += ['**/*.so']  // 仅 debug 时启用
-            pickFirsts += ['lib/arm64-v8a/libc++_shared.so', 'lib/arm64-v8a/libdotnethost.so']
+            pickFirsts += ['**/*.so']
         }
     }
 
-    // 临时只针对真机arm64-v8a编译
     splits {
         abi {
             enable true
@@ -91,7 +101,6 @@ android {
         }
     }
 
-    // 使用预编译的 System.Security.Cryptography jar，实现官方托管绑定
     sourceSets {
         main {
             java {
@@ -101,49 +110,51 @@ android {
     }
 
     kotlinOptions {
-        jvmTarget = '21'
+        jvmTarget = '17'
     }
 
-    // 关闭 Lint 检查
     lint {
         abortOnError false
         checkReleaseBuilds false
     }
 }
 
+// ... DEPENDENCIES BLOCK (Outside and at the bottom) ...
 dependencies {
-    // 本地 JAR/AAR 依赖
+    // ... Desugaring library ...
+    coreLibraryDesugaring libs.desugar.jdk.libs
+    
+    // ... Multidex support ...
+    implementation 'androidx.multidex:multidex:2.0.1'
+
+    // ... Local libraries ...
     implementation files('../app/libs/libSystem.Security.Cryptography.Native.Android.jar')
     implementation files('../external/libs/fmod.jar')
     implementation files('libs/fishnet-release.aar')
 
-    // 项目模块
     implementation project(':shared')
 
-    // 从 ralib 迁移的依赖
+    // ... 3rd party libraries ...
     implementation 'com.github.omicronapps:7-Zip-JBinding-4Android:Release-16.02-2.03'
     implementation 'com.google.code.gson:gson:2.13.2'
 
-    // AndroidX 核心库
     implementation libs.core.ktx
     implementation libs.appcompat
     implementation libs.activity
     implementation libs.constraintlayout
     implementation libs.recyclerview
-
-    // Material Design
     implementation libs.material
 
-    // Kotlin 扩展
+    // ... Coroutines & Serialization ...
     implementation libs.kotlinx.coroutines.core
     implementation libs.kotlinx.coroutines.android
     implementation libs.kotlinx.serialization.json
 
-    // Haze (Glassmorphism blur)
+    // ... UI effects ...
     implementation libs.haze
     implementation libs.haze.materials
 
-    // Compose
+    // ... Jetpack Compose ...
     implementation platform(libs.compose.bom)
     implementation libs.compose.ui
     implementation libs.compose.ui.graphics
@@ -157,19 +168,20 @@ dependencies {
     implementation 'com.github.jeziellago:compose-markdown:0.5.8'
     debugImplementation 'androidx.compose.ui:ui-tooling'
 
-    // Koin DI
+    // ... Koin DI ...
     implementation libs.koin.core
     implementation libs.koin.android
     implementation libs.koin.compose
 
-    // 第三方工具库
+    // ... Misc tools ...
     implementation libs.glide
     implementation libs.konfetti
-    implementation libs.commons.compress
-    implementation libs.xz
+    implementation 'org.tukaani:xz:1.9' // <--- KEEPT: Our custom ArchiveExtractor needs this to read .xz files!
     implementation libs.android.svg
+    
+    // ... NOTE: libs.commons.compress HAS BEEN COMPLETELY PURGED!
 
-    // 测试依赖
+    // ... Testing ...
     testImplementation libs.junit
     androidTestImplementation libs.ext.junit
     androidTestImplementation libs.espresso.core

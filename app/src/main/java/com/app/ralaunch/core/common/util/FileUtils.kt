@@ -3,16 +3,9 @@ package com.app.ralaunch.core.common.util
 import android.util.Log
 import java.io.File
 import java.io.IOException
-import java.nio.file.AccessDeniedException
-import java.nio.file.Files
-import java.nio.file.LinkOption
-import java.nio.file.NoSuchFileException
-import java.nio.file.Path
-import java.util.Comparator
-import java.util.concurrent.atomic.AtomicBoolean
 
 /**
- * 文件操作工具类
+ * File operation utilities
  */
 object FileUtils {
     private const val TAG = "FileUtils"
@@ -20,57 +13,58 @@ object FileUtils {
     private const val RETRY_DELAY_MS = 100L
 
     /**
-     * 递归删除目录及其内容
-     * @param path 要删除的路径
-     * @return 删除是否成功
+     * Recursively delete directory and its contents
+     * @param path path to delete
+     * @return true if deletion was successful
      */
     @JvmStatic
-    fun deleteDirectoryRecursively(path: Path?): Boolean {
+    fun deleteDirectoryRecursively(path: File?): Boolean {
         if (path == null) return false
-        if (!Files.exists(path, LinkOption.NOFOLLOW_LINKS)) return true
-        if (!Files.isReadable(path)) return false
-
-        val allDeleted = AtomicBoolean(true)
+        if (!path.exists()) return true
+        if (!path.canRead()) return false
 
         return try {
-            Files.walk(path).use { walker ->
-                walker.sorted(Comparator.reverseOrder())
-                    .forEach { p ->
-                        if (!deletePathWithRetry(p)) {
-                            allDeleted.set(false)
-                        }
-                    }
+            path.walkBottomUp().fold(true) { result, file ->
+                if (!deleteFileWithRetry(file)) {
+                    Log.w(TAG, "Failed to delete: $file")
+                    false
+                } else {
+                    result
+                }
             }
-            allDeleted.get() && !Files.exists(path, LinkOption.NOFOLLOW_LINKS)
-        } catch (e: NoSuchFileException) {
-            true
-        } catch (e: AccessDeniedException) {
-            Log.w(TAG, "删除失败（权限）: $path")
+        } catch (e: IOException) {
+            Log.w(TAG, "Delete failed: $path")
             false
         } catch (e: SecurityException) {
-            Log.w(TAG, "删除失败（权限）: $path")
-            false
-        } catch (e: IOException) {
-            Log.w(TAG, "删除失败: $path")
+            Log.w(TAG, "Delete failed (permission): $path")
             false
         } catch (e: Exception) {
-            Log.w(TAG, "删除失败: $path", e)
+            Log.w(TAG, "Delete failed: $path", e)
             false
         }
     }
 
     /**
-     * 带重试机制的路径删除
+     * Recursively delete directory and its contents
+     * @param path string path to delete
+     * @return true if deletion was successful
      */
-    private fun deletePathWithRetry(path: Path): Boolean {
+    @JvmStatic
+    fun deleteDirectoryRecursively(path: String?): Boolean {
+        if (path == null) return false
+        return deleteDirectoryRecursively(File(path))
+    }
+
+    /**
+     * Delete file with retry mechanism
+     */
+    private fun deleteFileWithRetry(file: File): Boolean {
         repeat(MAX_RETRY_ATTEMPTS) { attempt ->
             try {
-                if (!Files.exists(path, LinkOption.NOFOLLOW_LINKS)) return true
-                Files.delete(path)
-                return true
-            } catch (e: AccessDeniedException) {
-                return false
+                if (!file.exists()) return true
+                if (file.delete()) return true
             } catch (e: SecurityException) {
+                Log.w(TAG, "Delete denied (security): $file")
                 return false
             } catch (e: IOException) {
                 if (attempt < MAX_RETRY_ATTEMPTS - 1) {
@@ -92,24 +86,49 @@ object FileUtils {
                 }
             }
         }
+        Log.w(TAG, "Failed to delete after $MAX_RETRY_ATTEMPTS attempts: $file")
         return false
     }
 
     /**
-     * 递归删除目录及其内容（File 参数版本）
-     * @param directory 要删除的目录
-     * @return 删除是否成功
+     * Check if file exists
      */
     @JvmStatic
-    fun deleteDirectoryRecursively(directory: File?): Boolean {
-        if (directory == null) return false
-        if (!directory.exists()) return true
-        if (!directory.canRead()) return false
+    fun exists(path: String?): Boolean {
+        if (path == null) return false
+        return File(path).exists()
+    }
 
+    /**
+     * Create directories including parents
+     */
+    @JvmStatic
+    fun createDirectories(path: String?): Boolean {
+        if (path == null) return false
+        return File(path).mkdirs()
+    }
+
+    /**
+     * Get file size in bytes
+     */
+    @JvmStatic
+    fun getFileSize(path: String?): Long {
+        if (path == null) return 0L
+        val file = File(path)
+        return if (file.exists() && file.isFile) file.length() else 0L
+    }
+
+    /**
+     * Copy file from source to destination
+     */
+    @JvmStatic
+    fun copyFile(src: File, dst: File): Boolean {
         return try {
-            val path = directory.toPath().toAbsolutePath().normalize()
-            deleteDirectoryRecursively(path)
+            dst.parentFile?.mkdirs()
+            src.copyTo(dst, overwrite = true)
+            true
         } catch (e: Exception) {
+            Log.w(TAG, "Copy failed: $src -> $dst", e)
             false
         }
     }

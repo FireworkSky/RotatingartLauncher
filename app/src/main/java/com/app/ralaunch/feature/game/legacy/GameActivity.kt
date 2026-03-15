@@ -32,11 +32,9 @@ import com.app.ralaunch.core.common.util.LocaleManager
 import com.app.ralaunch.core.common.ErrorHandler
 import com.app.ralaunch.shared.core.platform.AppConstants
 import org.libsdl.app.SDLActivity
+import com.app.ralaunch.core.platform.runtime.DeviceOptimizationEngine
+import com.app.ralaunch.core.platform.runtime.TurboPatchLoader
 
-/**
- * 游戏运行界面
- * 继承 SDLActivity，实现 MVP 的 View 层
- */
 class GameActivity : SDLActivity(), GameContract.View {
 
     companion object {
@@ -54,10 +52,7 @@ class GameActivity : SDLActivity(), GameContract.View {
             private set
 
         @JvmStatic
-        fun createLaunchIntent(
-            context: Context,
-            gameStorageId: String
-        ): Intent {
+        fun createLaunchIntent(context: Context, gameStorageId: String): Intent {
             require(gameStorageId.isNotBlank()) { "gameStorageId must not be blank" }
             return Intent(context, GameActivity::class.java).apply {
                 putExtra(EXTRA_GAME_STORAGE_ID, gameStorageId)
@@ -66,12 +61,8 @@ class GameActivity : SDLActivity(), GameContract.View {
 
         @JvmStatic
         fun createLaunchIntent(
-            context: Context,
-            gameExePath: String,
-            gameArgs: Array<String>,
-            gameId: String?,
-            gameRendererOverride: String?,
-            gameEnvVars: Map<String, String?> = emptyMap()
+            context: Context, gameExePath: String, gameArgs: Array<String>,
+            gameId: String?, gameRendererOverride: String?, gameEnvVars: Map<String, String?> = emptyMap()
         ): Intent {
             require(gameExePath.isNotBlank()) { "gameExePath must not be blank" }
             return Intent(context, GameActivity::class.java).apply {
@@ -84,78 +75,44 @@ class GameActivity : SDLActivity(), GameContract.View {
         }
 
         @JvmStatic
-        fun launch(
-            context: Context,
-            gameStorageId: String
-        ) {
-            context.startActivity(
-                createLaunchIntent(
-                    context = context,
-                    gameStorageId = gameStorageId
-                )
-            )
+        fun launch(context: Context, gameStorageId: String) {
+            context.startActivity(createLaunchIntent(context, gameStorageId))
             (context as? Activity)?.overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
         }
 
         @JvmStatic
         fun launch(
-            context: Context,
-            gameExePath: String,
-            gameArgs: Array<String>,
-            gameId: String?,
-            gameRendererOverride: String?,
-            gameEnvVars: Map<String, String?> = emptyMap()
+            context: Context, gameExePath: String, gameArgs: Array<String>,
+            gameId: String?, gameRendererOverride: String?, gameEnvVars: Map<String, String?> = emptyMap()
         ) {
-            context.startActivity(
-                createLaunchIntent(
-                    context = context,
-                    gameExePath = gameExePath,
-                    gameArgs = gameArgs,
-                    gameId = gameId,
-                    gameRendererOverride = gameRendererOverride,
-                    gameEnvVars = gameEnvVars
-                )
-            )
+            context.startActivity(createLaunchIntent(context, gameExePath, gameArgs, gameId, gameRendererOverride, gameEnvVars))
             (context as? Activity)?.overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
         }
 
-        // ==================== 静态方法供 JNI/其他类调用 ====================
+        @JvmStatic
+        fun sendTextToGame(text: String) { GameImeHelper.sendTextToGame(text) }
 
         @JvmStatic
-        fun sendTextToGame(text: String) {
-            GameImeHelper.sendTextToGame(text)
-        }
+        fun sendBackspace() { GameImeHelper.sendBackspaceToGame() }
 
         @JvmStatic
-        fun sendBackspace() {
-            GameImeHelper.sendBackspaceToGame()
-        }
+        fun enableSDLTextInputForIME() { GameImeHelper.enableSDLTextInputForIME() }
 
         @JvmStatic
-        fun enableSDLTextInputForIME() {
-            GameImeHelper.enableSDLTextInputForIME()
-        }
-
-        @JvmStatic
-        fun disableSDLTextInput() {
-            GameImeHelper.disableSDLTextInput()
-        }
+        fun disableSDLTextInput() { GameImeHelper.disableSDLTextInput() }
 
         @JvmStatic
         fun onGameExitWithMessage(exitCode: Int, errorMessage: String?) {
             instance?.presenter?.onGameExit(exitCode, errorMessage)
         }
 
-        // Touch bridge native methods
         @JvmStatic
         fun nativeSetTouchDataBridge(count: Int, x: FloatArray, y: FloatArray, screenWidth: Int, screenHeight: Int) {
             nativeSetTouchData(count, x, y, screenWidth, screenHeight)
         }
 
         @JvmStatic
-        fun nativeClearTouchDataBridge() {
-            nativeClearTouchData()
-        }
+        fun nativeClearTouchDataBridge() { nativeClearTouchData() }
 
         @JvmStatic
         private external fun nativeSetTouchData(count: Int, x: FloatArray, y: FloatArray, screenWidth: Int, screenHeight: Int)
@@ -164,16 +121,14 @@ class GameActivity : SDLActivity(), GameContract.View {
         private external fun nativeClearTouchData()
     }
 
-    // MVP
     private val presenter: GamePresenter = GamePresenter()
-
-    // 管理器
     private var fullscreenManager: GameFullscreenManager? = null
     private val virtualControlsManager = GameVirtualControlsManager()
     private val touchBridge = GameTouchBridge()
     private var lastRequestedRefreshRate: Float = 0f
 
-    // ==================== 生命周期 ====================
+    private val uiHandler = Handler(Looper.getMainLooper())
+    private val hideUiRunnable = Runnable { hideNavigationBarDefinitively() }
 
     override fun attachBaseContext(newBase: Context) {
         super.attachBaseContext(LocaleManager.applyLanguage(newBase))
@@ -187,27 +142,63 @@ class GameActivity : SDLActivity(), GameContract.View {
         instance = this
         presenter.attach(this)
 
-        // 初始化日志系统 (游戏进程独立于主进程)
+        val gameExePath = intent.getStringExtra(EXTRA_GAME_EXE_PATH)
+        val gameDir = gameExePath?.let { java.io.File(it).parent }
+
+        DeviceOptimizationEngine.prepareGameEnvironment(this, gameDir)
+        TurboPatchLoader.injectTurboWrapper(this)
+
         initializeLogger()
-        
         initializeErrorHandler()
         forceLandscapeOrientation()
         initializeFullscreenManager()
-        initializeVirtualControls()
         requestHighRefreshRate("onCreate")
         
         AppLogger.info(TAG, "GameActivity onCreate completed")
     }
+
+    @Suppress("DEPRECATION")
+    private fun hideNavigationBarDefinitively() {
+        try {
+            window.setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
+
+            val flags = (
+                android.view.View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                or android.view.View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                or android.view.View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                or android.view.View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                or android.view.View.SYSTEM_UI_FLAG_FULLSCREEN
+                or android.view.View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+            )
+            
+            window.decorView.systemUiVisibility = flags
+
+            // Build.VERSION_CODES.O is Android 8.0 (API 26).
+            // This leaves modern devices alone and only tortures the old ones!
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+                uiHandler.removeCallbacks(hideUiRunnable)
+                uiHandler.postDelayed(hideUiRunnable, 300)
+            }
+
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to hide navigation bar: ${e.message}")
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        hideNavigationBarDefinitively()
+        
+        if (mLayout != null) {
+            initializeVirtualControls()
+        }
+    }    
     
     private fun initializeLogger() {
         try {
             val logDir = java.io.File(getExternalFilesDir(null), AppConstants.Dirs.LOGS)
             AppLogger.init(logDir)
-            AppLogger.info(TAG, "=== GameActivity Process Started ===")
-            AppLogger.info(TAG, "Game process PID: ${android.os.Process.myPid()}")
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to initialize logger in game process", e)
-        }
+        } catch (e: Exception) {}
     }
 
     private fun applyThemeMode() {
@@ -222,18 +213,11 @@ class GameActivity : SDLActivity(), GameContract.View {
     }
 
     private fun initializeErrorHandler() {
-        try {
-            ErrorHandler.setCurrentActivity(this)
-        } catch (e: Exception) {
-            AppLogger.error(TAG, "设置 ErrorHandler 失败: ${e.message}")
-        }
+        try { ErrorHandler.setCurrentActivity(this) } catch (e: Exception) {}
     }
 
     private fun forceLandscapeOrientation() {
-        try {
-            requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
-        } catch (_: Exception) {
-        }
+        try { requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE } catch (_: Exception) {}
     }
 
     private fun initializeFullscreenManager() {
@@ -241,6 +225,7 @@ class GameActivity : SDLActivity(), GameContract.View {
             enableFullscreen()
             configureIME()
         }
+        hideNavigationBarDefinitively()
     }
 
     private fun initializeVirtualControls() {
@@ -249,26 +234,16 @@ class GameActivity : SDLActivity(), GameContract.View {
             sdlLayout = mLayout as ViewGroup,
             sdlSurface = mSurface,
             disableSDLTextInput = { disableSDLTextInput() },
-            onExitGame = { exitGame() }
+            onExitGame = { finish() }
         )
-    }
-
-    private fun exitGame() {
-        // 通过 Presenter 正常退出游戏
-        finish()
     }
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {
         super.onWindowFocusChanged(hasFocus)
         fullscreenManager?.onWindowFocusChanged(hasFocus)
         if (hasFocus) {
-            requestHighRefreshRate("onWindowFocusChanged")
+            hideNavigationBarDefinitively()
         }
-    }
-
-    override fun onResume() {
-        super.onResume()
-        requestHighRefreshRate("onResume")
     }
 
     @Deprecated("Deprecated in Java")
@@ -281,29 +256,23 @@ class GameActivity : SDLActivity(), GameContract.View {
 
     @SuppressLint("MissingSuperCall")
     @Deprecated("Deprecated in Java")
-    override fun onBackPressed() {
-        // 按下返回键不做任何操作，由悬浮菜单控制
-        // 用户可以通过悬浮菜单退出游戏
-    }
+    override fun onBackPressed() {}
 
     override fun onDestroy() {
         Log.d(TAG, "GameActivity.onDestroy() called")
+        
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+            uiHandler.removeCallbacks(hideUiRunnable)
+        }
 
         virtualControlsManager.stop()
         presenter.detach()
-
         super.onDestroy()
-
-        // [重要] .NET runtime 不支持多次初始化
-        // GameActivity 运行在独立进程，终止不影响主应用
         Handler(Looper.getMainLooper()).postDelayed({
-            Log.d(TAG, "Terminating game process to ensure clean .NET runtime state")
             Process.killProcess(Process.myPid())
             System.exit(0)
         }, 100)
     }
-
-    // ==================== SDL 重写 ====================
 
     override fun setOrientationBis(w: Int, h: Int, resizable: Boolean, hint: String?) {
         super.setOrientationBis(w, h, resizable, "LandscapeLeft LandscapeRight")
@@ -311,48 +280,33 @@ class GameActivity : SDLActivity(), GameContract.View {
 
     override fun getMainFunction(): String = "SDL_main"
 
-    override fun Main(args: Array<String>?) {
-        presenter.launchGame()
-    }
+    override fun Main(args: Array<String>?) { presenter.launchGame() }
 
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
-        // 返回键处理：切换悬浮球可见性
-        if (event.keyCode == KeyEvent.KEYCODE_BACK) {
-            if (event.action == KeyEvent.ACTION_DOWN) {
-                virtualControlsManager.toggleFloatingBall()
-            }
-            return true  // 拦截返回键，不退出游戏
+        if (event.keyCode == KeyEvent.KEYCODE_BACK && event.action == KeyEvent.ACTION_DOWN) {
+            virtualControlsManager.toggleFloatingBall()
+            return true  
         }
-        
         return super.dispatchKeyEvent(event)
     }
 
     override fun dispatchTouchEvent(event: MotionEvent): Boolean {
         val result = super.dispatchTouchEvent(event)
         touchBridge.handleMotionEvent(event, resources)
+        
+        if (event.action == MotionEvent.ACTION_DOWN) {
+            hideNavigationBarDefinitively()
+        }
+        
         return result
     }
 
-    // ==================== 公开方法 ====================
+    fun toggleVirtualControls() { virtualControlsManager.toggle(this) }
+    fun setVirtualControlsVisible(visible: Boolean) { virtualControlsManager.setVisible(visible) }
 
-    fun toggleVirtualControls() {
-        virtualControlsManager.toggle(this)
-    }
-
-    fun setVirtualControlsVisible(visible: Boolean) {
-        virtualControlsManager.setVisible(visible)
-    }
-
-    // ==================== GameContract.View 实现 ====================
-
-    override fun showToast(message: String) {
-        Toast.makeText(this, message, Toast.LENGTH_LONG).show()
-    }
-
-    override fun showError(title: String, message: String) {
-        ErrorHandler.showWarning(title, message)
-    }
-
+    override fun showToast(message: String) { Toast.makeText(this, message, Toast.LENGTH_LONG).show() }
+    override fun showError(title: String, message: String) { ErrorHandler.showWarning(title, message) }
+    
     override fun showCrashReport(
         stackTrace: String,
         errorDetails: String,
@@ -371,25 +325,12 @@ class GameActivity : SDLActivity(), GameContract.View {
     }
 
     override fun getStringRes(resId: Int): String = getString(resId)
-
     override fun getStringRes(resId: Int, vararg args: Any): String = getString(resId, *args)
-
-    override fun runOnMainThread(action: () -> Unit) {
-        runOnUiThread { action() }
-    }
-
-    override fun finishActivity() {
-        finish()
-    }
-
+    override fun runOnMainThread(action: () -> Unit) { runOnUiThread { action() } }
+    override fun finishActivity() { finish() }
     override fun getActivityIntent(): Intent = intent
-
     override fun getAppVersionName(): String? {
-        return try {
-            packageManager.getPackageInfo(packageName, 0).versionName
-        } catch (e: Exception) {
-            null
-        }
+        return try { packageManager.getPackageInfo(packageName, 0).versionName } catch (e: Exception) { null }
     }
 
     private fun requestHighRefreshRate(caller: String) {
