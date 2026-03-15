@@ -1,11 +1,9 @@
 package com.app.ralaunch.core.platform.runtime.dotnet
 
-import android.os.Build
 import com.app.ralaunch.core.common.SettingsAccess
 import com.app.ralaunch.core.platform.runtime.EnvVarsManager
 import com.app.ralaunch.core.common.util.AppLogger
 import com.app.ralaunch.core.common.util.RuntimePreference
-import java.util.Locale
 
 object DotNetLauncher {
     const val TAG = "DotNetLauncher"
@@ -47,8 +45,7 @@ object DotNetLauncher {
             CoreHostHooks.initCompatHooks()
         }
 
-        val shouldApplyCompatEnv = shouldApplyXiaomiCompatEnv(assemblyPath, compatEnabled)
-        val compatEnvSnapshot = if (shouldApplyCompatEnv) {
+        val compatEnvSnapshot = if (compatEnabled) {
             AppLogger.warn(
                 TAG,
                 "Applying Xiaomi CoreCLR compatibility env before first hostfxr initialization"
@@ -58,7 +55,7 @@ object DotNetLauncher {
             null
         }
 
-        if (shouldApplyCompatEnv) {
+        if (compatEnabled) {
             applyXiaomiCoreClrCompatEnv()
         } else {
             EnvVarsManager.quickSetEnvVar("RAL_CORECLR_XIAOMI_COMPAT", null)
@@ -79,32 +76,10 @@ object DotNetLauncher {
             }
             return exitCode
         } finally {
-            if (compatEnvSnapshot != null) {
+            if (compatEnabled && compatEnvSnapshot != null) {
                 restoreXiaomiCoreClrCompatEnv(compatEnvSnapshot)
             }
         }
-    }
-
-    private fun shouldApplyXiaomiCompatEnv(
-        assemblyPath: String,
-        compatEnabled: Boolean
-    ): Boolean {
-        if (!compatEnabled) return false
-        if (!isTModLoaderAssembly(assemblyPath)) return false
-        return isXiaomiFamilyDevice()
-    }
-
-    private fun isTModLoaderAssembly(assemblyPath: String): Boolean {
-        return assemblyPath.lowercase(Locale.ROOT).contains("tmodloader")
-    }
-
-    private fun isXiaomiFamilyDevice(): Boolean {
-        val manufacturer = Build.MANUFACTURER.orEmpty().lowercase(Locale.ROOT)
-        val brand = Build.BRAND.orEmpty().lowercase(Locale.ROOT)
-        return manufacturer.contains("xiaomi") ||
-            brand.contains("xiaomi") ||
-            brand.contains("redmi") ||
-            brand.contains("poco")
     }
 
     private fun applyXiaomiCoreClrCompatEnv() {

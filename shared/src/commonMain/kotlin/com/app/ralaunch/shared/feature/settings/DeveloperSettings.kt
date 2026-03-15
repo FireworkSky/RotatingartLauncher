@@ -29,7 +29,7 @@ data class DeveloperState(
     val serverGCEnabled: Boolean = true,
     val concurrentGCEnabled: Boolean = true,
     val tieredCompilationEnabled: Boolean = true,
-    val coreClrXiaomiCompatEnabled: Boolean = true,
+    val coreClrXiaomiCompatEnabled: Boolean = false,
     
     // FNA 优化
     val fnaMapBufferRangeOptEnabled: Boolean = false,

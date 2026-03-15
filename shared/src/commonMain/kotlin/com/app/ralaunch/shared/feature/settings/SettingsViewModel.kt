@@ -55,7 +55,7 @@ data class SettingsUiState(
     val serverGCEnabled: Boolean = true,
     val concurrentGCEnabled: Boolean = true,
     val tieredCompilationEnabled: Boolean = true,
-    val coreClrXiaomiCompatEnabled: Boolean = true,
+    val coreClrXiaomiCompatEnabled: Boolean = false,
     val fnaMapBufferRangeOptEnabled: Boolean = false,
     val fnaGlPerfDiagnosticsEnabled: Boolean = false,
 

@@ -87,7 +87,7 @@ data class AppSettings(
 
     // 开发者设置
     var logSystemEnabled: Boolean = true,
-    var verboseLogging: Boolean = true,
+    var verboseLogging: Boolean = false,
     var setThreadAffinityToBigCore: Boolean = false,
 
     // FNA 设置
@@ -110,7 +110,7 @@ data class AppSettings(
     var tieredCompilation: Boolean = true,
     var quickJIT: Boolean = true,
     var jitOptimizeType: Int = 0,
-    var coreClrXiaomiCompatEnabled: Boolean = true,
+    var coreClrXiaomiCompatEnabled: Boolean = false,
     var retainVM: Boolean = false,
 
     // 内存优化

@@ -35,11 +35,6 @@ static std::atomic_bool g_compat_hooks_installed = false;
 static __thread char trace_buffer[4096] = {0};
 static __thread size_t trace_buffer_len = 0;
 
-static bool is_xiaomi_compat_enabled() {
-    const char* enabled = getenv("RAL_CORECLR_XIAOMI_COMPAT");
-    return enabled != nullptr && strcmp(enabled, "1") == 0;
-}
-
 // Hook后的vfprintf函数
 static int hooked_vfprintf(FILE* stream, const char* format, va_list ap) {
     // 先调用原始函数
@@ -90,7 +85,7 @@ static int hooked_pthread_condattr_setclock(pthread_condattr_t* attr, clockid_t 
     }
 
     int rc = original_pthread_condattr_setclock(attr, clock_id);
-    if (rc == 0 || !is_xiaomi_compat_enabled()) {
+    if (rc == 0) {
         return rc;
     }
 
@@ -116,7 +111,7 @@ static int hooked_pthread_attr_setstacksize(pthread_attr_t* attr, size_t stack_s
     }
 
     int rc = original_pthread_attr_setstacksize(attr, stack_size);
-    if (rc == 0 || !is_xiaomi_compat_enabled()) {
+    if (rc == 0) {
         return rc;
     }
 
@@ -150,7 +145,7 @@ static int hooked_pthread_create(
     }
 
     int rc = original_pthread_create(thread, attr, start_routine, arg);
-    if (rc == 0 || !is_xiaomi_compat_enabled()) {
+    if (rc == 0) {
         return rc;
     }
 
@@ -178,7 +173,7 @@ static int hooked_sched_getaffinity(pid_t pid, size_t cpusetsize, cpu_set_t* mas
     }
 
     int rc = original_sched_getaffinity(pid, cpusetsize, mask);
-    if (rc == 0 || !is_xiaomi_compat_enabled()) {
+    if (rc == 0) {
         return rc;
     }
 
@@ -219,7 +214,7 @@ static int hooked_sched_setaffinity(pid_t pid, size_t cpusetsize, const cpu_set_
     }
 
     int rc = original_sched_setaffinity(pid, cpusetsize, mask);
-    if (rc == 0 || !is_xiaomi_compat_enabled()) {
+    if (rc == 0) {
         return rc;
     }
 
