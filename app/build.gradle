@@ -26,8 +26,7 @@ android {
         
         externalNativeBuild {
             cmake {
-                // ... Ensure C++ native code compiles for API 25 compatibility ...
-                arguments "-DANDROID_PLATFORM=android-25"
+                arguments "-DANDROID_PLATFORM=android-24"
             }
         }
     }
