@@ -8,14 +8,15 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.IBinder
+import android.system.Os
 import androidx.core.app.NotificationCompat
 import com.app.ralaunch.R
+import com.app.ralaunch.core.common.util.AppLogger
+import com.app.ralaunch.core.common.util.NativeMethods
 import com.app.ralaunch.core.platform.runtime.GameLauncher
 import com.app.ralaunch.feature.patch.data.PatchManager
-import com.app.ralaunch.core.common.util.NativeMethods
 import org.koin.java.KoinJavaComponent
-import com.app.ralaunch.core.common.util.AppLogger
-import java.io.File  // Thay java.nio.file.Paths
+import java.io.File
 
 class ProcessLauncherService : Service() {
 
@@ -104,12 +105,28 @@ class ProcessLauncherService : Service() {
             return START_NOT_STICKY
         }
 
+        AppLogger.info(TAG, "Launch request received")
+        AppLogger.info(TAG, "Title: $title")
+        AppLogger.info(TAG, "Game ID: ${gameId ?: "<null>"}")
+        AppLogger.info(TAG, "Assembly path: $assemblyPath")
+        AppLogger.info(TAG, "Assembly exists: ${File(assemblyPath).exists()}")
+        AppLogger.info(TAG, "Args: ${args?.joinToString(" ") ?: "<none>"}")
+        AppLogger.info(TAG, "Renderer: ${safeEnv("RALCORE_RENDERER", "native")}")
+        AppLogger.info(TAG, "EGL: ${safeEnv("RALCORE_EGL", "system")}")
+        AppLogger.info(TAG, "GLES: ${safeEnv("LIBGL_GLES", "system")}")
+        AppLogger.info(TAG, "FNA3D_OPENGL_LIBRARY: ${safeEnv("FNA3D_OPENGL_LIBRARY", "default")}")
+        AppLogger.info(TAG, "Native dir: ${safeEnv("RALCORE_NATIVEDIR", applicationInfo.nativeLibraryDir)}")
+        AppLogger.info(TAG, "Runtime dir: ${safeEnv("RALCORE_RUNTIMEDIR", "none")}")
+
         launchAsync(assemblyPath, args, title, gameId)
         return START_STICKY
     }
 
     private fun launchAsync(assemblyPath: String, args: Array<String>?, title: String, gameId: String?) {
-        if (running) return
+        if (running) {
+            AppLogger.warn(TAG, "Launch ignored because a process is already running")
+            return
+        }
 
         launcherThread = Thread(
             null,
@@ -117,9 +134,11 @@ class ProcessLauncherService : Service() {
                 try {
                     running = true
                     updateNotification(getString(R.string.process_launcher_status_running, title))
-                    doLaunch(assemblyPath, args, title, gameId)
-                } catch (e: Exception) {
-                    AppLogger.error(TAG, "Launch error: ${e.message}", e)
+                    AppLogger.info(TAG, "Launcher thread started: ${Thread.currentThread().name}")
+                    val result = doLaunch(assemblyPath, args, title, gameId)
+                    AppLogger.info(TAG, "doLaunch result: $result")
+                } catch (t: Throwable) {
+                    AppLogger.error(TAG, "Launch error: ${t.message}", t)
                 } finally {
                     running = false
                     stopSelf()
@@ -136,19 +155,35 @@ class ProcessLauncherService : Service() {
 
             val patchManager: PatchManager? = try {
                 KoinJavaComponent.getOrNull(PatchManager::class.java)
-            } catch (e: Exception) { null }
+            } catch (t: Throwable) {
+                AppLogger.warn(TAG, "PatchManager unavailable: ${t.message}")
+                null
+            }
 
-            // Thay Paths.get(assemblyPath) bang File(assemblyPath)
+            val assemblyFile = File(assemblyPath)
             val patches = if (gameId != null) {
-                patchManager?.getApplicableAndEnabledPatches(gameId, File(assemblyPath)) ?: emptyList()
+                patchManager?.getApplicableAndEnabledPatches(gameId, assemblyFile) ?: emptyList()
             } else {
                 emptyList()
             }
 
-            AppLogger.info(TAG, "Game: $gameId, Applicable patches: ${patches.size}")
-            GameLauncher.launchDotNetAssembly(assemblyPath, args ?: emptyArray(), patches)
-        } catch (e: Exception) {
-            AppLogger.error(TAG, "Launch failed: ${e.message}", e)
+            AppLogger.info(TAG, "Preparing launch for: $title")
+            AppLogger.info(TAG, "Assembly absolute path: ${assemblyFile.absolutePath}")
+            AppLogger.info(TAG, "Assembly exists: ${assemblyFile.exists()}")
+            AppLogger.info(TAG, "Assembly isFile: ${assemblyFile.isFile}")
+            AppLogger.info(TAG, "Assembly size: ${if (assemblyFile.exists()) assemblyFile.length() else -1} bytes")
+            AppLogger.info(TAG, "Applicable patches: ${patches.size}")
+            AppLogger.info(TAG, "Args count: ${args?.size ?: 0}")
+            AppLogger.info(TAG, "Last GameLauncher error before launch: ${GameLauncher.getLastErrorMessage()}")
+
+            val result = GameLauncher.launchDotNetAssembly(assemblyPath, args ?: emptyArray(), patches)
+
+            AppLogger.info(TAG, "GameLauncher finished with result: $result")
+            AppLogger.info(TAG, "Last GameLauncher error after launch: ${GameLauncher.getLastErrorMessage()}")
+
+            result
+        } catch (t: Throwable) {
+            AppLogger.error(TAG, "Launch failed: ${t.message}", t)
             AppLogger.error(TAG, "Last Error Msg: ${GameLauncher.getLastErrorMessage()}")
             -1
         } finally {
@@ -170,6 +205,7 @@ class ProcessLauncherService : Service() {
         if (stdinPipeReady) {
             NativeMethods.closeStdinPipe()
             stdinPipeReady = false
+            AppLogger.info(TAG, "stdin pipe closed")
         }
     }
 
@@ -186,12 +222,21 @@ class ProcessLauncherService : Service() {
         }
     }
 
+    private fun safeEnv(key: String, fallback: String): String {
+        return try {
+            Os.getenv(key) ?: fallback
+        } catch (_: Throwable) {
+            fallback
+        }
+    }
+
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onDestroy() {
         super.onDestroy()
         running = false
         launcherThread?.takeIf { it.isAlive }?.interrupt()
+        AppLogger.info(TAG, "ProcessLauncherService destroyed")
     }
 
     private fun createNotificationChannel() {
@@ -218,6 +263,9 @@ class ProcessLauncherService : Service() {
     }
 
     private fun updateNotification(text: String) {
-        getSystemService(NotificationManager::class.java)?.notify(NOTIFICATION_ID, createNotification(text))
+        getSystemService(NotificationManager::class.java)?.notify(
+            NOTIFICATION_ID,
+            createNotification(text)
+        )
     }
 }
