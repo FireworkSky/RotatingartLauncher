@@ -12,7 +12,7 @@ object DeviceOptimizationEngine {
         Log.i(TAG, "Initializing Device Optimization Engine for API ${Build.VERSION.SDK_INT}...")
 
         try {
-            SDLOptimizer.applyRenderer(rendererId)
+            SDLOptimizer.applyRenderer(context, rendererId)
 
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
                 Log.w(TAG, "Legacy Device Detected. Applying aggressive survival hacks!")
