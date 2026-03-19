@@ -4,17 +4,20 @@ import android.content.Context
 import android.media.AudioManager
 import android.system.Os
 import android.util.Log
-import com.app.ralaunch.core.platform.runtime.renderer.RendererRegistry
+import com.app.ralaunch.core.platform.runtime.renderer.RendererLoader
 
 object SDLOptimizer {
 
     private const val TAG = "SDLOptimizer"
+    private var nativeInjectorLoaded = false
 
     init {
         try {
             System.loadLibrary("ral_injector")
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to load ral_injector.so", e)
+            nativeInjectorLoaded = true
+        } catch (t: Throwable) {
+            Log.e(TAG, "Failed to load ral_injector.so", t)
+            nativeInjectorLoaded = false
         }
     }
 
@@ -23,6 +26,44 @@ object SDLOptimizer {
         forceClaimAudioHardware(context)
         injectEnvironmentVariables()
         Log.i(TAG, "SDLOptimizer configuration completed successfully!")
+    }
+
+    fun applyRenderer(context: Context, rendererId: String): Boolean {
+        return try {
+            val loaded = RendererLoader.loadRenderer(context, rendererId)
+            if (!loaded) {
+                Log.w(TAG, "RendererLoader failed for renderer=$rendererId")
+                return false
+            }
+
+            val rendererInfo = com.app.ralaunch.core.platform.runtime.renderer.RendererRegistry
+                .getRendererInfo(
+                    com.app.ralaunch.core.platform.runtime.renderer.RendererRegistry
+                        .normalizeRendererId(rendererId)
+                )
+
+            val eglPath = com.app.ralaunch.core.platform.runtime.renderer.RendererRegistry
+                .getRendererLibraryPath(rendererInfo?.eglLibrary)
+
+            val glesPath = com.app.ralaunch.core.platform.runtime.renderer.RendererRegistry
+                .getRendererLibraryPath(rendererInfo?.glesLibrary)
+
+            if (nativeInjectorLoaded && rendererInfo?.needsPreload == true && (!eglPath.isNullOrEmpty() || !glesPath.isNullOrEmpty())) {
+                try {
+                    nativeForceLoadLibs(eglPath, glesPath)
+                    Log.i(TAG, "Native renderer preload completed")
+                } catch (t: Throwable) {
+                    Log.e(TAG, "Native renderer preload failed", t)
+                }
+            } else {
+                Log.i(TAG, "Native injector unavailable or preload not required")
+            }
+
+            true
+        } catch (t: Throwable) {
+            Log.e(TAG, "applyRenderer failed", t)
+            false
+        }
     }
 
     @Suppress("DEPRECATION")
@@ -40,71 +81,31 @@ object SDLOptimizer {
             } else {
                 Log.w(TAG, "Audio Focus DENIED!")
             }
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to claim Audio Focus: ${e.message}")
+        } catch (t: Throwable) {
+            Log.e(TAG, "Failed to claim Audio Focus", t)
         }
     }
 
     private fun injectEnvironmentVariables() {
         try {
             Os.setenv("SDL_AUDIODRIVER", "android", true)
-            Os.setenv("SDL_AUDIO_SAMPLES", "512", true) 
+            Os.setenv("SDL_AUDIO_SAMPLES", "512", true)
             Os.setenv("FAUDIO_FMT_WBUFFER", "1", true)
             Os.setenv("FNA_AUDIO_SAMPLE_RATE", "44100", true)
-            Os.setenv("ALSOFT_REQCHANNELS", "2", true) 
+            Os.setenv("ALSOFT_REQCHANNELS", "2", true)
             Os.setenv("ALSOFT_REQSAMPLERATE", "44100", true)
             Os.setenv("SDL_AUDIO_FORMAT", "s16", true)
             Os.setenv("FNA_AUDIO_DISABLE_FLOAT", "1", true)
-
             Os.setenv("SDL_VIDEO_ALLOW_SCREENSAVER", "0", true)
             Os.setenv("SDL_HINT_RENDER_LOGICAL_SIZE_MODE", "letterbox", true)
             Os.setenv("FNA_GRAPHICS_ENABLE_HIGHDPI", "1", true)
-            
             Os.setenv("SDL_ANDROID_TRAP_BACK_BUTTON", "1", true)
             Os.setenv("SDL_ANDROID_BLOCK_ON_PAUSE", "0", true)
-            Os.setenv("SDL_VIDEO_MINIMIZE_ON_FOCUS_LOSS", "0", true) 
-
+            Os.setenv("SDL_VIDEO_MINIMIZE_ON_FOCUS_LOSS", "0", true)
             Log.i(TAG, "Injected all environment variables successfully!")
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to inject environment variables: ${e.message}")
+        } catch (t: Throwable) {
+            Log.e(TAG, "Failed to inject environment variables", t)
         }
-    }
-
-    fun applyRenderer(rendererId: String) {
-        Log.i(TAG, "Initiating Native Renderer Injection for: $rendererId")
-        
-        val normalizedId = RendererRegistry.normalizeRendererId(rendererId)
-        val info = RendererRegistry.getRendererInfo(normalizedId)
-        
-        if (info == null) {
-            Log.w(TAG, "Renderer $normalizedId not found in Registry!")
-            return
-        }
-
-        val envs = RendererRegistry.buildRendererEnv(normalizedId)
-        for ((key, value) in envs) {
-            if (value != null) {
-                try {
-                    Os.setenv(key, value, true)
-                } catch (e: Exception) {
-                    Log.e(TAG, "Failed to set Renderer env: $key=$value", e)
-                }
-            }
-        }
-
-        if (info.needsPreload) {
-            val eglAbsPath = RendererRegistry.getRendererLibraryPath(info.eglLibrary)
-            val glesAbsPath = RendererRegistry.getRendererLibraryPath(info.glesLibrary)
-            
-            if (eglAbsPath != null || glesAbsPath != null) {
-                Log.i(TAG, "Forcing native load for EGL: $eglAbsPath, GLES: $glesAbsPath")
-                nativeForceLoadLibs(eglAbsPath, glesAbsPath)
-            } else {
-                Log.w(TAG, "Needs preload but files not found!")
-            }
-        }
-        
-        Log.i(TAG, "Renderer configuration completed!")
     }
 
     @JvmStatic
