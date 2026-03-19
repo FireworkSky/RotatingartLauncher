@@ -21,8 +21,6 @@ object DeviceOptimizationEngine {
                 Log.i(TAG, "Modern Device Detected. Skipping legacy audio hacks.")
             }
 
-            TurboPatchLoader.injectTurboWrapper(context)
-
             Log.i(TAG, "All systems GO! Game environment is highly optimized and ready.")
             
         } catch (e: Exception) {
