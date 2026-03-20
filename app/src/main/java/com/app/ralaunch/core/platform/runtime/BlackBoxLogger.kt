@@ -20,7 +20,9 @@ object BlackBoxLogger {
     fun startRecording(context: Context) {
         val crashDir = File(context.getExternalFilesDir(null), "crashreport")
         if (!crashDir.exists()) crashDir.mkdirs()
+        
         clearOldReports(context, crashDir)
+        
         catchJavaCrashes(context, crashDir)
         catchNativeCrashes(context, crashDir)
     }
@@ -32,10 +34,13 @@ object BlackBoxLogger {
     private fun clearOldReports(context: Context, crashDir: File) {
         runCatching {
             crashDir.listFiles()?.forEach { file ->
-                if (file.isFile) file.delete()
+                if (file.isFile && file.name.endsWith(".txt")) {
+                    file.delete()
+                }
             }
         }
         runCatching { File(context.filesDir, "FATAL_CRASH.txt").delete() }
+        Log.i(TAG, "Old log files cleared.")
     }
 
     private fun catchJavaCrashes(context: Context, crashDir: File) {
@@ -46,7 +51,6 @@ object BlackBoxLogger {
 
         Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
             try {
-                clearOldReports(context, crashDir)
                 writeThrowableReport(context, crashDir, thread, throwable, "APP_CRASH")
             } catch (_: Throwable) {
             } finally {
@@ -54,7 +58,7 @@ object BlackBoxLogger {
             }
         }
 
-        Log.i(TAG, "🚨 VIP Java Crash Catcher Armed!")
+        Log.i(TAG, "VIP Java Crash Catcher Armed")
     }
 
     private fun catchNativeCrashes(context: Context, crashDir: File) {
@@ -63,11 +67,10 @@ object BlackBoxLogger {
         Thread {
             try {
                 isRecording = true
-                clearOldReports(context, crashDir)
-                val logFile = File(crashDir, "Crash.txt")
+                val logFile = File(crashDir, "GAME_NATIVE_CRASH.txt")
                 val timeFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
 
-                Log.i(TAG, "✈️ Black Box activated! Recording flight data to: ${logFile.absolutePath}")
+                Log.i(TAG, "Black Box activated! Recording to: ${logFile.absolutePath}")
 
                 runCatching { Runtime.getRuntime().exec("logcat -c").waitFor() }
                 val process = Runtime.getRuntime().exec("logcat -v threadtime")
@@ -75,29 +78,60 @@ object BlackBoxLogger {
                 process.inputStream.bufferedReader().use { reader ->
                     logFile.printWriter().use { writer ->
                         writer.println("=========================================")
-                        writer.println("✈️ BLACK BOX FLIGHT RECORDER STARTED ✈️")
+                        writer.println("✈️ BLACK BOX FLIGHT RECORDER")
                         writer.println("🕒 TIME            : ${timeFormat.format(Date())}")
                         writer.println("📱 DEVICE          : ${Build.MANUFACTURER} ${Build.MODEL} (API ${Build.VERSION.SDK_INT})")
                         writer.println("🏗️ ABI             : ${getAbiSummary()}")
                         writer.println("🎮 RENDERER        : ${safeEnv("RALCORE_RENDERER", "native")}")
-                        writer.println("🧪 EGL             : ${safeEnv("RALCORE_EGL", "system")}")
-                        writer.println("🧩 GLES            : ${safeEnv("LIBGL_GLES", "system")}")
                         writer.println("📚 FNA3D LIB       : ${safeEnv("FNA3D_OPENGL_LIBRARY", "default")}")
                         writer.println("=========================================")
 
                         while (isRecording) {
                             val line = reader.readLine() ?: break
-                            writer.println(line)
-                            writer.flush()
+                            if (shouldRecordLine(line)) {
+                                writer.println(line)
+                                writer.flush()
+                            }
                         }
                     }
                 }
             } catch (t: Throwable) {
-                Log.e(TAG, "❌ Black Box Recorder malfunction", t)
+                Log.e(TAG, "Black Box Recorder malfunction", t)
             } finally {
                 isRecording = false
             }
         }.start()
+    }
+
+    private fun shouldRecordLine(line: String): Boolean {
+        val lower = line.lowercase(Locale.ROOT)
+        return lower.contains("fatal") ||
+            lower.contains("f libc") ||
+            lower.contains("abort") ||
+            lower.contains("sigsegv") ||
+            lower.contains("sigabrt") ||
+            lower.contains("crash") ||
+            lower.contains("exception") ||
+            lower.contains("androidruntime") ||
+            lower.contains("unsatisfiedlinkerror") ||
+            lower.contains("dlopen") ||
+            lower.contains("oom") ||
+            lower.contains("out of memory") ||
+            lower.contains("lowmemory") ||
+            lower.contains("kmemleak") ||
+            lower.contains("kill") ||
+            lower.contains("activitymanager: process") ||
+            lower.contains("died") ||
+            lower.contains("egl") ||
+            lower.contains("gles") ||
+            lower.contains("opengl") ||
+            lower.contains("mali") ||
+            lower.contains("sdl") ||
+            lower.contains("fna") ||
+            lower.contains("mono") ||
+            lower.contains("dotnet") ||
+            lower.contains("tmodloader") ||
+            lower.contains("terraria")
     }
 
     private fun writeThrowableReport(
@@ -109,80 +143,45 @@ object BlackBoxLogger {
     ) {
         val appVersion = try {
             context.packageManager.getPackageInfo(context.packageName, 0).versionName
-        } catch (_: Throwable) {
-            "Unknown"
-        }
+        } catch (_: Throwable) { "Unknown" }
 
         val activityManager = try {
             context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
-        } catch (_: Throwable) {
-            null
-        }
+        } catch (_: Throwable) { null }
 
         val memoryInfo = try {
-            ActivityManager.MemoryInfo().also { info ->
-                activityManager?.getMemoryInfo(info)
-            }
-        } catch (_: Throwable) {
-            null
-        }
+            ActivityManager.MemoryInfo().also { info -> activityManager?.getMemoryInfo(info) }
+        } catch (_: Throwable) { null }
 
-        val memoryClass = try {
-            activityManager?.memoryClass?.toString() ?: "Unknown"
-        } catch (_: Throwable) {
-            "Unknown"
-        }
-
-        val largeMemoryClass = try {
-            activityManager?.largeMemoryClass?.toString() ?: "Unknown"
-        } catch (_: Throwable) {
-            "Unknown"
-        }
-
-        val processName = try {
-            if (Build.VERSION.SDK_INT >= 28) Application.getProcessName() else context.packageName
-        } catch (_: Throwable) {
-            context.packageName
-        }
+        val memoryClass = try { activityManager?.memoryClass?.toString() ?: "Unknown" } catch (_: Throwable) { "Unknown" }
+        val processName = try { if (Build.VERSION.SDK_INT >= 28) Application.getProcessName() else context.packageName } catch (_: Throwable) { context.packageName }
 
         val rootCauseElement = throwable.stackTrace.firstOrNull()
         val errorFile = rootCauseElement?.fileName ?: "Unknown File"
         val errorLine = rootCauseElement?.lineNumber?.toString() ?: "Unknown Line"
         val errorMethod = "${rootCauseElement?.className}.${rootCauseElement?.methodName}"
-        val reportFile = File(crashDir, "🚨${prefix}_${System.currentTimeMillis()}.txt")
+        
+        val reportFile = File(crashDir, "${prefix}_VIP_REPORT.txt")
         val internalFatal = File(context.filesDir, "FATAL_CRASH.txt")
         val timeFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
 
-        runCatching { internalFatal.delete() }
-
-        val renderer = safeEnv("RALCORE_RENDERER", "native")
-        val egl = safeEnv("RALCORE_EGL", "system")
-        val gles = safeEnv("LIBGL_GLES", "system")
-        val fnaLib = safeEnv("FNA3D_OPENGL_LIBRARY", "default")
-        val nativeDir = safeEnv("RALCORE_NATIVEDIR", context.applicationInfo.nativeLibraryDir)
-        val runtimeDir = safeEnv("RALCORE_RUNTIMEDIR", "none")
-        val abi = getAbiSummary()
-
         val vipReport = buildString {
             appendLine("=========================================")
-            appendLine("🚨 RALAUNCHER VIP CRASH REPORT 🚨")
+            appendLine("🚨 RALAUNCHER VIP CRASH REPORT")
             appendLine("=========================================")
             appendLine("🕒 CRASH TIME      : ${timeFormat.format(Date())}")
             appendLine("📱 DEVICE          : ${Build.MANUFACTURER} ${Build.MODEL} (API ${Build.VERSION.SDK_INT})")
             appendLine("📦 APP VERSION     : $appVersion")
             appendLine("🧵 THREAD          : ${thread?.name ?: "Unknown"}")
             appendLine("🧬 PROCESS         : $processName")
-            appendLine("🏗️ ABI             : $abi")
+            appendLine("🏗️ ABI             : ${getAbiSummary()}")
             appendLine("-----------------------------------------")
-            appendLine("🎮 RENDERER        : $renderer")
-            appendLine("🧪 EGL             : $egl")
-            appendLine("🧩 GLES            : $gles")
-            appendLine("📚 FNA3D LIB       : $fnaLib")
-            appendLine("📁 NATIVE DIR      : $nativeDir")
-            appendLine("🗂️ RUNTIME DIR     : $runtimeDir")
+            appendLine("🎮 RENDERER        : ${safeEnv("RALCORE_RENDERER", "native")}")
+            appendLine("🧪 EGL             : ${safeEnv("RALCORE_EGL", "system")}")
+            appendLine("🧩 GLES            : ${safeEnv("LIBGL_GLES", "system")}")
+            appendLine("📚 FNA3D LIB       : ${safeEnv("FNA3D_OPENGL_LIBRARY", "default")}")
             appendLine("-----------------------------------------")
             appendLine("🧠 MEMORY CLASS    : ${memoryClass}MB")
-            appendLine("🚀 LARGE MEM CLASS : ${largeMemoryClass}MB")
             appendLine("💾 AVAIL MEM       : ${memoryInfo?.availMem?.div(1024 * 1024) ?: -1}MB")
             appendLine("⚠️ LOW MEMORY      : ${memoryInfo?.lowMemory ?: "Unknown"}")
             appendLine("-----------------------------------------")
@@ -204,27 +203,18 @@ object BlackBoxLogger {
                 cause.stackTrace.forEach { appendLine("  at $it") }
                 cause = cause.cause
             }
-
             appendLine("=========================================")
         }
 
         reportFile.writeText(vipReport)
-        internalFatal.writeText(vipReport)
+        runCatching { internalFatal.writeText(vipReport) }
     }
 
     private fun safeEnv(key: String, fallback: String): String {
-        return try {
-            Os.getenv(key) ?: fallback
-        } catch (_: Throwable) {
-            fallback
-        }
+        return try { Os.getenv(key) ?: fallback } catch (_: Throwable) { fallback }
     }
 
     private fun getAbiSummary(): String {
-        return try {
-            Build.SUPPORTED_ABIS.joinToString(", ")
-        } catch (_: Throwable) {
-            "Unknown"
-        }
+        return try { Build.SUPPORTED_ABIS.joinToString(", ") } catch (_: Throwable) { "Unknown" }
     }
 }
