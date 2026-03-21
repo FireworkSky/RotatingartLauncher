@@ -4,6 +4,7 @@ import android.app.ActivityManager
 import android.app.Application
 import android.content.Context
 import android.os.Build
+import android.os.Process
 import android.system.Os
 import android.util.Log
 import java.io.File
@@ -16,6 +17,7 @@ object BlackBoxLogger {
     private const val TAG = "BlackBoxLogger"
     private var isRecording = false
     private var isJavaArmed = false
+    private var logcatProcess: java.lang.Process? = null
 
     fun startRecording(context: Context) {
         val crashDir = File(context.getExternalFilesDir(null), "crashreport")
@@ -29,6 +31,9 @@ object BlackBoxLogger {
 
     fun stopRecording() {
         isRecording = false
+        try {
+            logcatProcess?.destroy()
+        } catch (t: Throwable) {}
     }
 
     private fun clearOldReports(context: Context, crashDir: File) {
@@ -51,6 +56,7 @@ object BlackBoxLogger {
         Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
             try {
                 writeThrowableReport(context, crashDir, thread, throwable, "APP_CRASH")
+                Thread.sleep(500)
             } catch (_: Throwable) {
             } finally {
                 defaultHandler?.uncaughtException(thread, throwable)
@@ -66,14 +72,16 @@ object BlackBoxLogger {
                 isRecording = true
                 val logFile = File(crashDir, "GAME_FULL_LOG.txt")
                 val timeFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+                val myPid = Process.myPid().toString()
 
                 runCatching { Runtime.getRuntime().exec("logcat -c").waitFor() }
-                val process = Runtime.getRuntime().exec("logcat -b all -v threadtime")
+                
+                logcatProcess = Runtime.getRuntime().exec("logcat -b all -v threadtime --pid=$myPid")
 
-                process.inputStream.bufferedReader().use { reader ->
+                logcatProcess?.inputStream?.bufferedReader()?.use { reader ->
                     logFile.printWriter().use { writer ->
                         writer.println("=========================================")
-                        writer.println("✈️ BLACK BOX FULL RECORDER")
+                        writer.println("✈️ BLACK BOX FULL RECORDER (PID: $myPid)")
                         writer.println("🕒 TIME            : ${timeFormat.format(Date())}")
                         writer.println("📱 DEVICE          : ${Build.MANUFACTURER} ${Build.MODEL} (API ${Build.VERSION.SDK_INT})")
                         writer.println("=========================================")
@@ -81,7 +89,10 @@ object BlackBoxLogger {
                         while (isRecording) {
                             val line = reader.readLine() ?: break
                             writer.println(line)
-                            writer.flush()
+                            
+                            if (line.contains("Fatal") || line.contains("SIG") || line.contains("Exception") || line.contains("died")) {
+                                writer.flush()
+                            }
                         }
                     }
                 }
