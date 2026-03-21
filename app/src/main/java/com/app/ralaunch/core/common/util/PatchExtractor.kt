@@ -4,11 +4,12 @@ import android.content.Context
 import com.app.ralaunch.core.platform.runtime.AssemblyPatcher
 import com.app.ralaunch.shared.core.contract.repository.GameRepositoryV2
 import org.koin.java.KoinJavaComponent
-import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream
 import java.io.BufferedInputStream
 import java.io.BufferedOutputStream
 import java.io.File
 import java.io.FileOutputStream
+// ... standard Java Zip import ...
+import java.util.zip.ZipInputStream
 
 /**
  * 补丁提取工具
@@ -46,31 +47,44 @@ object PatchExtractor {
         if (monoModDir.exists()) FileUtils.deleteDirectoryRecursively(monoModDir)
         monoModDir.mkdirs()
 
+        // ... use standard Android ZipInputStream ...
         context.assets.open("MonoMod.zip").use { inputStream ->
             BufferedInputStream(inputStream, 16384).use { bis ->
-                ZipArchiveInputStream(bis, "UTF-8", true, true).use { zis ->
-                    generateSequence { zis.nextZipEntry }.forEach { entry ->
+                ZipInputStream(bis).use { zis ->
+                    // ... use while(true) and break on null to avoid Kotlin mutable smart-cast compilation errors ...
+                    while (true) {
+                        // ... val ensures it is immutable and safe for smart-casting ...
+                        val entry = zis.nextEntry ?: break
+                        
                         var entryName = entry.name
+                        
+                        // ... strip the root folder name from the zip entry ...
                         if (entryName.startsWith("MonoMod/") || entryName.startsWith("MonoMod\\")) {
                             entryName = entryName.substring(8)
                         }
-                        if (entryName.isEmpty()) return@forEach
-
-                        val targetFile = File(monoModDir, entryName)
-                        val canonicalDestPath = monoModDir.canonicalPath
-                        val canonicalEntryPath = targetFile.canonicalPath
-                        if (!canonicalEntryPath.startsWith("$canonicalDestPath${File.separator}")) return@forEach
-
-                        if (entry.isDirectory) {
-                            targetFile.mkdirs()
-                        } else {
-                            targetFile.parentFile?.mkdirs()
-                            FileOutputStream(targetFile).use { fos ->
-                                BufferedOutputStream(fos).use { bos ->
-                                    zis.copyTo(bos, 8192)
+                        
+                        if (entryName.isNotEmpty()) {
+                            val targetFile = File(monoModDir, entryName)
+                            val canonicalDestPath = monoModDir.canonicalPath
+                            val canonicalEntryPath = targetFile.canonicalPath
+                            
+                            // ... security check to prevent Zip Path Traversal vulnerability ...
+                            if (canonicalEntryPath.startsWith("$canonicalDestPath${File.separator}")) {
+                                if (entry.isDirectory) {
+                                    targetFile.mkdirs()
+                                } else {
+                                    targetFile.parentFile?.mkdirs()
+                                    FileOutputStream(targetFile).use { fos ->
+                                        BufferedOutputStream(fos).use { bos ->
+                                            // ... standard stream copy ...
+                                            zis.copyTo(bos, 8192)
+                                        }
+                                    }
                                 }
                             }
                         }
+                        // ... safely close current entry ...
+                        zis.closeEntry()
                     }
                 }
             }

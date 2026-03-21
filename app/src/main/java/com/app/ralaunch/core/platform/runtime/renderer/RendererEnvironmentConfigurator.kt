@@ -37,6 +37,7 @@ object RendererEnvironmentConfigurator {
         val overrideCompatible = normalizedOverride?.let { renderer ->
             context == null || RendererRegistry.isRendererCompatible(renderer)
         } ?: true
+
         val renderer = resolveRendererForLaunch(
             globalEffectiveRenderer = globalRenderer,
             rendererOverride = rendererOverride,
@@ -47,15 +48,9 @@ object RendererEnvironmentConfigurator {
             val rawOverride = rendererOverride.trim()
             when {
                 rawOverride.isEmpty() || !RendererRegistry.isKnownRendererId(rawOverride) ->
-                    Log.w(
-                        TAG,
-                        "Renderer override is invalid: $rendererOverride, fallback to global: $globalRenderer"
-                    )
+                    Log.w(TAG, "Renderer override is invalid: $rendererOverride, fallback to global: $globalRenderer")
                 !overrideCompatible ->
-                    Log.w(
-                        TAG,
-                        "Renderer override is incompatible on this device: $rawOverride, fallback to global: $globalRenderer"
-                    )
+                    Log.w(TAG, "Renderer override is incompatible on this device: $rawOverride, fallback to global: $globalRenderer")
                 else ->
                     Log.i(TAG, "Using per-game renderer override: ${RendererRegistry.normalizeRendererId(rawOverride)}")
             }
@@ -65,6 +60,7 @@ object RendererEnvironmentConfigurator {
         applyFna3dEnvironment(renderer)
 
         Log.i(TAG, "Renderer environment applied successfully for: $renderer")
+        Log.i(TAG, "Effective renderer after apply: ${RendererLoader.getCurrentRenderer()}")
     }
 
     private fun loadRendererLibraries(context: Context?, renderer: String) {
@@ -87,14 +83,19 @@ object RendererEnvironmentConfigurator {
     private fun buildFna3dEnvVars(renderer: String): Map<String, String?> {
         val envVars = mutableMapOf<String, String?>()
 
-        envVars["FNA3D_OPENGL_DRIVER"] = renderer
         envVars["FNA3D_FORCE_DRIVER"] = "OpenGL"
+        envVars["FNA3D_OPENGL_DRIVER"] = mapRendererToFnaDriver(renderer)
         envVars.putAll(getOpenGlVersionConfig(renderer))
-//        envVars["FNA3D_OPENGL_USE_MAP_BUFFER_RANGE"] = getMapBufferRangeValue(renderer)
         envVars.putAll(getQualityConfig())
-//        envVars["SDL_RENDER_VSYNC"] = "1"
 
         return envVars
+    }
+
+    private fun mapRendererToFnaDriver(renderer: String): String {
+        return when (renderer) {
+            RendererRegistry.ID_MOBILEGLUES -> "mobileglues"
+            else -> "OpenGL"
+        }
     }
 
     private fun getQualityConfig(): Map<String, String?> {
@@ -190,21 +191,26 @@ object RendererEnvironmentConfigurator {
                 Log.i(TAG, "OpenGL Profile: Desktop OpenGL 2.1 Compatibility Profile")
             RendererRegistry.ID_ZINK ->
                 Log.i(TAG, "OpenGL Profile: Desktop OpenGL 4.3 (Mesa Zink over Vulkan)")
-            else ->
+            RendererRegistry.ID_ANGLE,
+            RendererRegistry.ID_GL4ES_ANGLE,
+            RendererRegistry.ID_NATIVE,
+            RendererRegistry.ID_MOBILEGLUES ->
                 Log.i(TAG, "OpenGL Profile: OpenGL ES 3.0")
+            else ->
+                Log.i(TAG, "OpenGL Profile: OpenGL ES")
         }
 
         val mapBufferRange = envVars["FNA3D_OPENGL_USE_MAP_BUFFER_RANGE"]
         when {
             mapBufferRange == "0" && renderer in setOf(RendererRegistry.ID_ANGLE, RendererRegistry.ID_GL4ES_ANGLE) ->
-                Log.i(TAG, "Map Buffer Range: Disabled (Vulkan-translated renderer)")
+                Log.i(TAG, "Map Buffer Range: Disabled (translated renderer)")
             mapBufferRange == "0" ->
                 Log.i(TAG, "Map Buffer Range: Disabled (via settings)")
             else ->
                 Log.i(TAG, "Map Buffer Range: Enabled by default")
         }
 
-        Log.i(TAG, "VSync: Forced ON")
+        Log.i(TAG, "VSync: Controlled by runtime/settings")
         Log.i(TAG, "===========================")
     }
 }

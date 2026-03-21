@@ -4,9 +4,10 @@ import android.content.Context
 import com.app.ralaunch.R
 import com.app.ralaunch.RaLaunchApp
 import com.app.ralaunch.core.common.util.AppLogger
+import com.app.ralaunch.core.common.util.ArchiveExtractor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
+// ... Removed Apache TarArchiveInputStream to prevent crash ...
 import org.tukaani.xz.XZInputStream
 import java.io.BufferedInputStream
 import java.io.File
@@ -175,12 +176,15 @@ object RuntimeLibraryLoader {
             context.assets.open(RUNTIME_LIBS_ARCHIVE).use { assetStream ->
                 val bufferedStream = BufferedInputStream(assetStream, 1024 * 1024)
                 val xzStream = XZInputStream(bufferedStream)
-                val tarStream = TarArchiveInputStream(xzStream)
                 
-                var entry = tarStream.nextEntry
+                // ... Use our custom MiniTarReader instead of Apache ...
+                val tarReader = ArchiveExtractor.MiniTarReader(xzStream)
+                
                 var extractedCount = 0
+                val buffer = ByteArray(8192) // ... buffer for custom copy ...
                 
-                while (entry != null) {
+                while (true) {
+                    val entry = tarReader.nextEntry() ?: break
                     val outputFile = File(runtimeDir, entry.name)
                     
                     if (entry.isDirectory) {
@@ -189,7 +193,12 @@ object RuntimeLibraryLoader {
                         outputFile.parentFile?.mkdirs()
                         
                         FileOutputStream(outputFile).use { fos ->
-                            tarStream.copyTo(fos)
+                            // ... Custom write loop ...
+                            while (true) {
+                                val read = tarReader.readData(buffer)
+                                if (read <= 0) break
+                                fos.write(buffer, 0, read)
+                            }
                         }
                         
                         // 设置库文件权限（可读 + 可执行）
@@ -211,8 +220,6 @@ object RuntimeLibraryLoader {
                         
                         AppLogger.debug(TAG, "Extracted: ${entry.name}")
                     }
-                    
-                    entry = tarStream.nextEntry
                 }
             }
             

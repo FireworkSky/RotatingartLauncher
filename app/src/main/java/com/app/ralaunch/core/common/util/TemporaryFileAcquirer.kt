@@ -4,41 +4,36 @@ import android.content.Context
 import android.util.Log
 import org.koin.java.KoinJavaComponent
 import java.io.Closeable
-import java.nio.file.Path
+import java.io.File
 
-/**
- * 临时文件管理器
- */
 class TemporaryFileAcquirer : Closeable {
 
-    private val preferredTempDir: Path
-    private val tmpFilePaths = mutableListOf<Path>()
+    private val preferredTempDir: File
+    private val tmpFiles = mutableListOf<File>()
 
     constructor() {
         val context: Context = KoinJavaComponent.get(Context::class.java)
         preferredTempDir = requireNotNull(context.externalCacheDir)
-            .toPath()
-            .toAbsolutePath()
     }
 
-    constructor(preferredTempDir: Path) {
+    constructor(preferredTempDir: File) {
         this.preferredTempDir = preferredTempDir
     }
 
-    fun acquireTempFilePath(preferredSuffix: String): Path {
-        val tempFilePath = preferredTempDir.resolve("${System.currentTimeMillis()}_$preferredSuffix")
-        tmpFilePaths.add(tempFilePath)
-        return tempFilePath
+    fun acquireTempFilePath(preferredSuffix: String): File {
+        val tempFile = File(preferredTempDir, "${System.currentTimeMillis()}_$preferredSuffix")
+        tmpFiles.add(tempFile)
+        return tempFile
     }
 
     fun cleanupTempFiles() {
-        tmpFilePaths.forEach { tmpFilePath ->
-            val isSuccessful = FileUtils.deleteDirectoryRecursively(tmpFilePath)
+        tmpFiles.forEach { tmpFile ->
+            val isSuccessful = FileUtils.deleteDirectoryRecursively(tmpFile)
             if (!isSuccessful) {
-                Log.w(TAG, "Failed to delete temporary file or directory: $tmpFilePath")
+                Log.w(TAG, "Failed to delete temporary file or directory: $tmpFile")
             }
         }
-        tmpFilePaths.clear()
+        tmpFiles.clear()
     }
 
     override fun close() {
