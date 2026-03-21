@@ -33,6 +33,8 @@ import com.app.ralaunch.core.common.ErrorHandler
 import com.app.ralaunch.shared.core.platform.AppConstants
 import org.libsdl.app.SDLActivity
 import com.app.ralaunch.core.platform.runtime.DeviceOptimizationEngine
+import com.app.ralaunch.core.platform.runtime.BlackBoxLogger
+import com.app.ralaunch.core.platform.runtime.GameBoost
 
 class GameActivity : SDLActivity(), GameContract.View {
 
@@ -141,12 +143,14 @@ class GameActivity : SDLActivity(), GameContract.View {
         instance = this
         presenter.attach(this)
 
-        val gameExePath = intent.getStringExtra(EXTRA_GAME_EXE_PATH)
-        val gameDir = gameExePath?.let { java.io.File(it).parent }
+        BlackBoxLogger.startRecording(this)
 
-        val selectedRenderer = "angle" 
+        val prefs = getSharedPreferences("RAL_Settings", Context.MODE_PRIVATE)
+        val selectedRenderer = prefs.getString("CHOOSEN_RENDERER", "native") ?: "native"
 
         DeviceOptimizationEngine.prepareGameEnvironment(this, selectedRenderer)
+
+        GameBoost.ignite(this)
 
         initializeLogger()
         initializeErrorHandler()
@@ -259,21 +263,22 @@ class GameActivity : SDLActivity(), GameContract.View {
     override fun onBackPressed() {}
 
     override fun onDestroy() {
-        Log.d(TAG, "GameActivity.onDestroy() called")
-        
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
-            uiHandler.removeCallbacks(hideUiRunnable)
-        }
+    BlackBoxLogger.stopRecording()
 
-        virtualControlsManager.stop()
-        presenter.detach()
-        super.onDestroy()
-        Handler(Looper.getMainLooper()).postDelayed({
-            Process.killProcess(Process.myPid())
-            System.exit(0)
-        }, 100)
+    try {
+        android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_DEFAULT)
+    } catch (t: Throwable) {}
+    
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+        uiHandler.removeCallbacks(hideUiRunnable)
     }
 
+    virtualControlsManager.stop()
+    presenter.detach()
+    
+    super.onDestroy()
+    }
+    
     override fun setOrientationBis(w: Int, h: Int, resizable: Boolean, hint: String?) {
         super.setOrientationBis(w, h, resizable, "LandscapeLeft LandscapeRight")
     }
