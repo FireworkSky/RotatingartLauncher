@@ -30,6 +30,7 @@
         android:icon="@mipmap/ic_launcher_foreground"
         android:roundIcon="@mipmap/ic_launcher"
         android:label="@string/app_name"
+        android:largeHeap="true"
         android:requestLegacyExternalStorage="true"
         android:supportsRtl="true"
         android:theme="@style/Theme.raLaunch"
