@@ -1794,6 +1794,7 @@
     <string name="settings_controls_multitouch_subtitle">Allow multiple simultaneous touch points</string>
     <string name="settings_controls_mouse_right_stick_title">Mouse Right Stick</string>
     <string name="settings_controls_mouse_right_stick_subtitle">Map mouse movement to right stick</string>
+    <string name="settings_controls_controller_section">Controller</string>
     <string name="settings_controls_vibration_section">Vibration</string>
     <string name="settings_controls_vibration_strength_title">Vibration Strength</string>
     <string name="settings_game_performance_section">Performance</string>
@@ -2052,7 +2053,9 @@
     <string name="settings_developer_view_logs_title">View Logs</string>
     <string name="settings_developer_view_logs_subtitle">View recent runtime logs</string>
     <string name="settings_developer_export_logs_title">Export Logs</string>
-    <string name="settings_developer_export_logs_subtitle">Share log files for debugging</string>
+    <string name="settings_developer_export_logs_subtitle">Export log files to a local file</string>
+    <string name="settings_developer_share_logs_title">Share Logs</string>
+    <string name="settings_developer_share_logs_subtitle">Share log files for debugging</string>
     <string name="settings_developer_performance_section">Performance</string>
     <string name="settings_developer_kill_launcher_ui_title">Close Launcher UI After Launch</string>
     <string name="settings_developer_kill_launcher_ui_subtitle">Free more memory for the game</string>

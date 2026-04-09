@@ -47,6 +47,7 @@ fun DeveloperSettingsContent(
     onVerboseLoggingChange: (Boolean) -> Unit,
     onViewLogsClick: () -> Unit,
     onExportLogsClick: () -> Unit,
+    onShareLogsClick: () -> Unit,
     onClearCacheClick: () -> Unit,
     // 性能回调
     onBigCoreAffinityChange: (Boolean) -> Unit,
@@ -78,7 +79,8 @@ fun DeveloperSettingsContent(
             onLoggingChange = onLoggingChange,
             onVerboseLoggingChange = onVerboseLoggingChange,
             onViewLogsClick = onViewLogsClick,
-            onExportLogsClick = onExportLogsClick
+            onExportLogsClick = onExportLogsClick,
+            onShareLogsClick = onShareLogsClick
         )
 
         // 性能设置
@@ -126,7 +128,8 @@ private fun LoggingSection(
     onLoggingChange: (Boolean) -> Unit,
     onVerboseLoggingChange: (Boolean) -> Unit,
     onViewLogsClick: () -> Unit,
-    onExportLogsClick: () -> Unit
+    onExportLogsClick: () -> Unit,
+    onShareLogsClick: () -> Unit
 ) {
     SettingsSection(title = stringResource(Res.string.settings_developer_logging_section)) {
         SwitchSettingItem(
@@ -161,8 +164,17 @@ private fun LoggingSection(
         ClickableSettingItem(
             title = stringResource(Res.string.settings_developer_export_logs_title),
             subtitle = stringResource(Res.string.settings_developer_export_logs_subtitle),
-            icon = Icons.Default.Share,
+            icon = Icons.Default.Download,
             onClick = onExportLogsClick
+        )
+
+        SettingsDivider()
+
+        ClickableSettingItem(
+            title = stringResource(Res.string.settings_developer_share_logs_title),
+            subtitle = stringResource(Res.string.settings_developer_share_logs_subtitle),
+            icon = Icons.Default.Share,
+            onClick = onShareLogsClick
         )
     }
 }

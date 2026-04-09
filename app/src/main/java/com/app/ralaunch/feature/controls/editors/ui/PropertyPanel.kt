@@ -436,7 +436,9 @@ private fun formatPercentWithSingleDecimal(value: Float): String {
 fun MouseModeSettings() {
     val settingsManager = remember { SettingsAccess }
     
-    var mouseSpeed by remember { mutableStateOf(settingsManager.mouseRightStickSpeed) }
+    var mouseSpeed by remember {
+        mutableStateOf(settingsManager.mouseRightStickSpeed.coerceIn(60, 500))
+    }
     var rangeLeft by remember { mutableStateOf(settingsManager.mouseRightStickRangeLeft) }
     var rangeTop by remember { mutableStateOf(settingsManager.mouseRightStickRangeTop) }
     var rangeRight by remember { mutableStateOf(settingsManager.mouseRightStickRangeRight) }
@@ -449,12 +451,12 @@ fun MouseModeSettings() {
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(stringResource(R.string.editor_mouse_speed), style = MaterialTheme.typography.labelMedium)
-                Text("$mouseSpeed", style = MaterialTheme.typography.labelSmall)
+                Text("$mouseSpeed%", style = MaterialTheme.typography.labelSmall)
             }
             Slider(
-                value = (mouseSpeed - 60f) / 140f,
+                value = (mouseSpeed - 60f) / 440f,
                 onValueChange = { 
-                    mouseSpeed = (60 + (it * 140)).toInt()
+                    mouseSpeed = (60 + (it * 440)).toInt()
                     settingsManager.mouseRightStickSpeed = mouseSpeed
                 },
                 valueRange = 0f..1f

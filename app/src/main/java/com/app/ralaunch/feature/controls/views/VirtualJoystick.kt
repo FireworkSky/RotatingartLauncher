@@ -21,8 +21,10 @@ import com.app.ralaunch.feature.controls.textures.TextureRenderer
 import com.app.ralaunch.core.common.SettingsAccess
 import java.io.File
 import kotlin.math.atan2
+import kotlin.math.cos
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.math.sin
 import kotlin.math.sqrt
 
 /**
@@ -94,7 +96,7 @@ class VirtualJoystick(
 
         // 死区（防止漂移）- 改为较小值以提高触摸灵敏度
         private const val DEADZONE_PERCENT = 0.05f
-        private const val DEADZONE_KEYBOARD_PERCENT = 0.3f
+        private const val DEADZONE_KEYBOARD_PERCENT = 0.4f
 
         // 8方向角度映射表（从角度计算结果映射到实际方向）
         // 角度计算：0度=正右, 90度=正上, 180度=正左, 270度=正下
@@ -638,13 +640,12 @@ class VirtualJoystick(
         } else if (castedData.mode == ControlData.Joystick.Mode.GAMEPAD) {
             // SDL控制器模式：发送模拟摇杆输入
             sendSDLStick(dx, dy, distance, maxDistance)
-        } else {
-            // 键盘模式：计算方向并发送按键事件
+        } else if (castedData.mode == ControlData.Joystick.Mode.KEYBOARD) {
+            // 键盘模式：沿用原有输入路径，只将视觉位置改为离散方向
             val newDirection = calculateDirection(dx, dy, distance)
+            updateKeyboardStickPosition(newDirection)
             if (newDirection != mCurrentDirection) {
-                // 释放旧方向的按键
                 releaseDirection(mCurrentDirection)
-                // 按下新方向的按键
                 pressDirection(newDirection)
                 mCurrentDirection = newDirection
             }
@@ -707,6 +708,31 @@ class VirtualJoystick(
     private fun resetStick() {
         mStickX = mCenterX
         mStickY = mCenterY
+    }
+
+    private fun updateKeyboardStickPosition(direction: Int) {
+        if (direction == DIR_NONE) {
+            resetStick()
+            return
+        }
+
+        val angle = Math.toRadians(getAngleForDirection(direction).toDouble())
+        val snapDistance = mRadius * STICK_BACKGROUND_SIZE
+        val screenDx = cos(angle).toFloat() * snapDistance
+        val screenDy = -sin(angle).toFloat() * snapDistance
+
+        var localDx = screenDx
+        var localDy = screenDy
+        if (castedData.rotation != 0f) {
+            val rotation = Math.toRadians(-castedData.rotation.toDouble())
+            val cosRotation = cos(rotation).toFloat()
+            val sinRotation = sin(rotation).toFloat()
+            localDx = screenDx * cosRotation - screenDy * sinRotation
+            localDy = screenDx * sinRotation + screenDy * cosRotation
+        }
+
+        mStickX = mCenterX + localDx
+        mStickY = mCenterY + localDy
     }
 
     /**

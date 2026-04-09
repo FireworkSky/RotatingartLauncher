@@ -1624,6 +1624,7 @@
     <string name="settings_controls_multitouch_subtitle">允许同时多个触控点</string>
     <string name="settings_controls_mouse_right_stick_title">鼠标右摇杆</string>
     <string name="settings_controls_mouse_right_stick_subtitle">鼠标移动映射到右摇杆</string>
+    <string name="settings_controls_controller_section">控制器</string>
     <string name="settings_controls_vibration_section">震动</string>
     <string name="settings_controls_vibration_strength_title">震动强度</string>
     <string name="settings_game_performance_section">性能</string>
@@ -1733,7 +1734,9 @@
     <string name="settings_developer_view_logs_title">查看日志</string>
     <string name="settings_developer_view_logs_subtitle">查看最近的运行日志</string>
     <string name="settings_developer_export_logs_title">导出日志</string>
-    <string name="settings_developer_export_logs_subtitle">分享日志文件以便调试</string>
+    <string name="settings_developer_export_logs_subtitle">将日志文件导出到本地文件</string>
+    <string name="settings_developer_share_logs_title">分享日志</string>
+    <string name="settings_developer_share_logs_subtitle">分享日志文件以便调试</string>
     <string name="settings_developer_performance_section">性能</string>
     <string name="settings_developer_kill_launcher_ui_title">启动后关闭启动器UI</string>
     <string name="settings_developer_kill_launcher_ui_subtitle">释放更多内存给游戏</string>

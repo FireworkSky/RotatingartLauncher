@@ -145,7 +145,9 @@ class ControlEditorViewModel : ViewModel() {
      */
     private fun updateLayoutWithControls(newControls: MutableList<ControlData>) {
         val layout = _layoutState.value ?: return
-        _layoutState.value = layout.copy(controls = newControls)
+        _layoutState.value = layout.copy(controls = newControls).also { updatedLayout ->
+            updatedLayout.id = layout.id
+        }
         checkUnsavedChanges()
     }
 

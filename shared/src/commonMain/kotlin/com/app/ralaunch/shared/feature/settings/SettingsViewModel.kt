@@ -36,6 +36,7 @@ data class SettingsUiState(
     val mouseRightStickEnabled: Boolean = false,
     val vibrationEnabled: Boolean = true,
     val vibrationStrength: Float = 0.5f,
+    val virtualControllerAsFirst: Boolean = false,
 
     // 游戏设置
     val bigCoreAffinityEnabled: Boolean = false,
@@ -84,6 +85,7 @@ sealed class SettingsEvent {
     data class SetMouseRightStick(val enabled: Boolean) : SettingsEvent()
     data class SetVibrationEnabled(val enabled: Boolean) : SettingsEvent()
     data class SetVibrationStrength(val strength: Float) : SettingsEvent()
+    data class SetVirtualControllerAsFirst(val enabled: Boolean) : SettingsEvent()
 
     // 游戏
     data class SetBigCoreAffinity(val enabled: Boolean) : SettingsEvent()
@@ -115,6 +117,7 @@ sealed class SettingsEvent {
     data object ViewLogs : SettingsEvent()
     data object ClearCache : SettingsEvent()
     data object ExportLogs : SettingsEvent()
+    data object ShareLogs : SettingsEvent()
     data object OpenLicense : SettingsEvent()
     data object CheckUpdate : SettingsEvent()
     data object SelectBackgroundImage : SettingsEvent()
@@ -140,6 +143,7 @@ sealed class SettingsEffect {
     data object OpenLicensePage : SettingsEffect()
     data object OpenSponsorsPage : SettingsEffect()
     data object ExportLogsToFile : SettingsEffect()
+    data object ShareLogs : SettingsEffect()
     data object ViewLogsPage : SettingsEffect()
     data object ClearCacheComplete : SettingsEffect()
     data object ForceReinstallPatchesComplete : SettingsEffect()
@@ -192,6 +196,7 @@ class SettingsViewModel(
             is SettingsEvent.SetMouseRightStick -> setMouseRightStick(event.enabled)
             is SettingsEvent.SetVibrationEnabled -> setVibrationEnabled(event.enabled)
             is SettingsEvent.SetVibrationStrength -> setVibrationStrength(event.strength)
+            is SettingsEvent.SetVirtualControllerAsFirst -> setVirtualControllerAsFirst(event.enabled)
 
             // 游戏
             is SettingsEvent.SetBigCoreAffinity -> setBigCoreAffinity(event.enabled)
@@ -221,6 +226,7 @@ class SettingsViewModel(
             is SettingsEvent.ViewLogs -> sendEffect(SettingsEffect.ViewLogsPage)
             is SettingsEvent.ClearCache -> clearCache()
             is SettingsEvent.ExportLogs -> sendEffect(SettingsEffect.ExportLogsToFile)
+            is SettingsEvent.ShareLogs -> sendEffect(SettingsEffect.ShareLogs)
             is SettingsEvent.ForceReinstallPatches -> forceReinstallPatches()
 
             // 关于
@@ -252,6 +258,7 @@ class SettingsViewModel(
                     mouseRightStickEnabled = settings.mouseRightStickEnabled,
                     vibrationEnabled = settings.vibrationEnabled,
                     vibrationStrength = settings.virtualControllerVibrationIntensity,
+                    virtualControllerAsFirst = settings.virtualControllerAsFirst,
                     // 游戏
                     bigCoreAffinityEnabled = settings.setThreadAffinityToBigCore,
                     lowLatencyAudioEnabled = settings.sdlAaudioLowLatency,
@@ -377,6 +384,13 @@ class SettingsViewModel(
         viewModelScope.launch {
             settingsRepository.update { virtualControllerVibrationIntensity = strength }
             _uiState.update { it.copy(vibrationStrength = strength) }
+        }
+    }
+
+    private fun setVirtualControllerAsFirst(enabled: Boolean) {
+        viewModelScope.launch {
+            settingsRepository.update { virtualControllerAsFirst = enabled }
+            _uiState.update { it.copy(virtualControllerAsFirst = enabled) }
         }
     }
 

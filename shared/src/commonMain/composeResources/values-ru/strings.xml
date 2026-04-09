@@ -120,7 +120,7 @@
     <string name="settings_developer_concurrent_gc_subtitle">Включить параллельную сборку мусора</string>
     <string name="settings_developer_concurrent_gc_title">Параллельный GC</string>
     <string name="settings_developer_dotnet_section">.NET Runtime</string>
-    <string name="settings_developer_export_logs_subtitle">Поделиться файлами логов для отладки</string>
+    <string name="settings_developer_export_logs_subtitle">Экспортировать файлы логов в локальный файл</string>
     <string name="settings_developer_export_logs_title">Экспорт логов</string>
     <string name="settings_developer_fna_section">Оптимизация FNA</string>
     <string name="settings_developer_kill_launcher_ui_subtitle">Освободить больше памяти для игры</string>
@@ -140,6 +140,8 @@
     <string name="settings_developer_coreclr_compat_subtitle">Включает совместимые с Xiaomi хуки и более безопасные параметры запуска, если инициализация CoreCLR сбоит на затронутых устройствах Xiaomi</string>
     <string name="settings_developer_verbose_logging_subtitle">Выводить больше отладочной информации</string>
     <string name="settings_developer_verbose_logging_title">Подробное логирование</string>
+    <string name="settings_developer_share_logs_subtitle">Поделиться файлами логов для отладки</string>
+    <string name="settings_developer_share_logs_title">Поделиться логами</string>
     <string name="settings_developer_view_logs_subtitle">Просмотр последних логов работы</string>
     <string name="settings_developer_view_logs_title">Просмотр логов</string>
     <string name="settings_fps_30">30 FPS</string>

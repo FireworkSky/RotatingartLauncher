@@ -489,12 +489,14 @@ class ControlLayout : FrameLayout {
             return false
         }
 
-        this.currentLayout = layout
-
         if (layout == null) {
+            this.currentLayout = null
             AppLogger.warn(TAG, "Layout is null")
             return false
         }
+
+        this.currentLayout = layout
+        currentAssetsDir = resolvePackAssetsDir(layout)
 
         // 清除现有控件视图
         clearControls()
@@ -534,11 +536,26 @@ class ControlLayout : FrameLayout {
             AppLogger.warn(TAG, "No current layout selected in pack manager")
             return false
         }
-        
-        // 获取控件包的资源目录
+
         currentAssetsDir = packManager.getPackAssetsDir(packId)
         
         return loadLayout(layout)
+    }
+
+    private fun resolvePackAssetsDir(layout: PackControlLayout): File? {
+        val packId = layout.id
+        if (packId.isBlank()) {
+            return null
+        }
+
+        return try {
+            val packManager: ControlPackManager =
+                KoinJavaComponent.get(ControlPackManager::class.java)
+            packManager.getPackAssetsDir(packId)
+        } catch (e: Exception) {
+            AppLogger.warn(TAG, "Failed to resolve pack assets dir for '$packId': ${e.message}")
+            null
+        }
     }
     
     /**

@@ -27,7 +27,9 @@ internal fun ControlsSettingsContent(
     vibrationEnabled: Boolean,
     onVibrationChange: (Boolean) -> Unit,
     vibrationStrength: Float,
-    onVibrationStrengthChange: (Float) -> Unit
+    onVibrationStrengthChange: (Float) -> Unit,
+    virtualControllerAsFirst: Boolean,
+    onVirtualControllerAsFirstChange: (Boolean) -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -77,6 +79,16 @@ internal fun ControlsSettingsContent(
                     onValueChange = onVibrationStrengthChange
                 )
             }
+        }
+
+        SettingsSection(title = stringResource(R.string.settings_controls_controller_section)) {
+            SwitchSettingItem(
+                title = stringResource(R.string.virtual_controller_as_first),
+                subtitle = stringResource(R.string.virtual_controller_as_first_desc),
+                icon = Icons.Default.Gamepad,
+                checked = virtualControllerAsFirst,
+                onCheckedChange = onVirtualControllerAsFirstChange
+            )
         }
     }
 }

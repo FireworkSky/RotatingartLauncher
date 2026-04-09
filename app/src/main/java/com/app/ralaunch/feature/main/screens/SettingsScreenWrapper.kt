@@ -22,6 +22,7 @@ import com.app.ralaunch.shared.core.component.dialogs.*
 import com.app.ralaunch.shared.core.theme.AppThemeState
 import com.app.ralaunch.shared.feature.settings.*
 import com.app.ralaunch.core.ui.dialog.PatchManagementDialogCompose
+import com.app.ralaunch.core.common.SettingsAccess
 import com.app.ralaunch.core.common.util.AssetIntegrityChecker
 import com.app.ralaunch.R
 import com.app.ralaunch.core.platform.runtime.renderer.RendererRegistry
@@ -139,7 +140,12 @@ fun SettingsScreenWrapper(
                     showLogViewerDialog = true
                 }
                 is SettingsEffect.ExportLogsToFile -> {
-                    logExportLauncher.launch("ralaunch_logs_${System.currentTimeMillis()}.txt")
+                    logExportLauncher.launch(buildLogFileName())
+                }
+                is SettingsEffect.ShareLogs -> {
+                    scope.launch {
+                        shareLogs(context)
+                    }
                 }
                 is SettingsEffect.OpenLicensePage -> showLicenseDialog = true
                 is SettingsEffect.OpenSponsorsPage -> openSponsorsPage(context)
@@ -171,7 +177,12 @@ fun SettingsScreenWrapper(
                         videoPlaybackSpeed = uiState.videoPlaybackSpeed,
                         language = LocaleManager.getLanguageDisplayName(uiState.language)
                     ),
-                    onThemeModeChange = { viewModel.onEvent(SettingsEvent.SetThemeMode(it)) },
+                    onThemeModeChange = { mode ->
+                        SettingsAccess.themeMode = mode
+                        viewModel.onEvent(SettingsEvent.SetThemeMode(mode))
+                        AppThemeState.updateThemeMode(mode)
+                        recreateActivityForUiRefresh(activity)
+                    },
                     onThemeColorClick = { viewModel.onEvent(SettingsEvent.OpenThemeColorSelector) },
                     onBackgroundTypeChange = { viewModel.onEvent(SettingsEvent.SetBackgroundType(it)) },
                     onSelectImageClick = { viewModel.onEvent(SettingsEvent.SelectBackgroundImage) },
@@ -191,7 +202,11 @@ fun SettingsScreenWrapper(
                     vibrationEnabled = uiState.vibrationEnabled,
                     onVibrationChange = { viewModel.onEvent(SettingsEvent.SetVibrationEnabled(it)) },
                     vibrationStrength = uiState.vibrationStrength,
-                    onVibrationStrengthChange = { viewModel.onEvent(SettingsEvent.SetVibrationStrength(it)) }
+                    onVibrationStrengthChange = { viewModel.onEvent(SettingsEvent.SetVibrationStrength(it)) },
+                    virtualControllerAsFirst = uiState.virtualControllerAsFirst,
+                    onVirtualControllerAsFirstChange = {
+                        viewModel.onEvent(SettingsEvent.SetVirtualControllerAsFirst(it))
+                    }
                 )
             }
             SettingsCategory.GAME -> {
@@ -275,6 +290,7 @@ fun SettingsScreenWrapper(
                     onVerboseLoggingChange = { viewModel.onEvent(SettingsEvent.SetVerboseLogging(it)) },
                     onViewLogsClick = { viewModel.onEvent(SettingsEvent.ViewLogs) },
                     onExportLogsClick = { viewModel.onEvent(SettingsEvent.ExportLogs) },
+                    onShareLogsClick = { viewModel.onEvent(SettingsEvent.ShareLogs) },
                     onClearCacheClick = { viewModel.onEvent(SettingsEvent.ClearCache) },
                     onBigCoreAffinityChange = { viewModel.onEvent(SettingsEvent.SetBigCoreAffinity(it)) },
                     onKillLauncherUIChange = { viewModel.onEvent(SettingsEvent.SetKillLauncherUI(it)) },
@@ -328,7 +344,8 @@ fun SettingsScreenWrapper(
             onSelect = { code ->
                 LocaleManager.setLanguage(context, code)
                 viewModel.onEvent(SettingsEvent.SetLanguage(code))
-                Toast.makeText(context, context.getString(R.string.language_changed, LocaleManager.getLanguageDisplayName(code)), Toast.LENGTH_SHORT).show()
+                showLanguageDialog = false
+                recreateActivityForUiRefresh(activity)
             },
             onDismiss = { showLanguageDialog = false }
         )
@@ -367,7 +384,7 @@ fun SettingsScreenWrapper(
         LogViewerDialog(
             logs = logs,
             onExport = {
-                logExportLauncher.launch("ralaunch_logs_${System.currentTimeMillis()}.txt")
+                logExportLauncher.launch(buildLogFileName())
             },
             onClear = {
                 clearLogs(context)

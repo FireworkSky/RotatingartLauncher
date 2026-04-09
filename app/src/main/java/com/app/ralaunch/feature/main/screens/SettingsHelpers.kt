@@ -1,16 +1,20 @@
 package com.app.ralaunch.feature.main.screens
 
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
+import androidx.core.content.FileProvider
 import com.app.ralaunch.R
 import com.app.ralaunch.feature.patch.data.PatchManager
 import com.app.ralaunch.core.platform.runtime.renderer.RendererRegistry
 import com.app.ralaunch.core.common.util.LogExportHelper
+import com.app.ralaunch.core.platform.android.provider.RaLaunchFileProvider
 import com.app.ralaunch.shared.core.component.dialogs.RendererOption
 import com.app.ralaunch.shared.core.model.domain.BackgroundType
 import com.app.ralaunch.shared.core.contract.repository.SettingsRepositoryV2
+import com.app.ralaunch.shared.core.platform.AppConstants
 import com.app.ralaunch.shared.feature.settings.*
 import com.app.ralaunch.shared.core.theme.AppThemeState
 import com.app.ralaunch.feature.sponsor.SponsorsActivity
@@ -21,6 +25,9 @@ import kotlinx.coroutines.withContext
 import org.koin.java.KoinJavaComponent
 import java.io.File
 import java.io.FileOutputStream
+import java.util.Calendar
+
+internal const val RESTORE_SETTINGS_AFTER_RECREATE_KEY = "restore_settings_after_recreate"
 
 // ==================== 背景处理 ====================
 
@@ -169,7 +176,64 @@ internal suspend fun exportLogs(context: Context, uri: Uri) {
     }
 }
 
+internal suspend fun shareLogs(context: Context) {
+    withContext(Dispatchers.IO) {
+        try {
+            val logs = LogExportHelper.buildExportContent(context)
+                .ifEmpty { loadLogs(context).joinToString("\n") }
+
+            val shareDir = File(context.cacheDir, "shared_logs").apply {
+                mkdirs()
+            }
+            shareDir.listFiles { file ->
+                file.isFile && file.name.startsWith(SHARED_LOG_FILE_PREFIX)
+            }?.forEach(File::delete)
+
+            val logFile = File(shareDir, buildLogFileName())
+            logFile.writeText(logs, Charsets.UTF_8)
+
+            val fileUri = FileProvider.getUriForFile(
+                context,
+                RaLaunchFileProvider.AUTHORITY,
+                logFile
+            )
+
+            val shareTitle = context.getString(R.string.export_share_log)
+            val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                type = "text/plain"
+                putExtra(Intent.EXTRA_STREAM, fileUri)
+                putExtra(
+                    Intent.EXTRA_SUBJECT,
+                    "${context.getString(R.string.app_name)} ${context.getString(R.string.settings_developer_export_logs_title)}"
+                )
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+
+            withContext(Dispatchers.Main) {
+                context.startActivity(
+                    Intent.createChooser(shareIntent, shareTitle).apply {
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    }
+                )
+            }
+        } catch (e: Exception) {
+            withContext(Dispatchers.Main) {
+                Toast.makeText(context, context.getString(R.string.log_export_failed, e.message ?: ""), Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+}
+
 private const val LOG_VIEW_LIMIT = 500
+private const val SHARED_LOG_FILE_PREFIX = "ralaunch_logs_"
+
+internal fun buildLogFileName(): String {
+    val calendar = Calendar.getInstance()
+    val year = calendar.get(Calendar.YEAR)
+    val month = calendar.get(Calendar.MONTH) + 1
+    val day = calendar.get(Calendar.DAY_OF_MONTH)
+    return "${SHARED_LOG_FILE_PREFIX}${year}-${month}-${day}.txt"
+}
 
 internal fun clearAppCache(context: Context) {
     try {
@@ -232,6 +296,17 @@ internal fun applyThemeColor(context: Context, colorId: Int) {
     }
     AppThemeState.updateThemeColor(colorId)
     Toast.makeText(context, context.getString(R.string.theme_color_changed), Toast.LENGTH_SHORT).show()
+}
+
+internal fun recreateActivityForUiRefresh(activity: Activity) {
+    if (activity.isFinishing || activity.isDestroyed) return
+
+    activity.getSharedPreferences(AppConstants.PREFS_NAME, Context.MODE_PRIVATE)
+        .edit()
+        .putBoolean(RESTORE_SETTINGS_AFTER_RECREATE_KEY, true)
+        .apply()
+
+    activity.recreate()
 }
 
 internal fun getLanguageCode(languageName: String): String {

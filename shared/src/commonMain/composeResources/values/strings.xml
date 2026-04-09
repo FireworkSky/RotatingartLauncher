@@ -120,7 +120,7 @@
     <string name="settings_developer_concurrent_gc_subtitle">Enable concurrent garbage collection</string>
     <string name="settings_developer_concurrent_gc_title">Concurrent GC</string>
     <string name="settings_developer_dotnet_section">.NET Runtime</string>
-    <string name="settings_developer_export_logs_subtitle">Share log files for debugging</string>
+    <string name="settings_developer_export_logs_subtitle">Export log files to a local file</string>
     <string name="settings_developer_export_logs_title">Export Logs</string>
     <string name="settings_developer_fna_section">FNA Optimization</string>
     <string name="settings_developer_kill_launcher_ui_subtitle">Free more memory for the game</string>
@@ -142,6 +142,8 @@
     <string name="settings_developer_coreclr_compat_subtitle">Enable Xiaomi-targeted compatibility hooks and safer startup settings when CoreCLR initialization fails on affected Xiaomi devices</string>
     <string name="settings_developer_verbose_logging_subtitle">Output more debug information</string>
     <string name="settings_developer_verbose_logging_title">Verbose Logging</string>
+    <string name="settings_developer_share_logs_subtitle">Share log files for debugging</string>
+    <string name="settings_developer_share_logs_title">Share Logs</string>
     <string name="settings_developer_view_logs_subtitle">View recent runtime logs</string>
     <string name="settings_developer_view_logs_title">View Logs</string>
     <string name="settings_fps_30">30 FPS</string>

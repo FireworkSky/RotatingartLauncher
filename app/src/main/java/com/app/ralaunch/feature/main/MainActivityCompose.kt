@@ -73,6 +73,7 @@ import com.app.ralaunch.feature.main.screens.DownloadScreenWrapper
 import com.app.ralaunch.feature.main.screens.FileBrowserScreenWrapper
 import com.app.ralaunch.feature.main.screens.ImportScreenWrapper
 import com.app.ralaunch.feature.main.screens.AnnouncementScreenWrapper
+import com.app.ralaunch.feature.main.screens.RESTORE_SETTINGS_AFTER_RECREATE_KEY
 import com.app.ralaunch.feature.main.screens.SettingsScreenWrapper
 import com.app.ralaunch.feature.main.screens.buildRendererOptions
 import com.app.ralaunch.feature.main.MainViewModel
@@ -312,8 +313,8 @@ class MainActivityCompose : BaseActivity() {
 
     private fun checkRestoreSettings() {
         val prefs = getSharedPreferences(AppConstants.PREFS_NAME, MODE_PRIVATE)
-        if (prefs.getBoolean("restore_settings_after_recreate", false)) {
-            prefs.edit().putBoolean("restore_settings_after_recreate", false).apply()
+        if (prefs.getBoolean(RESTORE_SETTINGS_AFTER_RECREATE_KEY, false)) {
+            prefs.edit().putBoolean(RESTORE_SETTINGS_AFTER_RECREATE_KEY, false).apply()
             navState.navigateToSettings()
         }
     }

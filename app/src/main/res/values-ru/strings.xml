@@ -1770,6 +1770,7 @@
     <string name="settings_controls_multitouch_subtitle">Разрешить несколько одновременных точек касания</string>
     <string name="settings_controls_mouse_right_stick_title">Правый джойстик мыши</string>
     <string name="settings_controls_mouse_right_stick_subtitle">Сопоставить движение мыши с правым джойстиком</string>
+    <string name="settings_controls_controller_section">Контроллер</string>
     <string name="settings_controls_vibration_section">Вибрация</string>
     <string name="settings_controls_vibration_strength_title">Сила вибрации</string>
     <string name="settings_game_performance_section">Производительность</string>
@@ -2009,7 +2010,9 @@
     <string name="settings_developer_view_logs_title">Просмотр журналов</string>
     <string name="settings_developer_view_logs_subtitle">Просмотр последних журналов выполнения</string>
     <string name="settings_developer_export_logs_title">Экспорт журналов</string>
-    <string name="settings_developer_export_logs_subtitle">Делитесь файлами журналов для отладки</string>
+    <string name="settings_developer_export_logs_subtitle">Экспортировать файлы логов в локальный файл</string>
+    <string name="settings_developer_share_logs_title">Поделиться журналами</string>
+    <string name="settings_developer_share_logs_subtitle">Делиться файлами журналов для отладки</string>
     <string name="settings_developer_performance_section">Производительность</string>
     <string name="settings_developer_kill_launcher_ui_title">Закрыть пользовательский интерфейс Launcher после запуска</string>
     <string name="settings_developer_kill_launcher_ui_subtitle">Освободите больше памяти для игры</string>
