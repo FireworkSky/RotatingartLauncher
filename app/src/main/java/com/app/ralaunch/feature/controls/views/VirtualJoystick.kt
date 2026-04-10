@@ -381,7 +381,9 @@ class VirtualJoystick(
                 knobBounds = knobBoundsRectF,
                 isPressed = mIsTouching,
                 backgroundClipPath = bgClipPath,
-                knobClipPath = knobClipPath
+                knobClipPath = knobClipPath,
+                backgroundOpacityMultiplier = castedData.opacity,
+                knobOpacityMultiplier = castedData.stickOpacity
             )
             
             // 如果纹理没有完全覆盖，仍然绘制默认形状作为fallback

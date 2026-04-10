@@ -1,6 +1,5 @@
 package com.app.ralaunch.feature.controls.views
 
-import android.app.Activity
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
@@ -14,12 +13,11 @@ import android.text.TextPaint
 import android.util.Log
 import android.view.View
 import com.app.ralaunch.core.common.VibrationManager
-import com.app.ralaunch.feature.game.legacy.GameActivity
 import org.koin.java.KoinJavaComponent
-import com.app.ralaunch.feature.controls.ControlsSharedState
 import com.app.ralaunch.feature.controls.ControlData
+import com.app.ralaunch.feature.controls.ControlSpecialActionHandler
+import com.app.ralaunch.feature.controls.ControlsSharedState
 import com.app.ralaunch.feature.controls.bridges.ControlInputBridge
-import com.app.ralaunch.feature.controls.bridges.SDLInputBridge
 import com.app.ralaunch.feature.controls.textures.TextureLoader
 import com.app.ralaunch.feature.controls.textures.TextureRenderer
 import java.io.File
@@ -374,7 +372,8 @@ class VirtualButton(
                         bounds = mRectF,
                         isPressed = mIsPressed,
                         isToggled = mIsToggled,
-                        clipPath = mClipPath
+                        clipPath = mClipPath,
+                        opacityMultiplier = castedData.opacity
                     )
                 } else {
                     // 绘制具有深度感的背景
@@ -406,7 +405,8 @@ class VirtualButton(
                         bounds = mRectF,
                         isPressed = mIsPressed,
                         isToggled = mIsToggled,
-                        clipPath = mClipPath
+                        clipPath = mClipPath,
+                        opacityMultiplier = castedData.opacity
                     )
                     canvas.drawCircle(centerXDraw, centerYDraw, radius, mStrokePaint)
                 } else {
@@ -460,7 +460,8 @@ class VirtualButton(
                         bounds = mRectF,
                         isPressed = mIsPressed,
                         isToggled = mIsToggled,
-                        clipPath = mClipPath
+                        clipPath = mClipPath,
+                        opacityMultiplier = castedData.opacity
                     )
                 } else {
                     // 绘制多边形背景
@@ -553,16 +554,7 @@ class VirtualButton(
     private fun handlePress() {
         mIsPressed = true
 
-
-        // 处理特殊功能按键
-        if (castedData.keycode == ControlData.KeyCode.SPECIAL_KEYBOARD) {
-            // 显示系统键盘
-            showKeyboard()
-            invalidate()
-            return
-        }
-        if (castedData.keycode == ControlData.KeyCode.SPECIAL_TOUCHPAD_RIGHT_BUTTON) {
-            ControlsSharedState.isTouchPadRightButton = !ControlsSharedState.isTouchPadRightButton
+        if (ControlSpecialActionHandler.handlePress(context, castedData.keycode, mInputBridge)) {
             invalidate()
             return
         }
@@ -589,40 +581,6 @@ class VirtualButton(
 
         // 切换按钮不在释放时发送事件
         invalidate()
-    }
-
-    /**
-     * 显示Android软键盘并实时发送文本到游戏
-     *
-     * 工作原理：
-     * 1. 先调用SDL.showTextInput()启用SDL文本输入模式
-     * 2. 创建透明EditText激活系统IME
-     * 3. 每输入一个字符立即通过SDL_TEXTINPUT发送
-     * 4. Terraria的FnaIme会接收并转发文本到游戏
-     */
-    private fun showKeyboard() {
-        try {
-            if (context !is Activity) {
-                Log.e(TAG, "Context is not an Activity")
-                return
-            }
-
-            val activity = context as Activity
-
-            activity.runOnUiThread {
-                try {
-                    if (mInputBridge is SDLInputBridge) {
-                        // 启用SDL文本输入模式
-                        mInputBridge.startTextInput()
-                    }
-                    GameActivity.enableSDLTextInputForIME()
-                } catch (e: Exception) {
-                    Log.e(TAG, "Failed to enable SDL text input", e)
-                }
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to show keyboard", e)
-        }
     }
 
     private fun sendInput(isDown: Boolean) {

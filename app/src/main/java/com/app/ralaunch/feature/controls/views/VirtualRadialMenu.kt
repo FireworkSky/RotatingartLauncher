@@ -19,6 +19,7 @@ import android.view.animation.DecelerateInterpolator
 import android.view.animation.OvershootInterpolator
 import com.app.ralaunch.feature.controls.bridges.ControlInputBridge
 import com.app.ralaunch.feature.controls.ControlData
+import com.app.ralaunch.feature.controls.ControlSpecialActionHandler
 import com.app.ralaunch.feature.controls.textures.TextureLoader
 import com.app.ralaunch.core.common.VibrationManager
 import org.koin.java.KoinJavaComponent
@@ -608,15 +609,22 @@ class VirtualRadialMenu(
     // 触发按键
     private fun triggerSectorKey(sectorIndex: Int, pressed: Boolean) {
         if (sectorIndex < 0 || sectorIndex >= castedData.sectors.size) return
-        
+
         val sector = castedData.sectors[sectorIndex]
         val keycode = sector.keycode
-        
+
         if (keycode != ControlData.KeyCode.UNKNOWN) {
             if (pressed) {
                 vibrationManager?.vibrateOneShot(30, 50)
             }
-            
+
+            if (keycode.type == ControlData.KeyType.SPECIAL) {
+                if (pressed && ControlSpecialActionHandler.handlePress(context, keycode, mInputBridge)) {
+                    invalidate()
+                }
+                return
+            }
+
             when (keycode.type) {
                 ControlData.KeyType.KEYBOARD -> {
                     mInputBridge.sendKey(keycode, pressed)

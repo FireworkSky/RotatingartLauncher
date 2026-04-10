@@ -29,7 +29,8 @@ object TextureRenderer {
         bitmap: Bitmap,
         config: TextureConfig,
         bounds: RectF,
-        clipPath: Path? = null
+        clipPath: Path? = null,
+        opacityMultiplier: Float = 1f
     ) {
         if (!config.enabled || bitmap.isRecycled) return
         
@@ -41,7 +42,9 @@ object TextureRenderer {
         }
         
         // 设置透明度
-        paint.alpha = (config.opacity * 255).toInt()
+        paint.alpha = ((config.opacity.coerceIn(0f, 1f) * opacityMultiplier.coerceIn(0f, 1f)) * 255f)
+            .toInt()
+            .coerceIn(0, 255)
         
         // 设置着色
         if (config.tintColor != 0) {
@@ -148,7 +151,8 @@ object TextureRenderer {
         bitmap: Bitmap,
         config: TextureConfig,
         bounds: RectF,
-        clipPath: Path? = null
+        clipPath: Path? = null,
+        opacityMultiplier: Float = 1f
     ) {
         if (!config.enabled || bitmap.isRecycled) return
         
@@ -158,7 +162,9 @@ object TextureRenderer {
             canvas.clipPath(clipPath)
         }
         
-        paint.alpha = (config.opacity * 255).toInt()
+        paint.alpha = ((config.opacity.coerceIn(0f, 1f) * opacityMultiplier.coerceIn(0f, 1f)) * 255f)
+            .toInt()
+            .coerceIn(0, 255)
         
         if (config.tintColor != 0) {
             paint.colorFilter = PorterDuffColorFilter(config.tintColor, PorterDuff.Mode.SRC_IN)
@@ -188,7 +194,8 @@ object TextureRenderer {
         isPressed: Boolean,
         isToggled: Boolean,
         isEnabled: Boolean = true,
-        clipPath: Path? = null
+        clipPath: Path? = null,
+        opacityMultiplier: Float = 1f
     ) {
         if (!textureConfig.hasAnyTexture || assetsDir == null) return
         
@@ -209,9 +216,9 @@ object TextureRenderer {
         ) ?: return
         
         if (config.scaleMode == TextureConfig.ScaleMode.TILE) {
-            renderTiled(canvas, bitmap, config, bounds, clipPath)
+            renderTiled(canvas, bitmap, config, bounds, clipPath, opacityMultiplier)
         } else {
-            render(canvas, bitmap, config, bounds, clipPath)
+            render(canvas, bitmap, config, bounds, clipPath, opacityMultiplier)
         }
     }
     
@@ -227,7 +234,9 @@ object TextureRenderer {
         knobBounds: RectF,
         isPressed: Boolean,
         backgroundClipPath: Path? = null,
-        knobClipPath: Path? = null
+        knobClipPath: Path? = null,
+        backgroundOpacityMultiplier: Float = 1f,
+        knobOpacityMultiplier: Float = 1f
     ) {
         if (!textureConfig.hasAnyTexture || assetsDir == null) return
         
@@ -247,9 +256,23 @@ object TextureRenderer {
             )
             if (bgBitmap != null) {
                 if (bgConfig.scaleMode == TextureConfig.ScaleMode.TILE) {
-                    renderTiled(canvas, bgBitmap, bgConfig, backgroundBounds, backgroundClipPath)
+                    renderTiled(
+                        canvas,
+                        bgBitmap,
+                        bgConfig,
+                        backgroundBounds,
+                        backgroundClipPath,
+                        backgroundOpacityMultiplier
+                    )
                 } else {
-                    render(canvas, bgBitmap, bgConfig, backgroundBounds, backgroundClipPath)
+                    render(
+                        canvas,
+                        bgBitmap,
+                        bgConfig,
+                        backgroundBounds,
+                        backgroundClipPath,
+                        backgroundOpacityMultiplier
+                    )
                 }
             }
         }
@@ -270,14 +293,28 @@ object TextureRenderer {
             )
             if (knobBitmap != null) {
                 if (knobConfig.scaleMode == TextureConfig.ScaleMode.TILE) {
-                    renderTiled(canvas, knobBitmap, knobConfig, knobBounds, knobClipPath)
+                    renderTiled(
+                        canvas,
+                        knobBitmap,
+                        knobConfig,
+                        knobBounds,
+                        knobClipPath,
+                        knobOpacityMultiplier
+                    )
                 } else {
-                    render(canvas, knobBitmap, knobConfig, knobBounds, knobClipPath)
+                    render(
+                        canvas,
+                        knobBitmap,
+                        knobConfig,
+                        knobBounds,
+                        knobClipPath,
+                        knobOpacityMultiplier
+                    )
                 }
             }
         }
     }
-    
+
     /**
      * 创建圆形裁剪路径
      */
@@ -296,8 +333,6 @@ object TextureRenderer {
         }
     }
 }
-
-
 
 
 
