@@ -12,6 +12,10 @@ kotlin = "2.0.21"
 coreKtx = "1.17.0"
 kotlinx-serialization-json = "1.7.3"
 kotlinx-coroutines = "1.9.0"
+
+# --- THÊM DÒNG NÀY (Hỗ trợ Java 8+ API trên Android cũ) ---
+desugarJdkLibs = "2.1.4" 
+
 # Third-party libraries
 glide = "4.16.0"
 konfetti = "2.0.5"
@@ -53,6 +57,10 @@ kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-
 kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
 kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "kotlinx-coroutines" }
 kotlinx-datetime = { group = "org.jetbrains.kotlinx", name = "kotlinx-datetime", version.ref = "kotlinxDatetime" }
+
+# --- THÊM DÒNG NÀY (Thư viện Desugar) ---
+desugar-jdk-libs = { group = "com.android.tools", name = "desugar_jdk_libs", version.ref = "desugarJdkLibs" }
+
 # Android Compose
 compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
 compose-ui = { group = "androidx.compose.ui", name = "ui" }

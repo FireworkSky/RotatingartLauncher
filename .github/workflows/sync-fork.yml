@@ -1,0 +1,59 @@
+name: Sync Fork (Keep My Code)
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    name: Sync with Upstream (Keep My Changes)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.PAT_TOKEN }}
+
+      - name: Get upstream repo URL
+        id: upstream
+        env:
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+        run: |
+          UPSTREAM=$(gh api repos/${{ github.repository }} --jq '.parent.full_name')
+          if [ -z "$UPSTREAM" ] || [ "$UPSTREAM" = "null" ]; then
+            echo "This repo is not a fork!"
+            exit 1
+          fi
+          echo "repo=$UPSTREAM" >> $GITHUB_OUTPUT
+          echo "Upstream found: $UPSTREAM"
+
+      - name: Config Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Merge upstream keep my code on conflict
+        id: merge
+        run: |
+          git remote add upstream https://github.com/${{ steps.upstream.outputs.repo }}.git
+          git fetch upstream main
+          BEFORE=$(git rev-parse HEAD)
+          git merge upstream/main --strategy-option ours --allow-unrelated-histories --no-edit || echo "Nothing to merge"
+          AFTER=$(git rev-parse HEAD)
+          if [ "$BEFORE" != "$AFTER" ]; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "Code changed, will push and trigger build"
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+            echo "No changes"
+          fi
+
+      - name: Push
+        if: steps.merge.outputs.changed == 'true'
+        run: git push origin main

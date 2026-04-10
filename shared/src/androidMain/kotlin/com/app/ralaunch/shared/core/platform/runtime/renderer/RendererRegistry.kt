@@ -5,7 +5,6 @@ import android.os.Build
 import android.os.Environment
 import com.app.ralaunch.shared.generated.resources.*
 import java.io.File
-import kotlin.io.path.Path
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.getString
@@ -60,12 +59,14 @@ actual object RendererRegistry {
                 id = ID_GL4ES_ANGLE,
                 displayName = null,
                 description = null,
-                eglLibrary = "libEGL_gl4es.so",
+                eglLibrary = "libEGL_angle.so",
                 glesLibrary = "libGL_gl4es.so",
                 needsPreload = true,
-                minAndroidVersion = 0
+                minAndroidVersion = Build.VERSION_CODES.N
             ) { _, env ->
                 env["RALCORE_RENDERER"] = "gl4es"
+                env["RALCORE_EGL"] = "libEGL_angle.so"
+                env["LIBGL_GLES"] = "libGLESv2_angle.so"
                 env["LIBGL_ES"] = "3"
                 env["LIBGL_MIPMAP"] = "3"
                 env["LIBGL_NORMALIZE"] = "1"
@@ -88,8 +89,11 @@ actual object RendererRegistry {
                 env["FNA3D_OPENGL_DRIVER"] = "mobileglues"
                 env["MOBILEGLUES_GLES_VERSION"] = "3.2"
                 env["FNA3D_MOJOSHADER_PROFILE"] = "glsles3"
-                env["MG_DIR_PATH"] =
-                    Path(Environment.getExternalStorageDirectory().absolutePath).resolve("MG").toString()
+                val mgDir = File(
+                    Environment.getExternalStorageDirectory().absolutePath,
+                    "MG"
+                ).absolutePath
+                env["MG_DIR_PATH"] = mgDir
             }
         )
 
@@ -103,6 +107,7 @@ actual object RendererRegistry {
                 needsPreload = true,
                 minAndroidVersion = Build.VERSION_CODES.N
             ) { _, env ->
+                env["RALCORE_RENDERER"] = "angle"
                 env["RALCORE_EGL"] = "libEGL_angle.so"
                 env["LIBGL_GLES"] = "libGLESv2_angle.so"
             }
@@ -178,37 +183,31 @@ actual object RendererRegistry {
 
     @JvmStatic
     fun getCompatibleRenderers(): MutableList<RendererInfo> {
-        val context = getGlobalContext()
         val compatible = mutableListOf<RendererInfo>()
-        val nativeLibDir = File(context.applicationInfo.nativeLibraryDir)
-        val runtimeLibsDir = File(context.filesDir, RUNTIME_LIBS_DIR)
-
         val renderers = synchronized(rendererStore) { rendererStore.values.toList() }
+
         for (renderer in renderers) {
-            if (Build.VERSION.SDK_INT < renderer.minAndroidVersion) {
-                continue
-            }
+            if (Build.VERSION.SDK_INT < renderer.minAndroidVersion) continue
 
             var hasLibraries = true
-            if (renderer.eglLibrary != null) {
-                val eglLibNative = File(nativeLibDir, renderer.eglLibrary)
-                val eglLibRuntime = File(runtimeLibsDir, renderer.eglLibrary)
-                if (!eglLibNative.exists() && !eglLibRuntime.exists()) {
-                    hasLibraries = false
-                }
+
+            if (renderer.eglLibrary != null && getRendererLibraryPath(renderer.eglLibrary) == null) {
+                hasLibraries = false
             }
 
             if (hasLibraries && renderer.glesLibrary != null && renderer.glesLibrary != renderer.eglLibrary) {
-                val glesLibNative = File(nativeLibDir, renderer.glesLibrary)
-                val glesLibRuntime = File(runtimeLibsDir, renderer.glesLibrary)
-                if (!glesLibNative.exists() && !glesLibRuntime.exists()) {
+                if (getRendererLibraryPath(renderer.glesLibrary) == null) {
                     hasLibraries = false
                 }
             }
 
-            if (hasLibraries) {
-                compatible.add(renderer)
+            if (hasLibraries && renderer.id == ID_GL4ES_ANGLE) {
+                if (getRendererLibraryPath("libGLESv2_angle.so") == null) {
+                    hasLibraries = false
+                }
             }
+
+            if (hasLibraries) compatible.add(renderer)
         }
 
         return compatible
@@ -239,8 +238,16 @@ actual object RendererRegistry {
     fun getRendererLibraryPath(libraryName: String?): String? {
         if (libraryName == null) return null
         val context = getGlobalContext()
+
+        val runtimeLibDir = File(context.filesDir, RUNTIME_LIBS_DIR)
+        val runtimeLib = File(runtimeLibDir, libraryName)
+        if (runtimeLib.exists()) return runtimeLib.absolutePath
+
         val nativeLibDir = File(context.applicationInfo.nativeLibraryDir)
-        return File(nativeLibDir, libraryName).absolutePath
+        val nativeLib = File(nativeLibDir, libraryName)
+        if (nativeLib.exists()) return nativeLib.absolutePath
+
+        return null
     }
 
     @JvmStatic
@@ -250,6 +257,37 @@ actual object RendererRegistry {
         val envMap = mutableMapOf<String, String?>()
         rendererInfo.configureEnv(context, envMap)
         return envMap
+    }
+
+    @JvmStatic
+    fun getRendererPreloadLibraries(rendererId: String): List<String> {
+        return when (normalizeRendererId(rendererId)) {
+            ID_ANGLE -> listOf(
+                "libEGL_angle.so",
+                "libGLESv2_angle.so"
+            )
+            ID_GL4ES -> listOf(
+                "libEGL_gl4es.so",
+                "libGL_gl4es.so"
+            )
+            ID_GL4ES_ANGLE -> listOf(
+                "libEGL_angle.so",
+                "libGLESv2_angle.so",
+                "libGL_gl4es.so"
+            )
+            ID_MOBILEGLUES -> listOf(
+                "libmobileglues.so"
+            )
+            ID_ZINK -> listOf(
+                "libOSMesa.so"
+            )
+            else -> emptyList()
+        }
+    }
+
+    @JvmStatic
+    fun getRendererPreloadLibraryPaths(rendererId: String): List<String> {
+        return getRendererPreloadLibraries(rendererId).mapNotNull { getRendererLibraryPath(it) }
     }
 
     private fun getGlobalContext(): Context {

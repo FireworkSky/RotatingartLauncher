@@ -1,19 +1,13 @@
 package com.app.ralaunch.core.common.util
 
 import android.content.Context
-import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
-import org.apache.commons.compress.compressors.xz.XZCompressorInputStream
+import org.tukaani.xz.XZInputStream
 import java.io.*
-import java.nio.file.Files
-import java.nio.file.StandardCopyOption
 import java.util.zip.GZIPInputStream
 
-/**
- * 通用归档文件解压工具
- */
 object ArchiveExtractor {
     private const val TAG = "ArchiveExtractor"
-    private const val BUFFER_SIZE = 8192
+    private const val BUFFER_SIZE = 65536 
 
     fun interface ProgressCallback {
         fun onProgress(processedFiles: Int, currentFile: String)
@@ -22,12 +16,10 @@ object ArchiveExtractor {
     @JvmStatic
     @JvmOverloads
     fun extractTarGz(archiveFile: File, targetDir: File, stripPrefix: String?, callback: ProgressCallback? = null): Int {
-        FileInputStream(archiveFile).use { fis ->
-            BufferedInputStream(fis).use { bis ->
-                GZIPInputStream(bis).use { gzipIn ->
-                    TarArchiveInputStream(gzipIn).use { tarIn ->
-                        return extractTarEntries(tarIn, targetDir, stripPrefix, callback)
-                    }
+        return FileInputStream(archiveFile).use { fis ->
+            BufferedInputStream(fis, BUFFER_SIZE).use { bis ->
+                GZIPInputStream(bis, BUFFER_SIZE).use { gzipIn ->
+                    extractTarEntries(gzipIn, targetDir, stripPrefix, callback)
                 }
             }
         }
@@ -36,12 +28,10 @@ object ArchiveExtractor {
     @JvmStatic
     @JvmOverloads
     fun extractTarXz(archiveFile: File, targetDir: File, stripPrefix: String?, callback: ProgressCallback? = null): Int {
-        FileInputStream(archiveFile).use { fis ->
-            BufferedInputStream(fis).use { bis ->
-                XZCompressorInputStream(bis).use { xzIn ->
-                    TarArchiveInputStream(xzIn).use { tarIn ->
-                        return extractTarEntries(tarIn, targetDir, stripPrefix, callback)
-                    }
+        return FileInputStream(archiveFile).use { fis ->
+            BufferedInputStream(fis, BUFFER_SIZE).use { bis ->
+                XZInputStream(bis).use { xzIn ->
+                    extractTarEntries(xzIn, targetDir, stripPrefix, callback)
                 }
             }
         }
@@ -50,38 +40,42 @@ object ArchiveExtractor {
     @JvmStatic
     @JvmOverloads
     fun extractTar(archiveFile: File, targetDir: File, stripPrefix: String?, callback: ProgressCallback? = null): Int {
-        FileInputStream(archiveFile).use { fis ->
-            BufferedInputStream(fis).use { bis ->
-                TarArchiveInputStream(bis).use { tarIn ->
-                    return extractTarEntries(tarIn, targetDir, stripPrefix, callback)
-                }
+        return FileInputStream(archiveFile).use { fis ->
+            BufferedInputStream(fis, BUFFER_SIZE).use { bis ->
+                extractTarEntries(bis, targetDir, stripPrefix, callback)
             }
         }
     }
 
     private fun extractTarEntries(
-        tarIn: TarArchiveInputStream, targetDir: File,
+        inStream: InputStream, targetDir: File,
         stripPrefix: String?, callback: ProgressCallback?
     ): Int {
         var processedFiles = 0
+        var lastCallbackTime = 0L 
+        val tarReader = MiniTarReader(inStream)
 
-        generateSequence { tarIn.nextTarEntry }.forEach { entry ->
-            if (!tarIn.canReadEntryData(entry)) return@forEach
-
-            val entryName = normalizeEntryName(entry.name, stripPrefix) ?: return@forEach
+        while (true) {
+            val entry = tarReader.nextEntry() ?: break
+            val entryName = normalizeEntryName(entry.name, stripPrefix) ?: continue
             val targetFile = File(targetDir, entryName)
 
-            if (!isPathSafe(targetDir, targetFile)) return@forEach
+            if (!isPathSafe(targetDir, targetFile)) continue
 
             when {
                 entry.isDirectory -> extractDirectory(targetFile)
                 entry.isSymbolicLink -> extractSymlink(targetFile, entry.linkName)
-                else -> extractFile(tarIn, targetFile, entry.mode)
+                else -> extractFile(tarReader, targetFile, entry.mode)
             }
 
             processedFiles++
-            if (callback != null && processedFiles % 10 == 0) {
-                callback.onProgress(processedFiles, entryName)
+            
+            if (callback != null) {
+                val currentTime = System.currentTimeMillis()
+                if (currentTime - lastCallbackTime > 100) {
+                    callback.onProgress(processedFiles, entryName)
+                    lastCallbackTime = currentTime
+                }
             }
         }
 
@@ -129,26 +123,28 @@ object ArchiveExtractor {
         try {
             android.system.Os.symlink(linkTarget, targetFile.absolutePath)
         } catch (e: Exception) {
-            AppLogger.warn(TAG, "Failed to create symlink: ${e.message}")
             targetFile.parentFile?.let { parent ->
                 val linkTargetFile = File(parent, linkTarget)
                 if (linkTargetFile.exists()) {
                     try {
-                        Files.copy(linkTargetFile.toPath(), targetFile.toPath(), StandardCopyOption.REPLACE_EXISTING)
-                    } catch (copyEx: Exception) {
-                        AppLogger.warn(TAG, "Failed to copy symlink target: ${copyEx.message}")
-                    }
+                        linkTargetFile.copyTo(targetFile, overwrite = true)
+                    } catch (copyEx: Exception) {}
                 }
             }
         }
     }
 
-    private fun extractFile(tarIn: TarArchiveInputStream, targetFile: File, mode: Int) {
+    private fun extractFile(tarReader: MiniTarReader, targetFile: File, mode: Int) {
         targetFile.parentFile?.takeIf { !it.exists() }?.mkdirs()
 
         FileOutputStream(targetFile).use { fos ->
-            BufferedOutputStream(fos).use { bos ->
-                tarIn.copyTo(bos, BUFFER_SIZE)
+            BufferedOutputStream(fos, BUFFER_SIZE).use { bos ->
+                val buffer = ByteArray(BUFFER_SIZE)
+                while (true) {
+                    val read = tarReader.readData(buffer)
+                    if (read <= 0) break
+                    bos.write(buffer, 0, read)
+                }
             }
         }
 
@@ -160,8 +156,107 @@ object ArchiveExtractor {
     fun copyAssetToFile(context: Context, assetFileName: String, targetFile: File) {
         context.assets.open(assetFileName).use { inputStream ->
             FileOutputStream(targetFile).use { fos ->
-                BufferedOutputStream(fos).use { bos ->
-                    inputStream.copyTo(bos, BUFFER_SIZE)
+                BufferedOutputStream(fos, BUFFER_SIZE).use { bos ->
+                    val buffer = ByteArray(BUFFER_SIZE)
+                    var read: Int
+                    while (inputStream.read(buffer).also { read = it } != -1) {
+                        bos.write(buffer, 0, read)
+                    }
+                }
+            }
+        }
+    }
+
+    class MiniTarReader(private val inStream: InputStream) {
+        private var currentEntrySize: Long = 0
+        private var bytesReadForEntry: Long = 0
+        private val headerBuffer = ByteArray(512)
+
+        class TarEntry(
+            val name: String,
+            val size: Long,
+            val typeFlag: Char,
+            val linkName: String,
+            val mode: Int
+        ) {
+            val isDirectory: Boolean get() = typeFlag == '5' || name.endsWith("/")
+            val isSymbolicLink: Boolean get() = typeFlag == '2'
+        }
+
+        fun nextEntry(): TarEntry? {
+            val padding = (512 - (bytesReadForEntry % 512)) % 512
+            if (padding > 0L) skipFully(padding)
+
+            val read = readFully(headerBuffer)
+            if (read < 512) return null
+            if (headerBuffer.all { it == 0.toByte() }) return null
+
+            var parsedName = parseString(0, 100)
+            var realName: String? = null
+
+            if (parsedName == "././@LongLink") {
+                val nameSize = parseOctal(124, 12).toInt()
+                val nameBytes = ByteArray(nameSize)
+                readFully(nameBytes)
+                realName = String(nameBytes).trim('\u0000')
+
+                val namePadding = (512 - (nameSize % 512)) % 512
+                if (namePadding > 0) skipFully(namePadding.toLong())
+
+                readFully(headerBuffer)
+                parsedName = parseString(0, 100)
+            }
+
+            val prefix = parseString(345, 155)
+            val finalName = realName ?: if (prefix.isNotEmpty()) "$prefix/$parsedName" else parsedName
+
+            currentEntrySize = parseOctal(124, 12)
+            val typeFlag = headerBuffer[156].toInt().toChar()
+            val linkName = parseString(157, 100)
+            val mode = parseOctal(100, 8).toInt()
+
+            bytesReadForEntry = 0
+            return TarEntry(finalName, currentEntrySize, typeFlag, linkName, mode)
+        }
+
+        fun readData(buffer: ByteArray): Int {
+            if (bytesReadForEntry >= currentEntrySize) return -1
+            val toRead = minOf(buffer.size.toLong(), currentEntrySize - bytesReadForEntry).toInt()
+            val read = inStream.read(buffer, 0, toRead)
+            if (read > 0) bytesReadForEntry += read
+            return read
+        }
+
+        private fun parseString(offset: Int, length: Int): String {
+            var end = offset
+            val limit = offset + length
+            while (end < limit && headerBuffer[end] != 0.toByte()) end++
+            return String(headerBuffer, offset, end - offset).trim()
+        }
+
+        private fun parseOctal(offset: Int, length: Int): Long {
+            val str = String(headerBuffer, offset, length).trim('\u0000', ' ')
+            return if (str.isNotEmpty()) str.toLongOrNull(8) ?: 0L else 0L
+        }
+
+        private fun readFully(buffer: ByteArray): Int {
+            var totalRead = 0
+            while (totalRead < buffer.size) {
+                val read = inStream.read(buffer, totalRead, buffer.size - totalRead)
+                if (read == -1) break
+                totalRead += read
+            }
+            return totalRead
+        }
+
+        private fun skipFully(n: Long) {
+            var totalSkipped = 0L
+            while (totalSkipped < n) {
+                val skipped = inStream.skip(n - totalSkipped)
+                if (skipped == 0L) {
+                    if (inStream.read() == -1) break else totalSkipped++
+                } else {
+                    totalSkipped += skipped
                 }
             }
         }

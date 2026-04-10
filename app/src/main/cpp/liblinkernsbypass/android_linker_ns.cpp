@@ -19,6 +19,9 @@
 extern "C" {
 #endif
 
+#define LOG_TAG "linkernsbypass"
+#define LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
+#define LOGW(...) __android_log_print(ANDROID_LOG_WARN, LOG_TAG, __VA_ARGS__)
 
 using loader_android_create_namespace_t = android_namespace_t *(*)(const char *, const char *,
                                                                    const char *, uint64_t,
@@ -28,6 +31,7 @@ using loader_android_create_namespace_t = android_namespace_t *(*)(const char *,
 static loader_android_create_namespace_t loader_android_create_namespace;
 
 static bool lib_loaded;
+static int device_api_level = 0; // Cache API level
 
 
 /* Public API */
@@ -41,6 +45,12 @@ struct android_namespace_t *android_create_namespace(const char *name,
                                                      uint64_t type,
                                                      const char *permitted_when_isolated_path,
                                                      android_namespace_t *parent_namespace) {
+    // === FIX: Android < 28 không có namespace, trả về NULL ===
+    if (!lib_loaded) {
+        LOGW("android_create_namespace: not available on API %d, returning NULL", device_api_level);
+        return nullptr;
+    }
+
     auto caller{__builtin_return_address(0)};
     return loader_android_create_namespace(name, ld_library_path, default_library_path, type,
                                            permitted_when_isolated_path, parent_namespace, caller);
@@ -52,6 +62,12 @@ struct android_namespace_t *android_create_namespace_escape(const char *name,
                                                             uint64_t type,
                                                             const char *permitted_when_isolated_path,
                                                             android_namespace_t *parent_namespace) {
+    // === FIX: Android < 28 không có namespace, trả về NULL ===
+    if (!lib_loaded) {
+        LOGW("android_create_namespace_escape: not available on API %d, returning NULL", device_api_level);
+        return nullptr;
+    }
+
     auto caller{reinterpret_cast<void *>(&dlopen)};
     return loader_android_create_namespace(name, ld_library_path, default_library_path, type,
                                            permitted_when_isolated_path, parent_namespace, caller);
@@ -64,8 +80,13 @@ android_link_namespaces_all_libs_t android_link_namespaces_all_libs;
 android_link_namespaces_t android_link_namespaces;
 
 bool linkernsbypass_link_namespace_to_default_all_libs(android_namespace_t *to) {
-    // Creating a shared namespace with the default parent will give a copy of the default namespace that we can actually access
-    // This is needed since there is no way to access a direct handle to the default namespace as it's not exported
+    // === FIX: Android < 28 không có namespace restriction, trả về true (thành công) ===
+    if (!lib_loaded) {
+        LOGI("linkernsbypass_link_namespace_to_default_all_libs: "
+             "API %d has no namespace restrictions, returning success", device_api_level);
+        return true;
+    }
+
     static auto defaultNs{android_create_namespace_escape("default_copy", nullptr, nullptr,
                                                           ANDROID_NAMESPACE_TYPE_SHARED, nullptr,
                                                           nullptr)};
@@ -73,6 +94,13 @@ bool linkernsbypass_link_namespace_to_default_all_libs(android_namespace_t *to) 
 }
 
 void *linkernsbypass_namespace_dlopen(const char *filename, int flags, android_namespace_t *ns) {
+    // === FIX: Android < 28 không có namespace, dùng dlopen thường ===
+    if (!lib_loaded || ns == nullptr) {
+        LOGI("linkernsbypass_namespace_dlopen: falling back to dlopen() for '%s' (API %d)",
+             filename ? filename : "null", device_api_level);
+        return dlopen(filename, flags);
+    }
+
     android_dlextinfo extInfo{
             .flags = ANDROID_DLEXT_USE_NAMESPACE,
             .library_namespace = ns
@@ -92,6 +120,13 @@ void *linkernsbypass_namespace_dlopen(const char *filename, int flags, android_n
 void *
 linkernsbypass_namespace_dlopen_unique(const char *libPath, const char *libTargetDir, int flags,
                                        android_namespace_t *ns) {
+    // === FIX: Android < 28 không có namespace, dùng dlopen thường ===
+    if (!lib_loaded || ns == nullptr) {
+        LOGI("linkernsbypass_namespace_dlopen_unique: falling back to dlopen() for '%s' (API %d)",
+             libPath ? libPath : "null", device_api_level);
+        return dlopen(libPath, flags);
+    }
+
     static std::array<char, PATH_MAX> PathBuf{};
 
     // Used as a unique ID for overwriting soname and creating target lib files
@@ -142,8 +177,15 @@ static void *align_ptr(void *ptr) {
 __attribute__((constructor)) static void resolve_linker_symbols() {
     using loader_dlopen_t = void *(*)(const char *, int, const void *);
 
-    if (android_get_device_api_level() < 28)
+    // === FIX: Cache API level để dùng trong log ===
+    device_api_level = android_get_device_api_level();
+
+    if (device_api_level < 28) {
+        LOGI("API level %d < 28: linker namespace bypass disabled, "
+             "using standard dlopen() fallback (no namespace restrictions on this Android version)",
+             device_api_level);
         return;
+    }
 
     // ARM64 specific function walking to locate the internal dlopen handler
     auto loader_dlopen{[]() {
@@ -161,11 +203,11 @@ __attribute__((constructor)) static void resolve_linker_symbols() {
         };
         static_assert(sizeof(BranchLinked) == 4, "BranchLinked is wrong size");
 
-        // Some devices ship with --X mapping for exexecutables so work around that
+        // Some devices ship with --X mapping for executables so work around that
         mprotect(align_ptr(reinterpret_cast<void *>(&dlopen)), getpagesize(),
                  PROT_WRITE | PROT_READ | PROT_EXEC);
 
-        // dlopen is just a wrapper for __loader_dlopen that passes the return address as the third arg hence we can just walk it to find __loader_dlopen
+        // dlopen is just a wrapper for __loader_dlopen that passes the return address as the third arg
         auto blInstr{reinterpret_cast<BranchLinked *>(&dlopen)};
         while (!blInstr->Verify())
             blInstr++;
@@ -173,11 +215,9 @@ __attribute__((constructor)) static void resolve_linker_symbols() {
         return reinterpret_cast<loader_dlopen_t>(blInstr + blInstr->offset);
     }()};
 
-    // Protect the loader_dlopen function to remove the BTI attribute (since this is an internal function that isn't intended to be jumped indirectly to)
     mprotect(align_ptr(reinterpret_cast<void *>(&loader_dlopen)), getpagesize(),
              PROT_WRITE | PROT_READ | PROT_EXEC);
 
-    // Passing dlopen as a caller address tricks the linker into using the internal unrestricted namespace letting us access libraries that are normally forbidden in the classloader namespace imposed on apps
     auto ldHandle{loader_dlopen("ld-android.so", RTLD_LAZY, reinterpret_cast<void *>(&dlopen))};
     if (!ldHandle)
         return;
@@ -209,6 +249,7 @@ __attribute__((constructor)) static void resolve_linker_symbols() {
 
     // Lib is now safe to use
     lib_loaded = true;
+    LOGI("Linker namespace bypass loaded successfully on API %d", device_api_level);
 }
 
 #ifdef __cplusplus
