@@ -107,6 +107,14 @@
     <string name="settings_category_launcher_desc">补丁管理、高级选项</string>
     <string name="settings_checking_update">正在检查更新...</string>
     <string name="settings_control">控制设置</string>
+    <string name="settings_controls_controller_section">控制器</string>
+    <string name="settings_controls_mouse_right_stick_subtitle">鼠标移动映射到右摇杆</string>
+    <string name="settings_controls_mouse_right_stick_title">鼠标右摇杆</string>
+    <string name="settings_controls_multitouch_subtitle">允许同时多个触控点</string>
+    <string name="settings_controls_multitouch_title">多点触控</string>
+    <string name="settings_controls_touch_section">触控</string>
+    <string name="settings_controls_vibration_section">震动</string>
+    <string name="settings_controls_vibration_strength_title">震动强度</string>
     <string name="settings_developer">高级设置</string>
     <string name="settings_developer_clear_cache_subtitle">清理应用缓存文件</string>
     <string name="settings_developer_clear_cache_title">清除缓存</string>
@@ -166,6 +174,8 @@
     <string name="settings_quality_low">低画质</string>
     <string name="settings_quality_medium">中画质</string>
     <string name="settings_restart_required_toast">重启游戏后生效</string>
+    <string name="settings_vibration">振动反馈</string>
+    <string name="settings_vibration_desc">按键时提供振动反馈</string>
     <string name="settings_logs_empty">暂无日志</string>
     <string name="settings_logs_title">日志查看器</string>
     <string name="settings_select_category_prompt">选择一个设置分类</string>
@@ -185,6 +195,8 @@
     <string name="settings_fps_60">60 FPS</string>
     <string name="settings_open_source_licenses">开源许可</string>
     <string name="settings_reextract_runtime_title">重新解压运行时库</string>
+    <string name="virtual_controller_as_first">虚拟手柄作为第一个控制器</string>
+    <string name="virtual_controller_as_first_desc">将虚拟手柄注册为第一个控制器（某些游戏只识别第一个控制器）</string>
     <string name="shared_feature_not_implemented">待实现</string>
     <string name="shared_game_launch_executable_not_found">游戏可执行文件不存在: %1$s</string>
     <string name="shared_game_launch_executable_path_empty">游戏可执行文件路径为空</string>

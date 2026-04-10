@@ -114,6 +114,14 @@
     <string name="settings_category_launcher_desc">Patch management and advanced options</string>
     <string name="settings_checking_update">Checking for updates...</string>
     <string name="settings_control">Controls</string>
+    <string name="settings_controls_controller_section">Controller</string>
+    <string name="settings_controls_mouse_right_stick_subtitle">Map mouse movement to right stick</string>
+    <string name="settings_controls_mouse_right_stick_title">Mouse Right Stick</string>
+    <string name="settings_controls_multitouch_subtitle">Allow multiple simultaneous touch points</string>
+    <string name="settings_controls_multitouch_title">Multi-touch</string>
+    <string name="settings_controls_touch_section">Touch</string>
+    <string name="settings_controls_vibration_section">Vibration</string>
+    <string name="settings_controls_vibration_strength_title">Vibration Strength</string>
     <string name="settings_developer">Advanced Settings</string>
     <string name="settings_developer_clear_cache_subtitle">Clean application cache files</string>
     <string name="settings_developer_clear_cache_title">Clear Cache</string>
@@ -178,6 +186,8 @@
     <string name="settings_quality_medium">Medium Quality</string>
     <string name="settings_reextract_runtime_title">Re-extract Runtime Libraries</string>
     <string name="settings_restart_required_toast">Restart game to apply.</string>
+    <string name="settings_vibration">Vibration Feedback</string>
+    <string name="settings_vibration_desc">Provide vibration feedback when pressing keys</string>
     <string name="settings_logs_empty">No logs yet</string>
     <string name="settings_logs_title">Log Viewer</string>
     <string name="settings_select_category_prompt">Select a settings category</string>
@@ -194,4 +204,6 @@
     <string name="thread_affinity_big_core_desc">Bind main thread to big cores for better performance</string>
     <string name="permission_grant">Grant Permission</string>
     <string name="select_file">Select File</string>
+    <string name="virtual_controller_as_first">Virtual Controller as First Controller</string>
+    <string name="virtual_controller_as_first_desc">Register virtual controller as the first controller (some games only recognize the first controller)</string>
 </resources>

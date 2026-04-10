@@ -114,6 +114,14 @@
     <string name="settings_category_launcher_desc">Управление патчами и расширенные параметры</string>
     <string name="settings_checking_update">Проверка обновлений...</string>
     <string name="settings_control">Управление</string>
+    <string name="settings_controls_controller_section">Контроллер</string>
+    <string name="settings_controls_mouse_right_stick_subtitle">Сопоставить движение мыши с правым джойстиком</string>
+    <string name="settings_controls_mouse_right_stick_title">Правый джойстик мыши</string>
+    <string name="settings_controls_multitouch_subtitle">Разрешить несколько одновременных точек касания</string>
+    <string name="settings_controls_multitouch_title">Мультитач</string>
+    <string name="settings_controls_touch_section">Трогать</string>
+    <string name="settings_controls_vibration_section">Вибрация</string>
+    <string name="settings_controls_vibration_strength_title">Сила вибрации</string>
     <string name="settings_developer">Расширенные настройки</string>
     <string name="settings_developer_clear_cache_subtitle">Очистить файлы кэша приложения</string>
     <string name="settings_developer_clear_cache_title">Очистить кэш</string>
@@ -176,6 +184,8 @@
     <string name="settings_quality_medium">Среднее качество</string>
     <string name="settings_reextract_runtime_title">Повторно извлечь runtime-библиотеки</string>
     <string name="settings_restart_required_toast">Перезапустите игру для применения.</string>
+    <string name="settings_vibration">Тактильная отдача</string>
+    <string name="settings_vibration_desc">Обеспечивать тактильную отдачу при нажатии клавиш</string>
     <string name="settings_logs_empty">Логи пока отсутствуют</string>
     <string name="settings_logs_title">Просмотр логов</string>
     <string name="settings_select_category_prompt">Выберите категорию настроек</string>
@@ -192,4 +202,6 @@
     <string name="thread_affinity_big_core_desc">Привязать главный поток к большому ядру для повышения производительности</string>
     <string name="permission_grant">Предоставить разрешение</string>
     <string name="select_file">Выбрать файл</string>
+    <string name="virtual_controller_as_first">Виртуальный контроллер как первый контроллер</string>
+    <string name="virtual_controller_as_first_desc">Зарегистрировать виртуальный контроллер как первый контроллер (некоторые игры распознают только первый контроллер)</string>
 </resources>

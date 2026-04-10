@@ -55,6 +55,14 @@
     <string name="settings_about">Acerca de</string>
     <string name="settings_appearance">Apariencia</string>
     <string name="settings_control">Controles</string>
+    <string name="settings_controls_controller_section">Controlador</string>
+    <string name="settings_controls_mouse_right_stick_subtitle">Mapea el movimiento del ratón al stick derecho</string>
+    <string name="settings_controls_mouse_right_stick_title">Stick derecho del ratón</string>
+    <string name="settings_controls_multitouch_subtitle">Permite múltiples puntos táctiles simultáneos</string>
+    <string name="settings_controls_multitouch_title">Multitáctil</string>
+    <string name="settings_controls_touch_section">Táctil</string>
+    <string name="settings_controls_vibration_section">Vibración</string>
+    <string name="settings_controls_vibration_strength_title">Intensidad de vibración</string>
     <string name="settings_developer">Configuración avanzada</string>
     <string name="settings_game">Juego</string>
     <string name="settings_launcher">Lanzador</string>
@@ -62,6 +70,8 @@
     <string name="thread_affinity_big_core_desc">Vincular el hilo principal a núcleos grandes para mejor rendimiento</string>
     <string name="permission_grant">Conceder permiso</string>
     <string name="select_file">Seleccionar archivo</string>
+    <string name="virtual_controller_as_first">Controlador virtual como primer controlador</string>
+    <string name="virtual_controller_as_first_desc">Registrar controlador virtual como el primer controlador (algunos juegos solo reconocen el primer controlador)</string>
 
     <string name="about_build_label">Compilación</string>
     <string name="about_core_developer">Desarrollador principal</string>
@@ -181,6 +191,8 @@
     <string name="settings_quality_medium">Calidad media</string>
     <string name="settings_reextract_runtime_title">Reextraer bibliotecas de runtime</string>
     <string name="settings_restart_required_toast">Reinicia el juego para aplicar.</string>
+    <string name="settings_vibration">Retroalimentación de vibración</string>
+    <string name="settings_vibration_desc">Proporcionar retroalimentación de vibración al presionar teclas</string>
     <string name="settings_logs_empty">Aún no hay registros</string>
     <string name="settings_logs_title">Visor de registros</string>
     <string name="settings_select_category_prompt">Selecciona una categoría de configuración</string>
