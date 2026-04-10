@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.app.ralaunch.core.platform.runtime.renderer.RendererRegistry
 import com.app.ralaunch.shared.core.model.domain.BackgroundType
+import com.app.ralaunch.shared.core.model.domain.FpsLimit
+import com.app.ralaunch.shared.core.model.domain.QualityLevel
 import com.app.ralaunch.shared.core.model.domain.ThemeMode
 import com.app.ralaunch.shared.core.contract.repository.SettingsRepositoryV2
 import com.app.ralaunch.shared.generated.resources.*
@@ -24,9 +26,9 @@ data class SettingsUiState(
     val currentCategory: SettingsCategory? = SettingsCategory.APPEARANCE,
 
     // 外观设置
-    val themeMode: Int = 0,
+    val themeMode: ThemeMode = ThemeMode.FOLLOW_SYSTEM,
     val themeColor: Int = 0xFF6750A4.toInt(),
-    val backgroundType: Int = 0,
+    val backgroundType: BackgroundType = BackgroundType.DEFAULT,
     val backgroundOpacity: Int = 0,
     val videoPlaybackSpeed: Float = 1.0f,
     val language: String = "auto",
@@ -45,9 +47,9 @@ data class SettingsUiState(
     val rendererType: String = DEFAULT_RENDERER_ID,
 
     // 画质设置
-    val qualityLevel: Int = 0, // 0=高, 1=中, 2=低
+    val qualityLevel: QualityLevel = QualityLevel.HIGH,
     val shaderLowPrecision: Boolean = false,
-    val targetFps: Int = 0, // 0=无限制, 30, 45, 60
+    val targetFps: FpsLimit = FpsLimit.UNLIMITED,
 
     // 开发者设置
     val loggingEnabled: Boolean = false,
@@ -72,9 +74,9 @@ sealed class SettingsEvent {
     data class SelectCategory(val category: SettingsCategory) : SettingsEvent()
 
     // 外观
-    data class SetThemeMode(val mode: Int) : SettingsEvent()
+    data class SetThemeMode(val mode: ThemeMode) : SettingsEvent()
     data class SetThemeColor(val color: Int) : SettingsEvent()
-    data class SetBackgroundType(val type: Int) : SettingsEvent()
+    data class SetBackgroundType(val type: BackgroundType) : SettingsEvent()
     data class SetBackgroundOpacity(val opacity: Int) : SettingsEvent()
     data class SetVideoPlaybackSpeed(val speed: Float) : SettingsEvent()
     data class SetLanguage(val language: String) : SettingsEvent()
@@ -94,9 +96,9 @@ sealed class SettingsEvent {
     data class SetRenderer(val renderer: String) : SettingsEvent()
     
     // 画质
-    data class SetQualityLevel(val level: Int) : SettingsEvent()
+    data class SetQualityLevel(val level: QualityLevel) : SettingsEvent()
     data class SetShaderLowPrecision(val enabled: Boolean) : SettingsEvent()
-    data class SetTargetFps(val fps: Int) : SettingsEvent()
+    data class SetTargetFps(val fps: FpsLimit) : SettingsEvent()
 
     // 开发者
     data class SetLoggingEnabled(val enabled: Boolean) : SettingsEvent()
@@ -192,9 +194,9 @@ class SettingsViewModel(
             _uiState.update { state ->
                 state.copy(
                     // 外观
-                    themeMode = settings.themeMode.value,
+                    themeMode = settings.themeMode,
                     themeColor = settings.themeColor,
-                    backgroundType = backgroundTypeToInt(settings.backgroundType),
+                    backgroundType = settings.backgroundType,
                     backgroundOpacity = settings.backgroundOpacity,
                     videoPlaybackSpeed = settings.videoPlaybackSpeed,
                     language = settings.language,
@@ -210,9 +212,9 @@ class SettingsViewModel(
                     ralAudioBufferSize = normalizeRalAudioBufferSize(settings.ralAudioBufferSize),
                     rendererType = RendererRegistry.normalizeRendererId(settings.fnaRenderer),
                     // 画质
-                    qualityLevel = settings.qualityLevel,
+                    qualityLevel = QualityLevel.fromValue(settings.qualityLevel),
                     shaderLowPrecision = settings.shaderLowPrecision,
-                    targetFps = settings.targetFps,
+                    targetFps = FpsLimit.fromValue(settings.targetFps),
                     // 开发者
                     loggingEnabled = settings.logSystemEnabled,
                     verboseLogging = settings.verboseLogging,
@@ -239,9 +241,9 @@ class SettingsViewModel(
 
     // ==================== 外观设置 ====================
 
-    private fun setThemeMode(mode: Int) {
+    private fun setThemeMode(mode: ThemeMode) {
         viewModelScope.launch {
-            settingsRepository.update { themeMode = ThemeMode.fromValue(mode) }
+            settingsRepository.update { themeMode = mode }
             _uiState.update { it.copy(themeMode = mode) }
         }
     }
@@ -253,9 +255,9 @@ class SettingsViewModel(
         }
     }
 
-    private fun setBackgroundType(type: Int) {
+    private fun setBackgroundType(type: BackgroundType) {
         viewModelScope.launch {
-            settingsRepository.update { backgroundType = intToBackgroundType(type) }
+            settingsRepository.update { backgroundType = type }
             _uiState.update { it.copy(backgroundType = type) }
         }
     }
@@ -291,7 +293,7 @@ class SettingsViewModel(
                 videoPlaybackSpeed = 1.0f
             }
             _uiState.update { it.copy(
-                backgroundType = 0,
+                backgroundType = BackgroundType.DEFAULT,
                 backgroundOpacity = 0,
                 videoPlaybackSpeed = 1.0f
             ) }
@@ -375,15 +377,14 @@ class SettingsViewModel(
 
     // ==================== 画质设置 ====================
 
-    private fun setQualityLevel(level: Int) {
+    private fun setQualityLevel(level: QualityLevel) {
         viewModelScope.launch {
-            settingsRepository.update { qualityLevel = level }
+            settingsRepository.update { qualityLevel = level.value }
             _uiState.update { it.copy(qualityLevel = level) }
             val qualityName = when (level) {
-                0 -> getString(Res.string.settings_quality_high)
-                1 -> getString(Res.string.settings_quality_medium)
-                2 -> getString(Res.string.settings_quality_low)
-                else -> getString(Res.string.settings_quality_high)
+                QualityLevel.HIGH -> getString(Res.string.settings_quality_high)
+                QualityLevel.MEDIUM -> getString(Res.string.settings_quality_medium)
+                QualityLevel.LOW -> getString(Res.string.settings_quality_low)
             }
             sendEffect(
                 SettingsEffect.ShowToast(
@@ -401,16 +402,15 @@ class SettingsViewModel(
         }
     }
 
-    private fun setTargetFps(fps: Int) {
+    private fun setTargetFps(fps: FpsLimit) {
         viewModelScope.launch {
-            settingsRepository.update { targetFps = fps }
+            settingsRepository.update { targetFps = fps.value }
             _uiState.update { it.copy(targetFps = fps) }
             val fpsName = when (fps) {
-                0 -> getString(Res.string.settings_fps_unlimited)
-                30 -> getString(Res.string.settings_fps_30)
-                45 -> getString(Res.string.settings_fps_45)
-                60 -> getString(Res.string.settings_fps_60)
-                else -> getString(Res.string.settings_fps_unlimited)
+                FpsLimit.UNLIMITED -> getString(Res.string.settings_fps_unlimited)
+                FpsLimit.FPS_30 -> getString(Res.string.settings_fps_30)
+                FpsLimit.FPS_45 -> getString(Res.string.settings_fps_45)
+                FpsLimit.FPS_60 -> getString(Res.string.settings_fps_60)
             }
             sendEffect(
                 SettingsEffect.ShowToast(
@@ -488,19 +488,6 @@ class SettingsViewModel(
         }
     }
 
-    private fun backgroundTypeToInt(type: BackgroundType): Int = when (type) {
-        BackgroundType.DEFAULT -> 0
-        BackgroundType.IMAGE -> 1
-        BackgroundType.VIDEO -> 2
-        BackgroundType.COLOR -> 3
-    }
-
-    private fun intToBackgroundType(value: Int): BackgroundType = when (value) {
-        1 -> BackgroundType.IMAGE
-        2 -> BackgroundType.VIDEO
-        3 -> BackgroundType.COLOR
-        else -> BackgroundType.DEFAULT
-    }
 }
 
 private const val DEFAULT_RENDERER_ID = "native"

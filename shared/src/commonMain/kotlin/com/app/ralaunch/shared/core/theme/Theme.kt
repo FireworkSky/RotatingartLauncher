@@ -11,6 +11,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import com.app.ralaunch.shared.core.model.domain.ThemeMode
 import dev.chrisbanes.haze.HazeState
 import kotlin.math.roundToInt
 
@@ -231,22 +232,22 @@ val LocalExtendedColors = staticCompositionLocalOf { LightExtendedColors }
 /**
  * 应用主题 - 跨平台共享
  * 
- * @param themeMode 主题模式: 0=跟随系统, 1=深色, 2=浅色
+ * @param themeMode 主题模式
  * @param themeColor 主题颜色 (ARGB 整数)，用于动态生成颜色方案
- * @param darkTheme 是否深色模式（当 themeMode=0 时使用）
+ * @param darkTheme 是否深色模式（当主题模式跟随系统时使用）
  */
 @Composable
 fun RaLaunchTheme(
-    themeMode: Int = 0,
+    themeMode: ThemeMode = ThemeMode.FOLLOW_SYSTEM,
     themeColor: Int = 0xFF6750A4.toInt(),
     darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit
 ) {
     // 计算是否使用深色主题
     val useDarkTheme = when (themeMode) {
-        1 -> true   // 强制深色
-        2 -> false  // 强制浅色
-        else -> darkTheme // 跟随系统
+        ThemeMode.DARK -> true
+        ThemeMode.LIGHT -> false
+        ThemeMode.FOLLOW_SYSTEM -> darkTheme
     }
     
     // 根据种子颜色动态生成颜色方案（使用 remember 缓存，仅当 themeColor 或 useDarkTheme 变化时才重新计算）

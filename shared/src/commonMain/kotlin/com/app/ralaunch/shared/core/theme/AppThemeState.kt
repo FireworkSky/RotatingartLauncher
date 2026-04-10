@@ -1,9 +1,10 @@
 package com.app.ralaunch.shared.core.theme
 
+import com.app.ralaunch.shared.core.model.domain.BackgroundType
+import com.app.ralaunch.shared.core.model.domain.ThemeMode
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
 
 /**
  * 应用主题状态管理 - 跨平台
@@ -13,10 +14,10 @@ import kotlinx.coroutines.flow.update
 object AppThemeState {
     
     /**
-     * 主题模式: 0=跟随系统, 1=深色, 2=浅色
+     * 主题模式
      */
-    private val _themeMode = MutableStateFlow(0)
-    val themeMode: StateFlow<Int> = _themeMode.asStateFlow()
+    private val _themeMode = MutableStateFlow(ThemeMode.FOLLOW_SYSTEM)
+    val themeMode: StateFlow<ThemeMode> = _themeMode.asStateFlow()
     
     /**
      * 主题颜色 (ARGB 整数)
@@ -25,10 +26,10 @@ object AppThemeState {
     val themeColor: StateFlow<Int> = _themeColor.asStateFlow()
     
     /**
-     * 背景类型: 0=默认, 1=图片, 2=视频
+     * 背景类型
      */
-    private val _backgroundType = MutableStateFlow(0)
-    val backgroundType: StateFlow<Int> = _backgroundType.asStateFlow()
+    private val _backgroundType = MutableStateFlow(BackgroundType.DEFAULT)
+    val backgroundType: StateFlow<BackgroundType> = _backgroundType.asStateFlow()
     
     /**
      * 背景图片路径
@@ -56,7 +57,7 @@ object AppThemeState {
     
     // ==================== 更新方法 ====================
     
-    fun updateThemeMode(mode: Int) {
+    fun updateThemeMode(mode: ThemeMode) {
         _themeMode.value = mode
     }
     
@@ -64,7 +65,7 @@ object AppThemeState {
         _themeColor.value = color
     }
     
-    fun updateBackgroundType(type: Int) {
+    fun updateBackgroundType(type: BackgroundType) {
         _backgroundType.value = type
     }
     
@@ -88,7 +89,7 @@ object AppThemeState {
      * 恢复默认背景设置
      */
     fun restoreDefaultBackground() {
-        _backgroundType.value = 0
+        _backgroundType.value = BackgroundType.DEFAULT
         _backgroundImagePath.value = ""
         _backgroundVideoPath.value = ""
         _backgroundOpacity.value = 0
@@ -99,9 +100,9 @@ object AppThemeState {
      * 批量更新所有状态（用于初始化）
      */
     fun initializeState(
-        themeMode: Int = 0,
+        themeMode: ThemeMode = ThemeMode.FOLLOW_SYSTEM,
         themeColor: Int = 0xFF6750A4.toInt(),
-        backgroundType: Int = 0,
+        backgroundType: BackgroundType = BackgroundType.DEFAULT,
         backgroundImagePath: String = "",
         backgroundVideoPath: String = "",
         backgroundOpacity: Int = 0,

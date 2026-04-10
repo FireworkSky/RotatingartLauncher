@@ -1,41 +1,13 @@
 package com.app.ralaunch.shared.core.config
 
-/**
- * 主题模式
- */
-enum class ThemeMode(val value: Int, val displayName: String) {
-    SYSTEM(0, "跟随系统"),
-    DARK(1, "深色"),
-    LIGHT(2, "浅色");
-
-    companion object {
-        fun fromValue(value: Int): ThemeMode {
-            return entries.find { it.value == value } ?: SYSTEM
-        }
-    }
-}
-
-/**
- * 背景类型
- */
-enum class BackgroundType(val value: String, val displayName: String) {
-    DEFAULT("default", "默认"),
-    IMAGE("image", "图片"),
-    VIDEO("video", "视频"),
-    COLOR("color", "纯色");
-
-    companion object {
-        fun fromValue(value: String): BackgroundType {
-            return entries.find { it.value == value } ?: DEFAULT
-        }
-    }
-}
+import com.app.ralaunch.shared.core.model.domain.BackgroundType
+import com.app.ralaunch.shared.core.model.domain.ThemeMode
 
 /**
  * 主题配置数据类 - 跨平台
  */
 data class ThemeConfig(
-    val mode: ThemeMode = ThemeMode.SYSTEM,
+    val mode: ThemeMode = ThemeMode.FOLLOW_SYSTEM,
     val primaryColor: Int = DEFAULT_PRIMARY_COLOR,
     val backgroundType: BackgroundType = BackgroundType.DEFAULT,
     val backgroundColor: Int = DEFAULT_BACKGROUND_COLOR,
@@ -57,7 +29,7 @@ data class ThemeConfig(
      */
     fun isDarkMode(systemIsDark: Boolean): Boolean {
         return when (mode) {
-            ThemeMode.SYSTEM -> systemIsDark
+            ThemeMode.FOLLOW_SYSTEM -> systemIsDark
             ThemeMode.DARK -> true
             ThemeMode.LIGHT -> false
         }

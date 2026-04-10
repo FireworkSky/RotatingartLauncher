@@ -30,6 +30,7 @@ import com.app.ralaunch.core.common.util.AppLogger
 import com.app.ralaunch.core.common.util.DensityAdapter
 import com.app.ralaunch.core.common.util.LocaleManager
 import com.app.ralaunch.core.common.ErrorHandler
+import com.app.ralaunch.shared.core.model.domain.ThemeMode
 import com.app.ralaunch.shared.core.platform.AppConstants
 import org.libsdl.app.SDLActivity
 
@@ -213,10 +214,9 @@ class GameActivity : SDLActivity(), GameContract.View {
     private fun applyThemeMode() {
         val themeMode = SettingsAccess.themeMode
         val nightMode = when (themeMode) {
-            0 -> AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
-            1 -> AppCompatDelegate.MODE_NIGHT_YES
-            2 -> AppCompatDelegate.MODE_NIGHT_NO
-            else -> AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
+            ThemeMode.FOLLOW_SYSTEM -> AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
+            ThemeMode.DARK -> AppCompatDelegate.MODE_NIGHT_YES
+            ThemeMode.LIGHT -> AppCompatDelegate.MODE_NIGHT_NO
         }
         AppCompatDelegate.setDefaultNightMode(nightMode)
     }

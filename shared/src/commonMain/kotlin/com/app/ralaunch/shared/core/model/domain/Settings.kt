@@ -33,6 +33,35 @@ enum class BackgroundType(val value: String) {
 }
 
 /**
+ * 画质预设
+ */
+@Serializable
+enum class QualityLevel(val value: Int) {
+    HIGH(0),
+    MEDIUM(1),
+    LOW(2);
+
+    companion object {
+        fun fromValue(value: Int): QualityLevel = entries.find { it.value == value } ?: HIGH
+    }
+}
+
+/**
+ * 帧率限制
+ */
+@Serializable
+enum class FpsLimit(val value: Int) {
+    UNLIMITED(0),
+    FPS_30(30),
+    FPS_45(45),
+    FPS_60(60);
+
+    companion object {
+        fun fromValue(value: Int): FpsLimit = entries.find { it.value == value } ?: UNLIMITED
+    }
+}
+
+/**
  * 键盘类型
  */
 @Serializable

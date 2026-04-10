@@ -53,6 +53,7 @@ import com.app.ralaunch.core.common.PermissionManager
 import com.app.ralaunch.core.common.ThemeManager
 import com.app.ralaunch.core.common.MessageHelper
 import com.app.ralaunch.core.platform.android.provider.RaLaunchFileProvider
+import com.app.ralaunch.shared.core.model.domain.BackgroundType as SettingsBackgroundType
 import com.app.ralaunch.shared.core.platform.AppConstants
 import com.app.ralaunch.shared.core.navigation.*
 import com.app.ralaunch.shared.core.theme.AppThemeState
@@ -157,8 +158,10 @@ class MainActivityCompose : BaseActivity() {
             // 根据 AppThemeState 计算背景类型
             val backgroundType = remember(bgType, bgImagePath, bgVideoPath) {
                 when (bgType) {
-                    1 -> if (bgImagePath.isNotEmpty()) BackgroundType.Image(bgImagePath) else BackgroundType.None
-                    2 -> if (bgVideoPath.isNotEmpty()) BackgroundType.Video(bgVideoPath) else BackgroundType.None
+                    SettingsBackgroundType.IMAGE ->
+                        if (bgImagePath.isNotEmpty()) BackgroundType.Image(bgImagePath) else BackgroundType.None
+                    SettingsBackgroundType.VIDEO ->
+                        if (bgVideoPath.isNotEmpty()) BackgroundType.Video(bgVideoPath) else BackgroundType.None
                     else -> BackgroundType.None
                 }
             }
@@ -324,18 +327,13 @@ class MainActivityCompose : BaseActivity() {
      */
     private fun initializeThemeState() {
         val settings = SettingsAccess
-        val bgType = when (settings.backgroundType?.lowercase()) {
-            "image" -> 1
-            "video" -> 2
-            else -> 0
-        }
-        
+
         AppThemeState.initializeState(
             themeMode = settings.themeMode,
             themeColor = settings.themeColor,
-            backgroundType = bgType,
-            backgroundImagePath = settings.backgroundImagePath ?: "",
-            backgroundVideoPath = settings.backgroundVideoPath ?: "",
+            backgroundType = settings.backgroundType,
+            backgroundImagePath = settings.backgroundImagePath,
+            backgroundVideoPath = settings.backgroundVideoPath,
             backgroundOpacity = settings.backgroundOpacity,
             videoPlaybackSpeed = settings.videoPlaybackSpeed
         )

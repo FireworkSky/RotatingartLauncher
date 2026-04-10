@@ -26,6 +26,7 @@ import com.app.ralaunch.core.common.DynamicColorManager
 import com.app.ralaunch.feature.controls.textures.TextureLoader
 import com.app.ralaunch.core.common.util.DensityAdapter
 import com.app.ralaunch.core.common.util.LocaleManager
+import com.app.ralaunch.shared.core.model.domain.ThemeMode
 import java.io.File
 import java.io.FileOutputStream
 
@@ -77,9 +78,11 @@ class ControlEditorActivity : AppCompatActivity() {
 
         // 应用其他主题设置
         AppCompatDelegate.setDefaultNightMode(
-            if (settingsManager.themeMode == 0) AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM 
-            else if (settingsManager.themeMode == 1) AppCompatDelegate.MODE_NIGHT_YES 
-            else AppCompatDelegate.MODE_NIGHT_NO
+            when (settingsManager.themeMode) {
+                ThemeMode.FOLLOW_SYSTEM -> AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
+                ThemeMode.DARK -> AppCompatDelegate.MODE_NIGHT_YES
+                ThemeMode.LIGHT -> AppCompatDelegate.MODE_NIGHT_NO
+            }
         )
 
         super.onCreate(savedInstanceState)

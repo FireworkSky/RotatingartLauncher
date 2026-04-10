@@ -8,12 +8,11 @@ import android.os.Looper
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.fragment.app.DialogFragment
-import com.app.ralaunch.core.common.SettingsAccess
-import com.app.ralaunch.shared.core.config.BackgroundType
 import com.app.ralaunch.shared.core.config.IThemeManager
 import com.app.ralaunch.shared.core.config.ThemeConfig
-import com.app.ralaunch.shared.core.config.ThemeMode
 import com.app.ralaunch.core.common.util.AppLogger
+import com.app.ralaunch.shared.core.model.domain.BackgroundType
+import com.app.ralaunch.shared.core.model.domain.ThemeMode
 
 /**
  * 主题管理器 - Android 实现
@@ -43,9 +42,12 @@ class ThemeManager(private val activity: AppCompatActivity) : IThemeManager {
      */
     private fun applyNightMode() {
         when (settingsManager.themeMode) {
-            0 -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
-            1 -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
-            2 -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
+            ThemeMode.FOLLOW_SYSTEM ->
+                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
+            ThemeMode.DARK ->
+                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
+            ThemeMode.LIGHT ->
+                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
         }
     }
 
@@ -85,10 +87,10 @@ class ThemeManager(private val activity: AppCompatActivity) : IThemeManager {
         AppLogger.info(TAG, "applyBackgroundFromSettings - type: $type")
 
         when (type) {
-            "video" -> applyVideoBackground()
-            "image" -> applyImageBackground()
-            "color" -> applyColorBackground()
-            else -> applyDefaultBackground()
+            BackgroundType.VIDEO -> applyVideoBackground()
+            BackgroundType.IMAGE -> applyImageBackground()
+            BackgroundType.COLOR -> applyColorBackground()
+            BackgroundType.DEFAULT -> applyDefaultBackground()
         }
     }
 
@@ -128,7 +130,7 @@ class ThemeManager(private val activity: AppCompatActivity) : IThemeManager {
      * 检查是否使用视频背景
      */
     val isVideoBackground: Boolean
-        get() = settingsManager.backgroundType == "video"
+        get() = settingsManager.backgroundType == BackgroundType.VIDEO
 
     /**
      * 获取视频背景路径
@@ -140,7 +142,7 @@ class ThemeManager(private val activity: AppCompatActivity) : IThemeManager {
      * 处理配置变化（主题切换）
      */
     fun handleConfigurationChanged(newConfig: Configuration) {
-        if (settingsManager.themeMode != 0) return
+        if (settingsManager.themeMode != ThemeMode.FOLLOW_SYSTEM) return
 
         // 先关闭所有对话框
         activity.supportFragmentManager.fragments.forEach { fragment ->
@@ -159,9 +161,9 @@ class ThemeManager(private val activity: AppCompatActivity) : IThemeManager {
 
     override fun getThemeConfig(): ThemeConfig {
         return ThemeConfig(
-            mode = ThemeMode.fromValue(settingsManager.themeMode),
+            mode = settingsManager.themeMode,
             primaryColor = settingsManager.themeColor,
-            backgroundType = BackgroundType.fromValue(settingsManager.backgroundType ?: "default"),
+            backgroundType = settingsManager.backgroundType,
             backgroundColor = settingsManager.backgroundColor,
             backgroundImagePath = settingsManager.backgroundImagePath,
             backgroundVideoPath = settingsManager.backgroundVideoPath,
@@ -170,7 +172,7 @@ class ThemeManager(private val activity: AppCompatActivity) : IThemeManager {
     }
 
     override fun setThemeMode(mode: ThemeMode) {
-        settingsManager.themeMode = mode.value
+        settingsManager.themeMode = mode
         applyNightMode()
     }
 
@@ -179,7 +181,7 @@ class ThemeManager(private val activity: AppCompatActivity) : IThemeManager {
     }
 
     override fun setBackgroundType(type: BackgroundType) {
-        settingsManager.backgroundType = type.value
+        settingsManager.backgroundType = type
         applyBackgroundFromSettings()
     }
 

@@ -32,17 +32,17 @@ object SettingsAccess {
     // ==================== 便捷方法 ====================
 
     // 主题设置
-    var themeMode: Int
-        get() = settings.themeMode.value
-        set(value) = update { themeMode = ThemeMode.fromValue(value) }
+    var themeMode: ThemeMode
+        get() = settings.themeMode
+        set(value) = update { themeMode = value }
 
     var themeColor: Int
         get() = settings.themeColor
         set(value) = update { themeColor = value }
 
-    var backgroundType: String
-        get() = settings.backgroundType.value
-        set(value) = update { backgroundType = BackgroundType.fromValue(value) }
+    var backgroundType: BackgroundType
+        get() = settings.backgroundType
+        set(value) = update { backgroundType = value }
 
     val backgroundColor: Int
         get() = settings.backgroundColor

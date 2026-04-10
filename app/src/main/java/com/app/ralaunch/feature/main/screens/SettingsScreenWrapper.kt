@@ -6,11 +6,8 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -24,7 +21,47 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.Audiotrack
+import androidx.compose.material.icons.filled.BugReport
+import androidx.compose.material.icons.filled.Code
+import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.DeleteSweep
+import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.Extension
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FilterAlt
+import androidx.compose.material.icons.filled.Forum
+import androidx.compose.material.icons.filled.Gamepad
+import androidx.compose.material.icons.filled.Group
+import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Language
+import androidx.compose.material.icons.filled.Layers
+import androidx.compose.material.icons.filled.Memory
+import androidx.compose.material.icons.filled.Mouse
+import androidx.compose.material.icons.filled.Opacity
+import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.People
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.RestartAlt
+import androidx.compose.material.icons.filled.Restore
+import androidx.compose.material.icons.filled.Security
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Speed
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.Storage
+import androidx.compose.material.icons.filled.Sync
+import androidx.compose.material.icons.filled.Timeline
+import androidx.compose.material.icons.filled.TouchApp
+import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material.icons.filled.Tv
+import androidx.compose.material.icons.filled.Update
+import androidx.compose.material.icons.filled.VerifiedUser
+import androidx.compose.material.icons.filled.VideoLibrary
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.Wifi
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
@@ -32,14 +69,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -48,7 +84,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource as androidStringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -58,6 +93,7 @@ import androidx.lifecycle.ViewModelStoreOwner
 import com.app.ralaunch.R
 import com.app.ralaunch.core.common.SettingsAccess
 import com.app.ralaunch.core.common.util.AssetIntegrityChecker
+import com.app.ralaunch.core.common.util.LocaleManager
 import com.app.ralaunch.core.platform.runtime.RuntimeLibraryLoader
 import com.app.ralaunch.core.platform.runtime.renderer.RendererRegistry
 import com.app.ralaunch.core.ui.dialog.PatchManagementDialogCompose
@@ -67,8 +103,13 @@ import com.app.ralaunch.shared.core.component.dialogs.LogViewerDialog
 import com.app.ralaunch.shared.core.component.dialogs.RendererSelectDialog
 import com.app.ralaunch.shared.core.component.dialogs.ThemeColorSelectDialog
 import com.app.ralaunch.shared.core.contract.repository.SettingsRepositoryV2
+import com.app.ralaunch.shared.core.model.domain.BackgroundType
+import com.app.ralaunch.shared.core.model.domain.FpsLimit
+import com.app.ralaunch.shared.core.model.domain.QualityLevel
+import com.app.ralaunch.shared.core.model.domain.ThemeMode
 import com.app.ralaunch.shared.core.theme.AppThemeState
 import com.app.ralaunch.shared.feature.settings.AppInfo
+import com.app.ralaunch.shared.feature.settings.ClickableSettingItem
 import com.app.ralaunch.shared.feature.settings.SettingsCategory
 import com.app.ralaunch.shared.feature.settings.SettingsDivider
 import com.app.ralaunch.shared.feature.settings.SettingsEffect
@@ -77,14 +118,13 @@ import com.app.ralaunch.shared.feature.settings.SettingsScreenContent
 import com.app.ralaunch.shared.feature.settings.SettingsSection
 import com.app.ralaunch.shared.feature.settings.SettingsUiState
 import com.app.ralaunch.shared.feature.settings.SettingsViewModel
-import com.app.ralaunch.shared.feature.settings.ClickableSettingItem
 import com.app.ralaunch.shared.feature.settings.SliderSettingItem
 import com.app.ralaunch.shared.feature.settings.SwitchSettingItem
-import com.app.ralaunch.core.common.util.LocaleManager
 import kotlinx.coroutines.launch
 import org.koin.java.KoinJavaComponent
 import java.util.Locale
 import kotlin.math.roundToInt
+import androidx.compose.ui.res.stringResource as androidStringResource
 
 @Composable
 fun SettingsScreenWrapper(
@@ -184,22 +224,16 @@ private fun SettingsPaneColumn(
 }
 
 @Composable
-private fun boolLabel(enabled: Boolean): String {
-    return androidStringResource(if (enabled) R.string.common_on else R.string.common_off)
-}
-
-@Composable
 private fun languageLabel(languageCode: String): String {
     return LocaleManager.getLanguageDisplayName(languageCode)
 }
 
 @Composable
-private fun themeModeLabel(mode: Int): String {
+private fun themeModeLabel(mode: ThemeMode): String {
     return when (mode) {
-        0 -> androidStringResource(R.string.settings_appearance_theme_mode_system)
-        1 -> androidStringResource(R.string.settings_appearance_theme_mode_dark)
-        2 -> androidStringResource(R.string.settings_appearance_theme_mode_light)
-        else -> androidStringResource(R.string.settings_appearance_theme_mode_system)
+        ThemeMode.FOLLOW_SYSTEM -> androidStringResource(R.string.settings_appearance_theme_mode_system)
+        ThemeMode.DARK -> androidStringResource(R.string.settings_appearance_theme_mode_dark)
+        ThemeMode.LIGHT -> androidStringResource(R.string.settings_appearance_theme_mode_light)
     }
 }
 
@@ -241,7 +275,8 @@ private fun AppearanceSettingsPane(
                     value = themeModeLabel(themeMode),
                     icon = Icons.Default.DarkMode,
                     onClick = {
-                        val nextMode = (themeMode + 1) % 3
+                        val nextModeIndex = (ThemeMode.entries.indexOf(themeMode) + 1) % ThemeMode.entries.size
+                        val nextMode = ThemeMode.entries[nextModeIndex]
                         SettingsAccess.themeMode = nextMode
                         viewModel.onEvent(SettingsEvent.SetThemeMode(nextMode))
                         AppThemeState.updateThemeMode(nextMode)
@@ -262,7 +297,7 @@ private fun AppearanceSettingsPane(
             SettingsSection(title = androidStringResource(R.string.settings_appearance_background_section)) {
                 ClickableSettingItem(
                     title = androidStringResource(R.string.settings_appearance_background_image_title),
-                    subtitle = if (backgroundType == 1) {
+                    subtitle = if (backgroundType == BackgroundType.IMAGE) {
                         androidStringResource(R.string.settings_appearance_background_set)
                     } else {
                         androidStringResource(R.string.settings_appearance_background_select_image)
@@ -275,7 +310,7 @@ private fun AppearanceSettingsPane(
 
                 ClickableSettingItem(
                     title = androidStringResource(R.string.settings_appearance_background_video_title),
-                    subtitle = if (backgroundType == 2) {
+                    subtitle = if (backgroundType == BackgroundType.VIDEO) {
                         androidStringResource(R.string.settings_appearance_background_set)
                     } else {
                         androidStringResource(R.string.settings_appearance_background_select_video)
@@ -284,7 +319,7 @@ private fun AppearanceSettingsPane(
                     onClick = { videoPickerLauncher.launch("video/*") }
                 )
 
-                if (backgroundType != 0) {
+                if (backgroundType != BackgroundType.DEFAULT) {
                     SettingsDivider()
 
                     SliderSettingItem(
@@ -292,8 +327,8 @@ private fun AppearanceSettingsPane(
                         subtitle = androidStringResource(R.string.settings_appearance_background_opacity_subtitle),
                         icon = Icons.Default.Opacity,
                         value = backgroundOpacity.toFloat(),
-                        valueRange = 0f..100f,
-                        steps = 9,
+                        valueRange = BACKGROUND_OPACITY_RANGE,
+                        steps = BACKGROUND_OPACITY_STEP_COUNT,
                         valueLabel = "$backgroundOpacity%",
                         onValueChange = {
                             val opacity = it.toInt()
@@ -303,7 +338,7 @@ private fun AppearanceSettingsPane(
                     )
                 }
 
-                if (backgroundType == 2) {
+                if (backgroundType == BackgroundType.VIDEO) {
                     SettingsDivider()
 
                     SliderSettingItem(
@@ -311,8 +346,8 @@ private fun AppearanceSettingsPane(
                         subtitle = androidStringResource(R.string.settings_appearance_video_speed_subtitle),
                         icon = Icons.Default.Speed,
                         value = videoPlaybackSpeed,
-                        valueRange = 0.5f..2.0f,
-                        steps = 5,
+                        valueRange = VIDEO_PLAYBACK_SPEED_RANGE,
+                        steps = VIDEO_PLAYBACK_SPEED_STEP_COUNT,
                         valueLabel = String.format(Locale.US, "%.1fx", videoPlaybackSpeed),
                         onValueChange = { speed ->
                             viewModel.onEvent(SettingsEvent.SetVideoPlaybackSpeed(speed))
@@ -321,7 +356,7 @@ private fun AppearanceSettingsPane(
                     )
                 }
 
-                if (backgroundType != 0) {
+                if (backgroundType != BackgroundType.DEFAULT) {
                     SettingsDivider()
 
                     ClickableSettingItem(
@@ -449,16 +484,16 @@ private fun GameSettingsPane(
 ) {
     var showRendererDialog by remember { mutableStateOf(false) }
     val availableRenderers = remember { buildRendererOptions() }
-    val qualityNames = listOf(
-        androidStringResource(R.string.settings_quality_high),
-        androidStringResource(R.string.settings_quality_medium),
-        androidStringResource(R.string.settings_quality_low)
+    val qualityOptions = listOf(
+        QualityLevel.HIGH to androidStringResource(R.string.settings_quality_high),
+        QualityLevel.MEDIUM to androidStringResource(R.string.settings_quality_medium),
+        QualityLevel.LOW to androidStringResource(R.string.settings_quality_low)
     )
     val fpsOptions = listOf(
-        0 to androidStringResource(R.string.settings_fps_unlimited),
-        30 to androidStringResource(R.string.settings_fps_30),
-        45 to androidStringResource(R.string.settings_fps_45),
-        60 to androidStringResource(R.string.settings_fps_60)
+        FpsLimit.UNLIMITED to androidStringResource(R.string.settings_fps_unlimited),
+        FpsLimit.FPS_30 to androidStringResource(R.string.settings_fps_30),
+        FpsLimit.FPS_45 to androidStringResource(R.string.settings_fps_45),
+        FpsLimit.FPS_60 to androidStringResource(R.string.settings_fps_60)
     )
     with(uiState) {
         val currentFpsName = fpsOptions.find { it.first == targetFps }?.second
@@ -491,8 +526,8 @@ private fun GameSettingsPane(
                     subtitle = androidStringResource(R.string.settings_game_audio_buffer_subtitle),
                     icon = Icons.Default.Tune,
                     value = audioBufferSizeToSliderPosition(ralAudioBufferSize),
-                    valueRange = 0f..7f,
-                    steps = 6,
+                    valueRange = audioBufferSizeSliderRange(),
+                    steps = audioBufferSizeSliderSteps(),
                     valueLabel = ralAudioBufferSize?.toString()
                         ?: androidStringResource(R.string.common_auto),
                     onValueChange = {
@@ -515,11 +550,15 @@ private fun GameSettingsPane(
                 ClickableSettingItem(
                     title = androidStringResource(R.string.settings_game_quality_preset_title),
                     subtitle = androidStringResource(R.string.settings_game_quality_preset_subtitle),
-                    value = qualityNames.getOrElse(qualityLevel) { qualityNames.first() },
+                    value = qualityOptions.find { it.first == qualityLevel }?.second
+                        ?: qualityOptions.first().second,
                     icon = Icons.Default.Tune,
                     onClick = {
+                        val currentIndex = qualityOptions.indexOfFirst { it.first == qualityLevel }
+                            .takeIf { it >= 0 } ?: 0
+                        val nextIndex = (currentIndex + 1) % qualityOptions.size
                         viewModel.onEvent(
-                            SettingsEvent.SetQualityLevel((qualityLevel + 1) % qualityNames.size)
+                            SettingsEvent.SetQualityLevel(qualityOptions[nextIndex].first)
                         )
                     }
                 )
@@ -543,6 +582,7 @@ private fun GameSettingsPane(
                     icon = Icons.Default.Speed,
                     onClick = {
                         val currentIndex = fpsOptions.indexOfFirst { it.first == targetFps }
+                            .takeIf { it >= 0 } ?: 0
                         val nextIndex = (currentIndex + 1) % fpsOptions.size
                         viewModel.onEvent(SettingsEvent.SetTargetFps(fpsOptions[nextIndex].first))
                     }
@@ -1210,8 +1250,18 @@ private data class SettingsContributor(
     val githubUrl: String
 )
 
+private val BACKGROUND_OPACITY_RANGE = 0f..100f
+private const val BACKGROUND_OPACITY_STEP_COUNT = 9
+private val VIDEO_PLAYBACK_SPEED_RANGE = 0.5f..2.0f
+private const val VIDEO_PLAYBACK_SPEED_STEP_COUNT = 5
 private val AUDIO_BUFFER_SIZE_OPTIONS: List<Int?> =
     listOf(null) + (4..10).map { 1 shl it }
+
+private fun audioBufferSizeSliderRange(): ClosedFloatingPointRange<Float> =
+    0f..AUDIO_BUFFER_SIZE_OPTIONS.lastIndex.toFloat()
+
+private fun audioBufferSizeSliderSteps(): Int =
+    (AUDIO_BUFFER_SIZE_OPTIONS.size - 2).coerceAtLeast(0)
 
 private fun audioBufferSizeToSliderPosition(bufferSize: Int?): Float {
     val index = AUDIO_BUFFER_SIZE_OPTIONS.indexOf(bufferSize).takeIf { it >= 0 } ?: 0
