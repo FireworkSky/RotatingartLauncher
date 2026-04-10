@@ -32,7 +32,6 @@ import com.app.ralaunch.core.common.util.LocaleManager
 import com.app.ralaunch.core.common.ErrorHandler
 import com.app.ralaunch.shared.core.platform.AppConstants
 import org.libsdl.app.SDLActivity
-import com.app.ralaunch.core.platform.runtime.DeviceOptimizationEngine
 import com.app.ralaunch.core.platform.runtime.BlackBoxLogger
 import com.app.ralaunch.core.platform.runtime.GameBoost
 
@@ -147,8 +146,6 @@ class GameActivity : SDLActivity(), GameContract.View {
 
         val prefs = getSharedPreferences("RAL_Settings", Context.MODE_PRIVATE)
         val selectedRenderer = prefs.getString("CHOOSEN_RENDERER", "native") ?: "native"
-
-        DeviceOptimizationEngine.prepareGameEnvironment(this, selectedRenderer)
 
         GameBoost.ignite(this)
 
