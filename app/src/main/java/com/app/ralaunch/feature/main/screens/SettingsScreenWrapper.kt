@@ -87,28 +87,24 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelStoreOwner
 import com.app.ralaunch.R
 import com.app.ralaunch.core.common.SettingsAccess
 import com.app.ralaunch.core.common.util.AssetIntegrityChecker
 import com.app.ralaunch.core.common.util.LocaleManager
 import com.app.ralaunch.core.platform.runtime.RuntimeLibraryLoader
-import com.app.ralaunch.core.platform.runtime.renderer.RendererRegistry
+import com.app.ralaunch.shared.core.platform.runtime.renderer.AndroidRendererRegistry
 import com.app.ralaunch.core.ui.dialog.PatchManagementDialogCompose
 import com.app.ralaunch.shared.core.component.dialogs.LanguageSelectDialog
 import com.app.ralaunch.shared.core.component.dialogs.LicenseDialog
 import com.app.ralaunch.shared.core.component.dialogs.LogViewerDialog
 import com.app.ralaunch.shared.core.component.dialogs.RendererSelectDialog
 import com.app.ralaunch.shared.core.component.dialogs.ThemeColorSelectDialog
-import com.app.ralaunch.shared.core.contract.repository.SettingsRepositoryV2
 import com.app.ralaunch.shared.core.model.domain.BackgroundType
 import com.app.ralaunch.shared.core.model.domain.FpsLimit
 import com.app.ralaunch.shared.core.model.domain.QualityLevel
 import com.app.ralaunch.shared.core.model.domain.ThemeMode
 import com.app.ralaunch.shared.core.theme.AppThemeState
-import com.app.ralaunch.shared.feature.settings.AppInfo
 import com.app.ralaunch.shared.feature.settings.ClickableSettingItem
 import com.app.ralaunch.shared.feature.settings.SettingsCategory
 import com.app.ralaunch.shared.feature.settings.SettingsDivider
@@ -121,7 +117,7 @@ import com.app.ralaunch.shared.feature.settings.SettingsViewModel
 import com.app.ralaunch.shared.feature.settings.SliderSettingItem
 import com.app.ralaunch.shared.feature.settings.SwitchSettingItem
 import kotlinx.coroutines.launch
-import org.koin.java.KoinJavaComponent
+import org.koin.compose.viewmodel.koinViewModel
 import java.util.Locale
 import kotlin.math.roundToInt
 import androidx.compose.ui.res.stringResource as androidStringResource
@@ -132,26 +128,11 @@ fun SettingsScreenWrapper(
 ) {
     val context = LocalContext.current
     val activity = context as? Activity ?: return
-    val settingsRepository: SettingsRepositoryV2 = remember {
-        KoinJavaComponent.get(SettingsRepositoryV2::class.java)
-    }
-    val viewModel: SettingsViewModel = remember {
-        val appInfo: AppInfo = KoinJavaComponent.getOrNull(AppInfo::class.java) ?: AppInfo()
-        ViewModelProvider(
-            activity as ViewModelStoreOwner,
-            object : ViewModelProvider.Factory {
-                @Suppress("UNCHECKED_CAST")
-                override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                    return SettingsViewModel(
-                        settingsRepository = settingsRepository,
-                        appInfo = appInfo
-                    ) as T
-                }
-            }
-        )[SettingsViewModel::class.java]
-    }
+    val viewModelStoreOwner = activity as? ViewModelStoreOwner ?: return
+    val viewModel: SettingsViewModel = koinViewModel(
+        viewModelStoreOwner = viewModelStoreOwner
+    )
     val uiState by viewModel.uiState.collectAsState()
-    val multiplayerState = remember { mutableStateOf(settingsRepository.Settings.multiplayerEnabled) }
     val assetStatusSummaryState = remember { mutableStateOf("") }
 
     LaunchedEffect(Unit) {
@@ -190,8 +171,8 @@ fun SettingsScreenWrapper(
             )
 
             SettingsCategory.LAUNCHER -> LauncherSettingsPane(
-                settingsRepository = settingsRepository,
-                multiplayerState = multiplayerState,
+                viewModel = viewModel,
+                uiState = uiState,
                 assetStatusSummaryState = assetStatusSummaryState
             )
 
@@ -540,7 +521,7 @@ private fun GameSettingsPane(
                 ClickableSettingItem(
                     title = androidStringResource(R.string.renderer_title),
                     subtitle = androidStringResource(R.string.renderer_desc),
-                    value = RendererRegistry.getRendererDisplayName(rendererType),
+                    value = AndroidRendererRegistry.getRendererDisplayName(rendererType),
                     icon = Icons.Default.Tv,
                     onClick = { showRendererDialog = true }
                 )
@@ -606,8 +587,8 @@ private fun GameSettingsPane(
 
 @Composable
 private fun LauncherSettingsPane(
-    settingsRepository: SettingsRepositoryV2,
-    multiplayerState: MutableState<Boolean>,
+    viewModel: SettingsViewModel,
+    uiState: SettingsUiState,
     assetStatusSummaryState: MutableState<String>
 ) {
     val context = LocalContext.current
@@ -619,7 +600,6 @@ private fun LauncherSettingsPane(
     var isCheckingAssets by remember { mutableStateOf(false) }
     var showReExtractConfirmDialog by remember { mutableStateOf(false) }
     var isReExtracting by remember { mutableStateOf(false) }
-    val multiplayerEnabled = multiplayerState.value
     val assetStatusSummary = assetStatusSummaryState.value
 
     SettingsPaneColumn {
@@ -671,22 +651,16 @@ private fun LauncherSettingsPane(
                 title = androidStringResource(R.string.settings_launcher_enable_multiplayer_title),
                 subtitle = androidStringResource(R.string.settings_launcher_enable_multiplayer_subtitle),
                 icon = Icons.Default.Wifi,
-                checked = multiplayerEnabled,
+                checked = uiState.multiplayerEnabled,
                 onCheckedChange = { enabled ->
                     if (enabled) {
-                        if (!settingsRepository.Settings.multiplayerDisclaimerAccepted) {
+                        if (!uiState.multiplayerDisclaimerAccepted) {
                             showMultiplayerDisclaimerDialog = true
                         } else {
-                            multiplayerState.value = true
-                            scope.launch {
-                                settingsRepository.update { this.multiplayerEnabled = true }
-                            }
+                            viewModel.onEvent(SettingsEvent.SetMultiplayerEnabled(true))
                         }
                     } else {
-                        multiplayerState.value = false
-                        scope.launch {
-                            settingsRepository.update { this.multiplayerEnabled = false }
-                        }
+                        viewModel.onEvent(SettingsEvent.SetMultiplayerEnabled(false))
                     }
                 }
             )
@@ -720,14 +694,8 @@ private fun LauncherSettingsPane(
     if (showMultiplayerDisclaimerDialog) {
         MultiplayerDisclaimerDialog(
             onConfirm = {
-                multiplayerState.value = true
                 showMultiplayerDisclaimerDialog = false
-                scope.launch {
-                    settingsRepository.update {
-                        this.multiplayerDisclaimerAccepted = true
-                        this.multiplayerEnabled = true
-                    }
-                }
+                viewModel.onEvent(SettingsEvent.AcceptMultiplayerDisclaimer)
                 Toast.makeText(
                     context,
                     context.getString(R.string.settings_multiplayer_enabled),

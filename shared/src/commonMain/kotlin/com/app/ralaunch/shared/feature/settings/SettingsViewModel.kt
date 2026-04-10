@@ -2,7 +2,7 @@ package com.app.ralaunch.shared.feature.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.app.ralaunch.core.platform.runtime.renderer.RendererRegistry
+import com.app.ralaunch.shared.core.platform.runtime.renderer.RendererRegistry
 import com.app.ralaunch.shared.core.model.domain.BackgroundType
 import com.app.ralaunch.shared.core.model.domain.FpsLimit
 import com.app.ralaunch.shared.core.model.domain.QualityLevel
@@ -45,6 +45,10 @@ data class SettingsUiState(
     val lowLatencyAudioEnabled: Boolean = false,
     val ralAudioBufferSize: Int? = null,
     val rendererType: String = DEFAULT_RENDERER_ID,
+
+    // 启动器设置
+    val multiplayerEnabled: Boolean = false,
+    val multiplayerDisclaimerAccepted: Boolean = false,
 
     // 画质设置
     val qualityLevel: QualityLevel = QualityLevel.HIGH,
@@ -94,7 +98,11 @@ sealed class SettingsEvent {
     data class SetLowLatencyAudio(val enabled: Boolean) : SettingsEvent()
     data class SetRalAudioBufferSize(val size: Int?) : SettingsEvent()
     data class SetRenderer(val renderer: String) : SettingsEvent()
-    
+
+    // 启动器
+    data class SetMultiplayerEnabled(val enabled: Boolean) : SettingsEvent()
+    data object AcceptMultiplayerDisclaimer : SettingsEvent()
+
     // 画质
     data class SetQualityLevel(val level: QualityLevel) : SettingsEvent()
     data class SetShaderLowPrecision(val enabled: Boolean) : SettingsEvent()
@@ -165,7 +173,11 @@ class SettingsViewModel(
             is SettingsEvent.SetLowLatencyAudio -> setLowLatencyAudio(event.enabled)
             is SettingsEvent.SetRalAudioBufferSize -> setRalAudioBufferSize(event.size)
             is SettingsEvent.SetRenderer -> setRenderer(event.renderer)
-            
+
+            // 启动器
+            is SettingsEvent.SetMultiplayerEnabled -> setMultiplayerEnabled(event.enabled)
+            is SettingsEvent.AcceptMultiplayerDisclaimer -> acceptMultiplayerDisclaimer()
+
             // 画质
             is SettingsEvent.SetQualityLevel -> setQualityLevel(event.level)
             is SettingsEvent.SetShaderLowPrecision -> setShaderLowPrecision(event.enabled)
@@ -211,6 +223,9 @@ class SettingsViewModel(
                     lowLatencyAudioEnabled = settings.sdlAaudioLowLatency,
                     ralAudioBufferSize = normalizeRalAudioBufferSize(settings.ralAudioBufferSize),
                     rendererType = RendererRegistry.normalizeRendererId(settings.fnaRenderer),
+                    // 启动器
+                    multiplayerEnabled = settings.multiplayerEnabled,
+                    multiplayerDisclaimerAccepted = settings.multiplayerDisclaimerAccepted,
                     // 画质
                     qualityLevel = QualityLevel.fromValue(settings.qualityLevel),
                     shaderLowPrecision = settings.shaderLowPrecision,
@@ -372,6 +387,30 @@ class SettingsViewModel(
         viewModelScope.launch {
             settingsRepository.update { fnaRenderer = normalized }
             _uiState.update { it.copy(rendererType = normalized) }
+        }
+    }
+
+    // ==================== 启动器设置 ====================
+
+    private fun setMultiplayerEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            settingsRepository.update { multiplayerEnabled = enabled }
+            _uiState.update { it.copy(multiplayerEnabled = enabled) }
+        }
+    }
+
+    private fun acceptMultiplayerDisclaimer() {
+        viewModelScope.launch {
+            settingsRepository.update {
+                multiplayerDisclaimerAccepted = true
+                multiplayerEnabled = true
+            }
+            _uiState.update {
+                it.copy(
+                    multiplayerDisclaimerAccepted = true,
+                    multiplayerEnabled = true
+                )
+            }
         }
     }
 

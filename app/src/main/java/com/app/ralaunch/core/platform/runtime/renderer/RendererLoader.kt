@@ -4,6 +4,8 @@ import android.content.Context
 import android.system.Os
 import com.app.ralaunch.core.platform.runtime.EnvVarsManager
 import com.app.ralaunch.core.common.util.AppLogger
+import com.app.ralaunch.shared.core.platform.runtime.renderer.AndroidRendererRegistry
+import com.app.ralaunch.shared.core.platform.runtime.renderer.RendererRegistry
 
 /**
  * 渲染器加载器 - 基于环境变量的简化实现
@@ -14,23 +16,23 @@ object RendererLoader {
     fun loadRenderer(context: Context, renderer: String): Boolean {
         return try {
             val normalizedRenderer = RendererRegistry.normalizeRendererId(renderer)
-            val rendererInfo = RendererRegistry.getRendererInfo(normalizedRenderer)
+            val rendererInfo = AndroidRendererRegistry.getRendererInfo(normalizedRenderer)
             if (rendererInfo == null) {
                 AppLogger.error(TAG, "Unknown renderer: $renderer")
                 return false
             }
 
-            if (!RendererRegistry.isRendererCompatible(normalizedRenderer)) {
+            if (!AndroidRendererRegistry.isRendererCompatible(normalizedRenderer)) {
                 AppLogger.error(TAG, "Renderer is not compatible with this device")
                 return false
             }
 
-            val envMap = RendererRegistry.buildRendererEnv(normalizedRenderer)
+            val envMap = AndroidRendererRegistry.buildRendererEnv(normalizedRenderer)
             EnvVarsManager.quickSetEnvVars(envMap)
 
             if (rendererInfo.needsPreload && rendererInfo.eglLibrary != null) {
                 try {
-                    val eglLibPath = RendererRegistry.getRendererLibraryPath(rendererInfo.eglLibrary)
+                    val eglLibPath = AndroidRendererRegistry.getRendererLibraryPath(rendererInfo.eglLibrary)
                     EnvVarsManager.quickSetEnvVar("FNA3D_OPENGL_LIBRARY", eglLibPath)
                 } catch (e: UnsatisfiedLinkError) {
                     AppLogger.error(TAG, "Failed to preload renderer library: ${e.message}")

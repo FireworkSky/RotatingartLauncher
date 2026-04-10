@@ -1,4 +1,4 @@
-package com.app.ralaunch.core.platform.runtime.renderer
+package com.app.ralaunch.shared.core.platform.runtime.renderer
 
 import android.content.Context
 import android.os.Build

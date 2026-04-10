@@ -8,7 +8,7 @@ import android.widget.Toast
 import androidx.core.content.FileProvider
 import com.app.ralaunch.R
 import com.app.ralaunch.feature.patch.data.PatchManager
-import com.app.ralaunch.core.platform.runtime.renderer.RendererRegistry
+import com.app.ralaunch.shared.core.platform.runtime.renderer.AndroidRendererRegistry
 import com.app.ralaunch.core.common.util.LogExportHelper
 import com.app.ralaunch.core.platform.android.provider.RaLaunchFileProvider
 import com.app.ralaunch.shared.core.component.dialogs.RendererOption
@@ -343,12 +343,12 @@ internal fun isChineseLanguage(context: Context): Boolean {
 
 internal fun buildRendererOptions(): List<RendererOption> {
     return buildList {
-        RendererRegistry.getCompatibleRenderers().forEach { info ->
+        AndroidRendererRegistry.getCompatibleRenderers().forEach { info ->
             add(
                 RendererOption(
                     renderer = info.id,
-                    name = RendererRegistry.getRendererDisplayName(info.id),
-                    description = RendererRegistry.getRendererDescription(info.id)
+                    name = AndroidRendererRegistry.getRendererDisplayName(info.id),
+                    description = AndroidRendererRegistry.getRendererDescription(info.id)
                 )
             )
         }
