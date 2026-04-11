@@ -1,4 +1,4 @@
-package com.app.ralaunch.feature.init
+package com.app.ralaunch.feature.init.ui
 
 import android.content.Intent
 import android.content.SharedPreferences
@@ -9,22 +9,19 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.runtime.*
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import com.app.ralaunch.R
-import com.app.ralaunch.core.di.service.PermissionManager
-import com.app.ralaunch.core.platform.AppConstants
-import com.app.ralaunch.feature.init.model.ComponentState
-import com.app.ralaunch.feature.init.model.InitUiState
-import com.app.ralaunch.core.theme.RaLaunchTheme
-import com.app.ralaunch.feature.main.MainActivityCompose
-import com.app.ralaunch.core.common.util.AppLogger
-import com.app.ralaunch.core.extractor.ArchiveExtractor
 import com.app.ralaunch.core.common.ErrorHandler
-import com.app.ralaunch.core.platform.runtime.RuntimeLibraryLoader
-import kotlinx.coroutines.runBlocking
+import com.app.ralaunch.core.common.util.AppLogger
+import com.app.ralaunch.core.di.service.PermissionManager
+import com.app.ralaunch.core.extractor.ArchiveExtractor
+import com.app.ralaunch.core.platform.AppConstants
+import com.app.ralaunch.core.theme.RaLaunchTheme
+import com.app.ralaunch.feature.init.InitializationScreen
+import com.app.ralaunch.feature.init.model.ComponentState
+import com.app.ralaunch.feature.main.MainActivityCompose
 import java.io.File
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
@@ -64,7 +61,7 @@ class InitializationActivity : ComponentActivity() {
                     permissionManager = permissionManager,
                     onComplete = { navigateToMain() },
                     onExit = { finish() },
-                    onExtract = { components, onUpdate -> 
+                    onExtract = { components, onUpdate ->
                         startExtraction(components, onUpdate)
                     },
                     prefs = prefs,
@@ -160,22 +157,6 @@ class InitializationActivity : ComponentActivity() {
             mainHandler.post {
                 onUpdate(index, 100, true, getString(R.string.init_complete))
             }
-        }
-        
-        // 后台解压 runtime_libs（如果存在且未解压）
-        extractRuntimeLibsIfNeeded()
-    }
-    
-    private fun extractRuntimeLibsIfNeeded() {
-        try {
-            val hasRuntimeLibs = assets.list("")?.contains("runtime_libs.tar.xz") == true
-            if (hasRuntimeLibs && !RuntimeLibraryLoader.isExtracted(this)) {
-                runBlocking {
-                    RuntimeLibraryLoader.extractRuntimeLibs(this@InitializationActivity) { _, _ -> }
-                }
-            }
-        } catch (e: Exception) {
-            AppLogger.error("InitActivity", "Failed to extract runtime libs: ${e.message}")
         }
     }
 

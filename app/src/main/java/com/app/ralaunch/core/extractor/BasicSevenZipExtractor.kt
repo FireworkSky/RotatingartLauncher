@@ -3,10 +3,8 @@ package com.app.ralaunch.core.extractor
 import android.util.Log
 import com.app.ralaunch.R
 import com.app.ralaunch.RaLaunchApp
-import com.app.ralaunch.core.platform.runtime.RuntimeLibraryLoader
 import net.sf.sevenzipjbinding.*
 import net.sf.sevenzipjbinding.impl.RandomAccessFileInStream
-import java.io.FileNotFoundException
 import java.io.FileOutputStream
 import java.io.IOException
 import java.io.RandomAccessFile
@@ -21,40 +19,6 @@ class BasicSevenZipExtractor : ExtractorCollection.IExtractor {
     
     companion object {
         private const val TAG = "BasicSevenZipExtractor"
-        
-        @Volatile
-        private var libraryLoaded = false
-        
-        /**
-         * 确保 7-Zip 原生库已加载
-         * 7-Zip 库保留在 APK 中，直接使用 System.loadLibrary 加载
-         */
-        @Synchronized
-        fun ensureLibraryLoaded(): Boolean {
-            if (libraryLoaded) return true
-            
-            try {
-                // 7-Zip 库在 APK 的 lib 目录中，直接加载
-                System.loadLibrary("7-Zip-JBinding")
-                libraryLoaded = true
-                Log.i(TAG, "7-Zip native library loaded successfully via System.loadLibrary")
-            } catch (e: UnsatisfiedLinkError) {
-                Log.e(TAG, "Failed to load 7-Zip native library: ${e.message}")
-                // 尝试从 runtime_libs 加载作为备选
-                try {
-                    val context = RaLaunchApp.getInstance()
-                    libraryLoaded = RuntimeLibraryLoader.load7Zip(context)
-                    if (libraryLoaded) {
-                        Log.i(TAG, "7-Zip native library loaded from runtime_libs")
-                    }
-                } catch (e2: Exception) {
-                    Log.e(TAG, "Cannot load 7-Zip library from runtime_libs: ${e2.message}")
-                }
-            } catch (e: Exception) {
-                Log.e(TAG, "Cannot load 7-Zip library: ${e.message}")
-            }
-            return libraryLoaded
-        }
     }
 
     private lateinit var sourcePath: Path
@@ -103,16 +67,6 @@ class BasicSevenZipExtractor : ExtractorCollection.IExtractor {
     }
 
     override fun extract(): Boolean {
-        // 确保 7-Zip 原生库已加载
-        if (!ensureLibraryLoaded()) {
-            extractionListener?.onError(
-                RaLaunchApp.getInstance().getString(R.string.extract_7zip_library_load_failed),
-                RuntimeException("Failed to load 7-Zip native library"),
-                state
-            )
-            return false
-        }
-        
         return try {
             if (!Files.exists(destinationPath)) {
                 Files.createDirectories(destinationPath)
@@ -230,7 +184,7 @@ class BasicSevenZipExtractor : ExtractorCollection.IExtractor {
                 try {
                     it.close()
                     outputStream = null
-                } catch (e: IOException) {
+                } catch (_: IOException) {
                     throw SevenZipException("Error closing file: $currentProcessingFilePath")
                 }
             }

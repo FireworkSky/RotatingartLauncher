@@ -2,7 +2,6 @@ package com.app.ralaunch.core.common.util
 
 import android.content.Context
 import com.app.ralaunch.R
-import com.app.ralaunch.core.platform.runtime.RuntimeLibraryLoader
 import com.app.ralaunch.core.platform.AppConstants
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -113,44 +112,6 @@ object AssetIntegrityChecker {
             }
         }
 
-        // 2. 检查运行时库
-        val runtimeDir = RuntimeLibraryLoader.getRuntimeLibsDir(context)
-        if (!runtimeDir.exists()) {
-            issues.add(CheckResult.Issue(
-                type = CheckResult.IssueType.DIRECTORY_MISSING,
-                description = context.getString(
-                    R.string.asset_check_issue_directory_missing,
-                    context.getString(R.string.asset_check_component_runtime_libs)
-                ),
-                filePath = runtimeDir.absolutePath,
-                canAutoFix = true
-            ))
-        } else {
-            for ((fileName, minSize) in RUNTIME_LIBS_CRITICAL) {
-                val file = File(runtimeDir, fileName)
-                val issue = checkFile(
-                    context,
-                    file,
-                    context.getString(R.string.asset_check_component_runtime_libs),
-                    minSize
-                )
-                if (issue != null) {
-                    issues.add(issue)
-                }
-            }
-
-            // 检查版本文件
-            val versionFile = File(runtimeDir, ".version")
-            if (!versionFile.exists()) {
-                issues.add(CheckResult.Issue(
-                    type = CheckResult.IssueType.VERSION_MISMATCH,
-                    description = context.getString(R.string.asset_check_issue_runtime_version_missing),
-                    filePath = versionFile.absolutePath,
-                    canAutoFix = true
-                ))
-            }
-        }
-
         // 生成摘要
         val summary = if (issues.isEmpty()) {
             context.getString(R.string.asset_check_summary_all_passed)
@@ -236,9 +197,6 @@ object AssetIntegrityChecker {
         val apphost = File(dotnetDir, "apphost")
         if (!apphost.exists() || apphost.length() < 1000) return true
 
-        // 检查运行时库
-        if (!RuntimeLibraryLoader.isExtracted(context)) return true
-
         return false
     }
 
@@ -269,43 +227,10 @@ object AssetIntegrityChecker {
         var fixedCount = 0
         var failedCount = 0
         val errors = mutableListOf<String>()
-        val runtimeDirPath = RuntimeLibraryLoader.getRuntimeLibsDir(context).absolutePath
-
-        // 按类型分组处理
-        val needsRuntimeLibsExtract = fixableIssues.any { 
-            val filePath = it.filePath
-            filePath?.startsWith(runtimeDirPath) == true || filePath?.contains("runtime_libs") == true
-        }
 
         val needsComponentExtract = fixableIssues.any {
             it.filePath?.contains("coreclr") == true ||
             it.filePath?.contains("fna") == true
-        }
-
-        // 重新解压运行时库
-        if (needsRuntimeLibsExtract) {
-            progressCallback?.invoke(20, context.getString(R.string.asset_fix_progress_reextract_runtime))
-            try {
-                val result = RuntimeLibraryLoader.forceReExtract(context) { progress, msg ->
-                    progressCallback?.invoke(20 + progress * 40 / 100, msg)
-                }
-                if (result) {
-                    fixedCount++
-                    AppLogger.info(TAG, "运行时库重新解压成功")
-                } else {
-                    failedCount++
-                    errors.add(context.getString(R.string.asset_fix_runtime_reextract_failed))
-                }
-            } catch (e: Exception) {
-                failedCount++
-                errors.add(
-                    context.getString(
-                        R.string.asset_fix_runtime_extract_exception,
-                        e.message ?: context.getString(R.string.common_unknown_error)
-                    )
-                )
-                AppLogger.error(TAG, "运行时库重新解压失败", e)
-            }
         }
 
         // 重新解压核心组件需要清除初始化标记
@@ -386,15 +311,6 @@ object AssetIntegrityChecker {
             context.getString(R.string.asset_check_status_dotnet_not_installed)
         }
         sb.appendLine(dotnetStatus)
-
-        // 运行时库状态
-        val runtimeStatus = if (RuntimeLibraryLoader.isExtracted(context)) {
-            val libs = RuntimeLibraryLoader.listExtractedLibraries(context)
-            context.getString(R.string.asset_check_status_runtime_libs_installed, libs.size)
-        } else {
-            context.getString(R.string.asset_check_status_runtime_libs_not_extracted)
-        }
-        sb.appendLine(runtimeStatus)
 
         sb.toString()
     }

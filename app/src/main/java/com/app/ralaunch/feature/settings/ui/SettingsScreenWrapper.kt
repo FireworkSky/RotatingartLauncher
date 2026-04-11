@@ -92,7 +92,6 @@ import com.app.ralaunch.R
 import com.app.ralaunch.core.common.SettingsAccess
 import com.app.ralaunch.core.common.util.AssetIntegrityChecker
 import com.app.ralaunch.core.common.util.LocaleManager
-import com.app.ralaunch.core.platform.runtime.RuntimeLibraryLoader
 import com.app.ralaunch.core.platform.runtime.AndroidRendererRegistry
 import com.app.ralaunch.feature.patch.ui.PatchManagementDialogCompose
 import com.app.ralaunch.core.ui.dialog.LanguageSelectDialog
@@ -598,8 +597,6 @@ private fun LauncherSettingsPane(
     var showAssetCheckDialog by remember { mutableStateOf(false) }
     var assetCheckResult by remember { mutableStateOf<AssetIntegrityChecker.CheckResult?>(null) }
     var isCheckingAssets by remember { mutableStateOf(false) }
-    var showReExtractConfirmDialog by remember { mutableStateOf(false) }
-    var isReExtracting by remember { mutableStateOf(false) }
     val assetStatusSummary = assetStatusSummaryState.value
 
     SettingsPaneColumn {
@@ -634,15 +631,6 @@ private fun LauncherSettingsPane(
                         assetStatusSummaryState.value = AssetIntegrityChecker.getStatusSummary(context)
                     }
                 }
-            )
-
-            SettingsDivider()
-
-            ClickableSettingItem(
-                title = androidStringResource(R.string.settings_reextract_runtime_title),
-                subtitle = androidStringResource(R.string.settings_launcher_reextract_runtime_subtitle),
-                icon = Icons.Default.RestartAlt,
-                onClick = { showReExtractConfirmDialog = true }
             )
         }
 
@@ -740,87 +728,6 @@ private fun LauncherSettingsPane(
                 }
             },
             onDismiss = { showAssetCheckDialog = false }
-        )
-    }
-
-    if (showReExtractConfirmDialog) {
-        AlertDialog(
-            onDismissRequest = { showReExtractConfirmDialog = false },
-            icon = {
-                Icon(
-                    imageVector = Icons.Default.Info,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary
-                )
-            },
-            title = { Text(androidStringResource(R.string.settings_reextract_runtime_title)) },
-            text = {
-                Column {
-                    Text(androidStringResource(R.string.settings_reextract_runtime_message))
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = androidStringResource(R.string.settings_reextract_runtime_hint),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    if (isReExtracting) {
-                        Spacer(modifier = Modifier.height(16.dp))
-                        LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
-                        Text(
-                            text = androidStringResource(R.string.settings_reextract_runtime_in_progress),
-                            style = MaterialTheme.typography.bodySmall,
-                            modifier = Modifier.padding(top = 8.dp)
-                        )
-                    }
-                }
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        scope.launch {
-                            isReExtracting = true
-                            try {
-                                val result = RuntimeLibraryLoader.forceReExtract(context) { _, _ -> }
-                                isReExtracting = false
-                                showReExtractConfirmDialog = false
-
-                                if (result) {
-                                    Toast.makeText(
-                                        context,
-                                        context.getString(R.string.settings_reextract_runtime_success),
-                                        Toast.LENGTH_SHORT
-                                    ).show()
-                                } else {
-                                    Toast.makeText(
-                                        context,
-                                        context.getString(R.string.settings_reextract_runtime_failed),
-                                        Toast.LENGTH_LONG
-                                    ).show()
-                                }
-                                assetStatusSummaryState.value = AssetIntegrityChecker.getStatusSummary(context)
-                            } catch (e: Exception) {
-                                isReExtracting = false
-                                Toast.makeText(
-                                    context,
-                                    context.getString(R.string.settings_extract_failed_with_reason, e.message ?: ""),
-                                    Toast.LENGTH_LONG
-                                ).show()
-                            }
-                        }
-                    },
-                    enabled = !isReExtracting
-                ) {
-                    Text(androidStringResource(R.string.settings_confirm_extract))
-                }
-            },
-            dismissButton = {
-                TextButton(
-                    onClick = { showReExtractConfirmDialog = false },
-                    enabled = !isReExtracting
-                ) {
-                    Text(androidStringResource(R.string.cancel))
-                }
-            }
         )
     }
 }
