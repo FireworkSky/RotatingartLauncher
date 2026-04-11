@@ -19,6 +19,7 @@ import com.app.ralaunch.feature.announcement.AnnouncementRepositoryService
 import com.app.ralaunch.feature.controls.packs.ControlPackManager
 import com.app.ralaunch.feature.main.update.LauncherUpdateChecker
 import com.app.ralaunch.feature.patch.data.PatchManager
+import com.app.ralaunch.feature.script.JavaScriptExecutor
 import com.app.ralaunch.feature.settings.AppInfo
 import com.app.ralaunch.feature.settings.SettingsViewModel
 import org.koin.android.ext.koin.androidContext
@@ -90,6 +91,10 @@ val appModule = module {
 
     single {
         LauncherUpdateChecker(androidContext())
+    }
+
+    single {
+        JavaScriptExecutor()
     }
 
     single<PatchManager?> {

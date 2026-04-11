@@ -36,6 +36,7 @@ datastore = "1.1.1"
 lifecycleViewmodel = "2.9.1"
 # Navigation
 navigationCompose = "2.8.5"
+rhino = "1.8.0"
 
 [libraries]
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -85,6 +86,7 @@ recyclerview = { group = "androidx.recyclerview", name = "recyclerview", version
 # Haze (Glassmorphism blur)
 haze = { group = "dev.chrisbanes.haze", name = "haze", version.ref = "haze" }
 haze-materials = { group = "dev.chrisbanes.haze", name = "haze-materials", version.ref = "haze" }
+mozilla-rhino = { group = "org.mozilla", name = "rhino", version.ref = "rhino" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

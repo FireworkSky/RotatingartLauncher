@@ -169,6 +169,7 @@ dependencies {
     implementation libs.commons.compress
     implementation libs.xz
     implementation libs.android.svg
+    implementation libs.mozilla.rhino
 
     // 测试依赖
     testImplementation libs.junit
