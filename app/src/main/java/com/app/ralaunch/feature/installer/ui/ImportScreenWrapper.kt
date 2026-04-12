@@ -28,7 +28,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.app.ralaunch.R
-import com.app.ralaunch.feature.main.contracts.ImportUiState
+import com.app.ralaunch.feature.installer.contract.InstallerUiState
 import java.io.File
 
 /**
@@ -42,7 +42,7 @@ fun ImportScreenWrapper(
     detectedGameId: String? = null,
     modLoaderFilePath: String? = null,
     detectedModLoaderId: String? = null,
-    importUiState: ImportUiState = ImportUiState(),
+    importUiState: InstallerUiState = InstallerUiState(),
     onBack: () -> Unit = {},
     onStartImport: () -> Unit = {},
     onSelectGameFile: () -> Unit = {},

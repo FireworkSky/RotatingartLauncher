@@ -2,6 +2,7 @@ package com.app.ralaunch.core.di
 
 import androidx.activity.ComponentActivity
 import androidx.appcompat.app.AppCompatActivity
+import com.app.ralaunch.core.common.GameLaunchManager
 import com.app.ralaunch.core.di.contract.GameListStorage
 import com.app.ralaunch.core.di.contract.GameRepositoryV2
 import com.app.ralaunch.core.di.contract.IThemeManager
@@ -17,7 +18,9 @@ import com.app.ralaunch.core.di.service.ThemeManager
 import com.app.ralaunch.core.di.service.VibrationManager
 import com.app.ralaunch.feature.announcement.AnnouncementRepositoryService
 import com.app.ralaunch.feature.controls.packs.ControlPackManager
+import com.app.ralaunch.feature.installer.vm.InstallerViewModel
 import com.app.ralaunch.feature.main.update.LauncherUpdateChecker
+import com.app.ralaunch.feature.main.vm.MainViewModel
 import com.app.ralaunch.feature.patch.data.PatchManager
 import com.app.ralaunch.feature.script.JavaScriptExecutor
 import com.app.ralaunch.feature.settings.vm.AppInfo
@@ -94,6 +97,14 @@ val appModule = module {
     }
 
     single {
+        GameLaunchManager(androidContext())
+    }
+
+    single {
+        GameDeletionManager(androidContext())
+    }
+
+    single {
         JavaScriptExecutor()
     }
 
@@ -114,6 +125,26 @@ val appModule = module {
         )
     }
 
+    viewModel {
+        MainViewModel(
+            appContext = androidContext(),
+            gameRepository = get(),
+            gameLaunchManager = get(),
+            gameDeletionManager = get(),
+            settingsRepository = get<SettingsRepositoryV2>(),
+            announcementRepositoryService = get(),
+            launcherUpdateChecker = get()
+        )
+    }
+
+    viewModel {
+        InstallerViewModel(
+            appContext = androidContext(),
+            gameRepository = get(),
+            gameListStorage = get()
+        )
+    }
+
     // ==================== UI Managers (参数化工厂) ====================
 
     factory<ThemeManager> { (activity: AppCompatActivity) ->
@@ -126,10 +157,6 @@ val appModule = module {
 
     factory<PermissionManager> { (activity: ComponentActivity) ->
         PermissionManager(activity)
-    }
-
-    factory<GameDeletionManager> { (activity: AppCompatActivity) ->
-        GameDeletionManager(activity)
     }
 }
 

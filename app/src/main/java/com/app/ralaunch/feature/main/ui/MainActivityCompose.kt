@@ -16,82 +16,119 @@ import android.provider.Settings
 import android.util.Log
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.core.content.ContextCompat
-import androidx.core.content.FileProvider
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.runtime.*
-import androidx.compose.ui.Modifier
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import androidx.compose.runtime.collectAsState
-import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.ViewModelProvider
+import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
+import androidx.core.content.edit
+import androidx.core.net.toUri
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.lifecycleScope
 import coil.compose.AsyncImage
 import com.app.ralaunch.R
+import com.app.ralaunch.core.common.ErrorHandler
+import com.app.ralaunch.core.common.MessageHelper
 import com.app.ralaunch.core.common.SettingsAccess
+import com.app.ralaunch.core.common.util.AppLogger
+import com.app.ralaunch.core.common.util.DensityAdapter
 import com.app.ralaunch.core.di.service.PermissionManager
 import com.app.ralaunch.core.di.service.ThemeManager
-import com.app.ralaunch.core.common.MessageHelper
-import com.app.ralaunch.core.platform.android.provider.RaLaunchFileProvider
-import com.app.ralaunch.core.model.BackgroundType as SettingsBackgroundType
+import com.app.ralaunch.core.navigation.NavDestination
+import com.app.ralaunch.core.navigation.NavState
+import com.app.ralaunch.core.navigation.Screen
+import com.app.ralaunch.core.navigation.handleBackPress
+import com.app.ralaunch.core.navigation.handleEvent
+import com.app.ralaunch.core.navigation.navigateToControlStore
+import com.app.ralaunch.core.navigation.navigateToControls
+import com.app.ralaunch.core.navigation.navigateToGameDetail
+import com.app.ralaunch.core.navigation.navigateToGames
+import com.app.ralaunch.core.navigation.navigateToSettings
 import com.app.ralaunch.core.platform.AppConstants
-import com.app.ralaunch.core.navigation.*
+import com.app.ralaunch.core.platform.android.provider.RaLaunchFileProvider
 import com.app.ralaunch.core.theme.AppThemeState
 import com.app.ralaunch.core.theme.RaLaunchTheme
 import com.app.ralaunch.core.ui.BaseActivity
-import com.app.ralaunch.feature.main.ui.background.AppBackground
-import com.app.ralaunch.feature.main.ui.background.BackgroundType
-import com.app.ralaunch.core.model.GameItemUi
-import com.app.ralaunch.feature.main.contracts.ImportUiState
-import com.app.ralaunch.feature.main.contracts.AppUpdateUiModel
-import com.app.ralaunch.feature.main.contracts.ForceAnnouncementUiModel
-import com.app.ralaunch.feature.main.contracts.MainUiEffect
-import com.app.ralaunch.feature.main.contracts.MainUiEvent
-import com.app.ralaunch.feature.main.contracts.MainUiState
 import com.app.ralaunch.feature.announcement.ui.AnnouncementScreenWrapper
 import com.app.ralaunch.feature.controls.packs.ui.ControlStoreScreenWrapper
 import com.app.ralaunch.feature.controls.ui.ControlLayoutScreenWrapper
 import com.app.ralaunch.feature.filebrowser.ui.FileBrowserScreenWrapper
 import com.app.ralaunch.feature.gog.ui.DownloadScreenWrapper
-import com.app.ralaunch.feature.installer.ui.ImportScreenWrapper
+import com.app.ralaunch.feature.installer.ui.InstallerScreenWrapper
+import com.app.ralaunch.feature.installer.ui.rememberInstallerRouteActions
+import com.app.ralaunch.feature.main.contracts.AppUpdateUiModel
+import com.app.ralaunch.feature.main.contracts.ForceAnnouncementUiModel
+import com.app.ralaunch.feature.main.contracts.MainUiEffect
+import com.app.ralaunch.feature.main.contracts.MainUiEvent
+import com.app.ralaunch.feature.main.contracts.MainUiState
+import com.app.ralaunch.feature.main.ui.background.AppBackground
+import com.app.ralaunch.feature.main.ui.background.BackgroundType
 import com.app.ralaunch.feature.main.vm.MainViewModel
-import com.app.ralaunch.feature.main.vm.MainViewModelFactory
+import com.app.ralaunch.feature.patch.ui.PatchManagementSubScreen
+import com.app.ralaunch.feature.settings.ui.LogViewerSubScreen
 import com.app.ralaunch.feature.settings.ui.RESTORE_SETTINGS_AFTER_RECREATE_KEY
 import com.app.ralaunch.feature.settings.ui.SettingsScreenWrapper
 import com.app.ralaunch.feature.settings.ui.buildRendererOptions
-import com.app.ralaunch.core.common.util.AppLogger
-import com.app.ralaunch.core.common.util.DensityAdapter
-import com.app.ralaunch.core.common.ErrorHandler
 import dev.chrisbanes.haze.HazeState
-import kotlinx.coroutines.Dispatchers
+import dev.jeziellago.compose.markdowntext.MarkdownText
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import org.koin.compose.viewmodel.koinViewModel
 import java.io.File
-import dev.jeziellago.compose.markdowntext.MarkdownText
+import com.app.ralaunch.core.model.BackgroundType as SettingsBackgroundType
 
 
 class MainActivityCompose : BaseActivity() {
@@ -99,7 +136,6 @@ class MainActivityCompose : BaseActivity() {
     // Managers
     private lateinit var themeManager: ThemeManager
     private lateinit var permissionManager: PermissionManager
-    private lateinit var mainViewModel: MainViewModel
 
     private val navState = NavState()
     private var activeUpdateDownloadId: Long = -1L
@@ -138,118 +174,18 @@ class MainActivityCompose : BaseActivity() {
         initLogger()
         ErrorHandler.init(this)
         permissionManager = PermissionManager(this).apply { initialize() }
-        mainViewModel = ViewModelProvider(this, MainViewModelFactory(this))[MainViewModel::class.java]
         registerUpdateDownloadReceiver()
 
         // 设置纯 Compose UI
         setContent {
-            val state by mainViewModel.uiState.collectAsStateWithLifecycle()
-            val importState by mainViewModel.importUiState.collectAsStateWithLifecycle()
-
-            // 监听 AppThemeState 实现实时更新 (使用 collectAsState 确保实时响应)
             val themeMode by AppThemeState.themeMode.collectAsState()
             val themeColor by AppThemeState.themeColor.collectAsState()
-            val bgType by AppThemeState.backgroundType.collectAsState()
-            val bgOpacity by AppThemeState.backgroundOpacity.collectAsState()
-            val videoSpeed by AppThemeState.videoPlaybackSpeed.collectAsState()
-            val bgImagePath by AppThemeState.backgroundImagePath.collectAsState()
-            val bgVideoPath by AppThemeState.backgroundVideoPath.collectAsState()
-            
-            // 根据 AppThemeState 计算背景类型
-            val backgroundType = remember(bgType, bgImagePath, bgVideoPath) {
-                when (bgType) {
-                    SettingsBackgroundType.IMAGE ->
-                        if (bgImagePath.isNotEmpty()) BackgroundType.Image(bgImagePath) else BackgroundType.None
-                    SettingsBackgroundType.VIDEO ->
-                        if (bgVideoPath.isNotEmpty()) BackgroundType.Video(bgVideoPath) else BackgroundType.None
-                    else -> BackgroundType.None
-                }
-            }
-            
-            // 计算页面透明度
-            val pageAlpha = remember(bgOpacity) {
-                if (bgOpacity > 0) bgOpacity / 100f else 1f
-            }
-
-            // Splash 覆盖层状态
-            var showSplash by remember { mutableStateOf(true) }
-            val isContentReady = !state.isLoading
-
-            LaunchedEffect(Unit) {
-                mainViewModel.effects.collect { effect ->
-                    when (effect) {
-                        is MainUiEffect.ShowToast -> MessageHelper.showToast(this@MainActivityCompose, effect.message)
-                        is MainUiEffect.ShowSuccess -> MessageHelper.showSuccess(this@MainActivityCompose, effect.message)
-                        is MainUiEffect.DownloadLauncherUpdate -> {
-                            downloadLauncherUpdate(
-                                downloadUrl = effect.downloadUrl,
-                                latestVersion = effect.latestVersion,
-                                fallbackUrl = effect.releaseUrl
-                            )
-                        }
-                        is MainUiEffect.OpenUrl -> openExternalUrl(effect.url)
-                        is MainUiEffect.ExitLauncher -> finishAffinity()
-                    }
-                }
-            }
 
             RaLaunchTheme(
                 themeMode = themeMode,
                 themeColor = themeColor
             ) {
-                Box(modifier = Modifier.fillMaxSize()) {
-                    // 主内容（始终渲染，Splash 覆盖在上方）
-                    MainActivityContent(
-                        state = state.copy(backgroundType = backgroundType),
-                        importUiState = importState,
-                        navState = navState,
-                        showAnnouncementBadge = state.showAnnouncementBadge,
-                        forceAnnouncement = state.forceAnnouncement,
-                        pageAlpha = pageAlpha,
-                        videoSpeed = videoSpeed,
-                        onGameClick = { mainViewModel.onEvent(MainUiEvent.GameSelected(it)) },
-                        onGameLongClick = { mainViewModel.onEvent(MainUiEvent.GameSelected(it)) },
-                        onLaunchClick = { mainViewModel.onEvent(MainUiEvent.LaunchRequested) },
-                        onDeleteClick = { mainViewModel.onEvent(MainUiEvent.DeleteRequested) },
-                        onEditClick = { updatedGameUi -> mainViewModel.onEvent(MainUiEvent.GameEdited(updatedGameUi)) },
-                        onDismissDeleteDialog = { mainViewModel.onEvent(MainUiEvent.DeleteDialogDismissed) },
-                        onConfirmDelete = { mainViewModel.onEvent(MainUiEvent.DeleteConfirmed) },
-                        availableUpdate = state.availableUpdate,
-                        updateDownloadState = updateDownloadUiState,
-                        onDismissUpdateDialog = { mainViewModel.onEvent(MainUiEvent.UpdateDialogDismissed) },
-                        onIgnoreUpdateClick = { mainViewModel.onEvent(MainUiEvent.UpdateIgnoreClicked) },
-                        onUpdateActionClick = { mainViewModel.onEvent(MainUiEvent.UpdateActionClicked) },
-                        onUpdateCloudActionClick = { mainViewModel.onEvent(MainUiEvent.UpdateCloudActionClicked) },
-                        onCheckLauncherUpdateClick = {
-                            mainViewModel.onEvent(MainUiEvent.CheckAppUpdateManually)
-                        },
-                        onDismissUpdateDownloadDialog = { updateDownloadUiState = null },
-                        onInstallDownloadedUpdate = { installDownloadedUpdateFromDialog() },
-                        onRetryUpdateDownload = { retryUpdateDownload() },
-                        permissionManager = permissionManager,
-                        onStartImport = { gameFilePath, modLoaderFilePath ->
-                            mainViewModel.startImport(gameFilePath, modLoaderFilePath)
-                        },
-                        onDismissImportError = { mainViewModel.clearImportError() },
-                        onImportCompletionHandled = { mainViewModel.resetImportCompletedFlag() },
-                        onAnnouncementsOpened = { mainViewModel.onEvent(MainUiEvent.AnnouncementTabOpened) },
-                        onForceAnnouncementLearnMore = {
-                            mainViewModel.onEvent(MainUiEvent.AnnouncementPopupConfirmed)
-                        },
-                        onForceAnnouncementConfirm = {
-                            navState.navigateToAnnouncements()
-                            mainViewModel.onEvent(MainUiEvent.AnnouncementPopupConfirmed)
-                        }
-                    )
-
-                    // MD3 风格启动画面覆盖层
-                    if (showSplash) {
-                        SplashOverlay(
-                            isReady = isContentReady,
-                            onSplashFinished = { showSplash = false }
-                        )
-                    }
-                }
+                MainScreenWrapper()
             }
         }
 
@@ -265,17 +201,9 @@ class MainActivityCompose : BaseActivity() {
 
         ErrorHandler.setCurrentActivity(this)
         resumePendingInstallIfPossible()
-
-        // 恢复视频播放
-        Handler(Looper.getMainLooper()).postDelayed({
-            if (!isFinishing && !isDestroyed) {
-                mainViewModel.onEvent(MainUiEvent.AppResumed)
-            }
-        }, 200)
     }
 
     override fun onPause() {
-        mainViewModel.onEvent(MainUiEvent.AppPaused)
         super.onPause()
     }
 
@@ -317,7 +245,7 @@ class MainActivityCompose : BaseActivity() {
     private fun checkRestoreSettings() {
         val prefs = getSharedPreferences(AppConstants.PREFS_NAME, MODE_PRIVATE)
         if (prefs.getBoolean(RESTORE_SETTINGS_AFTER_RECREATE_KEY, false)) {
-            prefs.edit().putBoolean(RESTORE_SETTINGS_AFTER_RECREATE_KEY, false).apply()
+            prefs.edit { putBoolean(RESTORE_SETTINGS_AFTER_RECREATE_KEY, false) }
             navState.navigateToSettings()
         }
     }
@@ -341,7 +269,7 @@ class MainActivityCompose : BaseActivity() {
 
     private fun openExternalUrl(url: String) {
         runCatching {
-            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+            startActivity(Intent(Intent.ACTION_VIEW, url.toUri()))
         }.onFailure {
             MessageHelper.showToast(this, getString(R.string.settings_cannot_open_url))
         }
@@ -402,7 +330,7 @@ class MainActivityCompose : BaseActivity() {
             targetFile.delete()
         }
 
-        val request = DownloadManager.Request(Uri.parse(downloadUrl)).apply {
+        val request = DownloadManager.Request(downloadUrl.toUri()).apply {
             setTitle(getString(R.string.main_update_notification_title))
             setDescription(getString(R.string.main_update_notification_downloading_version, latestVersion))
             setMimeType("application/vnd.android.package-archive")
@@ -575,22 +503,20 @@ class MainActivityCompose : BaseActivity() {
     private fun resumePendingInstallIfPossible() {
         if (!waitingUnknownSourcePermission) return
         val apkUri = pendingInstallApkUri ?: return
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O || packageManager.canRequestPackageInstalls()) {
+        if (packageManager.canRequestPackageInstalls()) {
             waitingUnknownSourcePermission = false
             promptInstallDownloadedApk(apkUri)
         }
     }
 
     private fun promptInstallDownloadedApk(apkUri: Uri) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
-            !packageManager.canRequestPackageInstalls()
-        ) {
+        if (!packageManager.canRequestPackageInstalls()) {
             pendingInstallApkUri = apkUri
             waitingUnknownSourcePermission = true
             MessageHelper.showToast(this, getString(R.string.main_update_require_unknown_source_permission))
             val permissionIntent = Intent(
                 Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
-                Uri.parse("package:$packageName")
+                "package:$packageName".toUri()
             )
             startActivity(permissionIntent)
             return
@@ -615,335 +541,303 @@ class MainActivityCompose : BaseActivity() {
         }
     }
 
-}
+    @Composable
+    private fun MainScreenWrapper() {
+        val viewModel: MainViewModel = koinViewModel()
+        val state by viewModel.uiState.collectAsStateWithLifecycle()
+        val lifecycleOwner = LocalLifecycleOwner.current
+        var showSplash by remember { mutableStateOf(true) }
 
-/**
- * 主界面 Compose 内容
- */
-@Composable
-private fun MainActivityContent(
-    state: MainUiState,
-    importUiState: ImportUiState,
-    navState: NavState,
-    showAnnouncementBadge: Boolean,
-    forceAnnouncement: ForceAnnouncementUiModel? = null,
-    pageAlpha: Float = 1f,
-    videoSpeed: Float = 1f,
-    onGameClick: (GameItemUi) -> Unit,
-    onGameLongClick: (GameItemUi) -> Unit,
-    onLaunchClick: () -> Unit,
-    onDeleteClick: () -> Unit,
-    onEditClick: (updatedGame: GameItemUi) -> Unit,
-    onDismissDeleteDialog: () -> Unit = {},
-    onConfirmDelete: () -> Unit = {},
-    availableUpdate: AppUpdateUiModel? = null,
-    updateDownloadState: UpdateDownloadUiState? = null,
-    onDismissUpdateDialog: () -> Unit = {},
-    onIgnoreUpdateClick: () -> Unit = {},
-    onUpdateActionClick: () -> Unit = {},
-    onUpdateCloudActionClick: () -> Unit = {},
-    onCheckLauncherUpdateClick: () -> Unit = {},
-    onDismissUpdateDownloadDialog: () -> Unit = {},
-    onInstallDownloadedUpdate: () -> Unit = {},
-    onRetryUpdateDownload: () -> Unit = {},
-    onStartImport: (gameFilePath: String?, modLoaderFilePath: String?) -> Unit = { _, _ -> },
-    onDismissImportError: () -> Unit = {},
-    onImportCompletionHandled: () -> Unit = {},
-    onAnnouncementsOpened: () -> Unit = {},
-    onForceAnnouncementLearnMore: () -> Unit = {},
-    onForceAnnouncementConfirm: () -> Unit = {},
-    permissionManager: PermissionManager? = null
-) {
-    val context = LocalContext.current
-    val scope = rememberCoroutineScope()
-    val hazeState = remember { HazeState() }
-    val gameRendererOptions = remember {
-        buildRendererOptions()
-    }
-
-    // 导入状态 - 提升到此层级避免导航时丢失
-    var importGameFilePath by remember { mutableStateOf<String?>(null) }
-    var importGameName by remember { mutableStateOf<String?>(null) }
-    var importModLoaderFilePath by remember { mutableStateOf<String?>(null) }
-    var importModLoaderName by remember { mutableStateOf<String?>(null) }
-    
-    // 当前文件选择类型 (game / modloader)
-    var currentFileType by remember { mutableStateOf("") }
-    var hasFilePermission by remember(permissionManager) {
-        mutableStateOf(permissionManager?.hasRequiredPermissions() ?: true)
-    }
-    val currentDestination by remember {
-        derivedStateOf { navState.currentDestination }
-    }
-    
-    // 重置导入状态
-    val resetImportState: () -> Unit = {
-        importGameFilePath = null
-        importGameName = null
-        importModLoaderFilePath = null
-        importModLoaderName = null
-    }
-
-    LaunchedEffect(importUiState.lastCompletedGameId) {
-        val completedGameId = importUiState.lastCompletedGameId ?: return@LaunchedEffect
-        resetImportState()
-        if (navState.currentScreen is Screen.Import) {
-            navState.navigateToGames()
+        DisposableEffect(lifecycleOwner, viewModel) {
+            val observer = LifecycleEventObserver { _, event ->
+                when (event) {
+                    Lifecycle.Event.ON_RESUME -> {
+                        Handler(Looper.getMainLooper()).postDelayed({
+                            viewModel.onEvent(MainUiEvent.AppResumed)
+                        }, 200)
+                    }
+                    Lifecycle.Event.ON_PAUSE -> viewModel.onEvent(MainUiEvent.AppPaused)
+                    else -> Unit
+                }
+            }
+            lifecycleOwner.lifecycle.addObserver(observer)
+            onDispose {
+                lifecycleOwner.lifecycle.removeObserver(observer)
+            }
         }
-        onImportCompletionHandled()
-        Log.d("MainActivityCompose", "Handled import completion for gameId=$completedGameId")
-    }
 
-    LaunchedEffect(currentDestination, showAnnouncementBadge) {
-        if (currentDestination == NavDestination.ANNOUNCEMENTS && showAnnouncementBadge) {
-            onAnnouncementsOpened()
-        }
-    }
-    
-    Box(modifier = Modifier.fillMaxSize()) {
-        // 主内容 - 背景层通过 backgroundLayer 传入，由 MainApp 自动标记为 hazeSource
-        MainApp(
-            modifier = Modifier
-                .fillMaxSize()
-                .systemBarsPadding()
-                .graphicsLayer { alpha = pageAlpha },
-            navState = navState,
-            showAnnouncementBadge = showAnnouncementBadge,
-            externalHazeState = hazeState,
-            backgroundLayer = {
-                // 背景层 - 沉浸式（作为毛玻璃模糊源）
-                AppBackground(
-                    backgroundType = state.backgroundType,
-                    isPlaying = state.isVideoPlaying,
-                    playbackSpeed = videoSpeed,
-                    modifier = Modifier.fillMaxSize()
-                )
-                // 全局半透明遮罩，增加内容对比度
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(
-                            Brush.verticalGradient(
-                                colors = listOf(
-                                    Color.Black.copy(alpha = 0.15f),
-                                    Color.Transparent,
-                                    Color.Black.copy(alpha = 0.35f)
-                                )
-                            )
+        LaunchedEffect(viewModel) {
+            viewModel.effects.collect { effect ->
+                when (effect) {
+                    is MainUiEffect.ShowToast -> MessageHelper.showToast(
+                        this@MainActivityCompose,
+                        effect.message
+                    )
+                    is MainUiEffect.ShowSuccess -> MessageHelper.showSuccess(
+                        this@MainActivityCompose,
+                        effect.message
+                    )
+                    is MainUiEffect.DownloadLauncherUpdate -> {
+                        downloadLauncherUpdate(
+                            downloadUrl = effect.downloadUrl,
+                            latestVersion = effect.latestVersion,
+                            fallbackUrl = effect.releaseUrl
                         )
+                    }
+                    is MainUiEffect.OpenUrl -> openExternalUrl(effect.url)
+                    is MainUiEffect.Navigate -> navState.handleEvent(effect.event)
+                    is MainUiEffect.ExitLauncher -> finishAffinity()
+                }
+            }
+        }
+
+        Box(modifier = Modifier.fillMaxSize()) {
+            MainActivityContent(
+                state = state,
+                onEvent = viewModel::onEvent
+            )
+
+            if (showSplash) {
+                SplashOverlay(
+                    isReady = !state.isLoading,
+                    onSplashFinished = { showSplash = false }
                 )
-            },
-            appLogo = {
-                Image(
-                    painter = painterResource(R.mipmap.ic_launcher_foreground),
+            }
+        }
+    }
+
+    @Composable
+    private fun MainActivityContent(
+        state: MainUiState,
+        onEvent: (MainUiEvent) -> Unit
+    ) {
+        val installerActions = rememberInstallerRouteActions()
+        val hazeState = remember { HazeState() }
+        val gameRendererOptions = remember { buildRendererOptions() }
+        val bgType by AppThemeState.backgroundType.collectAsState()
+        val bgOpacity by AppThemeState.backgroundOpacity.collectAsState()
+        val videoSpeed by AppThemeState.videoPlaybackSpeed.collectAsState()
+        val bgImagePath by AppThemeState.backgroundImagePath.collectAsState()
+        val bgVideoPath by AppThemeState.backgroundVideoPath.collectAsState()
+
+        val backgroundType = remember(bgType, bgImagePath, bgVideoPath) {
+            when (bgType) {
+                SettingsBackgroundType.IMAGE ->
+                    if (bgImagePath.isNotEmpty()) BackgroundType.Image(bgImagePath) else BackgroundType.None
+                SettingsBackgroundType.VIDEO ->
+                    if (bgVideoPath.isNotEmpty()) BackgroundType.Video(bgVideoPath) else BackgroundType.None
+                else -> BackgroundType.None
+            }
+        }
+        val pageAlpha = remember(bgOpacity) {
+            if (bgOpacity > 0) bgOpacity / 100f else 1f
+        }
+
+        var hasFilePermission by remember {
+            mutableStateOf(permissionManager.hasRequiredPermissions())
+        }
+        val currentDestination by remember {
+            derivedStateOf { navState.currentDestination }
+        }
+
+        val iconLoader: @Composable (String?, Modifier) -> Unit = { iconPath, modifier ->
+            iconPath?.let {
+                AsyncImage(
+                    model = File(it),
                     contentDescription = null,
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clip(RoundedCornerShape(8.dp))
-                        .graphicsLayer {
-                            clip = true
-                            scaleX = 1.42f
-                            scaleY = 1.42f
-                        },
+                    modifier = modifier,
                     contentScale = ContentScale.Crop
                 )
-            },
-            games = state.games,
-            selectedGame = state.selectedGame,
-            isLoading = state.isLoading,
-            onGameClick = onGameClick,
-            onGameLongClick = onGameLongClick,
-            onLaunchClick = onLaunchClick,
-            onDeleteClick = onDeleteClick,
-            onEditClick = onEditClick,
-            gameRendererOptions = gameRendererOptions,
-            iconLoader = { iconPath, modifier ->
-                iconPath?.let {
-                    AsyncImage(
-                        model = File(it),
-                        contentDescription = null,
-                        modifier = modifier,
-                        contentScale = ContentScale.Crop
+            }
+        }
+
+        LaunchedEffect(currentDestination, state.showAnnouncementBadge) {
+            if (currentDestination == NavDestination.ANNOUNCEMENTS && state.showAnnouncementBadge) {
+                onEvent(MainUiEvent.AnnouncementTabOpened)
+            }
+        }
+
+        Box(modifier = Modifier.fillMaxSize()) {
+            MainApp(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .systemBarsPadding()
+                    .graphicsLayer { alpha = pageAlpha },
+                navState = navState,
+                showAnnouncementBadge = state.showAnnouncementBadge,
+                externalHazeState = hazeState,
+                backgroundLayer = {
+                    AppBackground(
+                        backgroundType = backgroundType,
+                        isPlaying = state.isVideoPlaying,
+                        playbackSpeed = videoSpeed,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(
+                                Brush.verticalGradient(
+                                    colors = listOf(
+                                        Color.Black.copy(alpha = 0.15f),
+                                        Color.Transparent,
+                                        Color.Black.copy(alpha = 0.35f)
+                                    )
+                                )
+                            )
+                    )
+                },
+                pageContent = { targetScreen ->
+                    when (targetScreen) {
+                        is Screen.Games -> {
+                            GameListContent(
+                                games = state.games,
+                                selectedGame = state.selectedGame,
+                                onGameClick = { onEvent(MainUiEvent.GameSelected(it)) },
+                                onGameLongClick = { onEvent(MainUiEvent.GameSelected(it)) },
+                                onLaunchClick = { onEvent(MainUiEvent.LaunchRequested) },
+                                onDeleteClick = { onEvent(MainUiEvent.DeleteRequested) },
+                                onEditClick = {
+                                    state.selectedGame?.id?.let { navState.navigateToGameDetail(it) }
+                                },
+                                onAddClick = { navState.navigateTo(Screen.Import) },
+                                isLoading = state.isLoading,
+                                iconLoader = iconLoader
+                            )
+                        }
+                        is Screen.Controls -> {
+                            ControlLayoutScreenWrapper(
+                                onBack = { navState.navigateToGames() },
+                                onOpenStore = { navState.navigateToControlStore() }
+                            )
+                        }
+                        is Screen.Download -> {
+                            DownloadScreenWrapper(
+                                onBack = { navState.navigateToGames() },
+                                onNavigateToImport = { gamePath, modLoaderPath, gameName ->
+                                    installerActions.prefillFromDownload(gamePath, modLoaderPath, gameName)
+                                    navState.navigateTo(Screen.Import)
+                                }
+                            )
+                        }
+                        is Screen.Announcements -> AnnouncementScreenWrapper()
+                        is Screen.Settings -> {
+                            SettingsScreenWrapper(
+                                navState = navState,
+                                onCheckLauncherUpdate = {
+                                    onEvent(MainUiEvent.CheckAppUpdateManually)
+                                }
+                            )
+                        }
+                        is Screen.Import -> {
+                            InstallerScreenWrapper(navState = navState)
+                        }
+                        is Screen.ControlStore -> {
+                            ControlStoreScreenWrapper(
+                                onBack = { navState.navigateToControls() }
+                            )
+                        }
+                        is Screen.FileBrowser -> {
+                            FileBrowserScreenWrapper(
+                                initialPath = targetScreen.initialPath,
+                                fileType = targetScreen.fileType,
+                                allowedExtensions = targetScreen.allowedExtensions,
+                                hasPermission = hasFilePermission,
+                                onFileSelected = { path, type ->
+                                    installerActions.onFileSelected(type ?: targetScreen.fileType, path)
+                                    navState.goBack()
+                                },
+                                onBack = { navState.goBack() },
+                                onRequestPermission = {
+                                    permissionManager.requestRequiredPermissions(object : PermissionManager.PermissionCallback {
+                                        override fun onPermissionsGranted() {
+                                            hasFilePermission = true
+                                        }
+
+                                        override fun onPermissionsDenied() {
+                                            hasFilePermission = false
+                                        }
+                                    })
+                                }
+                            )
+                        }
+                        is Screen.GameDetail -> {
+                            val game = state.games.find { it.id == targetScreen.storageId }
+                            if (game != null) {
+                                GameInfoEditSubScreen(
+                                    game = game,
+                                    rendererOptions = gameRendererOptions,
+                                    onBack = { navState.goBack() },
+                                    onSave = { onEvent(MainUiEvent.GameEdited(it)) }
+                                )
+                            } else {
+                                PlaceholderScreen(stringResource(R.string.main_game_not_found, targetScreen.storageId))
+                            }
+                        }
+                        is Screen.PatchManagement -> {
+                            PatchManagementSubScreen(
+                                onBack = { navState.goBack() }
+                            )
+                        }
+                        is Screen.LogViewer -> {
+                            LogViewerSubScreen(
+                                onBack = { navState.goBack() }
+                            )
+                        }
+                        is Screen.ControlEditor -> {
+                            PlaceholderScreen(stringResource(R.string.main_control_editor_placeholder))
+                        }
+                        is Screen.Initialization -> Unit
+                    }
+                }
+            )
+
+            state.gamePendingDeletion?.let { game ->
+                DeleteGameComposeDialog(
+                    gameName = game.displayedName,
+                    isDeleting = state.isDeletingGame,
+                    onConfirm = { onEvent(MainUiEvent.DeleteConfirmed) },
+                    onDismiss = { onEvent(MainUiEvent.DeleteDialogDismissed) }
+                )
+            }
+
+            if (state.forceAnnouncement == null && updateDownloadUiState == null) {
+                state.availableUpdate?.let { update ->
+                    AppUpdateComposeDialog(
+                        update = update,
+                        onConfirm = { onEvent(MainUiEvent.UpdateActionClicked) },
+                        onCloudDownload = { onEvent(MainUiEvent.UpdateCloudActionClicked) },
+                        onIgnore = { onEvent(MainUiEvent.UpdateIgnoreClicked) },
+                        onDismiss = { onEvent(MainUiEvent.UpdateDialogDismissed) }
                     )
                 }
-            },
-            // 各页面的 Compose 实现
-            settingsContent = {
-                SettingsScreenWrapper(
-                    navState = navState,
-                    onCheckLauncherUpdate = onCheckLauncherUpdateClick
-                )
-            },
-            controlsContent = {
-                ControlLayoutScreenWrapper(
-                    onBack = { navState.navigateToGames() },
-                    onOpenStore = { navState.navigateToControlStore() }
-                )
-            },
-            downloadContent = { 
-                DownloadScreenWrapper(
-                    onBack = { navState.navigateToGames() },
-                    onNavigateToImport = { gamePath, modLoaderPath, gameName ->
-                        // 设置导入参数
-                        Log.d("MainActivityCompose", ">>> onNavigateToImport called: gamePath=$gamePath, modLoaderPath=$modLoaderPath, gameName=$gameName")
-                        importGameFilePath = gamePath
-                        importGameName = gameName
-                        importModLoaderFilePath = modLoaderPath
-                        importModLoaderName = modLoaderPath?.let { File(it).nameWithoutExtension }
-                        // 导航到安装页面
-                        Log.d("MainActivityCompose", ">>> navigating to Screen.Import")
-                        navState.navigateTo(Screen.Import)
-                    }
-                )
-            },
-            announcementsContent = {
-                AnnouncementScreenWrapper()
-            },
-            importContent = {
-                ImportScreenWrapper(
-                    gameFilePath = importGameFilePath,
-                    detectedGameId = importGameName,
-                    modLoaderFilePath = importModLoaderFilePath,
-                    detectedModLoaderId = importModLoaderName,
-                    importUiState = importUiState,
-                    onBack = {
-                        resetImportState()
-                        navState.navigateToGames() 
-                    },
-                    onStartImport = { onStartImport(importGameFilePath, importModLoaderFilePath) },
-                    onSelectGameFile = {
-                        currentFileType = "game"
-                        navState.navigateTo(Screen.FileBrowser(
-                            initialPath = "",
-                            allowedExtensions = listOf(".sh", ".zip"),
-                            fileType = "game"
-                        ))
-                    },
-                    onSelectModLoader = {
-                        currentFileType = "modloader"
-                        navState.navigateTo(Screen.FileBrowser(
-                            initialPath = "",
-                            allowedExtensions = listOf(".zip"),
-                            fileType = "modloader"
-                        ))
-                    },
-                    onDismissError = onDismissImportError
-                )
-            },
-            controlStoreContent = { 
-                ControlStoreScreenWrapper(
-                    onBack = { navState.navigateToControls() }
-                )
-            },
-            fileBrowserContent = { initialPath, allowedExtensions, fileType ->
-                FileBrowserScreenWrapper(
-                    initialPath = initialPath,
-                    fileType = fileType,
-                    allowedExtensions = allowedExtensions,
-                    hasPermission = hasFilePermission,
-                    onFileSelected = { path, type ->
-                        val selectedType = type ?: currentFileType
-                        val file = File(path)
-                        
-                        // 立即设置文件路径和名称
-                        when (selectedType) {
-                            "game" -> {
-                                importGameFilePath = path
-                                importGameName = file.nameWithoutExtension
-                            }
-                            "modloader" -> {
-                                importModLoaderFilePath = path
-                                importModLoaderName = file.nameWithoutExtension
-                            }
-                        }
-                        
-                        // 异步检测游戏/模组加载器名称
-                        scope.launch(Dispatchers.IO) {
-                            try {
-                                when (selectedType) {
-                                    "game" -> {
-                                        val result = com.app.ralaunch.feature.installer.InstallPluginRegistry.detectGame(file)
-                                        result?.second?.definition?.displayName?.let { name ->
-                                            withContext(Dispatchers.Main) {
-                                                importGameName = name
-                                            }
-                                        }
-                                    }
-                                    "modloader" -> {
-                                        val result = com.app.ralaunch.feature.installer.InstallPluginRegistry.detectModLoader(file)
-                                        result?.second?.definition?.displayName?.let { name ->
-                                            withContext(Dispatchers.Main) {
-                                                importModLoaderName = name
-                                            }
-                                        }
-                                    }
-                                }
-                            } catch (_: Exception) {
-                                // 保持文件名
-                            }
-                        }
-                        
-                        navState.goBack()
-                    },
-                    onBack = {
-                        navState.goBack()
-                    },
-                    onRequestPermission = {
-                        permissionManager?.requestRequiredPermissions(object : PermissionManager.PermissionCallback {
-                            override fun onPermissionsGranted() {
-                                hasFilePermission = true
-                            }
+            }
 
-                            override fun onPermissionsDenied() {
-                                hasFilePermission = false
-                            }
-                        })
-                    }
+            updateDownloadUiState?.let { downloadState ->
+                UpdateDownloadComposeDialog(
+                    state = downloadState,
+                    onDismiss = { updateDownloadUiState = null },
+                    onInstall = { installDownloadedUpdateFromDialog() },
+                    onRetry = { retryUpdateDownload() }
                 )
             }
-        )
-        
-        // 删除确认对话框 (纯 Compose)
-        state.gamePendingDeletion?.let { game ->
-            DeleteGameComposeDialog(
-                gameName = game.displayedName,
-                isDeleting = state.isDeletingGame,
-                onConfirm = onConfirmDelete,
-                onDismiss = onDismissDeleteDialog
-            )
-        }
 
-        if (forceAnnouncement == null && updateDownloadState == null) {
-            availableUpdate?.let { update ->
-                AppUpdateComposeDialog(
-                    update = update,
-                    onConfirm = onUpdateActionClick,
-                    onCloudDownload = onUpdateCloudActionClick,
-                    onIgnore = onIgnoreUpdateClick,
-                    onDismiss = onDismissUpdateDialog
-                )
-            }
-        }
-
-        updateDownloadState?.let { downloadState ->
-            UpdateDownloadComposeDialog(
-                state = downloadState,
-                onDismiss = onDismissUpdateDownloadDialog,
-                onInstall = onInstallDownloadedUpdate,
-                onRetry = onRetryUpdateDownload
-            )
-        }
-
-        if (updateDownloadState == null) {
-            forceAnnouncement?.let { announcement ->
-                ForceAnnouncementComposeDialog(
-                    announcement = announcement,
-                    onLearnMore = onForceAnnouncementLearnMore,
-                    onConfirm = onForceAnnouncementConfirm
-                )
+            if (updateDownloadUiState == null) {
+                state.forceAnnouncement?.let { announcement ->
+                    ForceAnnouncementComposeDialog(
+                        announcement = announcement,
+                        onLearnMore = {
+                            onEvent(MainUiEvent.AnnouncementPopupLearnMoreClicked)
+                        },
+                        onConfirm = {
+                            onEvent(MainUiEvent.AnnouncementPopupViewClicked)
+                        }
+                    )
+                }
             }
         }
     }
+
 }
 
 /**

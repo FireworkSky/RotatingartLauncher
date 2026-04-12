@@ -91,12 +91,15 @@ class GameActivity : SDLActivity(), GameContract.View {
             context: Context,
             gameStorageId: String
         ) {
-            context.startActivity(
-                createLaunchIntent(
-                    context = context,
-                    gameStorageId = gameStorageId
-                )
-            )
+            val intent = createLaunchIntent(
+                context = context,
+                gameStorageId = gameStorageId
+            ).apply {
+                if (context !is Activity) {
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+            }
+            context.startActivity(intent)
             (context as? Activity)?.overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
         }
 
@@ -109,16 +112,19 @@ class GameActivity : SDLActivity(), GameContract.View {
             gameRendererOverride: String?,
             gameEnvVars: Map<String, String?> = emptyMap()
         ) {
-            context.startActivity(
-                createLaunchIntent(
-                    context = context,
-                    gameExePath = gameExePath,
-                    gameArgs = gameArgs,
-                    gameId = gameId,
-                    gameRendererOverride = gameRendererOverride,
-                    gameEnvVars = gameEnvVars
-                )
-            )
+            val intent = createLaunchIntent(
+                context = context,
+                gameExePath = gameExePath,
+                gameArgs = gameArgs,
+                gameId = gameId,
+                gameRendererOverride = gameRendererOverride,
+                gameEnvVars = gameEnvVars
+            ).apply {
+                if (context !is Activity) {
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+            }
+            context.startActivity(intent)
             (context as? Activity)?.overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
         }
 

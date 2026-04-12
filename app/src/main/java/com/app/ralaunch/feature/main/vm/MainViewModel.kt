@@ -3,36 +3,27 @@ package com.app.ralaunch.feature.main.vm
 import android.content.Context
 import android.content.pm.PackageManager
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.app.ralaunch.R
+import com.app.ralaunch.core.common.GameLaunchManager
 import com.app.ralaunch.core.common.SettingsAccess
 import com.app.ralaunch.core.common.util.AppLogger
-import com.app.ralaunch.feature.announcement.AnnouncementRepositoryService
-import com.app.ralaunch.feature.main.AddGameUseCase
-import com.app.ralaunch.feature.main.DeleteGameFilesUseCase
-import com.app.ralaunch.feature.main.DeleteGameUseCase
-import com.app.ralaunch.feature.main.LaunchGameUseCase
-import com.app.ralaunch.feature.main.LoadGamesUseCase
-import com.app.ralaunch.feature.main.UpdateGameUseCase
-import com.app.ralaunch.core.di.service.GameDeletionManager
-import com.app.ralaunch.core.common.GameLaunchManager
-import com.app.ralaunch.feature.installer.GameInstaller
-import com.app.ralaunch.feature.installer.InstallCallback
-import com.app.ralaunch.core.model.GameItem
-import com.app.ralaunch.core.di.contract.GameListStorage
+import com.app.ralaunch.R
 import com.app.ralaunch.core.di.contract.GameRepositoryV2
+import com.app.ralaunch.core.di.contract.SettingsRepositoryV2
+import com.app.ralaunch.core.di.service.GameDeletionManager
+import com.app.ralaunch.core.navigation.NavDestination
+import com.app.ralaunch.core.navigation.NavigationEvent
+import com.app.ralaunch.core.model.GameItem
 import com.app.ralaunch.core.model.applyFromUiModel
 import com.app.ralaunch.core.model.toUiModels
+import com.app.ralaunch.feature.announcement.AnnouncementRepositoryService
 import com.app.ralaunch.feature.main.contracts.AppUpdateUiModel
 import com.app.ralaunch.feature.main.contracts.ForceAnnouncementUiModel
-import com.app.ralaunch.feature.main.contracts.ImportUiState
 import com.app.ralaunch.feature.main.contracts.MainUiEffect
 import com.app.ralaunch.feature.main.contracts.MainUiEvent
 import com.app.ralaunch.feature.main.contracts.MainUiState
 import com.app.ralaunch.feature.main.update.LauncherUpdateChecker
 import com.app.ralaunch.feature.main.update.LauncherUpdateInfo
-import com.app.ralaunch.core.di.contract.SettingsRepositoryV2
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -40,19 +31,16 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.koin.java.KoinJavaComponent
 
 class MainViewModel(
     private val appContext: Context,
-    private val loadGamesUseCase: LoadGamesUseCase,
-    private val addGameUseCase: AddGameUseCase,
-    private val updateGameUseCase: UpdateGameUseCase,
-    private val deleteGameUseCase: DeleteGameUseCase,
-    private val launchGameUseCase: LaunchGameUseCase,
-    private val deleteGameFilesUseCase: DeleteGameFilesUseCase,
+    private val gameRepository: GameRepositoryV2,
+    private val gameLaunchManager: GameLaunchManager,
+    private val gameDeletionManager: GameDeletionManager,
     private val settingsRepository: SettingsRepositoryV2,
     private val announcementRepositoryService: AnnouncementRepositoryService,
     private val launcherUpdateChecker: LauncherUpdateChecker
@@ -64,11 +52,7 @@ class MainViewModel(
     private val _effects = MutableSharedFlow<MainUiEffect>()
     val effects: SharedFlow<MainUiEffect> = _effects.asSharedFlow()
 
-    private val _importUiState = MutableStateFlow(ImportUiState())
-    val importUiState: StateFlow<ImportUiState> = _importUiState.asStateFlow()
-
     private val gameItemsMap = mutableMapOf<String, GameItem>()
-    private var activeInstaller: GameInstaller? = null
     private var isUpdateCheckInProgress = false
     private var lastUpdateCheckAt: Long = 0L
     private var latestAnnouncementId: String? = null
@@ -78,7 +62,7 @@ class MainViewModel(
     }
 
     init {
-        onEvent(MainUiEvent.RefreshRequested)
+        observeGames()
         onEvent(MainUiEvent.CheckAppUpdate)
         loadAnnouncementBadgeFromSettings()
         checkAnnouncementUnreadOnStartup()
@@ -86,7 +70,6 @@ class MainViewModel(
 
     fun onEvent(event: MainUiEvent) {
         when (event) {
-            is MainUiEvent.RefreshRequested -> refreshGames()
             is MainUiEvent.CheckAppUpdate -> checkAppUpdate()
             is MainUiEvent.CheckAppUpdateManually -> checkAppUpdate(
                 force = true,
@@ -102,14 +85,45 @@ class MainViewModel(
             is MainUiEvent.UpdateIgnoreClicked -> ignoreCurrentUpdate()
             is MainUiEvent.UpdateActionClicked -> openUpdateUrl()
             is MainUiEvent.UpdateCloudActionClicked -> openCloudUpdateUrl()
-            is MainUiEvent.ImportCompleted -> onGameImportComplete(event.game)
             is MainUiEvent.AppResumed -> {
                 _uiState.update { it.copy(isVideoPlaying = true) }
                 checkAppUpdate(force = false)
             }
             is MainUiEvent.AppPaused -> _uiState.update { it.copy(isVideoPlaying = false) }
             is MainUiEvent.AnnouncementTabOpened -> markAnnouncementsAsRead()
-            is MainUiEvent.AnnouncementPopupConfirmed -> markAnnouncementsAsRead()
+            is MainUiEvent.AnnouncementPopupLearnMoreClicked -> markAnnouncementsAsRead()
+            is MainUiEvent.AnnouncementPopupViewClicked -> openAnnouncementScreen()
+        }
+    }
+
+    private fun observeGames() {
+        viewModelScope.launch {
+            gameRepository.games.collectLatest { games ->
+                val distinctGames = games.distinctBy { it.id }
+                gameItemsMap.clear()
+                distinctGames.forEach { game ->
+                    gameItemsMap[game.id] = game
+                }
+
+                val uiGames = distinctGames.toUiModels()
+                _uiState.update { state ->
+                    val selectedGameId = state.selectedGame?.id
+                    val pendingDeletionId = state.gamePendingDeletion?.id
+                    state.copy(
+                        games = uiGames,
+                        selectedGame = selectedGameId?.let { id ->
+                            uiGames.find { it.id == id }
+                        },
+                        gamePendingDeletion = pendingDeletionId?.let { id ->
+                            uiGames.find { it.id == id }
+                        },
+                        deletePosition = pendingDeletionId?.let { id ->
+                            uiGames.indexOfFirst { it.id == id }.takeIf { it >= 0 } ?: -1
+                        } ?: -1,
+                        isLoading = false
+                    )
+                }
+            }
         }
     }
 
@@ -226,151 +240,6 @@ class MainViewModel(
         }
     }
 
-    fun startImport(gameFilePath: String?, modLoaderFilePath: String?) {
-        if (_importUiState.value.isImporting) return
-
-        if (gameFilePath.isNullOrEmpty() && modLoaderFilePath.isNullOrEmpty()) {
-            _importUiState.update {
-                it.copy(errorMessage = appContext.getString(R.string.import_select_game_first))
-            }
-            return
-        }
-
-        val storage: GameListStorage = try {
-            KoinJavaComponent.get(GameListStorage::class.java)
-        } catch (_: Exception) {
-            _importUiState.update {
-                it.copy(
-                    isImporting = false,
-                    errorMessage = appContext.getString(R.string.import_storage_init_failed)
-                )
-            }
-            return
-        }
-
-        _importUiState.update {
-            it.copy(
-                isImporting = true,
-                progress = 0,
-                status = appContext.getString(R.string.import_preparing_import),
-                errorMessage = null,
-                lastCompletedGameId = null
-            )
-        }
-
-        val installer = GameInstaller(storage)
-        activeInstaller = installer
-
-        installer.install(
-            gameFilePath = gameFilePath ?: "",
-            modLoaderFilePath = modLoaderFilePath,
-            callback = object : InstallCallback {
-                override fun onProgress(message: String, progress: Int) {
-                    _importUiState.update {
-                        it.copy(
-                            status = message,
-                            progress = progress.coerceIn(0, 100)
-                        )
-                    }
-                }
-
-                override fun onComplete(gameItem: GameItem) {
-                    activeInstaller = null
-                    viewModelScope.launch(Dispatchers.IO) {
-                        try {
-                            addGameUseCase(gameItem, 0)
-                            refreshGames(selectedId = null)
-                            _importUiState.update {
-                                it.copy(
-                                    isImporting = false,
-                                    progress = 100,
-                                    status = appContext.getString(R.string.import_complete_exclamation),
-                                    errorMessage = null,
-                                    lastCompletedGameId = gameItem.id
-                                )
-                            }
-                            emitEffect(MainUiEffect.ShowSuccess(appContext.getString(R.string.game_added_success)))
-                        } catch (e: Exception) {
-                            _importUiState.update {
-                                it.copy(
-                                    isImporting = false,
-                                    errorMessage = e.message ?: appContext.getString(R.string.import_error_game_import_failed)
-                                )
-                            }
-                            emitEffect(
-                                MainUiEffect.ShowToast(
-                                    appContext.getString(
-                                        R.string.import_failed_colon,
-                                        e.message ?: appContext.getString(R.string.common_unknown_error)
-                                    )
-                                )
-                            )
-                        }
-                    }
-                }
-
-                override fun onError(error: String) {
-                    activeInstaller = null
-                    _importUiState.update {
-                        it.copy(
-                            isImporting = false,
-                            lastCompletedGameId = null,
-                            errorMessage = error
-                        )
-                    }
-                    emitEffect(MainUiEffect.ShowToast(appContext.getString(R.string.import_failed_colon, error)))
-                }
-
-                override fun onCancelled() {
-                    activeInstaller = null
-                    _importUiState.update {
-                        it.copy(
-                            isImporting = false,
-                            lastCompletedGameId = null,
-                            errorMessage = appContext.getString(R.string.import_cancelled)
-                        )
-                    }
-                }
-            }
-        )
-    }
-
-    fun clearImportError() {
-        _importUiState.update {
-            it.copy(errorMessage = null)
-        }
-    }
-
-    fun resetImportCompletedFlag() {
-        _importUiState.update {
-            it.copy(lastCompletedGameId = null)
-        }
-    }
-
-    private fun refreshGames(selectedId: String? = _uiState.value.selectedGame?.id) {
-        viewModelScope.launch(Dispatchers.IO) {
-            val games = loadGamesUseCase().distinctBy { it.id }
-            gameItemsMap.clear()
-            games.forEach { game ->
-                gameItemsMap[game.id] = game
-            }
-            val uiGames = games.toUiModels()
-            val selectedGame = selectedId?.let { id -> uiGames.find { it.id == id } }
-            withContext(Dispatchers.Main) {
-                _uiState.update {
-                    it.copy(
-                        games = uiGames,
-                        selectedGame = selectedGame,
-                        gamePendingDeletion = null,
-                        deletePosition = -1,
-                        isDeletingGame = false,
-                        isLoading = false
-                    )
-                }
-            }
-        }
-    }
-
     private fun selectGame(gameId: String) {
         val selected = _uiState.value.games.find { it.id == gameId } ?: return
         _uiState.update { it.copy(selectedGame = selected) }
@@ -380,8 +249,10 @@ class MainViewModel(
         viewModelScope.launch(Dispatchers.IO) {
             val game = gameItemsMap[updatedGameUi.id] ?: return@launch
             game.applyFromUiModel(updatedGameUi)
-            updateGameUseCase(game)
-            refreshGames(selectedId = updatedGameUi.id)
+            val index = gameRepository.games.value.indexOfFirst { it.id == game.id }
+            if (index >= 0) {
+                gameRepository.upsert(game, index)
+            }
         }
     }
 
@@ -433,9 +304,8 @@ class MainViewModel(
                     return@launch
                 }
 
-                val filesDeleted = deleteGameFilesUseCase(game)
-                deleteGameUseCase(game.id)
-                refreshGames(selectedId = null)
+                val filesDeleted = gameDeletionManager.deleteGameFiles(game)
+                gameRepository.removeById(game.id)
 
                 if (filesDeleted) {
                     emitEffect(MainUiEffect.ShowSuccess(appContext.getString(R.string.main_game_deleted)))
@@ -465,8 +335,10 @@ class MainViewModel(
             return
         }
 
-        viewModelScope.launch(Dispatchers.IO) {
-            val success = launchGameUseCase(game)
+        viewModelScope.launch {
+            val success = withContext(Dispatchers.Main) {
+                gameLaunchManager.launchGame(game)
+            }
             if (!success) {
                 emitEffect(MainUiEffect.ShowToast(appContext.getString(R.string.game_launch_failed)))
                 return@launch
@@ -477,12 +349,13 @@ class MainViewModel(
         }
     }
 
-    private fun onGameImportComplete(game: GameItem) {
-        viewModelScope.launch(Dispatchers.IO) {
-            addGameUseCase(game, 0)
-            refreshGames(selectedId = null)
-            emitEffect(MainUiEffect.ShowSuccess(appContext.getString(R.string.game_added_success)))
-        }
+    private fun openAnnouncementScreen() {
+        emitEffect(
+            MainUiEffect.Navigate(
+                NavigationEvent.NavigateToDestination(NavDestination.ANNOUNCEMENTS)
+            )
+        )
+        markAnnouncementsAsRead()
     }
 
     private fun checkAppUpdate(
@@ -601,46 +474,5 @@ class MainViewModel(
         viewModelScope.launch {
             _effects.emit(effect)
         }
-    }
-
-    override fun onCleared() {
-        activeInstaller?.cancel()
-        activeInstaller = null
-        super.onCleared()
-    }
-}
-
-class MainViewModelFactory(
-    private val appContext: Context
-) : ViewModelProvider.Factory {
-
-    @Suppress("UNCHECKED_CAST")
-    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        if (!modelClass.isAssignableFrom(MainViewModel::class.java)) {
-            throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
-        }
-        val gameRepository: GameRepositoryV2 = KoinJavaComponent.get(GameRepositoryV2::class.java)
-        val loadGamesUseCase = LoadGamesUseCase(gameRepository)
-        val addGameUseCase = AddGameUseCase(gameRepository)
-        val updateGameUseCase = UpdateGameUseCase(gameRepository)
-        val deleteGameUseCase = DeleteGameUseCase(gameRepository)
-        val launchGameUseCase = LaunchGameUseCase(GameLaunchManager(appContext))
-        val deleteGameFilesUseCase = DeleteGameFilesUseCase(GameDeletionManager(appContext))
-        val settingsRepository: SettingsRepositoryV2 = KoinJavaComponent.get(SettingsRepositoryV2::class.java)
-        val announcementRepositoryService: AnnouncementRepositoryService = KoinJavaComponent.get(AnnouncementRepositoryService::class.java)
-        val launcherUpdateChecker: LauncherUpdateChecker = KoinJavaComponent.get(LauncherUpdateChecker::class.java)
-
-        return MainViewModel(
-            appContext = appContext.applicationContext,
-            loadGamesUseCase = loadGamesUseCase,
-            addGameUseCase = addGameUseCase,
-            updateGameUseCase = updateGameUseCase,
-            deleteGameUseCase = deleteGameUseCase,
-            launchGameUseCase = launchGameUseCase,
-            deleteGameFilesUseCase = deleteGameFilesUseCase,
-            settingsRepository = settingsRepository,
-            announcementRepositoryService = announcementRepositoryService,
-            launcherUpdateChecker = launcherUpdateChecker
-        ) as T
     }
 }

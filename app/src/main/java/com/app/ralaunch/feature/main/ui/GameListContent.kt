@@ -24,9 +24,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.zIndex
 import androidx.compose.ui.unit.dp
+import com.app.ralaunch.R
 import com.app.ralaunch.core.ui.component.GlassSurface
 import com.app.ralaunch.core.model.GameItemUi
 
@@ -48,16 +50,6 @@ fun GameListContent(
     onDeleteClick: () -> Unit,
     onEditClick: () -> Unit = {},
     onAddClick: () -> Unit = {},
-    noSelectionTitle: String,
-    noSelectionMessage: String,
-    emptyGamesTitle: String,
-    emptyGamesMessage: String,
-    addGameButtonText: String,
-    launchGameButtonText: String,
-    editActionContentDescription: String,
-    deleteActionContentDescription: String,
-    moreActionsContentDescription: String,
-    collapseActionsContentDescription: String,
     isLoading: Boolean = false,
     modifier: Modifier = Modifier,
     iconLoader: @Composable (String?, Modifier) -> Unit = { _, _ -> }
@@ -80,9 +72,6 @@ fun GameListContent(
                 onGameClick = onGameClick,
                 onGameLongClick = onGameLongClick,
                 onAddClick = onAddClick,
-                emptyGamesTitle = emptyGamesTitle,
-                emptyGamesMessage = emptyGamesMessage,
-                addGameButtonText = addGameButtonText,
                 isLoading = isLoading,
                 iconLoader = iconLoader,
                 modifier = Modifier.fillMaxSize()
@@ -104,13 +93,6 @@ fun GameListContent(
                 onLaunchClick = onLaunchClick,
                 onDeleteClick = onDeleteClick,
                 onEditClick = onEditClick,
-                noSelectionTitle = noSelectionTitle,
-                noSelectionMessage = noSelectionMessage,
-                launchGameButtonText = launchGameButtonText,
-                editActionContentDescription = editActionContentDescription,
-                deleteActionContentDescription = deleteActionContentDescription,
-                moreActionsContentDescription = moreActionsContentDescription,
-                collapseActionsContentDescription = collapseActionsContentDescription,
                 iconLoader = iconLoader,
                 modifier = Modifier.fillMaxSize()
             )
@@ -125,9 +107,6 @@ private fun GameGridSection(
     onGameClick: (GameItemUi) -> Unit,
     onGameLongClick: (GameItemUi) -> Unit,
     onAddClick: () -> Unit,
-    emptyGamesTitle: String,
-    emptyGamesMessage: String,
-    addGameButtonText: String,
     isLoading: Boolean,
     iconLoader: @Composable (String?, Modifier) -> Unit,
     modifier: Modifier = Modifier
@@ -136,9 +115,6 @@ private fun GameGridSection(
         if (games.isEmpty() && !isLoading) {
             EmptyGameListContent(
                 onAddClick = onAddClick,
-                title = emptyGamesTitle,
-                message = emptyGamesMessage,
-                addButtonText = addGameButtonText
             )
         } else {
             LazyVerticalGrid(
@@ -185,13 +161,6 @@ private fun DetailSection(
     onLaunchClick: () -> Unit,
     onDeleteClick: () -> Unit,
     onEditClick: () -> Unit,
-    noSelectionTitle: String,
-    noSelectionMessage: String,
-    launchGameButtonText: String,
-    editActionContentDescription: String,
-    deleteActionContentDescription: String,
-    moreActionsContentDescription: String,
-    collapseActionsContentDescription: String,
     iconLoader: @Composable (String?, Modifier) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -210,18 +179,15 @@ private fun DetailSection(
                     onLaunchClick = onLaunchClick,
                     onDeleteClick = onDeleteClick,
                     onEditClick = onEditClick,
-                    launchButtonText = launchGameButtonText,
-                    editContentDescription = editActionContentDescription,
-                    deleteContentDescription = deleteActionContentDescription,
-                    moreOptionsContentDescription = moreActionsContentDescription,
-                    collapseOptionsContentDescription = collapseActionsContentDescription,
+                    launchButtonText = stringResource(R.string.main_launch_game),
+                    editContentDescription = stringResource(R.string.control_layout_edit),
+                    deleteContentDescription = stringResource(R.string.delete),
+                    moreOptionsContentDescription = stringResource(R.string.control_layout_more_actions),
+                    collapseOptionsContentDescription = stringResource(R.string.control_layout_hide_quick_actions),
                     iconLoader = iconLoader
                 )
             } else {
-                EmptySelectionContent(
-                    title = noSelectionTitle,
-                    message = noSelectionMessage
-                )
+                EmptySelectionContent()
             }
         }
     }
@@ -232,8 +198,6 @@ private fun DetailSection(
  */
 @Composable
 fun EmptySelectionContent(
-    title: String,
-    message: String,
     modifier: Modifier = Modifier
 ) {
     val primaryColor = MaterialTheme.colorScheme.primary
@@ -274,14 +238,14 @@ fun EmptySelectionContent(
         }
         Spacer(modifier = Modifier.height(20.dp))
         Text(
-            text = title,
+            text = stringResource(R.string.main_no_game_selected),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Medium,
             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            text = message,
+            text = stringResource(R.string.main_select_game),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
         )
@@ -294,9 +258,6 @@ fun EmptySelectionContent(
 @Composable
 fun EmptyGameListContent(
     onAddClick: () -> Unit,
-    title: String,
-    message: String,
-    addButtonText: String,
     modifier: Modifier = Modifier
 ) {
     val primaryColor = MaterialTheme.colorScheme.primary
@@ -337,14 +298,14 @@ fun EmptyGameListContent(
             }
             Spacer(modifier = Modifier.height(20.dp))
             Text(
-                text = title,
+                text = stringResource(R.string.patch_no_games),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = message,
+                text = stringResource(R.string.main_empty_game_list_hint),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
             )
@@ -359,7 +320,7 @@ fun EmptyGameListContent(
                     modifier = Modifier.size(20.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                Text(addButtonText)
+                Text(stringResource(R.string.main_add_game))
             }
         }
     }

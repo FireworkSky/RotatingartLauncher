@@ -1,7 +1,7 @@
 package com.app.ralaunch.feature.main.contracts
 
+import com.app.ralaunch.core.navigation.NavigationEvent
 import com.app.ralaunch.feature.main.ui.background.BackgroundType
-import com.app.ralaunch.core.model.GameItem
 import com.app.ralaunch.core.model.GameItemUi
 
 data class MainUiState(
@@ -39,7 +39,6 @@ data class AppUpdateUiModel(
 )
 
 sealed interface MainUiEvent {
-    data object RefreshRequested : MainUiEvent
     data object CheckAppUpdate : MainUiEvent
     data object CheckAppUpdateManually : MainUiEvent
     data class GameSelected(val game: GameItemUi) : MainUiEvent
@@ -52,11 +51,11 @@ sealed interface MainUiEvent {
     data object UpdateIgnoreClicked : MainUiEvent
     data object UpdateActionClicked : MainUiEvent
     data object UpdateCloudActionClicked : MainUiEvent
-    data class ImportCompleted(val gameType: String, val game: GameItem) : MainUiEvent
     data object AppResumed : MainUiEvent
     data object AppPaused : MainUiEvent
     data object AnnouncementTabOpened : MainUiEvent
-    data object AnnouncementPopupConfirmed : MainUiEvent
+    data object AnnouncementPopupLearnMoreClicked : MainUiEvent
+    data object AnnouncementPopupViewClicked : MainUiEvent
 }
 
 sealed interface MainUiEffect {
@@ -68,5 +67,6 @@ sealed interface MainUiEffect {
         val releaseUrl: String
     ) : MainUiEffect
     data class OpenUrl(val url: String) : MainUiEffect
+    data class Navigate(val event: NavigationEvent) : MainUiEffect
     data object ExitLauncher : MainUiEffect
 }
