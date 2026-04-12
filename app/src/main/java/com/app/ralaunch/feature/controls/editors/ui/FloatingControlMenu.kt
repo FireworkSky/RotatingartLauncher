@@ -255,8 +255,7 @@ fun FloatingControlMenu(
         Row(
             modifier = Modifier
                 .align(Alignment.TopStart)
-                .padding(top = 12.dp)
-                .height(IntrinsicSize.Min),
+                .padding(top = 12.dp),
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             // 主菜单
@@ -646,7 +645,7 @@ private fun MenuHeader(
         )
         IconButton(onClick = onClose, modifier = Modifier.size(24.dp)) {
             Icon(
-                Icons.Default.ExpandLess,
+                Icons.Default.Close,
                 contentDescription = stringResource(R.string.control_editor_collapse_menu),
                 modifier = Modifier.size(20.dp)
             )
@@ -695,7 +694,7 @@ private fun DraggableMenuHeader(
         }
         IconButton(onClick = onClose, modifier = Modifier.size(24.dp)) {
             Icon(
-                Icons.Default.ExpandLess,
+                Icons.Default.Close,
                 contentDescription = stringResource(R.string.control_editor_collapse_menu),
                 modifier = Modifier.size(20.dp)
             )

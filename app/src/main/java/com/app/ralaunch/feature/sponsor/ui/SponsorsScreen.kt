@@ -84,23 +84,38 @@ fun SponsorsScreen(
         // 星空背景
         StarfieldBackground()
         
-        // Konfetti 效果层 (使用 AndroidView 包装)
-        AndroidView(
-            factory = { ctx ->
-                KonfettiView(ctx).also { view ->
-                    konfettiView = view
-                    // 启动星空效果
-                    startStarfieldEffect(view, scope)
-                }
-            },
-            modifier = Modifier.fillMaxSize()
-        )
-        
         // 主内容
-        Column(
-            modifier = Modifier.fillMaxSize()
-        ) {
-            // 顶部标题栏
+        Box(modifier = Modifier.fillMaxSize()) {
+            when (val state = uiState) {
+                is SponsorsUiState.Loading -> {
+                    LoadingState()
+                }
+                is SponsorsUiState.Error -> {
+                    ErrorState(
+                        message = state.message,
+                        onRetry = viewModel::retry
+                    )
+                }
+                is SponsorsUiState.Success -> {
+                    AndroidView(
+                        factory = { ctx ->
+                            SponsorWallView(ctx).apply {
+                                setSponsors(state.repository.sponsors, state.repository.tiers)
+                                onSponsorClick = { sponsor ->
+                                    showSponsorInfo(context, sponsor)
+                                }
+                                onHighTierSponsorClick = { tier, x, y ->
+                                    konfettiView?.let {
+                                        playTierCelebration(it, tier, x, y)
+                                    }
+                                }
+                            }
+                        },
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
+            }
+
             SponsorsTopBar(
                 onBack = onBack,
                 onSponsor = {
@@ -108,58 +123,32 @@ fun SponsorsScreen(
                     openSponsorPage(context)
                 }
             )
-            
-            // 内容区域
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .weight(1f)
-            ) {
-                when (val state = uiState) {
-                    is SponsorsUiState.Loading -> {
-                        LoadingState()
-                    }
-                    is SponsorsUiState.Error -> {
-                        ErrorState(
-                            message = state.message,
-                            onRetry = viewModel::retry
-                        )
-                    }
-                    is SponsorsUiState.Success -> {
-                        // 使用 AndroidView 包装 SponsorWallView
-                        AndroidView(
-                            factory = { ctx ->
-                                SponsorWallView(ctx).apply {
-                                    setSponsors(state.repository.sponsors, state.repository.tiers)
-                                    onSponsorClick = { sponsor ->
-                                        showSponsorInfo(context, sponsor)
-                                    }
-                                    onHighTierSponsorClick = { tier, x, y ->
-                                        konfettiView?.let { 
-                                            playTierCelebration(it, tier, x, y) 
-                                        }
-                                    }
-                                }
-                            },
-                            modifier = Modifier.fillMaxSize()
-                        )
-                    }
-                }
-            }
-            
-            // 底部提示
+
             Text(
                 text = stringResource(R.string.sponsors_tip_gesture),
                 color = Color.White.copy(alpha = 0.4f),
                 fontSize = 12.sp,
                 modifier = Modifier
-                    .align(Alignment.CenterHorizontally)
+                    .align(Alignment.BottomCenter)
                     .padding(bottom = 24.dp)
                     .clip(RoundedCornerShape(16.dp))
                     .background(Color.Black.copy(alpha = 0.3f))
                     .padding(horizontal = 16.dp, vertical = 6.dp)
             )
         }
+
+        // Konfetti 效果层保持在最前，覆盖赞助墙内容但不拦截手势
+        AndroidView(
+            factory = { ctx ->
+                KonfettiView(ctx).also { view ->
+                    view.isClickable = false
+                    view.isFocusable = false
+                    konfettiView = view
+                    startStarfieldEffect(view, scope)
+                }
+            },
+            modifier = Modifier.fillMaxSize()
+        )
     }
 }
 
@@ -539,6 +528,7 @@ private fun playTierCelebration(view: KonfettiView, tier: SponsorTier, centerX: 
                 )
             )
         }
+
     }
 }
 

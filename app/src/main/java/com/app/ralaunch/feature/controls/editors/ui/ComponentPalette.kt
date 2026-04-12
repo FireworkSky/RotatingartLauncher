@@ -4,6 +4,9 @@ import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -22,6 +25,8 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.app.ralaunch.R
 
@@ -119,7 +124,7 @@ fun ActionWindowMenu(
                 )
                 IconButton(onClick = onCloseMenu, modifier = Modifier.size(24.dp)) {
                     Icon(
-                        Icons.Default.ExpandLess,
+                        Icons.Default.Close,
                         contentDescription = stringResource(R.string.control_editor_collapse_menu),
                         modifier = Modifier.size(20.dp)
                     )
@@ -235,11 +240,19 @@ fun ComponentPalette(
     onAddControl: (String) -> Unit,
     onClose: () -> Unit
 ) {
-    val scrollState = rememberScrollState()
+    val paletteItems = listOf(
+        Triple(Icons.Default.RadioButtonChecked, stringResource(R.string.control_editor_button_label), "button"),
+        Triple(Icons.Default.Games, stringResource(R.string.control_editor_joystick_label), "joystick"),
+        Triple(Icons.Default.TouchApp, stringResource(R.string.control_editor_touch_label), "touchpad"),
+        Triple(Icons.Default.Mouse, stringResource(R.string.control_editor_mousewheel_label), "mousewheel"),
+        Triple(Icons.Default.TextFields, stringResource(R.string.control_editor_text_label), "text"),
+        Triple(Icons.Default.DonutLarge, stringResource(R.string.control_editor_radial_menu_label), "radialmenu"),
+        Triple(Icons.Default.Gamepad, stringResource(R.string.control_editor_dpad_label), "dpad")
+    )
 
     Surface(
         modifier = Modifier
-            .width(240.dp)
+            .width(320.dp)
             .heightIn(max = 420.dp),
         shape = RoundedCornerShape(16.dp),
         color = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.95f),
@@ -265,37 +278,25 @@ fun ComponentPalette(
                 }
             }
 
-            Column(
+            LazyVerticalGrid(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 12.dp)
-                    .verticalScroll(scrollState)
-                    .weight(1f, fill = false),
-                horizontalAlignment = Alignment.CenterHorizontally
+                    .weight(1f),
+                columns = GridCells.Adaptive(minSize = 88.dp),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly
-                ) {
-                    PaletteItem(Icons.Default.RadioButtonChecked, stringResource(R.string.control_editor_button_label), "button", onAddControl)
-                    PaletteItem(Icons.Default.Games, stringResource(R.string.control_editor_joystick_label), "joystick", onAddControl)
-                    PaletteItem(Icons.Default.TouchApp, stringResource(R.string.control_editor_touch_label), "touchpad", onAddControl)
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly
-                ) {
-                    PaletteItem(Icons.Default.Mouse, stringResource(R.string.control_editor_mousewheel_label), "mousewheel", onAddControl)
-                    PaletteItem(Icons.Default.TextFields, stringResource(R.string.control_editor_text_label), "text", onAddControl)
-                    PaletteItem(Icons.Default.DonutLarge, stringResource(R.string.control_editor_radial_menu_label), "radialmenu", onAddControl)
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly
-                ) {
-                    PaletteItem(Icons.Default.Gamepad, stringResource(R.string.control_editor_dpad_label), "dpad", onAddControl)
+                items(
+                    items = paletteItems,
+                    key = { it.third }
+                ) { (icon, label, type) ->
+                    PaletteItem(
+                        icon = icon,
+                        label = label,
+                        type = type,
+                        onAdd = onAddControl
+                    )
                 }
             }
         }
@@ -307,14 +308,15 @@ fun PaletteItem(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     label: String,
     type: String,
-    onAdd: (String) -> Unit
+    onAdd: (String) -> Unit,
+    modifier: Modifier = Modifier
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier
+        modifier = modifier
             .clip(RoundedCornerShape(12.dp))
             .clickable { onAdd(type) }
-            .padding(4.dp),
+            .padding(horizontal = 6.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.Center
     ) {
         Surface(
@@ -324,6 +326,15 @@ fun PaletteItem(
         ) {
             Icon(icon, contentDescription = label, modifier = Modifier.padding(12.dp).size(24.dp))
         }
-        Text(label, style = MaterialTheme.typography.labelSmall, modifier = Modifier.padding(top = 4.dp))
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 6.dp),
+            textAlign = TextAlign.Center,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis
+        )
     }
 }

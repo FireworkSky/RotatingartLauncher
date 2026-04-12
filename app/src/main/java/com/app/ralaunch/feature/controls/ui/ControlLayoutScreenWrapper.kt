@@ -9,20 +9,27 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.app.ralaunch.R
@@ -615,191 +622,203 @@ private fun LayoutDetailPanel(
             if (currentLayout != null) {
                 val isDefault = currentLayout.id == selectedPackId
                 val isQuickSwitch = currentLayout.id in quickSwitchIds
+                val detailScrollState = rememberScrollState()
 
                 Column(
                     modifier = Modifier.fillMaxSize()
                 ) {
-                // 布局信息
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Surface(
-                        shape = RoundedCornerShape(12.dp),
-                        color = MaterialTheme.colorScheme.primaryContainer,
-                        modifier = Modifier.size(64.dp)
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .verticalScroll(detailScrollState),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Icon(
-                                Icons.Default.TouchApp,
-                                null,
-                                modifier = Modifier.size(32.dp),
-                                tint = MaterialTheme.colorScheme.onPrimaryContainer
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.width(16.dp))
-
-                    Column(modifier = Modifier.weight(1f)) {
+                        // 布局信息
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(
-                                text = currentLayout.name,
-                                style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.Bold
-                            )
-                            if (isDefault) {
-                                Spacer(modifier = Modifier.width(8.dp))
-                                AssistChip(
-                                    onClick = {},
-                                    label = { Text(stringResource(R.string.layout_default_tag)) },
-                                    leadingIcon = {
-                                        Icon(
-                                            Icons.Default.Star,
-                                            null,
-                                            modifier = Modifier.size(14.dp)
+                            Surface(
+                                shape = RoundedCornerShape(12.dp),
+                                color = MaterialTheme.colorScheme.primaryContainer,
+                                modifier = Modifier.size(64.dp)
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Icon(
+                                        Icons.Default.TouchApp,
+                                        null,
+                                        modifier = Modifier.size(32.dp),
+                                        tint = MaterialTheme.colorScheme.onPrimaryContainer
+                                    )
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.width(16.dp))
+
+                            Column(modifier = Modifier.weight(1f)) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = currentLayout.name,
+                                        style = MaterialTheme.typography.titleLarge,
+                                        fontWeight = FontWeight.Bold,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                        modifier = Modifier.weight(1f, fill = false)
+                                    )
+                                    if (isDefault) {
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        AssistChip(
+                                            onClick = {},
+                                            label = { Text(stringResource(R.string.layout_default_tag)) },
+                                            leadingIcon = {
+                                                Icon(
+                                                    Icons.Default.Star,
+                                                    null,
+                                                    modifier = Modifier.size(14.dp)
+                                                )
+                                            }
                                         )
                                     }
+                                }
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Text(
+                                    text = currentLayout.author.ifBlank { stringResource(R.string.control_layout_custom_author) },
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
                         }
-                        Spacer(modifier = Modifier.height(2.dp))
-                        Text(
-                            text = currentLayout.author.ifBlank { stringResource(R.string.control_layout_custom_author) },
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
 
-                if (currentLayout.description.isNotBlank()) {
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(
-                        text = currentLayout.description,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-                
-                // 快速切换开关
-                Surface(
-                    shape = RoundedCornerShape(12.dp),
-                    color = MaterialTheme.colorScheme.surfaceContainerLow,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        Icon(
-                            Icons.Default.SwapHoriz,
-                            contentDescription = null,
-                            modifier = Modifier.size(20.dp),
-                            tint = if (isQuickSwitch) MaterialTheme.colorScheme.primary
-                                   else MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Column(modifier = Modifier.weight(1f)) {
+                        if (currentLayout.description.isNotBlank()) {
                             Text(
-                                text = stringResource(R.string.control_layout_quick_switch_title),
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = FontWeight.Medium
-                            )
-                            Text(
-                                text = stringResource(R.string.control_layout_quick_switch_subtitle),
+                                text = currentLayout.description,
                                 style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
                             )
                         }
-                        Switch(
-                            checked = isQuickSwitch,
-                            onCheckedChange = onToggleQuickSwitch
-                        )
-                    }
-                }
 
-                Spacer(modifier = Modifier.weight(1f))
-
-                // 操作按钮（窄屏自适应为两行，避免文字换行）
-                BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
-                    val buttonPadding = PaddingValues(horizontal = 12.dp, vertical = 10.dp)
-                    val useTwoRows = !isDefault && maxWidth < 560.dp
-
-                    if (useTwoRows) {
-                        Column(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        // 快速切换开关
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = MaterialTheme.colorScheme.surfaceContainerLow,
+                            modifier = Modifier.fillMaxWidth()
                         ) {
                             Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
                             ) {
-                                OutlinedButton(
-                                    onClick = onPreviewClick,
-                                    modifier = Modifier.weight(1f),
-                                    contentPadding = buttonPadding
-                                ) {
-                                    Icon(Icons.Default.Visibility, null, modifier = Modifier.size(18.dp))
-                                    Spacer(modifier = Modifier.width(6.dp))
-                                    Text(stringResource(R.string.control_layout_preview), maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis)
+                                Icon(
+                                    Icons.Default.SwapHoriz,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(20.dp),
+                                    tint = if (isQuickSwitch) MaterialTheme.colorScheme.primary
+                                    else MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = stringResource(R.string.control_layout_quick_switch_title),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                    Text(
+                                        text = stringResource(R.string.control_layout_quick_switch_subtitle),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
                                 }
-                                OutlinedButton(
-                                    onClick = onSetDefault,
-                                    modifier = Modifier.weight(1f),
-                                    contentPadding = buttonPadding
-                                ) {
-                                    Icon(Icons.Default.Star, null, modifier = Modifier.size(18.dp))
-                                    Spacer(modifier = Modifier.width(6.dp))
-                                    Text(stringResource(R.string.action_set_default), maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis)
-                                }
-                            }
-                            Button(
-                                onClick = onEditClick,
-                                modifier = Modifier.fillMaxWidth(),
-                                contentPadding = buttonPadding
-                            ) {
-                                Icon(Icons.Default.Edit, null, modifier = Modifier.size(18.dp))
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text(stringResource(R.string.control_layout_edit), maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis)
+                                Switch(
+                                    checked = isQuickSwitch,
+                                    onCheckedChange = onToggleQuickSwitch
+                                )
                             }
                         }
-                    } else {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            OutlinedButton(
-                                onClick = onPreviewClick,
-                                modifier = Modifier.weight(1f),
-                                contentPadding = buttonPadding
-                            ) {
-                                Icon(Icons.Default.Visibility, null, modifier = Modifier.size(18.dp))
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text(stringResource(R.string.control_layout_preview), maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis)
-                            }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // 操作按钮：按实际文案宽度决定是一行还是纵向堆叠
+                    BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+                        val actionSpacing = 8.dp
+                        val buttonPadding = PaddingValues(horizontal = 12.dp, vertical = 10.dp)
+                        val textMeasurer = rememberTextMeasurer()
+                        val density = LocalDensity.current
+                        val buttonTextStyle = MaterialTheme.typography.labelLarge
+                        val actionSpecs = buildList {
+                            add(
+                                LayoutActionSpec(
+                                    icon = Icons.Default.Visibility,
+                                    label = stringResource(R.string.control_layout_preview),
+                                    onClick = onPreviewClick,
+                                    emphasized = false
+                                )
+                            )
                             if (!isDefault) {
-                                OutlinedButton(
-                                    onClick = onSetDefault,
-                                    modifier = Modifier.weight(1f),
-                                    contentPadding = buttonPadding
-                                ) {
-                                    Icon(Icons.Default.Star, null, modifier = Modifier.size(18.dp))
-                                    Spacer(modifier = Modifier.width(6.dp))
-                                    Text(stringResource(R.string.action_set_default), maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis)
+                                add(
+                                    LayoutActionSpec(
+                                        icon = Icons.Default.Star,
+                                        label = stringResource(R.string.action_set_default),
+                                        onClick = onSetDefault,
+                                        emphasized = false
+                                    )
+                                )
+                            }
+                            add(
+                                LayoutActionSpec(
+                                    icon = Icons.Default.Edit,
+                                    label = stringResource(R.string.control_layout_edit),
+                                    onClick = onEditClick,
+                                    emphasized = true
+                                )
+                            )
+                        }
+                        val horizontalInsetPx = with(density) {
+                            // button horizontal padding + icon + spacer + a small safety reserve
+                            (12.dp * 2 + 18.dp + 6.dp + 8.dp).roundToPx()
+                        }
+                        val spacingPx = with(density) { actionSpacing.roundToPx() }
+                        val availableWidthPx = with(density) { maxWidth.roundToPx() }
+                        val widestActionWidthPx = actionSpecs.maxOfOrNull { action ->
+                            textMeasurer.measure(
+                                text = AnnotatedString(action.label),
+                                style = buttonTextStyle,
+                                maxLines = 1
+                            ).size.width + horizontalInsetPx
+                        } ?: 0
+                        val useSingleRow = availableWidthPx >=
+                            (widestActionWidthPx * actionSpecs.size) + (spacingPx * (actionSpecs.size - 1))
+
+                        if (useSingleRow) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(actionSpacing)
+                            ) {
+                                actionSpecs.forEach { action ->
+                                    LayoutDetailActionButton(
+                                        action = action,
+                                        modifier = Modifier.weight(1f),
+                                        contentPadding = buttonPadding,
+                                        maxLines = 1
+                                    )
                                 }
                             }
-                            Button(
-                                onClick = onEditClick,
-                                modifier = Modifier.weight(1f),
-                                contentPadding = buttonPadding
+                        } else {
+                            Column(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalArrangement = Arrangement.spacedBy(actionSpacing)
                             ) {
-                                Icon(Icons.Default.Edit, null, modifier = Modifier.size(18.dp))
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text(stringResource(R.string.control_layout_edit), maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis)
+                                actionSpecs.forEach { action ->
+                                    LayoutDetailActionButton(
+                                        action = action,
+                                        modifier = Modifier.fillMaxWidth(),
+                                        contentPadding = buttonPadding,
+                                        maxLines = 2
+                                    )
+                                }
                             }
                         }
                     }
                 }
-            }
             } else {
                 // 空状态
                 Box(
@@ -823,5 +842,70 @@ private fun LayoutDetailPanel(
                 }
             }
         }
+    }
+}
+
+private data class LayoutActionSpec(
+    val icon: ImageVector,
+    val label: String,
+    val onClick: () -> Unit,
+    val emphasized: Boolean
+)
+
+@Composable
+private fun LayoutDetailActionButton(
+    action: LayoutActionSpec,
+    modifier: Modifier,
+    contentPadding: PaddingValues,
+    maxLines: Int
+) {
+    if (action.emphasized) {
+        Button(
+            onClick = action.onClick,
+            modifier = modifier,
+            contentPadding = contentPadding
+        ) {
+            LayoutActionButtonContent(
+                icon = action.icon,
+                label = action.label,
+                maxLines = maxLines
+            )
+        }
+    } else {
+        OutlinedButton(
+            onClick = action.onClick,
+            modifier = modifier,
+            contentPadding = contentPadding
+        ) {
+            LayoutActionButtonContent(
+                icon = action.icon,
+                label = action.label,
+                maxLines = maxLines
+            )
+        }
+    }
+}
+
+@Composable
+private fun LayoutActionButtonContent(
+    icon: ImageVector,
+    label: String,
+    maxLines: Int = 1
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center
+    ) {
+        Icon(icon, null, modifier = Modifier.size(18.dp))
+        Spacer(modifier = Modifier.width(6.dp))
+        Text(
+            text = label,
+            modifier = Modifier.weight(1f),
+            maxLines = maxLines,
+            softWrap = maxLines > 1,
+            overflow = TextOverflow.Ellipsis,
+            textAlign = TextAlign.Center
+        )
     }
 }

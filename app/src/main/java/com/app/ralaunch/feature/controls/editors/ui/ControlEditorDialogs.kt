@@ -1,7 +1,11 @@
 package com.app.ralaunch.feature.controls.editors.ui
 
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -9,13 +13,25 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import com.app.ralaunch.R
 import com.app.ralaunch.feature.controls.ControlData
 import com.app.ralaunch.feature.controls.KeyMapper
+import com.app.ralaunch.feature.controls.packs.ControlPackManager
+import com.app.ralaunch.feature.controls.textures.TextureLoader
+import org.koin.compose.koinInject
+import java.io.File
 
 /**
  * DPad 按键选择行
@@ -138,6 +154,9 @@ fun JoystickKeyMappingDialog(
     onDismiss: () -> Unit
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
+    val configuration = LocalConfiguration.current
+    val maxDialogHeight = configuration.screenHeightDp.dp * 0.85f
+    val contentScrollState = rememberScrollState()
     val directions = listOf(
         stringResource(R.string.key_arrow_up),
         stringResource(R.string.key_arrow_right),
@@ -149,14 +168,20 @@ fun JoystickKeyMappingDialog(
     var selectingDirectionIndex by remember { mutableStateOf<Int?>(null) }
 
     Dialog(onDismissRequest = onDismiss) {
+        val detailsScrollState = rememberScrollState()
         Surface(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth(0.86f)
+                .widthIn(max = 960.dp)
+                .heightIn(max = maxDialogHeight),
             shape = RoundedCornerShape(16.dp),
             color = MaterialTheme.colorScheme.surfaceContainerHighest,
             tonalElevation = 8.dp
         ) {
             Column(
-                modifier = Modifier.padding(20.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(20.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 Text(
@@ -164,65 +189,83 @@ fun JoystickKeyMappingDialog(
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold
                 )
-                
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+
+                Column(
+                    modifier = Modifier
+                        .weight(1f, fill = false)
+                        .verticalScroll(contentScrollState),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    SuggestionChip(
-                        onClick = { 
-                            keys = arrayOf(
-                                ControlData.KeyCode.KEYBOARD_W,
-                                ControlData.KeyCode.KEYBOARD_D,
-                                ControlData.KeyCode.KEYBOARD_S,
-                                ControlData.KeyCode.KEYBOARD_A
-                            )
-                        },
-                        label = { Text(stringResource(R.string.control_editor_wasd_keys)) }
-                    )
-                    SuggestionChip(
-                        onClick = { 
-                            keys = arrayOf(
-                                ControlData.KeyCode.KEYBOARD_UP,
-                                ControlData.KeyCode.KEYBOARD_RIGHT,
-                                ControlData.KeyCode.KEYBOARD_DOWN,
-                                ControlData.KeyCode.KEYBOARD_LEFT
-                            )
-                        },
-                        label = { Text(stringResource(R.string.control_editor_arrow_keys_compact)) }
-                    )
-                }
-
-                HorizontalDivider()
-
-                directions.forEachIndexed { index, direction ->
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Text(direction, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
-                        
-                        val keyCode = keys.getOrNull(index)
-                        val displayName = keyCode?.let { KeyMapper.getKeyName(context, it) }
-                            ?: stringResource(R.string.editor_combo_keys_not_set)
-                        
-                        OutlinedButton(
-                            onClick = { selectingDirectionIndex = index },
-                            colors = if (selectingDirectionIndex == index) {
-                                ButtonDefaults.outlinedButtonColors(
-                                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                        SuggestionChip(
+                            onClick = {
+                                keys = arrayOf(
+                                    ControlData.KeyCode.KEYBOARD_W,
+                                    ControlData.KeyCode.KEYBOARD_D,
+                                    ControlData.KeyCode.KEYBOARD_S,
+                                    ControlData.KeyCode.KEYBOARD_A
                                 )
-                            } else {
-                                ButtonDefaults.outlinedButtonColors()
-                            }
+                            },
+                            label = { Text(stringResource(R.string.control_editor_wasd_keys)) }
+                        )
+                        SuggestionChip(
+                            onClick = {
+                                keys = arrayOf(
+                                    ControlData.KeyCode.KEYBOARD_UP,
+                                    ControlData.KeyCode.KEYBOARD_RIGHT,
+                                    ControlData.KeyCode.KEYBOARD_DOWN,
+                                    ControlData.KeyCode.KEYBOARD_LEFT
+                                )
+                            },
+                            label = { Text(stringResource(R.string.control_editor_arrow_keys_compact)) }
+                        )
+                    }
+
+                    HorizontalDivider()
+
+                    directions.forEachIndexed { index, direction ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(displayName)
+                            Text(
+                                direction,
+                                style = MaterialTheme.typography.bodyLarge,
+                                fontWeight = FontWeight.Medium,
+                                modifier = Modifier.weight(1f)
+                            )
+
+                            Spacer(modifier = Modifier.width(12.dp))
+
+                            val keyCode = keys.getOrNull(index)
+                            val displayName = keyCode?.let { KeyMapper.getKeyName(context, it) }
+                                ?: stringResource(R.string.editor_combo_keys_not_set)
+
+                            OutlinedButton(
+                                onClick = { selectingDirectionIndex = index },
+                                colors = if (selectingDirectionIndex == index) {
+                                    ButtonDefaults.outlinedButtonColors(
+                                        containerColor = MaterialTheme.colorScheme.primaryContainer
+                                    )
+                                } else {
+                                    ButtonDefaults.outlinedButtonColors()
+                                }
+                            ) {
+                                Text(
+                                    text = displayName,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
                         }
                     }
-                }
 
-                HorizontalDivider()
+                    HorizontalDivider()
+                }
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -397,11 +440,18 @@ fun TextureSettingItem(
 fun TextureSelectorDialog(
     control: ControlData,
     textureType: String,
+    packId: String?,
     onUpdateButtonTexture: (ControlData.Button, String, String, Boolean) -> Unit,
     onUpdateJoystickTexture: (ControlData.Joystick, String, String, Boolean) -> Unit,
     onPickImage: () -> Unit,
     onDismiss: () -> Unit
 ) {
+    val context = LocalContext.current
+    val packManager: ControlPackManager = koinInject()
+    val configuration = LocalConfiguration.current
+    val maxDialogHeight = configuration.screenHeightDp.dp * 0.85f
+    val detailsScrollState = rememberScrollState()
+    val contentScrollState = rememberScrollState()
     val currentConfig = remember(control, textureType) {
         when (control) {
             is ControlData.Button -> when (textureType) {
@@ -423,6 +473,17 @@ fun TextureSelectorDialog(
 
     var textureEnabled by remember { mutableStateOf(currentConfig?.enabled ?: false) }
     val currentPath = currentConfig?.path ?: ""
+    val previewBitmap = remember(packId, currentPath) {
+        val assetsDir = packId?.let { packManager.getPackAssetsDir(it) } ?: return@remember null
+        if (currentPath.isBlank()) return@remember null
+        val textureFile = File(assetsDir, currentPath)
+        if (!textureFile.exists()) return@remember null
+        TextureLoader.getInstance(context).loadTexture(
+            path = textureFile.absolutePath,
+            targetWidth = 640,
+            targetHeight = 640
+        )?.asImageBitmap()
+    }
 
     val textureTypeName = when (textureType) {
         "normal" -> stringResource(R.string.control_texture_normal)
@@ -435,15 +496,23 @@ fun TextureSelectorDialog(
         else -> textureType
     }
 
-    Dialog(onDismissRequest = onDismiss) {
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
         Surface(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth(0.86f)
+                .widthIn(max = 960.dp)
+                .heightIn(max = maxDialogHeight),
             shape = RoundedCornerShape(16.dp),
             color = MaterialTheme.colorScheme.surfaceContainerHighest,
             tonalElevation = 8.dp
         ) {
             Column(
-                modifier = Modifier.padding(20.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(20.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 Row(
@@ -467,92 +536,170 @@ fun TextureSelectorDialog(
                 HorizontalDivider()
 
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                    modifier = Modifier
+                        .weight(1f, fill = false)
+                        .fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(20.dp)
                 ) {
-                    Column {
-                        Text(stringResource(R.string.control_editor_enable_custom_texture), style = MaterialTheme.typography.bodyLarge)
-                        Text(
-                            stringResource(R.string.control_editor_replace_default_texture_hint),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                    Switch(
-                        checked = textureEnabled,
-                        onCheckedChange = { textureEnabled = it }
-                    )
-                }
-
-                if (currentPath.isNotEmpty()) {
-                    Surface(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
-                        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+                    Column(
+                        modifier = Modifier
+                            .weight(0.52f)
+                            .verticalScroll(detailsScrollState),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        Row(
-                            modifier = Modifier.padding(12.dp),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                        Surface(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp),
+                            color = MaterialTheme.colorScheme.surfaceContainerLow
                         ) {
-                            Icon(Icons.Default.Image, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                            Column(modifier = Modifier.weight(1f)) {
+                            Column(
+                                modifier = Modifier.padding(16.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
                                 Text(
                                     stringResource(R.string.control_editor_texture_set),
                                     style = MaterialTheme.typography.bodyMedium,
                                     fontWeight = FontWeight.Medium
                                 )
-                                Text(currentPath.substringAfterLast("/"), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text(
+                                    text = if (currentPath.isNotEmpty()) {
+                                        currentPath.substringAfterLast("/")
+                                    } else {
+                                        stringResource(R.string.control_texture_disabled)
+                                    },
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    maxLines = 2,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+                        }
+
+                        Surface(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp),
+                            color = MaterialTheme.colorScheme.surfaceContainerLow
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(16.dp),
+                                verticalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                Text(
+                                    stringResource(R.string.control_layout_preview),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.Medium
+                                )
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .aspectRatio(1.15f)
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .background(MaterialTheme.colorScheme.surfaceContainerHigh),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    if (previewBitmap != null) {
+                                        Image(
+                                            bitmap = previewBitmap,
+                                            contentDescription = currentPath.substringAfterLast("/"),
+                                            modifier = Modifier.fillMaxSize(),
+                                            contentScale = ContentScale.Fit
+                                        )
+                                    } else {
+                                        Column(
+                                            horizontalAlignment = Alignment.CenterHorizontally,
+                                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.ImageNotSupported,
+                                                contentDescription = null,
+                                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                            Text(
+                                                text = if (currentPath.isNotEmpty()) {
+                                                    currentPath.substringAfterLast("/")
+                                                } else {
+                                                    stringResource(R.string.control_texture_disabled)
+                                                },
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                maxLines = 2,
+                                                overflow = TextOverflow.Ellipsis
+                                            )
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
-                }
 
-                Button(
-                    onClick = onPickImage,
-                    modifier = Modifier.fillMaxWidth(),
-                    enabled = textureEnabled
-                ) {
-                    Icon(Icons.Default.PhotoLibrary, contentDescription = null, modifier = Modifier.size(20.dp))
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        if (currentPath.isEmpty()) {
-                            stringResource(R.string.control_editor_select_image)
-                        } else {
-                            stringResource(R.string.control_editor_change_image)
-                        }
+                    VerticalDivider(
+                        modifier = Modifier.fillMaxHeight(),
+                        color = MaterialTheme.colorScheme.outlineVariant
                     )
-                }
 
-                if (currentPath.isNotEmpty()) {
-                    OutlinedButton(
-                        onClick = {
-                            when (control) {
-                                is ControlData.Button -> onUpdateButtonTexture(control, textureType, "", false)
-                                is ControlData.Joystick -> onUpdateJoystickTexture(control, textureType, "", false)
-                                else -> {}
-                            }
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                    Column(
+                        modifier = Modifier
+                            .weight(0.48f)
+                            .verticalScroll(contentScrollState),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        Icon(Icons.Default.Delete, contentDescription = null, modifier = Modifier.size(20.dp))
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(stringResource(R.string.control_texture_clear))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(stringResource(R.string.control_editor_enable_custom_texture), style = MaterialTheme.typography.bodyLarge)
+                                Text(
+                                    text = textureTypeName,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Switch(
+                                checked = textureEnabled,
+                                onCheckedChange = { textureEnabled = it }
+                            )
+                        }
+
+                        Button(
+                            onClick = onPickImage,
+                            modifier = Modifier.fillMaxWidth(),
+                            enabled = textureEnabled
+                        ) {
+                            Icon(Icons.Default.PhotoLibrary, contentDescription = null, modifier = Modifier.size(20.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                if (currentPath.isEmpty()) {
+                                    stringResource(R.string.control_editor_select_image)
+                                } else {
+                                    stringResource(R.string.control_editor_change_image)
+                                }
+                            )
+                        }
+
+                        if (currentPath.isNotEmpty()) {
+                            OutlinedButton(
+                                onClick = {
+                                    when (control) {
+                                        is ControlData.Button -> onUpdateButtonTexture(control, textureType, "", false)
+                                        is ControlData.Joystick -> onUpdateJoystickTexture(control, textureType, "", false)
+                                        else -> {}
+                                    }
+                                },
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                            ) {
+                                Icon(Icons.Default.Delete, contentDescription = null, modifier = Modifier.size(20.dp))
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(stringResource(R.string.control_texture_clear))
+                            }
+                        }
+
                     }
                 }
 
-                HorizontalDivider()
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End
-                ) {
-                    TextButton(onClick = onDismiss) {
-                        Text(stringResource(R.string.close))
-                    }
-                }
             }
         }
     }

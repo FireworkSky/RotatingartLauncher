@@ -30,6 +30,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -146,7 +148,7 @@ fun AppNavigationRail(
     // 毛玻璃容器
     val baseModifier = modifier
         .fillMaxHeight()
-        .width(88.dp)
+        .width(96.dp)
 
     val hazeModifier = if (hazeState != null) {
         baseModifier.hazeChild(
@@ -366,15 +368,22 @@ private fun SilkyNavItem(
                 }
             }
 
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(2.dp))
 
             Text(
                 text = label,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 8.dp),
                 style = MaterialTheme.typography.labelSmall,
                 color = contentColor,
                 fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
                 fontSize = if (isSelected) 10.sp else 9.sp,
-                letterSpacing = 0.3.sp
+                lineHeight = if (isSelected) 12.sp else 11.sp,
+                letterSpacing = 0.2.sp,
+                textAlign = TextAlign.Center,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
             )
         }
     }

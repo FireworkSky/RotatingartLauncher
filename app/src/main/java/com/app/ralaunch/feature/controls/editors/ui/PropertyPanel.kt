@@ -1,5 +1,6 @@
 package com.app.ralaunch.feature.controls.editors.ui
 
+import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
@@ -14,16 +15,20 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.app.ralaunch.R
 import com.app.ralaunch.feature.controls.ControlData
 import com.app.ralaunch.core.common.SettingsAccess
 import kotlin.math.roundToInt
+
+private val PropertyPanelWidth = 384.dp
 
 @Composable
 fun PropertyPanel(
@@ -34,14 +39,12 @@ fun PropertyPanel(
     onOpenJoystickKeyMapping: ((ControlData.Joystick) -> Unit)? = null,
     onOpenTextureSelector: ((ControlData, String) -> Unit)? = null,
     onOpenPolygonEditor: ((ControlData.Button) -> Unit)? = null,
-    onDrag: ((androidx.compose.ui.geometry.Offset) -> Unit)? = null,
-    onDuplicate: (() -> Unit)? = null,
-    onDelete: (() -> Unit)? = null
+    onDrag: ((androidx.compose.ui.geometry.Offset) -> Unit)? = null
 ) {
     Surface(
         modifier = Modifier
             .fillMaxHeight()
-            .width(320.dp)
+            .width(PropertyPanelWidth)
             .padding(16.dp),
         shape = RoundedCornerShape(16.dp),
         color = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.95f),
@@ -58,21 +61,23 @@ fun PropertyPanel(
             // 可拖动的标题栏
             Row(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .then(
-                        if (onDrag != null) {
-                            Modifier.pointerInput(Unit) {
-                                detectDragGestures { change, dragAmount ->
-                                    change.consume()
-                                    onDrag(androidx.compose.ui.geometry.Offset(dragAmount.x, dragAmount.y))
-                                }
-                            }
-                        } else Modifier
-                    ),
-                horizontalArrangement = Arrangement.SpaceBetween,
+                    .fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(
+                    modifier = Modifier
+                        .weight(1f)
+                        .then(
+                            if (onDrag != null) {
+                                Modifier.pointerInput(Unit) {
+                                    detectDragGestures { change, dragAmount ->
+                                        change.consume()
+                                        onDrag(androidx.compose.ui.geometry.Offset(dragAmount.x, dragAmount.y))
+                                    }
+                                }
+                            } else Modifier
+                        ),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
@@ -85,18 +90,23 @@ fun PropertyPanel(
                         )
                     }
                     Text(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clipToBounds()
+                            .basicMarquee(),
                         text = stringResource(R.string.editor_edit_control_properties),
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = MaterialTheme.colorScheme.primary
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary,
+                        maxLines = 1,
+                        softWrap = false,
+                        overflow = TextOverflow.Clip
                     )
                 }
-                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                    if (onDuplicate != null) {
-                        IconButton(onClick = onDuplicate) {
-                            Icon(Icons.Default.ContentCopy, contentDescription = stringResource(R.string.editor_copy))
-                        }
-                    }
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     IconButton(onClick = onClose) {
                         Icon(Icons.Default.Close, contentDescription = stringResource(R.string.close))
                     }
@@ -324,48 +334,24 @@ fun PropertyPanel(
 
                 // ===== 高级设置 =====
                 PropertySection(title = stringResource(R.string.control_editor_advanced)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column {
-                            Text(stringResource(R.string.editor_visible_in_game), style = MaterialTheme.typography.bodyMedium)
-                            Text(
-                                stringResource(R.string.control_editor_visibility_hint),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
+                    PropertySwitchRow(
+                        title = stringResource(R.string.editor_visible_in_game),
+                        description = stringResource(R.string.control_editor_visibility_hint),
+                        checked = control.isVisible,
+                        onCheckedChange = {
+                            val updated = control.deepCopy().apply { isVisible = it }
+                            onUpdate(updated)
                         }
-                        Switch(
-                            checked = control.isVisible,
-                            onCheckedChange = {
-                                val updated = control.deepCopy().apply { isVisible = it }
-                                onUpdate(updated)
-                            }
-                        )
-                    }
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column {
-                            Text(stringResource(R.string.editor_pass_through), style = MaterialTheme.typography.bodyMedium)
-                            Text(
-                                stringResource(R.string.editor_pass_through_desc),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
+                    )
+                    PropertySwitchRow(
+                        title = stringResource(R.string.editor_pass_through),
+                        description = stringResource(R.string.editor_pass_through_desc),
+                        checked = control.isPassThrough,
+                        onCheckedChange = {
+                            val updated = control.deepCopy().apply { isPassThrough = it }
+                            onUpdate(updated)
                         }
-                        Switch(
-                            checked = control.isPassThrough,
-                            onCheckedChange = {
-                                val updated = control.deepCopy().apply { isPassThrough = it }
-                                onUpdate(updated)
-                            }
-                        )
-                    }
+                    )
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -388,6 +374,42 @@ fun PropertySection(
         )
         content()
         HorizontalDivider(modifier = Modifier.padding(top = 8.dp).background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)))
+    }
+}
+
+@Composable
+private fun PropertySwitchRow(
+    title: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    description: String? = null
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .padding(end = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(2.dp)
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyMedium
+            )
+            if (description != null) {
+                Text(
+                    text = description,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+        Switch(
+            checked = checked,
+            onCheckedChange = onCheckedChange
+        )
     }
 }
 

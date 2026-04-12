@@ -5,20 +5,22 @@ import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import kotlin.math.roundToInt
@@ -127,6 +129,14 @@ fun GameControlsOverlay(
     
     // 属性面板偏移量（可拖动）
     var propertyPanelOffset by remember { mutableStateOf(androidx.compose.ui.geometry.Offset.Zero) }
+    var rootSize by remember { mutableStateOf(IntSize.Zero) }
+    var propertyPanelBounds by remember { mutableStateOf<Rect?>(null) }
+
+    LaunchedEffect(menuState.isInEditMode, selectedControl) {
+        if (!menuState.isInEditMode || selectedControl == null) {
+            propertyPanelBounds = null
+        }
+    }
     
     // 图片选择器
     val imagePickerLauncher = rememberLauncherForActivityResult(
@@ -364,7 +374,13 @@ fun GameControlsOverlay(
         })
     }
 
-    Box(modifier = modifier.fillMaxSize()) {
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .onGloballyPositioned { coordinates ->
+                rootSize = coordinates.size
+            }
+    ) {
         // 点击空白区域关闭菜单和属性面板
         if (menuState.isExpanded || (menuState.isInEditMode && selectedControl != null)) {
             Box(
@@ -401,43 +417,75 @@ fun GameControlsOverlay(
             callbacks = callbacks
         )
         val copySuffix = stringResource(R.string.editor_copy_suffix)
+        val isPropertyPanelVisible = menuState.isInEditMode && selectedControl != null
 
         // 右侧属性面板 (仅编辑模式下选中控件时显示，可拖动)
         AnimatedVisibility(
-            visible = menuState.isInEditMode && selectedControl != null,
+            visible = isPropertyPanelVisible,
             enter = slideInHorizontally(initialOffsetX = { it }) + fadeIn(),
             exit = slideOutHorizontally(targetOffsetX = { it }) + fadeOut(),
             modifier = Modifier
                 .align(Alignment.CenterEnd)
                 .offset { IntOffset(propertyPanelOffset.x.roundToInt(), propertyPanelOffset.y.roundToInt()) }
         ) {
-            PropertyPanel(
-                control = selectedControl,
-                onUpdate = { updatedControl ->
-                    // 更新控件数据 - 使用 id 作为标识
-                    val layout = controlLayoutView.currentLayout ?: return@PropertyPanel
-                    if (updateControlInLayout(layout, updatedControl)) {
-                        controlLayoutView.loadLayout(layout)
-                        currentLayout = layout
-                        hasUnsavedChanges = true
-                    }
-                    selectedControl = updatedControl
-                },
-                onClose = { selectedControl = null },
-                onOpenKeySelector = { button -> showKeySelector = button },
-                onOpenJoystickKeyMapping = { joystick -> showJoystickKeyMapping = joystick },
-                onOpenTextureSelector = { control, type -> showTextureSelector = control to type },
-                onOpenPolygonEditor = { button -> showPolygonEditor = button },
-                onDrag = { delta -> 
-                    propertyPanelOffset = androidx.compose.ui.geometry.Offset(
-                        propertyPanelOffset.x + delta.x,
-                        propertyPanelOffset.y + delta.y
+            Box(
+                modifier = Modifier.onGloballyPositioned { coordinates ->
+                    val position = coordinates.positionInRoot()
+                    propertyPanelBounds = Rect(
+                        left = position.x,
+                        top = position.y,
+                        right = position.x + coordinates.size.width,
+                        bottom = position.y + coordinates.size.height
                     )
-                },
+                }
+            ) {
+                PropertyPanel(
+                    control = selectedControl,
+                    onUpdate = { updatedControl ->
+                        // 更新控件数据 - 使用 id 作为标识
+                        val layout = controlLayoutView.currentLayout ?: return@PropertyPanel
+                        if (updateControlInLayout(layout, updatedControl)) {
+                            controlLayoutView.loadLayout(layout)
+                            currentLayout = layout
+                            hasUnsavedChanges = true
+                        }
+                        selectedControl = updatedControl
+                    },
+                    onClose = { selectedControl = null },
+                    onOpenKeySelector = { button -> showKeySelector = button },
+                    onOpenJoystickKeyMapping = { joystick -> showJoystickKeyMapping = joystick },
+                    onOpenTextureSelector = { control, type -> showTextureSelector = control to type },
+                    onOpenPolygonEditor = { button -> showPolygonEditor = button },
+                    onDrag = { delta ->
+                        propertyPanelOffset = androidx.compose.ui.geometry.Offset(
+                            propertyPanelOffset.x + delta.x,
+                            propertyPanelOffset.y + delta.y
+                        )
+                    }
+                )
+            }
+        }
+
+        // 调试日志覆盖层（不拦截触摸）
+        DebugLogOverlay(visible = debugLogVisible)
+        val isPropertyToolbarVisible =
+            isPropertyPanelVisible &&
+                propertyPanelBounds != null &&
+                rootSize != IntSize.Zero
+
+        AnimatedVisibility(
+            visible = isPropertyToolbarVisible,
+            enter = fadeIn(animationSpec = tween(durationMillis = 180)),
+            exit = fadeOut(animationSpec = tween(durationMillis = 140))
+        ) {
+            val bounds = propertyPanelBounds ?: return@AnimatedVisibility
+            PropertyPanelToolbar(
+                panelBounds = bounds,
+                rootSize = rootSize,
+                alpha = if (menuState.isGhostMode) 0.3f else 1.0f,
                 onDuplicate = {
-                    val layout = controlLayoutView.currentLayout ?: return@PropertyPanel
-                    val controlToDuplicate = selectedControl ?: return@PropertyPanel
-                    // 深拷贝控件并生成新的 ID 和名称
+                    val layout = controlLayoutView.currentLayout ?: return@PropertyPanelToolbar
+                    val controlToDuplicate = selectedControl ?: return@PropertyPanelToolbar
                     val duplicated = controlToDuplicate.deepCopy().apply {
                         id = java.util.UUID.randomUUID().toString()
                         name = "${controlToDuplicate.name}_$copySuffix"
@@ -451,8 +499,8 @@ fun GameControlsOverlay(
                     selectedControl = duplicated
                 },
                 onDelete = {
-                    val layout = controlLayoutView.currentLayout ?: return@PropertyPanel
-                    val controlToDelete = selectedControl ?: return@PropertyPanel
+                    val layout = controlLayoutView.currentLayout ?: return@PropertyPanelToolbar
+                    val controlToDelete = selectedControl ?: return@PropertyPanelToolbar
                     removeControlFromLayout(layout, controlToDelete.id)
                     controlLayoutView.loadLayout(layout)
                     currentLayout = layout
@@ -460,35 +508,6 @@ fun GameControlsOverlay(
                     selectedControl = null
                 }
             )
-        }
-
-        // 调试日志覆盖层（不拦截触摸）
-        DebugLogOverlay(visible = debugLogVisible)
-
-        // 删除按钮 (仅编辑模式下选中控件时显示)
-        if (menuState.isInEditMode && selectedControl != null) {
-            Box(
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(24.dp)
-                    .graphicsLayer { alpha = if (menuState.isGhostMode) 0.3f else 1.0f }
-            ) {
-                FloatingActionButton(
-                    onClick = {
-                        val layout = controlLayoutView.currentLayout ?: return@FloatingActionButton
-                        val controlToDelete = selectedControl ?: return@FloatingActionButton
-                        removeControlFromLayout(layout, controlToDelete.id)
-                        controlLayoutView.loadLayout(layout)
-                        currentLayout = layout
-                        hasUnsavedChanges = true
-                        selectedControl = null
-                    },
-                    containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.8f),
-                    contentColor = MaterialTheme.colorScheme.error
-                ) {
-                    Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.editor_delete_control))
-                }
-            }
         }
     }
 
@@ -543,6 +562,7 @@ fun GameControlsOverlay(
         TextureSelectorDialog(
             control = control,
             textureType = textureType,
+            packId = controlLayoutView.currentLayout?.id,
             onUpdateButtonTexture = { btn, type, path, enabled -> 
                 val updated = btn.deepCopy() as ControlData.Button
                 val newConfig = TextureConfig(path = path, enabled = enabled)

@@ -92,6 +92,7 @@ class SponsorWallView @JvmOverloads constructor(
     
     init {
         setLayerType(LAYER_TYPE_HARDWARE, null)
+        setBackgroundColor(Color.TRANSPARENT)
         
         gestureDetector = GestureDetector(context, object : GestureDetector.SimpleOnGestureListener() {
             override fun onScroll(e1: MotionEvent?, e2: MotionEvent, distanceX: Float, distanceY: Float): Boolean {
@@ -275,10 +276,7 @@ class SponsorWallView @JvmOverloads constructor(
     
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
-        
-        // 深空背景
-        canvas.drawColor(Color.parseColor("#0A0A1A"))
-        
+
         canvas.save()
         canvas.translate(width / 2f + offsetX * scale, height / 2f + offsetY * scale)
         canvas.scale(scale, scale)
@@ -341,22 +339,22 @@ class SponsorWallView @JvmOverloads constructor(
         
         // 外层光晕
         drawOuterGlow(canvas, node, animatedSize)
-        
-        // 头像
-        drawAvatar(canvas, node, animatedSize)
-        
-        // 名称
-        drawName(canvas, node, animatedSize, entryProgress)
-        
-        // 高级别动态光环
+
+        // 高级别动态光环位于头像后方
         if (node.tierOrder >= 40) {
             drawDynamicRing(canvas, node, animatedSize)
         }
+        
+        // 头像
+        drawAvatar(canvas, node, animatedSize)
         
         // 最高级别皇冠
         if (node.tierOrder >= 100) {
             drawCrown(canvas, node, animatedSize)
         }
+
+        // 名称保持在最上层，避免被装饰元素遮挡
+        drawName(canvas, node, animatedSize, entryProgress)
     }
     
     private fun drawOuterGlow(canvas: Canvas, node: SponsorNode, size: Float) {
@@ -396,15 +394,17 @@ class SponsorWallView @JvmOverloads constructor(
     
     private fun drawAvatar(canvas: Canvas, node: SponsorNode, size: Float) {
         val avatar = node.avatar ?: defaultAvatar ?: return
-        
-        // 边框
-        paint.style = Paint.Style.STROKE
-        paint.strokeWidth = when {
+        val avatarRadius = size / 2f
+        val borderWidth = when {
             node.tierOrder >= 100 -> 5f
             node.tierOrder >= 80 -> 4f
             node.tierOrder >= 60 -> 3f
             else -> 2f
         }
+        
+        // 边框
+        paint.style = Paint.Style.STROKE
+        paint.strokeWidth = borderWidth
         
         if (node.tierOrder >= 60) {
             val shift = (sin(animationTime * 2) + 1f) / 2f
@@ -412,23 +412,22 @@ class SponsorWallView @JvmOverloads constructor(
         } else {
             paint.color = node.color
         }
-        canvas.drawCircle(node.x, node.y, size / 2f + paint.strokeWidth, paint)
+        canvas.drawCircle(node.x, node.y, avatarRadius + borderWidth, paint)
         
         // 头像
         val avatarRect = RectF(
-            node.x - size / 2f,
-            node.y - size / 2f,
-            node.x + size / 2f,
-            node.y + size / 2f
+            node.x - avatarRadius,
+            node.y - avatarRadius,
+            node.x + avatarRadius,
+            node.y + avatarRadius
         )
         
         canvas.save()
         val clipPath = Path().apply {
-            addCircle(node.x, node.y, size / 2f, Path.Direction.CW)
+            addCircle(node.x, node.y, avatarRadius, Path.Direction.CW)
         }
         canvas.clipPath(clipPath)
-        paint.style = Paint.Style.FILL
-        canvas.drawBitmap(avatar, null, avatarRect, paint)
+        canvas.drawBitmap(avatar, null, avatarRect, null)
         canvas.restore()
     }
     

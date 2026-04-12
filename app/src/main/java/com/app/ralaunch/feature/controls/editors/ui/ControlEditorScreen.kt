@@ -2,6 +2,7 @@ package com.app.ralaunch.feature.controls.editors.ui
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.*
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
@@ -12,13 +13,18 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.zIndex
 import com.app.ralaunch.R
 import com.app.ralaunch.feature.controls.ControlData
 import com.app.ralaunch.feature.controls.editors.vm.ControlEditorViewModel
@@ -50,6 +56,8 @@ fun ControlEditorScreen(
     
     // 属性面板偏移量（可拖动）
     var propertyPanelOffset by remember { mutableStateOf(androidx.compose.ui.geometry.Offset.Zero) }
+    var rootSize by remember { mutableStateOf(IntSize.Zero) }
+    var propertyPanelBounds by remember { mutableStateOf<Rect?>(null) }
 
     // 处理返回键
     BackHandler {
@@ -64,7 +72,20 @@ fun ControlEditorScreen(
     // 不受浅色/深色主题影响，确保控件（通常为浅色边框/文字）始终清晰可见
     val backgroundColor = androidx.compose.ui.graphics.Color(0xFF2D2D2D)
 
-    Box(modifier = Modifier.fillMaxSize().background(backgroundColor)) {
+    LaunchedEffect(isPropertyPanelVisible) {
+        if (!isPropertyPanelVisible) {
+            propertyPanelBounds = null
+        }
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(backgroundColor)
+            .onGloballyPositioned { coordinates ->
+                rootSize = coordinates.size
+            }
+    ) {
         // Layer 0: 游戏预览层 (AndroidView)
         AndroidView(
             factory = { context ->
@@ -150,14 +171,14 @@ fun ControlEditorScreen(
             Row(
                 modifier = Modifier
                     .align(Alignment.TopStart)
-                    .padding(top = 12.dp)
-                    .height(IntrinsicSize.Min),
+                    .padding(top = 12.dp),
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 AnimatedVisibility(
                     visible = isMenuExpanded,
                     enter = slideInHorizontally(initialOffsetX = { -it }) + fadeIn(),
-                    exit = slideOutHorizontally(targetOffsetX = { -it }) + fadeOut()
+                    exit = slideOutHorizontally(targetOffsetX = { -it }) + fadeOut(),
+                    modifier = Modifier.zIndex(1f)
                 ) {
                     ActionWindowMenu(
                         isPaletteVisible = isPaletteVisible,
@@ -181,8 +202,9 @@ fun ControlEditorScreen(
 
                 AnimatedVisibility(
                     visible = isPaletteVisible && isMenuExpanded,
-                    enter = slideInHorizontally(initialOffsetX = { -20 }) + fadeIn(),
-                    exit = slideOutHorizontally(targetOffsetX = { -20 }) + fadeOut()
+                    enter = slideInHorizontally(initialOffsetX = { -it }) + fadeIn(),
+                    exit = slideOutHorizontally(targetOffsetX = { -it }) + fadeOut(),
+                    modifier = Modifier.zIndex(0f)
                 ) {
                     ComponentPalette(
                         onAddControl = { viewModel.addNewControl(it) },
@@ -200,42 +222,56 @@ fun ControlEditorScreen(
                     .align(Alignment.CenterEnd)
                     .offset { IntOffset(propertyPanelOffset.x.roundToInt(), propertyPanelOffset.y.roundToInt()) }
             ) {
-                PropertyPanel(
-                    control = selectedControl,
-                    onUpdate = { viewModel.updateControl(it) },
-                    onClose = { viewModel.selectControl(null) },
-                    onOpenKeySelector = { viewModel.showKeySelector(it) },
-                    onOpenJoystickKeyMapping = { viewModel.showJoystickKeyMapping(it) },
-                    onOpenTextureSelector = { control, type -> viewModel.showTextureSelector(control, type) },
-                    onOpenPolygonEditor = { viewModel.showPolygonEditor(it) },
-                    onDrag = { delta ->
-                        propertyPanelOffset = androidx.compose.ui.geometry.Offset(
-                            propertyPanelOffset.x + delta.x,
-                            propertyPanelOffset.y + delta.y
+                Box(
+                    modifier = Modifier.onGloballyPositioned { coordinates ->
+                        val position = coordinates.positionInRoot()
+                        propertyPanelBounds = Rect(
+                            left = position.x,
+                            top = position.y,
+                            right = position.x + coordinates.size.width,
+                            bottom = position.y + coordinates.size.height
                         )
-                    },
-                    onDuplicate = { viewModel.duplicateSelectedControl() },
-                    onDelete = { viewModel.deleteSelectedControl() }
-                )
+                    }
+                ) {
+                    PropertyPanel(
+                        control = selectedControl,
+                        onUpdate = { viewModel.updateControl(it) },
+                        onClose = { viewModel.selectControl(null) },
+                        onOpenKeySelector = { viewModel.showKeySelector(it) },
+                        onOpenJoystickKeyMapping = { viewModel.showJoystickKeyMapping(it) },
+                        onOpenTextureSelector = { control, type -> viewModel.showTextureSelector(control, type) },
+                        onOpenPolygonEditor = { viewModel.showPolygonEditor(it) },
+                        onDrag = { delta ->
+                            propertyPanelOffset = androidx.compose.ui.geometry.Offset(
+                                propertyPanelOffset.x + delta.x,
+                                propertyPanelOffset.y + delta.y
+                            )
+                        },
+                    )
+                }
             }
         }
 
-        // Layer 5: 底部操作按钮组
-        if (selectedControl != null) {
-            Box(
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(24.dp)
-                    .graphicsLayer { alpha = if (isGhostMode) 0.3f else 1.0f }
-            ) {
-                FloatingActionButton(
-                    onClick = { viewModel.deleteSelectedControl() },
-                    containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.8f),
-                    contentColor = MaterialTheme.colorScheme.error
-                ) {
-                    Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.editor_delete_control))
-                }
-            }
+        // Layer 5: 属性面板附着工具栏
+        val isPropertyToolbarVisible =
+            selectedControl != null &&
+                isPropertyPanelVisible &&
+                propertyPanelBounds != null &&
+                rootSize != IntSize.Zero
+
+        AnimatedVisibility(
+            visible = isPropertyToolbarVisible,
+            enter = fadeIn(animationSpec = tween(durationMillis = 180)),
+            exit = fadeOut(animationSpec = tween(durationMillis = 140))
+        ) {
+            val bounds = propertyPanelBounds ?: return@AnimatedVisibility
+            PropertyPanelToolbar(
+                panelBounds = bounds,
+                rootSize = rootSize,
+                alpha = if (isGhostMode) 0.3f else 1.0f,
+                onDuplicate = { viewModel.duplicateSelectedControl() },
+                onDelete = { viewModel.deleteSelectedControl() }
+            )
         }
     }
 
@@ -277,6 +313,7 @@ fun ControlEditorScreen(
         TextureSelectorDialog(
             control = control,
             textureType = textureType,
+            packId = layout?.id,
             onUpdateButtonTexture = { btn, type, path, enabled -> 
                 viewModel.updateButtonTexture(btn, type, path, enabled) 
             },
