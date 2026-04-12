@@ -16,6 +16,7 @@ import android.provider.Settings
 import android.util.Log
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -33,8 +34,8 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -348,12 +349,12 @@ class MainActivityCompose : BaseActivity() {
 
     private fun registerUpdateDownloadReceiver() {
         val filter = IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            registerReceiver(updateDownloadReceiver, filter, RECEIVER_NOT_EXPORTED)
-        } else {
-            @Suppress("DEPRECATION")
-            registerReceiver(updateDownloadReceiver, filter)
-        }
+        ContextCompat.registerReceiver(
+            this,
+            updateDownloadReceiver,
+            filter,
+            ContextCompat.RECEIVER_NOT_EXPORTED
+        )
     }
 
     private fun downloadLauncherUpdate(
@@ -769,6 +770,7 @@ private fun MainActivityContent(
             // 各页面的 Compose 实现
             settingsContent = {
                 SettingsScreenWrapper(
+                    navState = navState,
                     onCheckLauncherUpdate = onCheckLauncherUpdateClick
                 )
             },
@@ -1126,6 +1128,12 @@ private fun ForceAnnouncementComposeDialog(
             ?.takeIf { it.isNotBlank() }
     }
     val markdownScrollState = rememberScrollState()
+    val configuration = LocalConfiguration.current
+    val compactHeight = configuration.screenHeightDp.dp < 520.dp
+    val widthFraction = if (configuration.screenWidthDp.dp >= 1000.dp) 0.78f else 0.92f
+    val heightFraction = if (compactHeight) 0.94f else 0.88f
+    val contentPadding = if (compactHeight) 16.dp else 24.dp
+    val contentSpacing = if (compactHeight) 8.dp else 10.dp
 
     Dialog(
         onDismissRequest = {},
@@ -1135,14 +1143,9 @@ private fun ForceAnnouncementComposeDialog(
             dismissOnClickOutside = false
         )
     ) {
-        BoxWithConstraints(
+        Box(
             modifier = Modifier.fillMaxSize()
         ) {
-            val compactHeight = maxHeight < 520.dp
-            val widthFraction = if (maxWidth >= 1000.dp) 0.78f else 0.92f
-            val heightFraction = if (compactHeight) 0.94f else 0.88f
-            val contentPadding = if (compactHeight) 16.dp else 24.dp
-            val contentSpacing = if (compactHeight) 8.dp else 10.dp
             Surface(
                 modifier = Modifier
                     .align(Alignment.Center)

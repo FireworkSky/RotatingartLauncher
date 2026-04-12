@@ -19,7 +19,6 @@ import com.app.ralaunch.feature.settings.vm.SettingsEvent
 import com.app.ralaunch.feature.settings.vm.SettingsViewModel
 import com.app.ralaunch.core.theme.AppThemeState
 import com.app.ralaunch.feature.sponsor.ui.SponsorsActivity
-import com.app.ralaunch.core.common.util.AppLogger
 import com.app.ralaunch.core.common.util.LocaleManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -147,14 +146,6 @@ internal fun loadLogs(context: Context): List<String> {
         LogExportHelper.getLatestLogFile(context)?.readLines()?.takeLast(LOG_VIEW_LIMIT) ?: emptyList()
     } catch (e: Exception) {
         listOf(context.getString(R.string.settings_logs_read_failed, e.message ?: ""))
-    }
-}
-
-internal fun clearLogs(context: Context) {
-    try {
-        LogExportHelper.getLogFiles(context).forEach { it.writeText("") }
-    } catch (e: Exception) {
-        AppLogger.error("Settings", "清除日志失败", e)
     }
 }
 

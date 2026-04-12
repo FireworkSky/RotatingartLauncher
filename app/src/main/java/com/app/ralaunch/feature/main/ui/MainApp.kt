@@ -19,6 +19,8 @@ import com.app.ralaunch.core.navigation.*
 import com.app.ralaunch.core.theme.LocalHazeState
 import com.app.ralaunch.core.theme.RaLaunchTheme
 import com.app.ralaunch.core.model.GameItemUi
+import com.app.ralaunch.feature.patch.ui.PatchManagementSubScreen
+import com.app.ralaunch.feature.settings.ui.LogViewerSubScreen
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.haze
 
@@ -369,6 +371,16 @@ private fun PageContent(
             } else {
                 PlaceholderScreen(stringResource(R.string.main_game_not_found, targetScreen.storageId))
             }
+        }
+        is Screen.PatchManagement -> {
+            PatchManagementSubScreen(
+                onBack = { navState.goBack() }
+            )
+        }
+        is Screen.LogViewer -> {
+            LogViewerSubScreen(
+                onBack = { navState.goBack() }
+            )
         }
         is Screen.ControlEditor -> PlaceholderScreen(stringResource(R.string.main_control_editor_placeholder))
         is Screen.Initialization -> { /* 已移至独立 Activity */ }

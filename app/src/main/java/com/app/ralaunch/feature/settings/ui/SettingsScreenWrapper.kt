@@ -92,11 +92,12 @@ import com.app.ralaunch.R
 import com.app.ralaunch.core.common.SettingsAccess
 import com.app.ralaunch.core.common.util.AssetIntegrityChecker
 import com.app.ralaunch.core.common.util.LocaleManager
+import com.app.ralaunch.core.navigation.NavState
+import com.app.ralaunch.core.navigation.navigateToLogViewer
+import com.app.ralaunch.core.navigation.navigateToPatchManagement
 import com.app.ralaunch.core.platform.runtime.AndroidRendererRegistry
-import com.app.ralaunch.feature.patch.ui.PatchManagementDialogCompose
 import com.app.ralaunch.core.ui.dialog.LanguageSelectDialog
 import com.app.ralaunch.core.ui.dialog.LicenseDialog
-import com.app.ralaunch.core.ui.dialog.LogViewerDialog
 import com.app.ralaunch.core.ui.dialog.RendererSelectDialog
 import com.app.ralaunch.core.ui.dialog.ThemeColorSelectDialog
 import com.app.ralaunch.core.model.BackgroundType
@@ -123,6 +124,7 @@ import androidx.compose.ui.res.stringResource as androidStringResource
 
 @Composable
 fun SettingsScreenWrapper(
+    navState: NavState,
     onCheckLauncherUpdate: () -> Unit = {}
 ) {
     val context = LocalContext.current
@@ -170,12 +172,14 @@ fun SettingsScreenWrapper(
             )
 
             SettingsCategory.LAUNCHER -> LauncherSettingsPane(
+                navState = navState,
                 viewModel = viewModel,
                 uiState = uiState,
                 assetStatusSummaryState = assetStatusSummaryState
             )
 
             SettingsCategory.DEVELOPER -> DeveloperSettingsPane(
+                navState = navState,
                 viewModel = viewModel,
                 uiState = uiState
             )
@@ -586,13 +590,13 @@ private fun GameSettingsPane(
 
 @Composable
 private fun LauncherSettingsPane(
+    navState: NavState,
     viewModel: SettingsViewModel,
     uiState: SettingsUiState,
     assetStatusSummaryState: MutableState<String>
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    var showPatchManagementDialog by remember { mutableStateOf(false) }
     var showMultiplayerDisclaimerDialog by remember { mutableStateOf(false) }
     var showAssetCheckDialog by remember { mutableStateOf(false) }
     var assetCheckResult by remember { mutableStateOf<AssetIntegrityChecker.CheckResult?>(null) }
@@ -659,7 +663,7 @@ private fun LauncherSettingsPane(
                 title = androidStringResource(R.string.patch_management),
                 subtitle = androidStringResource(R.string.patch_management_desc),
                 icon = Icons.Default.Extension,
-                onClick = { showPatchManagementDialog = true }
+                onClick = { navState.navigateToPatchManagement() }
             )
 
             SettingsDivider()
@@ -671,12 +675,6 @@ private fun LauncherSettingsPane(
                 onClick = { forceReinstallPatches(context) }
             )
         }
-    }
-
-    if (showPatchManagementDialog) {
-        PatchManagementDialogCompose(
-            onDismiss = { showPatchManagementDialog = false }
-        )
     }
 
     if (showMultiplayerDisclaimerDialog) {
@@ -734,13 +732,12 @@ private fun LauncherSettingsPane(
 
 @Composable
 private fun DeveloperSettingsPane(
+    navState: NavState,
     viewModel: SettingsViewModel,
     uiState: SettingsUiState
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    var logs by remember { mutableStateOf<List<String>>(emptyList()) }
-    var showLogViewerDialog by remember { mutableStateOf(false) }
     val logExportLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument("text/plain")
     ) { uri ->
@@ -778,10 +775,7 @@ private fun DeveloperSettingsPane(
                     title = androidStringResource(R.string.settings_developer_view_logs_title),
                     subtitle = androidStringResource(R.string.settings_developer_view_logs_subtitle),
                     icon = Icons.Default.Visibility,
-                    onClick = {
-                        logs = loadLogs(context)
-                        showLogViewerDialog = true
-                    }
+                    onClick = { navState.navigateToLogViewer() }
                 )
 
                 SettingsDivider()
@@ -916,22 +910,6 @@ private fun DeveloperSettingsPane(
             }
         }
 
-        if (showLogViewerDialog) {
-            LogViewerDialog(
-                logs = logs,
-                onExport = { logExportLauncher.launch(buildLogFileName()) },
-                onClear = {
-                    clearLogs(context)
-                    logs = emptyList()
-                    Toast.makeText(
-                        context,
-                        context.getString(R.string.settings_logs_cleared),
-                        Toast.LENGTH_SHORT
-                    ).show()
-                },
-                onDismiss = { showLogViewerDialog = false }
-            )
-        }
     }
 }
 

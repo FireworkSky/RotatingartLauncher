@@ -55,6 +55,18 @@ fun NavState.navigateToGameDetail(storageId: String) =
     navigateTo(Screen.GameDetail(storageId), addToBackStack = true)
 
 /**
+ * NavState 导航扩展：导航到补丁管理
+ */
+fun NavState.navigateToPatchManagement() =
+    navigateTo(Screen.PatchManagement, addToBackStack = true)
+
+/**
+ * NavState 导航扩展：导航到日志查看器
+ */
+fun NavState.navigateToLogViewer() =
+    navigateTo(Screen.LogViewer, addToBackStack = true)
+
+/**
  * NavState 导航扩展：导航到控制布局编辑器
  */
 fun NavState.navigateToControlEditor(layoutId: String? = null) = 

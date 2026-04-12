@@ -16,6 +16,7 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Gamepad
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -28,15 +29,14 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import com.app.ralaunch.R
-import com.app.ralaunch.core.model.GameItem
 import com.app.ralaunch.core.di.contract.GameRepositoryV2
+import com.app.ralaunch.core.model.GameItem
 import com.app.ralaunch.feature.patch.data.Patch
 import com.app.ralaunch.feature.patch.data.PatchManager
 import com.app.ralaunch.core.common.util.StreamUtils
 import com.app.ralaunch.core.common.util.TemporaryFileAcquirer
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -46,12 +46,13 @@ import java.nio.file.Files
 import java.nio.file.Paths
 
 /**
- * 补丁管理对话框 - Compose 版本
+ * 补丁管理子页面
  * 横屏双栏布局：左侧游戏列表，右侧补丁列表
  */
 @Composable
-fun PatchManagementDialogCompose(
-    onDismiss: () -> Unit
+@OptIn(ExperimentalMaterial3Api::class)
+fun PatchManagementSubScreen(
+    onBack: () -> Unit
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -69,8 +70,18 @@ fun PatchManagementDialogCompose(
     var patches by remember { mutableStateOf<List<Patch>>(emptyList()) }
     
     // 加载游戏列表
-    LaunchedEffect(Unit) {
-        games = gameRepository?.games?.value ?: emptyList()
+    LaunchedEffect(gameRepository) {
+        gameRepository?.games?.collectLatest { repositoryGames ->
+            games = repositoryGames
+            if (selectedGame?.id !in repositoryGames.map { it.id }) {
+                selectedGame = null
+                selectedGameIndex = -1
+            } else {
+                selectedGameIndex = repositoryGames.indexOfFirst { it.id == selectedGame?.id }
+            }
+        } ?: run {
+            games = emptyList()
+        }
     }
     
     // 当选择游戏改变时加载补丁
@@ -98,90 +109,65 @@ fun PatchManagementDialogCompose(
         }
     }
     
-    Dialog(
-        onDismissRequest = onDismiss,
-        properties = DialogProperties(
-            usePlatformDefaultWidth = false,
-            dismissOnBackPress = true,
-            dismissOnClickOutside = true
-        )
-    ) {
-        Card(
-            modifier = Modifier
-                .fillMaxWidth(0.95f)
-                .fillMaxHeight(0.95f),
-            shape = RoundedCornerShape(20.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surface
-            )
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(24.dp)
-            ) {
-                // 顶部标题栏
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 24.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = stringResource(R.string.patch_dialog_title),
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold
-                    )
-                    
-                    Row {
-                        TextButton(
-                            onClick = {
-                                // 显示导入说明对话框后打开选择器
-                                patchFilePicker.launch("application/zip")
-                            }
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Add,
-                                contentDescription = null,
-                                modifier = Modifier.size(18.dp)
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(stringResource(R.string.patch_dialog_import))
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(R.string.patch_dialog_title)) },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.back)
+                        )
+                    }
+                },
+                actions = {
+                    TextButton(
+                        onClick = {
+                            patchFilePicker.launch("application/zip")
                         }
-                        
-                        TextButton(onClick = onDismiss) {
-                            Text(stringResource(R.string.ok))
-                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(stringResource(R.string.patch_dialog_import))
                     }
                 }
-                
-                // 主内容区域 - 横向双栏
-                Row(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .weight(1f),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    // 左侧：游戏列表
-                    GameListPanel(
-                        games = games,
-                        selectedIndex = selectedGameIndex,
-                        onGameSelected = { game, index ->
-                            selectedGame = game
-                            selectedGameIndex = index
-                        },
-                        modifier = Modifier.weight(1f)
-                    )
-                    
-                    // 右侧：补丁列表
-                    PatchListPanel(
-                        patches = patches,
-                        selectedGame = selectedGame,
-                        patchManager = patchManager,
-                        modifier = Modifier.weight(1f)
-                    )
-                }
+            )
+        }
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .padding(horizontal = 20.dp, vertical = 16.dp)
+        ) {
+            // 主内容区域 - 横向双栏
+            Row(
+                modifier = Modifier.fillMaxSize(),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // 左侧：游戏列表
+                GameListPanel(
+                    games = games,
+                    selectedIndex = selectedGameIndex,
+                    onGameSelected = { game, index ->
+                        selectedGame = game
+                        selectedGameIndex = index
+                    },
+                    modifier = Modifier.weight(1f)
+                )
+
+                // 右侧：补丁列表
+                PatchListPanel(
+                    patches = patches,
+                    selectedGame = selectedGame,
+                    patchManager = patchManager,
+                    modifier = Modifier.weight(1f)
+                )
             }
         }
     }
