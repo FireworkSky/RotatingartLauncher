@@ -116,8 +116,10 @@ public static class Patcher
         InstallVerifierBugMitigation(assembly);
         LoggingHooksHarmonyPatch();
         TMLContentManagerPatch();
+        ModOrganizerPatch();
         SetResolveNativeLibraryHandler();
         OpenToURLPatch();
+        WorkshopSearchPatch();
     }
 
     public static void LoggingHooksHarmonyPatch()
@@ -231,6 +233,34 @@ public static class Patcher
 			File.Move(actualFullPath, actualFullPath + ".1");
 			File.Move(actualFullPath + ".1", expectedFullPath);
 		}
+    }
+    
+    public static void ModOrganizerPatch()
+    {
+        var method = TmlAssembly.GetType("Terraria.ModLoader.Core.ModOrganizer")
+            ?.GetMethod("DetectAbnormalSteamWorkshopDownloads", BindingFlags.Static | BindingFlags.NonPublic);
+        if (method == null)
+        {
+            Console.WriteLine("[ModOrganizerPatch] ModOrganizer.DetectAbnormalSteamWorkshopDownloads method not found");
+            return;
+        }
+
+        _harmony!.Patch(method, prefix: new HarmonyMethod(typeof(Patcher), nameof(ModOrganizerPatch_Prefix)));
+        Console.WriteLine("[ModOrganizerPatch] ModOrganizer patch applied successfully!");
+    }
+
+    public static bool ModOrganizerPatch_Prefix(
+        out Action resolveAbnormalDownloads,
+        out string continueButton,
+        out string cancelButton,
+        // ReSharper disable once InconsistentNaming
+        ref string __result)
+    {
+        cancelButton = string.Empty;
+        continueButton = string.Empty;
+        resolveAbnormalDownloads = null!;
+        __result = string.Empty;
+        return false;
     }
     
     // GOG Linux 已知的多个版本哈希 (不同 GOG 安装包/版本的 Terraria 二进制文件)
@@ -434,5 +464,70 @@ public static class Patcher
             Console.WriteLine($"[TModLoaderPatch] OpenFolder error: {ex.Message}");
         }
         return false;
+    }
+
+    private static void WorkshopSearchPatch()
+    {
+        var enumType = TmlAssembly.GetType("Terraria.Social.Steam.WorkshopHelper+WorkshopSearchReturnState");
+        if (enumType == null)
+        {
+            Console.WriteLine("[WorkshopSearchPatch] ERROR: Could not find WorkshopSearchReturnState enum");
+            return;
+        }
+
+        if (!Enum.TryParse(enumType, "RetrievalFailed", out var successValue))
+        {
+            Console.WriteLine("[WorkshopSearchPatch] ERROR: Could not parse Success value");
+            return;
+        }
+
+        var targetMethod =
+            TmlAssembly.GetType("Terraria.Social.Steam.WorkshopHelper+QueryHelper+AQueryInstance")!.GetMethod(
+                "TryGetModDownloadItem", BindingFlags.Static | BindingFlags.NonPublic);
+
+        if (targetMethod == null)
+        {
+            Console.WriteLine("[WorkshopSearchPatch] ERROR: Could not find method returning WorkshopSearchReturnState");
+            return;
+        }
+
+        WorkshopSearchReturnStatePatch.SetSuccessValue(successValue, TmlAssembly);
+
+        _harmony!.Patch(targetMethod,
+            prefix: new HarmonyMethod(typeof(WorkshopSearchReturnStatePatch).GetMethod("Prefix")));
+    }
+    
+    private static class WorkshopSearchReturnStatePatch
+    {
+        private static object _successValue;
+        private static Assembly _targetAssembly;
+
+        public static void SetSuccessValue(object successValue, Assembly assembly)
+        {
+            _successValue = successValue;
+            _targetAssembly = assembly;
+        }
+
+
+        // ReSharper disable once InconsistentNaming
+        // ReSharper disable once UnusedMember.Local
+        public static bool Prefix(ref object __result)
+        {
+            try
+            {
+                Console.WriteLine("[WorkshopSearchPatch] WorkshopSearchReturnState patch triggered!");
+
+                if (_successValue == null || _targetAssembly == null) return true;
+
+                __result = _successValue;
+                Console.WriteLine("[WorkshopSearchPatch] Returning Success state");
+                return false;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[WorkshopSearchPatch] Patch error: {ex.GetType().Name} - {ex.Message}");
+                return true;
+            }
+        }
     }
 }
