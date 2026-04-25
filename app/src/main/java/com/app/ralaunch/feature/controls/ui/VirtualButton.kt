@@ -10,7 +10,7 @@ import android.graphics.RectF
 import android.graphics.Region
 import android.graphics.Typeface
 import android.text.TextPaint
-import android.util.Log
+import com.app.ralaunch.core.logging.AppLog
 import android.view.View
 import com.app.ralaunch.core.di.service.VibrationManagerServiceV1
 import org.koin.java.KoinJavaComponent
@@ -44,7 +44,7 @@ class VirtualButton(
         try {
             KoinJavaComponent.get(VibrationManagerServiceV1::class.java)
         } catch (e: Exception) {
-            Log.w(TAG, "VibrationManagerServiceV1 not available: ${e.message}")
+            AppLog.w(TAG, "VibrationManagerServiceV1 not available: ${e.message}")
             null
         }
     }

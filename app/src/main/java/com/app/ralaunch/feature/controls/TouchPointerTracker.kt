@@ -1,6 +1,6 @@
 package com.app.ralaunch.feature.controls
 
-import android.util.Log
+import com.app.ralaunch.core.logging.AppLog
 import org.libsdl.app.SDLActivity
 
 /**
@@ -25,7 +25,7 @@ object TouchPointerTracker {
         try {
             SDLActivity.nativeConsumeFingerTouch(pointerId)
         } catch (e: Exception) {
-            Log.w(TAG, "Failed to notify SDL about consumed pointer: " + e.message)
+            AppLog.w(TAG, "Failed to notify SDL about consumed pointer: " + e.message)
         }
     }
 
@@ -40,7 +40,7 @@ object TouchPointerTracker {
         try {
             SDLActivity.nativeReleaseFingerTouch(pointerId)
         } catch (e: Exception) {
-            Log.w(TAG, "Failed to notify SDL about released pointer: " + e.message)
+            AppLog.w(TAG, "Failed to notify SDL about released pointer: " + e.message)
         }
     }
 
@@ -71,7 +71,7 @@ object TouchPointerTracker {
         try {
             SDLActivity.nativeClearConsumedFingers()
         } catch (e: Exception) {
-            Log.w(TAG, "Failed to notify SDL about cleared pointers: " + e.message)
+            AppLog.w(TAG, "Failed to notify SDL about cleared pointers: " + e.message)
         }
     }
 }

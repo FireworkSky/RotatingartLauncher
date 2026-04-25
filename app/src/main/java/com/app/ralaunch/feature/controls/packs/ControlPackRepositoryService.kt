@@ -3,7 +3,7 @@ package com.app.ralaunch.feature.controls.packs
 import android.content.Context
 import com.app.ralaunch.R
 import com.app.ralaunch.core.common.JsonHttpRepositoryClient
-import com.app.ralaunch.core.common.util.AppLogger
+import com.app.ralaunch.core.logging.AppLog
 import com.app.ralaunch.core.common.util.FileUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -102,11 +102,11 @@ class ControlPackRepositoryService(private val context: Context) {
         result.getOrNull()?.let { repository ->
             cachedRepository = repository
             cacheTimestamp = System.currentTimeMillis()
-            AppLogger.info(TAG, "Fetched repository: ${repository.packs.size} packs")
+            AppLog.i(TAG, "Fetched repository: ${repository.packs.size} packs")
         }
 
         result.exceptionOrNull()?.let { error ->
-            AppLogger.error(TAG, "Failed to fetch repository", error)
+            AppLog.e(TAG, "Failed to fetch repository", error)
         }
 
         return result
@@ -124,7 +124,7 @@ class ControlPackRepositoryService(private val context: Context) {
         )
 
         result.exceptionOrNull()?.let { error ->
-            AppLogger.error(TAG, "Failed to fetch pack info: $packId", error)
+            AppLog.e(TAG, "Failed to fetch pack info: $packId", error)
         }
         return result
     }
@@ -189,7 +189,7 @@ class ControlPackRepositoryService(private val context: Context) {
                 val totalSize = packInfo.fileSize.takeIf { it > 0 } ?: 100L
                 
                 // 1. 下载 manifest.json
-                AppLogger.info(TAG, "Downloading manifest.json...")
+                AppLog.i(TAG, "Downloading manifest.json...")
                 val manifestFile = File(packDir, ControlPackInfo.MANIFEST_FILE_NAME)
                 val manifestResult = downloadFile("$baseUrl/${ControlPackInfo.MANIFEST_FILE_NAME}", manifestFile)
                 if (manifestResult.isFailure) {
@@ -203,7 +203,7 @@ class ControlPackRepositoryService(private val context: Context) {
                 listener?.onProgress(downloadedSize, totalSize, 30)
                 
                 // 2. 下载 layout.json
-                AppLogger.info(TAG, "Downloading layout.json...")
+                AppLog.i(TAG, "Downloading layout.json...")
                 val layoutFile = File(packDir, ControlPackInfo.LAYOUT_FILE_NAME)
                 val layoutResult = downloadFile("$baseUrl/${ControlPackInfo.LAYOUT_FILE_NAME}", layoutFile)
                 if (layoutResult.isFailure) {
@@ -227,9 +227,9 @@ class ControlPackRepositoryService(private val context: Context) {
                 }
                 
                 // 5. 下载 assets 纹理文件
-                AppLogger.info(TAG, "assetFiles count: ${packInfo.assetFiles.size}, list: ${packInfo.assetFiles.take(3)}")
+                AppLog.i(TAG, "assetFiles count: ${packInfo.assetFiles.size}, list: ${packInfo.assetFiles.take(3)}")
                 if (packInfo.assetFiles.isNotEmpty()) {
-                    AppLogger.info(TAG, "Downloading ${packInfo.assetFiles.size} asset files...")
+                    AppLog.i(TAG, "Downloading ${packInfo.assetFiles.size} asset files...")
                     val assetsDir = File(packDir, ControlPackInfo.ASSETS_DIR_NAME)
                     assetsDir.mkdirs()
                     
@@ -239,9 +239,9 @@ class ControlPackRepositoryService(private val context: Context) {
                         val assetUrl = "$baseUrl/${ControlPackInfo.ASSETS_DIR_NAME}/$assetPath"
                         val result = downloadFile(assetUrl, assetFile)
                         if (result.isSuccess) {
-                            AppLogger.info(TAG, "  Downloaded: $assetPath")
+                            AppLog.i(TAG, "  Downloaded: $assetPath")
                         } else {
-                            AppLogger.warn(TAG, "  Failed to download: $assetPath")
+                            AppLog.w(TAG, "  Failed to download: $assetPath")
                         }
                         
                         // 更新进度 (70% - 100%)
@@ -253,10 +253,10 @@ class ControlPackRepositoryService(private val context: Context) {
                 listener?.onProgress(totalSize, totalSize, 100)
                 listener?.onComplete(packDir)
                 
-                AppLogger.info(TAG, "Downloaded pack to folder: ${packDir.absolutePath}")
+                AppLog.i(TAG, "Downloaded pack to folder: ${packDir.absolutePath}")
                 Result.success(packDir)
             } catch (e: Exception) {
-                AppLogger.error(TAG, "Failed to download pack: ${packInfo.id}", e)
+                AppLog.e(TAG, "Failed to download pack: ${packInfo.id}", e)
                 listener?.onError(e.message ?: context.getString(R.string.common_unknown_error))
                 Result.failure(e)
             }
@@ -298,7 +298,7 @@ class ControlPackRepositoryService(private val context: Context) {
                     connection.disconnect()
                 }
             } catch (e: Exception) {
-                AppLogger.error(TAG, "Failed to download preview: $packId/$imageName", e)
+                AppLog.e(TAG, "Failed to download preview: $packId/$imageName", e)
                 Result.failure(e)
             }
         }
@@ -322,7 +322,7 @@ class ControlPackRepositoryService(private val context: Context) {
         // 验证安装是否成功
         val installedInfo = packManager.getPackInfo(packInfo.id)
         if (installedInfo != null) {
-            AppLogger.info(TAG, "Pack installed successfully: ${installedInfo.name}")
+            AppLog.i(TAG, "Pack installed successfully: ${installedInfo.name}")
             return Result.success(installedInfo)
         }
         

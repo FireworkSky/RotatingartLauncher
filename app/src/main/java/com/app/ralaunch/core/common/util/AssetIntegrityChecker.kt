@@ -3,6 +3,7 @@ package com.app.ralaunch.core.common.util
 import android.content.Context
 import com.app.ralaunch.R
 import com.app.ralaunch.core.di.contract.IRuntimeManagerServiceV2
+import com.app.ralaunch.core.logging.AppLog
 import com.app.ralaunch.core.platform.AppConstants
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -73,7 +74,7 @@ object AssetIntegrityChecker {
         val issues = mutableListOf<CheckResult.Issue>()
         val filesDir = context.filesDir
 
-        AppLogger.info(TAG, "开始资产完整性检查...")
+        AppLog.i(TAG, "开始资产完整性检查...")
 
         // 1. 检查关键组件目录
         for (component in CRITICAL_COMPONENTS) {
@@ -126,9 +127,9 @@ object AssetIntegrityChecker {
             }
         }
 
-        AppLogger.info(TAG, "资产完整性检查完成: $summary")
+        AppLog.i(TAG, "资产完整性检查完成: $summary")
         issues.forEach { issue ->
-            AppLogger.warn(TAG, "  - [${issue.type}] ${issue.description}: ${issue.filePath}")
+            AppLog.w(TAG, "  - [${issue.type}] ${issue.description}: ${issue.filePath}")
         }
 
         CheckResult(
@@ -198,7 +199,7 @@ object AssetIntegrityChecker {
             )
         }
 
-        AppLogger.info(TAG, "开始自动修复 ${fixableIssues.size} 个问题...")
+        AppLog.i(TAG, "开始自动修复 ${fixableIssues.size} 个问题...")
         progressCallback?.invoke(0, context.getString(R.string.asset_fix_progress_prepare))
 
         var fixedCount = 0
@@ -217,11 +218,11 @@ object AssetIntegrityChecker {
 
                 if (deleteSucceeded) {
                     fixedCount++
-                    AppLogger.info(TAG, "已清理旧组件目录: ${componentDir.absolutePath}")
+                    AppLog.i(TAG, "已清理旧组件目录: ${componentDir.absolutePath}")
                 } else {
                     failedCount++
                     errors.add("Failed to remove old $componentName directory: ${componentDir.absolutePath}")
-                    AppLogger.warn(TAG, "清理旧组件目录失败: ${componentDir.absolutePath}")
+                    AppLog.w(TAG, "清理旧组件目录失败: ${componentDir.absolutePath}")
                 }
 
                 val progress = 20 + ((index + 1) * 40 / componentsToReextract.size)
@@ -238,7 +239,7 @@ object AssetIntegrityChecker {
                     .putBoolean(AppConstants.InitKeys.COMPONENTS_EXTRACTED, false)
                     .apply()
                 needsComponentExtract = true
-                AppLogger.info(TAG, "已标记需要重新初始化，下次启动将重新解压组件")
+                AppLog.i(TAG, "已标记需要重新初始化，下次启动将重新解压组件")
             } catch (e: Exception) {
                 failedCount++
                 errors.add(

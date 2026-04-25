@@ -16,9 +16,12 @@ import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.transition.Transition
 import com.app.ralaunch.R
+import com.app.ralaunch.core.logging.AppLog
 import com.app.ralaunch.feature.sponsor.Sponsor
 import com.app.ralaunch.feature.sponsor.SponsorTier
 import kotlin.math.*
+
+private const val TAG = "SponsorWallView"
 
 /**
  * 赞助者星空墙 - 简化版
@@ -154,7 +157,7 @@ class SponsorWallView @JvmOverloads constructor(
             val drawable = context.getDrawable(R.drawable.ic_person)
             defaultAvatar = drawable?.toBitmap(100, 100)
         } catch (e: Exception) {
-            e.printStackTrace()
+            AppLog.e(TAG, "Failed to load default avatar", e)
         }
     }
     

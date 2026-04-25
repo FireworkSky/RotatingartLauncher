@@ -2,8 +2,9 @@ package com.app.ralaunch.feature.main
 
 import android.content.Context
 import android.content.SharedPreferences
-import com.app.ralaunch.core.platform.AppConstants
 import com.app.ralaunch.R
+import com.app.ralaunch.core.logging.AppLog
+import com.app.ralaunch.core.platform.AppConstants
 import com.app.ralaunch.core.model.GameItem
 import com.app.ralaunch.core.di.contract.IGameRepositoryServiceV3
 import com.app.ralaunch.core.model.GameItemUi
@@ -105,13 +106,13 @@ class MainPresenter(
     }
 
     override fun launchSelectedGame() {
-        android.util.Log.d("MainPresenter", "launchSelectedGame called, selectedGame=$selectedGame, isViewAttached=$isViewAttached")
+        AppLog.d("MainPresenter", "launchSelectedGame called, selectedGame=$selectedGame, isViewAttached=$isViewAttached")
         val game = selectedGame
         if (game != null) {
-            android.util.Log.d("MainPresenter", "Launching game: ${game.displayedName}")
+            AppLog.d("MainPresenter", "Launching game: ${game.displayedName}")
             withView { launchGame(game) }
         } else {
-            android.util.Log.w("MainPresenter", "selectedGame is null!")
+            AppLog.w("MainPresenter", "selectedGame is null!")
             withView { showToast(context.getString(R.string.main_select_game_first)) }
         }
     }

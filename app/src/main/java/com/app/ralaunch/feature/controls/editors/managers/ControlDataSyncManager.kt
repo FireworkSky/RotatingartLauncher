@@ -1,6 +1,6 @@
 package com.app.ralaunch.feature.controls.editors.managers
 
-import android.util.Log
+import com.app.ralaunch.core.logging.AppLog
 import android.view.View
 import android.widget.FrameLayout
 import com.app.ralaunch.feature.controls.ControlData
@@ -23,11 +23,11 @@ object ControlDataSyncManager {
     @JvmStatic
     fun syncControlDataToView(layout: ControlLayout?, controlData: ControlData?): Boolean {
         if (layout == null || controlData == null) {
-            Log.w(TAG, "syncControlDataToView: layout=$layout, controlData=$controlData")
+            AppLog.w(TAG, "syncControlDataToView: layout=$layout, controlData=$controlData")
             return false
         }
         
-        Log.d(TAG, "syncControlDataToView: looking for controlData@${System.identityHashCode(controlData)} (name='${controlData.name}'), childCount=${layout.childCount}")
+        AppLog.d(TAG, "syncControlDataToView: looking for controlData@${System.identityHashCode(controlData)} (name='${controlData.name}'), childCount=${layout.childCount}")
 
         for (i in 0 until layout.childCount) {
             val child = layout.getChildAt(i)
@@ -38,7 +38,7 @@ object ControlDataSyncManager {
                 // 这确保即使多个控件有相同名称，也只更新正确的那个控件
                 val isMatch = viewData === controlData
 
-                Log.d(TAG, "  child[$i]: viewData@${System.identityHashCode(viewData)} (name='${viewData?.name}'), isMatch=$isMatch")
+                AppLog.d(TAG, "  child[$i]: viewData@${System.identityHashCode(viewData)} (name='${viewData?.name}'), isMatch=$isMatch")
 
                 if (isMatch) {
                     // Get screen dimensions from the layout
@@ -68,7 +68,7 @@ object ControlDataSyncManager {
                     
                     // 验证纹理是否同步成功
                     if (viewData is ControlData.Button && controlData is ControlData.Button) {
-                        Log.i(TAG, "Button texture synced: path='${viewData.texture.normal.path}', enabled=${viewData.texture.normal.enabled}")
+                        AppLog.i(TAG, "Button texture synced: path='${viewData.texture.normal.path}', enabled=${viewData.texture.normal.enabled}")
                     }
 
                     // 重新设置 controlData 以触发 initPaints() 更新颜色/透明度
@@ -78,13 +78,13 @@ object ControlDataSyncManager {
                     // 刷新控件绘制
                     child.invalidate()
 
-                    Log.i(TAG, "syncControlDataToView: SUCCESS for '${controlData.name}'")
+                    AppLog.i(TAG, "syncControlDataToView: SUCCESS for '${controlData.name}'")
                     return true
                 }
             }
         }
 
-        Log.w(TAG, "syncControlDataToView: FAILED - no matching control found for '${controlData.name}'")
+        AppLog.w(TAG, "syncControlDataToView: FAILED - no matching control found for '${controlData.name}'")
         return false
     }
 

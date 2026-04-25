@@ -1,7 +1,7 @@
 package com.app.ralaunch.feature.controls.packs
 
 import com.app.ralaunch.feature.controls.ControlData
-import com.app.ralaunch.core.common.util.AppLogger
+import com.app.ralaunch.core.logging.AppLog
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import kotlinx.serialization.json.Json
@@ -69,7 +69,7 @@ data class ControlLayout(
                 sanitizeControls(layout)
                 layout
             } catch (e: Exception) {
-                AppLogger.error("ControlLayout", "Failed to parse layout JSON", e)
+                AppLog.e("ControlLayout", "Failed to parse layout JSON", e)
                 null
             }
         }
@@ -115,11 +115,11 @@ data class ControlLayout(
                 val bgAlpha = (control.bgColor ushr 24) / 255f
                 if (bgAlpha > minThreshold) {
                     control.opacity = bgAlpha
-                    AppLogger.debug("ControlLayout",
+                    AppLog.d("ControlLayout",
                         "  '${control.name}': opacity 0 → ${bgAlpha} (from bgColor alpha #${Integer.toHexString(control.bgColor ushr 24).uppercase()})")
                 } else {
                     control.opacity = 0.35f
-                    AppLogger.debug("ControlLayout",
+                    AppLog.d("ControlLayout",
                         "  '${control.name}': opacity 0 → 0.35 (default, bgColor alpha also 0)")
                 }
                 fixed = true
@@ -144,7 +144,7 @@ data class ControlLayout(
             }
 
             if (fixedCount > 0) {
-                AppLogger.info("ControlLayout",
+                AppLog.i("ControlLayout",
                     "Fixed $fixedCount controls with invisible opacity (in-memory only) in layout '${layout.name}'")
             }
         }

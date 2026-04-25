@@ -3,7 +3,7 @@ package com.app.ralaunch.core.common
 import androidx.annotation.StringRes
 import com.app.ralaunch.R
 import com.app.ralaunch.RaLaunchApp
-import com.app.ralaunch.core.common.util.AppLogger
+import com.app.ralaunch.core.logging.AppLog
 import com.app.ralaunch.core.common.util.LocaleManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -94,7 +94,7 @@ object ConsoleManager {
                 process.destroy()
             } catch (e: Exception) {
                 if (isRunning) {
-                    AppLogger.error(TAG, "日志收集异常: ${e.message}")
+                    AppLog.e(TAG, "日志收集异常: ${e.message}")
                 }
             }
         }, "ConsoleLogCollector").apply {

@@ -1,7 +1,7 @@
 package com.app.ralaunch.core.extractor
 
 import android.graphics.Bitmap
-import android.util.Log
+import com.app.ralaunch.core.logging.AppLog
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
@@ -22,7 +22,7 @@ object BmpDecoder {
     fun decodeBmpIcon(data: ByteArray?): Bitmap? {
         return try {
             if (data == null || data.size < 40) {
-                Log.e(TAG, "Invalid icon data: too short")
+                AppLog.e(TAG, "Invalid icon data: too short")
                 return null
             }
 
@@ -39,7 +39,7 @@ object BmpDecoder {
 
             // 验证header size
             if (headerSize != 40) {
-                Log.e(TAG, "Invalid BITMAPINFOHEADER size: $headerSize")
+                AppLog.e(TAG, "Invalid BITMAPINFOHEADER size: $headerSize")
                 return null
             }
 
@@ -48,7 +48,7 @@ object BmpDecoder {
 
             // 只支持常见的位深度
             if (bitCount !in listOf(32, 24, 8, 4, 1)) {
-                Log.e(TAG, "Unsupported bit count: $bitCount")
+                AppLog.e(TAG, "Unsupported bit count: $bitCount")
                 return null
             }
 
@@ -75,7 +75,7 @@ object BmpDecoder {
 
             bitmap
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to decode BMP: ${e.message}", e)
+            AppLog.e(TAG, "Failed to decode BMP: ${e.message}", e)
             null
         }
     }

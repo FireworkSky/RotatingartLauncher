@@ -1,6 +1,6 @@
 package com.app.ralaunch.feature.patch.data
 
-import android.util.Log
+import com.app.ralaunch.core.logging.AppLog
 import com.google.gson.FieldNamingPolicy
 import com.google.gson.GsonBuilder
 import com.google.gson.annotations.SerializedName
@@ -99,7 +99,7 @@ class PatchManagerConfig {
      * @return true if save succeeds, false otherwise
      */
     fun saveToJson(pathToJson: Path): Boolean {
-        Log.i(TAG, "Save $CONFIG_FILE_NAME, pathToJson: $pathToJson")
+        AppLog.i(TAG, "Save $CONFIG_FILE_NAME, pathToJson: $pathToJson")
 
         return try {
             // Ensure parent directory exists
@@ -109,12 +109,12 @@ class PatchManagerConfig {
                 OutputStreamWriter(stream, StandardCharsets.UTF_8).use { writer ->
                     gson.toJson(this, writer)
                     writer.flush()
-                    Log.i(TAG, "Configuration file saved successfully")
+                    AppLog.i(TAG, "Configuration file saved successfully")
                     true
                 }
             }
         } catch (e: Exception) {
-            Log.w(TAG, "Save configuration file failed: ${Log.getStackTraceString(e)}")
+            AppLog.w(TAG, "Save configuration file failed: ${AppLog.getStackTraceString(e)}")
             false
         }
     }
@@ -135,10 +135,10 @@ class PatchManagerConfig {
          */
         @JvmStatic
         fun fromJson(pathToJson: Path): PatchManagerConfig? {
-            Log.i(TAG, "加载 $CONFIG_FILE_NAME, pathToJson: $pathToJson")
+            AppLog.i(TAG, "加载 $CONFIG_FILE_NAME, pathToJson: $pathToJson")
 
             if (!Files.exists(pathToJson) || !Files.isRegularFile(pathToJson)) {
-                Log.w(TAG, "路径不存在 $CONFIG_FILE_NAME 文件")
+                AppLog.w(TAG, "路径不存在 $CONFIG_FILE_NAME 文件")
                 return null
             }
 
@@ -149,7 +149,7 @@ class PatchManagerConfig {
                     }
                 }
             } catch (e: Exception) {
-                Log.w(TAG, "加载配置文件失败: ${Log.getStackTraceString(e)}")
+                AppLog.w(TAG, "加载配置文件失败: ${AppLog.getStackTraceString(e)}")
                 null
             }
         }

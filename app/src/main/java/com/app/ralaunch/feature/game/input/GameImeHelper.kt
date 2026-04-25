@@ -1,6 +1,6 @@
 package com.app.ralaunch.feature.game.input
 
-import android.util.Log
+import com.app.ralaunch.core.logging.AppLog
 
 /**
  * SDL IME/文本输入工具，集中管理反射调用
@@ -16,7 +16,7 @@ object GameImeHelper {
             ).apply { isAccessible = true }
             nativeCommitText.invoke(null, text, 1)
         } catch (e: Exception) {
-            Log.e(TAG, "发送文本失败", e)
+            AppLog.e(TAG, "发送文本失败", e)
         }
     }
 
@@ -34,7 +34,7 @@ object GameImeHelper {
             onNativeKeyDown.invoke(null, SDL_SCANCODE_BACKSPACE)
             onNativeKeyUp.invoke(null, SDL_SCANCODE_BACKSPACE)
         } catch (e: Exception) {
-            Log.e(TAG, "发送Backspace失败", e)
+            AppLog.e(TAG, "发送Backspace失败", e)
         }
     }
 
@@ -48,7 +48,7 @@ object GameImeHelper {
             ).apply { isAccessible = true }
             showTextInput.invoke(null, 0, 0, 0, 0)
         } catch (e: Exception) {
-            Log.e(TAG, "启用SDL文本输入失败", e)
+            AppLog.e(TAG, "启用SDL文本输入失败", e)
         }
     }
 
@@ -60,7 +60,7 @@ object GameImeHelper {
             val mSingletonField = sdlActivityClass.getDeclaredField("mSingleton")
                 .apply { isAccessible = true }
             val mSingleton = mSingletonField.get(null) ?: run {
-                Log.w(TAG, "SDLActivity.mSingleton is null, cannot hide text input")
+                AppLog.w(TAG, "SDLActivity.mSingleton is null, cannot hide text input")
                 return
             }
 
@@ -69,7 +69,7 @@ object GameImeHelper {
             ).apply { isAccessible = true }
             sendCommandMethod.invoke(mSingleton, COMMAND_TEXTEDIT_HIDE, null)
         } catch (e: Exception) {
-            Log.e(TAG, "禁用SDL文本输入失败", e)
+            AppLog.e(TAG, "禁用SDL文本输入失败", e)
         }
     }
 }

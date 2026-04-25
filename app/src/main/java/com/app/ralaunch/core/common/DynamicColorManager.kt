@@ -7,7 +7,7 @@ import android.graphics.Color
 import android.os.Build
 import androidx.annotation.ColorInt
 import com.app.ralaunch.core.common.SettingsAccess
-import com.app.ralaunch.core.common.util.AppLogger
+import com.app.ralaunch.core.logging.AppLog
 import com.google.android.material.color.DynamicColors
 import com.google.android.material.color.DynamicColorsOptions
 
@@ -39,7 +39,7 @@ class DynamicColorManager private constructor() {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 if (shouldUseSystemDynamicColors()) {
                     DynamicColors.applyToActivityIfAvailable(activity)
-                    AppLogger.info(TAG, "应用系统动态颜色（Android 12+）")
+                    AppLog.i(TAG, "应用系统动态颜色（Android 12+）")
                     return
                 }
             }
@@ -47,7 +47,7 @@ class DynamicColorManager private constructor() {
             val themeColor = SettingsAccess.themeColor
             applyCustomThemeColor(activity, themeColor)
         } catch (e: Exception) {
-            AppLogger.error(TAG, "应用动态颜色失败: ${e.message}", e)
+            AppLog.e(TAG, "应用动态颜色失败: ${e.message}", e)
         }
     }
 
@@ -62,20 +62,20 @@ class DynamicColorManager private constructor() {
                         .setContentBasedSource(seedColor)
                         .build()
                     DynamicColors.applyToActivityIfAvailable(activity, options)
-                    AppLogger.info(TAG, "✓ Material 3 动态主题准备就绪: ${String.format("#%08X", seedColor)}")
+                    AppLog.i(TAG, "✓ Material 3 动态主题准备就绪: ${String.format("#%08X", seedColor)}")
                 } catch (e: NoSuchMethodError) {
-                    AppLogger.warn(TAG, "setContentBasedSource 不可用，使用默认动态颜色")
+                    AppLog.w(TAG, "setContentBasedSource 不可用，使用默认动态颜色")
                     DynamicColors.applyToActivityIfAvailable(activity)
                 } catch (e: Exception) {
-                    AppLogger.error(TAG, "动态颜色应用失败: ${e.message}")
+                    AppLog.e(TAG, "动态颜色应用失败: ${e.message}")
                     applyLegacyThemeColor(activity, seedColor)
                 }
             } else {
                 applyLegacyThemeColor(activity, seedColor)
-                AppLogger.info(TAG, "Android 11 及以下，主题颜色已设置")
+                AppLog.i(TAG, "Android 11 及以下，主题颜色已设置")
             }
         } catch (e: Exception) {
-            AppLogger.error(TAG, "应用自定义主题颜色失败: ${e.message}", e)
+            AppLog.e(TAG, "应用自定义主题颜色失败: ${e.message}", e)
             applyLegacyThemeColor(activity, seedColor)
         }
     }
@@ -86,9 +86,9 @@ class DynamicColorManager private constructor() {
                 statusBarColor = adjustColorBrightness(color, 0.8f)
                 navigationBarColor = adjustColorBrightness(color, 0.9f)
             }
-            AppLogger.info(TAG, "应用传统主题颜色（Android < 12）")
+            AppLog.i(TAG, "应用传统主题颜色（Android < 12）")
         } catch (e: Exception) {
-            AppLogger.error(TAG, "应用传统主题颜色失败: ${e.message}", e)
+            AppLog.e(TAG, "应用传统主题颜色失败: ${e.message}", e)
         }
     }
 

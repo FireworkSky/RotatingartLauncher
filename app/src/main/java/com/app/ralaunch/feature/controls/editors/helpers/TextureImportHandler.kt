@@ -4,7 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.provider.OpenableColumns
-import android.util.Log
+import com.app.ralaunch.core.logging.AppLog
 import android.widget.Toast
 import com.app.ralaunch.R
 import com.app.ralaunch.feature.controls.ControlData
@@ -53,21 +53,21 @@ class TextureImportHandler(
      * 导入并应用纹理
      */
     fun importAndApplyTexture(uri: Uri): Boolean {
-        Log.d(TAG, "importAndApplyTexture: $uri")
+        AppLog.d(TAG, "importAndApplyTexture: $uri")
 
         val context = contextProvider() ?: run {
-            Log.e(TAG, "Context is null")
+            AppLog.e(TAG, "Context is null")
             return false
         }
 
         val packManager: ControlPackManager = KoinJavaComponent.get(ControlPackManager::class.java)
         val packId = activityProvider()?.getCurrentPackId() ?: run {
-            Log.e(TAG, "PackId is null")
+            AppLog.e(TAG, "PackId is null")
             return false
         }
 
         val data = currentDataProvider() ?: run {
-            Log.e(TAG, "currentData is null")
+            AppLog.e(TAG, "currentData is null")
             return false
         }
 
@@ -118,7 +118,7 @@ class TextureImportHandler(
             onTextureApplied()
             true
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to import texture", e)
+            AppLog.e(TAG, "Failed to import texture", e)
             Toast.makeText(context, R.string.control_texture_import_failed, Toast.LENGTH_SHORT).show()
             false
         }

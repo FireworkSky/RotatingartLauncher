@@ -2,7 +2,7 @@ package com.app.ralaunch.feature.gog.data.api
 
 import com.app.ralaunch.feature.gog.data.GogConstants
 import com.app.ralaunch.feature.gog.data.model.*
-import com.app.ralaunch.core.common.util.AppLogger
+import com.app.ralaunch.core.logging.AppLog
 import org.json.JSONObject
 import java.io.*
 import java.net.HttpURLConnection
@@ -226,7 +226,7 @@ class GogGalaxyApi(private val authClient: GogAuthClient) {
                 getResponseJson(repository.getString("repository_manifest"))
             } else JSONObject()
         } catch (e: Exception) {
-            AppLogger.error(TAG, "获取依赖信息失败", e)
+            AppLog.e(TAG, "获取依赖信息失败", e)
             JSONObject()
         }
     }
@@ -277,7 +277,7 @@ class GogGalaxyApi(private val authClient: GogAuthClient) {
             }
             path
         } catch (e: Exception) {
-            AppLogger.error(TAG, "解析 downlink url 失败", e)
+            AppLog.e(TAG, "解析 downlink url 失败", e)
             ""
         }
     }
@@ -304,12 +304,12 @@ class GogGalaxyApi(private val authClient: GogAuthClient) {
                 val response = readResponse(inputStream)
                 return if (response.isEmpty()) JSONObject() else JSONObject(response)
             } else {
-                AppLogger.warn(TAG, "API请求失败，响应码: ${conn.responseCode}")
+                AppLog.w(TAG, "API请求失败，响应码: ${conn.responseCode}")
                 return JSONObject()
             }
         } catch (e: Exception) {
             if (e is IOException) throw e
-            AppLogger.error(TAG, "获取JSON响应失败: $urlString", e)
+            AppLog.e(TAG, "获取JSON响应失败: $urlString", e)
             return JSONObject()
         } finally {
             conn.disconnect()

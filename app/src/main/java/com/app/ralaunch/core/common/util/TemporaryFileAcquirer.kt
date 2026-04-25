@@ -1,7 +1,7 @@
 package com.app.ralaunch.core.common.util
 
 import android.content.Context
-import android.util.Log
+import com.app.ralaunch.core.logging.AppLog
 import org.koin.java.KoinJavaComponent
 import java.io.Closeable
 import java.nio.file.Path
@@ -35,7 +35,7 @@ class TemporaryFileAcquirer : Closeable {
         tmpFilePaths.forEach { tmpFilePath ->
             val isSuccessful = FileUtils.deleteDirectoryRecursivelyWithinRoot(tmpFilePath, preferredTempDir)
             if (!isSuccessful) {
-                Log.w(TAG, "Failed to delete temporary file or directory: $tmpFilePath")
+                AppLog.w(TAG, "Failed to delete temporary file or directory: $tmpFilePath")
             }
         }
         tmpFilePaths.clear()

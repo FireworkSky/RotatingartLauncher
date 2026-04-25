@@ -1,6 +1,6 @@
 package com.app.ralaunch.feature.controls.ui
 
-import android.util.Log
+import com.app.ralaunch.core.logging.AppLog
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
@@ -216,13 +216,13 @@ private fun VirtualKey(
                 detectTapGestures(
                     onPress = {
                         isPressed = true
-                        Log.d(TAG, "Key pressed: $keyCode")
+                        AppLog.d(TAG, "Key pressed: $keyCode")
                         inputBridge?.sendKey(keyCode, true)
                         try {
                             awaitRelease()
                         } finally {
                             isPressed = false
-                            Log.d(TAG, "Key released: $keyCode")
+                            AppLog.d(TAG, "Key released: $keyCode")
                             inputBridge?.sendKey(keyCode, false)
                         }
                     }
@@ -262,7 +262,7 @@ private fun VirtualMouseKey(
                 detectTapGestures(
                     onPress = {
                         isPressed = true
-                        Log.d(TAG, "Mouse button pressed: $mouseButton")
+                        AppLog.d(TAG, "Mouse button pressed: $mouseButton")
                         // 鼠标按键发送到屏幕中心
                         val centerX = size.width / 2f
                         val centerY = size.height / 2f
@@ -271,7 +271,7 @@ private fun VirtualMouseKey(
                             awaitRelease()
                         } finally {
                             isPressed = false
-                            Log.d(TAG, "Mouse button released: $mouseButton")
+                            AppLog.d(TAG, "Mouse button released: $mouseButton")
                             inputBridge?.sendMouseButton(mouseButton, false, centerX, centerY)
                         }
                     }

@@ -1,6 +1,6 @@
 package com.app.ralaunch.core.extractor
 
-import android.util.Log
+import com.app.ralaunch.core.logging.AppLog
 import com.app.ralaunch.R
 import com.app.ralaunch.RaLaunchApp
 import com.app.ralaunch.core.common.util.TemporaryFileAcquirer
@@ -61,10 +61,10 @@ class GogShFileExtractor(
                 val shFile = MakeSelfShFile.parse(sourcePath)
                     ?: throw IOException("解析 MakeSelf Sh 文件头部失败")
 
-                Log.d(TAG, "Successfully parsed header - offset: ${shFile.offset}, filesize: ${shFile.filesize}")
+                AppLog.d(TAG, "Successfully parsed header - offset: ${shFile.offset}, filesize: ${shFile.filesize}")
 
                 FileInputStream(sourcePath.toFile()).use { fis ->
-                    Log.d(TAG, "Starting extraction: $sourcePath to $destinationPath")
+                    AppLog.d(TAG, "Starting extraction: $sourcePath to $destinationPath")
 
                     Files.createDirectories(destinationPath)
                     val srcChannel = fis.channel
@@ -84,7 +84,7 @@ class GogShFileExtractor(
                     val mojosetupPath = tfa.acquireTempFilePath(EXTRACTED_MOJOSETUP_TAR_GZ_FILENAME)
                     FileOutputStream(mojosetupPath.toFile()).use { mojosetupFos ->
                         val mojosetupChannel = mojosetupFos.channel
-                        Log.d(TAG, "Extracting mojosetup.tar.gz to $mojosetupPath")
+                        AppLog.d(TAG, "Extracting mojosetup.tar.gz to $mojosetupPath")
                         srcChannel.transferTo(shFile.offset, shFile.filesize, mojosetupChannel)
                     }
 
@@ -98,7 +98,7 @@ class GogShFileExtractor(
                     val gameDataPath = tfa.acquireTempFilePath(EXTRACTED_GAME_DATA_ZIP_FILENAME)
                     FileOutputStream(gameDataPath.toFile()).use { gameDataFos ->
                         val gameDataChannel = gameDataFos.channel
-                        Log.d(TAG, "Extracting game_data.zip to $gameDataPath")
+                        AppLog.d(TAG, "Extracting game_data.zip to $gameDataPath")
                         srcChannel.transferTo(
                             shFile.offset + shFile.filesize,
                             srcChannel.size() - (shFile.offset + shFile.filesize),
@@ -111,10 +111,10 @@ class GogShFileExtractor(
                         0.09f,
                         state
                     )
-                    Log.d(TAG, "Extraction from MakeSelf SH file completed successfully")
+                    AppLog.d(TAG, "Extraction from MakeSelf SH file completed successfully")
 
                     // 解压 game_data.zip
-                    Log.d(TAG, "Trying to extract game_data.zip...")
+                    AppLog.d(TAG, "Trying to extract game_data.zip...")
                     val gdzf = GameDataZipFile.parse(gameDataPath)
                         ?: throw IOException("解析 game_data.zip 失败")
 
@@ -170,7 +170,7 @@ class GogShFileExtractor(
                 }
             }
         } catch (ex: Exception) {
-            Log.e(TAG, "Error when extracting source file", ex)
+            AppLog.e(TAG, "Error when extracting source file", ex)
             extractionListener?.onError(
                 RaLaunchApp.getInstance().getString(R.string.extract_gog_sh_failed),
                 ex,
@@ -195,11 +195,11 @@ class GogShFileExtractor(
                 try {
                     FileInputStream(filePath.toFile()).use { fis ->
                         val bytesRead = fis.read(headerBuffer)
-                        Log.d(TAG, "Read $bytesRead bytes from header")
+                        AppLog.d(TAG, "Read $bytesRead bytes from header")
                         headerContent = String(headerBuffer, 0, bytesRead, StandardCharsets.UTF_8)
                     }
                 } catch (ex: Exception) {
-                    Log.e(TAG, "Error when reading MakeSelf SH file", ex)
+                    AppLog.e(TAG, "Error when reading MakeSelf SH file", ex)
                     return null
                 }
 
@@ -207,7 +207,7 @@ class GogShFileExtractor(
             }
 
             private fun parseMakeSelfShFileContent(content: String): MakeSelfShFile? {
-                Log.d(TAG, "Parsing makeself file content, content size: ${content.length}")
+                AppLog.d(TAG, "Parsing makeself file content, content size: ${content.length}")
 
                 val lines = content.split("\n")
                 var lineOffset = 0L
@@ -221,14 +221,14 @@ class GogShFileExtractor(
                             line.contains("head -n") -> {
                                 extractNumber(line.substring(line.indexOf("head -n") + 7))?.let {
                                     lineOffset = it
-                                    Log.d(TAG, "Found lineOffset from 'head -n': $lineOffset")
+                                    AppLog.d(TAG, "Found lineOffset from 'head -n': $lineOffset")
                                     foundLineOffset = true
                                 }
                             }
                             line.contains("SKIP=") -> {
                                 extractNumber(line.substring(line.indexOf("SKIP=") + 5))?.let {
                                     lineOffset = it
-                                    Log.d(TAG, "Found lineOffset from 'SKIP=': $lineOffset")
+                                    AppLog.d(TAG, "Found lineOffset from 'SKIP=': $lineOffset")
                                     foundLineOffset = true
                                 }
                             }
@@ -240,14 +240,14 @@ class GogShFileExtractor(
                             line.contains("filesizes=") -> {
                                 extractNumber(line.substring(line.indexOf("filesizes=") + 10))?.let {
                                     filesize = it
-                                    Log.d(TAG, "Found filesize from 'filesizes=': $filesize")
+                                    AppLog.d(TAG, "Found filesize from 'filesizes=': $filesize")
                                     foundFilesize = true
                                 }
                             }
                             line.contains("SIZE=") -> {
                                 extractNumber(line.substring(line.indexOf("SIZE=") + 5))?.let {
                                     filesize = it
-                                    Log.d(TAG, "Found filesize from 'SIZE=': $filesize")
+                                    AppLog.d(TAG, "Found filesize from 'SIZE=': $filesize")
                                     foundFilesize = true
                                 }
                             }
@@ -257,11 +257,11 @@ class GogShFileExtractor(
                     if (foundLineOffset && foundFilesize) break
                 }
 
-                Log.d(TAG, "Final parse result - lineOffset: $lineOffset, filesize: $filesize")
+                AppLog.d(TAG, "Final parse result - lineOffset: $lineOffset, filesize: $filesize")
 
                 return if (foundLineOffset && foundFilesize) {
                     if (lineOffset > lines.size) {
-                        Log.e(TAG, "Parsed lineOffset is greater than number of lines, invalid makeself file")
+                        AppLog.e(TAG, "Parsed lineOffset is greater than number of lines, invalid makeself file")
                         return null
                     }
                     val offset = lines.take(lineOffset.toInt()).sumOf { it.length + 1 }
@@ -311,7 +311,7 @@ class GogShFileExtractor(
 
             fun parseFromGogShFile(filePath: Path): GameDataZipFile? {
                 val shFile = MakeSelfShFile.parse(filePath) ?: run {
-                    Log.e(TAG, "MakeSelf SH file is null")
+                    AppLog.e(TAG, "MakeSelf SH file is null")
                     return null
                 }
 
@@ -335,7 +335,7 @@ class GogShFileExtractor(
                         parse(tempZipFile)
                     }
                 } catch (ex: Exception) {
-                    Log.e(TAG, "Error when reading GOG SH file: $filePath", ex)
+                    AppLog.e(TAG, "Error when reading GOG SH file: $filePath", ex)
                     null
                 }
             }
@@ -350,7 +350,7 @@ class GogShFileExtractor(
                             if (parseGameInfoContent(gameDataZipFile, gameInfoContent)) {
                                 return@use gameDataZipFile
                             }
-                            Log.w(TAG, "Failed to parse gameinfo content, trying config.lua...")
+                            AppLog.w(TAG, "Failed to parse gameinfo content, trying config.lua...")
                         }
 
                         val configLuaContent = getFileContent(zip, CONFIG_LUA_PATH)
@@ -358,14 +358,14 @@ class GogShFileExtractor(
                             if (parseConfigLuaContent(gameDataZipFile, configLuaContent)) {
                                 return@use gameDataZipFile
                             }
-                            Log.w(TAG, "Failed to parse config.lua content")
+                            AppLog.w(TAG, "Failed to parse config.lua content")
                         }
 
-                        Log.e(TAG, "Failed to parse game_data.zip content for id")
+                        AppLog.e(TAG, "Failed to parse game_data.zip content for id")
                         null
                     }
                 } catch (e: Exception) {
-                    Log.e(TAG, "Exception when reading game_data.zip", e)
+                    AppLog.e(TAG, "Exception when reading game_data.zip", e)
                     null
                 }
             }
@@ -373,16 +373,16 @@ class GogShFileExtractor(
             private fun getFileContent(zip: ZipFile, entryPath: String): String? {
                 val entry = zip.getEntry(entryPath)
                 if (entry == null) {
-                    Log.w(TAG, "未在压缩包中找到 $entryPath")
+                    AppLog.w(TAG, "未在压缩包中找到 $entryPath")
                     return null
                 }
                 return try {
                     zip.getInputStream(entry).use { stream ->
-                        Log.d(TAG, "Reading entry $entryPath...")
+                        AppLog.d(TAG, "Reading entry $entryPath...")
                         getFileContentFromStream(stream)
                     }
                 } catch (e: IOException) {
-                    Log.w(TAG, "IOException when reading $entryPath", e)
+                    AppLog.w(TAG, "IOException when reading $entryPath", e)
                     null
                 }
             }
@@ -390,7 +390,7 @@ class GogShFileExtractor(
             private fun getFileContentFromStream(inputStream: InputStream): String {
                 val contentBuffer = ByteArray(MAX_CONTENT_SIZE)
                 val bytesRead = inputStream.read(contentBuffer)
-                Log.d(TAG, "Read $bytesRead bytes!")
+                AppLog.d(TAG, "Read $bytesRead bytes!")
                 return String(contentBuffer, 0, bytesRead, StandardCharsets.UTF_8)
             }
 
@@ -408,19 +408,19 @@ class GogShFileExtractor(
                         }
                         if (idBuilder.isNotEmpty()) {
                             gameDataZipFile.id = idBuilder.toString()
-                            Log.d(TAG, "Found id from config.lua: ${gameDataZipFile.id}")
+                            AppLog.d(TAG, "Found id from config.lua: ${gameDataZipFile.id}")
                             return true
                         }
                     }
                 }
-                Log.w(TAG, "cannot extract id from $CONFIG_LUA_PATH")
+                AppLog.w(TAG, "cannot extract id from $CONFIG_LUA_PATH")
                 return false
             }
 
             private fun parseGameInfoContent(gameDataZipFile: GameDataZipFile, content: String): Boolean {
                 val lines = content.split("\n")
                 if (lines.isEmpty()) {
-                    Log.w(TAG, "cannot even extract id from $GAMEINFO_PATH")
+                    AppLog.w(TAG, "cannot even extract id from $GAMEINFO_PATH")
                     return false
                 }
 
@@ -432,7 +432,7 @@ class GogShFileExtractor(
                 gameDataZipFile.timestamp2 = lines.getOrNull(5)?.trim()
                 gameDataZipFile.gogId = lines.getOrNull(6)?.trim()
 
-                Log.d(TAG, "Parsed gameinfo - $gameDataZipFile")
+                AppLog.d(TAG, "Parsed gameinfo - $gameDataZipFile")
 
                 return !gameDataZipFile.id.isNullOrEmpty()
             }

@@ -92,6 +92,7 @@ import com.app.ralaunch.R
 import com.app.ralaunch.core.common.SettingsAccess
 import com.app.ralaunch.core.common.util.AssetIntegrityChecker
 import com.app.ralaunch.core.common.util.LocaleManager
+import com.app.ralaunch.core.logging.LogFilePolicy
 import com.app.ralaunch.core.navigation.NavState
 import com.app.ralaunch.core.navigation.navigateToLogViewer
 import com.app.ralaunch.core.navigation.navigateToPatchManagement
@@ -862,7 +863,7 @@ private fun DeveloperSettingsPane(
                     title = androidStringResource(R.string.settings_developer_export_logs_title),
                     subtitle = androidStringResource(R.string.settings_developer_export_logs_subtitle),
                     icon = Icons.Default.Download,
-                    onClick = { logExportLauncher.launch(buildLogFileName()) }
+                    onClick = { logExportLauncher.launch(LogFilePolicy.appLogFileName()) }
                 )
 
                 SettingsDivider()

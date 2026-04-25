@@ -1,7 +1,7 @@
 package com.app.ralaunch.core.platform.network.easytier
 
 import android.content.Context
-import android.util.Log
+import com.app.ralaunch.core.logging.AppLog
 import com.app.ralaunch.R
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -158,7 +158,7 @@ class EasyTierManager {
                 withPortForward = true  // 加入者始终启用端口转发
             )
             
-            Log.d(TAG, "Starting EasyTier with config:\n$config")
+            AppLog.d(TAG, "Starting EasyTier with config:\n$config")
             
             // 解析配置
             val parseResult = EasyTierJNI.parseConfig(config)
@@ -191,20 +191,20 @@ class EasyTierManager {
             
             // no_tun 模式下不需要 VPN/TUN，跳过 setTunFd
             // 端口转发由 EasyTier 内部通过应用层 socket 实现
-            Log.d(TAG, "Running in no_tun mode, skipping VPN/TUN setup")
+            AppLog.d(TAG, "Running in no_tun mode, skipping VPN/TUN setup")
             
             // 启动监控
             startMonitoring()
             
             if (isHost) {
-                Log.i(TAG, "EasyTier host connected to network: $networkName")
+                AppLog.i(TAG, "EasyTier host connected to network: $networkName")
             } else {
-                Log.i(TAG, "EasyTier guest connected to network: $networkName, port forwarding active")
+                AppLog.i(TAG, "EasyTier guest connected to network: $networkName, port forwarding active")
             }
             Result.success(Unit)
             
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to connect to EasyTier", e)
+            AppLog.e(TAG, "Failed to connect to EasyTier", e)
             _connectionState.value = EasyTierConnectionState.ERROR
             _errorMessage.value = e.message
             Result.failure(e)
@@ -247,11 +247,11 @@ class EasyTierManager {
             _peers.value = emptyList()
             _errorMessage.value = null
             
-            Log.i(TAG, "EasyTier disconnected")
+            AppLog.i(TAG, "EasyTier disconnected")
             Result.success(Unit)
             
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to disconnect from EasyTier", e)
+            AppLog.e(TAG, "Failed to disconnect from EasyTier", e)
             _errorMessage.value = e.message
             Result.failure(e)
         }
@@ -306,7 +306,7 @@ class EasyTierManager {
                 try {
                     updateNetworkStatus()
                 } catch (e: Exception) {
-                    Log.e(TAG, "Error updating network status", e)
+                    AppLog.e(TAG, "Error updating network status", e)
                 }
                 delay(MONITOR_INTERVAL)
             }
@@ -342,7 +342,7 @@ class EasyTierManager {
                 ?: return
             
             if (!instanceInfo.running) {
-                Log.w(TAG, "EasyTier instance not running: ${instanceInfo.errorMsg}")
+                AppLog.w(TAG, "EasyTier instance not running: ${instanceInfo.errorMsg}")
                 _connectionState.value = EasyTierConnectionState.ERROR
                 _errorMessage.value = instanceInfo.errorMsg
                 return
@@ -352,14 +352,14 @@ class EasyTierManager {
             instanceInfo.virtualIp?.let { ip ->
                 if (_virtualIp.value != ip) {
                     _virtualIp.value = ip
-                    Log.i(TAG, "Virtual IP updated: $ip")
+                    AppLog.i(TAG, "Virtual IP updated: $ip")
                 }
             }
             
             // 更新节点列表
             _peers.value = instanceInfo.peers
             
-            Log.d(TAG, "Network status: IP=${instanceInfo.virtualIp}, peers=${instanceInfo.peers.size}")
+            AppLog.d(TAG, "Network status: IP=${instanceInfo.virtualIp}, peers=${instanceInfo.peers.size}")
             
             // 如果是加入者且在 FINDING_HOST 状态，检测房主
             if (!isCurrentHost && _connectionState.value == EasyTierConnectionState.FINDING_HOST) {
@@ -367,7 +367,7 @@ class EasyTierManager {
             }
             
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to parse network info", e)
+            AppLog.e(TAG, "Failed to parse network info", e)
         }
     }
     
@@ -384,7 +384,7 @@ class EasyTierManager {
         }
         
         if (hostPeer != null && !hostFound) {
-            Log.i(TAG, "Host found! hostname=${hostPeer.hostname}, ip=${hostPeer.virtualIp}")
+            AppLog.i(TAG, "Host found! hostname=${hostPeer.hostname}, ip=${hostPeer.virtualIp}")
             hostFound = true
             _connectionState.value = EasyTierConnectionState.CONNECTED
         }

@@ -5,7 +5,7 @@ import android.app.Dialog
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
-import android.util.Log
+import com.app.ralaunch.core.logging.AppLog
 import android.widget.Toast
 import com.app.ralaunch.R
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -90,7 +90,7 @@ class ErrorDialog private constructor(
             clipboard.setPrimaryClip(ClipData.newPlainText(ctx.getString(R.string.error_details_title), text))
             Toast.makeText(context, ctx.getString(R.string.error_copy_success), Toast.LENGTH_SHORT).show()
         } catch (e: Exception) {
-            Log.e("ErrorDialog", "Failed to copy to clipboard", e)
+            AppLog.e("ErrorDialog", "Failed to copy to clipboard", e)
         }
     }
     

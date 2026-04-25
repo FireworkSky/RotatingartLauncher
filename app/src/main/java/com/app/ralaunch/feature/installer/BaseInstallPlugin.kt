@@ -1,7 +1,7 @@
 package com.app.ralaunch.feature.installer
 
 import android.content.Context
-import android.util.Log
+import com.app.ralaunch.core.logging.AppLog
 import com.app.ralaunch.core.platform.runtime.AssemblyPatcher
 import org.koin.java.KoinJavaComponent
 import com.app.ralaunch.core.model.GameItem
@@ -51,7 +51,7 @@ abstract class BaseInstallPlugin : GameInstallPlugin {
                 iconOutputPath
             } else null
         } catch (e: Exception) {
-            Log.e(TAG, "提取图标失败: ${e.message}")
+            AppLog.e(TAG, "提取图标失败: ${e.message}")
             null
         }
     }
@@ -216,7 +216,7 @@ abstract class BaseInstallPlugin : GameInstallPlugin {
             // 1. 解压 MonoMod 到目录
             val extractSuccess = AssemblyPatcher.extractMonoMod(context)
             if (!extractSuccess) {
-                Log.w(TAG, "MonoMod 解压失败")
+                AppLog.w(TAG, "MonoMod 解压失败")
                 return false
             }
 
@@ -224,14 +224,14 @@ abstract class BaseInstallPlugin : GameInstallPlugin {
             val patchedCount = AssemblyPatcher.applyMonoModPatches(context, gameDir.absolutePath, true)
 
             if (patchedCount >= 0) {
-                Log.i(TAG, "MonoMod 已应用，替换了 $patchedCount 个文件")
+                AppLog.i(TAG, "MonoMod 已应用，替换了 $patchedCount 个文件")
                 true
             } else {
-                Log.w(TAG, "MonoMod 应用失败")
+                AppLog.w(TAG, "MonoMod 应用失败")
                 false
             }
         } catch (e: Exception) {
-            Log.e(TAG, "MonoMod 安装异常", e)
+            AppLog.e(TAG, "MonoMod 安装异常", e)
             false
         }
     }
@@ -290,7 +290,7 @@ abstract class BaseInstallPlugin : GameInstallPlugin {
             }
         }
 
-        Log.i(TAG, "Creating GameItem: id=$storageId, displayedName=${definition.displayName}, " +
+        AppLog.i(TAG, "Creating GameItem: id=$storageId, displayedName=${definition.displayName}, " +
                 "gameExePathRelative=$gameExePathRelative, iconPathRelative=$iconPathRelative")
 
         return GameItem(

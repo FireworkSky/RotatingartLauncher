@@ -1,7 +1,7 @@
 package com.app.ralaunch.feature.gog.domain
 
 import com.app.ralaunch.feature.gog.domain.ModLoaderConfigManager.ModLoaderVersion
-import com.app.ralaunch.core.common.util.AppLogger
+import com.app.ralaunch.core.logging.AppLog
 import org.json.JSONArray
 import java.io.BufferedReader
 import java.io.InputStreamReader
@@ -89,7 +89,7 @@ object ModLoaderVersionFetcher {
         @Suppress("UNUSED_PARAMETER") includePrerelease: Boolean = false
     ): List<ModLoaderVersion> {
         val repo = ModLoaderRepo.fromModLoaderName(modLoaderName) ?: run {
-            AppLogger.warn(TAG, "未知的 ModLoader: $modLoaderName")
+            AppLog.w(TAG, "未知的 ModLoader: $modLoaderName")
             return emptyList()
         }
 
@@ -121,7 +121,7 @@ object ModLoaderVersionFetcher {
                     }
                 }
         } catch (e: Exception) {
-            AppLogger.error(TAG, "获取 $modLoaderName 版本失败", e)
+            AppLog.e(TAG, "获取 $modLoaderName 版本失败", e)
             emptyList()
         }
     }
@@ -141,7 +141,7 @@ object ModLoaderVersionFetcher {
             conn.readTimeout = 15000
 
             if (conn.responseCode != 200) {
-                AppLogger.warn(TAG, "GitHub API 返回 ${conn.responseCode}")
+                AppLog.w(TAG, "GitHub API 返回 ${conn.responseCode}")
                 return emptyList()
             }
 

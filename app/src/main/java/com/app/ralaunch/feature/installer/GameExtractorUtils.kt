@@ -5,6 +5,7 @@ import com.app.ralaunch.RaLaunchApp
 import com.app.ralaunch.core.extractor.BasicSevenZipExtractor
 import com.app.ralaunch.core.extractor.ExtractorCollection
 import com.app.ralaunch.core.extractor.GogShFileExtractor
+import com.app.ralaunch.core.logging.AppLog
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -16,6 +17,7 @@ import java.nio.file.Paths
  * 封装 ralib 中现有的解压实现
  */
 object GameExtractorUtils {
+    private const val TAG = "GameExtractorUtils"
 
     /**
      * 解析 GOG .sh 文件，获取游戏信息
@@ -34,7 +36,7 @@ object GameExtractorUtils {
                 null
             }
         } catch (e: Exception) {
-            e.printStackTrace()
+            AppLog.e(TAG, "Failed to parse GOG .sh file", e)
             null
         }
     }
@@ -84,7 +86,7 @@ object GameExtractorUtils {
             }
 
         } catch (e: Exception) {
-            e.printStackTrace()
+            AppLog.e(TAG, "Failed to extract GOG .sh file", e)
             ExtractResult.Error(
                 e.message ?: RaLaunchApp.getInstance().getString(R.string.extract_failed)
             )
@@ -142,7 +144,7 @@ object GameExtractorUtils {
             }
 
         } catch (e: Exception) {
-            e.printStackTrace()
+            AppLog.e(TAG, "Failed to extract ZIP file", e)
             ExtractResult.Error(
                 e.message ?: RaLaunchApp.getInstance().getString(R.string.extract_failed)
             )

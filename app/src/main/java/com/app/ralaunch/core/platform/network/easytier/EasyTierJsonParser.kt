@@ -1,6 +1,6 @@
 package com.app.ralaunch.core.platform.network.easytier
 
-import android.util.Log
+import com.app.ralaunch.core.logging.AppLog
 import org.json.JSONObject
 
 /**
@@ -31,8 +31,8 @@ internal object EasyTierJsonParser {
                 val ipv4AddrStr = myNodeInfo?.optString("ipv4_addr", null)
                 val myPeerId = myNodeInfo?.optLong("peer_id", 0L) ?: 0L
 
-                Log.w("DEBUG_MULTIPLAYER", "RawMyNodeInfo: ${myNodeInfo?.toString()?.take(500)}")
-                Log.w("DEBUG_MULTIPLAYER", "ParseInfo: virtualIp=$virtualIp, ipv4_addr=$ipv4AddrStr, peerId=$myPeerId")
+                AppLog.w("DEBUG_MULTIPLAYER", "RawMyNodeInfo: ${myNodeInfo?.toString()?.take(500)}")
+                AppLog.w("DEBUG_MULTIPLAYER", "ParseInfo: virtualIp=$virtualIp, ipv4_addr=$ipv4AddrStr, peerId=$myPeerId")
 
                 val peersList = mutableListOf<NetworkPeerInfo>()
 
@@ -52,7 +52,7 @@ internal object EasyTierJsonParser {
                         val peerIp = parseIpv4Addr(peerIpv4)
 
                         if (hostname.lowercase().contains("host")) {
-                            Log.w("DEBUG_MULTIPLAYER", "HostRoute: ${route.toString().take(800)}")
+                            AppLog.w("DEBUG_MULTIPLAYER", "HostRoute: ${route.toString().take(800)}")
                         }
                         val stunInfo = route.optJSONObject("stun_info")
                         val udpNatType = stunInfo?.optInt("udp_nat_type", 0) ?: 0
@@ -63,7 +63,7 @@ internal object EasyTierJsonParser {
                                 hostname.startsWith("PublicServer_")
 
                         if (isPublicServer) {
-                            Log.d(TAG, "Skipping public server: $hostname (peer_id=$peerId)")
+                            AppLog.d(TAG, "Skipping public server: $hostname (peer_id=$peerId)")
                             continue
                         }
 
@@ -116,7 +116,7 @@ internal object EasyTierJsonParser {
                                     hostname.startsWith("PublicServer_")
 
                             if (isPublicServer) {
-                                Log.d(TAG, "Skipping public server: $hostname (peer_id=$peerId)")
+                                AppLog.d(TAG, "Skipping public server: $hostname (peer_id=$peerId)")
                                 continue
                             }
 
@@ -133,7 +133,7 @@ internal object EasyTierJsonParser {
                     }
                 }
 
-                Log.d(TAG, "Parsed ${peersList.size} peers from network info")
+                AppLog.d(TAG, "Parsed ${peersList.size} peers from network info")
 
                 result[key] = NetworkInstanceInfo(
                     instanceName = key,
@@ -146,7 +146,7 @@ internal object EasyTierJsonParser {
 
             result
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to parse network info JSON", e)
+            AppLog.e(TAG, "Failed to parse network info JSON", e)
             null
         }
     }

@@ -2,7 +2,7 @@ package com.app.ralaunch.core.extractor
 
 import android.content.Context
 import android.system.Os
-import com.app.ralaunch.core.common.util.AppLogger
+import com.app.ralaunch.core.logging.AppLog
 import com.app.ralaunch.core.common.util.FileUtils
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
 import org.apache.commons.compress.compressors.xz.XZCompressorInputStream
@@ -139,14 +139,14 @@ object ArchiveExtractor {
         try {
             Os.symlink(linkTarget, targetFile.absolutePath)
         } catch (e: Exception) {
-            AppLogger.warn(TAG, "Failed to create symlink: ${e.message}")
+            AppLog.w(TAG, "Failed to create symlink: ${e.message}")
             targetFile.parentFile?.let { parent ->
                 val linkTargetFile = File(parent, linkTarget)
                 if (linkTargetFile.exists()) {
                     try {
                         Files.copy(linkTargetFile.toPath(), targetFile.toPath(), StandardCopyOption.REPLACE_EXISTING)
                     } catch (copyEx: Exception) {
-                        AppLogger.warn(TAG, "Failed to copy symlink target: ${copyEx.message}")
+                        AppLog.w(TAG, "Failed to copy symlink target: ${copyEx.message}")
                     }
                 }
             }

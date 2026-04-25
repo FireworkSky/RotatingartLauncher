@@ -1,6 +1,6 @@
 package com.app.ralaunch.core.extractor
 
-import android.util.Log
+import com.app.ralaunch.core.logging.AppLog
 import java.nio.file.Path
 
 /**
@@ -17,18 +17,18 @@ class ExtractorCollection {
         Thread {
             try {
                 extractors.forEachIndexed { index, extractor ->
-                    Log.d(TAG, "Starting extraction for extractor: ${extractor.javaClass.simpleName} ($index/${extractors.size})")
+                    AppLog.d(TAG, "Starting extraction for extractor: ${extractor.javaClass.simpleName} ($index/${extractors.size})")
                     val state = extractor.state
                     state[STATE_KEY_EXTRACTOR_INDEX] = index
                     state[STATE_KEY_EXTRACTORS] = extractors
                     val success = extractor.extract()
                     if (!success) {
-                        Log.e(TAG, "Extraction failed for extractor: ${extractor.javaClass.simpleName}")
+                        AppLog.e(TAG, "Extraction failed for extractor: ${extractor.javaClass.simpleName}")
                         return@Thread
                     }
                 }
             } catch (ex: Exception) {
-                Log.e(TAG, "Extraction error: ", ex)
+                AppLog.e(TAG, "Extraction error: ", ex)
             }
         }.start()
     }

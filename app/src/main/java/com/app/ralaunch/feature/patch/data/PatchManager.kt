@@ -1,7 +1,7 @@
 package com.app.ralaunch.feature.patch.data
 
 import android.content.Context
-import android.util.Log
+import com.app.ralaunch.core.logging.AppLog
 import com.app.ralaunch.core.extractor.BasicSevenZipExtractor
 import com.app.ralaunch.core.extractor.ExtractorCollection
 import com.app.ralaunch.core.common.util.FileUtils
@@ -131,29 +131,29 @@ class PatchManager @JvmOverloads constructor(
      */
     fun installPatch(patchZipPath: Path): Boolean {
         if (!Files.exists(patchZipPath) || !Files.isRegularFile(patchZipPath)) {
-            Log.w(TAG, "补丁安装失败: 补丁文件不存在或不是一个有效的文件, path: $patchZipPath")
+            AppLog.w(TAG, "补丁安装失败: 补丁文件不存在或不是一个有效的文件, path: $patchZipPath")
             return false
         }
 
         val manifest = PatchManifest.fromZip(patchZipPath)
         if (manifest == null) {
-            Log.w(TAG, "补丁安装失败: 无法读取补丁清单, path: $patchZipPath")
+            AppLog.w(TAG, "补丁安装失败: 无法读取补丁清单, path: $patchZipPath")
             return false
         }
 
         val patchPath = patchStoragePath.resolve(manifest.id)
 
         if (Files.exists(patchPath)) {
-            Log.i(TAG, "补丁已存在, 将删除原补丁目录，重新安装, patch id: ${manifest.id}")
+            AppLog.i(TAG, "补丁已存在, 将删除原补丁目录，重新安装, patch id: ${manifest.id}")
             if (!FileUtils.deleteDirectoryRecursivelyWithinRoot(patchPath, patchStoragePath)) {
-                Log.w(TAG, "删除原补丁目录时发生错误")
+                AppLog.w(TAG, "删除原补丁目录时发生错误")
                 return false
             }
         } else {
-            Log.i(TAG, "正在安装新补丁, patch id: ${manifest.id}")
+            AppLog.i(TAG, "正在安装新补丁, patch id: ${manifest.id}")
         }
 
-        Log.i(TAG, "正在解压补丁文件到补丁目录...")
+        AppLog.i(TAG, "正在解压补丁文件到补丁目录...")
         BasicSevenZipExtractor(
             patchZipPath,
             Paths.get(""),
@@ -196,17 +196,17 @@ class PatchManager @JvmOverloads constructor(
     private fun loadConfig(): PatchManagerConfig {
         val loadedConfig = PatchManagerConfig.fromJson(configFilePath)
         return if (loadedConfig == null) {
-            Log.i(TAG, "配置文件不存在或加载失败，创建新配置")
+            AppLog.i(TAG, "配置文件不存在或加载失败，创建新配置")
             PatchManagerConfig().also { it.saveToJson(configFilePath) }
         } else {
-            Log.i(TAG, "配置文件加载成功")
+            AppLog.i(TAG, "配置文件加载成功")
             loadedConfig
         }
     }
 
     private fun saveConfig() {
         if (!config.saveToJson(configFilePath)) {
-            Log.w(TAG, "保存配置文件失败")
+            AppLog.w(TAG, "保存配置文件失败")
         }
     }
 
@@ -220,10 +220,10 @@ class PatchManager @JvmOverloads constructor(
             try {
                 if (Files.exists(dllPath)) {
                     FileUtils.deleteFileWithinRoot(dllPath, patchStoragePath)
-                    Log.i(TAG, "已清理旧的共享 DLL: $dllName")
+                    AppLog.i(TAG, "已清理旧的共享 DLL: $dllName")
                 }
             } catch (e: IOException) {
-                Log.w(TAG, "清理 $dllName 失败: ${e.message}")
+                AppLog.w(TAG, "清理 $dllName 失败: ${e.message}")
             }
         }
     }
@@ -296,11 +296,11 @@ class PatchManager @JvmOverloads constructor(
 
                                 when {
                                     forceReinstall -> {
-                                        Log.i(TAG, "正在强制重新安装内置补丁: ${patchZip.fileName} (id: ${manifest.id})")
+                                        AppLog.i(TAG, "正在强制重新安装内置补丁: ${patchZip.fileName} (id: ${manifest.id})")
                                         patchManager.installPatch(patchZip)
                                     }
                                     installedPatch == null -> {
-                                        Log.i(TAG, "正在安装内置补丁: ${patchZip.fileName} (id: ${manifest.id}, version: ${manifest.version})")
+                                        AppLog.i(TAG, "正在安装内置补丁: ${patchZip.fileName} (id: ${manifest.id}, version: ${manifest.version})")
                                         patchManager.installPatch(patchZip)
                                     }
                                     else -> {
@@ -308,10 +308,10 @@ class PatchManager @JvmOverloads constructor(
                                         val bundledVersion = manifest.version
                                         val cmp = PatchManifest.compareVersions(bundledVersion, installedVersion)
                                         if (cmp > 0) {
-                                            Log.i(TAG, "检测到补丁更新: ${manifest.id} (${installedVersion} -> ${bundledVersion})，正在自动更新...")
+                                            AppLog.i(TAG, "检测到补丁更新: ${manifest.id} (${installedVersion} -> ${bundledVersion})，正在自动更新...")
                                             patchManager.installPatch(patchZip)
                                         } else {
-                                            Log.d(TAG, "补丁已是最新版本，跳过: ${manifest.id} (installed: ${installedVersion}, bundled: ${bundledVersion})")
+                                            AppLog.i(TAG, "补丁已是最新版本，跳过: ${manifest.id} (installed: ${installedVersion}, bundled: ${bundledVersion})")
                                         }
                                     }
                                 }
@@ -328,9 +328,9 @@ class PatchManager @JvmOverloads constructor(
          */
         @JvmStatic
         fun constructStartupHooksEnvVar(patches: List<Patch>): String {
-            Log.d(TAG, "constructStartupHooksEnvVar: Input patches count = ${patches.size}")
+            AppLog.d(TAG, "constructStartupHooksEnvVar: Input patches count = ${patches.size}")
             patches.forEachIndexed { index, p ->
-                Log.d(TAG, "  [$index] id=${p.manifest.id}, path=${p.getEntryAssemblyAbsolutePath()}")
+                AppLog.d(TAG, "  [$index] id=${p.manifest.id}, path=${p.getEntryAssemblyAbsolutePath()}")
             }
 
             val seenPatchIds = linkedSetOf<String>()
@@ -338,7 +338,7 @@ class PatchManager @JvmOverloads constructor(
                 .filter { p ->
                     val isNew = seenPatchIds.add(p.manifest.id)
                     if (!isNew) {
-                        Log.w(TAG, "constructStartupHooksEnvVar: Duplicate patch ID filtered: ${p.manifest.id}")
+                        AppLog.w(TAG, "constructStartupHooksEnvVar: Duplicate patch ID filtered: ${p.manifest.id}")
                     }
                     isNew
                 }
@@ -346,7 +346,7 @@ class PatchManager @JvmOverloads constructor(
                 .distinct()
                 .joinToString(":")
 
-            Log.d(TAG, "constructStartupHooksEnvVar: Result = $result")
+            AppLog.d(TAG, "constructStartupHooksEnvVar: Result = $result")
             return result
         }
     }

@@ -2,7 +2,7 @@ package com.app.ralaunch.feature.announcement
 
 import android.content.Context
 import com.app.ralaunch.core.common.JsonHttpRepositoryClient
-import com.app.ralaunch.core.common.util.AppLogger
+import com.app.ralaunch.core.logging.AppLog
 import com.app.ralaunch.core.common.util.LocaleManager
 import com.app.ralaunch.core.common.util.LocaleHelper
 import kotlinx.coroutines.Dispatchers
@@ -61,7 +61,7 @@ class AnnouncementRepositoryService(private val context: Context) {
 
             var result = tryFetchIndexFrom(primaryUrl)
             if (result.isFailure) {
-                AppLogger.info(TAG, "Primary source failed, trying fallback: $fallbackUrl")
+                AppLog.i(TAG, "Primary source failed, trying fallback: $fallbackUrl")
                 result = tryFetchIndexFrom(fallbackUrl)
             }
 
@@ -70,11 +70,11 @@ class AnnouncementRepositoryService(private val context: Context) {
                 resolvedAnnouncements = payload.resolvedById
                 cacheTimestamp = System.currentTimeMillis()
                 pruneMarkdownCache(payload.announcements)
-                AppLogger.info(TAG, "Fetched announcements: ${payload.announcements.size}")
+                AppLog.i(TAG, "Fetched announcements: ${payload.announcements.size}")
             }
 
             result.exceptionOrNull()?.let { error ->
-                AppLogger.error(TAG, "Failed to fetch announcements", error)
+                AppLog.e(TAG, "Failed to fetch announcements", error)
             }
 
             result.map { it.announcements }
@@ -133,7 +133,7 @@ class AnnouncementRepositoryService(private val context: Context) {
             }
 
             val error = lastError ?: IllegalStateException("Failed to fetch README for $announcementId")
-            AppLogger.error(TAG, "Failed to fetch markdown: $announcementId", error)
+            AppLog.e(TAG, "Failed to fetch markdown: $announcementId", error)
             Result.failure(error)
         }
     }
@@ -250,7 +250,7 @@ class AnnouncementRepositoryService(private val context: Context) {
         resolvedAnnouncements[announcementId]?.let { return it }
         val refreshResult = fetchAnnouncements(forceRefresh = true)
         if (refreshResult.isFailure) {
-            AppLogger.warn(TAG, "Failed to refresh announcements before markdown fetch")
+            AppLog.w(TAG, "Failed to refresh announcements before markdown fetch")
         }
         return resolvedAnnouncements[announcementId]
     }

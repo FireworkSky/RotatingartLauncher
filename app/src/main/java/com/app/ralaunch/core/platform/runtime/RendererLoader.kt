@@ -3,7 +3,7 @@ package com.app.ralaunch.core.platform.runtime
 import android.content.Context
 import android.system.Os
 import com.app.ralaunch.core.platform.runtime.EnvVarsManager
-import com.app.ralaunch.core.common.util.AppLogger
+import com.app.ralaunch.core.logging.AppLog
 import com.app.ralaunch.core.platform.runtime.AndroidRendererRegistry
 import com.app.ralaunch.core.platform.runtime.RendererRegistry
 
@@ -18,12 +18,12 @@ object RendererLoader {
             val normalizedRenderer = RendererRegistry.normalizeRendererId(renderer)
             val rendererInfo = AndroidRendererRegistry.getRendererInfo(normalizedRenderer)
             if (rendererInfo == null) {
-                AppLogger.error(TAG, "Unknown renderer: $renderer")
+                AppLog.e(TAG, "Unknown renderer: $renderer")
                 return false
             }
 
             if (!AndroidRendererRegistry.isRendererCompatible(normalizedRenderer)) {
-                AppLogger.error(TAG, "Renderer is not compatible with this device")
+                AppLog.e(TAG, "Renderer is not compatible with this device")
                 return false
             }
 
@@ -35,7 +35,7 @@ object RendererLoader {
                     val eglLibPath = AndroidRendererRegistry.getRendererLibraryPath(rendererInfo.eglLibrary)
                     EnvVarsManager.quickSetEnvVar("FNA3D_OPENGL_LIBRARY", eglLibPath)
                 } catch (e: UnsatisfiedLinkError) {
-                    AppLogger.error(TAG, "Failed to preload renderer library: ${e.message}")
+                    AppLog.e(TAG, "Failed to preload renderer library: ${e.message}")
                 }
             }
 
@@ -47,7 +47,7 @@ object RendererLoader {
             if (runtimeLibsDir.exists()) {
                 val runtimePath = runtimeLibsDir.absolutePath
                 EnvVarsManager.quickSetEnvVar("RALCORE_RUNTIMEDIR", runtimePath)
-                AppLogger.info(TAG, "RALCORE_RUNTIMEDIR = $runtimePath")
+                AppLog.i(TAG, "RALCORE_RUNTIMEDIR = $runtimePath")
                 
                 // 设置 LD_LIBRARY_PATH 包含 runtime_libs 目录，让 dlopen 能找到库
                 val currentLdPath = Os.getenv("LD_LIBRARY_PATH") ?: ""
@@ -57,13 +57,12 @@ object RendererLoader {
                     "$runtimePath:$nativeLibDir"
                 }
                 EnvVarsManager.quickSetEnvVar("LD_LIBRARY_PATH", newLdPath)
-                AppLogger.info(TAG, "LD_LIBRARY_PATH = $newLdPath")
+                AppLog.i(TAG, "LD_LIBRARY_PATH = $newLdPath")
             }
 
             true
         } catch (e: Exception) {
-            AppLogger.error(TAG, "Renderer loading failed: ${e.message}")
-            e.printStackTrace()
+            AppLog.e(TAG, "Renderer loading failed: ${e.message}", e)
             false
         }
     }

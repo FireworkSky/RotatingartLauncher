@@ -8,7 +8,7 @@ import android.graphics.Path
 import android.graphics.RectF
 import android.os.Handler
 import android.os.Looper
-import android.util.Log
+import com.app.ralaunch.core.logging.AppLog
 import android.view.MotionEvent
 import android.view.View
 import com.app.ralaunch.core.di.service.VibrationManagerServiceV1
@@ -117,7 +117,7 @@ class VirtualJoystick(
         try {
             KoinJavaComponent.get(VibrationManagerServiceV1::class.java)
         } catch (e: Exception) {
-            Log.w(TAG, "VibrationManagerServiceV1 not available: ${e.message}")
+            AppLog.w(TAG, "VibrationManagerServiceV1 not available: ${e.message}")
             null
         }
     }
@@ -199,7 +199,7 @@ class VirtualJoystick(
 
             // 检查是否有无效值（负数或超过最大值1.0）
             if (mGlobalMouseRangeLeft < 0 || mGlobalMouseRangeLeft > 1.0 || mGlobalMouseRangeTop < 0 || mGlobalMouseRangeTop > 1.0 || mGlobalMouseRangeRight < 0 || mGlobalMouseRangeRight > 1.0 || mGlobalMouseRangeBottom < 0 || mGlobalMouseRangeBottom > 1.0) {
-                Log.w(
+                AppLog.w(
                     TAG,
                     "Invalid mouse range detected (must be 0.0-1.0), resetting to full screen. Current: (" +
                             mGlobalMouseRangeLeft + "," + mGlobalMouseRangeTop + "," +
@@ -224,7 +224,7 @@ class VirtualJoystick(
                 settingsManager.mouseRightStickRangeBottom = mGlobalMouseRangeBottom
             }
 
-            Log.i(
+            AppLog.i(
                 TAG, "Global settings loaded: speed=" + mGlobalMouseSpeed +
                         ", range=(" + mGlobalMouseRangeLeft + "," + mGlobalMouseRangeTop +
                         "," + mGlobalMouseRangeRight + "," + mGlobalMouseRangeBottom + ")"
@@ -681,7 +681,7 @@ class VirtualJoystick(
                     postDelayed(object : Runnable {
                         override fun run() {
                             bridge.setVirtualMousePosition(currentX, currentY)
-                            Log.d(
+                            AppLog.d(
                                 TAG,
                                 "Restored mouse position after release: ($currentX, $currentY)"
                             )
@@ -911,7 +911,7 @@ class VirtualJoystick(
             val mouseY = bridge.virtualMouseY
 
 
-            // Log.v(TAG, "Mouse attack started at (" + mouseX + "," + mouseY + "), mode=" + mAttackMode);
+            // AppLog.v(TAG, "Mouse attack started at (" + mouseX + "," + mouseY + "), mode=" + mAttackMode);
             when (mAttackMode) {
                 0, 2 -> bridge.sendMouseButton(ControlData.KeyCode.MOUSE_LEFT, true, mouseX, mouseY)
                 1 -> {
@@ -948,7 +948,7 @@ class VirtualJoystick(
             bridge.sendMouseButton(ControlData.KeyCode.MOUSE_LEFT, false, mouseX, mouseY)
 
 
-            // Log.v(TAG, "Mouse attack stopped at (" + mouseX + "," + mouseY + ")");
+            // AppLog.v(TAG, "Mouse attack stopped at (" + mouseX + "," + mouseY + ")");
         }
     }
 
@@ -1122,7 +1122,7 @@ class VirtualJoystick(
                 var right = settingsManager.mouseRightStickRangeRight
                 var bottom = settingsManager.mouseRightStickRangeBottom
 
-                Log.i(
+                AppLog.i(
                     TAG, "setVirtualMouseRange: Read from settings: left=" + left + ", top=" + top +
                             ", right=" + right + ", bottom=" + bottom
                 )
@@ -1130,23 +1130,23 @@ class VirtualJoystick(
 
                 // 验证范围有效性（0.0-1.0）
                 if (left < 0 || left > 1.0) {
-                    Log.w(TAG, "Invalid left range: $left, resetting to 1.0")
+                    AppLog.w(TAG, "Invalid left range: $left, resetting to 1.0")
                     left = 1.0f
                 }
                 if (top < 0 || top > 1.0) {
-                    Log.w(TAG, "Invalid top range: $top, resetting to 1.0")
+                    AppLog.w(TAG, "Invalid top range: $top, resetting to 1.0")
                     top = 1.0f
                 }
                 if (right < 0 || right > 1.0) {
-                    Log.w(TAG, "Invalid right range: $right, resetting to 1.0")
+                    AppLog.w(TAG, "Invalid right range: $right, resetting to 1.0")
                     right = 1.0f
                 }
                 if (bottom < 0 || bottom > 1.0) {
-                    Log.w(TAG, "Invalid bottom range: $bottom, resetting to 1.0")
+                    AppLog.w(TAG, "Invalid bottom range: $bottom, resetting to 1.0")
                     bottom = 1.0f
                 }
 
-                Log.i(
+                AppLog.i(
                     TAG,
                     "setVirtualMouseRange: Applying range to native: left=" + left + ", top=" + top +
                             ", right=" + right + ", bottom=" + bottom + " (in percentage: " + (left * 100).toInt() + "%, " + (top * 100).toInt() + "%, " + (right * 100).toInt() + "%, " + (bottom * 100).toInt() + "%)"
@@ -1155,7 +1155,7 @@ class VirtualJoystick(
                 bridge.setVirtualMouseRange(left, top, right, bottom)
             } catch (e: Exception) {
                 // 如果读取失败，使用缓存的默认值
-                Log.w(TAG, "Failed to read mouse range settings, using cached values", e)
+                AppLog.w(TAG, "Failed to read mouse range settings, using cached values", e)
                 bridge.setVirtualMouseRange(
                     mGlobalMouseRangeLeft, mGlobalMouseRangeTop,
                     mGlobalMouseRangeRight, mGlobalMouseRangeBottom

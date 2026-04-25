@@ -15,7 +15,7 @@ import org.koin.java.KoinJavaComponent
 import com.app.ralaunch.feature.controls.bridges.ControlInputBridge
 import com.app.ralaunch.feature.controls.ControlData
 import com.app.ralaunch.feature.controls.packs.ControlLayout as PackControlLayout
-import com.app.ralaunch.core.common.util.AppLogger
+import com.app.ralaunch.core.logging.AppLog
 import java.io.File
 import kotlin.math.abs
 import kotlin.math.sqrt
@@ -364,7 +364,7 @@ class ControlLayout : FrameLayout {
         val x = event.getX(actionIndex)
         val y = event.getY(actionIndex)
 
-        AppLogger.debug(TAG, "handlePointerDown: pointerId=$pointerId x=$x y=$y")
+        AppLog.d(TAG, "handlePointerDown: pointerId=$pointerId x=$x y=$y")
 
         // 从后往前遍历控件（后添加的在上层），找到第一个接受触摸的控件
         for (i in childCount - 1 downTo 0) {
@@ -382,7 +382,7 @@ class ControlLayout : FrameLayout {
             val localY = y - childRect.top
 
             if (controlView.tryAcquireTouch(pointerId, localX, localY)) {
-                AppLogger.debug(TAG, "  Control ${controlView.javaClass.simpleName} accepted pointer $pointerId")
+                AppLog.d(TAG, "  Control ${controlView.javaClass.simpleName} accepted pointer $pointerId")
                 val wasEmpty = mPointerToControl.isEmpty()
                 mPointerToControl[pointerId] = controlView
 
@@ -399,7 +399,7 @@ class ControlLayout : FrameLayout {
         }
 
         // 没有控件接受，转发给 SDLSurface
-        AppLogger.debug(TAG, "  No control accepted pointer $pointerId, forwarding to SDL")
+        AppLog.d(TAG, "  No control accepted pointer $pointerId, forwarding to SDL")
         mSDLSurface?.dispatchTouchEvent(event)
         return true
     }
@@ -434,10 +434,10 @@ class ControlLayout : FrameLayout {
      * 释放控件的触摸点并清除映射
      */
     private fun handlePointerUp(event: MotionEvent, pointerId: Int): Boolean {
-        AppLogger.debug(TAG, "handlePointerUp: pointerId=$pointerId")
+        AppLog.d(TAG, "handlePointerUp: pointerId=$pointerId")
 
         mPointerToControl.remove(pointerId)?.let { controlView ->
-            AppLogger.debug(TAG, "  Releasing pointer $pointerId from ${controlView.javaClass.simpleName}")
+            AppLog.d(TAG, "  Releasing pointer $pointerId from ${controlView.javaClass.simpleName}")
             if (!controlView.controlData.isPassThrough) {
                 TouchPointerTracker.releasePointer(pointerId)
             }
@@ -458,7 +458,7 @@ class ControlLayout : FrameLayout {
      * 通知所有控件取消并清除所有映射
      */
     private fun handleCancel(event: MotionEvent): Boolean {
-        AppLogger.debug(TAG, "handleCancel: clearing ${mPointerToControl.size} pointers")
+        AppLog.d(TAG, "handleCancel: clearing ${mPointerToControl.size} pointers")
 
         val hadPointers = mPointerToControl.isNotEmpty()
         mPointerToControl.forEach { (pointerId, controlView) ->
@@ -485,13 +485,13 @@ class ControlLayout : FrameLayout {
      */
     fun loadLayout(layout: PackControlLayout?): Boolean {
         if (inputBridge == null) {
-            AppLogger.error(TAG, "InputBridge not set! Call setInputBridge() first.")
+            AppLog.e(TAG, "InputBridge not set! Call setInputBridge() first.")
             return false
         }
 
         if (layout == null) {
             this.currentLayout = null
-            AppLogger.warn(TAG, "Layout is null")
+            AppLog.w(TAG, "Layout is null")
             return false
         }
 
@@ -509,11 +509,11 @@ class ControlLayout : FrameLayout {
         }.size
 
         if (addedCount == 0) {
-            AppLogger.warn(TAG, "No visible controls were added, layout may appear empty")
+            AppLog.w(TAG, "No visible controls were added, layout may appear empty")
             return false
         }
 
-        AppLogger.debug(TAG, "Loaded $addedCount controls from layout: ${layout.name}")
+        AppLog.d(TAG, "Loaded $addedCount controls from layout: ${layout.name}")
         return true
     }
 
@@ -525,7 +525,7 @@ class ControlLayout : FrameLayout {
         val packManager: ControlPackManager = try {
             KoinJavaComponent.get(ControlPackManager::class.java)
         } catch (e: Exception) {
-            AppLogger.error(TAG, "Failed to get ControlPackManager: ${e.message}")
+            AppLog.e(TAG, "Failed to get ControlPackManager: ${e.message}")
             return false
         }
         
@@ -533,7 +533,7 @@ class ControlLayout : FrameLayout {
         val layout = packManager.getCurrentLayout()
         
         if (layout == null || packId == null) {
-            AppLogger.warn(TAG, "No current layout selected in pack manager")
+            AppLog.w(TAG, "No current layout selected in pack manager")
             return false
         }
 
@@ -553,7 +553,7 @@ class ControlLayout : FrameLayout {
                 KoinJavaComponent.get(ControlPackManager::class.java)
             packManager.getPackAssetsDir(packId)
         } catch (e: Exception) {
-            AppLogger.warn(TAG, "Failed to resolve pack assets dir for '$packId': ${e.message}")
+            AppLog.w(TAG, "Failed to resolve pack assets dir for '$packId': ${e.message}")
             null
         }
     }
@@ -581,7 +581,7 @@ class ControlLayout : FrameLayout {
         is ControlData.RadialMenu -> VirtualRadialMenu(context, data, inputBridge!!)
         is ControlData.DPad -> VirtualDPad(context, data, inputBridge!!)
         else -> {
-            AppLogger.warn(TAG, "Unknown control type")
+            AppLog.w(TAG, "Unknown control type")
             null
         }
     }
@@ -602,7 +602,7 @@ class ControlLayout : FrameLayout {
 
         // 强制确保没有 OnTouchListener（调试用）
         view.setOnTouchListener(null)
-        AppLogger.debug(TAG, "addControlView: ${data.name} - removed any existing OnTouchListener")
+        AppLog.d(TAG, "addControlView: ${data.name} - removed any existing OnTouchListener")
 
         val params = LayoutParams(
             widthToPx(data.width),

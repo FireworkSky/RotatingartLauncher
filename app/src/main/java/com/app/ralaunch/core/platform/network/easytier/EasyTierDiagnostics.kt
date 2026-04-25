@@ -1,7 +1,7 @@
 package com.app.ralaunch.core.platform.network.easytier
 
 import android.content.Context
-import android.util.Log
+import com.app.ralaunch.core.logging.AppLog
 import com.app.ralaunch.R
 import kotlinx.coroutines.*
 import org.koin.java.KoinJavaComponent
@@ -452,9 +452,9 @@ object EasyTierDiagnostics {
             )
         }
 
-        Log.i(TAG, "Diagnostics complete. Results:")
+        AppLog.i(TAG, "Diagnostics complete. Results:")
         results.forEachIndexed { i, r ->
-            Log.i(TAG, "  [$i] ${r.name}: ${r.status} - ${r.message}")
+            AppLog.i(TAG, "  [$i] ${r.name}: ${r.status} - ${r.message}")
         }
 
         results
@@ -470,7 +470,7 @@ object EasyTierDiagnostics {
                 true
             }
         } catch (e: Exception) {
-            Log.d(TAG, "Port $host:$port not listening: ${e.message}")
+            AppLog.d(TAG, "Port $host:$port not listening: ${e.message}")
             false
         }
     }

@@ -7,7 +7,7 @@ import android.opengl.EGLDisplay
 import android.opengl.EGLSurface
 import android.opengl.GLES20
 import android.opengl.GLES30
-import android.util.Log
+import com.app.ralaunch.core.logging.AppLog
 
 /**
  * OpenGL ES 信息工具类
@@ -31,11 +31,11 @@ object GLInfoUtils {
     fun getGlInfo(): GLInfo {
         info?.let { return it }
         
-        Log.i(TAG, "Querying graphics device info...")
+        AppLog.i(TAG, "Querying graphics device info...")
         val success = try {
             initAndQueryInfo()
         } catch (e: Throwable) {
-            Log.e(TAG, "Throwable when trying to initialize GL info", e)
+            AppLog.e(TAG, "Throwable when trying to initialize GL info", e)
             false
         }
         
@@ -51,7 +51,7 @@ object GLInfoUtils {
         return try {
             version.substring(0, firstDot).trim().toInt()
         } catch (e: NumberFormatException) {
-            Log.w(TAG, "Failed to parse GL version number, falling back to 2", e)
+            AppLog.w(TAG, "Failed to parse GL version number, falling back to 2", e)
             2
         }
     }
@@ -64,7 +64,7 @@ object GLInfoUtils {
         val version = try {
             minOf(getMajorGLVersion(versionString), contextGLVersion)
         } catch (e: NumberFormatException) {
-            Log.w(TAG, "Failed to parse GL version number, falling back to 2", e)
+            AppLog.w(TAG, "Failed to parse GL version number, falling back to 2", e)
             2
         }
         
@@ -72,7 +72,7 @@ object GLInfoUtils {
     }
 
     private fun initDummyInfo() {
-        Log.e(TAG, "An error happened during info query. Will use dummy info.")
+        AppLog.e(TAG, "An error happened during info query. Will use dummy info.")
         info = GLInfo("<Unknown>", "<Unknown>", 2)
     }
 
@@ -80,7 +80,7 @@ object GLInfoUtils {
         val attrs = intArrayOf(EGL14.EGL_CONTEXT_CLIENT_VERSION, majorVersion, EGL14.EGL_NONE)
         val context = EGL14.eglCreateContext(eglDisplay, config, EGL14.EGL_NO_CONTEXT, attrs, 0)
         if (context == EGL14.EGL_NO_CONTEXT || context == null) {
-            Log.e(TAG, "Failed to create a context with major version $majorVersion")
+            AppLog.e(TAG, "Failed to create a context with major version $majorVersion")
             return null
         }
         return context
@@ -89,7 +89,7 @@ object GLInfoUtils {
     private fun tryMakeCurrent(eglDisplay: EGLDisplay, config: EGLConfig, surface: EGLSurface, majorVersion: Int): EGLContext? {
         val context = tryCreateContext(eglDisplay, config, majorVersion) ?: return null
         if (!EGL14.eglMakeCurrent(eglDisplay, surface, surface, context)) {
-            Log.i(TAG, "Failed to make context GL version $majorVersion current")
+            AppLog.i(TAG, "Failed to make context GL version $majorVersion current")
             EGL14.eglDestroyContext(eglDisplay, context)
             return null
         }
@@ -116,7 +116,7 @@ object GLInfoUtils {
         
         if (!EGL14.eglChooseConfig(eglDisplay, eglAttrs, 0, config, 0, 1, numConfigs, 0) || numConfigs[0] == 0) {
             EGL14.eglTerminate(eglDisplay)
-            Log.e(TAG, "Failed to choose an EGL config")
+            AppLog.e(TAG, "Failed to choose an EGL config")
             return false
         }
 
@@ -124,7 +124,7 @@ object GLInfoUtils {
         val surface = EGL14.eglCreatePbufferSurface(eglDisplay, config[0], pbufferAttrs, 0)
         
         if (surface == null || surface == EGL14.EGL_NO_SURFACE) {
-            Log.e(TAG, "Failed to create pbuffer surface")
+            AppLog.e(TAG, "Failed to create pbuffer surface")
             EGL14.eglTerminate(eglDisplay)
             return false
         }
@@ -137,7 +137,7 @@ object GLInfoUtils {
         }
 
         if (context == null) {
-            Log.e(TAG, "Failed to create and make context current")
+            AppLog.e(TAG, "Failed to create and make context current")
             EGL14.eglDestroySurface(eglDisplay, surface)
             EGL14.eglTerminate(eglDisplay)
             return false

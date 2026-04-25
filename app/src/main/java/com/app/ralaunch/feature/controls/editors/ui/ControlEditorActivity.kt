@@ -5,7 +5,7 @@ import android.content.Context
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
+import com.app.ralaunch.core.logging.AppLog
 import android.view.View
 import android.view.WindowManager
 import androidx.activity.compose.setContent
@@ -183,9 +183,9 @@ class ControlEditorActivity : AppCompatActivity() {
             val relativePath = "textures/$fileName"
             viewModel.onImagePicked(relativePath)
             
-            Log.d(TAG, "Image copied to: ${destFile.absolutePath}")
+            AppLog.d(TAG, "Image copied to: ${destFile.absolutePath}")
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to copy image", e)
+            AppLog.e(TAG, "Failed to copy image", e)
         }
     }
 
@@ -213,7 +213,7 @@ class ControlEditorActivity : AppCompatActivity() {
         super.onStop()
         // 自动保存草稿（如果有未保存的更改）
         if (viewModel.hasUnsavedChanges.value) {
-            Log.d(TAG, "onStop: Auto-saving layout draft...")
+            AppLog.d(TAG, "onStop: Auto-saving layout draft...")
             viewModel.saveLayout()
         }
     }
@@ -225,7 +225,7 @@ class ControlEditorActivity : AppCompatActivity() {
     override fun onDestroy() {
         // 在非配置变化的销毁情况下保存数据
         if (!isChangingConfigurations && viewModel.hasUnsavedChanges.value) {
-            Log.d(TAG, "onDestroy: Saving layout before destruction...")
+            AppLog.d(TAG, "onDestroy: Saving layout before destruction...")
             viewModel.saveLayout()
         }
         super.onDestroy()

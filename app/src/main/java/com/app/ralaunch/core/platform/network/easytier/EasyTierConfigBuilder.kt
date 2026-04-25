@@ -1,6 +1,6 @@
 package com.app.ralaunch.core.platform.network.easytier
 
-import android.util.Log
+import com.app.ralaunch.core.logging.AppLog
 
 /**
  * EasyTier TOML 配置构建器
@@ -31,7 +31,7 @@ internal object EasyTierConfigBuilder {
     ): String {
         val hostname = if (isHost) "host" else "guest_${System.currentTimeMillis() % 1000}"
 
-        Log.d(TAG, "buildConfig: isHost=$isHost, withPortForward=$withPortForward, hostname=$hostname")
+        AppLog.d(TAG, "buildConfig: isHost=$isHost, withPortForward=$withPortForward, hostname=$hostname")
 
         val sb = StringBuilder()
 
@@ -112,7 +112,7 @@ internal object EasyTierConfigBuilder {
         sb.appendLine("mtu = 1380")
 
         val config = sb.toString().trim()
-        Log.d(TAG, "Generated config (${config.length} chars):\n$config")
+        AppLog.d(TAG, "Generated config (${config.length} chars):\n$config")
         return config
     }
 }

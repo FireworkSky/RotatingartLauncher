@@ -1,7 +1,7 @@
 package com.app.ralaunch.feature.main
 
 import com.app.ralaunch.core.di.service.ThemeManagerServiceV1
-import com.app.ralaunch.core.common.util.AppLogger
+import com.app.ralaunch.core.logging.AppLog
 import com.app.ralaunch.feature.main.ui.background.VideoBackgroundView
 import java.lang.ref.WeakReference
 
@@ -26,7 +26,7 @@ class VideoBackgroundManager(
      */
     fun registerVideoView(view: VideoBackgroundView?) {
         videoViewRef = view?.let { WeakReference(it) }
-        AppLogger.debug(TAG, "视频 View ${if (view != null) "已注册" else "已注销"}")
+        AppLog.d(TAG, "视频 View ${if (view != null) "已注册" else "已注销"}")
     }
 
     private val videoView: VideoBackgroundView?
@@ -45,7 +45,7 @@ class VideoBackgroundManager(
         try {
             videoView?.takeIf { themeManager.isVideoBackground }?.start()
         } catch (e: Exception) {
-            AppLogger.error(TAG, "恢复视频背景失败: ${e.message}")
+            AppLog.e(TAG, "恢复视频背景失败: ${e.message}")
         }
     }
 
@@ -56,7 +56,7 @@ class VideoBackgroundManager(
         try {
             videoView?.pause()
         } catch (e: Exception) {
-            AppLogger.error(TAG, "暂停视频背景失败: ${e.message}")
+            AppLog.e(TAG, "暂停视频背景失败: ${e.message}")
         }
     }
 
@@ -68,7 +68,7 @@ class VideoBackgroundManager(
             videoView?.release()
             videoViewRef = null
         } catch (e: Exception) {
-            AppLogger.error(TAG, "释放视频背景失败: ${e.message}")
+            AppLog.e(TAG, "释放视频背景失败: ${e.message}")
         }
     }
 

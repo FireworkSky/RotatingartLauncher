@@ -1,6 +1,6 @@
 package com.app.ralaunch.core.extractor
 
-import android.util.Log
+import com.app.ralaunch.core.logging.AppLog
 import com.app.ralaunch.R
 import com.app.ralaunch.RaLaunchApp
 import net.sf.sevenzipjbinding.*
@@ -76,13 +76,13 @@ class BasicSevenZipExtractor : ExtractorCollection.IExtractor {
                 RandomAccessFileInStream(raf).use { inStream ->
                     SevenZip.openInArchive(null, inStream).use { archive ->
                         val totalItems = archive.numberOfItems
-                        Log.d(TAG, "Archive contains $totalItems items")
+                        AppLog.d(TAG, "Archive contains $totalItems items")
                         archive.extract(null, false, ArchiveExtractCallback(archive))
                     }
                 }
             }
 
-            Log.d(TAG, "SevenZip extraction completed successfully")
+            AppLog.d(TAG, "SevenZip extraction completed successfully")
             extractionListener?.apply {
                 val completeMessage = RaLaunchApp.getInstance().getString(R.string.extract_complete)
                 onProgress(completeMessage, 1.0f, state)

@@ -4,7 +4,7 @@ import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.RectF
-import android.util.Log
+import com.app.ralaunch.core.logging.AppLog
 import android.view.View
 import com.app.ralaunch.feature.controls.bridges.ControlInputBridge
 import com.app.ralaunch.feature.controls.ControlData
@@ -41,7 +41,7 @@ class VirtualDPad(
         try {
             KoinJavaComponent.get(VibrationManagerServiceV1::class.java)
         } catch (e: Exception) {
-            Log.w(TAG, "VibrationManagerServiceV1 not available: ${e.message}")
+            AppLog.w(TAG, "VibrationManagerServiceV1 not available: ${e.message}")
             null
         }
     }

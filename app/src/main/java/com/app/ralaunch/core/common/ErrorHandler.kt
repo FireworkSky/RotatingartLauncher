@@ -7,14 +7,13 @@ import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.os.Process
-import android.util.Log
 import androidx.annotation.StringRes
 import androidx.fragment.app.FragmentActivity
 import com.app.ralaunch.R
 import com.app.ralaunch.RaLaunchApp
-import com.app.ralaunch.core.common.util.AppLogger
 import com.app.ralaunch.core.common.util.ErrorDialog
 import com.app.ralaunch.core.common.util.LocaleManager
+import com.app.ralaunch.core.logging.AppLog
 import com.app.ralaunch.feature.crash.ui.CrashReportActivity
 import java.io.PrintWriter
 import java.io.StringWriter
@@ -70,7 +69,7 @@ class ErrorHandler private constructor() {
 
                 context.startActivity(intent)
             } catch (e: Exception) {
-                Log.e(TAG, "Failed to show crash activity", e)
+                AppLog.e(TAG, "Failed to show crash activity", e)
                 defaultHandler?.uncaughtException(Thread.currentThread(), throwable)
                     ?: run {
                         Process.killProcess(Process.myPid())
@@ -159,7 +158,7 @@ class ErrorHandler private constructor() {
             try {
                 ErrorDialog.create(activity, title, throwable, isFatal).show()
             } catch (e: Exception) {
-                Log.e(TAG, "Failed to show error dialog, using log instead", e)
+                AppLog.e(TAG, "Failed to show error dialog, using log instead", e)
                 if (isFatal) {
                     activity.finishAffinity()
                     System.exit(1)
@@ -176,7 +175,7 @@ class ErrorHandler private constructor() {
             try {
                 ErrorDialog.create(activity, title, message).show()
             } catch (e: Exception) {
-                Log.e(TAG, "Failed to show warning dialog, using log instead", e)
+                AppLog.e(TAG, "Failed to show warning dialog, using log instead", e)
                 logError(title, RuntimeException(message), false)
             }
         }
@@ -185,9 +184,9 @@ class ErrorHandler private constructor() {
     private fun logError(title: String, throwable: Throwable, isFatal: Boolean) {
         try {
             val tag = if (isFatal) "FatalError" else "Error"
-            AppLogger.error(tag, title, throwable)
+            AppLog.e(tag, title, throwable)
         } catch (e: Exception) {
-            Log.e(TAG, title, throwable)
+            AppLog.e(TAG, title, throwable)
         }
     }
 
@@ -203,7 +202,7 @@ class ErrorHandler private constructor() {
             val localizedContext = LocaleManager.applyLanguage(context) ?: context
             localizedContext.getString(resId)
         } catch (e: Exception) {
-            Log.w(TAG, "Failed to get localized string for $resId, using default: $defaultValue")
+            AppLog.w(TAG, "Failed to get localized string for $resId, using default: $defaultValue")
             defaultValue
         }
     }
@@ -225,7 +224,7 @@ class ErrorHandler private constructor() {
             try {
                 ErrorDialog.create(activity, title, message, exception, isFatal).show()
             } catch (e: Exception) {
-                Log.e(TAG, "Failed to show native error dialog, using log instead", e)
+                AppLog.e(TAG, "Failed to show native error dialog, using log instead", e)
                 if (isFatal) {
                     activity.finishAffinity()
                     System.exit(1)

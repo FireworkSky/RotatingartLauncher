@@ -6,7 +6,7 @@ import android.content.ComponentCallbacks
 import android.content.Context
 import android.content.res.Configuration
 import android.util.DisplayMetrics
-import android.util.Log
+import com.app.ralaunch.core.logging.AppLog
 import kotlin.math.max
 import kotlin.math.min
 
@@ -52,7 +52,7 @@ object DensityAdapter {
                 override fun onConfigurationChanged(newConfig: Configuration) {
                     if (newConfig.fontScale > 0) {
                         appScaledDensity = application.resources.displayMetrics.scaledDensity
-                        Log.d(TAG, "系统字体大小变化，更新 scaledDensity: $appScaledDensity")
+                        AppLog.d(TAG, "系统字体大小变化，更新 scaledDensity: $appScaledDensity")
                     }
                 }
 
@@ -83,7 +83,7 @@ object DensityAdapter {
 
     @JvmStatic
     fun cancelAdapt(activity: Activity) {
-        Log.d(TAG, "取消适配: ${activity.javaClass.simpleName}（本方案无需取消）")
+        AppLog.d(TAG, "取消适配: ${activity.javaClass.simpleName}（本方案无需取消）")
     }
 
     @JvmStatic

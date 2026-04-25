@@ -1,5 +1,6 @@
 package com.app.ralaunch.feature.controls.packs
 
+import com.app.ralaunch.core.logging.AppLog
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import kotlinx.serialization.json.Json
@@ -114,7 +115,7 @@ data class ControlPackInfo(
             return try {
                 json.decodeFromString<ControlPackInfo>(jsonString)
             } catch (e: Exception) {
-                android.util.Log.e("ControlPackInfo", "Failed to parse JSON: ${e.message}", e)
+                AppLog.e("ControlPackInfo", "Failed to parse JSON: ${e.message}", e)
                 null
             }
         }

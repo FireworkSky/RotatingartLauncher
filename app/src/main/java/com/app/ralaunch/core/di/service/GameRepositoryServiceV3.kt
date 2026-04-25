@@ -1,6 +1,6 @@
 package com.app.ralaunch.core.di.service
 
-import com.app.ralaunch.core.common.util.AppLogger
+import com.app.ralaunch.core.logging.AppLog
 import com.app.ralaunch.core.common.util.FileUtils
 import com.app.ralaunch.core.di.contract.IGameRepositoryServiceV3
 import com.app.ralaunch.core.model.GameItem
@@ -107,7 +107,7 @@ class GameRepositoryServiceV3(
             val gameDir = gamesDir.resolve(storageRootPathRelative).normalize()
             FileUtils.deleteDirectoryRecursivelyWithinRoot(gameDir, gamesDir)
         } catch (e: Exception) {
-            AppLogger.error(TAG, "删除游戏文件时发生错误: ${e.message}", e)
+            AppLog.e(TAG, "删除游戏文件时发生错误: ${e.message}", e)
             false
         }
     }
@@ -119,7 +119,7 @@ class GameRepositoryServiceV3(
             val gameList = json.decodeFromString<GameList>(gameListPathFull.readText())
             gameList.games.mapNotNull(::loadGameInfo).also(::attachRepository)
         } catch (e: Exception) {
-            AppLogger.error(TAG, "加载游戏列表失败: ${e.message}", e)
+            AppLog.e(TAG, "加载游戏列表失败: ${e.message}", e)
             emptyList()
         }
     }
@@ -135,7 +135,7 @@ class GameRepositoryServiceV3(
                 it.gameRepositoryParent = this
             }
         } catch (e: Exception) {
-            AppLogger.error(TAG, "加载游戏信息失败: ${e.message}", e)
+            AppLog.e(TAG, "加载游戏信息失败: ${e.message}", e)
             null
         }
     }
@@ -149,7 +149,7 @@ class GameRepositoryServiceV3(
 
             games.forEach(::saveGameInfo)
         } catch (e: Exception) {
-            AppLogger.error(TAG, "保存游戏列表失败: ${e.message}", e)
+            AppLog.e(TAG, "保存游戏列表失败: ${e.message}", e)
         }
     }
 
@@ -161,7 +161,7 @@ class GameRepositoryServiceV3(
             storageRootPathFull.createDirectories()
             gameInfoPathFull.writeText(json.encodeToString(game))
         } catch (e: Exception) {
-            AppLogger.error(TAG, "保存游戏信息失败: ${e.message}", e)
+            AppLog.e(TAG, "保存游戏信息失败: ${e.message}", e)
         }
     }
 

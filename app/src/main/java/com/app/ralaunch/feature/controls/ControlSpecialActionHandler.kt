@@ -2,7 +2,7 @@ package com.app.ralaunch.feature.controls
 
 import android.app.Activity
 import android.content.Context
-import android.util.Log
+import com.app.ralaunch.core.logging.AppLog
 import com.app.ralaunch.feature.controls.bridges.ControlInputBridge
 import com.app.ralaunch.feature.controls.bridges.SDLInputBridge
 import com.app.ralaunch.feature.game.ui.legacy.GameActivity
@@ -32,7 +32,7 @@ object ControlSpecialActionHandler {
         try {
             val activity = context as? Activity
             if (activity == null) {
-                Log.e(TAG, "Context is not an Activity")
+                AppLog.e(TAG, "Context is not an Activity")
                 return
             }
 
@@ -43,11 +43,11 @@ object ControlSpecialActionHandler {
                     }
                     GameActivity.enableSDLTextInputForIME()
                 } catch (e: Exception) {
-                    Log.e(TAG, "Failed to enable SDL text input", e)
+                    AppLog.e(TAG, "Failed to enable SDL text input", e)
                 }
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to show keyboard", e)
+            AppLog.e(TAG, "Failed to show keyboard", e)
         }
     }
 }

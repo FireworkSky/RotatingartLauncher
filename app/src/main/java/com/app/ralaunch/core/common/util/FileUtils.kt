@@ -1,6 +1,6 @@
 package com.app.ralaunch.core.common.util
 
-import android.util.Log
+import com.app.ralaunch.core.logging.AppLog
 import java.io.File
 import java.io.IOException
 import java.nio.file.AccessDeniedException
@@ -72,16 +72,16 @@ object FileUtils {
         } catch (e: NoSuchFileException) {
             true
         } catch (e: AccessDeniedException) {
-            Log.w(TAG, "删除失败（权限）: $normalizedPath")
+            AppLog.w(TAG, "删除失败（权限）: $normalizedPath")
             false
         } catch (e: SecurityException) {
-            Log.w(TAG, "删除失败（权限）: $normalizedPath")
+            AppLog.w(TAG, "删除失败（权限）: $normalizedPath")
             false
         } catch (e: IOException) {
-            Log.w(TAG, "删除失败: $normalizedPath")
+            AppLog.w(TAG, "删除失败: $normalizedPath")
             false
         } catch (e: Exception) {
-            Log.w(TAG, "删除失败: $normalizedPath", e)
+            AppLog.w(TAG, "删除失败: $normalizedPath", e)
             false
         }
     }

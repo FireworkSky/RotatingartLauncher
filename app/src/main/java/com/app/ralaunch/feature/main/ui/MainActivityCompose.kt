@@ -13,7 +13,6 @@ import android.os.Environment
 import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
-import android.util.Log
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.background
@@ -82,7 +81,7 @@ import com.app.ralaunch.core.common.util.FileUtils
 import com.app.ralaunch.core.common.ErrorHandler
 import com.app.ralaunch.core.common.MessageHelper
 import com.app.ralaunch.core.common.SettingsAccess
-import com.app.ralaunch.core.common.util.AppLogger
+import com.app.ralaunch.core.logging.AppLog
 import com.app.ralaunch.core.common.util.DensityAdapter
 import com.app.ralaunch.core.di.service.PermissionManagerServiceV1
 import com.app.ralaunch.core.di.service.ThemeManagerServiceV1
@@ -173,7 +172,6 @@ class MainActivityCompose : BaseActivity() {
         // 初始化全局主题状态（从 SettingsAccess 加载）
         initializeThemeState()
 
-        initLogger()
         ErrorHandler.init(this)
         permissionManager = PermissionManagerServiceV1(this).apply { initialize() }
         registerUpdateDownloadReceiver()
@@ -200,7 +198,7 @@ class MainActivityCompose : BaseActivity() {
         try {
             super.onResume()
         } catch (e: Exception) {
-            AppLogger.error("MainActivityCompose", "onResume error: ${e.message}")
+            AppLog.e("MainActivityCompose", "onResume error: ${e.message}")
         }
 
         ErrorHandler.setCurrentActivity(this)
@@ -216,7 +214,6 @@ class MainActivityCompose : BaseActivity() {
         updateDownloadPollingJob?.cancel()
         updateDownloadPollingJob = null
         super.onDestroy()
-        if (!isChangingConfigurations) AppLogger.close()
     }
 
     @Deprecated("Deprecated in Java")
@@ -234,17 +231,6 @@ class MainActivityCompose : BaseActivity() {
     }
 
     // ==================== Init ====================
-
-    private fun initLogger() {
-        try {
-            AppLogger.init(
-                logDirectory = File(getExternalFilesDir(null), AppConstants.Dirs.LOGS),
-                clearExistingLogs = true
-            )
-        } catch (e: Exception) {
-            Log.e("MainActivityCompose", "Failed to initialize logger", e)
-        }
-    }
 
     private fun checkRestoreSettings() {
         val prefs = getSharedPreferences(AppConstants.PREFS_NAME, MODE_PRIVATE)

@@ -7,7 +7,7 @@ import android.graphics.Canvas
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.PictureDrawable
 import android.util.LruCache
-import com.app.ralaunch.core.common.util.AppLogger
+import com.app.ralaunch.core.logging.AppLog
 import com.caverock.androidsvg.SVG
 import java.io.File
 import java.io.FileInputStream
@@ -81,7 +81,7 @@ class TextureLoader private constructor(context: Context) {
         
         val file = File(path)
         if (!file.exists()) {
-            AppLogger.warn(TAG, "Texture file not found: $path")
+            AppLog.w(TAG, "Texture file not found: $path")
             return null
         }
         
@@ -98,14 +98,14 @@ class TextureLoader private constructor(context: Context) {
                 extension == SVG_EXTENSION -> loadSvg(file, targetWidth, targetHeight)
                 extension in SUPPORTED_IMAGE_EXTENSIONS -> loadBitmap(file, targetWidth, targetHeight)
                 else -> {
-                    AppLogger.warn(TAG, "Unsupported texture format: $extension")
+                    AppLog.w(TAG, "Unsupported texture format: $extension")
                     null
                 }
             }
             
             bitmap?.also { bitmapCache.put(cacheKey, it) }
         } catch (e: Exception) {
-            AppLogger.error(TAG, "Failed to load texture: $path", e)
+            AppLog.e(TAG, "Failed to load texture: $path", e)
             null
         }
     }
@@ -166,7 +166,7 @@ class TextureLoader private constructor(context: Context) {
                 }
             }
         } catch (e: Exception) {
-            AppLogger.error(TAG, "Failed to load bitmap: ${file.path}", e)
+            AppLog.e(TAG, "Failed to load bitmap: ${file.path}", e)
             null
         }
     }
@@ -200,7 +200,7 @@ class TextureLoader private constructor(context: Context) {
             svg.renderToCanvas(canvas)
             bitmap
         } catch (e: Exception) {
-            AppLogger.error(TAG, "Failed to load SVG: ${file.path}", e)
+            AppLog.e(TAG, "Failed to load SVG: ${file.path}", e)
             null
         }
     }
@@ -244,7 +244,7 @@ class TextureLoader private constructor(context: Context) {
                 .forEach { file ->
                     loadTexture(file.absolutePath)
                 }
-            AppLogger.info(TAG, "Preloaded textures from: ${packAssetsDir.path}")
+            AppLog.i(TAG, "Preloaded textures from: ${packAssetsDir.path}")
         }.start()
     }
     
@@ -269,7 +269,7 @@ class TextureLoader private constructor(context: Context) {
     fun clearCache() {
         bitmapCache.evictAll()
         svgCache.evictAll()
-        AppLogger.info(TAG, "Texture cache cleared")
+        AppLog.i(TAG, "Texture cache cleared")
     }
     
     /**

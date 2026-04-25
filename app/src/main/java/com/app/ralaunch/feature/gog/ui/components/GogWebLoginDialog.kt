@@ -20,7 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.app.ralaunch.R
 import com.app.ralaunch.feature.gog.data.GogConstants
-import com.app.ralaunch.core.common.util.AppLogger
+import com.app.ralaunch.core.logging.AppLog
 import java.net.URLEncoder
 
 /**
@@ -81,11 +81,11 @@ fun GogEmbeddedWebLogin(
                     currentUrl = url
                 },
                 onAuthCodeReceived = { code ->
-                    AppLogger.info("GogWebLogin", "获取到授权码")
+                    AppLog.i("GogWebLogin", "获取到授权码")
                     onLoginSuccess(code)
                 },
                 onError = { error ->
-                    AppLogger.error("GogWebLogin", "登录错误: $error")
+                    AppLog.e("GogWebLogin", "登录错误: $error")
                     onLoginFailed(error)
                 }
             )
@@ -145,7 +145,7 @@ private fun GogLoginWebView(
                     override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
                         val url = request?.url?.toString() ?: return false
                         
-                        AppLogger.debug("GogWebLogin", "URL: $url")
+                        AppLog.d("GogWebLogin", "URL: $url")
 
                         if (url.startsWith(GogConstants.REDIRECT_URI) || 
                             url.contains("on_login_success") ||
@@ -182,7 +182,7 @@ private fun GogLoginWebView(
 
                 webChromeClient = object : WebChromeClient() {
                     override fun onConsoleMessage(consoleMessage: ConsoleMessage?): Boolean {
-                        AppLogger.debug("GogWebView", consoleMessage?.message() ?: "")
+                        AppLog.d("GogWebView", consoleMessage?.message() ?: "")
                         return true
                     }
                 }

@@ -4,7 +4,7 @@ import android.content.res.Resources
 import android.view.MotionEvent
 import com.app.ralaunch.feature.controls.TouchPointerTracker
 import com.app.ralaunch.feature.game.ui.legacy.GameActivity
-import com.app.ralaunch.core.common.util.AppLogger
+import com.app.ralaunch.core.logging.AppLog
 
 /**
  * 触摸事件桥接，封装指针过滤与原生 touch 数据同步
@@ -52,7 +52,7 @@ class GameTouchBridge {
 
             GameActivity.nativeSetTouchDataBridge(validCount, touchX, touchY, screenWidth, screenHeight)
         } catch (e: Exception) {
-            AppLogger.error(TAG, "Error in handleMotionEvent: ${e.message}", e)
+            AppLog.e(TAG, "Error in handleMotionEvent: ${e.message}", e)
         }
     }
 

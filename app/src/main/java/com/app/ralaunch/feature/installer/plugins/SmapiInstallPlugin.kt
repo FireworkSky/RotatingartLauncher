@@ -1,7 +1,7 @@
 package com.app.ralaunch.feature.installer.plugins
 
 import android.os.Environment
-import android.util.Log
+import com.app.ralaunch.core.logging.AppLog
 import com.app.ralaunch.R
 import com.app.ralaunch.RaLaunchApp
 import com.app.ralaunch.core.common.util.FileUtils
@@ -143,9 +143,9 @@ class SmapiInstallPlugin : BaseInstallPlugin() {
                     // Create mods folder in external storage RALauncher directory
                     val externalModsDir = getSmapiModsDirectory()
                     if (externalModsDir.mkdirs() || externalModsDir.exists()) {
-                        Log.i(TAG, "SMAPI 模组目录已创建 / SMAPI mods directory created: ${externalModsDir.absolutePath}")
+                        AppLog.i(TAG, "SMAPI 模组目录已创建 / SMAPI mods directory created: ${externalModsDir.absolutePath}")
                     } else {
-                        Log.w(TAG, "无法创建 SMAPI 模组目录 / Failed to create SMAPI mods directory: ${externalModsDir.absolutePath}")
+                        AppLog.w(TAG, "无法创建 SMAPI 模组目录 / Failed to create SMAPI mods directory: ${externalModsDir.absolutePath}")
                         // 回退到游戏目录下的 Mods 文件夹
                         File(actualGameDir, "Mods").mkdirs()
                     }

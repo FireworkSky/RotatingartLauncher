@@ -1,6 +1,6 @@
 package com.app.ralaunch.feature.patch.data
 
-import android.util.Log
+import com.app.ralaunch.core.logging.AppLog
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -22,13 +22,13 @@ data class Patch(
         fun fromPatchPath(patchPath: Path): Patch? {
             val normalizedPath = patchPath.normalize()
             if (!Files.exists(normalizedPath) || !Files.isDirectory(normalizedPath)) {
-                Log.w(TAG, "fromPatchPath: Patch path does not exist or is not a directory: $normalizedPath")
+                AppLog.w(TAG, "fromPatchPath: Patch path does not exist or is not a directory: $normalizedPath")
                 return null
             }
 
             val manifest = PatchManifest.fromJson(normalizedPath.resolve(PatchManifest.MANIFEST_FILE_NAME))
             if (manifest == null) {
-                Log.w(TAG, "fromPatchPath: Failed to load manifest from path: $normalizedPath")
+                AppLog.w(TAG, "fromPatchPath: Failed to load manifest from path: $normalizedPath")
                 return null
             }
 

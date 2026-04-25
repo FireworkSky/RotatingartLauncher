@@ -1,6 +1,6 @@
 package com.app.ralaunch.core.platform.network.easytier
 
-import android.util.Log
+import com.app.ralaunch.core.logging.AppLog
 
 /**
  * EasyTier JNI 包装类
@@ -18,15 +18,15 @@ object EasyTierJNI {
             // 触发原生 JNI 类的加载
             com.easytier.jni.EasyTierJNI.getLastError()
             isLoaded = true
-            Log.i(TAG, "EasyTier native library loaded successfully")
+            AppLog.i(TAG, "EasyTier native library loaded successfully")
         } catch (e: UnsatisfiedLinkError) {
             isLoaded = false
             loadError = e.message
-            Log.w(TAG, "EasyTier native library not found: ${e.message}")
+            AppLog.w(TAG, "EasyTier native library not found: ${e.message}")
         } catch (e: Exception) {
             isLoaded = false
             loadError = e.message
-            Log.w(TAG, "EasyTier native library load error: ${e.message}")
+            AppLog.w(TAG, "EasyTier native library load error: ${e.message}")
         }
     }
     

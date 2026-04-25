@@ -11,6 +11,7 @@ import com.app.ralaunch.core.common.util.FileUtils
 import com.app.ralaunch.feature.patch.data.PatchManager
 import com.app.ralaunch.core.platform.runtime.AndroidRendererRegistry
 import com.app.ralaunch.core.common.util.LogExportHelper
+import com.app.ralaunch.core.logging.LogFilePolicy
 import com.app.ralaunch.core.platform.android.provider.RaLaunchFileProvider
 import com.app.ralaunch.core.ui.dialog.RendererOption
 import com.app.ralaunch.core.model.BackgroundType
@@ -26,7 +27,6 @@ import kotlinx.coroutines.withContext
 import org.koin.java.KoinJavaComponent
 import java.io.File
 import java.io.FileOutputStream
-import java.util.Calendar
 
 internal const val RESTORE_SETTINGS_AFTER_RECREATE_KEY = "restore_settings_after_recreate"
 
@@ -144,7 +144,7 @@ internal fun openSponsorsPage(context: Context) {
 
 internal fun loadLogs(context: Context): List<String> {
     return try {
-        LogExportHelper.getLatestLogFile(context)?.readLines()?.takeLast(LOG_VIEW_LIMIT) ?: emptyList()
+        LogExportHelper.getLatestAppLogFile(context)?.readLines()?.takeLast(LOG_VIEW_LIMIT) ?: emptyList()
     } catch (e: Exception) {
         listOf(context.getString(R.string.settings_logs_read_failed, e.message ?: ""))
     }
@@ -179,10 +179,10 @@ internal suspend fun shareLogs(context: Context) {
                 mkdirs()
             }
             shareDir.listFiles { file ->
-                file.isFile && file.name.startsWith(SHARED_LOG_FILE_PREFIX)
+                LogFilePolicy.isManagedLogFile(file)
             }?.forEach(File::delete)
 
-            val logFile = File(shareDir, buildLogFileName())
+            val logFile = File(shareDir, LogFilePolicy.appLogFileName())
             logFile.writeText(logs, Charsets.UTF_8)
 
             val fileUri = FileProvider.getUriForFile(
@@ -218,15 +218,6 @@ internal suspend fun shareLogs(context: Context) {
 }
 
 private const val LOG_VIEW_LIMIT = 500
-private const val SHARED_LOG_FILE_PREFIX = "ralaunch_logs_"
-
-internal fun buildLogFileName(): String {
-    val calendar = Calendar.getInstance()
-    val year = calendar.get(Calendar.YEAR)
-    val month = calendar.get(Calendar.MONTH) + 1
-    val day = calendar.get(Calendar.DAY_OF_MONTH)
-    return "${SHARED_LOG_FILE_PREFIX}${year}-${month}-${day}.txt"
-}
 
 internal fun clearAppCache(context: Context) {
     try {

@@ -6,7 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.app.ralaunch.core.common.GameLaunchManager
 import com.app.ralaunch.core.common.SettingsAccess
-import com.app.ralaunch.core.common.util.AppLogger
+import com.app.ralaunch.core.logging.AppLog
 import com.app.ralaunch.R
 import com.app.ralaunch.core.di.contract.IGameRepositoryServiceV3
 import com.app.ralaunch.core.di.contract.ISettingsRepositoryServiceV2
@@ -145,7 +145,7 @@ class MainViewModel(
                             isAnnouncementBadgeShown = shouldShowBadge
                         }
                     }.onFailure { error ->
-                        AppLogger.warn(
+                        AppLog.w(
                             "MainViewModel",
                             "Failed to persist isAnnouncementBadgeShown: ${error.message}",
                             error
@@ -184,7 +184,7 @@ class MainViewModel(
                     }
                 }
             }.onFailure { error ->
-                AppLogger.warn(
+                AppLog.w(
                     "MainViewModel",
                     "Failed to fetch announcements on startup: ${error.message}",
                     error
@@ -221,7 +221,7 @@ class MainViewModel(
                     }
                 }
             }.onFailure { error ->
-                AppLogger.warn(
+                AppLog.w(
                     "MainViewModel",
                     "Failed to persist announcement read state: ${error.message}",
                     error
@@ -377,7 +377,7 @@ class MainViewModel(
 
                 result.onSuccess { info ->
                     if (info == null) {
-                        AppLogger.info("MainViewModel", "No update. currentVersion=$currentVersion")
+                        AppLog.i("MainViewModel", "No update. currentVersion=$currentVersion")
                         if (fromUserAction) {
                             emitEffect(MainUiEffect.ShowToast("当前已是最新版本"))
                         }
@@ -386,12 +386,12 @@ class MainViewModel(
                     _uiState.update { state ->
                         state.copy(availableUpdate = info.toAppUpdateUiModel())
                     }
-                    AppLogger.info(
+                    AppLog.i(
                         "MainViewModel",
                         "Update available current=${info.currentVersion}, latest=${info.latestVersion}"
                     )
                 }.onFailure { error ->
-                    AppLogger.warn("MainViewModel", "Check update failed: ${error.message}", error)
+                    AppLog.w("MainViewModel", "Check update failed: ${error.message}", error)
                 }
             } finally {
                 isUpdateCheckInProgress = false

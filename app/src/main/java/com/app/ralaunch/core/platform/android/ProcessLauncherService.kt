@@ -14,7 +14,7 @@ import com.app.ralaunch.core.platform.runtime.GameLauncher
 import com.app.ralaunch.feature.patch.data.PatchManager
 import com.app.ralaunch.core.common.util.NativeMethods
 import org.koin.java.KoinJavaComponent
-import com.app.ralaunch.core.common.util.AppLogger
+import com.app.ralaunch.core.logging.AppLog
 import java.nio.file.Paths
 
 /**
@@ -84,7 +84,7 @@ class ProcessLauncherService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (intent == null) {
-            AppLogger.error(TAG, "Intent is null")
+            AppLog.e(TAG, "Intent is null")
             stopSelf()
             return START_NOT_STICKY
         }
@@ -107,7 +107,7 @@ class ProcessLauncherService : Service() {
         val gameId = intent.getStringExtra(EXTRA_GAME_ID)
 
         if (assemblyPath == null) {
-            AppLogger.error(TAG, "Assembly path is null")
+            AppLog.e(TAG, "Assembly path is null")
             stopSelf()
             return START_NOT_STICKY
         }
@@ -127,7 +127,7 @@ class ProcessLauncherService : Service() {
                     updateNotification(getString(R.string.process_launcher_status_running, title))
                     doLaunch(assemblyPath, args, title, gameId)
                 } catch (e: Exception) {
-                    AppLogger.error(TAG, "Launch error: ${e.message}", e)
+                    AppLog.e(TAG, "Launch error: ${e.message}", e)
                 } finally {
                     running = false
                     stopSelf()
@@ -147,11 +147,11 @@ class ProcessLauncherService : Service() {
                 KoinJavaComponent.getOrNull(PatchManager::class.java)
             } catch (e: Exception) { null }
             val patches = if (gameId != null) patchManager?.getApplicableAndEnabledPatches(gameId, Paths.get(assemblyPath)) ?: emptyList() else emptyList()
-            AppLogger.info(TAG, "Game: $gameId, Applicable patches: ${patches.size}")
+            AppLog.i(TAG, "Game: $gameId, Applicable patches: ${patches.size}")
             GameLauncher.launchDotNetAssembly(assemblyPath, args ?: emptyArray(), patches)
         } catch (e: Exception) {
-            AppLogger.error(TAG, "Launch failed: ${e.message}", e)
-            AppLogger.error(TAG, "Last Error Msg: ${GameLauncher.getLastErrorMessage()}")
+            AppLog.e(TAG, "Launch failed: ${e.message}", e)
+            AppLog.e(TAG, "Last Error Msg: ${GameLauncher.getLastErrorMessage()}")
             -1
         } finally {
             cleanupStdinPipe()
@@ -165,9 +165,9 @@ class ProcessLauncherService : Service() {
         val writeFd = NativeMethods.setupStdinPipe()
         if (writeFd >= 0) {
             stdinPipeReady = true
-            AppLogger.info(TAG, "stdin 管道已建立 (native write_fd=$writeFd)")
+            AppLog.i(TAG, "stdin 管道已建立 (native write_fd=$writeFd)")
         } else {
-            AppLogger.warn(TAG, "建立 stdin 管道失败")
+            AppLog.w(TAG, "建立 stdin 管道失败")
         }
     }
 
@@ -183,14 +183,14 @@ class ProcessLauncherService : Service() {
      */
     private fun writeToStdin(input: String) {
         if (!stdinPipeReady) {
-            AppLogger.warn(TAG, "stdin 管道未就绪，忽略输入: $input")
+            AppLog.w(TAG, "stdin 管道未就绪，忽略输入: $input")
             return
         }
         val result = NativeMethods.writeStdin(input)
         if (result >= 0) {
-            AppLogger.info(TAG, "stdin << $input ($result bytes)")
+            AppLog.i(TAG, "stdin << $input ($result bytes)")
         } else {
-            AppLogger.error(TAG, "写入 stdin 失败: $input")
+            AppLog.e(TAG, "写入 stdin 失败: $input")
         }
     }
 

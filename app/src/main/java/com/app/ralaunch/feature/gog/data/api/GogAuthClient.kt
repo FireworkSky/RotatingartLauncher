@@ -4,7 +4,7 @@ import android.content.Context
 import androidx.annotation.StringRes
 import com.app.ralaunch.R
 import com.app.ralaunch.feature.gog.data.GogConstants
-import com.app.ralaunch.core.common.util.AppLogger
+import com.app.ralaunch.core.logging.AppLog
 import org.json.JSONObject
 import java.io.*
 import java.net.*
@@ -41,7 +41,7 @@ class GogAuthClient(context: Context) {
     @Throws(IOException::class)
     fun login(username: String, password: String): Boolean {
         val authFormToken = getAuthFormToken() ?: run {
-            AppLogger.error(TAG, "无法获取登录表单令牌")
+            AppLog.e(TAG, "无法获取登录表单令牌")
             return false
         }
 
@@ -116,7 +116,7 @@ class GogAuthClient(context: Context) {
                 conn.disconnect()
             }
         } catch (e: Exception) {
-            AppLogger.error(TAG, "令牌刷新失败", e)
+            AppLog.e(TAG, "令牌刷新失败", e)
             false
         }
     }
@@ -143,7 +143,7 @@ class GogAuthClient(context: Context) {
             return extractFormToken(html, "name=\"login[_token]\" value=\"", "\"")
                 ?: extractFormToken(html, "name='login[_token]' value='", "'")
         } catch (e: Exception) {
-            AppLogger.error(TAG, "无法从登录表单提取令牌", e)
+            AppLog.e(TAG, "无法从登录表单提取令牌", e)
             return null
         } finally {
             conn.disconnect()
@@ -218,7 +218,7 @@ class GogAuthClient(context: Context) {
     @Throws(IOException::class)
     private fun handleTwoStepAuth(redirectUrl: String, type: String): String? {
         val callback = twoFactorCallback ?: run {
-            AppLogger.error(TAG, "需要两步验证，但未设置回调")
+            AppLog.e(TAG, "需要两步验证，但未设置回调")
             return null
         }
 
@@ -395,7 +395,7 @@ class GogAuthClient(context: Context) {
                 conn.disconnect()
             }
         } catch (e: Exception) {
-            AppLogger.error(TAG, "令牌交换错误", e)
+            AppLog.e(TAG, "令牌交换错误", e)
             return false
         }
     }

@@ -9,7 +9,7 @@ import android.renderscript.Allocation
 import android.renderscript.Element
 import android.renderscript.RenderScript
 import android.renderscript.ScriptIntrinsicConvolve3x3
-import android.util.Log
+import com.app.ralaunch.core.logging.AppLog
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
@@ -44,7 +44,7 @@ object IconExtractor {
 
             // 验证 PE 格式
             if (!reader.isPeFormat()) {
-                Log.e(TAG, "Not a valid PE file: $exePath")
+                AppLog.e(TAG, "Not a valid PE file: $exePath")
                 return false
             }
 
@@ -54,7 +54,7 @@ object IconExtractor {
             // 读取资源 Section
             val resourceSection = reader.readResourceSection(peHeader)
             if (resourceSection == null) {
-                Log.e(TAG, "No resource section found")
+                AppLog.e(TAG, "No resource section found")
                 return false
             }
 
@@ -64,30 +64,30 @@ object IconExtractor {
             // 查找图标组资源 (RT_GROUP_ICON)
             val iconGroup = findBestIconGroup(reader, resourceSection, rootDir)
             if (iconGroup == null) {
-                Log.e(TAG, "No icon group found")
+                AppLog.e(TAG, "No icon group found")
                 return false
             }
 
             // 选择最佳质量的图标（最大尺寸，最高位深度）
             val bestEntry = selectBestIcon(iconGroup)
             if (bestEntry == null) {
-                Log.e(TAG, "No suitable icon entry found")
+                AppLog.e(TAG, "No suitable icon entry found")
                 return false
             }
 
-            Log.i(TAG, "Selected icon: ${bestEntry.width}x${bestEntry.height}, ${bestEntry.bitCount} bits")
+            AppLog.i(TAG, "Selected icon: ${bestEntry.width}x${bestEntry.height}, ${bestEntry.bitCount} bits")
 
             // 查找并读取图标数据
             val iconData = findIconData(reader, resourceSection, rootDir, bestEntry.id)
             if (iconData == null) {
-                Log.e(TAG, "Icon data not found")
+                AppLog.e(TAG, "Icon data not found")
                 return false
             }
 
             // 检测图标格式并解码
             val bitmap = decodeIconData(iconData)
             if (bitmap == null) {
-                Log.e(TAG, "Failed to decode icon bitmap")
+                AppLog.e(TAG, "Failed to decode icon bitmap")
                 return false
             }
 
@@ -96,10 +96,10 @@ object IconExtractor {
                 bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
             }
 
-            Log.i(TAG, "Icon extracted successfully to: $outputPath")
+            AppLog.i(TAG, "Icon extracted successfully to: $outputPath")
             true
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to extract icon: ${e.message}", e)
+            AppLog.e(TAG, "Failed to extract icon: ${e.message}", e)
             false
         } finally {
             try {
@@ -235,13 +235,13 @@ object IconExtractor {
             (iconData[2].toInt() and 0xFF) == 0x4E &&
             (iconData[3].toInt() and 0xFF) == 0x47
         ) {
-            Log.i(TAG, "Detected PNG format icon")
+            AppLog.i(TAG, "Detected PNG format icon")
             // PNG 格式，使用 BitmapFactory 解码
             return BitmapFactory.decodeByteArray(iconData, 0, iconData.size)
         }
 
         // BMP 格式（BITMAPINFOHEADER 开头应该是 0x28 = 40）
-        Log.i(TAG, "Attempting BMP format decoding")
+        AppLog.i(TAG, "Attempting BMP format decoding")
         return BmpDecoder.decodeBmpIcon(iconData)
     }
 
@@ -291,18 +291,18 @@ object IconExtractor {
             // 读取原始图标
             val original = BitmapFactory.decodeFile(iconPath)
             if (original == null) {
-                Log.e(TAG, "Failed to decode original icon")
+                AppLog.e(TAG, "Failed to decode original icon")
                 return null
             }
 
             val originalWidth = original.width
             val originalHeight = original.height
 
-            Log.i(TAG, "Original icon size: ${originalWidth}x$originalHeight")
+            AppLog.i(TAG, "Original icon size: ${originalWidth}x$originalHeight")
 
             // 如果图标已经足够大,不需要高清化
             if (originalWidth >= 128 && originalHeight >= 128) {
-                Log.i(TAG, "Icon is already large enough, skipping upscale")
+                AppLog.i(TAG, "Icon is already large enough, skipping upscale")
                 original.recycle()
                 return iconPath
             }
@@ -327,11 +327,11 @@ object IconExtractor {
             upscaled.recycle()
             sharpened.recycle()
 
-            Log.i(TAG, "Icon upscaled from ${originalWidth}x$originalHeight to ${targetSize}x$targetSize")
+            AppLog.i(TAG, "Icon upscaled from ${originalWidth}x$originalHeight to ${targetSize}x$targetSize")
 
             upscaledPath
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to upscale icon: ${e.message}", e)
+            AppLog.e(TAG, "Failed to upscale icon: ${e.message}", e)
             null
         }
     }
@@ -372,7 +372,7 @@ object IconExtractor {
 
             result
         } catch (e: Exception) {
-            Log.w(TAG, "Failed to apply sharpen filter, using original: ${e.message}")
+            AppLog.w(TAG, "Failed to apply sharpen filter, using original: ${e.message}")
             src
         } finally {
             rs?.destroy()
@@ -393,7 +393,7 @@ object IconExtractor {
             // 如果图标文件小于5KB，可能是16x16或32x32的小图标，需要高清化
             iconFile.length() < 5 * 1024
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to check icon size: ${e.message}")
+            AppLog.e(TAG, "Failed to check icon size: ${e.message}")
             false
         }
     }
@@ -427,7 +427,7 @@ object IconExtractor {
             val iconGroup = findBestIconGroup(reader, resourceSection, rootDir)
             iconGroup != null && iconGroup.entries.isNotEmpty()
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to check icon: ${e.message}")
+            AppLog.e(TAG, "Failed to check icon: ${e.message}")
             false
         } finally {
             try {

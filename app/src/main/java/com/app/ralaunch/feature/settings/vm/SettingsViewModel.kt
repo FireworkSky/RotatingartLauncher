@@ -3,6 +3,7 @@ package com.app.ralaunch.feature.settings.vm
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.app.ralaunch.core.di.contract.IRuntimeManagerServiceV2
+import com.app.ralaunch.core.logging.service.AndroidFileLogger
 import com.app.ralaunch.core.platform.runtime.RendererRegistry
 import com.app.ralaunch.core.model.BackgroundType
 import com.app.ralaunch.core.model.FpsLimit
@@ -139,6 +140,7 @@ sealed class SettingsEffect {
 class SettingsViewModel(
     private val settingsRepository: ISettingsRepositoryServiceV2,
     private val runtimeManager: IRuntimeManagerServiceV2,
+    private val fileLogger: AndroidFileLogger? = null,
     private val appInfo: AppInfo = AppInfo()
 ) : ViewModel() {
 
@@ -494,6 +496,7 @@ class SettingsViewModel(
     private fun setLoggingEnabled(enabled: Boolean) {
         viewModelScope.launch {
             settingsRepository.update { logSystemEnabled = enabled }
+            fileLogger?.refreshConfiguration()
             _uiState.update { it.copy(loggingEnabled = enabled) }
         }
     }
@@ -501,6 +504,7 @@ class SettingsViewModel(
     private fun setVerboseLogging(enabled: Boolean) {
         viewModelScope.launch {
             settingsRepository.update { verboseLogging = enabled }
+            fileLogger?.refreshConfiguration()
             _uiState.update { it.copy(verboseLogging = enabled) }
         }
     }

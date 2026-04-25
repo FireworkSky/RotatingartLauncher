@@ -1,7 +1,7 @@
 package com.app.ralaunch.core.platform.runtime
 
 import android.content.Context
-import android.util.Log
+import com.app.ralaunch.core.logging.AppLog
 import com.app.ralaunch.core.common.SettingsAccess
 import com.app.ralaunch.core.platform.runtime.EnvVarsManager
 import com.app.ralaunch.core.platform.runtime.AndroidRendererRegistry
@@ -49,24 +49,24 @@ object RendererEnvironmentConfigurator {
             val rawOverride = rendererOverride.trim()
             when {
                 rawOverride.isEmpty() || !AndroidRendererRegistry.isKnownRendererId(rawOverride) ->
-                    Log.w(
+                    AppLog.w(
                         TAG,
                         "Renderer override is invalid: $rendererOverride, fallback to global: $globalRenderer"
                     )
                 !overrideCompatible ->
-                    Log.w(
+                    AppLog.w(
                         TAG,
                         "Renderer override is incompatible on this device: $rawOverride, fallback to global: $globalRenderer"
                     )
                 else ->
-                    Log.i(TAG, "Using per-game renderer override: ${RendererRegistry.normalizeRendererId(rawOverride)}")
+                    AppLog.i(TAG, "Using per-game renderer override: ${RendererRegistry.normalizeRendererId(rawOverride)}")
             }
         }
 
         loadRendererLibraries(context, renderer)
         applyFna3dEnvironment(renderer)
 
-        Log.i(TAG, "Renderer environment applied successfully for: $renderer")
+        AppLog.i(TAG, "Renderer environment applied successfully for: $renderer")
     }
 
     private fun loadRendererLibraries(context: Context?, renderer: String) {
@@ -74,9 +74,9 @@ object RendererEnvironmentConfigurator {
         val success = RendererLoader.loadRenderer(context, renderer)
 
         if (success) {
-            Log.i(TAG, "当前渲染器: ${RendererLoader.getCurrentRenderer()}")
+            AppLog.i(TAG, "当前渲染器: ${RendererLoader.getCurrentRenderer()}")
         } else {
-            Log.e(TAG, "Failed to load renderer: $renderer")
+            AppLog.e(TAG, "Failed to load renderer: $renderer")
         }
     }
 
@@ -182,18 +182,18 @@ object RendererEnvironmentConfigurator {
     }
 
     private fun logFna3dConfiguration(renderer: String, envVars: Map<String, String?>) {
-        Log.i(TAG, "=== FNA3D Configuration ===")
-        Log.i(TAG, "Renderer ID: $renderer")
-        Log.i(TAG, "FNA3D_OPENGL_DRIVER = ${envVars["FNA3D_OPENGL_DRIVER"]}")
-        Log.i(TAG, "FNA3D_FORCE_DRIVER = ${envVars["FNA3D_FORCE_DRIVER"]}")
+        AppLog.i(TAG, "=== FNA3D Configuration ===")
+        AppLog.i(TAG, "Renderer ID: $renderer")
+        AppLog.i(TAG, "FNA3D_OPENGL_DRIVER = ${envVars["FNA3D_OPENGL_DRIVER"]}")
+        AppLog.i(TAG, "FNA3D_FORCE_DRIVER = ${envVars["FNA3D_FORCE_DRIVER"]}")
 
         when (renderer) {
             AndroidRendererRegistry.ID_GL4ES ->
-                Log.i(TAG, "OpenGL Profile: Desktop OpenGL 2.1 Compatibility Profile")
+                AppLog.i(TAG, "OpenGL Profile: Desktop OpenGL 2.1 Compatibility Profile")
             AndroidRendererRegistry.ID_ZINK ->
-                Log.i(TAG, "OpenGL Profile: Desktop OpenGL 4.3 (Mesa Zink over Vulkan)")
+                AppLog.i(TAG, "OpenGL Profile: Desktop OpenGL 4.3 (Mesa Zink over Vulkan)")
             else ->
-                Log.i(TAG, "OpenGL Profile: OpenGL ES 3.0")
+                AppLog.i(TAG, "OpenGL Profile: OpenGL ES 3.0")
         }
 
         val mapBufferRange = envVars["FNA3D_OPENGL_USE_MAP_BUFFER_RANGE"]
@@ -202,14 +202,14 @@ object RendererEnvironmentConfigurator {
                 AndroidRendererRegistry.ID_ANGLE,
                 AndroidRendererRegistry.ID_GL4ES_ANGLE
             ) ->
-                Log.i(TAG, "Map Buffer Range: Disabled (Vulkan-translated renderer)")
+                AppLog.i(TAG, "Map Buffer Range: Disabled (Vulkan-translated renderer)")
             mapBufferRange == "0" ->
-                Log.i(TAG, "Map Buffer Range: Disabled (via settings)")
+                AppLog.i(TAG, "Map Buffer Range: Disabled (via settings)")
             else ->
-                Log.i(TAG, "Map Buffer Range: Enabled by default")
+                AppLog.i(TAG, "Map Buffer Range: Enabled by default")
         }
 
-        Log.i(TAG, "VSync: Forced ON")
-        Log.i(TAG, "===========================")
+        AppLog.i(TAG, "VSync: Forced ON")
+        AppLog.i(TAG, "===========================")
     }
 }

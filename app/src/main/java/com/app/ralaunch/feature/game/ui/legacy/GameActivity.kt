@@ -11,7 +11,6 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.os.Process
-import android.util.Log
 import android.view.Display
 import android.view.KeyEvent
 import android.view.MotionEvent
@@ -28,12 +27,11 @@ import com.app.ralaunch.feature.game.legacy.GameContract
 import com.app.ralaunch.feature.game.legacy.GamePresenter
 import com.app.ralaunch.core.common.SettingsAccess
 import com.app.ralaunch.core.common.GameFullscreenManager
-import com.app.ralaunch.core.common.util.AppLogger
+import com.app.ralaunch.core.logging.AppLog
 import com.app.ralaunch.core.common.util.DensityAdapter
 import com.app.ralaunch.core.common.util.LocaleManager
 import com.app.ralaunch.core.common.ErrorHandler
 import com.app.ralaunch.core.model.ThemeMode
-import com.app.ralaunch.core.platform.AppConstants
 import org.libsdl.app.SDLActivity
 
 /**
@@ -196,27 +194,14 @@ class GameActivity : SDLActivity(), GameContract.View {
         instance = this
         presenter.attach(this)
 
-        // 初始化日志系统 (游戏进程独立于主进程)
-        initializeLogger()
-        
         initializeErrorHandler()
         forceLandscapeOrientation()
         initializeFullscreenManager()
         initializeVirtualControls()
         requestHighRefreshRate("onCreate")
-        
-        AppLogger.info(TAG, "GameActivity onCreate completed")
-    }
-    
-    private fun initializeLogger() {
-        try {
-            val logDir = java.io.File(getExternalFilesDir(null), AppConstants.Dirs.LOGS)
-            AppLogger.init(logDir)
-            AppLogger.info(TAG, "=== GameActivity Process Started ===")
-            AppLogger.info(TAG, "Game process PID: ${android.os.Process.myPid()}")
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to initialize logger in game process", e)
-        }
+        AppLog.i(TAG, "=== GameActivity Process Started ===")
+        AppLog.i(TAG, "Game process PID: ${android.os.Process.myPid()}")
+        AppLog.i(TAG, "GameActivity onCreate completed")
     }
 
     private fun applyThemeMode() {
@@ -233,7 +218,7 @@ class GameActivity : SDLActivity(), GameContract.View {
         try {
             ErrorHandler.setCurrentActivity(this)
         } catch (e: Exception) {
-            AppLogger.error(TAG, "设置 ErrorHandler 失败: ${e.message}")
+            AppLog.e(TAG, "设置 ErrorHandler 失败: ${e.message}")
         }
     }
 
@@ -295,7 +280,7 @@ class GameActivity : SDLActivity(), GameContract.View {
     }
 
     override fun onDestroy() {
-        Log.d(TAG, "GameActivity.onDestroy() called")
+        AppLog.d(TAG, "GameActivity.onDestroy() called")
 
         virtualControlsManager.stop()
         presenter.detach()
@@ -305,7 +290,7 @@ class GameActivity : SDLActivity(), GameContract.View {
         // [重要] .NET runtime 不支持多次初始化
         // GameActivity 运行在独立进程，终止不影响主应用
         Handler(Looper.getMainLooper()).postDelayed({
-            Log.d(TAG, "Terminating game process to ensure clean .NET runtime state")
+            AppLog.d(TAG, "Terminating game process to ensure clean .NET runtime state")
             Process.killProcess(Process.myPid())
             System.exit(0)
         }, 100)
@@ -402,7 +387,7 @@ class GameActivity : SDLActivity(), GameContract.View {
 
     private fun requestHighRefreshRate(caller: String) {
         val display = getCurrentDisplay() ?: run {
-            AppLogger.warn(TAG, "[$caller] Display is null, skip refresh vote")
+            AppLog.w(TAG, "[$caller] Display is null, skip refresh vote")
             return
         }
 
@@ -416,13 +401,13 @@ class GameActivity : SDLActivity(), GameContract.View {
                     params.preferredDisplayModeId = targetMode.modeId
                     window.attributes = params
                 }
-                AppLogger.info(
+                AppLog.i(
                     TAG,
                     "[$caller] Requested display mode id=${targetMode.modeId}, " +
                         "rate=${targetMode.refreshRate}Hz, size=${targetMode.physicalWidth}x${targetMode.physicalHeight}"
                 )
             } catch (e: Exception) {
-                AppLogger.warn(TAG, "[$caller] Failed to request preferred display mode: ${e.message}")
+                AppLog.w(TAG, "[$caller] Failed to request preferred display mode: ${e.message}")
             }
         }
 
@@ -435,18 +420,18 @@ class GameActivity : SDLActivity(), GameContract.View {
                         Surface.FRAME_RATE_COMPATIBILITY_DEFAULT,
                         Surface.CHANGE_FRAME_RATE_ALWAYS
                     )
-                    AppLogger.info(TAG, "[$caller] Surface frame-rate vote applied: ${targetRefresh}Hz")
+                    AppLog.i(TAG, "[$caller] Surface frame-rate vote applied: ${targetRefresh}Hz")
                 } catch (e: Exception) {
-                    AppLogger.warn(TAG, "[$caller] Failed to apply frame-rate vote: ${e.message}")
+                    AppLog.w(TAG, "[$caller] Failed to apply frame-rate vote: ${e.message}")
                 }
             } else {
-                AppLogger.debug(TAG, "[$caller] SDL surface is not ready for frame-rate vote")
+                AppLog.d(TAG, "[$caller] SDL surface is not ready for frame-rate vote")
             }
         }
 
         if (lastRequestedRefreshRate != targetRefresh) {
             lastRequestedRefreshRate = targetRefresh
-            AppLogger.info(TAG, "[$caller] Target refresh updated to ${targetRefresh}Hz")
+            AppLog.i(TAG, "[$caller] Target refresh updated to ${targetRefresh}Hz")
         }
     }
 
@@ -473,7 +458,7 @@ class GameActivity : SDLActivity(), GameContract.View {
             val candidates = if (sameResolutionModes.isNotEmpty()) sameResolutionModes else supportedModes.toList()
             candidates.maxByOrNull { it.refreshRate }
         } catch (e: Exception) {
-            AppLogger.warn(TAG, "Failed to select target display mode: ${e.message}")
+            AppLog.w(TAG, "Failed to select target display mode: ${e.message}")
             null
         }
     }

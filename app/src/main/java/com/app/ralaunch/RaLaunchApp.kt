@@ -4,16 +4,18 @@ import android.app.Application
 import android.content.Context
 import android.content.res.Configuration
 import android.system.Os
-import android.util.Log
+import com.app.ralaunch.core.logging.AppLog
 import androidx.appcompat.app.AppCompatDelegate
 import com.app.ralaunch.feature.controls.packs.ControlPackManager
 import com.app.ralaunch.core.common.SettingsAccess
 import com.app.ralaunch.core.di.KoinInitializer
 import com.app.ralaunch.core.di.contract.IRuntimeManagerServiceV2
 import com.app.ralaunch.core.di.service.VibrationManagerServiceV1
+import com.app.ralaunch.core.logging.service.AndroidFileLogger
 import com.app.ralaunch.core.common.util.DensityAdapter
 import com.app.ralaunch.core.common.util.LocaleManager
 import com.app.ralaunch.core.model.ThemeMode
+import com.app.ralaunch.core.platform.AppConstants
 import com.app.ralaunch.feature.patch.data.PatchManager
 import com.kyant.fishnet.Fishnet
 import org.koin.android.ext.android.inject
@@ -52,6 +54,7 @@ class RaLaunchApp : Application(), KoinComponent {
     private val _controlPackManager: ControlPackManager by inject()
     private val _patchManager: PatchManager? by inject()
     private val _runtimeManager: IRuntimeManagerServiceV2 by inject()
+    private val _fileLogger: AndroidFileLogger by inject()
 
     override fun onCreate() {
         super.onCreate()
@@ -63,19 +66,22 @@ class RaLaunchApp : Application(), KoinComponent {
         // 2. 初始化 Koin DI（必须在使用 inject 之前）
         KoinInitializer.init(this)
 
-        // 3. 启动时迁移旧运行时布局，仅在主进程执行一次
+        // 3. 初始化进程级文件日志捕获
+        initFileLogger()
+
+        // 4. 启动时迁移旧运行时布局，仅在主进程执行一次
         runRuntimeMigrationOnAppLaunch()
 
-        // 4. 应用主题设置
+        // 5. 应用主题设置
         applyThemeFromSettings()
 
-        // 5. 初始化崩溃捕获
+        // 6. 初始化崩溃捕获
         initCrashHandler()
 
-        // 6. 后台安装补丁
+        // 7. 后台安装补丁
         installPatchesInBackground()
 
-        // 7. 设置环境变量
+        // 8. 设置环境变量
         setupEnvironmentVariables()
     }
 
@@ -98,7 +104,7 @@ class RaLaunchApp : Application(), KoinComponent {
             }
             AppCompatDelegate.setDefaultNightMode(nightMode)
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to apply theme: ${e.message}")
+            AppLog.e(TAG, "Failed to apply theme: ${e.message}")
             AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
         }
     }
@@ -109,11 +115,24 @@ class RaLaunchApp : Application(), KoinComponent {
         try {
             _runtimeManager.migrateLegacyInstallations()
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to migrate legacy runtimes on app launch: ${e.message}", e)
+            AppLog.e(TAG, "Failed to migrate legacy runtimes on app launch: ${e.message}", e)
         }
     }
 
     private fun isMainAppProcess(): Boolean = getProcessName() == packageName
+
+    private fun initFileLogger() {
+        try {
+            val logDir = File(getExternalFilesDir(null), AppConstants.Dirs.LOGS)
+            _fileLogger.start(
+                logDirectory = logDir,
+                clearExistingLogs = isMainAppProcess()
+            )
+            AppLog.i(TAG, "File log capture initialized for process=${getProcessName()}, pid=${android.os.Process.myPid()}")
+        } catch (e: Exception) {
+            AppLog.e(TAG, "Failed to initialize file log capture", e)
+        }
+    }
 
     /**
      * 初始化崩溃捕获
@@ -135,7 +154,7 @@ class RaLaunchApp : Application(), KoinComponent {
                     com.app.ralaunch.core.common.util.PatchExtractor.extractPatchesIfNeeded(applicationContext)
                     PatchManager.installBuiltInPatches(manager, false)
                 } catch (e: Exception) {
-                    Log.e(TAG, "Failed to install patches: ${e.message}")
+                    AppLog.e(TAG, "Failed to install patches: ${e.message}")
                 }
             }, "PatchInstaller").start()
         }
@@ -151,10 +170,10 @@ class RaLaunchApp : Application(), KoinComponent {
             val externalStorage = android.os.Environment.getExternalStorageDirectory()
             externalStorage?.let {
                 Os.setenv("EXTERNAL_STORAGE_DIRECTORY", it.absolutePath, true)
-                Log.d(TAG, "EXTERNAL_STORAGE_DIRECTORY: ${it.absolutePath}")
+                AppLog.d(TAG, "EXTERNAL_STORAGE_DIRECTORY: ${it.absolutePath}")
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to set environment variables: ${e.message}")
+            AppLog.e(TAG, "Failed to set environment variables: ${e.message}")
         }
     }
 

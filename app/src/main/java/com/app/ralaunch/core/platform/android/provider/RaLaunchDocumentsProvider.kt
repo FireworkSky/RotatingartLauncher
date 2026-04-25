@@ -16,6 +16,7 @@ import android.system.Os
 import android.webkit.MimeTypeMap
 import com.app.ralaunch.R
 import com.app.ralaunch.core.common.util.FileUtils
+import com.app.ralaunch.core.logging.AppLog
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.IOException
@@ -372,7 +373,7 @@ class RaLaunchDocumentsProvider : DocumentsProvider() {
                     }
                     add(COLUMN_FILE_EXTRAS, sb.toString())
                 } catch (e: Exception) {
-                    e.printStackTrace()
+                    AppLog.w(TAG, "Failed to read file extras for $path", e)
                 }
             }
         }
@@ -439,6 +440,7 @@ class RaLaunchDocumentsProvider : DocumentsProvider() {
     }
 
     companion object {
+        private const val TAG = "RaLaunchDocumentsProvider"
         const val AUTHORITY = "com.app.ralaunch.documents"
         const val COLUMN_FILE_PATH = "ralaunch_file_path"
         const val COLUMN_FILE_EXTRAS = "ralaunch_file_extras"

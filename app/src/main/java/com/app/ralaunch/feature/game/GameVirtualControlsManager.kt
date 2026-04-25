@@ -13,7 +13,7 @@ import com.app.ralaunch.feature.controls.editors.ui.GameControlsOverlay
 import com.app.ralaunch.feature.controls.packs.ControlPackManager
 import com.app.ralaunch.feature.controls.ui.ControlLayout
 import com.app.ralaunch.core.common.SettingsAccess
-import com.app.ralaunch.core.common.util.AppLogger
+import com.app.ralaunch.core.logging.AppLog
 import com.app.ralaunch.feature.main.ui.background.FPSDisplayView
 import org.koin.java.KoinJavaComponent
 import org.libsdl.app.SDLSurface
@@ -98,7 +98,7 @@ class GameVirtualControlsManager {
                 layout.postDelayed(disableSDLTextInput, 2000)
             }
         } catch (e: Exception) {
-            AppLogger.error("GameVirtualControls", "Failed to initialize virtual controls", e)
+            AppLog.e("GameVirtualControls", "Failed to initialize virtual controls", e)
         }
     }
 

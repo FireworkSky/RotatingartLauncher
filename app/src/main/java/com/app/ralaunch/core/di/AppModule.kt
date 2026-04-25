@@ -16,6 +16,10 @@ import com.app.ralaunch.core.di.service.SettingsRepositoryServiceV2
 import com.app.ralaunch.core.di.service.StoragePathsProviderServiceV1
 import com.app.ralaunch.core.di.service.ThemeManagerServiceV1
 import com.app.ralaunch.core.di.service.VibrationManagerServiceV1
+import com.app.ralaunch.core.logging.LogFilePolicy
+import com.app.ralaunch.core.logging.LogLevel
+import com.app.ralaunch.core.logging.contract.Logger
+import com.app.ralaunch.core.logging.service.AndroidFileLogger
 import com.app.ralaunch.core.platform.AppConstants
 import com.app.ralaunch.feature.announcement.AnnouncementRepositoryService
 import com.app.ralaunch.feature.announcement.vm.AnnouncementViewModel
@@ -43,8 +47,11 @@ import com.app.ralaunch.feature.settings.vm.SettingsViewModel
 import com.app.ralaunch.feature.sponsor.SponsorRepositoryService
 import com.app.ralaunch.feature.sponsor.vm.SponsorsViewModel
 import org.koin.android.ext.koin.androidContext
+import org.koin.core.qualifier.named
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
+
+private const val LOGCAT_FILE_LOGGER = "logcatFileLogger"
 
 /**
  * App 模块 Koin 依赖配置
@@ -54,6 +61,28 @@ import org.koin.dsl.module
 val appModule = module {
 
     // ==================== 数据存储 ====================
+
+    single(named(LOGCAT_FILE_LOGGER)) {
+        AndroidFileLogger(
+            fileNameProvider = { LogFilePolicy.logcatLogFileName() },
+            emitToAndroidLog = false
+        )
+    }
+
+    single {
+        val settingsRepository = get<ISettingsRepositoryServiceV2>()
+        AndroidFileLogger(
+            isFileLoggingEnabled = { settingsRepository.Settings.logSystemEnabled },
+            logLevel = {
+                if (settingsRepository.Settings.verboseLogging) LogLevel.VERBOSE else LogLevel.INFO
+            },
+            logcatFileLogger = get(named(LOGCAT_FILE_LOGGER))
+        )
+    }
+
+    single<Logger> {
+        get<AndroidFileLogger>()
+    }
 
     single<StoragePathsProviderServiceV1> {
         StoragePathsProviderServiceV1(androidContext())
@@ -160,6 +189,7 @@ val appModule = module {
         SettingsViewModel(
             settingsRepository = get<ISettingsRepositoryServiceV2>(),
             runtimeManager = get(),
+            fileLogger = get(),
             appInfo = getOrNull<AppInfo>() ?: AppInfo()
         )
     }

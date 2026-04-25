@@ -20,7 +20,7 @@ import android.os.Environment
 import com.app.ralaunch.core.common.SettingsAccess
 import org.koin.java.KoinJavaComponent
 import com.app.ralaunch.core.platform.runtime.dotnet.DotNetLauncher
-import com.app.ralaunch.core.common.util.AppLogger
+import com.app.ralaunch.core.logging.AppLog
 import com.app.ralaunch.core.common.util.NativeMethods
 import com.app.ralaunch.core.platform.runtime.RendererEnvironmentConfigurator
 import com.app.ralaunch.feature.patch.data.Patch
@@ -70,7 +70,7 @@ object GameLauncher {
      */
     fun resetInitializationState() {
         isSDLJNIInitialized = false
-        AppLogger.info(TAG, "初始化状态已重置 / Initialization state reset")
+        AppLog.i(TAG, "初始化状态已重置 / Initialization state reset")
     }
 
     /**
@@ -103,7 +103,7 @@ object GameLauncher {
             System.loadLibrary("SkiaSharp")
 
         } catch (e: UnsatisfiedLinkError) {
-            AppLogger.error(TAG, "加载 Native 库失败 / Failed to load native libraries: ${e.message}")
+            AppLog.e(TAG, "加载 Native 库失败 / Failed to load native libraries: ${e.message}")
         }
     }
 
@@ -172,22 +172,22 @@ object GameLauncher {
         gameEnvVars: Map<String, String?> = emptyMap()
     ): Int {
         try {
-            AppLogger.info(TAG, "=== 开始启动 .NET 程序集 / Starting .NET Assembly Launch ===")
-            AppLogger.info(TAG, "程序集路径 / Assembly path: $assemblyPath")
-            AppLogger.info(TAG, "启动参数 / Arguments: ${args.joinToString(", ")}")
-            AppLogger.info(TAG, "启用补丁数 / Enabled patches: ${enabledPatches?.size ?: 0}")
+            AppLog.i(TAG, "=== 开始启动 .NET 程序集 / Starting .NET Assembly Launch ===")
+            AppLog.i(TAG, "程序集路径 / Assembly path: $assemblyPath")
+            AppLog.i(TAG, "启动参数 / Arguments: ${args.joinToString(", ")}")
+            AppLog.i(TAG, "启用补丁数 / Enabled patches: ${enabledPatches?.size ?: 0}")
 
             // 步骤1：验证程序集文件存在
             // Step 1: Verify assembly file exists
             if (!Path(assemblyPath).exists()) {
-                AppLogger.error(TAG, "程序集文件不存在 / Assembly file does not exist: $assemblyPath")
+                AppLog.e(TAG, "程序集文件不存在 / Assembly file does not exist: $assemblyPath")
                 return -1
             }
-            AppLogger.debug(TAG, "程序集文件验证通过 / Assembly file exists: OK")
+            AppLog.d(TAG, "程序集文件验证通过 / Assembly file exists: OK")
 
             // 步骤2：设置基础环境变量
             // Step 2: Set basic environment variables
-            AppLogger.debug(TAG, "设置环境变量 / Setting up environment variables...")
+            AppLog.d(TAG, "设置环境变量 / Setting up environment variables...")
             val appContext: Context = KoinJavaComponent.get(Context::class.java)
             EnvVarsManager.quickSetEnvVars(
                 "PACKAGE_NAME" to appContext.packageName,
@@ -197,16 +197,16 @@ object GameLauncher {
             // 步骤3：切换工作目录
             // Step 3: Change working directory
             val workingDir = Path(assemblyPath).parent.toString()
-            AppLogger.debug(TAG, "切换工作目录 / Changing working directory to: $workingDir")
+            AppLog.d(TAG, "切换工作目录 / Changing working directory to: $workingDir")
             NativeMethods.chdir(workingDir)
-            AppLogger.debug(TAG, "工作目录切换完成 / Working directory changed: OK")
+            AppLog.d(TAG, "工作目录切换完成 / Working directory changed: OK")
 
             // 步骤4：准备数据目录
             // Step 4: Prepare data directory
-            AppLogger.debug(TAG, "准备数据目录 / Preparing data directory...")
+            AppLog.d(TAG, "准备数据目录 / Preparing data directory...")
             val dataDir = prepareDataDirectory(assemblyPath)
             val cacheDir = appContext.cacheDir.absolutePath
-            AppLogger.info(TAG, "数据目录 / Data directory: $dataDir")
+            AppLog.i(TAG, "数据目录 / Data directory: $dataDir")
 
             EnvVarsManager.quickSetEnvVars(
                 "HOME" to dataDir,
@@ -215,15 +215,15 @@ object GameLauncher {
                 "XDG_CACHE_HOME" to cacheDir,
                 "TMPDIR" to cacheDir
             )
-            AppLogger.debug(TAG, "XDG 环境变量设置完成 / XDG environment variables set: OK")
+            AppLog.d(TAG, "XDG 环境变量设置完成 / XDG environment variables set: OK")
 
             // 步骤5：应用用户设置
             // Step 5: Apply user settings
             val settings = SettingsAccess
-            AppLogger.debug(TAG, "应用用户设置 / Applying settings configuration...")
-            AppLogger.debug(TAG, "  - 大核亲和性 / Big core affinity: ${settings.setThreadAffinityToBigCoreEnabled}")
-            AppLogger.debug(TAG, "  - 多点触控 / Touch multitouch: ${settings.isTouchMultitouchEnabled}")
-            AppLogger.debug(TAG, "  - 鼠标右摇杆 / Mouse right stick: ${settings.isMouseRightStickEnabled}")
+            AppLog.d(TAG, "应用用户设置 / Applying settings configuration...")
+            AppLog.d(TAG, "  - 大核亲和性 / Big core affinity: ${settings.setThreadAffinityToBigCoreEnabled}")
+            AppLog.d(TAG, "  - 多点触控 / Touch multitouch: ${settings.isTouchMultitouchEnabled}")
+            AppLog.d(TAG, "  - 鼠标右摇杆 / Mouse right stick: ${settings.isMouseRightStickEnabled}")
 
             // 步骤6：配置启动钩子（补丁）
             // Step 6: Configure startup hooks (patches)
@@ -231,18 +231,18 @@ object GameLauncher {
                 PatchManager.constructStartupHooksEnvVar(enabledPatches) else null
 
             if (startupHooks != null) {
-                AppLogger.info(TAG, "已配置 ${enabledPatches!!.size} 个补丁的启动钩子 / DOTNET_STARTUP_HOOKS configured with ${enabledPatches.size} patch(es)")
-                AppLogger.debug(TAG, "DOTNET_STARTUP_HOOKS 值 / value: $startupHooks")
+                AppLog.i(TAG, "已配置 ${enabledPatches!!.size} 个补丁的启动钩子 / DOTNET_STARTUP_HOOKS configured with ${enabledPatches.size} patch(es)")
+                AppLog.d(TAG, "DOTNET_STARTUP_HOOKS 值 / value: $startupHooks")
                 val hookCount = startupHooks.split(":").filter { it.isNotEmpty() }.size
-                AppLogger.debug(TAG, "实际钩子数量 / Actual hook count: $hookCount")
+                AppLog.d(TAG, "实际钩子数量 / Actual hook count: $hookCount")
             } else {
-                AppLogger.debug(TAG, "未配置启动钩子 / No startup hooks configured")
+                AppLog.d(TAG, "未配置启动钩子 / No startup hooks configured")
             }
 
             // 步骤7：设置 MonoMod 路径（供补丁使用）
             // Step 7: Set MonoMod path (for patches)
             val monoModPath = AssemblyPatcher.getMonoModInstallPath().toString()
-            AppLogger.info(TAG, "MonoMod 路径 / path: $monoModPath")
+            AppLog.i(TAG, "MonoMod 路径 / path: $monoModPath")
 
             EnvVarsManager.quickSetEnvVars(
                 // 启动钩子配置
@@ -288,31 +288,31 @@ object GameLauncher {
                 "RAL_GL_MAP_RATIO" to null,
                 "RAL_GL_MAP_ENABLED" to null,
             )
-            AppLogger.debug(TAG, "游戏设置环境变量配置完成 / Game settings environment variables set: OK")
+            AppLog.d(TAG, "游戏设置环境变量配置完成 / Game settings environment variables set: OK")
 
             // 步骤8：配置渲染器
             // Step 8: Configure renderer
-            AppLogger.debug(TAG, "配置渲染器环境 / Applying renderer environment...")
+            AppLog.d(TAG, "配置渲染器环境 / Applying renderer environment...")
             RendererEnvironmentConfigurator.apply(
                 context = appContext,
                 rendererOverride = rendererOverride
             )
-            AppLogger.debug(TAG, "渲染器环境配置完成 / Renderer environment applied: OK")
+            AppLog.d(TAG, "渲染器环境配置完成 / Renderer environment applied: OK")
 
             // 步骤9：设置线程亲和性
             // Step 9: Set thread affinity
             if (settings.setThreadAffinityToBigCoreEnabled) {
-                AppLogger.debug(TAG, "设置线程亲和性到大核 / Setting thread affinity to big cores...")
+                AppLog.d(TAG, "设置线程亲和性到大核 / Setting thread affinity to big cores...")
                 val result = ThreadAffinityManager.setThreadAffinityToBigCores()
-                AppLogger.debug(TAG, "线程亲和性设置完成 / Thread affinity to big cores set: Result=$result")
+                AppLog.d(TAG, "线程亲和性设置完成 / Thread affinity to big cores set: Result=$result")
             } else {
-                AppLogger.debug(TAG, "未启用大核亲和性，跳过 / Thread affinity to big cores not enabled, skipping.")
+                AppLog.d(TAG, "未启用大核亲和性，跳过 / Thread affinity to big cores not enabled, skipping.")
             }
 
             // 步骤10：应用游戏级环境变量（优先级高于全局/渲染器配置）
             // Step 10: Apply per-game env vars (higher priority than global/renderer config)
             if (gameEnvVars.isNotEmpty()) {
-                AppLogger.debug(TAG, "应用游戏环境变量 / Applying per-game env vars: ${gameEnvVars.size} item(s)")
+                AppLog.d(TAG, "应用游戏环境变量 / Applying per-game env vars: ${gameEnvVars.size} item(s)")
                 val availableInterpolations = linkedMapOf(
                     "PACKAGE_NAME" to appContext.packageName,
                     "EXTERNAL_STORAGE_DIRECTORY" to Environment.getExternalStorageDirectory().path,
@@ -330,25 +330,24 @@ object GameLauncher {
                     availableInterpolations = availableInterpolations
                 )
                 EnvVarsManager.quickSetEnvVars(resolvedGameEnvVars)
-                AppLogger.debug(TAG, "游戏环境变量应用完成 / Per-game env vars applied: OK")
+                AppLog.d(TAG, "游戏环境变量应用完成 / Per-game env vars applied: OK")
             }
 
             // 步骤11：启动 .NET 运行时
             // Step 11: Launch .NET runtime
-            AppLogger.info(TAG, "通过 hostfxr 启动 .NET 运行时 / Launching .NET runtime with hostfxr...")
+            AppLog.i(TAG, "通过 hostfxr 启动 .NET 运行时 / Launching .NET runtime with hostfxr...")
             val result = DotNetLauncher.hostfxrLaunch(
                 assemblyPath = assemblyPath,
                 args = args,
                 dotNetRuntimeVersionOverride = dotNetRuntimeVersionOverride
             )
 
-            AppLogger.info(TAG, "=== .NET 程序集启动完成 / .NET Assembly Launch Completed ===")
-            AppLogger.info(TAG, "退出代码 / Exit code: $result")
+            AppLog.i(TAG, "=== .NET 程序集启动完成 / .NET Assembly Launch Completed ===")
+            AppLog.i(TAG, "退出代码 / Exit code: $result")
 
             return result
         } catch (e: Exception) {
-            AppLogger.error(TAG, "启动程序集失败 / Failed to launch assembly: $assemblyPath", e)
-            e.printStackTrace()
+            AppLog.e(TAG, "启动程序集失败 / Failed to launch assembly: $assemblyPath", e)
             return -1
         }
     }
@@ -377,17 +376,17 @@ object GameLauncher {
     @JvmStatic
     fun launchNewDotNetProcess(assemblyPath: String, args: Array<String>, title: String, gameId: String): Int {
         try {
-            AppLogger.info(TAG, "=== 收到新进程启动请求 / launchNewDotNetProcess called ===")
-            AppLogger.info(TAG, "程序集 / Assembly: $assemblyPath")
-            AppLogger.info(TAG, "标题 / Title: $title")
-            AppLogger.info(TAG, "游戏ID / Game ID: $gameId")
-            AppLogger.info(TAG, "参数 / Arguments: ${args.joinToString(", ")}")
+            AppLog.i(TAG, "=== 收到新进程启动请求 / launchNewDotNetProcess called ===")
+            AppLog.i(TAG, "程序集 / Assembly: $assemblyPath")
+            AppLog.i(TAG, "标题 / Title: $title")
+            AppLog.i(TAG, "游戏ID / Game ID: $gameId")
+            AppLog.i(TAG, "参数 / Arguments: ${args.joinToString(", ")}")
 
             ProcessLauncherService.launch(assemblyPath, args, title, gameId)
 
             return 0
         } catch (e: Exception) {
-            AppLogger.error(TAG, "启动新 .NET 进程失败 / Failed to launch new .NET process", e)
+            AppLog.e(TAG, "启动新 .NET 进程失败 / Failed to launch new .NET process", e)
             return -1
         }
     }
@@ -418,7 +417,7 @@ object GameLauncher {
         // 初始回退目录为程序集所在目录
         // Initial fallback is the assembly's parent directory
         var finalDataDir = Path(assemblyPath).parent
-        AppLogger.debug(TAG, "初始数据目录（程序集父目录）/ Initial data directory (assembly parent): $finalDataDir")
+        AppLog.d(TAG, "初始数据目录（程序集父目录）/ Initial data directory (assembly parent): $finalDataDir")
 
         try {
             // 尝试使用外部存储的默认数据目录
@@ -427,36 +426,36 @@ object GameLauncher {
                 .resolve(DEFAULT_DATA_DIR_NAME)
                 .toPath()
 
-            AppLogger.debug(TAG, "目标数据目录 / Target data directory: $defaultDataDirPath")
+            AppLog.d(TAG, "目标数据目录 / Target data directory: $defaultDataDirPath")
 
             // 创建目录（如果不存在）
             // Create directory if it doesn't exist
             if (!defaultDataDirPath.exists()) {
-                AppLogger.debug(TAG, "创建数据目录 / Creating data directory: $defaultDataDirPath")
+                AppLog.d(TAG, "创建数据目录 / Creating data directory: $defaultDataDirPath")
                 defaultDataDirPath.createDirectories()
-                AppLogger.debug(TAG, "数据目录创建成功 / Data directory created: OK")
+                AppLog.d(TAG, "数据目录创建成功 / Data directory created: OK")
             } else {
-                AppLogger.debug(TAG, "数据目录已存在 / Data directory already exists")
+                AppLog.d(TAG, "数据目录已存在 / Data directory already exists")
             }
 
             // 创建 .nomedia 文件防止媒体扫描
             // Create .nomedia file to prevent media scanning
             val nomediaFilePath = defaultDataDirPath.resolve(".nomedia")
             if (!nomediaFilePath.exists()) {
-                AppLogger.debug(TAG, "创建 .nomedia 文件 / Creating .nomedia file: $nomediaFilePath")
+                AppLog.d(TAG, "创建 .nomedia 文件 / Creating .nomedia file: $nomediaFilePath")
                 nomediaFilePath.createFile()
-                AppLogger.debug(TAG, ".nomedia 文件创建成功 / .nomedia file created: OK")
+                AppLog.d(TAG, ".nomedia 文件创建成功 / .nomedia file created: OK")
             } else {
-                AppLogger.debug(TAG, ".nomedia 文件已存在 / .nomedia file already exists")
+                AppLog.d(TAG, ".nomedia 文件已存在 / .nomedia file already exists")
             }
 
             finalDataDir = defaultDataDirPath
-            AppLogger.info(TAG, "使用默认数据目录 / Using default data directory: $finalDataDir")
+            AppLog.i(TAG, "使用默认数据目录 / Using default data directory: $finalDataDir")
         } catch (e: Exception) {
             // 无法访问外部存储，使用程序集目录作为回退
             // Cannot access external storage, use assembly directory as fallback
-            AppLogger.warn(TAG, "无法访问默认数据目录，使用程序集目录 / Failed to access default data directory, using assembly directory instead.", e)
-            AppLogger.warn(TAG, "回退数据目录 / Fallback data directory: $finalDataDir")
+            AppLog.w(TAG, "无法访问默认数据目录，使用程序集目录 / Failed to access default data directory, using assembly directory instead.", e)
+            AppLog.w(TAG, "回退数据目录 / Fallback data directory: $finalDataDir")
         }
 
         return finalDataDir.toString()

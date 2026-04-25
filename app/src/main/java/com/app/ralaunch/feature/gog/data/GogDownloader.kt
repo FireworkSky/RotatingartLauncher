@@ -4,7 +4,7 @@ import com.app.ralaunch.R
 import com.app.ralaunch.feature.gog.data.api.GogAuthClient
 import com.app.ralaunch.feature.gog.data.GogConstants
 import com.app.ralaunch.feature.gog.data.model.GogGameFile
-import com.app.ralaunch.core.common.util.AppLogger
+import com.app.ralaunch.core.logging.AppLog
 import java.io.*
 import java.net.HttpURLConnection
 import java.net.URL
@@ -269,7 +269,7 @@ class GogDownloader(private val authClient: GogAuthClient) {
             }
         }
 
-        AppLogger.error(TAG, "$operationName - All retries failed")
+        AppLog.e(TAG, "$operationName - All retries failed")
         throw lastException ?: IOException(authClient.localize(R.string.common_unknown_error))
     }
 

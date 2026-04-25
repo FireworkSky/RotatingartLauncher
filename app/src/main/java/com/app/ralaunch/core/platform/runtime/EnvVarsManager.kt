@@ -1,7 +1,7 @@
 package com.app.ralaunch.core.platform.runtime
 
 import android.system.Os
-import android.util.Log
+import com.app.ralaunch.core.logging.AppLog
 
 object EnvVarsManager {
     const val TAG = "EnvVarsManager"
@@ -11,7 +11,7 @@ object EnvVarsManager {
         return try {
             Os.getenv(key)
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to get env var $key: ${e.message}")
+            AppLog.e(TAG, "Failed to get env var $key: ${e.message}")
             null
         }
     }
@@ -23,13 +23,13 @@ object EnvVarsManager {
             try {
                 if (value != null) {
                     Os.setenv(key, value, true)
-                    Log.d(TAG, "Set env var $key=$value")
+                    AppLog.d(TAG, "Set env var $key=$value")
                 } else {
                     Os.unsetenv(key)
-                    Log.d(TAG, "Set env var $key=(null)")
+                    AppLog.d(TAG, "Set env var $key=(null)")
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "Failed to set env var $key: ${e.message}")
+                AppLog.e(TAG, "Failed to set env var $key: ${e.message}")
             }
         }
     }
@@ -38,13 +38,13 @@ object EnvVarsManager {
         try {
             if (value != null) {
                 Os.setenv(key, value, true)
-                Log.d(TAG, "Set env var $key=$value")
+                AppLog.d(TAG, "Set env var $key=$value")
             } else {
                 Os.unsetenv(key)
-                Log.d(TAG, "Set env var $key=(null)")
+                AppLog.d(TAG, "Set env var $key=(null)")
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to set env var $key: ${e.message}")
+            AppLog.e(TAG, "Failed to set env var $key: ${e.message}")
         }
     }
 

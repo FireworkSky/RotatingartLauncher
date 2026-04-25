@@ -2,7 +2,7 @@ package com.app.ralaunch.feature.sponsor
 
 import android.content.Context
 import com.app.ralaunch.core.common.JsonHttpRepositoryClient
-import com.app.ralaunch.core.common.util.AppLogger
+import com.app.ralaunch.core.logging.AppLog
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
@@ -83,7 +83,7 @@ class SponsorRepositoryService(private val context: Context) {
             
             // 如果失败，尝试备用源
             if (result.isFailure) {
-                AppLogger.info(TAG, "Primary source failed, trying fallback: $fallbackUrl")
+                AppLog.i(TAG, "Primary source failed, trying fallback: $fallbackUrl")
                 result = tryFetchFrom(fallbackUrl)
             }
             
@@ -102,11 +102,11 @@ class SponsorRepositoryService(private val context: Context) {
         result.getOrNull()?.let { repository ->
             cachedRepository = repository
             cacheTimestamp = System.currentTimeMillis()
-            AppLogger.info(TAG, "Fetched sponsors from $baseUrl: ${repository.sponsors.size} sponsors")
+            AppLog.i(TAG, "Fetched sponsors from $baseUrl: ${repository.sponsors.size} sponsors")
         }
 
         result.exceptionOrNull()?.let { error ->
-            AppLogger.error(TAG, "Failed to fetch from $baseUrl", error)
+            AppLog.e(TAG, "Failed to fetch from $baseUrl", error)
         }
 
         return result

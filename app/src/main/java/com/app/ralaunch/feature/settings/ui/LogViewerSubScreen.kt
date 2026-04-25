@@ -33,6 +33,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import com.app.ralaunch.R
+import com.app.ralaunch.core.logging.LogFilePolicy
 import kotlinx.coroutines.launch
 
 @Composable
@@ -72,7 +73,7 @@ fun LogViewerSubScreen(
                     }
                 },
                 actions = {
-                    TextButton(onClick = { exportLauncher.launch(buildLogFileName()) }) {
+                    TextButton(onClick = { exportLauncher.launch(LogFilePolicy.appLogFileName()) }) {
                         Text(stringResource(R.string.export))
                     }
                 }
