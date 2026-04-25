@@ -8,7 +8,7 @@ import java.util.Date
 import java.util.Locale
 
 object LogFilePolicy {
-    const val RETENTION_DAYS = 7
+    const val RETENTION_DAYS = 2
 
     private const val PREFIX = "ralaunch_"
     private const val EXTENSION = ".log"

@@ -133,7 +133,7 @@ class LogcatReader(
             "MiInputConsumer", "CompatChangeReporter", "ContentCatcher", "SecurityManager",
             "ComputilityLevel", "Activity", "libc", "SplineOverScroller",
             "BufferQueueProducer", "BLASTBufferQueue",
-            "oplus.android.OplusFrameworkFactoryImpl", "DynamicFramerate",
+            "oplus.android.OplusFrameworkFactoryImpl", "DynamicFramerate [AnimationSpeedAware]",
             "OplusViewDragTouchViewHelper"
         )
     }
