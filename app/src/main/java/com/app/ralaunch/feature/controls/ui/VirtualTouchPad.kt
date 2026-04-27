@@ -114,7 +114,7 @@ class VirtualTouchPad(
     private val centeredDeltaY
         get() = currentY - centerY
 
-    private var currentMouseButton = if (ControlsSharedState.isTouchPadRightButton) MotionEvent.BUTTON_SECONDARY else MotionEvent.BUTTON_PRIMARY
+    private var currentMouseButton = if (ControlsSharedState.isTouchPadRightButton) ControlData.KeyCode.MOUSE_RIGHT else ControlData.KeyCode.MOUSE_LEFT
 
     private val settingsManager = SettingsAccess
 
@@ -241,7 +241,7 @@ class VirtualTouchPad(
 
         // 如果在按下移动或双击状态，需要释放鼠标按钮
         if (currentState == TouchPadState.PRESS_MOVING || currentState == TouchPadState.DOUBLE_CLICK) {
-            sdlOnNativeMouseDirect(currentMouseButton, MotionEvent.ACTION_UP, 0f, 0f, true)
+            mInputBridge.sendMouseButton(currentMouseButton, false)
         }
 
         // 强制重置状态
@@ -259,7 +259,7 @@ class VirtualTouchPad(
 
         // 如果在按下状态，释放鼠标按钮
         if (currentState == TouchPadState.PRESS_MOVING || currentState == TouchPadState.DOUBLE_CLICK) {
-            sdlOnNativeMouseDirect(currentMouseButton, MotionEvent.ACTION_UP, 0f, 0f, true)
+            mInputBridge.sendMouseButton(currentMouseButton, false)
         }
 
         // 重置状态
@@ -312,7 +312,7 @@ class VirtualTouchPad(
                     // Send this move so that MOVE_THRESHOLD is not skipped
                     val multipliedDeltaX: Float = (currentX - initialTouchX) * mouseMoveRatio
                     val multipliedDeltaY: Float = (currentY - initialTouchY) * mouseMoveRatio
-                    sdlOnNativeMouseDirect(0, MotionEvent.ACTION_MOVE, multipliedDeltaX, multipliedDeltaY, true) // in ACTION_MOVE, button value doesn't matter
+                    mInputBridge.sendMouseMove(multipliedDeltaX, multipliedDeltaY)
                 }
             }
 
@@ -338,21 +338,21 @@ class VirtualTouchPad(
                 // Clamp to screen bounds
                 onScreenMouseX = Math.clamp(onScreenMouseX, 0f, screenWidth - 1)
                 onScreenMouseY = Math.clamp(onScreenMouseY, 0f, screenHeight - 1)
-                sdlOnNativeMouseDirect(0, MotionEvent.ACTION_MOVE, onScreenMouseX, onScreenMouseY, false) // in ACTION_MOVE, button value doesn't matter
+                mInputBridge.sendMousePosition(onScreenMouseX, onScreenMouseY)
             }
 
             TouchPadState.MOVING -> {
                 // Send movement data
                 val multipliedDeltaX: Float = deltaX * mouseMoveRatio
                 val multipliedDeltaY: Float = deltaY * mouseMoveRatio
-                sdlOnNativeMouseDirect(0, MotionEvent.ACTION_MOVE, multipliedDeltaX, multipliedDeltaY, true) // in ACTION_MOVE, button value doesn't matter
+                mInputBridge.sendMouseMove(multipliedDeltaX, multipliedDeltaY)
             }
 
             TouchPadState.PRESS_MOVING -> {
                 // Send movement data
                 val multipliedDeltaX: Float = deltaX * mouseMoveRatio
                 val multipliedDeltaY: Float = deltaY * mouseMoveRatio
-                sdlOnNativeMouseDirect(0, MotionEvent.ACTION_MOVE, multipliedDeltaX, multipliedDeltaY, true) // in ACTION_MOVE, button value doesn't matter
+                mInputBridge.sendMouseMove(multipliedDeltaX, multipliedDeltaY)
             }
         }
 
@@ -367,10 +367,7 @@ class VirtualTouchPad(
                 // proceed to pending state
                 currentState = TouchPadState.PENDING
                 // we set currentMouseButton here so it wont change in the delayed handlers
-                currentMouseButton = if (ControlsSharedState.isTouchPadRightButton)
-                    MotionEvent.BUTTON_SECONDARY
-                else
-                    MotionEvent.BUTTON_PRIMARY
+                currentMouseButton = if (ControlsSharedState.isTouchPadRightButton) ControlData.KeyCode.MOUSE_RIGHT else ControlData.KeyCode.MOUSE_LEFT
 
                 idleDelayHandler.postDelayed({
                     // 检查状态是否仍然是 PENDING，且我们仍在跟踪一个触摸点或刚刚释放
@@ -382,17 +379,17 @@ class VirtualTouchPad(
                             // notify the user press movement start
                             triggerVibration(true)
                             // Press down left mouse button
-                            sdlOnNativeMouseDirect(currentMouseButton, MotionEvent.ACTION_DOWN, 0f, 0f, true)
+                            mInputBridge.sendMouseButton(currentMouseButton, true)
                             // the rest of the movements would be handled by handleMove()
                         } else if (!mIsPressed && castedData.isDoubleClickSimulateJoystick) {
                             // 双击模式下，单击检测
                             // Single Press! Trigger left click!
                             currentState = TouchPadState.IDLE
                             clickDelayHandler.removeCallbacksAndMessages(null)
-                            sdlOnNativeMouseDirect(currentMouseButton, MotionEvent.ACTION_UP, 0f, 0f, true)
-                            sdlOnNativeMouseDirect(currentMouseButton,MotionEvent.ACTION_DOWN,0f,0f,true)
+                            mInputBridge.sendMouseButton(currentMouseButton, false)
+                            mInputBridge.sendMouseButton(currentMouseButton, true)
                             clickDelayHandler.postDelayed({
-                                sdlOnNativeMouseDirect(currentMouseButton, MotionEvent.ACTION_UP, 0f, 0f, true)
+                                mInputBridge.sendMouseButton(currentMouseButton, false)
                             }, TOUCHPAD_CLICK_TIMEOUT)
                         } else {
                             // 既没有按住也没有双击模式，直接回到 IDLE
@@ -430,8 +427,9 @@ class VirtualTouchPad(
                     // Clamp to screen bounds
                     onScreenMouseX = Math.clamp(onScreenMouseX, 0f, screenWidth - 1)
                     onScreenMouseY = Math.clamp(onScreenMouseY, 0f, screenHeight - 1)
-                    // click left mouse button and send centered movement
-                    sdlOnNativeMouseDirect(currentMouseButton, MotionEvent.ACTION_DOWN, onScreenMouseX, onScreenMouseY, false)
+                    // send centered movement and click left mouse button
+                    mInputBridge.sendMousePosition(onScreenMouseX, onScreenMouseY)
+                    mInputBridge.sendMouseButton(currentMouseButton, true)
                     // The rest of the movements would be handled by handleMove()
                 }
             }
@@ -473,10 +471,10 @@ class VirtualTouchPad(
                     idleDelayHandler.removeCallbacksAndMessages(null)
                     // Single Press! Trigger left click!
                     clickDelayHandler.removeCallbacksAndMessages(null)
-                    sdlOnNativeMouseDirect(currentMouseButton, MotionEvent.ACTION_UP, 0f, 0f, true)
-                    sdlOnNativeMouseDirect(currentMouseButton,MotionEvent.ACTION_DOWN,0f,0f,true)
+                    mInputBridge.sendMouseButton(currentMouseButton, false)
+                    mInputBridge.sendMouseButton(currentMouseButton, true)
                     clickDelayHandler.postDelayed({
-                        sdlOnNativeMouseDirect(currentMouseButton, MotionEvent.ACTION_UP, 0f, 0f, true)
+                        mInputBridge.sendMouseButton(currentMouseButton, false)
                     }, TOUCHPAD_CLICK_TIMEOUT)
                 }
             }
@@ -487,7 +485,7 @@ class VirtualTouchPad(
                 idleDelayHandler.removeCallbacksAndMessages(null)
                 clickDelayHandler.removeCallbacksAndMessages(null)
                 // Release mouse button
-                sdlOnNativeMouseDirect(currentMouseButton, MotionEvent.ACTION_UP, 0f, 0f, true)
+                mInputBridge.sendMouseButton(currentMouseButton, false)
             }
 
             TouchPadState.MOVING -> {
@@ -503,23 +501,11 @@ class VirtualTouchPad(
                 idleDelayHandler.removeCallbacksAndMessages(null)
                 clickDelayHandler.removeCallbacksAndMessages(null)
                 // Release mouse button
-                sdlOnNativeMouseDirect(currentMouseButton, MotionEvent.ACTION_UP, 0f, 0f, true)
+                mInputBridge.sendMouseButton(currentMouseButton, false)
             }
         }
 
         invalidate()
-    }
-
-    private fun sdlOnNativeMouseDirect(
-        button: Int,
-        action: Int,
-        x: Float,
-        y: Float,
-        relative: Boolean
-    ) {
-        if (mInputBridge is SDLInputBridge) {
-            mInputBridge.sdlOnNativeMouseDirect(button, action, x, y, relative)
-        }
     }
 
     private fun dpToPx(dp: Float) = dp * resources.displayMetrics.density

@@ -240,9 +240,7 @@ class VirtualDPad(
                 mInputBridge.sendKey(keycode, true)
             }
             ControlData.KeyType.MOUSE -> {
-                val centerX = this.x + width / 2f
-                val centerY = this.y + height / 2f
-                mInputBridge.sendMouseButton(keycode, true, centerX, centerY)
+                mInputBridge.sendMouseButton(keycode, true)
             }
             ControlData.KeyType.GAMEPAD -> {
                 mInputBridge.sendXboxButton(keycode, true)
@@ -260,9 +258,7 @@ class VirtualDPad(
                 mInputBridge.sendKey(keycode, false)
             }
             ControlData.KeyType.MOUSE -> {
-                val centerX = this.x + width / 2f
-                val centerY = this.y + height / 2f
-                mInputBridge.sendMouseButton(keycode, false, centerX, centerY)
+                mInputBridge.sendMouseButton(keycode, false)
             }
             ControlData.KeyType.GAMEPAD -> {
                 mInputBridge.sendXboxButton(keycode, false)

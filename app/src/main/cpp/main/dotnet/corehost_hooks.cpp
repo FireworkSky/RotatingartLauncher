@@ -1,4 +1,3 @@
-#include <android/log.h>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -11,6 +10,7 @@
 #include <time.h>
 #include <atomic>
 #include "And64InlineHook/And64InlineHook.hpp"
+#include "logging/app_log.h"
 #include <jni.h>
 
 #define LOG_TAG "COREHOST_TRACE"
@@ -69,7 +69,7 @@ static int hooked_fputc(int c, FILE* stream) {
     // 如果是换行符,输出累积的内容到 logcat
     if (c == '\n' && trace_buffer_len > 0) {
         trace_buffer[trace_buffer_len] = '\0';
-        __android_log_print(ANDROID_LOG_INFO, LOG_TAG, "%s", trace_buffer);
+        LOGI(LOG_TAG, "%s", trace_buffer);
         trace_buffer_len = 0;
     } else if (c != '\n' && trace_buffer_len < sizeof(trace_buffer) - 1) {
         // 累积字符
@@ -92,8 +92,7 @@ static int hooked_pthread_condattr_setclock(pthread_condattr_t* attr, clockid_t 
     if (clock_id == CLOCK_MONOTONIC) {
         int fallback = original_pthread_condattr_setclock(attr, CLOCK_REALTIME);
         if (fallback == 0) {
-            __android_log_print(
-                ANDROID_LOG_WARN,
+            LOGW(
                 LOG_TAG,
                 "Compat: pthread_condattr_setclock(CLOCK_MONOTONIC) failed rc=%d, fallback to CLOCK_REALTIME",
                 rc
@@ -119,8 +118,7 @@ static int hooked_pthread_attr_setstacksize(pthread_attr_t* attr, size_t stack_s
     if (stack_size != kCompatStackSize) {
         int fallback = original_pthread_attr_setstacksize(attr, kCompatStackSize);
         if (fallback == 0) {
-            __android_log_print(
-                ANDROID_LOG_WARN,
+            LOGW(
                 LOG_TAG,
                 "Compat: pthread_attr_setstacksize(%zu) failed rc=%d, fallback to %zu",
                 stack_size,
@@ -154,8 +152,7 @@ static int hooked_pthread_create(
         usleep(2000);
         int retry = original_pthread_create(thread, attr, start_routine, arg);
         if (retry == 0) {
-            __android_log_print(
-                ANDROID_LOG_WARN,
+            LOGW(
                 LOG_TAG,
                 "Compat: pthread_create EAGAIN recovered by one retry"
             );
@@ -191,8 +188,7 @@ static int hooked_sched_getaffinity(pid_t pid, size_t cpusetsize, cpu_set_t* mas
         for (size_t i = 0; i < usable_cpus; ++i) {
             CPU_SET(i, mask);
         }
-        __android_log_print(
-            ANDROID_LOG_WARN,
+        LOGW(
             LOG_TAG,
             "Compat: sched_getaffinity(pid=%d) failed errno=%d, fallback to synthetic cpu mask (%zu cpus)",
             static_cast<int>(pid),
@@ -221,8 +217,7 @@ static int hooked_sched_setaffinity(pid_t pid, size_t cpusetsize, const cpu_set_
     const int saved_errno = errno;
     if (pid == 0 || pid == getpid()) {
         if (saved_errno == EPERM || saved_errno == EACCES || saved_errno == EINVAL || saved_errno == ENOSYS) {
-            __android_log_print(
-                ANDROID_LOG_WARN,
+            LOGW(
                 LOG_TAG,
                 "Compat: sched_setaffinity(pid=%d) failed errno=%d, treating as non-fatal",
                 static_cast<int>(pid),
@@ -245,7 +240,7 @@ extern "C" void init_corehost_compat_hooks() {
     void* libc = dlopen("libc.so", RTLD_NOW);
     if (!libc) {
         g_compat_hooks_installed.store(false);
-        __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, "Compat: failed to open libc.so: %s", dlerror());
+        LOGE(LOG_TAG, "Compat: failed to open libc.so: %s", dlerror());
         return;
     }
 
@@ -256,9 +251,9 @@ extern "C" void init_corehost_compat_hooks() {
             (void*)hooked_pthread_condattr_setclock,
             (void**)&original_pthread_condattr_setclock
         );
-        __android_log_print(ANDROID_LOG_INFO, LOG_TAG, "Compat: hooked pthread_condattr_setclock");
+        LOGI(LOG_TAG, "Compat: hooked pthread_condattr_setclock");
     } else {
-        __android_log_print(ANDROID_LOG_WARN, LOG_TAG, "Compat: symbol pthread_condattr_setclock not found");
+        LOGW(LOG_TAG, "Compat: symbol pthread_condattr_setclock not found");
     }
 
     void* pthread_attr_setstacksize_addr = dlsym(libc, "pthread_attr_setstacksize");
@@ -268,9 +263,9 @@ extern "C" void init_corehost_compat_hooks() {
             (void*)hooked_pthread_attr_setstacksize,
             (void**)&original_pthread_attr_setstacksize
         );
-        __android_log_print(ANDROID_LOG_INFO, LOG_TAG, "Compat: hooked pthread_attr_setstacksize");
+        LOGI(LOG_TAG, "Compat: hooked pthread_attr_setstacksize");
     } else {
-        __android_log_print(ANDROID_LOG_WARN, LOG_TAG, "Compat: symbol pthread_attr_setstacksize not found");
+        LOGW(LOG_TAG, "Compat: symbol pthread_attr_setstacksize not found");
     }
 
     void* pthread_create_addr = dlsym(libc, "pthread_create");
@@ -280,9 +275,9 @@ extern "C" void init_corehost_compat_hooks() {
             (void*)hooked_pthread_create,
             (void**)&original_pthread_create
         );
-        __android_log_print(ANDROID_LOG_INFO, LOG_TAG, "Compat: hooked pthread_create");
+        LOGI(LOG_TAG, "Compat: hooked pthread_create");
     } else {
-        __android_log_print(ANDROID_LOG_WARN, LOG_TAG, "Compat: symbol pthread_create not found");
+        LOGW(LOG_TAG, "Compat: symbol pthread_create not found");
     }
 
     void* sched_getaffinity_addr = dlsym(libc, "sched_getaffinity");
@@ -292,9 +287,9 @@ extern "C" void init_corehost_compat_hooks() {
             (void*)hooked_sched_getaffinity,
             (void**)&original_sched_getaffinity
         );
-        __android_log_print(ANDROID_LOG_INFO, LOG_TAG, "Compat: hooked sched_getaffinity");
+        LOGI(LOG_TAG, "Compat: hooked sched_getaffinity");
     } else {
-        __android_log_print(ANDROID_LOG_WARN, LOG_TAG, "Compat: symbol sched_getaffinity not found");
+        LOGW(LOG_TAG, "Compat: symbol sched_getaffinity not found");
     }
 
     void* sched_setaffinity_addr = dlsym(libc, "sched_setaffinity");
@@ -304,9 +299,9 @@ extern "C" void init_corehost_compat_hooks() {
             (void*)hooked_sched_setaffinity,
             (void**)&original_sched_setaffinity
         );
-        __android_log_print(ANDROID_LOG_INFO, LOG_TAG, "Compat: hooked sched_setaffinity");
+        LOGI(LOG_TAG, "Compat: hooked sched_setaffinity");
     } else {
-        __android_log_print(ANDROID_LOG_WARN, LOG_TAG, "Compat: symbol sched_setaffinity not found");
+        LOGW(LOG_TAG, "Compat: symbol sched_setaffinity not found");
     }
 
     dlclose(libc);
@@ -316,7 +311,7 @@ extern "C" void init_corehost_compat_hooks() {
 extern "C" void init_corehost_trace_hooks() {
     void* libc = dlopen("libc.so", RTLD_NOW);
     if (!libc) {
-        __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, "Failed to open libc.so: %s", dlerror());
+        LOGE(LOG_TAG, "Failed to open libc.so: %s", dlerror());
         return;
     }
 
@@ -324,22 +319,22 @@ extern "C" void init_corehost_trace_hooks() {
     void* vfprintf_addr = dlsym(libc, "vfprintf");
     if (vfprintf_addr) {
         A64HookFunction(vfprintf_addr, (void*)hooked_vfprintf, (void**)&original_vfprintf);
-        __android_log_print(ANDROID_LOG_INFO, LOG_TAG, "Hooked vfprintf at: %p", vfprintf_addr);
+        LOGI(LOG_TAG, "Hooked vfprintf at: %p", vfprintf_addr);
     } else {
-        __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, "Failed to find vfprintf: %s", dlerror());
+        LOGE(LOG_TAG, "Failed to find vfprintf: %s", dlerror());
     }
 
     // Hook fputc
     void* fputc_addr = dlsym(libc, "fputc");
     if (fputc_addr) {
         A64HookFunction(fputc_addr, (void*)hooked_fputc, (void**)&original_fputc);
-        __android_log_print(ANDROID_LOG_INFO, LOG_TAG, "Hooked fputc at: %p", fputc_addr);
+        LOGI(LOG_TAG, "Hooked fputc at: %p", fputc_addr);
     } else {
-        __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, "Failed to find fputc: %s", dlerror());
+        LOGE(LOG_TAG, "Failed to find fputc: %s", dlerror());
     }
 
     dlclose(libc);
-    __android_log_print(ANDROID_LOG_INFO, LOG_TAG, "COREHOST_TRACE redirect initialization complete");
+    LOGI(LOG_TAG, "COREHOST_TRACE redirect initialization complete");
 }
 
 // JNI接口函数

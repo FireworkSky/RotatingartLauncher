@@ -92,13 +92,6 @@ object SettingsAccess {
         get() = settings.touchMultitouchEnabled
 
     // FNA 触屏设置
-    val isMouseRightStickEnabled: Boolean
-        get() = settings.mouseRightStickEnabled
-
-    var mouseRightStickAttackMode: Int
-        get() = settings.mouseRightStickAttackMode
-        set(value) = update { mouseRightStickAttackMode = value }
-
     var mouseRightStickSpeed: Int
         get() = settings.mouseRightStickSpeed
         set(value) = update { mouseRightStickSpeed = value }

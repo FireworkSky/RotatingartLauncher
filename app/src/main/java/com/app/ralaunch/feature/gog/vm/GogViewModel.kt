@@ -44,7 +44,6 @@ data class GogScreenUiState(
 
 sealed class GogUiEffect {
     data class ShowToast(val message: String) : GogUiEffect()
-    data class ShowError(val message: String) : GogUiEffect()
     data class OpenUrl(val url: String) : GogUiEffect()
     data class NavigateToImport(
         val gamePath: String?,
@@ -76,7 +75,8 @@ class GogViewModel(
         updateGogState {
             it.copy(
                 isLoading = true,
-                loadingMessage = appContext.getString(R.string.gog_logging_in)
+                loadingMessage = appContext.getString(R.string.gog_logging_in),
+                error = null
             )
         }
 
@@ -84,21 +84,21 @@ class GogViewModel(
             try {
                 val success = authClient.exchangeCodeForToken(authCode)
                 if (success) {
-                    updateGogState { it.copy(isLoggedIn = true) }
+                    updateGogState { it.copy(isLoggedIn = true, error = null) }
                     _effect.emit(GogUiEffect.ShowToast(appContext.getString(R.string.gog_login_success)))
                     loadUserInfoAndGames()
                 } else {
-                    updateGogState { it.copy(isLoading = false) }
+                    updateGogState {
+                        it.copy(
+                            isLoading = false,
+                            error = appContext.getString(R.string.gog_login_failed)
+                        )
+                    }
                     _effect.emit(GogUiEffect.ShowToast(appContext.getString(R.string.gog_login_failed)))
                 }
             } catch (e: Exception) {
                 AppLog.e(TAG, "WebView 登录异常", e)
-                updateGogState { it.copy(isLoading = false) }
-                _effect.emit(
-                    GogUiEffect.ShowError(
-                        appContext.getString(R.string.gog_login_error, e.message ?: "")
-                    )
-                )
+                showError(appContext.getString(R.string.gog_login_error, e.message ?: ""))
             }
         }
     }
@@ -137,7 +137,8 @@ class GogViewModel(
         updateGogState {
             it.copy(
                 isLoading = true,
-                loadingMessage = appContext.getString(R.string.gog_loading_version_info, game.title)
+                loadingMessage = appContext.getString(R.string.gog_loading_version_info, game.title),
+                error = null
             )
         }
 
@@ -336,7 +337,8 @@ class GogViewModel(
         updateGogState {
             it.copy(
                 isLoading = true,
-                loadingMessage = appContext.getString(R.string.gog_loading_user_info)
+                loadingMessage = appContext.getString(R.string.gog_loading_user_info),
+                error = null
             )
         }
 
@@ -370,7 +372,8 @@ class GogViewModel(
                     it.copy(
                         isLoading = false,
                         games = gameUiList,
-                        filteredGames = gameUiList
+                        filteredGames = gameUiList,
+                        error = null
                     )
                 }
 
@@ -385,14 +388,22 @@ class GogViewModel(
                 )
             } catch (e: Exception) {
                 AppLog.e(TAG, "加载数据失败", e)
-                updateGogState { it.copy(isLoading = false) }
-                _effect.emit(
-                    GogUiEffect.ShowError(
-                        appContext.getString(R.string.gog_load_games_failed, e.message ?: "")
-                    )
-                )
+                showError(appContext.getString(R.string.gog_load_games_failed, e.message ?: ""))
             }
         }
+    }
+
+    fun showError(message: String) {
+        updateGogState {
+            it.copy(
+                isLoading = false,
+                error = message
+            )
+        }
+    }
+
+    fun dismissError() {
+        updateGogState { it.copy(error = null) }
     }
 
     private fun updateGogState(transform: (GogUiState) -> GogUiState) {

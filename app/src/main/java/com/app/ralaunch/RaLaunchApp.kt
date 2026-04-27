@@ -10,17 +10,18 @@ import com.app.ralaunch.feature.controls.packs.ControlPackManager
 import com.app.ralaunch.core.common.SettingsAccess
 import com.app.ralaunch.core.di.KoinInitializer
 import com.app.ralaunch.core.di.contract.IRuntimeManagerServiceV2
+import com.app.ralaunch.core.di.service.StoragePathsProviderServiceV1
 import com.app.ralaunch.core.di.service.VibrationManagerServiceV1
 import com.app.ralaunch.core.logging.service.AndroidFileLogger
 import com.app.ralaunch.core.common.util.DensityAdapter
 import com.app.ralaunch.core.common.util.LocaleManager
 import com.app.ralaunch.core.model.ThemeMode
-import com.app.ralaunch.core.platform.AppConstants
 import com.app.ralaunch.feature.patch.data.PatchManager
 import com.kyant.fishnet.Fishnet
 import org.koin.android.ext.android.inject
 import org.koin.core.component.KoinComponent
 import java.io.File
+import java.io.InvalidObjectException
 
 /**
  * 应用程序 Application 类 (Kotlin 重构版)
@@ -55,6 +56,7 @@ class RaLaunchApp : Application(), KoinComponent {
     private val _patchManager: PatchManager? by inject()
     private val _runtimeManager: IRuntimeManagerServiceV2 by inject()
     private val _fileLogger: AndroidFileLogger by inject()
+    private val _storagePathsProvider: StoragePathsProviderServiceV1 by inject()
 
     override fun onCreate() {
         super.onCreate()
@@ -123,7 +125,7 @@ class RaLaunchApp : Application(), KoinComponent {
 
     private fun initFileLogger() {
         try {
-            val logDir = File(getExternalFilesDir(null), AppConstants.Dirs.LOGS)
+            val logDir = File(_storagePathsProvider.logsDirPathFull())
             _fileLogger.start(
                 logDirectory = logDir,
                 clearExistingLogs = isMainAppProcess()

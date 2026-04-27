@@ -34,18 +34,9 @@
     <string name="confirm">Confirm</string>
     <string name="close">Close</string>
 
-    <!-- Error Dialog -->
-    <string name="error_title_default">Error</string>
+    <!-- Errors -->
     <string name="error_message_default">An error occurred</string>
     <string name="error_operation_failed">Operation failed</string>
-    <string name="error_details_title">Error Details</string>
-    <string name="error_show_details">Show Details</string>
-    <string name="error_hide_details">Hide Details</string>
-    <string name="error_copy">Copy</string>
-    <string name="error_copy_success">Copied to clipboard</string>
-    <string name="error_icon_desc">Error icon</string>
-    <string name="error_crash_title">Application Crash</string>
-    <string name="error_fatal_title">Fatal Error</string>
 
     <!-- Import Game -->
     <string name="import_select_game_file">Select Game File</string>

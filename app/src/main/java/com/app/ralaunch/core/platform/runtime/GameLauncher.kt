@@ -223,7 +223,6 @@ object GameLauncher {
             AppLog.d(TAG, "应用用户设置 / Applying settings configuration...")
             AppLog.d(TAG, "  - 大核亲和性 / Big core affinity: ${settings.setThreadAffinityToBigCoreEnabled}")
             AppLog.d(TAG, "  - 多点触控 / Touch multitouch: ${settings.isTouchMultitouchEnabled}")
-            AppLog.d(TAG, "  - 鼠标右摇杆 / Mouse right stick: ${settings.isMouseRightStickEnabled}")
 
             // 步骤6：配置启动钩子（补丁）
             // Step 6: Configure startup hooks (patches)
@@ -257,7 +256,6 @@ object GameLauncher {
                 // Touch input configuration
                 "SDL_TOUCH_MOUSE_EVENTS" to "1",
                 "SDL_TOUCH_MOUSE_MULTITOUCH" to if (settings.isTouchMultitouchEnabled) "1" else "0",
-                "RALCORE_MOUSE_RIGHT_STICK" to if (settings.isMouseRightStickEnabled) "1" else null,
 
                 // 音频配置
                 // Audio configuration

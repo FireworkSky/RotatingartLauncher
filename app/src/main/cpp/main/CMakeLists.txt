@@ -2,22 +2,19 @@
 # FNA3D .NET 游戏启动器 - 主 JNI 桥接库
 
 set(MAIN_SOURCES
+        jni_entry.c
         sdl_entry.c
-        jni_bridge.c
-        app_logger.c
-        app_logger_jni.c
-        renderer_loader.c
+        logging/app_log.c
         osm_renderer.c
         thread_affinity_manager.cpp
-        touch_bridge.c
-        virtual_mouse_sdl.c
-        sdl_text_bridge.c
+        sdl_input_bridge_extend.c
         And64InlineHook/And64InlineHook.cpp
         shared_envvars.cpp
         dotnet/dotnet_launcher.cpp
         dotnet/corehost_hooks.cpp
         utils/native_methods.cpp
         core/game_launcher.cpp
+
 )
 
 add_library(${CMAKE_PROJECT_NAME} SHARED ${MAIN_SOURCES})

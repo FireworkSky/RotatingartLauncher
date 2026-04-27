@@ -14,6 +14,9 @@ class StoragePathsProviderServiceV1(
     fun gamesDirPathFull(): String =
         externalFilesDirPath().resolve(AppConstants.Dirs.GAMES).absolutePathString()
 
+    fun logsDirPathFull(): String =
+        externalFilesDirPath().resolve(AppConstants.Dirs.LOGS).absolutePathString()
+
     fun settingsFilePathFull(): String =
         Path(context.filesDir.absolutePath).resolve(AppConstants.Files.SETTINGS).absolutePathString()
 
@@ -23,16 +26,12 @@ class StoragePathsProviderServiceV1(
         Path(context.filesDir.absolutePath).resolve(AppConstants.Dirs.RUNTIMES).absolutePathString()
 
     fun legacyDotnetDirPathFull(): String =
-        Path(context.filesDir.absolutePath).resolve(LEGACY_DOTNET_DIR_NAME).absolutePathString()
+        Path(context.filesDir.absolutePath).resolve(AppConstants.Dirs.LEGACY_DOTNET).absolutePathString()
 
     private fun externalFilesDirPath() = run {
         val externalFilesDir = requireNotNull(context.getExternalFilesDir(null)) {
             "External files directory is unavailable"
         }
         Path(externalFilesDir.absolutePath)
-    }
-
-    private companion object {
-        const val LEGACY_DOTNET_DIR_NAME = "dotnet"
     }
 }

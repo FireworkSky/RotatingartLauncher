@@ -27,6 +27,8 @@ object AppConstants {
         const val LOGS = "logs"
         /** 运行时目录 */
         const val RUNTIMES = "runtimes"
+        /** 旧版 .NET 运行时目录 */
+        const val LEGACY_DOTNET = "dotnet"
         /** 补丁目录 */
         const val PATCHES = "patches"
     }

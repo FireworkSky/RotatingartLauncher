@@ -6,23 +6,18 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.RectF
-import android.os.Handler
-import android.os.Looper
 import com.app.ralaunch.core.logging.AppLog
-import android.view.MotionEvent
 import android.view.View
 import com.app.ralaunch.core.di.service.VibrationManagerServiceV1
 import com.app.ralaunch.feature.controls.ControlData
 import org.koin.java.KoinJavaComponent
 import com.app.ralaunch.feature.controls.bridges.ControlInputBridge
-import com.app.ralaunch.feature.controls.bridges.SDLInputBridge
 import com.app.ralaunch.feature.controls.textures.TextureLoader
 import com.app.ralaunch.feature.controls.textures.TextureRenderer
 import com.app.ralaunch.core.common.SettingsAccess
 import java.io.File
 import kotlin.math.atan2
 import kotlin.math.cos
-import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.sin
 import kotlin.math.sqrt
@@ -73,7 +68,7 @@ class VirtualJoystick(
         private const val TAG = "VirtualJoystick"
 
         // 8个方向常量（对应游戏中的实际方向）
-        val DIR_NONE: Int = -1
+        const val DIR_NONE: Int = -1
         const val DIR_UP: Int = 0 // 上 (W)
         const val DIR_UP_RIGHT: Int = 1 // 右上 (W+D)
         const val DIR_RIGHT: Int = 2 // 右 (D)
@@ -84,15 +79,6 @@ class VirtualJoystick(
         const val DIR_UP_LEFT: Int = 7 // 左上 (W+A)
 
         private const val STICK_BACKGROUND_SIZE = 0.75f // 背景圆占摇杆半径的比例
-
-        private const val CLICK_ATTACK_INTERVAL_MS = 150 // 点击攻击间隔（毫秒）
-
-        private const val MOUSE_CLICK_INTERVAL_MS = 100 // 鼠标点击间隔（毫秒）
-        private const val MOUSE_MOVE_INTERVAL_MS = 16 // 鼠标移动更新间隔（约60fps）
-
-        // 右摇杆移动阈值（像素，只有当摇杆位置变化超过此值时才移动鼠标）
-        // 改为极小值以确保丝滑移动，死区已经处理了静止状态
-        private const val JOYSTICK_MOVE_THRESHOLD = 0.1f
 
         // 死区（防止漂移）- 改为较小值以提高触摸灵敏度
         private const val DEADZONE_PERCENT = 0.05f
@@ -149,22 +135,6 @@ class VirtualJoystick(
     private var mScreenWidth = 0
     private var mScreenHeight = 0
 
-    // 右摇杆攻击状态
-    private var mIsAttacking = false
-    private var mClickAttackHandler: Handler
-    private val mClickAttackRunnable: Runnable
-
-    // 鼠标模式右摇杆攻击状态
-    private var mMouseLeftPressed = false // 鼠标左键是否按下
-    private var mMouseClickRunnable: Runnable // 点击模式 Runnable
-    private var mAttackMode = 0 // 攻击模式：0=长按, 1=点击, 2=持续
-
-    // 鼠标移动状态
-    private val mMouseMoveRunnable: Runnable? = null // 鼠标移动 Runnable
-    private val mCurrentMouseDx = 0f // 当前摇杆 X 方向偏移
-    private val mCurrentMouseDy = 0f // 当前摇杆 Y 方向偏移
-    private val mMouseMoveActive = false // 鼠标移动是否激活
-
     // 运行时从全局设置读取的鼠标速度和范围
     private var mGlobalMouseSpeed = 80.0f
     private var mGlobalMouseRangeLeft = 0.0f
@@ -181,9 +151,7 @@ class VirtualJoystick(
 
         // 读取全局设置（攻击模式、鼠标速度、鼠标范围）
         try {
-            val settingsManager =
-                SettingsAccess
-            mAttackMode = settingsManager.mouseRightStickAttackMode
+            val settingsManager = SettingsAccess
             mGlobalMouseSpeed = settingsManager.mouseRightStickSpeed.toFloat()
             mGlobalMouseRangeLeft = settingsManager.mouseRightStickRangeLeft
             mGlobalMouseRangeTop = settingsManager.mouseRightStickRangeTop
@@ -229,8 +197,7 @@ class VirtualJoystick(
                         ", range=(" + mGlobalMouseRangeLeft + "," + mGlobalMouseRangeTop +
                         "," + mGlobalMouseRangeRight + "," + mGlobalMouseRangeBottom + ")"
             )
-        } catch (e: Exception) {
-            mAttackMode = 0 // 默认长按模式
+        } catch (_: Exception) {
             mGlobalMouseSpeed = 80.0f // 默认速度80（范围60-200）
             mGlobalMouseRangeLeft = 0.0f
             mGlobalMouseRangeTop = 0.0f
@@ -244,46 +211,6 @@ class VirtualJoystick(
         // 禁用裁剪，让方向指示线可以完整显示
         clipToOutline = false
         clipBounds = null
-
-        // 初始化点击攻击 Handler（仅用于非鼠标移动模式）
-        mClickAttackHandler = Handler(Looper.getMainLooper())
-        mClickAttackRunnable = object : Runnable {
-            override fun run() {
-                if (mIsAttacking && mCurrentDirection != DIR_NONE && !false) {
-                    // 点击模式：触发一次点击（释放然后按下）
-                    performClickAttack(mCurrentDirection)
-                    // 继续下一次点击
-                    mClickAttackHandler.postDelayed(this, CLICK_ATTACK_INTERVAL_MS.toLong())
-                }
-            }
-        }
-
-
-        // 初始化鼠标模式点击 Runnable（仅点击模式使用）
-        mMouseClickRunnable = Runnable {
-            // 仅在点击模式下执行连续点击
-            if (mIsAttacking && mMouseLeftPressed && mAttackMode == 1 && mInputBridge is SDLInputBridge) {
-                val bridge1 = mInputBridge as SDLInputBridge
-                // 使用屏幕中心作为点击位置
-                val mouseX = mScreenWidth / 2.0f
-                val mouseY = mScreenHeight / 2.0f
-
-                // 发送鼠标左键点击（按下-释放）
-                bridge1.sendMouseButton(ControlData.KeyCode.MOUSE_LEFT, true, mouseX, mouseY)
-                // 短暂延迟后释放
-                mClickAttackHandler.postDelayed(Runnable {
-                    if (mIsAttacking && mMouseLeftPressed && mAttackMode == 1) {
-                        bridge1.sendMouseButton(ControlData.KeyCode.MOUSE_LEFT, false, mouseX, mouseY)
-                    }
-                }, 50) // 50ms 按下时间
-
-                // 继续下一次点击
-                mClickAttackHandler.postDelayed(
-                    mMouseClickRunnable,
-                    MOUSE_CLICK_INTERVAL_MS.toLong()
-                )
-            }
-        }
 
         initPaints()
     }
@@ -488,14 +415,6 @@ class VirtualJoystick(
         // 记录触摸点
         mActivePointerId = pointerId
 
-        // 如果是右摇杆鼠标模式，初始化并设置虚拟鼠标范围
-        if (castedData.mode == ControlData.Joystick.Mode.MOUSE && castedData.isRightStick) {
-            if (mInputBridge is SDLInputBridge) {
-                (mInputBridge as SDLInputBridge).initVirtualMouse(mScreenWidth, mScreenHeight)
-            }
-            setVirtualMouseRange()
-        }
-
         handleMove(x, y)
         mIsTouching = true
         triggerVibration(true)
@@ -519,19 +438,14 @@ class VirtualJoystick(
     }
 
     override fun cancelAllTouches() {
-        // 必须清理所有 Handler，防止后续回调导致状态问题
-        mClickAttackHandler.removeCallbacksAndMessages(null)
-
         mActivePointerId = -1
 
         // 强制调用 handleRelease 并重置所有状态
-        if (mIsTouching || mIsAttacking || mMouseLeftPressed || mCurrentDirection != DIR_NONE) {
+        if (mIsTouching || mCurrentDirection != DIR_NONE) {
             handleRelease()
         }
 
         mIsTouching = false
-        mIsAttacking = false
-        mMouseLeftPressed = false
         mCurrentDirection = DIR_NONE
         resetStick()
         triggerVibration(false)
@@ -540,18 +454,13 @@ class VirtualJoystick(
 
     override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()
-        // 清理所有待处理的 Handler，防止内存泄漏和状态问题
-        mClickAttackHandler.removeCallbacksAndMessages(null)
-
         // 如果还在触摸状态，执行释放逻辑
-        if (mIsTouching || mIsAttacking || mMouseLeftPressed) {
+        if (mIsTouching) {
             handleRelease()
         }
 
         // 重置所有状态
         mIsTouching = false
-        mIsAttacking = false
-        mMouseLeftPressed = false
         mActivePointerId = -1
         mCurrentDirection = DIR_NONE
         resetStick()
@@ -586,8 +495,8 @@ class VirtualJoystick(
         var visDy = dy
         if (castedData.rotation != 0f) {
             val rad = Math.toRadians(-castedData.rotation.toDouble())
-            val cos = Math.cos(rad).toFloat()
-            val sin = Math.sin(rad).toFloat()
+            val cos = cos(rad).toFloat()
+            val sin = sin(rad).toFloat()
             visDx = dx * cos - dy * sin
             visDy = dx * sin + dy * cos
         }
@@ -608,48 +517,38 @@ class VirtualJoystick(
 
 
         // 根据模式发送不同的输入事件
-        if (castedData.mode == ControlData.Joystick.Mode.MOUSE) {
-            // 鼠标模式：根据xboxUseRightStick区分左右摇杆
-            if (castedData.isRightStick) {
-                // 右摇杆：鼠标移动模式 + 持续点击攻击
+        when (castedData.mode) {
+            ControlData.Joystick.Mode.MOUSE -> {
                 // 直接判断是否在死区外（有效区域），而不是通过方向变化判断
                 val inActiveZone = (distance >= mRadius * DEADZONE_PERCENT)
 
-
                 // 检测攻击状态变化：进入/离开死区时启动/停止攻击
-                if (!mIsAttacking && inActiveZone) {
-                    // 从死区进入有效区域：开始持续鼠标左键点击
-                    startMouseClick()
-                    mIsAttacking = true
-                } else if (mIsAttacking && !inActiveZone) {
-                    // 从有效区域返回死区：停止持续点击
-                    stopMouseClick()
-                    mIsAttacking = false
+                if (inActiveZone) {
+                    sendMouseClickDown()
+                } else {
+                    sendMouseClickUp()
                 }
-
 
                 // 更新方向（用于其他逻辑，如UI显示）
                 val newDirection = calculateDirection(dx, dy, distance)
                 mCurrentDirection = newDirection
 
-
-                // 发送鼠标相对移动（只有当摇杆位置变化时才移动）
-                sendVirtualMouseMove(dx, dy, distance)
-            } else {
-                // 左摇杆：将摇杆偏移量转换为鼠标移动
-                sendMouseMove(dx, dy, distance)
+                // 发送鼠标绝对移动（只有当摇杆位置变化时才移动）
+                sendMousePos(dx, dy, distance)
             }
-        } else if (castedData.mode == ControlData.Joystick.Mode.GAMEPAD) {
-            // SDL控制器模式：发送模拟摇杆输入
-            sendSDLStick(dx, dy, distance, maxDistance)
-        } else if (castedData.mode == ControlData.Joystick.Mode.KEYBOARD) {
-            // 键盘模式：沿用原有输入路径，只将视觉位置改为离散方向
-            val newDirection = calculateDirection(dx, dy, distance)
-            updateKeyboardStickPosition(newDirection)
-            if (newDirection != mCurrentDirection) {
-                releaseDirection(mCurrentDirection)
-                pressDirection(newDirection)
-                mCurrentDirection = newDirection
+            ControlData.Joystick.Mode.GAMEPAD -> {
+                // SDL控制器模式：发送模拟摇杆输入
+                sendSDLStick(dx, dy, distance, maxDistance)
+            }
+            ControlData.Joystick.Mode.KEYBOARD -> {
+                // 键盘模式：沿用原有输入路径，只将视觉位置改为离散方向
+                val newDirection = calculateDirection(dx, dy, distance)
+                updateKeyboardStickPosition(newDirection)
+                if (newDirection != mCurrentDirection) {
+                    releaseDirection(mCurrentDirection)
+                    pressDirection(newDirection)
+                    mCurrentDirection = newDirection
+                }
             }
         }
 
@@ -660,48 +559,26 @@ class VirtualJoystick(
         resetStick()
 
         // 根据模式执行不同的释放操作
-        if (castedData.mode == ControlData.Joystick.Mode.MOUSE) {
-            // 鼠标模式
-            if (castedData.isRightStick) {
-                // 右摇杆：停止持续点击
-                stopMouseClick()
-                mIsAttacking = false
-
-
-                // 重要：保存当前虚拟鼠标位置，防止松开时鼠标位置被重置
-                // 因为触摸事件可能会被SDL转换为鼠标事件，导致鼠标位置跳回触摸位置
-                // 使用延迟执行确保在SDL处理完触摸事件后再设置鼠标位置
-                if (mInputBridge is SDLInputBridge) {
-                    val bridge = mInputBridge as SDLInputBridge
-                    val currentX = bridge.virtualMouseX
-                    val currentY = bridge.virtualMouseY
-
-
-                    // 延迟50ms执行，确保SDL处理完触摸事件
-                    postDelayed(object : Runnable {
-                        override fun run() {
-                            bridge.setVirtualMousePosition(currentX, currentY)
-                            AppLog.d(
-                                TAG,
-                                "Restored mouse position after release: ($currentX, $currentY)"
-                            )
-                        }
-                    }, 50)
+        when (castedData.mode) {
+            ControlData.Joystick.Mode.MOUSE -> {
+                // 鼠标模式
+                sendMouseClickUp()
+                mCurrentDirection = DIR_NONE
+            }
+            ControlData.Joystick.Mode.KEYBOARD -> {
+                // 键盘模式：释放按键和组合键
+                releaseDirection(mCurrentDirection)
+                mCurrentDirection = DIR_NONE
+            }
+            ControlData.Joystick.Mode.GAMEPAD -> {
+                // SDL控制器模式：摇杆回中
+                if (castedData.isRightStick) {
+                    mInputBridge.sendXboxRightStick(0.0f, 0.0f)
+                } else {
+                    mInputBridge.sendXboxLeftStick(0.0f, 0.0f)
                 }
+                mCurrentDirection = DIR_NONE
             }
-            mCurrentDirection = DIR_NONE
-        } else if (castedData.mode == ControlData.Joystick.Mode.KEYBOARD) {
-            // 键盘模式：释放按键和组合键
-            releaseDirection(mCurrentDirection)
-            mCurrentDirection = DIR_NONE
-        } else if (castedData.mode == ControlData.Joystick.Mode.GAMEPAD) {
-            // SDL控制器模式：摇杆回中
-            if (castedData.isRightStick) {
-                mInputBridge.sendXboxRightStick(0.0f, 0.0f)
-            } else {
-                mInputBridge.sendXboxLeftStick(0.0f, 0.0f)
-            }
-            mCurrentDirection = DIR_NONE
         }
 
         invalidate()
@@ -776,33 +653,30 @@ class VirtualJoystick(
     private fun pressDirection(direction: Int) {
         if (direction == DIR_NONE) return
 
+        // 发送方向键
+        when (direction) {
+            DIR_UP -> mInputBridge.sendKey(castedData.joystickKeys[0], true)
+            DIR_UP_RIGHT -> {
+                mInputBridge.sendKey(castedData.joystickKeys[0], true) // W (up)
+                mInputBridge.sendKey(castedData.joystickKeys[1], true) // D (right)
+            }
 
-        // 发送方向键（如果joystickKeys不为null）
-        if (castedData.joystickKeys != null) {
-            when (direction) {
-                DIR_UP -> mInputBridge.sendKey(castedData.joystickKeys[0], true)
-                DIR_UP_RIGHT -> {
-                    mInputBridge.sendKey(castedData.joystickKeys[0], true) // W (up)
-                    mInputBridge.sendKey(castedData.joystickKeys[1], true) // D (right)
-                }
+            DIR_RIGHT -> mInputBridge.sendKey(castedData.joystickKeys[1], true)
+            DIR_DOWN_RIGHT -> {
+                mInputBridge.sendKey(castedData.joystickKeys[2], true) // S (down)
+                mInputBridge.sendKey(castedData.joystickKeys[1], true) // D (right)
+            }
 
-                DIR_RIGHT -> mInputBridge.sendKey(castedData.joystickKeys[1], true)
-                DIR_DOWN_RIGHT -> {
-                    mInputBridge.sendKey(castedData.joystickKeys[2], true) // S (down)
-                    mInputBridge.sendKey(castedData.joystickKeys[1], true) // D (right)
-                }
+            DIR_DOWN -> mInputBridge.sendKey(castedData.joystickKeys[2], true)
+            DIR_DOWN_LEFT -> {
+                mInputBridge.sendKey(castedData.joystickKeys[2], true) // S (down)
+                mInputBridge.sendKey(castedData.joystickKeys[3], true) // A (left)
+            }
 
-                DIR_DOWN -> mInputBridge.sendKey(castedData.joystickKeys[2], true)
-                DIR_DOWN_LEFT -> {
-                    mInputBridge.sendKey(castedData.joystickKeys[2], true) // S (down)
-                    mInputBridge.sendKey(castedData.joystickKeys[3], true) // A (left)
-                }
-
-                DIR_LEFT -> mInputBridge.sendKey(castedData.joystickKeys[3], true)
-                DIR_UP_LEFT -> {
-                    mInputBridge.sendKey(castedData.joystickKeys[0], true) // W (up)
-                    mInputBridge.sendKey(castedData.joystickKeys[3], true) // A (left)
-                }
+            DIR_LEFT -> mInputBridge.sendKey(castedData.joystickKeys[3], true)
+            DIR_UP_LEFT -> {
+                mInputBridge.sendKey(castedData.joystickKeys[0], true) // W (up)
+                mInputBridge.sendKey(castedData.joystickKeys[3], true) // A (left)
             }
         }
     }
@@ -812,250 +686,41 @@ class VirtualJoystick(
      */
     private fun releaseDirection(direction: Int) {
         if (direction == DIR_NONE) return
-
-
-        // 释放方向键（如果joystickKeys不为null）
-        if (castedData.joystickKeys != null) {
-            when (direction) {
-                DIR_UP -> mInputBridge.sendKey(castedData.joystickKeys[0], false)
-                DIR_UP_RIGHT -> {
-                    mInputBridge.sendKey(castedData.joystickKeys[0], false)
-                    mInputBridge.sendKey(castedData.joystickKeys[1], false)
-                }
-
-                DIR_RIGHT -> mInputBridge.sendKey(castedData.joystickKeys[1], false)
-                DIR_DOWN_RIGHT -> {
-                    mInputBridge.sendKey(castedData.joystickKeys[2], false)
-                    mInputBridge.sendKey(castedData.joystickKeys[1], false)
-                }
-
-                DIR_DOWN -> mInputBridge.sendKey(castedData.joystickKeys[2], false)
-                DIR_DOWN_LEFT -> {
-                    mInputBridge.sendKey(castedData.joystickKeys[2], false)
-                    mInputBridge.sendKey(castedData.joystickKeys[3], false)
-                }
-
-                DIR_LEFT -> mInputBridge.sendKey(castedData.joystickKeys[3], false)
-                DIR_UP_LEFT -> {
-                    mInputBridge.sendKey(castedData.joystickKeys[0], false)
-                    mInputBridge.sendKey(castedData.joystickKeys[3], false)
-                }
-            }
-        }
-    }
-
-    /**
-     * 停止持续攻击 - 清除虚拟触屏点
-     */
-    private fun stopContinuousAttack() {
-        if (!mIsAttacking) return
-        mIsAttacking = false
-        // 释放攻击状态
-        // 组合键已移除
-    }
-
-    /**
-     * 更新攻击方向（方向改变时调用，用于持续攻击模式）
-     * 会自动释放旧方向的虚拟触屏点并按下新方向
-     */
-    private fun updateAttackDirection(oldDirection: Int, newDirection: Int) {
-        // 释放旧方向
-        if (oldDirection != DIR_NONE) {
-            // 组合键已移除
-        }
-        // 按下新方向
-        if (newDirection != DIR_NONE) {
-            // 组合键已移除
-        }
-    }
-
-    /**
-     * 启动点击攻击模式
-     */
-    private fun startClickAttack() {
-        if (mIsAttacking) return
-        mIsAttacking = true
-        // 立即触发第一次点击
-        performClickAttack(mCurrentDirection)
-        // 启动持续点击循环
-        mClickAttackHandler.postDelayed(mClickAttackRunnable, CLICK_ATTACK_INTERVAL_MS.toLong())
-    }
-
-    /**
-     * 停止点击攻击模式
-     */
-    private fun stopClickAttack() {
-        if (!mIsAttacking) return
-        mIsAttacking = false
-        mClickAttackHandler.removeCallbacks(mClickAttackRunnable)
-        // 确保释放最后的虚拟触屏点
-        // 组合键已移除
-    }
-
-    /**
-     * 启动鼠标攻击（鼠标模式右摇杆）
-     *
-     * 根据攻击模式执行不同行为：
-     * - 长按模式 (0)：按下鼠标左键，保持按住
-     * - 点击模式 (1)：快速连续点击
-     * - 持续模式 (2)：按下鼠标左键，保持按住（同长按）
-     */
-    private fun startMouseClick() {
-        if (mMouseLeftPressed) return
-        mMouseLeftPressed = true
-
-        if (mInputBridge is SDLInputBridge) {
-            val bridge = mInputBridge as SDLInputBridge
-            // 使用当前虚拟鼠标位置作为点击位置，避免鼠标跳动
-            val mouseX = bridge.virtualMouseX
-            val mouseY = bridge.virtualMouseY
-
-
-            // AppLog.v(TAG, "Mouse attack started at (" + mouseX + "," + mouseY + "), mode=" + mAttackMode);
-            when (mAttackMode) {
-                0, 2 -> bridge.sendMouseButton(ControlData.KeyCode.MOUSE_LEFT, true, mouseX, mouseY)
-                1 -> {
-                    // 立即发送第一次点击
-                    bridge.sendMouseButton(ControlData.KeyCode.MOUSE_LEFT, true, mouseX, mouseY)
-                    // 启动连续点击循环
-                    mClickAttackHandler.postDelayed(
-                        mMouseClickRunnable,
-                        MOUSE_CLICK_INTERVAL_MS.toLong()
-                    )
-                }
-            }
-        }
-    }
-
-    /**
-     * 停止鼠标攻击
-     */
-    private fun stopMouseClick() {
-        if (!mMouseLeftPressed) return
-        mMouseLeftPressed = false
-
-
-        // 停止点击循环（点击模式）
-        mClickAttackHandler.removeCallbacks(mMouseClickRunnable)
-
-
-        // 释放鼠标左键（所有模式都需要）
-        if (mInputBridge is SDLInputBridge) {
-            val bridge = mInputBridge as SDLInputBridge
-            // 使用当前虚拟鼠标位置作为释放位置
-            val mouseX = bridge.virtualMouseX
-            val mouseY = bridge.virtualMouseY
-            bridge.sendMouseButton(ControlData.KeyCode.MOUSE_LEFT, false, mouseX, mouseY)
-
-
-            // AppLog.v(TAG, "Mouse attack stopped at (" + mouseX + "," + mouseY + ")");
-        }
-    }
-
-    /**
-     * 执行一次点击攻击（按下然后短暂后释放）
-     */
-    private fun performClickAttack(direction: Int) {
-        if (direction == DIR_NONE) return
-
-
-        // 组合键已移除，直接使用鼠标左键点击
-        val pos = calculateDirectionPosition(direction)
-        if (mInputBridge is SDLInputBridge) {
-            val bridge = mInputBridge as SDLInputBridge
-            // 按下
-            bridge.sendVirtualTouch(SDLInputBridge.Companion.VIRTUAL_TOUCH_RIGHT_STICK, pos[0], pos[1], true)
-            // 短暂延迟后释放
-            mClickAttackHandler.postDelayed(Runnable {
-                if (mIsAttacking) {
-                    bridge.sendVirtualTouch(
-                        SDLInputBridge.Companion.VIRTUAL_TOUCH_RIGHT_STICK,
-                        pos[0],
-                        pos[1],
-                        false
-                    )
-                }
-            }, 50) // 50ms 按下时间
-        }
-    }
-
-    /**
-     * 计算八方向对应的屏幕位置（用于右摇杆八方向攻击）
-     * @param direction 方向常量
-     * @return float[] {x, y} 屏幕坐标
-     */
-    private fun calculateDirectionPosition(direction: Int): FloatArray {
-        // 计算瞄准距离（200像素）
-        val aimDistance = 200f
-        val centerX = mScreenWidth / 2.0f
-        val centerY = mScreenHeight / 2.0f
-
-        var targetX = centerX
-        var targetY = centerY
-
-
-        // 计算对角线距离（45度方向使用 0.707 = cos(45°)）
-        val diagonalOffset = aimDistance * 0.707f
-
+        
+        // 释放方向键
         when (direction) {
-            DIR_UP -> targetY = centerY - aimDistance
-            DIR_DOWN -> targetY = centerY + aimDistance
-            DIR_LEFT -> targetX = centerX - aimDistance
-            DIR_RIGHT -> targetX = centerX + aimDistance
-            DIR_UP_LEFT -> {
-                targetX = centerX - diagonalOffset
-                targetY = centerY - diagonalOffset
-            }
-
+            DIR_UP -> mInputBridge.sendKey(castedData.joystickKeys[0], false)
             DIR_UP_RIGHT -> {
-                targetX = centerX + diagonalOffset
-                targetY = centerY - diagonalOffset
+                mInputBridge.sendKey(castedData.joystickKeys[0], false)
+                mInputBridge.sendKey(castedData.joystickKeys[1], false)
             }
 
-            DIR_DOWN_LEFT -> {
-                targetX = centerX - diagonalOffset
-                targetY = centerY + diagonalOffset
-            }
-
+            DIR_RIGHT -> mInputBridge.sendKey(castedData.joystickKeys[1], false)
             DIR_DOWN_RIGHT -> {
-                targetX = centerX + diagonalOffset
-                targetY = centerY + diagonalOffset
+                mInputBridge.sendKey(castedData.joystickKeys[2], false)
+                mInputBridge.sendKey(castedData.joystickKeys[1], false)
+            }
+
+            DIR_DOWN -> mInputBridge.sendKey(castedData.joystickKeys[2], false)
+            DIR_DOWN_LEFT -> {
+                mInputBridge.sendKey(castedData.joystickKeys[2], false)
+                mInputBridge.sendKey(castedData.joystickKeys[3], false)
+            }
+
+            DIR_LEFT -> mInputBridge.sendKey(castedData.joystickKeys[3], false)
+            DIR_UP_LEFT -> {
+                mInputBridge.sendKey(castedData.joystickKeys[0], false)
+                mInputBridge.sendKey(castedData.joystickKeys[3], false)
             }
         }
-
-
-        // 限制在屏幕范围内
-        targetX = max(0f, min(mScreenWidth.toFloat(), targetX))
-        targetY = max(0f, min(mScreenHeight.toFloat(), targetY))
-
-        return floatArrayOf(targetX, targetY)
     }
 
-    /**
-     * 发送鼠标移动事件（鼠标模式，用于左摇杆）
-     * 将摇杆偏移量转换为鼠标移动增量
-     */
-    private fun sendMouseMove(dx: Float, dy: Float, distance: Float) {
-        // 死区检测
-        if (distance < mRadius * DEADZONE_PERCENT) {
-            return
-        }
+    private fun sendMouseClickDown() {
+        mInputBridge.sendMouseButton(ControlData.KeyCode.MOUSE_LEFT, true)
+    }
 
-
-        // 标准化偏移量到 [-1, 1] 范围（使用与视觉一致的背景圆半径）
-        val maxDistance = mRadius * STICK_BACKGROUND_SIZE
-        val normalizedX = dx / maxDistance
-        val normalizedY = dy / maxDistance
-
-
-        // 应用灵敏度系数（可调整）
-        val sensitivity = 15.0f // 鼠标移动速度倍数
-        val mouseX = normalizedX * sensitivity
-        val mouseY = normalizedY * sensitivity
-
-
-        // 发送鼠标移动事件
-        mInputBridge.sendMouseMove(mouseX, mouseY)
+    private fun sendMouseClickUp() {
+        mInputBridge.sendMouseButton(ControlData.KeyCode.MOUSE_LEFT, false)
     }
 
     /**
@@ -1066,7 +731,7 @@ class VirtualJoystick(
      * - 摇杆位置变化时 → 鼠标跟随移动
      * - 使用绝对位置计算，类似 VirtualTouchPad
      */
-    private fun sendVirtualMouseMove(dx: Float, dy: Float, distance: Float) {
+    private fun sendMousePos(dx: Float, dy: Float, distance: Float) {
         // 死区检测：在死区内时，不移动鼠标
         val deadzone: Float = mRadius * DEADZONE_PERCENT
         if (distance < deadzone) {
@@ -1104,64 +769,7 @@ class VirtualJoystick(
         onScreenMouseY = Math.clamp(onScreenMouseY, 0f, mScreenHeight.toFloat() - 1)
 
         // 发送绝对鼠标位置
-        sdlOnNativeMouseDirect(0, MotionEvent.ACTION_MOVE, onScreenMouseX, onScreenMouseY, false)
-    }
-
-    /**
-     * 设置虚拟鼠标范围（右摇杆鼠标移动模式）
-     */
-    private fun setVirtualMouseRange() {
-        if (mInputBridge is SDLInputBridge) {
-            val bridge = mInputBridge as SDLInputBridge
-            // 从全局设置实时读取最新的范围值（而不是使用缓存的变量）
-            try {
-                val settingsManager =
-                    SettingsAccess
-                var left = settingsManager.mouseRightStickRangeLeft
-                var top = settingsManager.mouseRightStickRangeTop
-                var right = settingsManager.mouseRightStickRangeRight
-                var bottom = settingsManager.mouseRightStickRangeBottom
-
-                AppLog.i(
-                    TAG, "setVirtualMouseRange: Read from settings: left=" + left + ", top=" + top +
-                            ", right=" + right + ", bottom=" + bottom
-                )
-
-
-                // 验证范围有效性（0.0-1.0）
-                if (left < 0 || left > 1.0) {
-                    AppLog.w(TAG, "Invalid left range: $left, resetting to 1.0")
-                    left = 1.0f
-                }
-                if (top < 0 || top > 1.0) {
-                    AppLog.w(TAG, "Invalid top range: $top, resetting to 1.0")
-                    top = 1.0f
-                }
-                if (right < 0 || right > 1.0) {
-                    AppLog.w(TAG, "Invalid right range: $right, resetting to 1.0")
-                    right = 1.0f
-                }
-                if (bottom < 0 || bottom > 1.0) {
-                    AppLog.w(TAG, "Invalid bottom range: $bottom, resetting to 1.0")
-                    bottom = 1.0f
-                }
-
-                AppLog.i(
-                    TAG,
-                    "setVirtualMouseRange: Applying range to native: left=" + left + ", top=" + top +
-                            ", right=" + right + ", bottom=" + bottom + " (in percentage: " + (left * 100).toInt() + "%, " + (top * 100).toInt() + "%, " + (right * 100).toInt() + "%, " + (bottom * 100).toInt() + "%)"
-                )
-
-                bridge.setVirtualMouseRange(left, top, right, bottom)
-            } catch (e: Exception) {
-                // 如果读取失败，使用缓存的默认值
-                AppLog.w(TAG, "Failed to read mouse range settings, using cached values", e)
-                bridge.setVirtualMouseRange(
-                    mGlobalMouseRangeLeft, mGlobalMouseRangeTop,
-                    mGlobalMouseRangeRight, mGlobalMouseRangeBottom
-                )
-            }
-        }
+        mInputBridge.sendMousePosition(onScreenMouseX, onScreenMouseY)
     }
 
     /**
@@ -1214,35 +822,7 @@ class VirtualJoystick(
         }
     }
 
-
-    /**
-     * 设置Xbox控制器模式下控制哪个摇杆
-     * @param useRightStick true=右摇杆, false=左摇杆（默认）
-     */
-    fun setXboxStickMode(useRightStick: Boolean) {
-        castedData.isRightStick = useRightStick
-    }
-
-    val isXboxRightStick: Boolean
-        /**
-         * 获取当前控制的Xbox摇杆类型
-         * @return true=右摇杆, false=左摇杆
-         */
-        get() = castedData.isRightStick
-
     private fun dpToPx(dp: Float): Float {
         return dp * resources.displayMetrics.density
-    }
-
-    private fun sdlOnNativeMouseDirect(
-        button: Int,
-        action: Int,
-        x: Float,
-        y: Float,
-        relative: Boolean
-    ) {
-        if (mInputBridge is SDLInputBridge) {
-            mInputBridge.sdlOnNativeMouseDirect(button, action, x, y, relative)
-        }
     }
 }

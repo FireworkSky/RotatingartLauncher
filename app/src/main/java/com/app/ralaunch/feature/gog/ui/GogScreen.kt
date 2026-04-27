@@ -3,11 +3,17 @@ package com.app.ralaunch.feature.gog.ui
 import androidx.compose.animation.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.app.ralaunch.R
 import com.app.ralaunch.feature.gog.model.GogGameUi
 import com.app.ralaunch.feature.gog.model.GogUiState
 import com.app.ralaunch.feature.gog.ui.components.*
@@ -25,6 +31,7 @@ fun GogScreen(
     onSearchQueryChange: (String) -> Unit,
     onGameClick: (GogGameUi) -> Unit,
     onLoginError: (String) -> Unit = {},
+    onDismissError: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Box(modifier = modifier.fillMaxSize()) {
@@ -59,6 +66,53 @@ fun GogScreen(
             exit = fadeOut()
         ) {
             GogLoadingOverlay(message = uiState.loadingMessage)
+        }
+
+        AnimatedVisibility(
+            visible = !uiState.error.isNullOrBlank(),
+            enter = fadeIn(),
+            exit = fadeOut(),
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .padding(16.dp)
+        ) {
+            GogErrorBanner(
+                message = uiState.error.orEmpty(),
+                onDismiss = onDismissError
+            )
+        }
+    }
+}
+
+@Composable
+private fun GogErrorBanner(
+    message: String,
+    onDismiss: () -> Unit
+) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        color = MaterialTheme.colorScheme.errorContainer,
+        contentColor = MaterialTheme.colorScheme.onErrorContainer,
+        tonalElevation = 2.dp
+    ) {
+        Row(
+            modifier = Modifier.padding(start = 16.dp, top = 10.dp, end = 8.dp, bottom = 10.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = message,
+                modifier = Modifier.weight(1f),
+                style = MaterialTheme.typography.bodyMedium,
+                maxLines = 3,
+                overflow = TextOverflow.Ellipsis
+            )
+            IconButton(onClick = onDismiss) {
+                Icon(
+                    imageVector = Icons.Default.Close,
+                    contentDescription = stringResource(R.string.content_desc_close)
+                )
+            }
         }
     }
 }

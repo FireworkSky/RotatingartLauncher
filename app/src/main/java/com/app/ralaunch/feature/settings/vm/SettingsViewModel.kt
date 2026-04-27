@@ -94,7 +94,6 @@ sealed class SettingsEvent {
 
     // 控制
     data class SetTouchMultitouch(val enabled: Boolean) : SettingsEvent()
-    data class SetMouseRightStick(val enabled: Boolean) : SettingsEvent()
     data class SetVibrationEnabled(val enabled: Boolean) : SettingsEvent()
     data class SetVibrationStrength(val strength: Float) : SettingsEvent()
     data class SetVirtualControllerAsFirst(val enabled: Boolean) : SettingsEvent()
@@ -172,7 +171,6 @@ class SettingsViewModel(
 
             // 控制
             is SettingsEvent.SetTouchMultitouch -> setTouchMultitouch(event.enabled)
-            is SettingsEvent.SetMouseRightStick -> setMouseRightStick(event.enabled)
             is SettingsEvent.SetVibrationEnabled -> setVibrationEnabled(event.enabled)
             is SettingsEvent.SetVibrationStrength -> setVibrationStrength(event.strength)
             is SettingsEvent.SetVirtualControllerAsFirst -> setVirtualControllerAsFirst(event.enabled)
@@ -227,7 +225,6 @@ class SettingsViewModel(
                     language = settings.language,
                     // 控制
                     touchMultitouchEnabled = settings.touchMultitouchEnabled,
-                    mouseRightStickEnabled = settings.mouseRightStickEnabled,
                     vibrationEnabled = settings.vibrationEnabled,
                     vibrationStrength = settings.virtualControllerVibrationIntensity,
                     virtualControllerAsFirst = settings.virtualControllerAsFirst,
@@ -338,13 +335,6 @@ class SettingsViewModel(
         viewModelScope.launch {
             settingsRepository.update { touchMultitouchEnabled = enabled }
             _uiState.update { it.copy(touchMultitouchEnabled = enabled) }
-        }
-    }
-
-    private fun setMouseRightStick(enabled: Boolean) {
-        viewModelScope.launch {
-            settingsRepository.update { mouseRightStickEnabled = enabled }
-            _uiState.update { it.copy(mouseRightStickEnabled = enabled) }
         }
     }
 

@@ -18,12 +18,9 @@
 #include <poll.h>
 #include <sys/ioctl.h>
 #include <android/native_window.h>
-#include <android/log.h>
+#include "logging/app_log.h"
 
 #define LOG_TAG "OSMRenderer"
-#define LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
-#define LOGW(...) __android_log_print(ANDROID_LOG_WARN, LOG_TAG, __VA_ARGS__)
-#define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
 
 /* ==================== Turnip Dependency Stubs ==================== */
 /*
@@ -161,17 +158,17 @@ static bool load_osmesa_library(void)
 
     for (int i = 0; i < 3; i++) {
         if (!paths[i]) continue;
-        LOGI("Trying to load OSMesa: %s", paths[i]);
+        LOGI(LOG_TAG, "Trying to load OSMesa: %s", paths[i]);
         g_osm.lib_handle = dlopen(paths[i], RTLD_NOW | RTLD_GLOBAL);
         if (g_osm.lib_handle) {
-            LOGI("Loaded OSMesa from: %s", paths[i]);
+            LOGI(LOG_TAG, "Loaded OSMesa from: %s", paths[i]);
             break;
         }
-        LOGW("  dlopen failed: %s", dlerror());
+        LOGW(LOG_TAG, "  dlopen failed: %s", dlerror());
     }
 
     if (!g_osm.lib_handle) {
-        LOGE("Failed to load libOSMesa.so from any path");
+        LOGE(LOG_TAG, "Failed to load libOSMesa.so from any path");
         return false;
     }
 
@@ -184,8 +181,8 @@ static bool load_osmesa_library(void)
 
     if (!g_osm.CreateContextExt || !g_osm.DestroyContext ||
         !g_osm.MakeCurrent || !g_osm.PixelStore) {
-        LOGE("Failed to resolve OSMesa function pointers:");
-        LOGE("  CreateContextExt=%p DestroyContext=%p MakeCurrent=%p PixelStore=%p",
+        LOGE(LOG_TAG, "Failed to resolve OSMesa function pointers:");
+        LOGE(LOG_TAG, "  CreateContextExt=%p DestroyContext=%p MakeCurrent=%p PixelStore=%p",
              g_osm.CreateContextExt, g_osm.DestroyContext,
              g_osm.MakeCurrent, g_osm.PixelStore);
         dlclose(g_osm.lib_handle);
@@ -193,9 +190,9 @@ static bool load_osmesa_library(void)
         return false;
     }
 
-    LOGI("OSMesa function pointers resolved successfully");
+    LOGI(LOG_TAG, "OSMesa function pointers resolved successfully");
     if (g_osm.GetProcAddress) {
-        LOGI("  OSMesaGetProcAddress available");
+        LOGI(LOG_TAG, "  OSMesaGetProcAddress available");
     }
 
     return true;
@@ -220,18 +217,18 @@ bool osm_renderer_is_initialized(void)
 bool osm_renderer_init(ANativeWindow *window)
 {
     if (!window) {
-        LOGE("osm_renderer_init: window is NULL");
+        LOGE(LOG_TAG, "osm_renderer_init: window is NULL");
         return false;
     }
 
     if (g_osm.initialized) {
-        LOGW("osm_renderer_init: already initialized, destroying old context");
+        LOGW(LOG_TAG, "osm_renderer_init: already initialized, destroying old context");
         osm_renderer_destroy();
     }
 
     /* Load library if not already loaded */
     if (!osm_renderer_is_available()) {
-        LOGE("osm_renderer_init: OSMesa library not available");
+        LOGE(LOG_TAG, "osm_renderer_init: OSMesa library not available");
         return false;
     }
 
@@ -246,15 +243,15 @@ bool osm_renderer_init(ANativeWindow *window)
      */
     void *turnip_handle = dlopen("libvulkan_freedreno.so", RTLD_NOW | RTLD_GLOBAL);
     if (turnip_handle) {
-        LOGI("Pre-loaded Turnip (libvulkan_freedreno.so) with RTLD_GLOBAL for Zink");
+        LOGI(LOG_TAG, "Pre-loaded Turnip (libvulkan_freedreno.so) with RTLD_GLOBAL for Zink");
     } else {
-        LOGW("Failed to pre-load Turnip: %s", dlerror());
+        LOGW(LOG_TAG, "Failed to pre-load Turnip: %s", dlerror());
         /* Fall back to system Vulkan if Turnip is not available */
         void *vulkan_handle = dlopen("libvulkan.so", RTLD_NOW | RTLD_GLOBAL);
         if (vulkan_handle) {
-            LOGI("Fallback: Pre-loaded system libvulkan.so");
+            LOGI(LOG_TAG, "Fallback: Pre-loaded system libvulkan.so");
         } else {
-            LOGW("Failed to load any Vulkan library: %s", dlerror());
+            LOGW(LOG_TAG, "Failed to load any Vulkan library: %s", dlerror());
         }
     }
 
@@ -263,33 +260,33 @@ bool osm_renderer_init(ANativeWindow *window)
     g_osm.height = ANativeWindow_getHeight(window);
     g_osm.window = window;
 
-    LOGI("Initializing OSMesa context: %dx%d", g_osm.width, g_osm.height);
+    LOGI(LOG_TAG, "Initializing OSMesa context: %dx%d", g_osm.width, g_osm.height);
 
     /* Create OSMesa context (RGBA, 24-bit depth, 8-bit stencil, no accum) */
     g_osm.context = g_osm.CreateContextExt(OSMESA_RGBA, 24, 8, 0, NULL);
     if (!g_osm.context) {
-        LOGE("Failed to create OSMesa context (Zink/Vulkan may be unavailable)");
+        LOGE(LOG_TAG, "Failed to create OSMesa context (Zink/Vulkan may be unavailable)");
         return false;
     }
-    LOGI("OSMesa context created");
+    LOGI(LOG_TAG, "OSMesa context created");
 
     /* Allocate color buffer (RGBA, 4 bytes per pixel) */
     size_t buffer_size = (size_t)g_osm.width * g_osm.height * 4;
     g_osm.color_buffer = malloc(buffer_size);
     if (!g_osm.color_buffer) {
-        LOGE("Failed to allocate color buffer (%zu bytes)", buffer_size);
+        LOGE(LOG_TAG, "Failed to allocate color buffer (%zu bytes)", buffer_size);
         g_osm.DestroyContext(g_osm.context);
         g_osm.context = NULL;
         return false;
     }
     memset(g_osm.color_buffer, 0, buffer_size);
-    LOGI("Color buffer allocated: %zu bytes", buffer_size);
+    LOGI(LOG_TAG, "Color buffer allocated: %zu bytes", buffer_size);
 
     /* Make context current with our buffer */
     /* GL_UNSIGNED_BYTE = 0x1401 */
     if (!g_osm.MakeCurrent(g_osm.context, g_osm.color_buffer, 0x1401,
                             g_osm.width, g_osm.height)) {
-        LOGE("OSMesaMakeCurrent failed");
+        LOGE(LOG_TAG, "OSMesaMakeCurrent failed");
         free(g_osm.color_buffer);
         g_osm.color_buffer = NULL;
         g_osm.DestroyContext(g_osm.context);
@@ -305,7 +302,7 @@ bool osm_renderer_init(ANativeWindow *window)
                                      WINDOW_FORMAT_RGBA_8888);
 
     g_osm.initialized = true;
-    LOGI("OSMesa renderer initialized successfully (%dx%d)", g_osm.width, g_osm.height);
+    LOGI(LOG_TAG, "OSMesa renderer initialized successfully (%dx%d)", g_osm.width, g_osm.height);
 
     return true;
 }
@@ -321,7 +318,7 @@ void osm_swap_buffers(void)
     int cur_h = ANativeWindow_getHeight(g_osm.window);
 
     if (cur_w != g_osm.width || cur_h != g_osm.height) {
-        LOGI("Window resized: %dx%d -> %dx%d, recreating buffer",
+        LOGI(LOG_TAG, "Window resized: %dx%d -> %dx%d, recreating buffer",
              g_osm.width, g_osm.height, cur_w, cur_h);
 
         g_osm.width = cur_w;
@@ -331,7 +328,7 @@ void osm_swap_buffers(void)
         size_t buffer_size = (size_t)g_osm.width * g_osm.height * 4;
         void *new_buffer = realloc(g_osm.color_buffer, buffer_size);
         if (!new_buffer) {
-            LOGE("Failed to reallocate color buffer");
+            LOGE(LOG_TAG, "Failed to reallocate color buffer");
             return;
         }
         g_osm.color_buffer = new_buffer;
@@ -347,7 +344,7 @@ void osm_swap_buffers(void)
     /* Lock the native window buffer */
     ANativeWindow_Buffer native_buffer;
     if (ANativeWindow_lock(g_osm.window, &native_buffer, NULL) != 0) {
-        LOGE("ANativeWindow_lock failed");
+        LOGE(LOG_TAG, "ANativeWindow_lock failed");
         return;
     }
 
@@ -369,7 +366,7 @@ void osm_swap_buffers(void)
 
 void osm_renderer_destroy(void)
 {
-    LOGI("Destroying OSMesa renderer");
+    LOGI(LOG_TAG, "Destroying OSMesa renderer");
 
     if (g_osm.context && g_osm.DestroyContext) {
         g_osm.DestroyContext(g_osm.context);
@@ -386,5 +383,5 @@ void osm_renderer_destroy(void)
     g_osm.height = 0;
     g_osm.initialized = false;
 
-    LOGI("OSMesa renderer destroyed");
+    LOGI(LOG_TAG, "OSMesa renderer destroyed");
 }

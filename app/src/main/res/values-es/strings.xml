@@ -33,18 +33,9 @@
     <string name="confirm">Confirmar</string>
     <string name="close">Cerrar</string>
 
-    <!-- Diálogo de Error -->
-    <string name="error_title_default">Error</string>
+    <!-- Errores -->
     <string name="error_message_default">Ocurrió un error</string>
     <string name="error_operation_failed">Operación fallida</string>
-    <string name="error_details_title">Detalles del error</string>
-    <string name="error_show_details">Mostrar detalles</string>
-    <string name="error_hide_details">Ocultar detalles</string>
-    <string name="error_copy">Copiar</string>
-    <string name="error_copy_success">Copiado al portapapeles</string>
-    <string name="error_icon_desc">Icono de error</string>
-    <string name="error_crash_title">Fallo de la aplicación</string>
-    <string name="error_fatal_title">Error fatal</string>
 
     <!-- Importar Juego -->
     <string name="import_select_game_file">Seleccionar archivo de juego</string>

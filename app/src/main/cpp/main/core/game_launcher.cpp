@@ -2,8 +2,8 @@
 #include <jni.h>
 #include <vector>
 #include <string>
-#include "../app_logger.h"
-#include "../jni_bridge.h"
+#include "logging/app_log.h"
+#include "../jni_entry.h"
 
 #define LOG_TAG "GameLauncher"
 
@@ -28,7 +28,7 @@ int game_launcher_launch_new_dotnet_process(const char* assembly_path,
         return -1;
     }
 
-    JNIEnv* env = Bridge_GetJNIEnv();
+    JNIEnv* env = JniEntry_GetEnv();
     if (env == nullptr) {
         LOGE(LOG_TAG, "Failed to get JNIEnv");
         return -2;

@@ -21,7 +21,7 @@ interface ControlInputBridge {
      * @param x 鼠标X坐标（屏幕坐标）
      * @param y 鼠标Y坐标（屏幕坐标）
      */
-    fun sendMouseButton(button: ControlData.KeyCode, isDown: Boolean, x: Float, y: Float)
+    fun sendMouseButton(button: ControlData.KeyCode, isDown: Boolean)
 
     /**
      * 发送鼠标移动事件
@@ -70,4 +70,14 @@ interface ControlInputBridge {
      * @param value 触发器值 (0.0 到 1.0)
      */
     fun sendXboxTrigger(xboxTrigger: ControlData.KeyCode, value: Float)
+
+    /**
+     * 开启文字输入（开启输入法）
+     */
+    fun startTextInput()
+
+    /**
+     * 关闭文字输入（关闭输入法）
+     */
+    fun stopTextInput()
 }

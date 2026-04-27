@@ -33,18 +33,9 @@
     <string name="confirm">Подтвердить</string>
     <string name="close">Закрыть</string>
 
-    <!-- Error Dialog -->
-    <string name="error_title_default">Ошибка</string>
+    <!-- Errors -->
     <string name="error_message_default">Произошла ошибка</string>
     <string name="error_operation_failed">Операция не удалась</string>
-    <string name="error_details_title">Детали ошибки</string>
-    <string name="error_show_details">Показать детали</string>
-    <string name="error_hide_details">Скрыть детали</string>
-    <string name="error_copy">Копировать</string>
-    <string name="error_copy_success">Скопировано в буфер обмена</string>
-    <string name="error_icon_desc">Иконка ошибки</string>
-    <string name="error_crash_title">Сбой приложения</string>
-    <string name="error_fatal_title">Критическая ошибка</string>
 
     <!-- Import Game -->
     <string name="import_select_game_file">Выбрать файл игры</string>

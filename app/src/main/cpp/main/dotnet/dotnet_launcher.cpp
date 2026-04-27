@@ -2,7 +2,7 @@
 
 #include <jni.h>
 #include <mutex>
-#include "app_logger.h"
+#include "logging/app_log.h"
 
 #include "dotnethost/nethost.hpp"
 #include "dotnethost/hostfxr.hpp"

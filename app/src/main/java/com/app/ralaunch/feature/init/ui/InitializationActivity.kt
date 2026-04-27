@@ -12,7 +12,6 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import com.app.ralaunch.R
-import com.app.ralaunch.core.common.ErrorHandler
 import com.app.ralaunch.core.di.service.PermissionManagerServiceV1
 import com.app.ralaunch.core.platform.AppConstants
 import com.app.ralaunch.core.theme.RaLaunchTheme
@@ -67,10 +66,6 @@ class InitializationActivity : ComponentActivity() {
                             }.onFailure {
                                 Toast.makeText(this@InitializationActivity, getString(R.string.init_cannot_open_browser), Toast.LENGTH_SHORT).show()
                             }
-                        }
-                        is InitializationEffect.ShowError -> {
-                            ErrorHandler.handleError(effect.message, RuntimeException(effect.message))
-                            viewModel.consumeError()
                         }
                     }
                 }

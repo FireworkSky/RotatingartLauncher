@@ -10,8 +10,8 @@ import com.app.ralaunch.R
 import com.app.ralaunch.core.common.util.FileUtils
 import com.app.ralaunch.feature.patch.data.PatchManager
 import com.app.ralaunch.core.platform.runtime.AndroidRendererRegistry
-import com.app.ralaunch.core.common.util.LogExportHelper
 import com.app.ralaunch.core.logging.LogFilePolicy
+import com.app.ralaunch.core.logging.service.LogExportHelper
 import com.app.ralaunch.core.platform.android.provider.RaLaunchFileProvider
 import com.app.ralaunch.core.ui.dialog.RendererOption
 import com.app.ralaunch.core.model.BackgroundType
@@ -144,7 +144,7 @@ internal fun openSponsorsPage(context: Context) {
 
 internal fun loadLogs(context: Context): List<String> {
     return try {
-        LogExportHelper.getLatestAppLogFile(context)?.readLines()?.takeLast(LOG_VIEW_LIMIT) ?: emptyList()
+        logExportHelper().getAppLogFiles().firstOrNull()?.readLines()?.takeLast(LOG_VIEW_LIMIT) ?: emptyList()
     } catch (e: Exception) {
         listOf(context.getString(R.string.settings_logs_read_failed, e.message ?: ""))
     }
@@ -153,8 +153,7 @@ internal fun loadLogs(context: Context): List<String> {
 internal suspend fun exportLogs(context: Context, uri: Uri) {
     withContext(Dispatchers.IO) {
         try {
-            val logs = LogExportHelper.buildExportContent(context)
-                .ifEmpty { loadLogs(context).joinToString("\n") }
+            val logs = logExportHelper().buildExportContent()
             context.contentResolver.openOutputStream(uri)?.use { output ->
                 output.write(logs.toByteArray(Charsets.UTF_8))
             }
@@ -172,8 +171,7 @@ internal suspend fun exportLogs(context: Context, uri: Uri) {
 internal suspend fun shareLogs(context: Context) {
     withContext(Dispatchers.IO) {
         try {
-            val logs = LogExportHelper.buildExportContent(context)
-                .ifEmpty { loadLogs(context).joinToString("\n") }
+            val logs = logExportHelper().buildExportContent()
 
             val shareDir = File(context.cacheDir, "shared_logs").apply {
                 mkdirs()
@@ -218,6 +216,9 @@ internal suspend fun shareLogs(context: Context) {
 }
 
 private const val LOG_VIEW_LIMIT = 500
+
+private fun logExportHelper(): LogExportHelper =
+    KoinJavaComponent.get(LogExportHelper::class.java)
 
 internal fun clearAppCache(context: Context) {
     try {

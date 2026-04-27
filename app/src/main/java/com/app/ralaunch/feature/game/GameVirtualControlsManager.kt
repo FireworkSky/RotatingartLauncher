@@ -54,16 +54,12 @@ class GameVirtualControlsManager {
         activity: Activity,
         sdlLayout: ViewGroup?,
         sdlSurface: SDLSurface?,
-        disableSDLTextInput: Runnable,
         onExitGame: () -> Unit = {}
     ) {
         try {
             settingsManager = SettingsAccess
             inputBridge = SDLInputBridge()
             onExitGameCallback = onExitGame
-
-            val metrics = activity.resources.displayMetrics
-            SDLInputBridge.setScreenSize(metrics.widthPixels, metrics.heightPixels)
 
             controlLayout = ControlLayout(activity).apply {
                 this.inputBridge = this@GameVirtualControlsManager.inputBridge
@@ -82,7 +78,6 @@ class GameVirtualControlsManager {
 
                 sdlSurface?.let { surface ->
                     controlLayout?.setSDLSurface(surface)
-                    surface.setVirtualControlsManager(this)
                 }
 
                 // 添加 FPS 显示
@@ -94,8 +89,6 @@ class GameVirtualControlsManager {
 
                 // 添加 Compose 悬浮菜单
                 setupComposeOverlay(activity, layout)
-
-                layout.postDelayed(disableSDLTextInput, 2000)
             }
         } catch (e: Exception) {
             AppLog.e("GameVirtualControls", "Failed to initialize virtual controls", e)

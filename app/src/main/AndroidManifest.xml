@@ -94,7 +94,7 @@
 
         <!-- 崩溃报告活动 -->
         <activity
-            android:name=".feature.crash.ui.CrashReportActivity"
+            android:name=".core.error.ui.CrashReportActivity"
             android:exported="false"
             android:theme="@style/Theme.raLaunch"
             android:launchMode="singleTask"

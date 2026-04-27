@@ -20,6 +20,7 @@ import com.app.ralaunch.core.logging.LogFilePolicy
 import com.app.ralaunch.core.logging.LogLevel
 import com.app.ralaunch.core.logging.contract.Logger
 import com.app.ralaunch.core.logging.service.AndroidFileLogger
+import com.app.ralaunch.core.logging.service.LogExportHelper
 import com.app.ralaunch.core.platform.AppConstants
 import com.app.ralaunch.feature.announcement.AnnouncementRepositoryService
 import com.app.ralaunch.feature.announcement.vm.AnnouncementViewModel
@@ -86,6 +87,14 @@ val appModule = module {
 
     single<StoragePathsProviderServiceV1> {
         StoragePathsProviderServiceV1(androidContext())
+    }
+
+    single {
+        LogExportHelper(
+            storagePathsProvider = get(),
+            gameRepository = get(),
+            patchManager = getOrNull()
+        )
     }
 
     // ==================== Repositories ====================

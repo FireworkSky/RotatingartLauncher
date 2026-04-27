@@ -13,16 +13,12 @@ import android.os.Looper
 import android.os.Process
 import android.view.Display
 import android.view.KeyEvent
-import android.view.MotionEvent
 import android.view.Surface
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatDelegate
-import com.app.ralaunch.R
-import com.app.ralaunch.feature.game.input.GameImeHelper
-import com.app.ralaunch.feature.game.input.GameTouchBridge
 import com.app.ralaunch.feature.game.GameVirtualControlsManager
-import com.app.ralaunch.feature.crash.ui.CrashReportActivity
+import com.app.ralaunch.core.error.ui.CrashReportActivity
 import com.app.ralaunch.feature.game.legacy.GameContract
 import com.app.ralaunch.feature.game.legacy.GamePresenter
 import com.app.ralaunch.core.common.SettingsAccess
@@ -30,7 +26,7 @@ import com.app.ralaunch.core.common.GameFullscreenManager
 import com.app.ralaunch.core.logging.AppLog
 import com.app.ralaunch.core.common.util.DensityAdapter
 import com.app.ralaunch.core.common.util.LocaleManager
-import com.app.ralaunch.core.common.ErrorHandler
+import com.app.ralaunch.core.error.ErrorHandler
 import com.app.ralaunch.core.model.ThemeMode
 import org.libsdl.app.SDLActivity
 
@@ -125,50 +121,6 @@ class GameActivity : SDLActivity(), GameContract.View {
             context.startActivity(intent)
             (context as? Activity)?.overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
         }
-
-        // ==================== 静态方法供 JNI/其他类调用 ====================
-
-        @JvmStatic
-        fun sendTextToGame(text: String) {
-            GameImeHelper.sendTextToGame(text)
-        }
-
-        @JvmStatic
-        fun sendBackspace() {
-            GameImeHelper.sendBackspaceToGame()
-        }
-
-        @JvmStatic
-        fun enableSDLTextInputForIME() {
-            GameImeHelper.enableSDLTextInputForIME()
-        }
-
-        @JvmStatic
-        fun disableSDLTextInput() {
-            GameImeHelper.disableSDLTextInput()
-        }
-
-        @JvmStatic
-        fun onGameExitWithMessage(exitCode: Int, errorMessage: String?) {
-            instance?.presenter?.onGameExit(exitCode, errorMessage)
-        }
-
-        // Touch bridge native methods
-        @JvmStatic
-        fun nativeSetTouchDataBridge(count: Int, x: FloatArray, y: FloatArray, screenWidth: Int, screenHeight: Int) {
-            nativeSetTouchData(count, x, y, screenWidth, screenHeight)
-        }
-
-        @JvmStatic
-        fun nativeClearTouchDataBridge() {
-            nativeClearTouchData()
-        }
-
-        @JvmStatic
-        private external fun nativeSetTouchData(count: Int, x: FloatArray, y: FloatArray, screenWidth: Int, screenHeight: Int)
-
-        @JvmStatic
-        private external fun nativeClearTouchData()
     }
 
     // MVP
@@ -177,7 +129,6 @@ class GameActivity : SDLActivity(), GameContract.View {
     // 管理器
     private var fullscreenManager: GameFullscreenManager? = null
     private val virtualControlsManager = GameVirtualControlsManager()
-    private val touchBridge = GameTouchBridge()
     private var lastRequestedRefreshRate: Float = 0f
 
     // ==================== 生命周期 ====================
@@ -216,7 +167,7 @@ class GameActivity : SDLActivity(), GameContract.View {
 
     private fun initializeErrorHandler() {
         try {
-            ErrorHandler.setCurrentActivity(this)
+            ErrorHandler.init(this)
         } catch (e: Exception) {
             AppLog.e(TAG, "设置 ErrorHandler 失败: ${e.message}")
         }
@@ -241,7 +192,6 @@ class GameActivity : SDLActivity(), GameContract.View {
             activity = this,
             sdlLayout = mLayout as ViewGroup,
             sdlSurface = mSurface,
-            disableSDLTextInput = { disableSDLTextInput() },
             onExitGame = { exitGame() }
         )
     }
@@ -320,12 +270,6 @@ class GameActivity : SDLActivity(), GameContract.View {
         return super.dispatchKeyEvent(event)
     }
 
-    override fun dispatchTouchEvent(event: MotionEvent): Boolean {
-        val result = super.dispatchTouchEvent(event)
-        touchBridge.handleMotionEvent(event, resources)
-        return result
-    }
-
     // ==================== 公开方法 ====================
 
     fun toggleVirtualControls() {
@@ -343,7 +287,7 @@ class GameActivity : SDLActivity(), GameContract.View {
     }
 
     override fun showError(title: String, message: String) {
-        ErrorHandler.showWarning(title, message)
+        showToast("$title: $message")
     }
 
     override fun showCrashReport(
@@ -352,14 +296,13 @@ class GameActivity : SDLActivity(), GameContract.View {
         exceptionClass: String,
         exceptionMessage: String
     ) {
-        val intent = Intent(this, CrashReportActivity::class.java).apply {
-            putExtra("stack_trace", stackTrace)
-            putExtra("error_details", errorDetails)
-            putExtra("exception_class", exceptionClass)
-            putExtra("exception_message", exceptionMessage)
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
-        }
-        startActivity(intent)
+        CrashReportActivity.launch(
+            context = this,
+            stackTrace = stackTrace,
+            errorDetails = errorDetails,
+            exceptionClass = exceptionClass,
+            exceptionMessage = exceptionMessage
+        )
         finish()
     }
 

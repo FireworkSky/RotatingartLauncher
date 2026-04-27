@@ -554,7 +554,7 @@ class VirtualButton(
     private fun handlePress() {
         mIsPressed = true
 
-        if (ControlSpecialActionHandler.handlePress(context, castedData.keycode, mInputBridge)) {
+        if (ControlSpecialActionHandler.handlePress(castedData.keycode, mInputBridge)) {
             invalidate()
             return
         }
@@ -612,10 +612,8 @@ class VirtualButton(
                 // 计算按钮中心点的屏幕坐标
                 val location = IntArray(2)
                 getLocationOnScreen(location)
-                val centerX = location[0] + width / 2.0f
-                val centerY = location[1] + height / 2.0f
 
-                mInputBridge.sendMouseButton(castedData.keycode, isDown, centerX, centerY)
+                mInputBridge.sendMouseButton(castedData.keycode, isDown)
             }
             // SPECIAL_KEYBOARD (-100) 不在这里处理，在handlePress中特殊处理
         }

@@ -78,7 +78,7 @@ import androidx.lifecycle.lifecycleScope
 import coil.compose.AsyncImage
 import com.app.ralaunch.R
 import com.app.ralaunch.core.common.util.FileUtils
-import com.app.ralaunch.core.common.ErrorHandler
+import com.app.ralaunch.core.error.ErrorHandler
 import com.app.ralaunch.core.common.MessageHelper
 import com.app.ralaunch.core.common.SettingsAccess
 import com.app.ralaunch.core.logging.AppLog
@@ -201,7 +201,7 @@ class MainActivityCompose : BaseActivity() {
             AppLog.e("MainActivityCompose", "onResume error: ${e.message}")
         }
 
-        ErrorHandler.setCurrentActivity(this)
+        ErrorHandler.init(this)
         resumePendingInstallIfPossible()
     }
 

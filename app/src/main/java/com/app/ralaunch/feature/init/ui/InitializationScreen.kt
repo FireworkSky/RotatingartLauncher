@@ -261,6 +261,22 @@ private fun SetupPage(
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
+                uiState.error?.takeIf { it.isNotBlank() }?.let { error ->
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        color = MaterialTheme.colorScheme.errorContainer,
+                        contentColor = MaterialTheme.colorScheme.onErrorContainer
+                    ) {
+                        Text(
+                            text = error,
+                            modifier = Modifier.padding(12.dp),
+                            style = MaterialTheme.typography.bodySmall,
+                            maxLines = 4,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                }
                 if (!uiState.hasPermissions) {
                     FilledTonalButton(
                         onClick = onRequestPermissions,

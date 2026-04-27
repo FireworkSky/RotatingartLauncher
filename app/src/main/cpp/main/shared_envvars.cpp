@@ -1,8 +1,8 @@
 #include "shared_envvars.hpp"
+#include "logging/app_log.h"
 
 #define LOG_TAG "SharedEnvVars"
 
-#include <android/log.h>
 #include <cstdlib>
 #include <string>
 #include <filesystem>
@@ -18,8 +18,7 @@ namespace ral::shared_envvars {
         }
 
         // 备用方案：如果环境变量未设置，返回默认包名
-        __android_log_print(ANDROID_LOG_WARN, LOG_TAG,
-                            "PACKAGE_NAME not set, using default: com.app.ralaunch");
+        LOGW(LOG_TAG, "PACKAGE_NAME not set, using default: com.app.ralaunch");
         return {"com.app.ralaunch"};
     }
 
@@ -41,15 +40,13 @@ namespace ral::shared_envvars {
         for (int i = 0; default_paths[i] != nullptr; i++) {
             std::error_code ec;
             if (fs::exists(default_paths[i], ec) && fs::is_directory(default_paths[i], ec)) {
-                __android_log_print(ANDROID_LOG_WARN, LOG_TAG,
-                                    "EXTERNAL_STORAGE_DIRECTORY not set, using fallback: %s", default_paths[i]);
+                LOGW(LOG_TAG, "EXTERNAL_STORAGE_DIRECTORY not set, using fallback: %s", default_paths[i]);
                 return {default_paths[i]};
             }
         }
 
         // 如果所有备用方案都失败，返回空字符串并记录错误
-        __android_log_print(ANDROID_LOG_ERROR, LOG_TAG,
-                            "EXTERNAL_STORAGE_DIRECTORY not set and no fallback path available");
+        LOGE(LOG_TAG, "EXTERNAL_STORAGE_DIRECTORY not set and no fallback path available");
         return {""};
     }
 

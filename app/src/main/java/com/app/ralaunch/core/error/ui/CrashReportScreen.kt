@@ -1,4 +1,4 @@
-package com.app.ralaunch.feature.crash.ui
+package com.app.ralaunch.core.error.ui
 
 import android.content.Intent
 import android.widget.Toast
@@ -40,7 +40,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
 import com.app.ralaunch.R
-import com.app.ralaunch.core.common.util.LogExportHelper
+import com.app.ralaunch.core.logging.service.LogExportHelper
+import org.koin.java.KoinJavaComponent
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
@@ -587,7 +588,8 @@ private fun shareLog(
         }
         val sdf = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault())
         val logFile = File(logDir, "crash_${sdf.format(Date())}.log")
-        val exportedLogs = LogExportHelper.buildExportContent(context)
+        val logExportHelper: LogExportHelper = KoinJavaComponent.get(LogExportHelper::class.java)
+        val exportedLogs = logExportHelper.buildExportContent()
 
         val logContent = buildString {
             append("=" .repeat(60))

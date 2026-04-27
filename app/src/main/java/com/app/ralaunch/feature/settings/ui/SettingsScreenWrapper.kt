@@ -416,16 +416,6 @@ private fun ControlsSettingsPane(
                     checked = touchMultitouchEnabled,
                     onCheckedChange = { viewModel.onEvent(SettingsEvent.SetTouchMultitouch(it)) }
                 )
-
-                SettingsDivider()
-
-                SwitchSettingItem(
-                    title = androidStringResource(R.string.settings_controls_mouse_right_stick_title),
-                    subtitle = androidStringResource(R.string.settings_controls_mouse_right_stick_subtitle),
-                    icon = Icons.Default.Mouse,
-                    checked = mouseRightStickEnabled,
-                    onCheckedChange = { viewModel.onEvent(SettingsEvent.SetMouseRightStick(it)) }
-                )
             }
 
             SettingsSection(title = androidStringResource(R.string.settings_controls_vibration_section)) {

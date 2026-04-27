@@ -38,9 +38,12 @@ class StoragePathsProviderServiceV1Test {
             )
 
             val gamesDir = externalFilesDir.resolve(AppConstants.Dirs.GAMES)
+            val logsDir = externalFilesDir.resolve(AppConstants.Dirs.LOGS)
 
             assertEquals(gamesDir.absolutePathString(), provider.gamesDirPathFull())
             assertFalse(gamesDir.exists())
+            assertEquals(logsDir.absolutePathString(), provider.logsDirPathFull())
+            assertFalse(logsDir.exists())
             assertEquals(
                 filesDir.resolve(AppConstants.Files.SETTINGS).absolutePathString(),
                 provider.settingsFilePathFull()
@@ -51,7 +54,7 @@ class StoragePathsProviderServiceV1Test {
                 provider.runtimesDirPathFull()
             )
             assertEquals(
-                filesDir.resolve("dotnet").absolutePathString(),
+                filesDir.resolve(AppConstants.Dirs.LEGACY_DOTNET).absolutePathString(),
                 provider.legacyDotnetDirPathFull()
             )
         } finally {

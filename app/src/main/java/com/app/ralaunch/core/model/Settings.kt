@@ -106,8 +106,6 @@ data class AppSettings(
     var touchEventEnabled: Boolean = true,
 
     // 触屏设置
-    var mouseRightStickEnabled: Boolean = true,
-    var mouseRightStickAttackMode: Int = 0,
     var mouseRightStickSpeed: Int = 200,
     var mouseRightStickRangeLeft: Float = 1.0f,
     var mouseRightStickRangeTop: Float = 1.0f,

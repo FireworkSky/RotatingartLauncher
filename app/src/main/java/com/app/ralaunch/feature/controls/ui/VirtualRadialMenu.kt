@@ -619,7 +619,7 @@ class VirtualRadialMenu(
             }
 
             if (keycode.type == ControlData.KeyType.SPECIAL) {
-                if (pressed && ControlSpecialActionHandler.handlePress(context, keycode, mInputBridge)) {
+                if (pressed && ControlSpecialActionHandler.handlePress(keycode, mInputBridge)) {
                     invalidate()
                 }
                 return
@@ -630,7 +630,7 @@ class VirtualRadialMenu(
                     mInputBridge.sendKey(keycode, pressed)
                 }
                 ControlData.KeyType.MOUSE -> {
-                    mInputBridge.sendMouseButton(keycode, pressed, width / 2f, height / 2f)
+                    mInputBridge.sendMouseButton(keycode, pressed)
                 }
                 ControlData.KeyType.GAMEPAD -> {
                     mInputBridge.sendXboxButton(keycode, pressed)

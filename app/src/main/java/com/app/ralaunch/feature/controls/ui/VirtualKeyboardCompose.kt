@@ -263,16 +263,13 @@ private fun VirtualMouseKey(
                     onPress = {
                         isPressed = true
                         AppLog.d(TAG, "Mouse button pressed: $mouseButton")
-                        // 鼠标按键发送到屏幕中心
-                        val centerX = size.width / 2f
-                        val centerY = size.height / 2f
-                        inputBridge?.sendMouseButton(mouseButton, true, centerX, centerY)
+                        inputBridge?.sendMouseButton(mouseButton, true)
                         try {
                             awaitRelease()
                         } finally {
                             isPressed = false
                             AppLog.d(TAG, "Mouse button released: $mouseButton")
-                            inputBridge?.sendMouseButton(mouseButton, false, centerX, centerY)
+                            inputBridge?.sendMouseButton(mouseButton, false)
                         }
                     }
                 )

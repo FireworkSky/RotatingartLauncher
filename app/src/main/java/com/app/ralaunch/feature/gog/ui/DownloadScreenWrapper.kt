@@ -9,7 +9,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.app.ralaunch.core.common.ErrorHandler
 import com.app.ralaunch.feature.gog.ui.components.GogDownloadDialog
 import com.app.ralaunch.feature.gog.vm.GogUiEffect
 import com.app.ralaunch.feature.gog.vm.GogViewModel
@@ -35,9 +34,6 @@ fun DownloadScreenWrapper(
                 is GogUiEffect.ShowToast -> {
                     Toast.makeText(context, effect.message, Toast.LENGTH_SHORT).show()
                 }
-                is GogUiEffect.ShowError -> {
-                    ErrorHandler.handleError(effect.message, RuntimeException(effect.message))
-                }
                 is GogUiEffect.OpenUrl -> {
                     context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(effect.url)))
                 }
@@ -55,6 +51,8 @@ fun DownloadScreenWrapper(
         onVisitGog = viewModel::onVisitGog,
         onSearchQueryChange = viewModel::onSearchQueryChange,
         onGameClick = viewModel::onGameClick,
+        onLoginError = viewModel::showError,
+        onDismissError = viewModel::dismissError,
         modifier = modifier
     )
 

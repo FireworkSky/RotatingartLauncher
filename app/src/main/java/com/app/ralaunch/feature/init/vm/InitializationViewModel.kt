@@ -29,7 +29,6 @@ import kotlin.io.path.moveTo
 
 sealed class InitializationEffect {
     data class OpenUrl(val url: String) : InitializationEffect()
-    data class ShowError(val message: String) : InitializationEffect()
 }
 
 class InitializationViewModel(
@@ -115,17 +114,8 @@ class InitializationViewModel(
                         error = e.message ?: appContext.getString(R.string.error_message_default)
                     )
                 }
-                _effect.emit(
-                    InitializationEffect.ShowError(
-                        e.message ?: appContext.getString(R.string.error_message_default)
-                    )
-                )
             }
         }
-    }
-
-    fun consumeError() {
-        _uiState.update { it.copy(error = null) }
     }
 
     fun openOfficialDownloadPage() {

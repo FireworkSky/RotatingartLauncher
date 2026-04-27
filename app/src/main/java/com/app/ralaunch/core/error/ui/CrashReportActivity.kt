@@ -1,5 +1,7 @@
-package com.app.ralaunch.feature.crash.ui
+package com.app.ralaunch.core.error.ui
 
+import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.os.Bundle
@@ -20,6 +22,45 @@ class CrashReportActivity : ComponentActivity() {
         const val EXTRA_ERROR_DETAILS = "error_details"
         const val EXTRA_EXCEPTION_CLASS = "exception_class"
         const val EXTRA_EXCEPTION_MESSAGE = "exception_message"
+
+        @JvmStatic
+        fun createLaunchIntent(
+            context: Context,
+            stackTrace: String,
+            errorDetails: String,
+            exceptionClass: String,
+            exceptionMessage: String?
+        ): Intent {
+            return Intent(context, CrashReportActivity::class.java).apply {
+                putExtra(EXTRA_STACK_TRACE, stackTrace)
+                putExtra(EXTRA_ERROR_DETAILS, errorDetails)
+                putExtra(EXTRA_EXCEPTION_CLASS, exceptionClass)
+                putExtra(EXTRA_EXCEPTION_MESSAGE, exceptionMessage)
+            }
+        }
+
+        @JvmStatic
+        fun launch(
+            context: Context,
+            stackTrace: String,
+            errorDetails: String,
+            exceptionClass: String,
+            exceptionMessage: String?
+        ) {
+            val intent = createLaunchIntent(
+                context = context,
+                stackTrace = stackTrace,
+                errorDetails = errorDetails,
+                exceptionClass = exceptionClass,
+                exceptionMessage = exceptionMessage
+            ).apply {
+                if (context !is Activity) {
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+            }
+            context.startActivity(intent)
+            (context as? Activity)?.overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
