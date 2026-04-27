@@ -415,13 +415,20 @@ class GameActivity : SDLActivity(), GameContract.View {
             val sdlSurface = mSurface?.holder?.surface
             if (sdlSurface != null && sdlSurface.isValid) {
                 try {
-                    sdlSurface.setFrameRate(
-                        targetRefresh,
-                        Surface.FRAME_RATE_COMPATIBILITY_DEFAULT,
-                        Surface.CHANGE_FRAME_RATE_ALWAYS
-                    )
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                        sdlSurface.setFrameRate(
+                            targetRefresh,
+                            Surface.FRAME_RATE_COMPATIBILITY_DEFAULT,
+                            Surface.CHANGE_FRAME_RATE_ALWAYS
+                        )
+                    } else {
+                        sdlSurface.setFrameRate(
+                            targetRefresh,
+                            Surface.FRAME_RATE_COMPATIBILITY_DEFAULT
+                        )
+                    }
                     AppLog.i(TAG, "[$caller] Surface frame-rate vote applied: ${targetRefresh}Hz")
-                } catch (e: Exception) {
+                } catch (e: Throwable) {
                     AppLog.w(TAG, "[$caller] Failed to apply frame-rate vote: ${e.message}")
                 }
             } else {
