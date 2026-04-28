@@ -356,6 +356,8 @@
     <string name="main_shortcut_removed">快捷方式已从列表移除</string>
     <string name="main_game_deleted">游戏及文件已删除</string>
     <string name="main_game_deleted_partial">游戏已从列表删除，但部分文件可能未删除</string>
+    <string name="main_permission_required_title">需要权限</string>
+    <string name="main_permission_required_message">尚未授予足够的文件访问权限。请开启所需的存储权限，以便启动器读取和管理游戏文件。</string>
 
     <!-- MainImportDelegate 消息 -->
     <string name="import_added_to_list">已添加到游戏列表</string>

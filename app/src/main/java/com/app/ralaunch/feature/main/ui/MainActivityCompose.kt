@@ -626,6 +626,9 @@ class MainActivityCompose : BaseActivity() {
         var hasFilePermission by remember {
             mutableStateOf(permissionManager.hasRequiredPermissions())
         }
+        var showMissingPermissionDialog by remember {
+            mutableStateOf(!hasFilePermission)
+        }
         val currentDestination by remember {
             derivedStateOf { navState.currentDestination }
         }
@@ -782,6 +785,25 @@ class MainActivityCompose : BaseActivity() {
                 }
             )
 
+            if (showMissingPermissionDialog && !hasFilePermission) {
+                MissingPermissionComposeDialog(
+                    onGrantPermission = {
+                        permissionManager.requestRequiredPermissions(object : PermissionManagerServiceV1.PermissionCallback {
+                            override fun onPermissionsGranted() {
+                                hasFilePermission = true
+                                showMissingPermissionDialog = false
+                            }
+
+                            override fun onPermissionsDenied() {
+                                hasFilePermission = false
+                                showMissingPermissionDialog = false
+                            }
+                        })
+                    },
+                    onDismiss = { showMissingPermissionDialog = false }
+                )
+            }
+
             state.gamePendingDeletion?.let { game ->
                 DeleteGameComposeDialog(
                     gameName = game.displayedName,
@@ -791,7 +813,7 @@ class MainActivityCompose : BaseActivity() {
                 )
             }
 
-            if (state.forceAnnouncement == null && updateDownloadUiState == null) {
+            if (!showMissingPermissionDialog && state.forceAnnouncement == null && updateDownloadUiState == null) {
                 state.availableUpdate?.let { update ->
                     AppUpdateComposeDialog(
                         update = update,
@@ -812,7 +834,7 @@ class MainActivityCompose : BaseActivity() {
                 )
             }
 
-            if (updateDownloadUiState == null) {
+            if (!showMissingPermissionDialog && updateDownloadUiState == null) {
                 state.forceAnnouncement?.let { announcement ->
                     ForceAnnouncementComposeDialog(
                         announcement = announcement,
@@ -828,6 +850,44 @@ class MainActivityCompose : BaseActivity() {
         }
     }
 
+}
+
+/**
+ * 纯 Compose 权限提示对话框
+ */
+@Composable
+private fun MissingPermissionComposeDialog(
+    onGrantPermission: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+        shape = RoundedCornerShape(20.dp),
+        title = {
+            Text(
+                text = stringResource(R.string.main_permission_required_title),
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold
+            )
+        },
+        text = {
+            Text(
+                text = stringResource(R.string.main_permission_required_message),
+                style = MaterialTheme.typography.bodyLarge
+            )
+        },
+        confirmButton = {
+            Button(onClick = onGrantPermission) {
+                Text(stringResource(R.string.permission_grant))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.cancel))
+            }
+        }
+    )
 }
 
 /**

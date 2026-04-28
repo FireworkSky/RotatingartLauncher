@@ -347,6 +347,8 @@
     <string name="main_shortcut_removed">Ярлык удален из списка</string>
     <string name="main_game_deleted">Игра и файлы удалены</string>
     <string name="main_game_deleted_partial">Игра удалена из списка, но некоторые файлы могут остаться</string>
+    <string name="main_permission_required_title">Требуется разрешение</string>
+    <string name="main_permission_required_message">Достаточный доступ к файлам не предоставлен. Включите требуемое разрешение на хранение, чтобы лаунчер мог читать и управлять файлами игр.</string>
 
     <!-- MainImportDelegate Messages -->
     <string name="import_added_to_list">Добавлено в список игр</string>

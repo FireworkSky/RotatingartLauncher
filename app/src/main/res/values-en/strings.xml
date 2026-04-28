@@ -366,6 +366,8 @@
     <string name="main_shortcut_removed">Shortcut removed from list</string>
     <string name="main_game_deleted">Game and files deleted</string>
     <string name="main_game_deleted_partial">Game removed from list, but some files may remain</string>
+    <string name="main_permission_required_title">Permission required</string>
+    <string name="main_permission_required_message">Sufficient file access has not been granted. Please turn on the required storage permission so the launcher can read and manage game files.</string>
 
     <!-- MainImportDelegate Messages -->
     <string name="import_added_to_list">Added to game list</string>

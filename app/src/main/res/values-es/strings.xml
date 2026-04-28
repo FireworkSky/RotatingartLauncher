@@ -324,6 +324,8 @@
     <string name="main_shortcut_removed">Acceso directo eliminado de la lista</string>
     <string name="main_game_deleted">Juego y archivos eliminados</string>
     <string name="main_game_deleted_partial">Juego eliminado de la lista, pero algunos archivos pueden permanecer</string>
+    <string name="main_permission_required_title">Permiso requerido</string>
+    <string name="main_permission_required_message">No se ha concedido acceso suficiente a los archivos. Activa el permiso de almacenamiento requerido para que el lanzador pueda leer y gestionar archivos de juegos.</string>
 
     <!-- Mensajes de MainImportDelegate -->
     <string name="import_added_to_list">Añadido a la lista de juegos</string>
