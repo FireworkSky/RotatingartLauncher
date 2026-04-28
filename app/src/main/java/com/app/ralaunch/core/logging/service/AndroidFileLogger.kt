@@ -5,23 +5,31 @@ import com.app.ralaunch.core.common.util.FileUtils
 import com.app.ralaunch.core.logging.LogFilePolicy
 import com.app.ralaunch.core.logging.LogLevel
 import com.app.ralaunch.core.logging.contract.Logger
+import java.io.BufferedWriter
 import java.io.File
 import java.io.FileWriter
 import java.io.PrintWriter
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.LinkedBlockingDeque
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
 
 class AndroidFileLogger(
     private val fileNameProvider: () -> String = { LogFilePolicy.appLogFileName() },
     private val emitToAndroidLog: Boolean = true,
     private val isFileLoggingEnabled: () -> Boolean = { true },
     private val logLevel: () -> LogLevel = { LogLevel.VERBOSE },
-    private val logcatFileLogger: AndroidFileLogger? = null
+    private val logcatFileLogger: AndroidFileLogger? = null,
+    private val queueCapacity: Int = DEFAULT_QUEUE_CAPACITY,
+    private val writerStartGate: CountDownLatch? = null
 ) : Logger {
     private val lock = Any()
     private val timestampFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.US)
-    private var writer: PrintWriter? = null
+    private var writer: AsyncLogWriter? = null
     private var logFile: File? = null
     private var reader: LogcatReader? = null
     private var initialized = false
@@ -55,8 +63,15 @@ class AndroidFileLogger(
             if (!logDirectory.exists()) {
                 logDirectory.mkdirs()
             }
-            logFile = File(logDirectory, fileNameProvider())
-            writer = PrintWriter(FileWriter(logFile, true), true)
+            val configuredLogFile = File(logDirectory, fileNameProvider())
+            configuredLogFile.createNewFile()
+            logFile = configuredLogFile
+            writer = AsyncLogWriter(
+                file = configuredLogFile,
+                queueCapacity = queueCapacity,
+                droppedLineFormatter = ::formatDroppedLine,
+                startGate = writerStartGate
+            )
         }
     }
 
@@ -71,11 +86,10 @@ class AndroidFileLogger(
     fun currentLogcatFile(): File? = logcatFileLogger?.currentLogFile()
 
     fun writeRawLine(line: String) {
-        synchronized(lock) {
-            val currentWriter = writer ?: return
-            currentWriter.println(line)
-            currentWriter.flush()
-        }
+        synchronized(lock) { writer }?.enqueue(
+            line = line,
+            priority = LogLevel.FileWritePriority.LOW
+        )
     }
 
     override fun v(tag: String, message: String): Int {
@@ -202,17 +216,35 @@ class AndroidFileLogger(
     private fun write(level: LogLevel, tag: String, message: String, throwable: Throwable?) {
         if (!shouldWriteFileLevel(level)) return
 
-        synchronized(lock) {
-            val currentWriter = writer ?: return
-            currentWriter.println("[${timestampFormat.format(Date())}] [${level.label}] [$tag] $message")
+        val formattedLine = buildString {
+            append("[")
+            append(formatTimestamp())
+            append("] [")
+            append(level.label)
+            append("] [")
+            append(tag)
+            append("] ")
+            append(message)
             if (throwable != null) {
-                currentWriter.println(throwable.stackTraceToString().trimEnd())
+                appendLine()
+                append(throwable.stackTraceToString().trimEnd())
             }
-            currentWriter.flush()
         }
+
+        synchronized(lock) { writer }?.enqueue(
+            line = formattedLine,
+            priority = level.fileWritePriority
+        )
     }
 
     private fun shouldWriteFileLevel(level: LogLevel): Boolean = logLevel().allows(level)
+
+    private fun formatTimestamp(): String = synchronized(timestampFormat) {
+        timestampFormat.format(Date())
+    }
+
+    private fun formatDroppedLine(droppedCount: Int): String =
+        "[${formatTimestamp()}] [W] [$TAG] Dropped $droppedCount log lines because the async log queue was full"
 
     private fun clearExpiredLogFiles(directory: File) {
         LogFilePolicy.filesOlderThanRetention(directory).forEach { file ->
@@ -222,15 +254,190 @@ class AndroidFileLogger(
     }
 
     private fun closeLocked() {
-        writer?.apply {
-            flush()
-            close()
-        }
+        writer?.close()
         writer = null
         logFile = null
     }
 
     companion object {
         private const val TAG = "AndroidFileLogger"
+        private const val DEFAULT_QUEUE_CAPACITY = 2048
+        private const val FLUSH_INTERVAL_MS = 500L
+    }
+
+    internal fun drainForTest(timeoutMillis: Long = 5_000L): Boolean =
+        synchronized(lock) { writer }?.flush(timeoutMillis) ?: true
+
+    private sealed interface QueueItem {
+        data class Line(
+            val value: String,
+            val priority: LogLevel.FileWritePriority
+        ) : QueueItem
+
+        data class Flush(val complete: CountDownLatch? = null) : QueueItem
+
+        data class Stop(val complete: CountDownLatch) : QueueItem
+    }
+
+    private class AsyncLogWriter(
+        private val file: File,
+        queueCapacity: Int,
+        private val droppedLineFormatter: (Int) -> String,
+        private val startGate: CountDownLatch?
+    ) {
+        private val queue = LinkedBlockingDeque<QueueItem>(queueCapacity.coerceAtLeast(1))
+        private val droppedLineCount = AtomicInteger(0)
+        private val closed = AtomicBoolean(false)
+        private val writerThread = Thread(::run, "AndroidFileLogger-${file.name}").apply {
+            isDaemon = true
+            start()
+        }
+
+        fun enqueue(
+            line: String,
+            priority: LogLevel.FileWritePriority
+        ) {
+            if (closed.get()) return
+
+            val item = QueueItem.Line(
+                value = line,
+                priority = priority
+            )
+            if (queue.offer(item)) return
+
+            if (priority > LogLevel.FileWritePriority.LOW && dropQueuedLowPriorityLine()) {
+                if (queue.offer(item)) return
+            }
+
+            droppedLineCount.incrementAndGet()
+        }
+
+        fun flush(timeoutMillis: Long): Boolean {
+            if (closed.get()) return true
+
+            val complete = CountDownLatch(1)
+            if (!queue.offer(QueueItem.Flush(complete))) {
+                return false
+            }
+            return try {
+                complete.await(timeoutMillis, TimeUnit.MILLISECONDS)
+            } catch (_: InterruptedException) {
+                Thread.currentThread().interrupt()
+                false
+            }
+        }
+
+        fun close() {
+            if (!closed.compareAndSet(false, true)) return
+            if (!writerThread.isAlive) return
+
+            val complete = CountDownLatch(1)
+            try {
+                queue.put(QueueItem.Stop(complete))
+                complete.await()
+            } catch (_: InterruptedException) {
+                Thread.currentThread().interrupt()
+            }
+        }
+
+        private fun run() {
+            try {
+                startGate?.await()
+                PrintWriter(BufferedWriter(FileWriter(file, true))).use { writer ->
+                    var lastFlushAt = System.currentTimeMillis()
+                    var running = true
+
+                    while (running) {
+                        when (val item = queue.poll(FLUSH_INTERVAL_MS, TimeUnit.MILLISECONDS)) {
+                            is QueueItem.Line -> {
+                                writeDroppedMarkerIfNeeded(writer)
+                                writer.println(item.value)
+                                if (item.priority.flushesImmediately()) {
+                                    writer.flush()
+                                    lastFlushAt = System.currentTimeMillis()
+                                }
+                            }
+
+                            is QueueItem.Flush -> {
+                                writeDroppedMarkerIfNeeded(writer)
+                                writer.flush()
+                                item.complete?.countDown()
+                                lastFlushAt = System.currentTimeMillis()
+                            }
+
+                            is QueueItem.Stop -> {
+                                drainRemainingLines(writer)
+                                writeDroppedMarkerIfNeeded(writer)
+                                writer.flush()
+                                item.complete.countDown()
+                                running = false
+                                lastFlushAt = System.currentTimeMillis()
+                            }
+
+                            null -> {
+                                writer.flush()
+                                lastFlushAt = System.currentTimeMillis()
+                            }
+                        }
+
+                        val now = System.currentTimeMillis()
+                        if (now - lastFlushAt >= FLUSH_INTERVAL_MS) {
+                            writer.flush()
+                            lastFlushAt = now
+                        }
+                    }
+                }
+            } catch (_: InterruptedException) {
+                Thread.currentThread().interrupt()
+            } finally {
+                releasePendingControls()
+            }
+        }
+
+        private fun drainRemainingLines(writer: PrintWriter) {
+            while (true) {
+                when (val item = queue.poll()) {
+                    is QueueItem.Line -> {
+                        writeDroppedMarkerIfNeeded(writer)
+                        writer.println(item.value)
+                    }
+
+                    is QueueItem.Flush -> item.complete?.countDown()
+                    is QueueItem.Stop -> item.complete.countDown()
+                    null -> return
+                }
+            }
+        }
+
+        private fun releasePendingControls() {
+            while (true) {
+                when (val item = queue.poll()) {
+                    is QueueItem.Flush -> item.complete?.countDown()
+                    is QueueItem.Stop -> item.complete.countDown()
+                    is QueueItem.Line -> Unit
+                    null -> return
+                }
+            }
+        }
+
+        private fun writeDroppedMarkerIfNeeded(writer: PrintWriter) {
+            val dropped = droppedLineCount.getAndSet(0)
+            if (dropped > 0) {
+                writer.println(droppedLineFormatter(dropped))
+            }
+        }
+
+        private fun dropQueuedLowPriorityLine(): Boolean {
+            val iterator = queue.iterator()
+            while (iterator.hasNext()) {
+                val item = iterator.next()
+                if (item is QueueItem.Line && item.priority <= LogLevel.FileWritePriority.LOW) {
+                    iterator.remove()
+                    droppedLineCount.incrementAndGet()
+                    return true
+                }
+            }
+            return false
+        }
     }
 }

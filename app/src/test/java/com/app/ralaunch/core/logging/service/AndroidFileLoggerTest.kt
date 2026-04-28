@@ -2,10 +2,12 @@ package com.app.ralaunch.core.logging.service
 
 import com.app.ralaunch.core.logging.LogLevel
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.nio.file.Files
+import java.util.concurrent.CountDownLatch
 
 class AndroidFileLoggerTest {
 
@@ -20,11 +22,13 @@ class AndroidFileLoggerTest {
 
             logger.configure(dir, enabled = true)
             logger.i("TestTag", "hello")
+            assertTrue(logger.drainForTest())
 
             val logFile = logger.currentLogFile()
             requireNotNull(logFile)
             val content = logFile.readText()
             assertTrue(content.contains("[I] [TestTag] hello"))
+            logger.close()
         } finally {
             dir.deleteRecursively()
         }
@@ -41,11 +45,141 @@ class AndroidFileLoggerTest {
 
             logger.configure(dir, enabled = true)
             logger.writeRawLine("[04-25 12:00:00.000] [I] [TestTag] raw message")
+            assertTrue(logger.drainForTest())
 
             val logFile = logger.currentLogFile()
             requireNotNull(logFile)
             assertEquals("[04-25 12:00:00.000] [I] [TestTag] raw message\n", logFile.readText())
+            logger.close()
         } finally {
+            dir.deleteRecursively()
+        }
+    }
+
+    @Test
+    fun infoWritesAreBufferedUntilExplicitFlushBoundary() {
+        val dir = Files.createTempDirectory("ralaunch-buffered-file-logger").toFile()
+        try {
+            val logger = AndroidFileLogger(
+                fileNameProvider = { "buffered.log" },
+                emitToAndroidLog = false
+            )
+
+            logger.configure(dir, enabled = true)
+            logger.i("TestTag", "buffered info")
+
+            val logFile = logger.currentLogFile()
+            requireNotNull(logFile)
+            assertFalse(logFile.readText().contains("buffered info"))
+
+            assertTrue(logger.drainForTest())
+            assertTrue(logFile.readText().contains("[I] [TestTag] buffered info"))
+            logger.close()
+        } finally {
+            dir.deleteRecursively()
+        }
+    }
+
+    @Test
+    fun warnWritesFlushImmediately() {
+        val dir = Files.createTempDirectory("ralaunch-warn-flush-file-logger").toFile()
+        try {
+            val logger = AndroidFileLogger(
+                fileNameProvider = { "warn.log" },
+                emitToAndroidLog = false
+            )
+
+            logger.configure(dir, enabled = true)
+            logger.w("TestTag", "flush warning")
+
+            val logFile = logger.currentLogFile()
+            requireNotNull(logFile)
+            assertTrue(eventually { logFile.readText().contains("[W] [TestTag] flush warning") })
+            logger.close()
+        } finally {
+            dir.deleteRecursively()
+        }
+    }
+
+    @Test
+    fun closeFlushesPendingBufferedWrites() {
+        val dir = Files.createTempDirectory("ralaunch-close-flush-file-logger").toFile()
+        try {
+            val logger = AndroidFileLogger(
+                fileNameProvider = { "close-flush.log" },
+                emitToAndroidLog = false
+            )
+
+            logger.configure(dir, enabled = true)
+            logger.i("TestTag", "written on close")
+
+            val logFile = logger.currentLogFile()
+            requireNotNull(logFile)
+            logger.close()
+
+            assertTrue(logFile.readText().contains("[I] [TestTag] written on close"))
+        } finally {
+            dir.deleteRecursively()
+        }
+    }
+
+    @Test
+    fun fullQueueDropsLowPriorityLinesAndWritesCompactMarker() {
+        val dir = Files.createTempDirectory("ralaunch-overflow-file-logger").toFile()
+        val startGate = CountDownLatch(1)
+        try {
+            val logger = AndroidFileLogger(
+                fileNameProvider = { "overflow.log" },
+                emitToAndroidLog = false,
+                queueCapacity = 1,
+                writerStartGate = startGate
+            )
+
+            logger.configure(dir, enabled = true)
+            repeat(5) { index ->
+                logger.d("TestTag", "overflow $index")
+            }
+
+            val logFile = logger.currentLogFile()
+            requireNotNull(logFile)
+            startGate.countDown()
+            logger.close()
+
+            val content = logFile.readText()
+            assertTrue(content.contains("Dropped 4 log lines because the async log queue was full"))
+        } finally {
+            startGate.countDown()
+            dir.deleteRecursively()
+        }
+    }
+
+    @Test
+    fun highPriorityWriteEvictsQueuedLowPriorityLineWhenQueueIsFull() {
+        val dir = Files.createTempDirectory("ralaunch-priority-overflow-file-logger").toFile()
+        val startGate = CountDownLatch(1)
+        try {
+            val logger = AndroidFileLogger(
+                fileNameProvider = { "priority-overflow.log" },
+                emitToAndroidLog = false,
+                queueCapacity = 1,
+                writerStartGate = startGate
+            )
+
+            logger.configure(dir, enabled = true)
+            logger.d("TestTag", "low priority")
+            logger.e("TestTag", "high priority")
+
+            val logFile = logger.currentLogFile()
+            requireNotNull(logFile)
+            startGate.countDown()
+            logger.close()
+
+            val content = logFile.readText()
+            assertFalse(content.contains("low priority"))
+            assertTrue(content.contains("Dropped 1 log lines because the async log queue was full"))
+            assertTrue(content.contains("[E] [TestTag] high priority"))
+        } finally {
+            startGate.countDown()
             dir.deleteRecursively()
         }
     }
@@ -90,6 +224,29 @@ class AndroidFileLoggerTest {
     }
 
     @Test
+    fun writesAfterCloseAreIgnoredCleanly() {
+        val dir = Files.createTempDirectory("ralaunch-write-after-close-file-logger").toFile()
+        try {
+            val logger = AndroidFileLogger(
+                fileNameProvider = { "after-close.log" },
+                emitToAndroidLog = false
+            )
+
+            logger.configure(dir, enabled = true)
+            val logFile = logger.currentLogFile()
+            requireNotNull(logFile)
+            logger.close()
+
+            logger.i("TestTag", "ignored after close")
+            logger.writeRawLine("ignored raw after close")
+
+            assertTrue(logFile.readText().isEmpty())
+        } finally {
+            dir.deleteRecursively()
+        }
+    }
+
+    @Test
     fun refreshConfigurationCanEnableLoggingAfterDisabledStart() {
         val dir = Files.createTempDirectory("ralaunch-refresh-file-logger").toFile()
         var enabled = false
@@ -106,10 +263,12 @@ class AndroidFileLoggerTest {
             enabled = true
             logger.refreshConfiguration()
             logger.i("TestTag", "enabled later")
+            assertTrue(logger.drainForTest())
 
             val logFile = logger.currentLogFile()
             requireNotNull(logFile)
             assertTrue(logFile.readText().contains("[I] [TestTag] enabled later"))
+            logger.close()
         } finally {
             dir.deleteRecursively()
         }
@@ -132,7 +291,9 @@ class AndroidFileLoggerTest {
 
             logLevel = LogLevel.DEBUG
             logger.d("TestTag", "debug visible")
+            assertTrue(logger.drainForTest())
             assertTrue(logger.currentLogFile()?.readText()?.contains("[D] [TestTag] debug visible") == true)
+            logger.close()
         } finally {
             dir.deleteRecursively()
         }
@@ -156,10 +317,24 @@ class AndroidFileLoggerTest {
             logLevel = LogLevel.VERBOSE
             logger.refreshConfiguration()
             logger.v("TestTag", "verbose visible")
+            assertTrue(logger.drainForTest())
 
             assertTrue(logger.currentLogFile()?.readText()?.contains("[V] [TestTag] verbose visible") == true)
+            logger.close()
         } finally {
             dir.deleteRecursively()
         }
+    }
+
+    private fun eventually(
+        timeoutMillis: Long = 5_000L,
+        condition: () -> Boolean
+    ): Boolean {
+        val deadline = System.currentTimeMillis() + timeoutMillis
+        while (System.currentTimeMillis() < deadline) {
+            if (condition()) return true
+            Thread.sleep(10L)
+        }
+        return condition()
     }
 }

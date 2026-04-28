@@ -31,9 +31,11 @@ class LogcatReaderTest {
             val reader = LogcatReader(RecordingLogger(), fileLogger)
 
             reader.processLogLine("04-25 12:00:00.000 I/MainActivityCompose( 123): app message")
+            assertTrue(fileLogger.drainForTest())
 
             val content = fileLogger.currentLogFile()?.readText().orEmpty()
             assertTrue(content.contains("[04-25 12:00:00.000] [I] [MainActivityCompose] [123] app message"))
+            fileLogger.close()
         } finally {
             dir.deleteRecursively()
         }
@@ -54,6 +56,7 @@ class LogcatReaderTest {
                 "04-25 23:31:03.760  2174  2625 I SDM     : " +
                     "DisplayBuiltIn::IdlePowerCollapse: IPC received, disabling partial update for one frame"
             )
+            assertTrue(fileLogger.drainForTest())
 
             val content = fileLogger.currentLogFile()?.readText().orEmpty()
             assertTrue(
@@ -62,6 +65,7 @@ class LogcatReaderTest {
                         "DisplayBuiltIn::IdlePowerCollapse: IPC received, disabling partial update for one frame"
                 )
             )
+            fileLogger.close()
         } finally {
             dir.deleteRecursively()
         }
@@ -98,8 +102,10 @@ class LogcatReaderTest {
             val reader = LogcatReader(RecordingLogger(), fileLogger)
 
             reader.processLogLine("04-25 12:00:00.000 I/Activity( 123): framework message")
+            assertTrue(fileLogger.drainForTest())
 
             assertTrue(fileLogger.currentLogFile()?.readText().orEmpty().isEmpty())
+            fileLogger.close()
         } finally {
             dir.deleteRecursively()
         }
