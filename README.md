@@ -55,7 +55,7 @@ Supports FNA/XNA framework games and mod loaders like tModLoader, SMAPI, and Eve
 | **Terraria** | tModLoader | ✅ Supported |
 | **Stardew Valley** | SMAPI | ✅ Supported |
 | **Celeste** | Everest | ✅ Supported |
-| Other FNA/XNA .NET Games | — | ✅ Supported |
+| Other FNA/XNA .NET Games | — | 🚧 WIP |
 
 </div>
 
