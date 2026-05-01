@@ -18,14 +18,30 @@ android {
         versionName "2.1.1"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
 
-        // 只编译 arm64-v8a 架构
-        // 使用 splits 配置
+    externalNativeBuild {
+        cmake {
+            path file('src/main/cpp/CMakeLists.txt')
+            version '3.22.1'
+        }
+    }
 
-        externalNativeBuild {
-            cmake {
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_21
+        targetCompatibility JavaVersion.VERSION_21
+    }
+    kotlinOptions {
+        jvmTarget = '21'
+    }
 
-            }
+    // 临时只针对真机arm64-v8a编译
+    splits {
+        abi {
+            enable true
+            reset()
+            include 'arm64-v8a'
+            universalApk false
         }
     }
 
@@ -34,8 +50,6 @@ android {
             debuggable true
             minifyEnabled false
             jniDebuggable true  // 启用 Native 调试
-            
-         
         }
         release {
             debuggable false
@@ -49,16 +63,6 @@ android {
                     arguments "-DCMAKE_BUILD_TYPE=Release"
                 }
             }
-        }
-    }
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_21
-        targetCompatibility JavaVersion.VERSION_21
-    }
-    externalNativeBuild {
-        cmake {
-            path file('src/main/cpp/CMakeLists.txt')
-            version '3.22.1'
         }
     }
     buildFeatures {
@@ -81,29 +85,6 @@ android {
         }
     }
 
-    // 临时只针对真机arm64-v8a编译
-    splits {
-        abi {
-            enable true
-            reset()
-            include 'arm64-v8a'
-            universalApk false
-        }
-    }
-
-    // 使用预编译的 System.Security.Cryptography jar，实现官方托管绑定
-    sourceSets {
-        main {
-            java {
-                exclude 'net/dot/android/crypto/**'
-            }
-        }
-    }
-
-    kotlinOptions {
-        jvmTarget = '21'
-    }
-
     // 关闭 Lint 检查
     lint {
         abortOnError false
@@ -113,13 +94,13 @@ android {
 
 dependencies {
     // 本地 JAR/AAR 依赖
-    implementation files('../app/libs/libSystem.Security.Cryptography.Native.Android.jar')
+    implementation files('../external/libs/libSystem.Security.Cryptography.Native.Android.jar')
     implementation files('../external/libs/fmod.jar')
-    implementation files('libs/fishnet-release.aar')
+    implementation files('../external/libs/fishnet-release.aar')
 
     // 从 ralib 迁移的依赖
-    implementation 'com.github.omicronapps:7-Zip-JBinding-4Android:Release-16.02-2.03'
-    implementation 'com.google.code.gson:gson:2.13.2'
+    implementation libs.sevenzip.jbinding.android
+    implementation libs.gson
 
     // AndroidX 核心库
     implementation libs.core.ktx
@@ -151,8 +132,8 @@ dependencies {
     implementation libs.activity.compose
     implementation libs.lifecycle.runtime.compose
     implementation libs.coil.compose
-    implementation 'com.github.jeziellago:compose-markdown:0.5.8'
-    debugImplementation 'androidx.compose.ui:ui-tooling'
+    implementation libs.compose.markdown
+    debugImplementation libs.compose.ui.tooling
 
     // Koin DI
     implementation libs.koin.core
