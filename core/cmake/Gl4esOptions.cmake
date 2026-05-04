@@ -1,0 +1,8 @@
+set(ANDROID        ON  CACHE BOOL "" FORCE)
+set(USE_ANDROID_LOG ON  CACHE BOOL "" FORCE)
+set(EGL_WRAPPER    ON  CACHE BOOL "" FORCE)
+set(NOX11          ON  CACHE BOOL "" FORCE)
+set(GLX_STUBS      OFF CACHE BOOL "" FORCE)  # ✅ 必须为 OFF
+set(STATICLIB      OFF CACHE BOOL "" FORCE)
+
+add_subdirectory(${LIBS_DIR}/gl4es)

@@ -1,8 +1,8 @@
 [submodule "app/src/main/cpp/FNA3D"]
-	path = app/src/main/cpp/FNA3D
+	path = core/libs/FNA3D
 	url = https://github.com/RotatingArtDev/FNA3D.git
 [submodule "app/src/main/cpp/FAudio"]
-	path = app/src/main/cpp/FAudio
+	path = core/libs/FAudio
 	url = https://github.com/RotatingArtDev/FAudio.git
 [submodule "app/src/main/cpp/Theorafile"]
 	path = app/src/main/cpp/Theorafile
@@ -11,14 +11,14 @@
 	path = app/src/main/cpp/box64
 	url = https://github.com/RotatingArtDev/box64.git
 [submodule "app/src/main/cpp/gl4es"]
-	path = app/src/main/cpp/gl4es
+	path = core/libs/gl4es
 	url = https://github.com/RotatingArtDev/gl4es.git
 [submodule "app/src/main/cpp/dxvk"]
 	path = app/src/main/cpp/dxvk
 	url = https://github.com/RotatingArtDev/dxvk.git
 [submodule "app/src/main/cpp/FMOD_SDL"]
-	path = app/src/main/cpp/FMOD_SDL
+	path = core/libs/FMOD_SDL
 	url = https://github.com/RotatingArtDev/FMOD_SDL.git
 [submodule "app/src/main/cpp/SDL"]
-	path = app/src/main/cpp/SDL
+	path = core/libs/SDL
 	url = https://github.com/RotatingArtDev/SDL.git

@@ -1,5 +1,5 @@
 [versions]
-agp = "8.11.2"
+agp = "9.0.1"
 junit = "4.13.2"
 junitVersion = "1.3.0"
 espressoCore = "3.7.0"
@@ -8,15 +8,15 @@ material = "1.12.0"
 constraintlayout = "2.2.1"
 annotationJvm = "1.9.1"
 activity = "1.10.1"
-kotlin = "2.0.21"
+kotlin = "2.3.21"
 coreKtx = "1.17.0"
-kotlinx-serialization-json = "1.7.3"
-kotlinx-coroutines = "1.9.0"
+kotlinx-serialization-json = "1.11.0"
+kotlinx-coroutines = "1.10.2"
 # Third-party libraries
-glide = "4.16.0"
+glide = "5.0.7"
 konfetti = "2.0.5"
-commonsCompress = "1.24.0"
-xz = "1.9"
+commonsCompress = "1.28.0"
+xz = "1.12"
 androidSvg = "1.4"
 recyclerview = "1.3.2"
 # Android Compose
@@ -27,8 +27,8 @@ lifecycleRuntimeCompose = "2.9.1"
 coil = "2.7.0"
 composeMarkdown = "0.5.8"
 # KMP
-koin = "4.0.0"
-kotlinxDatetime = "0.6.1"
+koin = "4.2.1"
+kotlinxDatetime = "0.7.1"
 # Haze (Glassmorphism blur)
 haze = "1.0.0"
 # DataStore
@@ -38,7 +38,7 @@ lifecycleViewmodel = "2.9.1"
 # Navigation
 navigationCompose = "2.8.5"
 rhino = "1.8.0"
-gson = "2.13.2"
+gson = "2.14.0"
 sevenzipJBinding = "Release-16.02-2.03"
 
 [libraries]

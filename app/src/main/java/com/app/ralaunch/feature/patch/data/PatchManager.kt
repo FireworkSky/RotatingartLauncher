@@ -289,8 +289,7 @@ class PatchManager @JvmOverloads constructor(
                         pathsStream
                             .filter { Files.isRegularFile(it) && it.toString().endsWith(".zip") }
                             .forEach { patchZip ->
-                                val manifest = PatchManifest.fromZip(patchZip)
-                                if (manifest == null) return@forEach
+                                val manifest = PatchManifest.fromZip(patchZip) ?: return@forEach
 
                                 val installedPatch = installedPatchMap[manifest.id]
 
