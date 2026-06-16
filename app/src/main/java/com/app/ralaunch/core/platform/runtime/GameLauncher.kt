@@ -83,7 +83,7 @@ object GameLauncher {
      * 包含的库：
      * Included libraries:
      * - FMOD: 音频引擎（Celeste 等游戏需要）/ Audio engine (required by games like Celeste)
-     * - SDL2: 跨平台多媒体库 / Cross-platform multimedia library
+     * - SDL3: 跨平台多媒体库 / Cross-platform multimedia library
      * - FAudio: XAudio2 替代实现 / XAudio2 reimplementation
      * - SkiaSharp: 2D 图形库 / 2D graphics library
      */
@@ -96,7 +96,7 @@ object GameLauncher {
             System.loadLibrary("dotnethost")
             System.loadLibrary("FAudio")
             System.loadLibrary("theorafile")
-            System.loadLibrary("SDL2")
+            System.loadLibrary("SDL3")
             System.loadLibrary("main")
             System.loadLibrary("openal32")
             System.loadLibrary("lwjgl_lz4")

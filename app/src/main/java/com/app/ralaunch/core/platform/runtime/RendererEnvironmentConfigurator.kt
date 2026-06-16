@@ -89,8 +89,16 @@ object RendererEnvironmentConfigurator {
     private fun buildFna3dEnvVars(renderer: String): Map<String, String?> {
         val envVars = mutableMapOf<String, String?>()
 
-        envVars["FNA3D_OPENGL_DRIVER"] = renderer
-        envVars["FNA3D_FORCE_DRIVER"] = "OpenGL"
+        if (renderer == AndroidRendererRegistry.ID_VULKAN) {
+            envVars["FNA3D_FORCE_DRIVER"] = "Vulkan"
+            envVars["SDL_GPU_DRIVER"] = "vulkan"
+            envVars["FNA3D_OPENGL_DRIVER"] = null
+            envVars["FNA3D_OPENGL_LIBRARY"] = null
+        } else {
+            envVars["FNA3D_OPENGL_DRIVER"] = renderer
+            envVars["FNA3D_FORCE_DRIVER"] = "OpenGL"
+            envVars["SDL_GPU_DRIVER"] = null
+        }
         envVars.putAll(getOpenGlVersionConfig(renderer))
 //        envVars["FNA3D_OPENGL_USE_MAP_BUFFER_RANGE"] = getMapBufferRangeValue(renderer)
         envVars.putAll(getQualityConfig())
@@ -148,6 +156,7 @@ object RendererEnvironmentConfigurator {
     private fun getOpenGlVersionConfig(renderer: String): Map<String, String?> {
         return when (renderer) {
             AndroidRendererRegistry.ID_GL4ES,
+            AndroidRendererRegistry.ID_VULKAN,
             AndroidRendererRegistry.ID_ZINK -> {
                 buildMap {
                     put("FNA3D_OPENGL_FORCE_ES3", null)
@@ -186,8 +195,11 @@ object RendererEnvironmentConfigurator {
         AppLog.i(TAG, "Renderer ID: $renderer")
         AppLog.i(TAG, "FNA3D_OPENGL_DRIVER = ${envVars["FNA3D_OPENGL_DRIVER"]}")
         AppLog.i(TAG, "FNA3D_FORCE_DRIVER = ${envVars["FNA3D_FORCE_DRIVER"]}")
+        AppLog.i(TAG, "SDL_GPU_DRIVER = ${envVars["SDL_GPU_DRIVER"]}")
 
         when (renderer) {
+            AndroidRendererRegistry.ID_VULKAN ->
+                AppLog.i(TAG, "GPU Profile: SDL_GPU Vulkan")
             AndroidRendererRegistry.ID_GL4ES ->
                 AppLog.i(TAG, "OpenGL Profile: Desktop OpenGL 2.1 Compatibility Profile")
             AndroidRendererRegistry.ID_ZINK ->
@@ -198,6 +210,8 @@ object RendererEnvironmentConfigurator {
 
         val mapBufferRange = envVars["FNA3D_OPENGL_USE_MAP_BUFFER_RANGE"]
         when {
+            renderer == AndroidRendererRegistry.ID_VULKAN ->
+                AppLog.i(TAG, "Map Buffer Range: Not applicable (SDL_GPU Vulkan)")
             mapBufferRange == "0" && renderer in setOf(
                 AndroidRendererRegistry.ID_ANGLE,
                 AndroidRendererRegistry.ID_GL4ES_ANGLE

@@ -188,10 +188,17 @@ class GameActivity : SDLActivity(), GameContract.View {
     }
 
     private fun initializeVirtualControls() {
+        val layout = mLayout
+        val surface = mSurface
+        if (layout == null || surface == null) {
+            AppLog.w(TAG, "SDL view hierarchy is not initialized; skip virtual controls")
+            return
+        }
+
         virtualControlsManager.initialize(
             activity = this,
-            sdlLayout = mLayout as ViewGroup,
-            sdlSurface = mSurface,
+            sdlLayout = layout,
+            sdlSurface = surface,
             onExitGame = { exitGame() }
         )
     }

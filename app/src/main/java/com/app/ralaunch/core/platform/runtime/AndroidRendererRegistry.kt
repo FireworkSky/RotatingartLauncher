@@ -6,6 +6,7 @@ object AndroidRendererRegistry {
     val ID_GL4ES_ANGLE: String = RendererRegistry.ID_GL4ES_ANGLE
     val ID_MOBILEGLUES: String = RendererRegistry.ID_MOBILEGLUES
     val ID_ANGLE: String = RendererRegistry.ID_ANGLE
+    val ID_VULKAN: String = RendererRegistry.ID_VULKAN
     val ID_ZINK: String = RendererRegistry.ID_ZINK
 
     fun getRendererInfo(rendererId: String): RendererInfo? = RendererRegistry.getRendererInfo(rendererId)
