@@ -43,7 +43,7 @@ add_library(${CMAKE_PROJECT_NAME} SHARED
 
 target_link_libraries(${CMAKE_PROJECT_NAME}
         android
-        SDL2
+        SDL3::SDL3
         FAudio-shared
         FNA3D
         mojoshader
@@ -66,7 +66,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
 # =========================
 # 安装
 # =========================
-install(TARGETS SDL2 FAudio-shared FNA3D dotnethost fmod_SDL
+install(TARGETS SDL3-shared FAudio-shared FNA3D dotnethost fmod_SDL
         DESTINATION lib)
 
 install(TARGETS GL_gl4es EGL_gl4es

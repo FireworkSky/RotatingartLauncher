@@ -1,6 +1,6 @@
 #include <jni.h>
 #include <stdlib.h>
-#include "SDL.h"
+#include <SDL3/SDL.h>
 #include "logger.hpp"
 
 // 获取 SDL 窗口
@@ -40,7 +40,7 @@ Java_com_app_ralaunch_feature_controls_bridges_SDLInputBridge_nativeSendMouseWhe
     // 创建 SDL 鼠标滚轮事件
     SDL_Event event;
     SDL_zero(event);
-    event.type = SDL_MOUSEWHEEL;
+    event.type = SDL_EVENT_MOUSE_WHEEL;
     event.wheel.x = 0;               // 水平滚动（通常为0）
     event.wheel.y = (int)scrollY;    // 垂直滚动（正数=向上，负数=向下）
     event.wheel.direction = SDL_MOUSEWHEEL_NORMAL;  // 正常方向（非翻转）
@@ -55,11 +55,11 @@ Java_com_app_ralaunch_feature_controls_bridges_SDLInputBridge_nativeSendMouseWhe
 extern "C" JNIEXPORT void JNICALL
 Java_com_app_ralaunch_feature_controls_bridges_SDLInputBridge_nativeStartTextInput(
         JNIEnv *env, jclass clazz) {
-    SDL_StartTextInput();
+    SDL_StartTextInput(get_sdl_window());
 }
 
 extern "C" JNIEXPORT void JNICALL
 Java_com_app_ralaunch_feature_controls_bridges_SDLInputBridge_nativeStopTextInput(
         JNIEnv *env, jclass clazz) {
-    SDL_StopTextInput();
+    SDL_StopTextInput(get_sdl_window());
 }
