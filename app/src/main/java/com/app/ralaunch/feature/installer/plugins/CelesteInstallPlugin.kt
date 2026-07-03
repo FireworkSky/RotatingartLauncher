@@ -13,9 +13,6 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.util.zip.ZipFile
 
-/**
- * Celeste/Everest 安装插件
- */
 class CelesteInstallPlugin : BaseInstallPlugin() {
 
     override val pluginId = "celeste"
@@ -25,11 +22,9 @@ class CelesteInstallPlugin : BaseInstallPlugin() {
 
     override fun detectGame(gameFile: File): GameDetectResult? {
         val fileName = gameFile.name.lowercase()
-
         if (fileName.endsWith(".zip") && fileName.contains("celeste")) {
             return GameDetectResult(GameDefinition.CELESTE)
         }
-
         return null
     }
 
@@ -54,15 +49,11 @@ class CelesteInstallPlugin : BaseInstallPlugin() {
         installJob = CoroutineScope(Dispatchers.IO).launch {
             try {
                 withContext(Dispatchers.Main) {
-                    callback.onProgress(
-                        RaLaunchApp.getInstance().getString(R.string.install_starting),
-                        0
-                    )
+                    callback.onProgress(RaLaunchApp.getInstance().getString(R.string.install_starting), 0)
                 }
 
                 if (!gameStorageRoot.exists()) gameStorageRoot.mkdirs()
 
-                // 解压游戏本体
                 val extractResult = GameExtractorUtils.extractZip(
                     zipFile = gameFile,
                     outputDir = gameStorageRoot,
@@ -81,7 +72,7 @@ class CelesteInstallPlugin : BaseInstallPlugin() {
                         withContext(Dispatchers.Main) { callback.onError(extractResult.message) }
                         return@launch
                     }
-                    is GameExtractorUtils.ExtractResult.Success -> { /* 继续 */ }
+                    is GameExtractorUtils.ExtractResult.Success -> { }
                 }
 
                 if (isCancelled) {
@@ -89,57 +80,57 @@ class CelesteInstallPlugin : BaseInstallPlugin() {
                     return@launch
                 }
 
+                val configFile = File(gameStorageRoot, "Celeste.runtimeconfig.json")
+                if (!configFile.exists()) {
+                    val jsonContent = """
+                    {
+                      "runtimeOptions": {
+                        "tfm": "net6.0",
+                        "rollForward": "LatestMajor",
+                        "framework": {
+                          "name": "Microsoft.NETCore.App",
+                          "version": "6.0.0"
+                        },
+                        "configProperties": {
+                          "System.GC.Server": false,
+                          "System.GC.Concurrent": true,
+                          "System.Runtime.TieredCompilation": true
+                        }
+                      }
+                    }
+                    """.trimIndent()
+                    configFile.writeText(jsonContent)
+                }
+
                 var definition = GameDefinition.CELESTE
 
-                // 安装 Everest
                 if (modLoaderFile != null) {
                     withContext(Dispatchers.Main) {
-                        callback.onProgress(
-                            RaLaunchApp.getInstance().getString(R.string.install_everest),
-                            55
-                        )
+                        callback.onProgress(RaLaunchApp.getInstance().getString(R.string.install_everest), 55)
                     }
                     installEverest(modLoaderFile, gameStorageRoot, callback)
                     definition = GameDefinition.EVEREST
                 }
 
-                // 提取图标
                 withContext(Dispatchers.Main) {
-                    callback.onProgress(
-                        RaLaunchApp.getInstance().getString(R.string.install_extract_icon),
-                        92
-                    )
+                    callback.onProgress(RaLaunchApp.getInstance().getString(R.string.install_extract_icon), 92)
                 }
                 val iconPath = extractIcon(gameStorageRoot, definition)
 
-                // 创建游戏信息文件 - outputDir 既是存储根目录也是实际游戏目录
                 withContext(Dispatchers.Main) {
-                    callback.onProgress(
-                        RaLaunchApp.getInstance().getString(R.string.install_finishing),
-                        98
-                    )
+                    callback.onProgress(RaLaunchApp.getInstance().getString(R.string.install_finishing), 98)
                 }
                 createGameInfo(gameStorageRoot, definition, iconPath)
 
-                // 创建 GameItem 并回调
-                val gameItem = createGameItem(
-                    definition = definition,
-                    gameDir = gameStorageRoot,
-                    iconPath = iconPath
-                )
+                val gameItem = createGameItem(definition, gameStorageRoot, iconPath)
 
                 withContext(Dispatchers.Main) {
-                    callback.onProgress(
-                        RaLaunchApp.getInstance().getString(R.string.install_complete),
-                        100
-                    )
+                    callback.onProgress(RaLaunchApp.getInstance().getString(R.string.install_complete), 100)
                     callback.onComplete(gameItem)
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
-                    callback.onError(
-                        e.message ?: RaLaunchApp.getInstance().getString(R.string.install_failed)
-                    )
+                    callback.onError(e.message ?: RaLaunchApp.getInstance().getString(R.string.install_failed))
                 }
             }
         }
@@ -154,13 +145,7 @@ class CelesteInstallPlugin : BaseInstallPlugin() {
                 if (!isCancelled) {
                     val progressInt = 55 + (progress * 25).toInt().coerceIn(0, 25)
                     CoroutineScope(Dispatchers.Main).launch {
-                        callback.onProgress(
-                            RaLaunchApp.getInstance().getString(
-                                R.string.install_everest_with_detail,
-                                msg
-                            ),
-                            progressInt
-                        )
+                        callback.onProgress(RaLaunchApp.getInstance().getString(R.string.install_everest_with_detail, msg), progressInt)
                     }
                 }
             }
@@ -168,59 +153,34 @@ class CelesteInstallPlugin : BaseInstallPlugin() {
 
         when (extractResult) {
             is GameExtractorUtils.ExtractResult.Error -> throw Exception(extractResult.message)
-            is GameExtractorUtils.ExtractResult.Success -> { /* 继续 */ }
+            is GameExtractorUtils.ExtractResult.Success -> { }
         }
 
-        // 安装 MonoMod 库
         withContext(Dispatchers.Main) {
-            callback.onProgress(
-                RaLaunchApp.getInstance().getString(R.string.install_monomod),
-                85
-            )
+            callback.onProgress(RaLaunchApp.getInstance().getString(R.string.install_monomod), 85)
         }
         installMonoMod(outputDir)
 
-        // 执行 Everest MiniInstaller
         withContext(Dispatchers.Main) {
-            callback.onProgress(
-                RaLaunchApp.getInstance().getString(R.string.install_everest_miniinstaller),
-                90
-            )
+            callback.onProgress(RaLaunchApp.getInstance().getString(R.string.install_everest_miniinstaller), 90)
         }
 
         val patchManager: PatchManager? = try {
             KoinJavaComponent.getOrNull(PatchManager::class.java)
         } catch (e: Exception) { null }
-        val patches = patchManager?.getPatchesByIds(
-            listOf("com.app.ralaunch.everest.miniinstaller.fix")
-        ) ?: emptyList()
+        val patches = patchManager?.getPatchesByIds(listOf("com.app.ralaunch.everest.miniinstaller.fix")) ?: emptyList()
 
         if (patches.size != 1) {
-            throw Exception(
-                RaLaunchApp.getInstance().getString(
-                    R.string.install_everest_miniinstaller_patch_missing
-                )
-            )
+            throw Exception(RaLaunchApp.getInstance().getString(R.string.install_everest_miniinstaller_patch_missing))
         }
 
-        val patchResult = GameLauncher.launchDotNetAssembly(
-            outputDir.resolve("MiniInstaller.dll").toString(),
-            arrayOf(),
-            patches
-        )
+        val patchResult = GameLauncher.launchDotNetAssembly(outputDir.resolve("MiniInstaller.dll").toString(), arrayOf(), patches)
 
-        outputDir.resolve("everest-launch.txt")
-            .writeText("# Splash screen disabled by Rotating Art Launcher\n--disable-splash\n")
-        outputDir.resolve("EverestXDGFlag")
-            .writeText("") // 创建一个空文件作为标记，告诉 Everest 使用 XDG 数据目录（Linux/MacOS）
+        outputDir.resolve("everest-launch.txt").writeText("# Splash screen disabled by Rotating Art Launcher\n--disable-splash\n")
+        outputDir.resolve("EverestXDGFlag").writeText("") 
 
         if (patchResult != 0) {
-            throw Exception(
-                RaLaunchApp.getInstance().getString(
-                    R.string.install_everest_miniinstaller_failed,
-                    patchResult
-                )
-            )
+            throw Exception(RaLaunchApp.getInstance().getString(R.string.install_everest_miniinstaller_failed, patchResult))
         }
     }
 }

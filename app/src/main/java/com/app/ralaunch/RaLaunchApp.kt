@@ -3,6 +3,7 @@ package com.app.ralaunch
 import android.app.Application
 import android.content.Context
 import android.content.res.Configuration
+import android.os.Build
 import android.system.Os
 import com.app.ralaunch.core.logging.AppLog
 import androidx.appcompat.app.AppCompatDelegate
@@ -21,13 +22,8 @@ import com.kyant.fishnet.Fishnet
 import org.koin.android.ext.android.inject
 import org.koin.core.component.KoinComponent
 import java.io.File
-import java.io.InvalidObjectException
+import com.app.ralaunch.core.platform.runtime.BlackBoxLogger
 
-/**
- * 应用程序 Application 类 (Kotlin 重构版)
- *
- * 使用 Koin DI 框架管理依赖
- */
 class RaLaunchApp : Application(), KoinComponent {
 
     companion object {
@@ -36,22 +32,15 @@ class RaLaunchApp : Application(), KoinComponent {
         @Volatile
         private var instance: RaLaunchApp? = null
 
-        /**
-         * 获取全局 Application 实例
-         */
         @JvmStatic
         fun getInstance(): RaLaunchApp = instance
             ?: throw IllegalStateException("Application not initialized")
 
-        /**
-         * 获取全局 Context（兼容旧代码）
-         */
         @JvmStatic
         fun getAppContext(): Context = getInstance().applicationContext
     }
 
-    // 延迟注入（在 Koin 初始化后才能使用）
-    private val _vibrationManager: VibrationManagerServiceV1 by inject()
+    private val _vibrationManager: VibrationManager by inject()
     private val _controlPackManager: ControlPackManager by inject()
     private val _patchManager: PatchManager? by inject()
     private val _runtimeManager: IRuntimeManagerServiceV2 by inject()
@@ -62,29 +51,37 @@ class RaLaunchApp : Application(), KoinComponent {
         super.onCreate()
         instance = this
 
-        // 1. 初始化密度适配（必须最先）
-        DensityAdapter.init(this)
+        BlackBoxLogger.startRecording(this)
 
-        // 2. 初始化 Koin DI（必须在使用 inject 之前）
-        KoinInitializer.init(this)
+        val startupLogFile = File(filesDir, "startup_log.txt")
+        startupLogFile.delete()
 
-        // 3. 初始化进程级文件日志捕获
-        initFileLogger()
+        fun writeLog(msg: String) {
+            Log.i(TAG, msg)
+            try { startupLogFile.appendText("$msg\n") } catch (e: Exception) { }
+        }
 
-        // 4. 启动时迁移旧运行时布局，仅在主进程执行一次
-        runRuntimeMigrationOnAppLaunch()
+        fun step(name: String, block: () -> Unit) {
+            writeLog("▶ $name...")
+            try {
+                block()
+                writeLog("✅ $name OK")
+            } catch (e: Throwable) {
+                writeLog("❌ $name FAILED: ${e.javaClass.name} - ${e.message}")
+                Log.e(TAG, "Init step failed: $name", e)
+            }
+        }
 
-        // 5. 应用主题设置
-        applyThemeFromSettings()
+        writeLog("=== App Start: Android ${Build.VERSION.SDK_INT} ===")
+        
+        step("DensityAdapter")  { DensityAdapter.init(this) }
+        step("KoinInitializer") { KoinInitializer.init(this) }
+        step("Theme")           { applyThemeFromSettings() }
+        step("Fishnet")         { initCrashHandler() }
+        step("Patches")         { installPatchesInBackground() }
+        step("EnvVars")         { setupEnvironmentVariables() }
 
-        // 6. 初始化崩溃捕获
-        initCrashHandler()
-
-        // 7. 后台安装补丁
-        installPatchesInBackground()
-
-        // 8. 设置环境变量
-        setupEnvironmentVariables()
+        writeLog("=== Init Complete ===")
     }
 
     override fun attachBaseContext(base: Context) {
@@ -98,57 +95,29 @@ class RaLaunchApp : Application(), KoinComponent {
 
     private fun applyThemeFromSettings() {
         try {
-            val settingsManager = SettingsAccess
-            val nightMode = when (settingsManager.themeMode) {
-                ThemeMode.FOLLOW_SYSTEM -> AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
-                ThemeMode.DARK -> AppCompatDelegate.MODE_NIGHT_YES
-                ThemeMode.LIGHT -> AppCompatDelegate.MODE_NIGHT_NO
+            val nightMode = when (SettingsAccess.themeMode) {
+                0 -> AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
+                1 -> AppCompatDelegate.MODE_NIGHT_YES
+                2 -> AppCompatDelegate.MODE_NIGHT_NO
+                else -> AppCompatDelegate.MODE_NIGHT_NO
             }
             AppCompatDelegate.setDefaultNightMode(nightMode)
         } catch (e: Exception) {
-            AppLog.e(TAG, "Failed to apply theme: ${e.message}")
-            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
+            Log.e(TAG, "Failed to apply theme: ${e.message}")
         }
     }
 
-    private fun runRuntimeMigrationOnAppLaunch() {
-        if (!isMainAppProcess()) return
-
-        try {
-            _runtimeManager.migrateLegacyInstallations()
-        } catch (e: Exception) {
-            AppLog.e(TAG, "Failed to migrate legacy runtimes on app launch: ${e.message}", e)
-        }
-    }
-
-    private fun isMainAppProcess(): Boolean = getProcessName() == packageName
-
-    private fun initFileLogger() {
-        try {
-            val logDir = File(_storagePathsProvider.logsDirPathFull())
-            _fileLogger.start(
-                logDirectory = logDir,
-                clearExistingLogs = isMainAppProcess()
-            )
-            AppLog.i(TAG, "File log capture initialized for process=${getProcessName()}, pid=${android.os.Process.myPid()}")
-        } catch (e: Exception) {
-            AppLog.e(TAG, "Failed to initialize file log capture", e)
-        }
-    }
-
-    /**
-     * 初始化崩溃捕获
-     */
     private fun initCrashHandler() {
-        val logDir = File(filesDir, "crash_logs").apply {
-            if (!exists()) mkdirs()
+        try {
+            val logDir = File(filesDir, "crash_logs").apply {
+                if (!exists()) mkdirs()
+            }
+            Fishnet.init(applicationContext, logDir.absolutePath)
+        } catch (e: Exception) {
+            Log.e(TAG, "Fishnet init failed: ${e.message}")
         }
-        Fishnet.init(applicationContext, logDir.absolutePath)
     }
 
-    /**
-     * 后台安装补丁
-     */
     private fun installPatchesInBackground() {
         _patchManager?.let { manager ->
             Thread({
@@ -162,37 +131,19 @@ class RaLaunchApp : Application(), KoinComponent {
         }
     }
 
-    /**
-     * 设置环境变量
-     */
     private fun setupEnvironmentVariables() {
         try {
             Os.setenv("PACKAGE_NAME", packageName, true)
-
             val externalStorage = android.os.Environment.getExternalStorageDirectory()
             externalStorage?.let {
                 Os.setenv("EXTERNAL_STORAGE_DIRECTORY", it.absolutePath, true)
-                AppLog.d(TAG, "EXTERNAL_STORAGE_DIRECTORY: ${it.absolutePath}")
             }
         } catch (e: Exception) {
             AppLog.e(TAG, "Failed to set environment variables: ${e.message}")
         }
     }
 
-    // ==================== 兼容旧代码的访问方法 ====================
-
-    /**
-     * 获取 VibrationManagerServiceV1
-     */
-    fun getVibrationManager(): VibrationManagerServiceV1 = _vibrationManager
-
-    /**
-     * 获取 ControlPackManager
-     */
+    fun getVibrationManager(): VibrationManager = _vibrationManager
     fun getControlPackManager(): ControlPackManager = _controlPackManager
-
-    /**
-     * 获取 PatchManager
-     */
     fun getPatchManager(): PatchManager? = _patchManager
 }

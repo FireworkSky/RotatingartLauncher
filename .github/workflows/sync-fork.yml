@@ -1,0 +1,64 @@
+name: Sync Fork (Keep My Code)
+
+on:
+  schedule:
+    - cron: '0 */23 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    name: Sync with Upstream (Keep My Changes)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.PAT_TOKEN }}
+
+      - name: Get upstream repo URL
+        id: upstream
+        env:
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+        run: |
+          UPSTREAM=$(gh api repos/${{ github.repository }} --jq '.parent.full_name')
+          if [ -z "$UPSTREAM" ] || [ "$UPSTREAM" = "null" ]; then
+            exit 1
+          fi
+          echo "repo=$UPSTREAM" >> $GITHUB_OUTPUT
+
+      - name: Config Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Force Merge Upstream
+        id: merge
+        run: |
+          git remote add upstream https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/${{ steps.upstream.outputs.repo }}.git
+          git fetch upstream main
+          
+          BEFORE=$(git rev-parse HEAD)
+                    
+          if ! git merge upstream/main --allow-unrelated-histories -X ours --no-edit; then
+            echo "Conflicts detected, forcing our versions..."            
+            git checkout --ours .
+            git add .      
+            git commit -m "Sync: Force resolve conflicts using main branch code"
+          fi
+          
+          AFTER=$(git rev-parse HEAD)
+          if [ "$BEFORE" != "$AFTER" ]; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Push to Main
+        if: steps.merge.outputs.changed == 'true'
+        run: |
+          git push https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/${{ github.repository }}.git main

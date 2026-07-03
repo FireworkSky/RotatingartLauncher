@@ -9,22 +9,19 @@ import com.app.ralaunch.core.logging.AppLog
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
-import java.nio.file.Path
-import java.nio.file.Paths
 
 /**
- * 游戏解压工具类
- * 封装 ralib 中现有的解压实现
+ * Game extraction utility class
  */
 object GameExtractorUtils {
     private const val TAG = "GameExtractorUtils"
 
     /**
-     * 解析 GOG .sh 文件，获取游戏信息
+     * Parse GOG .sh file to get game info
      */
     suspend fun parseGogShFile(shFile: File): GogGameInfo? = withContext(Dispatchers.IO) {
         try {
-            val gdzf = GogShFileExtractor.GameDataZipFile.parseFromGogShFile(shFile.toPath())
+            val gdzf = GogShFileExtractor.GameDataZipFile.parseFromGogShFile(shFile)
             if (gdzf != null) {
                 GogGameInfo(
                     id = gdzf.id ?: "",
@@ -42,7 +39,7 @@ object GameExtractorUtils {
     }
 
     /**
-     * 解压 GOG .sh 文件
+     * Extract GOG .sh file
      */
     suspend fun extractGogSh(
         shFile: File,
@@ -51,13 +48,13 @@ object GameExtractorUtils {
     ): ExtractResult = withContext(Dispatchers.IO) {
         try {
             val state = HashMap<String, Any>()
-            var gamePath: Path? = null
+            var gamePath: File? = null
             var success = false
             var errorMsg: String? = null
 
             val extractor = GogShFileExtractor(
-                shFile.toPath(),
-                outputDir.toPath(),
+                shFile,
+                outputDir,
                 object : ExtractorCollection.ExtractionListener {
                     override fun onProgress(message: String, progress: Float, state: HashMap<String, Any?>?) {
                         progressCallback(message, progress)
@@ -65,7 +62,7 @@ object GameExtractorUtils {
 
                     override fun onComplete(message: String, state: HashMap<String, Any?>?) {
                         success = true
-                        gamePath = state?.get(GogShFileExtractor.STATE_KEY_GAME_PATH) as? Path
+                        gamePath = state?.get(GogShFileExtractor.STATE_KEY_GAME_PATH) as? File
                     }
 
                     override fun onError(message: String, ex: Exception?, state: HashMap<String, Any?>?) {
@@ -78,7 +75,7 @@ object GameExtractorUtils {
             val result = extractor.extract()
 
             if (result && success) {
-                ExtractResult.Success(gamePath?.toFile() ?: outputDir)
+                ExtractResult.Success(gamePath ?: outputDir)
             } else {
                 ExtractResult.Error(
                     errorMsg ?: RaLaunchApp.getInstance().getString(R.string.extract_failed)
@@ -94,11 +91,11 @@ object GameExtractorUtils {
     }
 
     /**
-     * 解压 ZIP 文件
-     * @param zipFile ZIP 文件
-     * @param outputDir 输出目录
-     * @param progressCallback 进度回调
-     * @param sourcePrefix 源路径前缀（用于只解压 ZIP 中的特定目录）
+     * Extract ZIP file
+     * @param zipFile ZIP file
+     * @param outputDir Output directory
+     * @param progressCallback Progress callback
+     * @param sourcePrefix Source path prefix
      */
     suspend fun extractZip(
         zipFile: File,
@@ -126,9 +123,9 @@ object GameExtractorUtils {
             }
 
             val extractor = BasicSevenZipExtractor(
-                zipFile.toPath(),
-                Paths.get(sourcePrefix),
-                outputDir.toPath(),
+                zipFile,
+                File(sourcePrefix),
+                outputDir,
                 listener
             )
             extractor.state = HashMap(state)
@@ -151,9 +148,6 @@ object GameExtractorUtils {
         }
     }
 
-    /**
-     * GOG 游戏信息
-     */
     data class GogGameInfo(
         val id: String,
         val version: String,
@@ -161,9 +155,6 @@ object GameExtractorUtils {
         val locale: String? = null
     )
 
-    /**
-     * 解压结果
-     */
     sealed class ExtractResult {
         data class Success(val outputDir: File) : ExtractResult()
         data class Error(val message: String) : ExtractResult()

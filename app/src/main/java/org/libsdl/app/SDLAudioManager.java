@@ -356,24 +356,36 @@ public class SDLAudioManager {
         }
 
         if (android.os.Build.VERSION.SDK_INT < 21 /* Android 5.0 (LOLLIPOP) */) {
-            Log.e(TAG, "Attempted to make an incompatible audio call with uninitialized audio! (floating-point output is supported since Android 5.0 Lollipop)");
+            Log.e(TAG, "Attempted to make an incompatible audio call! (floating-point output is supported since Android 5.0)");
             return;
         }
 
-        for (int i = 0; i < buffer.length;) {
-            int result = mAudioTrack.write(buffer, i, buffer.length - i, AudioTrack.WRITE_BLOCKING);
-            if (result > 0) {
-                i += result;
-            } else if (result == 0) {
-                try {
-                    Thread.sleep(1);
-                } catch(InterruptedException e) {
-                    // Nom nom
+        // ... Wrap the entire write loop in a protective try-catch ...
+        try {
+            for (int i = 0; i < buffer.length;) {
+                int result = mAudioTrack.write(buffer, i, buffer.length - i, AudioTrack.WRITE_BLOCKING);
+                if (result > 0) {
+                    i += result;
+                } else if (result == 0) {
+                    try {
+                        Thread.sleep(1);
+                    } catch(InterruptedException e) {
+                        // Nom nom
+                    }
+                } else {
+                    Log.w(TAG, "SDL audio: error return from write(float)");
+                    return;
                 }
-            } else {
-                Log.w(TAG, "SDL audio: error return from write(float)");
-                return;
             }
+        } catch (IllegalStateException e) {
+            // ... THE SAVIOR BLOCK ...
+            // Catches "Unable to retrieve AudioTrack pointer for write()"
+            // Instead of crashing the whole game, we just drop this specific audio frame.
+            // The player might hear a tiny skip, but the GAME WILL NOT CRASH!
+            Log.e(TAG, "CRITICAL: Audio hardware choked! Dropped frame to prevent game crash.");
+        } catch (Exception e) {
+            // ... Catch any other random audio hardware failures ...
+            Log.e(TAG, "Unknown audio hardware failure intercepted: " + e.getMessage());
         }
     }
 

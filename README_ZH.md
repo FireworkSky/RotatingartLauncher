@@ -10,7 +10,7 @@
 
 <br/><br/>
 
-[![Android](https://img.shields.io/badge/Android_9.0+-34A853?style=for-the-badge&logo=android&logoColor=white)](https://www.android.com)
+[![Android](https://img.shields.io/badge/Android_7.0+-34A853?style=for-the-badge&logo=android&logoColor=white)](https://www.android.com)
 [![.NET](https://img.shields.io/badge/.NET_10.0-512BD4?style=for-the-badge&logo=dotnet&logoColor=white)](https://dotnet.microsoft.com)
 [![Kotlin](https://img.shields.io/badge/Kotlin_2.0-7F52FF?style=for-the-badge&logo=kotlin&logoColor=white)](https://kotlinlang.org)
 [![Compose](https://img.shields.io/badge/Jetpack_Compose-4285F4?style=for-the-badge&logo=jetpackcompose&logoColor=white)](https://developer.android.com/jetpack/compose)
@@ -24,6 +24,8 @@
 
 **Rotating Art Launcher** 是一款 Android 应用，让你在移动设备上运行基于 .NET 的桌面游戏。<br/>
 支持 FNA/XNA 框架游戏、tModLoader、SMAPI、Everest 等模组加载器。
+
+⚠️警告⚠️:这是针对Android 7.0+的修改版本 
 
 </div>
 
@@ -115,7 +117,7 @@
 
 ### 系统要求
 
-> - 📱 Android 9.0 (API 28) 或更高
+> - 📱 Android 7.0 (API 24) 或更高
 > - 🏗️ ARM64-v8a 架构设备
 > - 💾 至少 2GB 可用存储
 
