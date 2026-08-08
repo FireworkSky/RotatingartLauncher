@@ -207,7 +207,7 @@
     <string name="renderer_gl4es_angle_desc">翻译至 Vulkan 后端，兼容性与性能最佳平衡（推荐）</string>
     <string name="renderer_angle">ANGLE (Vulkan)</string>
     <string name="renderer_angle_desc">OpenGL ES over Vulkan（Google官方，需要 Android 7.0+）</string>
-    
+
     <string name="renderer_opengl">OpenGL (gl4es+)</string>
     <string name="renderer_opengl_desc">通过 gl4es+ 翻译层</string>
     <string name="renderer_opengles3">OpenGL ES 3 (Native)</string>

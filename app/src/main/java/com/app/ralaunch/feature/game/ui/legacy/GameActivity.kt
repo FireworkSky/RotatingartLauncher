@@ -29,6 +29,7 @@ import com.app.ralaunch.core.common.util.LocaleManager
 import com.app.ralaunch.core.error.ErrorHandler
 import com.app.ralaunch.core.model.ThemeMode
 import org.libsdl.app.SDLActivity
+import kotlin.system.exitProcess
 
 /**
  * 游戏运行界面
@@ -151,7 +152,7 @@ class GameActivity : SDLActivity(), GameContract.View {
         initializeVirtualControls()
         requestHighRefreshRate("onCreate")
         AppLog.i(TAG, "=== GameActivity Process Started ===")
-        AppLog.i(TAG, "Game process PID: ${android.os.Process.myPid()}")
+        AppLog.i(TAG, "Game process PID: ${Process.myPid()}")
         AppLog.i(TAG, "GameActivity onCreate completed")
     }
 
@@ -242,7 +243,7 @@ class GameActivity : SDLActivity(), GameContract.View {
         Handler(Looper.getMainLooper()).postDelayed({
             AppLog.d(TAG, "Terminating game process to ensure clean .NET runtime state")
             Process.killProcess(Process.myPid())
-            System.exit(0)
+            exitProcess(0)
         }, 100)
     }
 
@@ -323,7 +324,7 @@ class GameActivity : SDLActivity(), GameContract.View {
     override fun getAppVersionName(): String? {
         return try {
             packageManager.getPackageInfo(packageName, 0).versionName
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             null
         }
     }
@@ -337,7 +338,7 @@ class GameActivity : SDLActivity(), GameContract.View {
         val targetMode = selectTargetMode(display)
         val targetRefresh = targetMode?.refreshRate ?: display.refreshRate
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && targetMode != null) {
+        if (targetMode != null) {
             try {
                 val params = window.attributes
                 if (params.preferredDisplayModeId != targetMode.modeId) {
@@ -394,9 +395,6 @@ class GameActivity : SDLActivity(), GameContract.View {
     }
 
     private fun selectTargetMode(display: Display): Display.Mode? {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-            return null
-        }
 
         return try {
             val currentMode = display.mode ?: return null
@@ -405,7 +403,7 @@ class GameActivity : SDLActivity(), GameContract.View {
                 it.physicalWidth == currentMode.physicalWidth &&
                     it.physicalHeight == currentMode.physicalHeight
             }
-            val candidates = if (sameResolutionModes.isNotEmpty()) sameResolutionModes else supportedModes.toList()
+            val candidates = sameResolutionModes.ifEmpty { supportedModes.toList() }
             candidates.maxByOrNull { it.refreshRate }
         } catch (e: Exception) {
             AppLog.w(TAG, "Failed to select target display mode: ${e.message}")

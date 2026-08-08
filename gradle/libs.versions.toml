@@ -1,5 +1,6 @@
 [versions]
-agp = "9.0.1"
+agp = "9.2.1"
+colorpickerCompose = "1.2.0"
 junit = "4.13.2"
 junitVersion = "1.3.0"
 espressoCore = "3.7.0"
@@ -16,6 +17,10 @@ kotlinx-coroutines = "1.10.2"
 glide = "5.0.7"
 konfetti = "2.0.5"
 commonsCompress = "1.28.0"
+materialIconsExtended = "1.7.3"
+materialKolor = "4.1.1"
+navigationComposeVersion = "2.9.8"
+timber = "5.0.1"
 xz = "1.12"
 androidSvg = "1.4"
 recyclerview = "1.3.2"
@@ -36,12 +41,14 @@ datastore = "1.1.1"
 # Lifecycle ViewModel
 lifecycleViewmodel = "2.9.1"
 # Navigation
-navigationCompose = "2.8.5"
+navigationCompose = "2.9.8"
 rhino = "1.8.0"
 gson = "2.14.0"
 sevenzipJBinding = "Release-16.02-2.03"
+material3 = "1.4.0"
 
 [libraries]
+colorpicker-compose = { module = "com.github.skydoves:colorpicker-compose", version.ref = "colorpickerCompose" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 ext-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
@@ -52,6 +59,8 @@ annotation-jvm = { group = "androidx.annotation", name = "annotation-jvm", versi
 activity = { group = "androidx.activity", name = "activity", version.ref = "activity" }
 core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
+material-icons-extended = { module = "org.jetbrains.compose.material:material-icons-extended", version.ref = "materialIconsExtended" }
+material-kolor = { module = "com.materialkolor:material-kolor", version.ref = "materialKolor" }
 sevenzip-jbinding-android = { group = "com.github.omicronapps", name = "7-Zip-JBinding-4Android", version.ref = "sevenzipJBinding" }
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinx-serialization-json" }
 kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
@@ -87,6 +96,7 @@ navigation-compose = { group = "androidx.navigation", name = "navigation-compose
 glide = { group = "com.github.bumptech.glide", name = "glide", version.ref = "glide" }
 konfetti = { group = "nl.dionsegijn", name = "konfetti-xml", version.ref = "konfetti" }
 commons-compress = { group = "org.apache.commons", name = "commons-compress", version.ref = "commonsCompress" }
+timber = { module = "com.jakewharton.timber:timber", version.ref = "timber" }
 xz = { group = "org.tukaani", name = "xz", version.ref = "xz" }
 android-svg = { group = "com.caverock", name = "androidsvg-aar", version.ref = "androidSvg" }
 recyclerview = { group = "androidx.recyclerview", name = "recyclerview", version.ref = "recyclerview" }
@@ -94,6 +104,7 @@ recyclerview = { group = "androidx.recyclerview", name = "recyclerview", version
 haze = { group = "dev.chrisbanes.haze", name = "haze", version.ref = "haze" }
 haze-materials = { group = "dev.chrisbanes.haze", name = "haze-materials", version.ref = "haze" }
 mozilla-rhino = { group = "org.mozilla", name = "rhino", version.ref = "rhino" }
+material3 = { group = "androidx.compose.material3", name = "material3", version.ref = "material3" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

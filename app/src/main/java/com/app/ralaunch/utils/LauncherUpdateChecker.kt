@@ -1,7 +1,7 @@
-package com.app.ralaunch.feature.main.update
+package com.app.ralaunch.utils
 
+import android.app.Activity
 import android.content.Context
-import com.app.ralaunch.core.common.JsonHttpRepositoryClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerialName
@@ -10,37 +10,56 @@ import kotlinx.serialization.json.Json
 import java.net.HttpURLConnection
 import java.net.URL
 
-class LauncherUpdateChecker(
-    private val context: Context,
-    private val repositoryOwner: String = DEFAULT_REPOSITORY_OWNER,
-    private val repositoryName: String = DEFAULT_REPOSITORY_NAME
-) {
+object LauncherUpdateChecker {
 
-    companion object {
-        private const val GITHUB_API_BASE_URL = "https://api.github.com"
-        private const val VERSION_CONFIG_GITHUB_URL =
-            "https://raw.githubusercontent.com/RotatingArtDev/RAL-Version/main/version.json"
-        private const val VERSION_CONFIG_GITEE_URL =
-            "https://gitee.com/daohei/RAL-Version/raw/main/version.json"
-        private const val DEFAULT_REPOSITORY_OWNER = "FireworkSky"
-        private const val DEFAULT_REPOSITORY_NAME = "RotatingartLauncher"
-        private const val CONNECT_TIMEOUT_MS = 10_000
-        private const val READ_TIMEOUT_MS = 15_000
-        private const val USER_AGENT = "RotatingartLauncher-Android"
-    }
+    private const val GITHUB_API_BASE_URL = "https://api.github.com"
+    private const val VERSION_CONFIG_GITHUB_URL =
+        "https://raw.githubusercontent.com/RotatingArtDev/RAL-Version/main/version.json"
+    private const val VERSION_CONFIG_GITEE_URL =
+        "https://gitee.com/daohei/RAL-Version/raw/main/version.json"
+    private const val DEFAULT_REPOSITORY_OWNER = "FireworkSky"
+    private const val DEFAULT_REPOSITORY_NAME = "RotatingartLauncher"
+    private const val CONNECT_TIMEOUT_MS = 10_000
+    private const val READ_TIMEOUT_MS = 15_000
+    private const val USER_AGENT = "RotatingartLauncher-Android"
 
     private val json = Json {
         ignoreUnknownKeys = true
         encodeDefaults = true
     }
 
-    suspend fun checkForUpdate(currentVersionName: String): Result<LauncherUpdateInfo?> {
+    /**
+     * 使用默认仓库检查更新
+     * @param context 上下文（可以是 Activity 或 Application）
+     * @param currentVersionName 当前版本号
+     */
+    suspend fun checkForUpdate(
+        context: Context,
+        currentVersionName: String
+    ): Result<LauncherUpdateInfo?> {
+        return checkForUpdate(
+            context = context,
+            repositoryOwner = DEFAULT_REPOSITORY_OWNER,
+            repositoryName = DEFAULT_REPOSITORY_NAME,
+            currentVersionName = currentVersionName
+        )
+    }
+
+    /**
+     * 使用自定义仓库检查更新
+     */
+    suspend fun checkForUpdate(
+        context: Context,
+        repositoryOwner: String,
+        repositoryName: String,
+        currentVersionName: String
+    ): Result<LauncherUpdateInfo?> {
         val currentVersion = parseVersion(currentVersionName)
             ?: return Result.failure(
                 IllegalArgumentException("Invalid current version: $currentVersionName")
             )
 
-        val configResult = fetchVersionConfigRelease()
+        val configResult = fetchVersionConfigRelease(context)
         val configRelease = configResult.getOrNull()
 
         if (configRelease != null) {
@@ -95,7 +114,7 @@ class LauncherUpdateChecker(
             return Result.success(null)
         }
 
-        return fetchLatestStableRelease().mapCatching { release ->
+        return fetchLatestStableRelease(repositoryOwner, repositoryName).mapCatching { release ->
             if (release.tagName.isBlank()) return@mapCatching null
             val latestVersion = parseVersion(release.tagName) ?: return@mapCatching null
             if (!isRemoteVersionNewer(currentVersion, latestVersion)) return@mapCatching null
@@ -117,7 +136,7 @@ class LauncherUpdateChecker(
         }
     }
 
-    private suspend fun fetchVersionConfigRelease(): Result<VersionReleaseDto?> {
+    private suspend fun fetchVersionConfigRelease(context: Context): Result<VersionReleaseDto?> {
         val headers = mapOf(
             "Accept" to "application/json",
             "User-Agent" to USER_AGENT
@@ -144,8 +163,8 @@ class LauncherUpdateChecker(
             VERSION_CONFIG_GITEE_URL
         }
 
-        var primaryError: Throwable? = null
-        var fallbackError: Throwable? = null
+        var primaryError: Throwable?
+        var fallbackError: Throwable?
 
         val primary = JsonHttpRepositoryClient.getJson<VersionConfigDto>(
             urlString = primaryUrl,
@@ -179,7 +198,10 @@ class LauncherUpdateChecker(
         return locale.language == "zh"
     }
 
-    private suspend fun fetchLatestStableRelease(): Result<GitHubReleaseResponse> {
+    private suspend fun fetchLatestStableRelease(
+        repositoryOwner: String,
+        repositoryName: String
+    ): Result<GitHubReleaseResponse> {
         val headers = mapOf(
             "Accept" to "application/vnd.github+json",
             "User-Agent" to USER_AGENT
@@ -209,7 +231,7 @@ class LauncherUpdateChecker(
             ?.firstOrNull { !it.draft && !it.prerelease && it.tagName.isNotBlank() }
             ?.let { return Result.success(it) }
 
-        val redirectTagResult = resolveLatestTagByRedirect()
+        val redirectTagResult = resolveLatestTagByRedirect(repositoryOwner, repositoryName)
         val redirectTag = redirectTagResult.getOrNull()
         if (!redirectTag.isNullOrBlank()) {
             val releaseUrl = "https://github.com/$repositoryOwner/$repositoryName/releases/tag/$redirectTag"
@@ -237,7 +259,10 @@ class LauncherUpdateChecker(
         )
     }
 
-    private suspend fun resolveLatestTagByRedirect(): Result<String> = withContext(Dispatchers.IO) {
+    private suspend fun resolveLatestTagByRedirect(
+        repositoryOwner: String,
+        repositoryName: String
+    ): Result<String> = withContext(Dispatchers.IO) {
         runCatching {
             val latestReleasePage = "https://github.com/$repositoryOwner/$repositoryName/releases/latest"
             val connection = URL(latestReleasePage).openConnection() as HttpURLConnection
@@ -297,7 +322,7 @@ class LauncherUpdateChecker(
             val lowerName = asset.name.lowercase()
             val lowerType = asset.contentType.lowercase()
             lowerName.endsWith(".apk") ||
-                lowerType.contains("application/vnd.android.package-archive")
+                    lowerType.contains("application/vnd.android.package-archive")
         }
         if (apkAssets.isEmpty()) return ""
 

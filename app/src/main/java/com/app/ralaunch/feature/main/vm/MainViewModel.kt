@@ -21,8 +21,8 @@ import com.app.ralaunch.feature.main.contracts.ForceAnnouncementUiModel
 import com.app.ralaunch.feature.main.contracts.MainUiEffect
 import com.app.ralaunch.feature.main.contracts.MainUiEvent
 import com.app.ralaunch.feature.main.contracts.MainUiState
-import com.app.ralaunch.feature.main.update.LauncherUpdateChecker
-import com.app.ralaunch.feature.main.update.LauncherUpdateInfo
+import com.app.ralaunch.utils.LauncherUpdateChecker
+import com.app.ralaunch.utils.LauncherUpdateInfo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -371,7 +371,7 @@ class MainViewModel(
         lastUpdateCheckAt = now
         isUpdateCheckInProgress = true
         viewModelScope.launch {
-            try {
+            /*try {
                 val currentVersion = resolveCurrentVersionName()
                 val result = launcherUpdateChecker.checkForUpdate(currentVersion)
 
@@ -395,7 +395,7 @@ class MainViewModel(
                 }
             } finally {
                 isUpdateCheckInProgress = false
-            }
+            }*/
         }
     }
 

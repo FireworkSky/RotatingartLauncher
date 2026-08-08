@@ -1,4 +1,3 @@
-import org.gradle.kotlin.dsl.support.kotlinCompilerOptions
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
@@ -8,11 +7,21 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 }
 
+val generateStrings by tasks.registering {
+    description = "generated strings code"
+    val out = layout.buildDirectory.dir("generated/strings")
+    outputs.dir(out)
+
+    StringsGenerator.generateForModule(
+        moduleDir = layout.projectDirectory.asFile,
+        packageName = "com.app.ralaunch.strings.generated"
+    )
+}
+
 android {
     namespace = "com.app.ralaunch"
     compileSdk = 37
     ndkVersion = "30.0.14904198 rc1"
-
     defaultConfig {
         applicationId = "com.app.ralaunch"
         minSdk = 28
@@ -61,7 +70,6 @@ android {
         getByName("release") {
             isDebuggable = false
             isMinifyEnabled = false // TODO: 修复类重复后启用 R8
-            isShrinkResources = false
 
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
@@ -80,6 +88,7 @@ android {
         viewBinding = true
         prefab = true
         compose = true
+        buildConfig = true
     }
 
     androidResources {
@@ -102,6 +111,7 @@ dependencies {
     implementation(files("../external/libs/libSystem.Security.Cryptography.Native.Android.jar"))
     implementation(files("../external/libs/fmod.jar"))
     implementation(files("../external/libs/fishnet-release.aar"))
+    implementation(libs.material3)
 
     // 从 ralib 迁移的依赖
     implementation(libs.sevenzip.jbinding.android)
@@ -138,7 +148,9 @@ dependencies {
     implementation(libs.lifecycle.runtime.compose)
     implementation(libs.coil.compose)
     implementation(libs.compose.markdown)
-
+    implementation(libs.navigation.compose)
+    implementation(libs.material.icons.extended)
+    implementation(libs.colorpicker.compose)
     debugImplementation(libs.compose.ui.tooling)
 
     // Koin DI
@@ -158,8 +170,21 @@ dependencies {
     implementation(libs.android.svg)
     implementation(libs.mozilla.rhino)
 
+    implementation(libs.material.kolor)
+    implementation(libs.timber)
+
     // 测试依赖
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
+}
+
+afterEvaluate {
+    android.sourceSets.getByName("main") {
+        kotlin.srcDir("build/generated/strings")
+    }
+}
+
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+    dependsOn(generateStrings)
 }

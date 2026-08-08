@@ -1,27 +1,32 @@
 package com.app.ralaunch
 
 import android.app.Application
+import android.content.ComponentName
 import android.content.Context
+import android.content.pm.PackageManager
 import android.content.res.Configuration
+import android.os.Build
 import android.system.Os
-import com.app.ralaunch.core.logging.AppLog
 import androidx.appcompat.app.AppCompatDelegate
-import com.app.ralaunch.feature.controls.packs.ControlPackManager
 import com.app.ralaunch.core.common.SettingsAccess
+import com.app.ralaunch.core.common.util.DensityAdapter
+import com.app.ralaunch.core.common.util.LocaleManager
 import com.app.ralaunch.core.di.KoinInitializer
 import com.app.ralaunch.core.di.contract.IRuntimeManagerServiceV2
 import com.app.ralaunch.core.di.service.StoragePathsProviderServiceV1
 import com.app.ralaunch.core.di.service.VibrationManagerServiceV1
+import com.app.ralaunch.core.logging.AppLog
 import com.app.ralaunch.core.logging.service.AndroidFileLogger
-import com.app.ralaunch.core.common.util.DensityAdapter
-import com.app.ralaunch.core.common.util.LocaleManager
 import com.app.ralaunch.core.model.ThemeMode
+import com.app.ralaunch.feature.controls.packs.ControlPackManager
 import com.app.ralaunch.feature.patch.data.PatchManager
+import com.app.ralaunch.utils.AppLogger
+import com.app.ralaunch.utils.RuntimeManager
 import com.kyant.fishnet.Fishnet
 import org.koin.android.ext.android.inject
 import org.koin.core.component.KoinComponent
 import java.io.File
-import java.io.InvalidObjectException
+
 
 /**
  * 应用程序 Application 类 (Kotlin 重构版)
@@ -54,7 +59,6 @@ class RaLaunchApp : Application(), KoinComponent {
     private val _vibrationManager: VibrationManagerServiceV1 by inject()
     private val _controlPackManager: ControlPackManager by inject()
     private val _patchManager: PatchManager? by inject()
-    private val _runtimeManager: IRuntimeManagerServiceV2 by inject()
     private val _fileLogger: AndroidFileLogger by inject()
     private val _storagePathsProvider: StoragePathsProviderServiceV1 by inject()
 
@@ -68,11 +72,13 @@ class RaLaunchApp : Application(), KoinComponent {
         // 2. 初始化 Koin DI（必须在使用 inject 之前）
         KoinInitializer.init(this)
 
+        AppLogger.init(this)
+
         // 3. 初始化进程级文件日志捕获
         initFileLogger()
 
         // 4. 启动时迁移旧运行时布局，仅在主进程执行一次
-        runRuntimeMigrationOnAppLaunch()
+        RuntimeManager.initialize(this.filesDir)
 
         // 5. 应用主题设置
         applyThemeFromSettings()
@@ -85,6 +91,8 @@ class RaLaunchApp : Application(), KoinComponent {
 
         // 8. 设置环境变量
         setupEnvironmentVariables()
+
+        applyIconAlias()
     }
 
     override fun attachBaseContext(base: Context) {
@@ -94,7 +102,9 @@ class RaLaunchApp : Application(), KoinComponent {
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
         LocaleManager.applyLanguage(this)
+        applyIconAlias()
     }
+
 
     private fun applyThemeFromSettings() {
         try {
@@ -108,16 +118,6 @@ class RaLaunchApp : Application(), KoinComponent {
         } catch (e: Exception) {
             AppLog.e(TAG, "Failed to apply theme: ${e.message}")
             AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
-        }
-    }
-
-    private fun runRuntimeMigrationOnAppLaunch() {
-        if (!isMainAppProcess()) return
-
-        try {
-            _runtimeManager.migrateLegacyInstallations()
-        } catch (e: Exception) {
-            AppLog.e(TAG, "Failed to migrate legacy runtimes on app launch: ${e.message}", e)
         }
     }
 
@@ -176,6 +176,82 @@ class RaLaunchApp : Application(), KoinComponent {
             }
         } catch (e: Exception) {
             AppLog.e(TAG, "Failed to set environment variables: ${e.message}")
+        }
+    }
+
+    /**
+     * 根据系统主题切换应用图标
+     */
+    private fun applyIconAlias() {
+        try {
+            val pm = packageManager
+            val pkg = packageName
+            val isDarkMode = isSystemInDarkMode()
+            val targetAlias = if (isDarkMode) {
+                "$pkg.MainActivityDark"
+            } else {
+                "$pkg.MainActivityLight"
+            }
+
+            // 获取当前状态
+            val lightState = pm.getComponentEnabledSetting(
+                ComponentName(pkg, "$pkg.MainActivityLight")
+            )
+            val darkState = pm.getComponentEnabledSetting(
+                ComponentName(pkg, "$pkg.MainActivityDark")
+            )
+
+            // 检查是否已经是正确状态
+            val lightShouldBeEnabled = targetAlias == "$pkg.MainActivityLight"
+            val darkShouldBeEnabled = targetAlias == "$pkg.MainActivityDark"
+
+            val lightIsCorrect = if (lightShouldBeEnabled) {
+                lightState == PackageManager.COMPONENT_ENABLED_STATE_ENABLED
+            } else {
+                lightState == PackageManager.COMPONENT_ENABLED_STATE_DISABLED
+            }
+
+            val darkIsCorrect = if (darkShouldBeEnabled) {
+                darkState == PackageManager.COMPONENT_ENABLED_STATE_ENABLED
+            } else {
+                darkState == PackageManager.COMPONENT_ENABLED_STATE_DISABLED
+            }
+
+            // 如果状态都正确，直接返回
+            if (lightIsCorrect && darkIsCorrect) {
+                return
+            }
+
+            // 执行切换
+            listOf(".MainActivityLight", ".MainActivityDark").forEach { alias ->
+                val fullAlias = if (alias.startsWith(".")) pkg + alias else alias
+                val shouldEnable = fullAlias == targetAlias
+                val state = if (shouldEnable) {
+                    PackageManager.COMPONENT_ENABLED_STATE_ENABLED
+                } else {
+                    PackageManager.COMPONENT_ENABLED_STATE_DISABLED
+                }
+
+                pm.setComponentEnabledSetting(
+                    ComponentName(pkg, fullAlias),
+                    state,
+                    PackageManager.DONT_KILL_APP
+                )
+            }
+        } catch (_: Exception) {
+            // 静默处理异常
+        }
+    }
+
+    /**
+     * 检查系统是否处于暗色模式
+     */
+    private fun isSystemInDarkMode(): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            val uiMode = resources.configuration.uiMode
+            (uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
+        } else {
+            false
         }
     }
 

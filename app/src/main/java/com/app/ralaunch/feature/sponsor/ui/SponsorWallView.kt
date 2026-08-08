@@ -572,9 +572,9 @@ class SponsorWallView @JvmOverloads constructor(
             interpolator = DecelerateInterpolator()
             addUpdateListener { anim ->
                 val progress = anim.animatedValue as Float
-                offsetX = offsetX * (1f - progress)
-                offsetY = offsetY * (1f - progress)
-                scale = scale + (1f - scale) * progress
+                offsetX *= (1f - progress)
+                offsetY *= (1f - progress)
+                scale += (1f - scale) * progress
                 invalidate()
             }
             start()

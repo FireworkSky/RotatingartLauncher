@@ -1,7 +1,7 @@
 package com.app.ralaunch.feature.sponsor
 
 import android.content.Context
-import com.app.ralaunch.core.common.JsonHttpRepositoryClient
+import com.app.ralaunch.utils.JsonHttpRepositoryClient
 import com.app.ralaunch.core.logging.AppLog
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -11,7 +11,7 @@ import kotlinx.serialization.json.Json
  * 赞助商仓库服务
  * 负责从远程仓库获取赞助者列表
  */
-class SponsorRepositoryService(private val context: Context) {
+class SponsorRepositoryService(context: Context) {
 
     companion object {
         private const val TAG = "SponsorRepoService"

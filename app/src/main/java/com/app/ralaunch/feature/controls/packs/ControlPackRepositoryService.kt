@@ -2,7 +2,7 @@ package com.app.ralaunch.feature.controls.packs
 
 import android.content.Context
 import com.app.ralaunch.R
-import com.app.ralaunch.core.common.JsonHttpRepositoryClient
+import com.app.ralaunch.utils.JsonHttpRepositoryClient
 import com.app.ralaunch.core.logging.AppLog
 import com.app.ralaunch.core.common.util.FileUtils
 import kotlinx.coroutines.Dispatchers

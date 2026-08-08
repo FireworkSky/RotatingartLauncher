@@ -1,4 +1,4 @@
-package com.app.ralaunch.core.common
+package com.app.ralaunch.utils
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext

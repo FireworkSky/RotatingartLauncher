@@ -55,7 +55,7 @@ enum class ParticleType(val id: String) {
 
     companion object {
         fun fromString(id: String): ParticleType {
-            return values().find { it.id == id } ?: NONE
+            return entries.find { it.id == id } ?: NONE
         }
     }
 }

@@ -37,7 +37,7 @@ import com.app.ralaunch.feature.gog.domain.ModLoaderConfigManager
 import com.app.ralaunch.feature.gog.vm.GogViewModel
 import com.app.ralaunch.feature.init.vm.InitializationViewModel
 import com.app.ralaunch.feature.installer.vm.InstallerViewModel
-import com.app.ralaunch.feature.main.update.LauncherUpdateChecker
+import com.app.ralaunch.utils.LauncherUpdateChecker
 import com.app.ralaunch.feature.main.vm.MainViewModel
 import com.app.ralaunch.feature.main.vm.GameInfoEditViewModel
 import com.app.ralaunch.feature.patch.data.PatchManager
@@ -148,9 +148,9 @@ val appModule = module {
         AnnouncementRepositoryService(androidContext())
     }
 
-    single {
+    /*single {
         LauncherUpdateChecker(androidContext())
-    }
+    }*/
 
     single {
         ControlPackRepositoryService(androidContext())
