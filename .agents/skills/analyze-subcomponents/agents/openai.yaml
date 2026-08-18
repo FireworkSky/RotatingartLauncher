@@ -1,4 +1,0 @@
-interface:
-  display_name: "Analyze Subcomponents"
-  short_description: "Profile features for dependencies and impact"
-  default_prompt: "Analyze a selected subcomponent: responsibilities, dependencies, control flow, and impact surface."

@@ -1,4 +1,0 @@
-interface:
-  display_name: "UI Architecture"
-  short_description: "Guide landscape UI, routing, and MVVM"
-  default_prompt: "Define or review UI implementation using this repo’s landscape layout, NavState routing, and MVVM conventions."
