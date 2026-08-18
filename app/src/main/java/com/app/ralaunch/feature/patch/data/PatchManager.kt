@@ -154,8 +154,8 @@ class PatchManager @JvmOverloads constructor(
 
         AppLog.i(TAG, "正在解压补丁文件到补丁目录...")
         when (val result = ArchiveExtractor.builder()
-            .sourcePath(patchZipPath)
-            .destinationPath(patchPath)
+            .from(patchZipPath)
+            .to(patchPath)
             .build()
             .extract()
         ) {
@@ -266,9 +266,9 @@ class PatchManager @JvmOverloads constructor(
                 val extractedPatches = tfa.acquireTempFilePath("extracted_patches")
 
                 when (val result = ArchiveExtractor.builder()
-                    .sourcePath(apkPath)
-                    .sourceExtractionPrefix(Paths.get("assets/patches"))
-                    .destinationPath(extractedPatches)
+                    .from(apkPath)
+                    .prefix(Paths.get("assets/patches"))
+                    .to(extractedPatches)
                     .build()
                     .extract()
                 ) {

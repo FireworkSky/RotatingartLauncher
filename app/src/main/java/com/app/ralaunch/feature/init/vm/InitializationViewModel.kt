@@ -8,6 +8,7 @@ import com.app.ralaunch.R
 import com.app.ralaunch.core.common.util.FileUtils
 import com.app.ralaunch.core.di.contract.IRuntimeManagerServiceV2
 import com.app.ralaunch.core.extractor.ArchiveExtractor
+import com.app.ralaunch.core.extractor.AssetExtractor
 import com.app.ralaunch.core.platform.AppConstants
 import com.app.ralaunch.feature.init.model.ComponentState
 import com.app.ralaunch.feature.init.model.InitStep
@@ -136,7 +137,7 @@ class InitializationViewModel(
             updateComponent(index, 10, false, appContext.getString(R.string.init_preparing_file))
 
             val tempFile = File(appContext.cacheDir, "temp_${component.fileName}")
-            ArchiveExtractor.copyAssetToFile(appContext, component.fileName, tempFile.toPath())
+            AssetExtractor.copyAssetToFile(appContext, component.fileName, tempFile.toPath())
 
             updateComponent(index, 30, false, appContext.getString(R.string.init_extracting))
 
@@ -152,8 +153,8 @@ class InitializationViewModel(
             stagingDir.createDirectories()
 
             when (val result = ArchiveExtractor.builder()
-                .sourcePath(tempFile.toPath())
-                .destinationPath(stagingDir)
+                .from(tempFile.toPath())
+                .to(stagingDir)
                 .callback { event ->
                     if (event is ArchiveExtractor.Event.Progress &&
                         event.progress < 1f &&

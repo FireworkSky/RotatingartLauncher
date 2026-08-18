@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import com.app.ralaunch.MainActivity
 import com.app.ralaunch.core.extractor.ArchiveExtractor
+import com.app.ralaunch.core.extractor.AssetExtractor
 import com.app.ralaunch.core.platform.AppConstants
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -235,7 +236,7 @@ object AssetsManager {
                 updateComponent(index, 10, false, "Preparing file...")
 
                 val tempFile = File(context.cacheDir, "temp_${component.fileName}")
-                ArchiveExtractor.copyAssetToFile(context, component.fileName, tempFile.toPath())
+                AssetExtractor.copyAssetToFile(context, component.fileName, tempFile.toPath())
 
                 if (_state.value.isCancelled) {
                     deleteFileSafely(tempFile, context.cacheDir)
@@ -260,8 +261,8 @@ object AssetsManager {
                 stagingDir.createDirectories()
 
                 when (val result = ArchiveExtractor.builder()
-                    .sourcePath(tempFile.toPath())
-                    .destinationPath(stagingDir)
+                    .from(tempFile.toPath())
+                    .to(stagingDir)
                     .callback { event ->
                         if (event is ArchiveExtractor.Event.Progress && event.progress < 1f) {
                             if (_state.value.isCancelled) {

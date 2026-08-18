@@ -21,8 +21,6 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import java.nio.file.Files
 import java.nio.file.Path
-import org.junit.Assert.assertTrue
-import org.junit.Assert.assertEquals
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 import kotlin.io.path.div
@@ -85,8 +83,8 @@ class GogShFileExtractorTest {
         val events = mutableListOf<GogShFileExtractor.Event>()
         val result = GogShFileExtractor.builder()
             .id("gog-install")
-            .sourcePath(gogSh)
-            .destinationPath(tempDir / "output")
+            .from(gogSh)
+            .to(tempDir / "output")
             .callback { events += it }
             .build()
             .extract()
@@ -115,8 +113,8 @@ class GogShFileExtractorTest {
         val events = mutableListOf<GogShFileExtractor.Event>()
 
         val result = GogShFileExtractor.builder()
-            .sourcePath(tempDir / "invalid.sh")
-            .destinationPath(tempDir / "output")
+            .from(tempDir / "invalid.sh")
+            .to(tempDir / "output")
             .callback { events += it }
             .build()
             .extract()

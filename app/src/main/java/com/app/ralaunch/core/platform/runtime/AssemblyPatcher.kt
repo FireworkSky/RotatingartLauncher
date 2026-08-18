@@ -42,8 +42,8 @@ object AssemblyPatcher {
                 }
 
                 when (val result = ArchiveExtractor.builder()
-                    .sourcePath(tempZip)
-                    .destinationPath(targetDir)
+                    .from(tempZip)
+                    .to(targetDir)
                     .callback { event ->
                         when (event) {
                             is ArchiveExtractor.Event.Progress -> {

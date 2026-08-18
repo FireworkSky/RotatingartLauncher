@@ -63,9 +63,9 @@ class GogShFileExtractor private constructor(private val options: Options) {
 
         fun id(id: String) = apply { this.id = id }
 
-        fun sourcePath(sourcePath: Path) = apply { this.sourcePath = sourcePath }
+        fun from(sourcePath: Path) = apply { this.sourcePath = sourcePath }
 
-        fun destinationPath(destinationPath: Path) = apply { this.destinationPath = destinationPath }
+        fun to(destinationPath: Path) = apply { this.destinationPath = destinationPath }
 
         fun callback(callback: ((Event) -> Unit)?) = apply { this.callback = callback }
 
@@ -160,9 +160,9 @@ class GogShFileExtractor private constructor(private val options: Options) {
                     val gamePath = options.destinationPath / Path("GoG Games", requireNotNull(gdzf.id))
                     val gameDataResult = ArchiveExtractor.builder()
                         .id(options.id)
-                        .sourcePath(gameDataPath)
-                        .sourceExtractionPrefix(Path("data/noarch/game"))
-                        .destinationPath(gamePath)
+                        .from(gameDataPath)
+                        .prefix(Path("data/noarch/game"))
+                        .to(gamePath)
                         .callback { event ->
                             when (event) {
                                 is ArchiveExtractor.Event.Progress -> options.callback?.invoke(
@@ -180,9 +180,9 @@ class GogShFileExtractor private constructor(private val options: Options) {
 
                     // 提取图标
                     ArchiveExtractor.builder()
-                        .sourcePath(gameDataPath)
-                        .sourceExtractionPrefix(Path("data/noarch/support"))
-                        .destinationPath(gamePath / "support")
+                        .from(gameDataPath)
+                        .prefix(Path("data/noarch/support"))
+                        .to(gamePath / "support")
                         .build()
                         .extract()
 

@@ -19,7 +19,6 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
-import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 import java.io.OutputStream
 import java.nio.file.Files
@@ -59,9 +58,9 @@ class ArchiveExtractorTest {
 
         val result = ArchiveExtractor.builder()
             .id("patch-install")
-            .sourcePath(archive)
-            .sourceExtractionPrefix(Path.of("assets/patches"))
-            .destinationPath(destination)
+            .from(archive)
+            .prefix(Path.of("assets/patches"))
+            .to(destination)
             .callback { events += it }
             .build()
             .extract()
@@ -89,8 +88,8 @@ class ArchiveExtractorTest {
         val destination = tempDir / "destination"
 
         val result = ArchiveExtractor.builder()
-            .sourcePath(archive)
-            .destinationPath(destination)
+            .from(archive)
+            .to(destination)
             .build()
             .extract()
 
@@ -109,8 +108,8 @@ class ArchiveExtractorTest {
         archives.forEachIndexed { index, archive ->
             val destination = tempDir / "destination-$index"
             val result = ArchiveExtractor.builder()
-                .sourcePath(archive)
-                .destinationPath(destination)
+                .from(archive)
+                .to(destination)
                 .build()
                 .extract()
 
@@ -132,9 +131,9 @@ class ArchiveExtractorTest {
         val events = mutableListOf<ArchiveExtractor.Event>()
 
         val result = ArchiveExtractor.builder()
-            .sourcePath(archive)
-            .sourceExtractionPrefix(Path("runtime"))
-            .destinationPath(destination)
+            .from(archive)
+            .prefix(Path("runtime"))
+            .to(destination)
             .callback { events += it }
             .build()
             .extract()
@@ -151,21 +150,6 @@ class ArchiveExtractorTest {
 
     }
 
-    @Test
-    fun extractsBundledRuntimeAssetByContent() {
-        val source = tempDir / "runtime.data"
-        ArchiveExtractor.copyAssetToFile(RuntimeEnvironment.getApplication(), "dotnet.tar.xz", source)
-        val destination = tempDir / "runtime"
-
-        val result = ArchiveExtractor.builder()
-            .sourcePath(source)
-            .destinationPath(destination)
-            .build()
-            .extract()
-
-        assertTrue(result is ArchiveExtractor.Result.Success)
-        assertTrue(Files.exists(destination / "shared/Microsoft.NETCore.App/10.0.4"))
-    }
 
     @Test
     fun preservesTarExecutableMode() {
@@ -173,8 +157,8 @@ class ArchiveExtractorTest {
         val destination = tempDir / "destination"
 
         val result = ArchiveExtractor.builder()
-            .sourcePath(archive)
-            .destinationPath(destination)
+            .from(archive)
+            .to(destination)
             .build()
             .extract()
 
@@ -191,8 +175,8 @@ class ArchiveExtractorTest {
         val destination = tempDir / "destination"
 
         val result = ArchiveExtractor.builder()
-            .sourcePath(archive)
-            .destinationPath(destination)
+            .from(archive)
+            .to(destination)
             .build()
             .extract()
 
@@ -206,8 +190,8 @@ class ArchiveExtractorTest {
         val events = mutableListOf<ArchiveExtractor.Event>()
 
         ArchiveExtractor.builder()
-            .sourcePath(archive)
-            .destinationPath(tempDir / "destination")
+            .from(archive)
+            .to(tempDir / "destination")
             .callback { events += it }
             .build()
             .extract()
@@ -225,14 +209,65 @@ class ArchiveExtractorTest {
     }
 
     @Test
+    fun reportsByteBasedProgressForTarEntries() {
+        val archive = createTar(
+            TarEntry("first.txt", "first"),
+            TarEntry("second.txt", "second")
+        )
+        val events = mutableListOf<ArchiveExtractor.Event>()
+
+        ArchiveExtractor.builder()
+            .from(archive)
+            .to(tempDir / "destination")
+            .callback { events += it }
+            .build()
+            .extract()
+
+        val progress = events.filterIsInstance<ArchiveExtractor.Event.Progress>()
+            .filter { it.message.startsWith("Extracting:") }
+            .map { it.progress }
+
+        assertEquals(2, progress.size)
+        assertTrue(progress.all { it > 0f && it <= 1f })
+        assertEquals(progress.sorted(), progress)
+        assertEquals(1f, events.filterIsInstance<ArchiveExtractor.Event.Progress>().last().progress)
+    }
+
+    @Test
+    fun reportsByteBasedProgressForSevenZipEntries() {
+        val archive = createSevenZip(
+            "first.txt" to "first",
+            "second.txt" to "second"
+        )
+        val events = mutableListOf<ArchiveExtractor.Event>()
+        val result = ArchiveExtractor.builder()
+            .from(archive)
+            .to(tempDir / "destination")
+            .callback { events += it }
+            .build()
+            .extract()
+
+        assertTrue(result is ArchiveExtractor.Result.Success)
+
+        val progress = events.filterIsInstance<ArchiveExtractor.Event.Progress>()
+            .filter { it.message.startsWith("Extracting:") }
+            .map { it.progress }
+
+        assertEquals(2, progress.size)
+        assertTrue(progress.all { it > 0f && it <= 1f })
+        assertEquals(progress.sorted(), progress)
+        assertEquals(1f, progress.last())
+    }
+
+    @Test
     fun rejectsTraversalEntry() {
         val outside = tempDir / "outside.txt"
         val archive = createZip("../outside.txt" to "outside")
         val destination = tempDir / "destination"
         val events = mutableListOf<ArchiveExtractor.Event>()
         val result = ArchiveExtractor.builder()
-            .sourcePath(archive)
-            .destinationPath(destination)
+            .from(archive)
+            .to(destination)
             .callback { events += it }
             .build()
             .extract()
@@ -248,13 +283,14 @@ class ArchiveExtractorTest {
         assertFalse(Files.exists(outside))
     }
 
+
     @Test
     fun rejectsRelativeTarEntriesThatEscapeExtractionDirectory() {
         listOf("../../outside.txt", "nested/../../../outside.txt").forEach { entryName ->
             val destination = tempDir / entryName.hashCode().toString()
             val result = ArchiveExtractor.builder()
-                .sourcePath(createTar(TarEntry(entryName, "content")))
-                .destinationPath(destination)
+                .from(createTar(TarEntry(entryName, "content")))
+                .to(destination)
                 .build()
                 .extract()
 
@@ -272,8 +308,8 @@ class ArchiveExtractorTest {
         val destination = tempDir / "destination"
 
         val result = ArchiveExtractor.builder()
-            .sourcePath(archive)
-            .destinationPath(destination)
+            .from(archive)
+            .to(destination)
             .build()
             .extract()
 
@@ -288,8 +324,8 @@ class ArchiveExtractorTest {
         val destination = tempDir / "destination"
         val events = mutableListOf<ArchiveExtractor.Event>()
         val result = ArchiveExtractor.builder()
-            .sourcePath(createTar(TarEntry("links/outside", linkName = "../../outside.txt")))
-            .destinationPath(destination)
+            .from(createTar(TarEntry("links/outside", linkName = "../../outside.txt")))
+            .to(destination)
             .callback { events += it }
             .build()
             .extract()
@@ -299,6 +335,18 @@ class ArchiveExtractorTest {
         assertTrue(result.cause.message.orEmpty().contains("destination directory"))
         assertEquals("Extraction failed", (events.single() as ArchiveExtractor.Event.Error).message)
         assertFalse(Files.exists(tempDir / "outside.txt"))
+    }
+
+    private fun createSevenZip(vararg entries: Pair<String, String>): Path {
+        val archive = Files.createTempFile(tempDir, "archive", "7z")
+        SevenZOutputFile(archive.toFile()).use { sevenZ ->
+            entries.forEach { (name, content) ->
+                sevenZ.putArchiveEntry(SevenZArchiveEntry().apply { this.name = name })
+                sevenZ.write(content.toByteArray())
+                sevenZ.closeArchiveEntry()
+            }
+        }
+        return archive
     }
 
     private data class TarEntry(

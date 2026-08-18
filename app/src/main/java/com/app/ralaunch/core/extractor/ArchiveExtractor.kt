@@ -1,7 +1,6 @@
 package com.app.ralaunch.core.extractor
 
 import android.annotation.SuppressLint
-import android.content.Context
 import android.system.Os
 import com.app.ralaunch.strings.StringsResource.Strings
 import kotlinx.coroutines.CancellationException
@@ -19,6 +18,7 @@ import kotlin.io.path.createDirectories
 import kotlin.io.path.deleteIfExists
 import kotlin.io.path.div
 import kotlin.io.path.exists
+import kotlin.io.path.fileSize
 import kotlin.io.path.inputStream
 import kotlin.io.path.isSymbolicLink
 import kotlin.io.path.outputStream
@@ -70,13 +70,13 @@ class ArchiveExtractor private constructor(private val options: Options) {
 
         fun id(id: String) = apply { this.id = id }
 
-        fun sourcePath(sourcePath: Path) = apply { this.sourcePath = sourcePath }
+        fun from(sourcePath: Path) = apply { this.sourcePath = sourcePath }
 
-        fun sourceExtractionPrefix(sourceExtractionPrefix: Path) = apply {
+        fun prefix(sourceExtractionPrefix: Path) = apply {
             this.sourceExtractionPrefix = sourceExtractionPrefix
         }
 
-        fun destinationPath(destinationPath: Path) = apply { this.destinationPath = destinationPath }
+        fun to(destinationPath: Path) = apply { this.destinationPath = destinationPath }
 
         fun callback(callback: ((Event) -> Unit)?) = apply { this.callback = callback }
 
@@ -116,6 +116,7 @@ class ArchiveExtractor private constructor(private val options: Options) {
             }
         }
 
+        // emit success
         val message = Strings.extractor.complete
         options.callback?.invoke(Event.Progress(options.id, message, 1f, state.processedEntries))
         options.callback?.invoke(Event.Complete(options.id, message))
@@ -123,6 +124,7 @@ class ArchiveExtractor private constructor(private val options: Options) {
     } catch (ex: CancellationException) {
         throw ex
     } catch (ex: Exception) {
+        // emit failure
         val message = Strings.extractor.failed
         options.callback?.invoke(Event.Error(options.id, message, ex))
         Result.Failure(message, ex)
@@ -149,8 +151,27 @@ class ArchiveExtractor private constructor(private val options: Options) {
             .setPath(options.sourcePath)
             .get()
             .use { archive ->
+                val total = archive.entries.sumOf { it.size.coerceAtLeast(0) }
+                var done = 0L
                 generateSequence { archive.nextEntry }.forEach { entry ->
-                    writeEntry(root, entry, archive::read, state)
+                    if (writeEntry(root, entry) { buffer ->
+                            val readSize = archive.read(buffer)
+                            if (readSize > 0) done += readSize
+                            readSize
+                        }
+                    ) {
+                        state.processedEntries++
+
+                        // emit progress
+                        options.callback?.invoke(
+                            Event.Progress(
+                                options.id,
+                                Strings.extractor.inProgress.format(entry.name),
+                                if (total > 0) (done.toFloat() / total).coerceIn(0f, 1f) else 1f,
+                                state.processedEntries
+                            )
+                        )
+                    }
                 }
             }
     }
@@ -158,10 +179,24 @@ class ArchiveExtractor private constructor(private val options: Options) {
     private fun extractArchive(root: Path, input: java.io.InputStream, archiverName: String, state: ExtractionState) {
         val archive: ArchiveInputStream<*> =
             ArchiveStreamFactory().createArchiveInputStream(archiverName, input)
+        val archiveSize = options.sourcePath.fileSize().toFloat()
         archive.use {
             archive.forEach { entry ->
                 if (!archive.canReadEntryData(entry)) return@forEach
-                writeEntry(root, entry, archive::read, state)
+
+                if (writeEntry(root, entry, archive::read)) {
+                    state.processedEntries++
+
+                    // emit progress
+                    options.callback?.invoke(
+                        Event.Progress(
+                            options.id,
+                            Strings.extractor.inProgress.format(entry.name),
+                            (archive.bytesRead.toFloat() / archiveSize).coerceIn(0f, 1f),
+                            state.processedEntries
+                        )
+                    )
+                }
             }
         }
     }
@@ -169,20 +204,19 @@ class ArchiveExtractor private constructor(private val options: Options) {
     private fun writeEntry(
         root: Path,
         entry: ArchiveEntry,
-        read: (ByteArray) -> Int,
-        state: ExtractionState
-    ) {
+        read: (ByteArray) -> Int
+    ): Boolean {
         val entryPath = Path(entry.name).normalize()
         val prefix = options.sourceExtractionPrefix.normalize()
         val relativePath = if (prefix.toString().isEmpty()) {
             entryPath
         } else {
             if (!entryPath.startsWith(prefix))
-                return
+                return false
             prefix.relativize(entryPath)
         }
         if (relativePath == Path("."))
-            return
+            return false
 
         val target = (root / relativePath).normalize()
         require(target.startsWith(root)) {
@@ -200,15 +234,7 @@ class ArchiveExtractor private constructor(private val options: Options) {
                 extractFile(target, read, (entry as? TarArchiveEntry)?.mode ?: 0)
         }
 
-        state.processedEntries++
-        options.callback?.invoke(
-            Event.Progress(
-                options.id,
-                Strings.extractor.inProgress.format(entry.name),
-                0f,
-                state.processedEntries
-            )
-        )
+        return true
     }
 
     private fun extractSymlink(root: Path, target: Path, linkTarget: String) {
@@ -255,14 +281,5 @@ class ArchiveExtractor private constructor(private val options: Options) {
         private const val BUFFER_SIZE = 8192
 
         fun builder() = Builder()
-
-        @JvmStatic
-        fun copyAssetToFile(context: Context, assetFileName: String, targetFile: Path) {
-            context.assets.open(assetFileName).use { input ->
-                targetFile.outputStream().buffered().use { output ->
-                    input.copyTo(output, BUFFER_SIZE)
-                }
-            }
-        }
     }
 }

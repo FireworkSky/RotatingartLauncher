@@ -48,8 +48,8 @@ object GameExtractorUtils {
     ): ExtractResult = withContext(Dispatchers.IO) {
         try {
             when (val result = GogShFileExtractor.builder()
-                .sourcePath(shFile.toPath())
-                .destinationPath(outputDir.toPath())
+                .from(shFile.toPath())
+                .to(outputDir.toPath())
                 .callback { event ->
                     if (event is GogShFileExtractor.Event.Progress) {
                         progressCallback(event.message, event.progress)
@@ -84,9 +84,9 @@ object GameExtractorUtils {
     ): ExtractResult = withContext(Dispatchers.IO) {
         try {
             when (val result = ArchiveExtractor.builder()
-                .sourcePath(zipFile.toPath())
-                .sourceExtractionPrefix(Paths.get(sourcePrefix))
-                .destinationPath(outputDir.toPath())
+                .from(zipFile.toPath())
+                .prefix(Paths.get(sourcePrefix))
+                .to(outputDir.toPath())
                 .callback { event ->
                     if (event is ArchiveExtractor.Event.Progress) {
                         progressCallback(event.message, event.progress)
