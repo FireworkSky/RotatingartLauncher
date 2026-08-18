@@ -13,7 +13,7 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileInputStream
 import java.io.RandomAccessFile
-import java.util.zip.ZipInputStream
+import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream
 
 /**
  * Stardew Valley / SMAPI 安装插件
@@ -74,7 +74,7 @@ class SmapiInstallPlugin : BaseInstallPlugin() {
      */
     private fun isSmapiInstaller(modLoaderFile: File): Boolean {
         try {
-            ZipInputStream(FileInputStream(modLoaderFile)).use { zis ->
+            ZipArchiveInputStream(FileInputStream(modLoaderFile)).use { zis ->
                 var entry = zis.nextEntry
                 while (entry != null) {
                     if (entry.name.lowercase().endsWith(".dat")) return true
@@ -434,8 +434,8 @@ class SmapiInstallPlugin : BaseInstallPlugin() {
             when {
                 file.extension.lowercase() == "dat" -> {
                     try {
-                        // .dat 文件是 zip 格式，直接用 ZipInputStream 解压
-                        java.util.zip.ZipInputStream(java.io.FileInputStream(file)).use { zis ->
+                        // .dat 文件是 zip 格式，直接解压
+                        ZipArchiveInputStream(java.io.FileInputStream(file)).use { zis ->
                             var entry = zis.nextEntry
                             while (entry != null) {
                                 val targetFile = File(outputDir, entry.name)

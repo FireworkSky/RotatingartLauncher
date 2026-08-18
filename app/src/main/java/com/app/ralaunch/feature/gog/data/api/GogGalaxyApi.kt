@@ -9,7 +9,7 @@ import java.net.HttpURLConnection
 import java.net.URL
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
-import java.util.zip.GZIPInputStream
+import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream
 
 /**
  * GOG Galaxy API 客户端
@@ -299,7 +299,7 @@ class GogGalaxyApi(private val authClient: GogAuthClient) {
                 var inputStream: InputStream = conn.inputStream
                 val contentEncoding = conn.getHeaderField("Content-Encoding")
                 if (contentEncoding?.contains("gzip") == true) {
-                    inputStream = GZIPInputStream(inputStream)
+                    inputStream = GzipCompressorInputStream(inputStream)
                 }
                 val response = readResponse(inputStream)
                 return if (response.isEmpty()) JSONObject() else JSONObject(response)

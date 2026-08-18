@@ -1959,18 +1959,6 @@
     <string name="install_tmodloader_with_detail">Installing tModLoader: %1$s</string>
     <string name="install_tmodloader_copy_files">Copying tModLoader files...</string>
 
-    <string name="extract_failed">Extraction failed</string>
-    <string name="extract_complete">Extraction complete</string>
-    <string name="extract_in_progress">Extracting: %1$s</string>
-    <string name="extract_7zip_library_load_failed">Failed to load 7-Zip native library</string>
-    <string name="extract_7zip_failed">7z extraction failed</string>
-    <string name="extract_gog_script">Extracting installer script...</string>
-    <string name="extract_gog_mojosetup">Extracting MojoSetup archive...</string>
-    <string name="extract_gog_game_data">Extracting game data...</string>
-    <string name="extract_gog_parse_game_data">Parsing game data...</string>
-    <string name="extract_gog_decompress_game_data">Decompressing game data...</string>
-    <string name="extract_gog_game_data_complete">Game data extraction complete</string>
-    <string name="extract_gog_sh_failed">Failed to extract GOG .sh file</string>
 
     <string name="runtime_extract_prepare">Preparing to extract runtime libraries...</string>
     <string name="runtime_extract_entry">Extracting: %1$s</string>

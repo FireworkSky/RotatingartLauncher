@@ -11,7 +11,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
-import java.util.zip.ZipFile
+import org.apache.commons.compress.archivers.zip.ZipFile
 
 /**
  * Celeste/Everest 安装插件

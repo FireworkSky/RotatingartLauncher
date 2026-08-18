@@ -11,9 +11,9 @@ import kotlinx.serialization.json.Json
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
-import java.util.zip.ZipEntry
-import java.util.zip.ZipFile
-import java.util.zip.ZipOutputStream
+import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
+import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream
+import org.apache.commons.compress.archivers.zip.ZipFile
 
 /**
  * 控件包管理器
@@ -568,7 +568,7 @@ class ControlPackManager(private val context: Context) {
                 
                 // 如果根目录没有 manifest.json，在子目录中查找
                 if (manifestEntry == null) {
-                    manifestEntry = zip.entries().asSequence().find { entry ->
+                    manifestEntry = zip.entries.asSequence().find { entry ->
                         entry.name.endsWith("/${ControlPackInfo.MANIFEST_FILE_NAME}") ||
                         entry.name.endsWith("\\${ControlPackInfo.MANIFEST_FILE_NAME}")
                     }
@@ -596,7 +596,7 @@ class ControlPackManager(private val context: Context) {
                 packDir.mkdirs()
                 
                 // 解压所有文件（去掉前缀目录）
-                zip.entries().asSequence().forEach { entry ->
+                zip.entries.asSequence().forEach { entry ->
                     var entryName = entry.name
                     
                     // 去掉前缀目录
@@ -685,13 +685,13 @@ class ControlPackManager(private val context: Context) {
                 return Result.failure(Exception("Pack not found: $packId"))
             }
             
-            ZipOutputStream(FileOutputStream(outputFile)).use { zip ->
+            ZipArchiveOutputStream(FileOutputStream(outputFile)).use { zip ->
                 packDir.walkTopDown().forEach { file ->
                     if (file.isFile) {
                         val entryName = file.relativeTo(packDir).path.replace('\\', '/')
-                        zip.putNextEntry(ZipEntry(entryName))
+                        zip.putArchiveEntry(ZipArchiveEntry(entryName))
                         FileInputStream(file).use { it.copyTo(zip) }
-                        zip.closeEntry()
+                        zip.closeArchiveEntry()
                     }
                 }
             }

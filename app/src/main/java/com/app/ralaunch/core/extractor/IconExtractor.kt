@@ -10,12 +10,14 @@ import android.renderscript.Element
 import android.renderscript.RenderScript
 import android.renderscript.ScriptIntrinsicConvolve3x3
 import com.app.ralaunch.core.logging.AppLog
-import java.io.File
-import java.io.FileOutputStream
 import java.io.IOException
 import java.io.RandomAccessFile
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
+import java.nio.file.Path
+import kotlin.io.path.exists
+import kotlin.io.path.fileSize
+import kotlin.io.path.outputStream
 
 /**
  * 从 PE 文件（EXE/DLL）中提取图标
@@ -36,10 +38,10 @@ object IconExtractor {
      * @return true 表示成功，false 表示失败
      */
     @JvmStatic
-    fun extractIconToPng(exePath: String, outputPath: String): Boolean {
+    fun extractIconToPng(exePath: Path, outputPath: Path): Boolean {
         var file: RandomAccessFile? = null
         return try {
-            file = RandomAccessFile(File(exePath), "r")
+            file = RandomAccessFile(exePath.toFile(), "r")
             val reader = PeReader(file)
 
             // 验证 PE 格式
@@ -92,7 +94,7 @@ object IconExtractor {
             }
 
             // 保存为 PNG
-            FileOutputStream(outputPath).use { out ->
+            outputPath.outputStream().use { out ->
                 bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
             }
 
@@ -286,10 +288,10 @@ object IconExtractor {
      * @return 高清化后的图标路径，失败返回null
      */
     @JvmStatic
-    fun upscaleIcon(context: Context, iconPath: String): String? {
+    fun upscaleIcon(context: Context, iconPath: Path): Path? {
         return try {
             // 读取原始图标
-            val original = BitmapFactory.decodeFile(iconPath)
+            val original = BitmapFactory.decodeFile(iconPath.toString())
             if (original == null) {
                 AppLog.e(TAG, "Failed to decode original icon")
                 return null
@@ -317,8 +319,8 @@ object IconExtractor {
             val sharpened = applySharpen(context, upscaled)
 
             // 保存高清化后的图标
-            val upscaledPath = iconPath.replace(".png", "_upscaled.png")
-            FileOutputStream(upscaledPath).use { out ->
+            val upscaledPath = iconPath.resolveSibling(iconPath.fileName.toString().replace(".png", "_upscaled.png"))
+            upscaledPath.outputStream().use { out ->
                 sharpened.compress(Bitmap.CompressFormat.PNG, 100, out)
             }
 
@@ -386,12 +388,11 @@ object IconExtractor {
      * @return true 表示需要高清化（图标小于5KB），false 表示不需要
      */
     @JvmStatic
-    fun needsUpscale(iconPath: String): Boolean {
+    fun needsUpscale(iconPath: Path): Boolean {
         return try {
-            val iconFile = File(iconPath)
-            if (!iconFile.exists()) return false
+            if (!iconPath.exists()) return false
             // 如果图标文件小于5KB，可能是16x16或32x32的小图标，需要高清化
-            iconFile.length() < 5 * 1024
+            iconPath.fileSize() < 5 * 1024
         } catch (e: Exception) {
             AppLog.e(TAG, "Failed to check icon size: ${e.message}")
             false
@@ -405,10 +406,10 @@ object IconExtractor {
      * @return true 表示包含图标，false 表示不包含或检查失败
      */
     @JvmStatic
-    fun hasIcon(exePath: String): Boolean {
+    fun hasIcon(exePath: Path): Boolean {
         var file: RandomAccessFile? = null
         return try {
-            file = RandomAccessFile(File(exePath), "r")
+            file = RandomAccessFile(exePath.toFile(), "r")
             val reader = PeReader(file)
 
             // 验证 PE 格式

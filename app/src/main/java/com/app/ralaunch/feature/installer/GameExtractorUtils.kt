@@ -1,15 +1,12 @@
 package com.app.ralaunch.feature.installer
 
-import com.app.ralaunch.R
-import com.app.ralaunch.RaLaunchApp
-import com.app.ralaunch.core.extractor.BasicSevenZipExtractor
-import com.app.ralaunch.core.extractor.ExtractorCollection
+import com.app.ralaunch.strings.StringsResource.Strings
+import com.app.ralaunch.core.extractor.ArchiveExtractor
 import com.app.ralaunch.core.extractor.GogShFileExtractor
 import com.app.ralaunch.core.logging.AppLog
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
-import java.nio.file.Path
 import java.nio.file.Paths
 
 /**
@@ -50,45 +47,24 @@ object GameExtractorUtils {
         progressCallback: (String, Float) -> Unit
     ): ExtractResult = withContext(Dispatchers.IO) {
         try {
-            val state = HashMap<String, Any>()
-            var gamePath: Path? = null
-            var success = false
-            var errorMsg: String? = null
-
-            val extractor = GogShFileExtractor(
-                shFile.toPath(),
-                outputDir.toPath(),
-                object : ExtractorCollection.ExtractionListener {
-                    override fun onProgress(message: String, progress: Float, state: HashMap<String, Any?>?) {
-                        progressCallback(message, progress)
-                    }
-
-                    override fun onComplete(message: String, state: HashMap<String, Any?>?) {
-                        success = true
-                        gamePath = state?.get(GogShFileExtractor.STATE_KEY_GAME_PATH) as? Path
-                    }
-
-                    override fun onError(message: String, ex: Exception?, state: HashMap<String, Any?>?) {
-                        errorMsg = message
+            when (val result = GogShFileExtractor.builder()
+                .sourcePath(shFile.toPath())
+                .destinationPath(outputDir.toPath())
+                .callback { event ->
+                    if (event is GogShFileExtractor.Event.Progress) {
+                        progressCallback(event.message, event.progress)
                     }
                 }
-            )
-            extractor.state = HashMap(state)
-
-            val result = extractor.extract()
-
-            if (result && success) {
-                ExtractResult.Success(gamePath?.toFile() ?: outputDir)
-            } else {
-                ExtractResult.Error(
-                    errorMsg ?: RaLaunchApp.getInstance().getString(R.string.extract_failed)
-                )
+                .build()
+                .extract()
+            ) {
+                is GogShFileExtractor.Result.Success -> ExtractResult.Success(result.gamePath.toFile())
+                is GogShFileExtractor.Result.Failure -> ExtractResult.Error(result.message)
             }
-
         } catch (e: Exception) {
             AppLog.e(TAG, "Failed to extract GOG .sh file", e)
             ExtractResult.Error(
-                e.message ?: RaLaunchApp.getInstance().getString(R.string.extract_failed)
+                e.message ?: Strings.extractor.failed
             )
         }
     }
@@ -107,46 +83,25 @@ object GameExtractorUtils {
         sourcePrefix: String = ""
     ): ExtractResult = withContext(Dispatchers.IO) {
         try {
-            val state = HashMap<String, Any>()
-            var success = false
-            var errorMsg: String? = null
-
-            val listener = object : ExtractorCollection.ExtractionListener {
-                override fun onProgress(message: String, progress: Float, state: HashMap<String, Any?>?) {
-                    progressCallback(message, progress)
+            when (val result = ArchiveExtractor.builder()
+                .sourcePath(zipFile.toPath())
+                .sourceExtractionPrefix(Paths.get(sourcePrefix))
+                .destinationPath(outputDir.toPath())
+                .callback { event ->
+                    if (event is ArchiveExtractor.Event.Progress) {
+                        progressCallback(event.message, event.progress)
+                    }
                 }
-
-                override fun onComplete(message: String, state: HashMap<String, Any?>?) {
-                    success = true
-                }
-
-                override fun onError(message: String, ex: Exception?, state: HashMap<String, Any?>?) {
-                    errorMsg = message
-                }
+                .build()
+                .extract()
+            ) {
+                is ArchiveExtractor.Result.Success -> ExtractResult.Success(result.destinationPath.toFile())
+                is ArchiveExtractor.Result.Failure -> ExtractResult.Error(result.message)
             }
-
-            val extractor = BasicSevenZipExtractor(
-                zipFile.toPath(),
-                Paths.get(sourcePrefix),
-                outputDir.toPath(),
-                listener
-            )
-            extractor.state = HashMap(state)
-
-            val result = extractor.extract()
-
-            if (result && success) {
-                ExtractResult.Success(outputDir)
-            } else {
-                ExtractResult.Error(
-                    errorMsg ?: RaLaunchApp.getInstance().getString(R.string.extract_failed)
-                )
-            }
-
         } catch (e: Exception) {
             AppLog.e(TAG, "Failed to extract ZIP file", e)
             ExtractResult.Error(
-                e.message ?: RaLaunchApp.getInstance().getString(R.string.extract_failed)
+                e.message ?: Strings.extractor.failed
             )
         }
     }

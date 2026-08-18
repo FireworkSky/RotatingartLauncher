@@ -29,7 +29,6 @@ android {
         versionCode = 4
         versionName = "2.1.1"
 
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     externalNativeBuild {
@@ -95,6 +94,12 @@ android {
         noCompress += listOf("tar.gz", "tar.xz", "xz")
     }
 
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+        }
+    }
+
     packaging {
         jniLibs {
             useLegacyPackaging = true
@@ -114,7 +119,6 @@ dependencies {
     implementation(libs.material3)
 
     // 从 ralib 迁移的依赖
-    implementation(libs.sevenzip.jbinding.android)
     implementation(libs.gson)
 
     // AndroidX 核心库
@@ -165,18 +169,20 @@ dependencies {
     // 第三方工具库
     implementation(libs.glide)
     implementation(libs.konfetti)
-    implementation(libs.commons.compress)
-    implementation(libs.xz)
     implementation(libs.android.svg)
     implementation(libs.mozilla.rhino)
+
+    // Compressor / Decompressor
+    implementation(libs.commons.compress)
+    implementation(libs.xz)
 
     implementation(libs.material.kolor)
     implementation(libs.timber)
 
     // 测试依赖
     testImplementation(libs.junit)
-    androidTestImplementation(libs.ext.junit)
-    androidTestImplementation(libs.espresso.core)
+    testImplementation(libs.mockk)
+    testImplementation(libs.robolectric)
 }
 
 afterEvaluate {

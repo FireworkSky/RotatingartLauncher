@@ -7,7 +7,7 @@ import kotlinx.serialization.json.Json
 import timber.log.Timber
 import java.io.File
 import java.io.InputStream
-import java.util.zip.ZipInputStream
+import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream
 
 /*******************************************************************************
  * RotatingArtLauncher - PatchManager
@@ -50,7 +50,7 @@ object PatchManager {
                 inputStream.mark(1024 * 1024 * 10) // 设置 mark 限制
             }
 
-            val zipStream = ZipInputStream(inputStream)
+            val zipStream = ZipArchiveInputStream(inputStream)
 
             // 第一次读取：读取 manifest
             var manifest: PatchManifest? = null
@@ -84,7 +84,7 @@ object PatchManager {
 
             // 重置流，重新读取
             inputStream.reset()
-            val newZipStream = ZipInputStream(inputStream)
+            val newZipStream = ZipArchiveInputStream(inputStream)
 
             // 第二次读取：解压所有文件
             var newEntry = newZipStream.nextEntry
@@ -101,7 +101,6 @@ object PatchManager {
                     }
                 }
 
-                newZipStream.closeEntry()
                 newEntry = newZipStream.nextEntry
             }
 

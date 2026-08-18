@@ -10,7 +10,7 @@ import java.io.*
 import java.net.HttpURLConnection
 import java.net.URL
 import java.nio.charset.StandardCharsets
-import java.util.zip.GZIPInputStream
+import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream
 
 /**
  * GOG 网站 API 客户端
@@ -325,7 +325,7 @@ class GogWebsiteApi(private val authClient: GogAuthClient) {
                 var inputStream: InputStream = conn.inputStream
                 val contentEncoding = conn.getHeaderField("Content-Encoding")
                 if (contentEncoding?.contains("gzip") == true) {
-                    inputStream = GZIPInputStream(inputStream)
+                    inputStream = GzipCompressorInputStream(inputStream)
                 }
                 val response = readResponse(inputStream)
                 return if (response.isEmpty()) JSONObject() else JSONObject(response)

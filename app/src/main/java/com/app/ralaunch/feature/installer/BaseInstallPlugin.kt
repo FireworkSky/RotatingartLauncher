@@ -45,7 +45,10 @@ abstract class BaseInstallPlugin : GameInstallPlugin {
 
             // 3. 提取图标
             val iconOutputPath = "icon.png"
-            val success = IconExtractor.extractIconToPng(iconSourceFile.absolutePath, File(outputDir, iconOutputPath).absolutePath)
+            val success = IconExtractor.extractIconToPng(
+                iconSourceFile.toPath(),
+                outputDir.toPath().resolve(iconOutputPath)
+            )
 
             if (success && File(outputDir, iconOutputPath).exists() && File(outputDir, iconOutputPath).length() > 0) {
                 iconOutputPath
@@ -78,11 +81,11 @@ abstract class BaseInstallPlugin : GameInstallPlugin {
         if (launchTarget.lowercase().endsWith(".dll")) {
             val baseName = launchTarget.substringBeforeLast(".")
             val exeFile = File(outputDir, "$baseName.exe")
-            if (exeFile.exists() && IconExtractor.hasIcon(exeFile.absolutePath)) {
+            if (exeFile.exists() && IconExtractor.hasIcon(exeFile.toPath())) {
                 return exeFile
             }
             // DLL 文件本身也可能包含图标（PE 格式）
-            if (targetFile.exists() && IconExtractor.hasIcon(targetFile.absolutePath)) {
+            if (targetFile.exists() && IconExtractor.hasIcon(targetFile.toPath())) {
                 return targetFile
             }
         }
@@ -104,7 +107,7 @@ abstract class BaseInstallPlugin : GameInstallPlugin {
             val matchedExe = peFiles.find {
                 it.extension.lowercase() == "exe" &&
                 it.name.lowercase().contains(pattern.lowercase()) &&
-                IconExtractor.hasIcon(it.absolutePath)
+                IconExtractor.hasIcon(it.toPath())
             }
             if (matchedExe != null) return matchedExe
 
@@ -112,18 +115,18 @@ abstract class BaseInstallPlugin : GameInstallPlugin {
             val matchedDll = peFiles.find {
                 it.extension.lowercase() == "dll" &&
                 it.name.lowercase().contains(pattern.lowercase()) &&
-                IconExtractor.hasIcon(it.absolutePath)
+                IconExtractor.hasIcon(it.toPath())
             }
             if (matchedDll != null) return matchedDll
         }
 
         // 3. 返回第一个包含图标的 PE 文件（优先 EXE）
         val exeWithIcon = peFiles.filter { it.extension.lowercase() == "exe" }
-            .find { IconExtractor.hasIcon(it.absolutePath) }
+            .find { IconExtractor.hasIcon(it.toPath()) }
         if (exeWithIcon != null) return exeWithIcon
 
         val dllWithIcon = peFiles.filter { it.extension.lowercase() == "dll" }
-            .find { IconExtractor.hasIcon(it.absolutePath) }
+            .find { IconExtractor.hasIcon(it.toPath()) }
         if (dllWithIcon != null) return dllWithIcon
 
         // 4. 如果都没有图标，返回第一个 EXE（尝试提取）

@@ -136,7 +136,7 @@ class InitializationViewModel(
             updateComponent(index, 10, false, appContext.getString(R.string.init_preparing_file))
 
             val tempFile = File(appContext.cacheDir, "temp_${component.fileName}")
-            ArchiveExtractor.copyAssetToFile(appContext, component.fileName, tempFile)
+            ArchiveExtractor.copyAssetToFile(appContext, component.fileName, tempFile.toPath())
 
             updateComponent(index, 30, false, appContext.getString(R.string.init_extracting))
 
@@ -151,23 +151,27 @@ class InitializationViewModel(
             }
             stagingDir.createDirectories()
 
-            val callback = ArchiveExtractor.ProgressCallback { files, _ ->
-                val progress = 40 + minOf(files / 10, 50)
-                updateComponent(
-                    index,
-                    progress,
-                    false,
-                    appContext.getString(R.string.init_extracting_files, files)
-                )
-            }
-
-            when {
-                component.fileName.endsWith(".tar.xz") ->
-                    ArchiveExtractor.extractTarXz(tempFile, stagingDir.toFile(), null, callback)
-                component.fileName.endsWith(".tar.gz") ->
-                    ArchiveExtractor.extractTarGz(tempFile, stagingDir.toFile(), null, callback)
-                else ->
-                    ArchiveExtractor.extractTar(tempFile, stagingDir.toFile(), null, callback)
+            when (val result = ArchiveExtractor.builder()
+                .sourcePath(tempFile.toPath())
+                .destinationPath(stagingDir)
+                .callback { event ->
+                    if (event is ArchiveExtractor.Event.Progress &&
+                        event.progress < 1f &&
+                        event.processedEntries % 10 == 0
+                    ) {
+                        val files = event.processedEntries
+                        updateComponent(
+                            index,
+                            40 + minOf(files / 10, 50),
+                            false,
+                            appContext.getString(R.string.init_extracting_files, files)
+                        )
+                    }
+                }
+                .build()
+                .extract()) {
+                is ArchiveExtractor.Result.Success -> Unit
+                is ArchiveExtractor.Result.Failure -> throw result.cause
             }
 
             val runtimeVersion = when (runtimeType) {

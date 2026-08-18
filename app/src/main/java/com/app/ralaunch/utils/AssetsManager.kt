@@ -235,7 +235,7 @@ object AssetsManager {
                 updateComponent(index, 10, false, "Preparing file...")
 
                 val tempFile = File(context.cacheDir, "temp_${component.fileName}")
-                ArchiveExtractor.copyAssetToFile(context, component.fileName, tempFile)
+                ArchiveExtractor.copyAssetToFile(context, component.fileName, tempFile.toPath())
 
                 if (_state.value.isCancelled) {
                     deleteFileSafely(tempFile, context.cacheDir)
@@ -259,22 +259,25 @@ object AssetsManager {
                 }
                 stagingDir.createDirectories()
 
-                val callback = ArchiveExtractor.ProgressCallback { files, _ ->
-                    if (_state.value.isCancelled) {
-                        throw CancellationException("Installation cancelled by user")
+                when (val result = ArchiveExtractor.builder()
+                    .sourcePath(tempFile.toPath())
+                    .destinationPath(stagingDir)
+                    .callback { event ->
+                        if (event is ArchiveExtractor.Event.Progress && event.progress < 1f) {
+                            if (_state.value.isCancelled) {
+                                throw CancellationException("Installation cancelled by user")
+                            }
+                            val files = event.processedEntries
+                            if (files % 10 == 0) {
+                                val progress = 40 + minOf(files / 10, 50)
+                                updateComponent(index, progress, false, "Extracting... ($files files)")
+                            }
+                        }
                     }
-                    val progress = 40 + minOf(files / 10, 50)
-                    updateComponent(index, progress, false, "Extracting... ($files files)")
-                }
-
-                // Extract files
-                when {
-                    component.fileName.endsWith(".tar.xz") ->
-                        ArchiveExtractor.extractTarXz(tempFile, stagingDir.toFile(), null, callback)
-                    component.fileName.endsWith(".tar.gz") ->
-                        ArchiveExtractor.extractTarGz(tempFile, stagingDir.toFile(), null, callback)
-                    else ->
-                        ArchiveExtractor.extractTar(tempFile, stagingDir.toFile(), null, callback)
+                    .build()
+                    .extract()) {
+                    is ArchiveExtractor.Result.Success -> Unit
+                    is ArchiveExtractor.Result.Failure -> throw result.cause
                 }
 
                 if (_state.value.isCancelled) {

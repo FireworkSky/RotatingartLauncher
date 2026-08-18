@@ -2,8 +2,7 @@ package com.app.ralaunch.core.platform.runtime
 
 import android.content.Context
 import com.app.ralaunch.core.logging.AppLog
-import com.app.ralaunch.core.extractor.BasicSevenZipExtractor
-import com.app.ralaunch.core.extractor.ExtractorCollection
+import com.app.ralaunch.core.extractor.ArchiveExtractor
 import com.app.ralaunch.core.common.util.TemporaryFileAcquirer
 import org.koin.java.KoinJavaComponent
 import java.io.File
@@ -42,20 +41,26 @@ object AssemblyPatcher {
                     Files.copy(input, tempZip, StandardCopyOption.REPLACE_EXISTING)
                 }
 
-                BasicSevenZipExtractor(
-                    tempZip, Paths.get(""), targetDir,
-                    object : ExtractorCollection.ExtractionListener {
-                        override fun onProgress(message: String, progress: Float, state: HashMap<String, Any?>?) {
-                            AppLog.d(TAG, "解压中: $message (${(progress * 100).toInt()}%)")
-                        }
-                        override fun onComplete(message: String, state: HashMap<String, Any?>?) {
-                            AppLog.i(TAG, "MonoMod 解压完成")
-                        }
-                        override fun onError(message: String, ex: Exception?, state: HashMap<String, Any?>?) {
-                            AppLog.e(TAG, "解压错误: $message", ex)
+                when (val result = ArchiveExtractor.builder()
+                    .sourcePath(tempZip)
+                    .destinationPath(targetDir)
+                    .callback { event ->
+                        when (event) {
+                            is ArchiveExtractor.Event.Progress -> {
+                                AppLog.d(TAG, "解压中: ${event.message} (${(event.progress * 100).toInt()}%)")
+                            }
+                            is ArchiveExtractor.Event.Complete -> AppLog.i(TAG, "MonoMod 解压完成")
+                            is ArchiveExtractor.Event.Error -> {
+                                AppLog.e(TAG, "解压错误: ${event.message}", event.cause)
+                            }
                         }
                     }
-                ).extract()
+                    .build()
+                    .extract()
+                ) {
+                    is ArchiveExtractor.Result.Success -> Unit
+                    is ArchiveExtractor.Result.Failure -> return false
+                }
 
                 AppLog.i(TAG, "MonoMod 已解压到 $targetDir")
                 true

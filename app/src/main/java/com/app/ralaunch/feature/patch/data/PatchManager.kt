@@ -2,8 +2,7 @@ package com.app.ralaunch.feature.patch.data
 
 import android.content.Context
 import com.app.ralaunch.core.logging.AppLog
-import com.app.ralaunch.core.extractor.BasicSevenZipExtractor
-import com.app.ralaunch.core.extractor.ExtractorCollection
+import com.app.ralaunch.core.extractor.ArchiveExtractor
 import com.app.ralaunch.core.common.util.FileUtils
 import com.app.ralaunch.core.common.util.TemporaryFileAcquirer
 import org.koin.java.KoinJavaComponent
@@ -154,18 +153,18 @@ class PatchManager @JvmOverloads constructor(
         }
 
         AppLog.i(TAG, "正在解压补丁文件到补丁目录...")
-        BasicSevenZipExtractor(
-            patchZipPath,
-            Paths.get(""),
-            patchPath,
-            object : ExtractorCollection.ExtractionListener {
-                override fun onProgress(message: String, progress: Float, state: HashMap<String, Any?>?) {}
-                override fun onComplete(message: String, state: HashMap<String, Any?>?) {}
-                override fun onError(message: String, ex: Exception?, state: HashMap<String, Any?>?) {
-                    throw RuntimeException(message, ex)
-                }
+        when (val result = ArchiveExtractor.builder()
+            .sourcePath(patchZipPath)
+            .destinationPath(patchPath)
+            .build()
+            .extract()
+        ) {
+            is ArchiveExtractor.Result.Success -> Unit
+            is ArchiveExtractor.Result.Failure -> {
+                AppLog.e(TAG, "补丁安装失败: ${result.message}", result.cause)
+                return false
             }
-        ).extract()
+        }
 
         return true
     }
@@ -266,18 +265,16 @@ class PatchManager @JvmOverloads constructor(
             TemporaryFileAcquirer().use { tfa ->
                 val extractedPatches = tfa.acquireTempFilePath("extracted_patches")
 
-                BasicSevenZipExtractor(
-                    apkPath,
-                    Paths.get("assets/patches"),
-                    extractedPatches,
-                    object : ExtractorCollection.ExtractionListener {
-                        override fun onProgress(message: String, progress: Float, state: HashMap<String, Any?>?) {}
-                        override fun onComplete(message: String, state: HashMap<String, Any?>?) {}
-                        override fun onError(message: String, ex: Exception?, state: HashMap<String, Any?>?) {
-                            throw RuntimeException(message, ex)
-                        }
-                    }
-                ).extract()
+                when (val result = ArchiveExtractor.builder()
+                    .sourcePath(apkPath)
+                    .sourceExtractionPrefix(Paths.get("assets/patches"))
+                    .destinationPath(extractedPatches)
+                    .build()
+                    .extract()
+                ) {
+                    is ArchiveExtractor.Result.Success -> Unit
+                    is ArchiveExtractor.Result.Failure -> throw RuntimeException(result.message, result.cause)
+                }
 
                 // 获取已安装补丁的 ID -> 清单映射（用于版本比较）
                 val installedPatchMap = patchManager.installedPatches

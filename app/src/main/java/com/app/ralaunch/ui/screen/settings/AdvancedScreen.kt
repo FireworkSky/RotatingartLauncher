@@ -62,8 +62,8 @@ import java.io.FileOutputStream
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-import java.util.zip.ZipOutputStream
-import java.util.zip.ZipEntry
+import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
+import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream
 
 /*******************************************************************************
  * RotatingArtLauncher - DeveloperScreen
@@ -405,13 +405,13 @@ private fun exportLogsToZip(context: Context): File? {
     val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
     val zipFile = File(context.cacheDir, "logs_$timestamp.zip")
 
-    ZipOutputStream(FileOutputStream(zipFile)).use { zos ->
+    ZipArchiveOutputStream(FileOutputStream(zipFile)).use { zos ->
         logFiles.forEach { file ->
-            zos.putNextEntry(ZipEntry(file.name))
+            zos.putArchiveEntry(ZipArchiveEntry(file.name))
             file.inputStream().use { input ->
                 input.copyTo(zos)
             }
-            zos.closeEntry()
+            zos.closeArchiveEntry()
         }
     }
 

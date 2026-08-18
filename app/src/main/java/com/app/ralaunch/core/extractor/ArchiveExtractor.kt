@@ -1,177 +1,266 @@
 package com.app.ralaunch.core.extractor
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.system.Os
-import com.app.ralaunch.core.logging.AppLog
-import com.app.ralaunch.core.common.util.FileUtils
-import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
-import org.apache.commons.compress.compressors.xz.XZCompressorInputStream
-import java.io.BufferedInputStream
-import java.io.BufferedOutputStream
-import java.io.File
-import java.io.FileInputStream
-import java.io.FileOutputStream
-import java.io.IOException
-import java.nio.file.Files
-import java.nio.file.StandardCopyOption
-import java.util.zip.GZIPInputStream
+import com.app.ralaunch.strings.StringsResource.Strings
+import kotlinx.coroutines.CancellationException
+import org.apache.commons.compress.archivers.ArchiveEntry
+import org.apache.commons.compress.archivers.ArchiveInputStream
+import org.apache.commons.compress.archivers.ArchiveStreamFactory
+import org.apache.commons.compress.archivers.sevenz.SevenZFile
+import org.apache.commons.compress.archivers.tar.TarArchiveEntry
+import org.apache.commons.compress.compressors.CompressorStreamFactory
+import timber.log.Timber
+import java.nio.file.Path
+import kotlin.io.path.Path
+import kotlin.io.path.copyTo
+import kotlin.io.path.createDirectories
+import kotlin.io.path.deleteIfExists
+import kotlin.io.path.div
+import kotlin.io.path.exists
+import kotlin.io.path.inputStream
+import kotlin.io.path.isSymbolicLink
+import kotlin.io.path.outputStream
 
-/**
- * 通用归档文件解压工具
- */
-object ArchiveExtractor {
-    private const val TAG = "ArchiveExtractor"
-    private const val BUFFER_SIZE = 8192
+/** Extracts content-detected archives and 7z archives. */
+class ArchiveExtractor private constructor(private val options: Options) {
+    data class Options(
+        val id: String,
+        val sourcePath: Path,
+        val sourceExtractionPrefix: Path,
+        val destinationPath: Path,
+        val callback: ((Event) -> Unit)?
+    )
 
-    fun interface ProgressCallback {
-        fun onProgress(processedFiles: Int, currentFile: String)
+    sealed interface Event {
+        val id: String
+        val message: String
+
+        data class Progress(
+            override val id: String,
+            override val message: String,
+            val progress: Float,
+            val processedEntries: Int = 0
+        ) : Event
+
+        data class Complete(
+            override val id: String,
+            override val message: String
+        ) : Event
+
+        data class Error(
+            override val id: String,
+            override val message: String,
+            val cause: Throwable
+        ) : Event
     }
 
-    @JvmStatic
-    @JvmOverloads
-    fun extractTarGz(archiveFile: File, targetDir: File, stripPrefix: String?, callback: ProgressCallback? = null): Int {
-        FileInputStream(archiveFile).use { fis ->
-            BufferedInputStream(fis).use { bis ->
-                GZIPInputStream(bis).use { gzipIn ->
-                    TarArchiveInputStream(gzipIn).use { tarIn ->
-                        return extractTarEntries(tarIn, targetDir, stripPrefix, callback)
+    sealed class Result {
+        data class Success(val destinationPath: Path) : Result()
+        data class Failure(val message: String, val cause: Throwable) : Result()
+    }
+
+    class Builder {
+        private var id = ""
+        private var sourcePath: Path? = null
+        private var sourceExtractionPrefix = Path("")
+        private var destinationPath: Path? = null
+        private var callback: ((Event) -> Unit)? = null
+
+        fun id(id: String) = apply { this.id = id }
+
+        fun sourcePath(sourcePath: Path) = apply { this.sourcePath = sourcePath }
+
+        fun sourceExtractionPrefix(sourceExtractionPrefix: Path) = apply {
+            this.sourceExtractionPrefix = sourceExtractionPrefix
+        }
+
+        fun destinationPath(destinationPath: Path) = apply { this.destinationPath = destinationPath }
+
+        fun callback(callback: ((Event) -> Unit)?) = apply { this.callback = callback }
+
+        fun build() = ArchiveExtractor(
+            Options(
+                id = id,
+                sourcePath = requireNotNull(sourcePath) { "sourcePath is required" },
+                sourceExtractionPrefix = sourceExtractionPrefix,
+                destinationPath = requireNotNull(destinationPath) { "destinationPath is required" },
+                callback = callback
+            )
+        )
+    }
+
+    private class ExtractionState(
+        var processedEntries: Int = 0
+    )
+
+    fun extract(): Result = try {
+        val root = options.destinationPath.toAbsolutePath().normalize().also { it.createDirectories() }
+        val state = ExtractionState()
+
+        options.sourcePath.inputStream().buffered().use { source ->
+            val compressorName = runCatching {
+                CompressorStreamFactory.detect(source)
+            }.getOrNull()
+
+            if (compressorName != null) { // if is tar.gz / tar.xz ...
+                CompressorStreamFactory()
+                    .createCompressorInputStream(compressorName, source)
+                    .buffered()
+                    .use { decompressed ->
+                        extractDetectedArchive(root, decompressed, state, supportsSevenZ = false)
                     }
+            } else { // if is zip / 7z ...
+                extractDetectedArchive(root, source, state)
+            }
+        }
+
+        val message = Strings.extractor.complete
+        options.callback?.invoke(Event.Progress(options.id, message, 1f, state.processedEntries))
+        options.callback?.invoke(Event.Complete(options.id, message))
+        Result.Success(options.destinationPath)
+    } catch (ex: CancellationException) {
+        throw ex
+    } catch (ex: Exception) {
+        val message = Strings.extractor.failed
+        options.callback?.invoke(Event.Error(options.id, message, ex))
+        Result.Failure(message, ex)
+    }
+
+    private fun extractDetectedArchive(
+        root: Path,
+        input: java.io.InputStream,
+        state: ExtractionState,
+        supportsSevenZ: Boolean = true
+    ) {
+        val archiverName = ArchiveStreamFactory.detect(input)
+        if (archiverName == ArchiveStreamFactory.SEVEN_Z) {
+            require(supportsSevenZ) { "7z archives wrapped in a compressor are not supported" }
+            extractSevenZip(root, state)
+            return
+        }
+
+        extractArchive(root, input, archiverName, state)
+    }
+
+    private fun extractSevenZip(root: Path, state: ExtractionState) {
+        SevenZFile.builder()
+            .setPath(options.sourcePath)
+            .get()
+            .use { archive ->
+                generateSequence { archive.nextEntry }.forEach { entry ->
+                    writeEntry(root, entry, archive::read, state)
                 }
             }
-        }
     }
 
-    @JvmStatic
-    @JvmOverloads
-    fun extractTarXz(archiveFile: File, targetDir: File, stripPrefix: String?, callback: ProgressCallback? = null): Int {
-        FileInputStream(archiveFile).use { fis ->
-            BufferedInputStream(fis).use { bis ->
-                XZCompressorInputStream(bis).use { xzIn ->
-                    TarArchiveInputStream(xzIn).use { tarIn ->
-                        return extractTarEntries(tarIn, targetDir, stripPrefix, callback)
-                    }
-                }
+    private fun extractArchive(root: Path, input: java.io.InputStream, archiverName: String, state: ExtractionState) {
+        val archive: ArchiveInputStream<*> =
+            ArchiveStreamFactory().createArchiveInputStream(archiverName, input)
+        archive.use {
+            archive.forEach { entry ->
+                if (!archive.canReadEntryData(entry)) return@forEach
+                writeEntry(root, entry, archive::read, state)
             }
         }
     }
 
-    @JvmStatic
-    @JvmOverloads
-    fun extractTar(archiveFile: File, targetDir: File, stripPrefix: String?, callback: ProgressCallback? = null): Int {
-        FileInputStream(archiveFile).use { fis ->
-            BufferedInputStream(fis).use { bis ->
-                TarArchiveInputStream(bis).use { tarIn ->
-                    return extractTarEntries(tarIn, targetDir, stripPrefix, callback)
-                }
-            }
+    private fun writeEntry(
+        root: Path,
+        entry: ArchiveEntry,
+        read: (ByteArray) -> Int,
+        state: ExtractionState
+    ) {
+        val entryPath = Path(entry.name).normalize()
+        val prefix = options.sourceExtractionPrefix.normalize()
+        val relativePath = if (prefix.toString().isEmpty()) {
+            entryPath
+        } else {
+            if (!entryPath.startsWith(prefix))
+                return
+            prefix.relativize(entryPath)
         }
-    }
+        if (relativePath == Path("."))
+            return
 
-    private fun extractTarEntries(
-        tarIn: TarArchiveInputStream, targetDir: File,
-        stripPrefix: String?, callback: ProgressCallback?
-    ): Int {
-        var processedFiles = 0
-
-        generateSequence { tarIn.nextTarEntry }.forEach { entry ->
-            if (!tarIn.canReadEntryData(entry)) return@forEach
-
-            val entryName = normalizeEntryName(entry.name, stripPrefix) ?: return@forEach
-            val targetFile = File(targetDir, entryName)
-
-            if (!isPathSafe(targetDir, targetFile)) return@forEach
-
-            when {
-                entry.isDirectory -> extractDirectory(targetFile)
-                entry.isSymbolicLink -> extractSymlink(targetDir, targetFile, entry.linkName)
-                else -> extractFile(tarIn, targetFile, entry.mode)
-            }
-
-            processedFiles++
-            if (callback != null && processedFiles % 10 == 0) {
-                callback.onProgress(processedFiles, entryName)
-            }
+        val target = (root / relativePath).normalize()
+        require(target.startsWith(root)) {
+            "Archive entry escapes destination directory: $target"
         }
 
-        return processedFiles
-    }
+        when {
+            entry.isDirectory ->
+                target.createDirectories()
 
-    private fun normalizeEntryName(entryName: String?, stripPrefix: String?): String? {
-        if (entryName.isNullOrEmpty() || entryName == "." || entryName == "..") return null
+            (entry as? TarArchiveEntry)?.isSymbolicLink == true ->
+                extractSymlink(root, target, entry.linkName)
 
-        var name: String = entryName
-        if (name.startsWith("./")) name = name.substring(2)
-
-        if (!stripPrefix.isNullOrEmpty()) {
-            name = when {
-                name.startsWith("./$stripPrefix") -> name.substring(2 + stripPrefix.length)
-                name.startsWith(stripPrefix) -> name.substring(stripPrefix.length)
-                name.contains(stripPrefix) -> name.substring(name.indexOf(stripPrefix) + stripPrefix.length)
-                else -> name
-            }
+            else ->
+                extractFile(target, read, (entry as? TarArchiveEntry)?.mode ?: 0)
         }
 
-        while (name.startsWith("/") || name.startsWith("\\")) {
-            name = name.substring(1)
+        state.processedEntries++
+        options.callback?.invoke(
+            Event.Progress(
+                options.id,
+                Strings.extractor.inProgress.format(entry.name),
+                0f,
+                state.processedEntries
+            )
+        )
+    }
+
+    private fun extractSymlink(root: Path, target: Path, linkTarget: String) {
+        val resolvedTarget = requireNotNull(target.parent).resolve(linkTarget).normalize()
+        require(resolvedTarget.startsWith(root)) {
+            "Archive symlink escapes destination directory: $resolvedTarget"
         }
-
-        return name.takeIf { it.isNotEmpty() }
-    }
-
-    private fun isPathSafe(targetDir: File, targetFile: File): Boolean {
-        return try {
-            val canonicalDestPath = targetDir.canonicalPath
-            val canonicalEntryPath = targetFile.canonicalPath
-            canonicalEntryPath.startsWith("$canonicalDestPath${File.separator}") || canonicalEntryPath == canonicalDestPath
-        } catch (e: IOException) { false }
-    }
-
-    private fun extractDirectory(targetFile: File) {
-        if (!targetFile.exists()) targetFile.mkdirs()
-    }
-
-    private fun extractSymlink(targetDir: File, targetFile: File, linkTarget: String) {
-        targetFile.parentFile?.takeIf { !it.exists() }?.mkdirs()
-        if (targetFile.exists()) {
-            FileUtils.deleteFileWithinRoot(targetFile, targetDir)
-        }
+        target.parent?.createDirectories()
+        target.deleteIfExists()
 
         try {
-            Os.symlink(linkTarget, targetFile.absolutePath)
-        } catch (e: Exception) {
-            AppLog.w(TAG, "Failed to create symlink: ${e.message}")
-            targetFile.parentFile?.let { parent ->
-                val linkTargetFile = File(parent, linkTarget)
-                if (linkTargetFile.exists()) {
-                    try {
-                        Files.copy(linkTargetFile.toPath(), targetFile.toPath(), StandardCopyOption.REPLACE_EXISTING)
-                    } catch (copyEx: Exception) {
-                        AppLog.w(TAG, "Failed to copy symlink target: ${copyEx.message}")
-                    }
+            Os.symlink(linkTarget, target.toString())
+            check(target.isSymbolicLink()) { "Symlink was not created" }
+        } catch (ex: Exception) {
+            Timber.w(ex, "Failed to create symlink: %s", target)
+            if (resolvedTarget.exists()) {
+                try {
+                    resolvedTarget.copyTo(target, overwrite = true)
+                } catch (copyEx: Exception) {
+                    Timber.w(copyEx, "Failed to copy symlink target: %s", resolvedTarget)
                 }
             }
         }
     }
 
-    private fun extractFile(tarIn: TarArchiveInputStream, targetFile: File, mode: Int) {
-        targetFile.parentFile?.takeIf { !it.exists() }?.mkdirs()
-
-        FileOutputStream(targetFile).use { fos ->
-            BufferedOutputStream(fos).use { bos ->
-                tarIn.copyTo(bos, BUFFER_SIZE)
+    @SuppressLint("SetWorldReadable")
+    private fun extractFile(target: Path, read: (ByteArray) -> Int, mode: Int) {
+        target.parent?.createDirectories()
+        target.outputStream().buffered().use { output ->
+            val buffer = ByteArray(BUFFER_SIZE)
+            var count: Int
+            while (read(buffer).also { count = it } != -1) {
+                if (count > 0) output.write(buffer, 0, count)
             }
         }
-
-        if ((mode and 0x40) != 0) targetFile.setExecutable(true, false)
-        targetFile.setReadable(true, false)
+        target.toFile().apply {
+            if ((mode and 0x40) != 0)
+                setExecutable(true, false)
+            setReadable(true, false)
+        }
     }
 
-    @JvmStatic
-    fun copyAssetToFile(context: Context, assetFileName: String, targetFile: File) {
-        context.assets.open(assetFileName).use { inputStream ->
-            FileOutputStream(targetFile).use { fos ->
-                BufferedOutputStream(fos).use { bos ->
-                    inputStream.copyTo(bos, BUFFER_SIZE)
+    companion object {
+        private const val BUFFER_SIZE = 8192
+
+        fun builder() = Builder()
+
+        @JvmStatic
+        fun copyAssetToFile(context: Context, assetFileName: String, targetFile: Path) {
+            context.assets.open(assetFileName).use { input ->
+                targetFile.outputStream().buffered().use { output ->
+                    input.copyTo(output, BUFFER_SIZE)
                 }
             }
         }
