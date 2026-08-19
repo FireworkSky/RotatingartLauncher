@@ -28,7 +28,6 @@ import androidx.compose.material.icons.rounded.Visibility
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
@@ -51,7 +50,7 @@ import androidx.compose.ui.unit.dp
 import com.app.ralaunch.ConfigurationState
 import com.app.ralaunch.MainActivity
 import com.app.ralaunch.ui.component.SectionTitle
-import com.app.ralaunch.ui.component.SettingItem
+
 import com.app.ralaunch.ui.component.SettingsGroup
 import com.app.ralaunch.ui.component.Switch
 import com.app.ralaunch.utils.AppLogger
@@ -103,11 +102,12 @@ fun AdvancedScreen() {
                 try {
                     val zipFile = exportLogsToZip(MainActivity.context!!)
                     if (zipFile != null) {
-                        MainActivity.context!!.contentResolver.openOutputStream(uri)?.use { outputStream ->
-                            zipFile.inputStream().use { inputStream ->
-                                inputStream.copyTo(outputStream)
+                        MainActivity.context!!.contentResolver.openOutputStream(uri)
+                            ?.use { outputStream ->
+                                zipFile.inputStream().use { inputStream ->
+                                    inputStream.copyTo(outputStream)
+                                }
                             }
-                        }
                         // Clean up temp file
                         snackbarHostState.showSnackbar(
                             message = "Logs exported successfully",
@@ -133,10 +133,11 @@ fun AdvancedScreen() {
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) }
-    ) { _ ->
+    ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .padding(innerPadding)
                 .verticalScroll(rememberScrollState())
                 .padding(top = 8.dp, bottom = 20.dp),
         ) {
@@ -221,35 +222,32 @@ fun AdvancedScreen() {
                             fontWeight = FontWeight.Medium
                         )
                     },
-                    showDivider = false
-                )
-                Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 8.dp)
+                    belowContent = {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 8.dp)
                         ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Slider(
-                            enabled = ConfigurationState.logFileEnabled,
-                            value = (ConfigurationState.logFileMaxSize / 1024 / 1024).toFloat(),
-                            onValueChange = { newValue ->
-                                ConfigurationState.logFileMaxSize = (newValue.toLong() * 1024 * 1024)
-                            },
-                            valueRange = AppLogger.LOG_FILE_MIN_SIZE_MB.toFloat()..AppLogger.LOG_FILE_MAX_SIZE_MB.toFloat(),
-                            steps = AppLogger.LOG_FILE_MAX_SIZE_MB,
-                            modifier = Modifier.weight(2f)
-                        )
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Slider(
+                                    enabled = ConfigurationState.logFileEnabled,
+                                    value = (ConfigurationState.logFileMaxSize / 1024 / 1024).toFloat(),
+                                    onValueChange = { newValue ->
+                                        ConfigurationState.logFileMaxSize =
+                                            (newValue.toLong() * 1024 * 1024)
+                                    },
+                                    valueRange = AppLogger.LOG_FILE_MIN_SIZE_MB.toFloat()..AppLogger.LOG_FILE_MAX_SIZE_MB.toFloat(),
+                                    steps = AppLogger.LOG_FILE_MAX_SIZE_MB,
+                                    modifier = Modifier.weight(2f)
+                                )
+                            }
+                        }
                     }
-                }
-
-                HorizontalDivider(
-                    modifier = Modifier.padding(start = 66.dp),
-                    color = MaterialTheme.colorScheme.outlineVariant,
-                    thickness = 0.5.dp
                 )
+
 
                 SettingItem(
                     icon = Icons.Rounded.Storage,
@@ -264,36 +262,32 @@ fun AdvancedScreen() {
                             fontWeight = FontWeight.Medium
                         )
                     },
-                    showDivider = false
-                )
+                    belowContent = {
 
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 8.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Slider(
-                            enabled = ConfigurationState.logFileEnabled,
-                            value = ConfigurationState.logFileMaxCount.toFloat(),
-                            onValueChange = { newValue ->
-                                ConfigurationState.logFileMaxCount = newValue.toInt()
-                            },
-                            valueRange = AppLogger.LOG_FILE_MIN_COUNT.toFloat()..AppLogger.LOG_FILE_MAX_COUNT.toFloat(),
-                            steps = AppLogger.LOG_FILE_MAX_COUNT,
-                            modifier = Modifier.weight(2f)
-                        )
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 8.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Slider(
+                                    enabled = ConfigurationState.logFileEnabled,
+                                    value = ConfigurationState.logFileMaxCount.toFloat(),
+                                    onValueChange = { newValue ->
+                                        ConfigurationState.logFileMaxCount = newValue.toInt()
+                                    },
+                                    valueRange = AppLogger.LOG_FILE_MIN_COUNT.toFloat()..AppLogger.LOG_FILE_MAX_COUNT.toFloat(),
+                                    steps = AppLogger.LOG_FILE_MAX_COUNT,
+                                    modifier = Modifier.weight(2f)
+                                )
+                            }
+                        }
                     }
-                }
-
-                HorizontalDivider(
-                    modifier = Modifier.padding(start = 66.dp),
-                    color = MaterialTheme.colorScheme.outlineVariant,
-                    thickness = 0.5.dp
                 )
+
 
                 SettingItem(
                     icon = Icons.Rounded.Download,
@@ -308,9 +302,7 @@ fun AdvancedScreen() {
                 SettingItem(
                     icon = Icons.Rounded.Download,
                     title = "清空日志",
-                    description = "删除所有日志文件",
-                    showDivider = false,
-                    trailingContent = {},
+                    description = "删除所有日志文件", trailingContent = {},
                     onClick = {
                         scope.launch {
                             AppLogger.clearLogs()
@@ -319,8 +311,7 @@ fun AdvancedScreen() {
                                 duration = SnackbarDuration.Long
                             )
                         }
-                    }
-                )
+                    })
             }
 
             Spacer(modifier = Modifier.height(4.dp))
@@ -334,15 +325,12 @@ fun AdvancedScreen() {
                 SettingItem(
                     icon = Icons.Rounded.ClearAll,
                     title = "结束后台UI",
-                    description = "启动游戏后关闭启动器UI",
-                    showDivider = false,
-                    trailingContent = {
+                    description = "启动游戏后关闭启动器UI", trailingContent = {
                         Switch(
                             checked = killUI,
                             onCheckedChange = { killUI = it }
                         )
-                    }
-                )
+                    })
             }
 
             Spacer(modifier = Modifier.height(4.dp))
@@ -380,15 +368,12 @@ fun AdvancedScreen() {
                 SettingItem(
                     icon = Icons.Rounded.Speed,
                     title = "分层编译",
-                    description = "启用分层编译优化",
-                    showDivider = false,
-                    trailingContent = {
+                    description = "启用分层编译优化", trailingContent = {
                         Switch(
                             checked = true,
                             onCheckedChange = {}
                         )
-                    }
-                )
+                    })
             }
         }
     }

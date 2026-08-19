@@ -49,7 +49,7 @@ import androidx.compose.ui.window.DialogProperties
 import com.app.ralaunch.ConfigurationState
 import com.app.ralaunch.strings.StringsResource.Strings
 import com.app.ralaunch.ui.component.SectionTitle
-import com.app.ralaunch.ui.component.SettingItem
+
 import com.app.ralaunch.ui.component.SettingsGroup
 import com.app.ralaunch.ui.component.Switch
 import java.io.File
@@ -86,8 +86,7 @@ fun GameScreen() {
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 20.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp)
+            .padding(top = 8.dp, bottom = 20.dp),
     ) {
         SectionTitle(
             title = Strings.settings.game.performance,
@@ -104,21 +103,17 @@ fun GameScreen() {
                         checked = ConfigurationState.bigCore,
                         onCheckedChange = { ConfigurationState.bigCore = it }
                     )
-                }
-            )
+                })
 
             SettingItem(
                 icon = Icons.Rounded.Audiotrack,
                 title = Strings.settings.game.lowLatency,
-                description = Strings.settings.game.lowLatencyDesc,
-                showDivider = false,
-                trailingContent = {
+                description = Strings.settings.game.lowLatencyDesc, trailingContent = {
                     Switch(
                         checked = ConfigurationState.lowLatency,
                         onCheckedChange = { ConfigurationState.lowLatency = it }
                     )
-                }
-            )
+                })
         }
 
         Spacer(modifier = Modifier.height(4.dp))
@@ -135,7 +130,8 @@ fun GameScreen() {
                 description = Strings.settings.game.qualityPresetDesc,
                 trailingContent = {
                     var expanded by remember { mutableStateOf(false) }
-                    val presets = ConfigurationState.AppConfig.QualityPreset.entries.toTypedArray().map { it.getDisplayName() }
+                    val presets = ConfigurationState.AppConfig.QualityPreset.entries.toTypedArray()
+                        .map { it.getDisplayName() }
 
                     Box {
                         OutlinedButton(
@@ -168,15 +164,15 @@ fun GameScreen() {
                                         )
                                     },
                                     onClick = {
-                                        ConfigurationState.qualityPreset = ConfigurationState.AppConfig.QualityPreset.entries.toTypedArray()[index]
+                                        ConfigurationState.qualityPreset =
+                                            ConfigurationState.AppConfig.QualityPreset.entries.toTypedArray()[index]
                                         expanded = false
                                     }
                                 )
                             }
                         }
                     }
-                }
-            )
+                })
 
             SettingItem(
                 icon = Icons.Rounded.IntegrationInstructions,
@@ -187,15 +183,12 @@ fun GameScreen() {
                         checked = ConfigurationState.shaderPrecision,
                         onCheckedChange = { ConfigurationState.shaderPrecision = it }
                     )
-                }
-            )
+                })
 
             SettingItem(
                 icon = Icons.Rounded.MoreVert,
                 title = Strings.settings.game.fpsLimit,
-                description = Strings.settings.game.fpsLimitDesc,
-                showDivider = false,
-                trailingContent = {
+                description = Strings.settings.game.fpsLimitDesc, trailingContent = {
                     var expanded by remember { mutableStateOf(false) }
                     val limits = ConfigurationState.AppConfig.FpsLimit.entries.toTypedArray()
 
@@ -234,15 +227,15 @@ fun GameScreen() {
                                         )
                                     },
                                     onClick = {
-                                        ConfigurationState.fpsLimit = ConfigurationState.AppConfig.FpsLimit.entries.toTypedArray()[index]
+                                        ConfigurationState.fpsLimit =
+                                            ConfigurationState.AppConfig.FpsLimit.entries.toTypedArray()[index]
                                         expanded = false
                                     }
                                 )
                             }
                         }
                     }
-                }
-            )
+                })
         }
 
         Spacer(modifier = Modifier.height(4.dp))
@@ -308,15 +301,12 @@ fun GameScreen() {
                             }
                         }
                     }
-                }
-            )
+                })
 
             SettingItem(
                 icon = Icons.Rounded.GraphicEq,
                 title = Strings.settings.game.renderer,
-                description = Strings.settings.game.rendererDesc,
-                showDivider = false,
-                onClick = {
+                description = Strings.settings.game.rendererDesc, onClick = {
                     showRendererDialog = true
                 },
                 trailingContent = {
@@ -326,8 +316,7 @@ fun GameScreen() {
                         color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.Medium
                     )
-                }
-            )
+                })
         }
 
         if (showRendererDialog) {
@@ -499,8 +488,10 @@ private fun RendererItem(
                 when (renderer) {
                     ConfigurationState.AppConfig.Renderer.GL4ES_ANGLE ->
                         Tag(Strings.settings.renderer.recommended, isSelected)
+
                     ConfigurationState.AppConfig.Renderer.VULKAN ->
                         Tag(Strings.settings.renderer.experimental, isSelected)
+
                     else -> Unit
                 }
             }

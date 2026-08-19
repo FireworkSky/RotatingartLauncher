@@ -34,7 +34,7 @@ import com.app.ralaunch.ConfigurationState
 import com.app.ralaunch.strings.StringsResource
 import com.app.ralaunch.strings.StringsResource.Strings
 import com.app.ralaunch.ui.component.SectionTitle
-import com.app.ralaunch.ui.component.SettingItem
+
 import com.app.ralaunch.ui.component.SettingsGroup
 import com.app.ralaunch.ui.component.Switch
 import com.github.skydoves.colorpicker.compose.AlphaSlider
@@ -83,8 +83,7 @@ fun AppearanceScreen() {
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 20.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp)
+            .padding(top = 8.dp, bottom = 20.dp),
     ) {
         SectionTitle(
             title = Strings.settings.appearance.theme,
@@ -131,15 +130,15 @@ fun AppearanceScreen() {
                                         )
                                     },
                                     onClick = {
-                                        ConfigurationState.themeMode = ConfigurationState.AppConfig.ThemeMode.entries.toTypedArray()[index]
+                                        ConfigurationState.themeMode =
+                                            ConfigurationState.AppConfig.ThemeMode.entries.toTypedArray()[index]
                                         expanded = false
                                     }
                                 )
                             }
                         }
                     }
-                }
-            )
+                })
 
             SettingItem(
                 icon = Icons.Rounded.ColorLens,
@@ -158,9 +157,7 @@ fun AppearanceScreen() {
                 icon = Icons.Rounded.ColorLens,
                 title = Strings.settings.appearance.themeColor,
                 description = Strings.settings.appearance.themeColorDesc,
-                enabled = !ConfigurationState.dynamicColor,
-                showDivider = false,
-                trailingContent = {
+                enabled = !ConfigurationState.dynamicColor, trailingContent = {
                     Surface(
                         shape = CircleShape,
                         color = if (!ConfigurationState.dynamicColor) {
@@ -174,8 +171,7 @@ fun AppearanceScreen() {
                                 if (!ConfigurationState.dynamicColor) showColorPicker = true
                             }
                     ) {}
-                }
-            )
+                })
         }
 
         Spacer(modifier = Modifier.height(4.dp))
@@ -189,11 +185,10 @@ fun AppearanceScreen() {
             SettingItem(
                 icon = Icons.Rounded.Language,
                 title = Strings.settings.appearance.language,
-                description = Strings.settings.appearance.languageDesc,
-                showDivider = false,
-                trailingContent = {
+                description = Strings.settings.appearance.languageDesc, trailingContent = {
                     var expanded by remember { mutableStateOf(false) }
-                    val languages = StringsResource.Language.entries.toTypedArray().map { it.string() }
+                    val languages =
+                        StringsResource.Language.entries.toTypedArray().map { it.string() }
 
                     Box {
                         OutlinedButton(
@@ -226,15 +221,15 @@ fun AppearanceScreen() {
                                         )
                                     },
                                     onClick = {
-                                        ConfigurationState.language = StringsResource.Language.entries[index]
+                                        ConfigurationState.language =
+                                            StringsResource.Language.entries[index]
                                         expanded = false
                                     }
                                 )
                             }
                         }
                     }
-                }
-            )
+                })
         }
     }
 }

@@ -45,7 +45,7 @@ import androidx.compose.ui.unit.dp
 import com.app.ralaunch.ConfigurationState
 import com.app.ralaunch.MainActivity
 import com.app.ralaunch.ui.component.SectionTitle
-import com.app.ralaunch.ui.component.SettingItem
+
 import com.app.ralaunch.ui.component.SettingsGroup
 import com.app.ralaunch.ui.component.Switch
 import com.app.ralaunch.utils.AssetIntegrityChecker
@@ -183,11 +183,11 @@ fun LauncherScreen() {
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) }
-    ) { paddingValues ->
+    ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
+                .padding(innerPadding)
                 .verticalScroll(rememberScrollState())
                 .padding(top = 8.dp, bottom = 20.dp)
         ) {
@@ -208,8 +208,7 @@ fun LauncherScreen() {
                             color = MaterialTheme.colorScheme.primary,
                             fontWeight = FontWeight.Medium
                         )
-                    }
-                )
+                    })
 
                 SettingItem(
                     icon = Icons.Rounded.Verified,
@@ -220,21 +219,17 @@ fun LauncherScreen() {
                         scope.launch {
                             performAssetCheck()
                         }
-                    }
-                )
+                    })
 
                 SettingItem(
                     icon = Icons.Rounded.Download,
                     title = "Force Reinstall Assets",
-                    description = "Re-extract all runtime assets",
-                    showDivider = false,
-                    trailingContent = {},
+                    description = "Re-extract all runtime assets", trailingContent = {},
                     onClick = {
                         scope.launch {
                             performForceReinstall()
                         }
-                    }
-                )
+                    })
             }
 
             Spacer(modifier = Modifier.height(4.dp))
@@ -248,9 +243,7 @@ fun LauncherScreen() {
                 SettingItem(
                     icon = Icons.Rounded.Wifi,
                     title = "Enable Multiplayer",
-                    description = "Enable multiplayer support",
-                    showDivider = false,
-                    trailingContent = {
+                    description = "Enable multiplayer support", trailingContent = {
                         Switch(
                             checked = multiplayer,
                             onCheckedChange = {
@@ -263,8 +256,7 @@ fun LauncherScreen() {
                                 }
                             }
                         )
-                    }
-                )
+                    })
             }
 
             Spacer(modifier = Modifier.height(4.dp))
@@ -278,9 +270,7 @@ fun LauncherScreen() {
                 SettingItem(
                     icon = Icons.Rounded.Update,
                     title = "Force Reinstall Patches",
-                    description = "Reinstall all built-in patches",
-                    showDivider = false,
-                    trailingContent = {},
+                    description = "Reinstall all built-in patches", trailingContent = {},
                     onClick = {
                         scope.launch {
                             try {
@@ -296,8 +286,7 @@ fun LauncherScreen() {
                                 )
                             }
                         }
-                    }
-                )
+                    })
             }
         }
     }

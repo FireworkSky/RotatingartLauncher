@@ -32,7 +32,7 @@ import androidx.compose.ui.unit.dp
 import com.app.ralaunch.ConfigurationState
 import com.app.ralaunch.strings.StringsResource.Strings
 import com.app.ralaunch.ui.component.SectionTitle
-import com.app.ralaunch.ui.component.SettingItem
+
 import com.app.ralaunch.ui.component.SettingsGroup
 import com.app.ralaunch.ui.component.Switch
 
@@ -65,8 +65,7 @@ fun ControlsScreen() {
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 20.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp)
+            .padding(top = 8.dp, bottom = 20.dp),
     ) {
         SectionTitle(
             title = Strings.settings.controls.touch,
@@ -77,14 +76,12 @@ fun ControlsScreen() {
             SettingItem(
                 icon = Icons.Rounded.Devices,
                 title = Strings.settings.controls.multitouch,
-                description = Strings.settings.controls.multitouchDesc,
-                trailingContent = {
+                description = Strings.settings.controls.multitouchDesc, trailingContent = {
                     Switch(
                         checked = ConfigurationState.multitouch,
                         onCheckedChange = { ConfigurationState.multitouch = it }
                     )
-                }
-            )
+                })
         }
 
         Spacer(modifier = Modifier.height(4.dp))
@@ -104,14 +101,12 @@ fun ControlsScreen() {
                         checked = ConfigurationState.vibration,
                         onCheckedChange = { ConfigurationState.vibration = it }
                     )
-                }
-            )
+                })
 
             SettingItem(
                 icon = Icons.AutoMirrored.Rounded.VolumeUp,
                 title = Strings.settings.controls.vibrationIntensity,
                 description = Strings.settings.controls.vibrationIntensityDesc,
-                showDivider = false,
                 enabled = ConfigurationState.vibration,
                 trailingContent = {
                     Text(
@@ -120,8 +115,7 @@ fun ControlsScreen() {
                         color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.Medium
                     )
-                }
-            )
+                })
 
             // 滑块在下方
             Column(
@@ -172,15 +166,12 @@ fun ControlsScreen() {
             SettingItem(
                 icon = Icons.Rounded.Router,
                 title = Strings.settings.controls.virtualController,
-                description = Strings.settings.controls.virtualControllerDesc,
-                showDivider = false,
-                trailingContent = {
+                description = Strings.settings.controls.virtualControllerDesc, trailingContent = {
                     Switch(
                         checked = ConfigurationState.virtualController,
                         onCheckedChange = { ConfigurationState.virtualController = it },
                     )
-                }
-            )
+                })
         }
     }
 }

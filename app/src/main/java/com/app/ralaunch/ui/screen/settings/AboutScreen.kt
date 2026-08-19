@@ -37,7 +37,7 @@ import com.app.ralaunch.core.ui.dialog.LicenseInfo
 import com.app.ralaunch.core.ui.dialog.defaultLicenses
 import com.app.ralaunch.feature.settings.ui.openSponsorsPage
 import com.app.ralaunch.ui.component.SectionTitle
-import com.app.ralaunch.ui.component.SettingItem
+
 import com.app.ralaunch.ui.component.SettingsGroup
 import com.app.ralaunch.utils.LauncherUpdateChecker
 import com.app.ralaunch.utils.LauncherUpdateInfo
@@ -100,16 +100,25 @@ fun AboutScreen() {
                         showUpdateDialog = true
                     } else {
                         isLatest = true
-                        snackbarHostState.showSnackbar(message = "已是最新版本", duration = SnackbarDuration.Short)
+                        snackbarHostState.showSnackbar(
+                            message = "已是最新版本",
+                            duration = SnackbarDuration.Short
+                        )
                     }
                 }.onFailure { error ->
                     updateErrorMessage = error.message ?: "检查更新失败"
 
-                    snackbarHostState.showSnackbar(message = updateErrorMessage!!, duration = SnackbarDuration.Short)
+                    snackbarHostState.showSnackbar(
+                        message = updateErrorMessage!!,
+                        duration = SnackbarDuration.Short
+                    )
                 }
             } catch (e: Exception) {
                 updateErrorMessage = e.message ?: "检查更新失败"
-                snackbarHostState.showSnackbar(message = updateErrorMessage!!, duration = SnackbarDuration.Short)
+                snackbarHostState.showSnackbar(
+                    message = updateErrorMessage!!,
+                    duration = SnackbarDuration.Short
+                )
             } finally {
                 isChecking = false
             }
@@ -123,8 +132,7 @@ fun AboutScreen() {
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 20.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
+                .padding(top = 8.dp, bottom = 20.dp),
         ) {
             SectionTitle(
                 title = "应用信息",
@@ -132,58 +140,57 @@ fun AboutScreen() {
             )
 
             SettingsGroup {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(14.dp)
-                ) {
-                    Surface(
-                        shape = RoundedCornerShape(8.dp),
-                        color = MaterialTheme.colorScheme.primaryContainer,
-                        modifier = Modifier.size(36.dp)
+                Item {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(14.dp)
                     ) {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = MaterialTheme.colorScheme.primaryContainer,
+                            modifier = Modifier.size(36.dp)
                         ) {
-                            Icon(
-                                painter = painterResource(R.drawable.ic_init_logo),
-                                contentDescription = null,
-                                modifier = Modifier.size(20.dp),
-                                tint = MaterialTheme.colorScheme.onPrimaryContainer
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    painter = painterResource(R.drawable.ic_init_logo),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(20.dp),
+                                    tint = MaterialTheme.colorScheme.onPrimaryContainer
+                                )
+                            }
+                        }
+
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            verticalArrangement = Arrangement.spacedBy(2.dp)
+                        ) {
+                            Text(
+                                text = "RotatingArt Launcher",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Medium,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+
+                            Text(
+                                text = "v${BuildConfig.VERSION_NAME}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
-                    }
-
-                    Column(
-                        modifier = Modifier.weight(1f),
-                        verticalArrangement = Arrangement.spacedBy(2.dp)
-                    ) {
-                        Text(
-                            text = "RotatingArt Launcher",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Medium,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-
-                        Text(
-                            text = "v${BuildConfig.VERSION_NAME}",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
                     }
                 }
 
                 SettingItem(
                     icon = Icons.Rounded.Update,
                     title = "检查更新",
-                    description = "检查应用是否有新版本",
-                    showDivider = false,
-                    trailingContent = {},
-                    onClick = { checkForUpdate() }
-                )
+                    description = "检查应用是否有新版本", trailingContent = {},
+                    onClick = { checkForUpdate() })
             }
 
             Spacer(modifier = Modifier.height(4.dp))
@@ -201,8 +208,7 @@ fun AboutScreen() {
                     trailingContent = {},
                     onClick = {
                         openUrl("https://discord.gg/cVkrRdffGp")
-                    }
-                )
+                    })
 
                 SettingItem(
                     icon = Icons.Rounded.Group,
@@ -211,19 +217,15 @@ fun AboutScreen() {
                     trailingContent = {},
                     onClick = {
                         openUrl("https://qm.qq.com/q/BWiPSj6wWQ")
-                    }
-                )
+                    })
 
                 SettingItem(
                     icon = Icons.Rounded.Code,
                     title = "GitHub",
-                    description = "查看项目源代码",
-                    showDivider = false,
-                    trailingContent = {},
+                    description = "查看项目源代码", trailingContent = {},
                     onClick = {
                         openUrl("https://github.com/FireworkSky/RotatingartLauncher")
-                    }
-                )
+                    })
             }
 
             Spacer(modifier = Modifier.height(4.dp))
@@ -239,8 +241,7 @@ fun AboutScreen() {
                     title = "赞助墙",
                     description = "查看所有赞助者",
                     trailingContent = {},
-                    onClick = { openSponsorsPage(MainActivity.context!!) }
-                )
+                    onClick = { openSponsorsPage(MainActivity.context!!) })
 
                 SettingItem(
                     icon = Icons.Rounded.Verified,
@@ -249,19 +250,15 @@ fun AboutScreen() {
                     trailingContent = {},
                     onClick = {
                         openUrl("https://afdian.com/a/RotatingartLauncher")
-                    }
-                )
+                    })
 
                 SettingItem(
                     icon = Icons.Rounded.Verified,
                     title = "Patreon",
-                    description = "支持项目开发",
-                    showDivider = false,
-                    trailingContent = {},
+                    description = "支持项目开发", trailingContent = {},
                     onClick = {
                         openUrl("https://www.patreon.com/c/RotatingArtLauncher")
-                    }
-                )
+                    })
             }
 
             Spacer(modifier = Modifier.height(4.dp))
@@ -275,11 +272,8 @@ fun AboutScreen() {
                 SettingItem(
                     icon = Icons.Rounded.Copyright,
                     title = "开源许可证",
-                    description = "查看使用的开源许可证",
-                    showDivider = false,
-                    trailingContent = {},
-                    onClick = { showLicenseDialog = true }
-                )
+                    description = "查看使用的开源许可证", trailingContent = {},
+                    onClick = { showLicenseDialog = true })
             }
         }
 
@@ -520,6 +514,7 @@ private fun UpdateChangelogItem(item: String) {
             item.startsWith("•") || item.startsWith("-") || item.startsWith("*") -> item.trim()
             item.startsWith("新增") || item.startsWith("修复") ||
                     item.startsWith("优化") || item.startsWith("更新") -> "• $item"
+
             else -> item
         }
 
