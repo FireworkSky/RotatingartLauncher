@@ -138,7 +138,7 @@ fun AdvancedScreen() {
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(vertical = 8.dp),
+                .padding(top = 8.dp, bottom = 20.dp),
         ) {
             SectionTitle(
                 title = "日志",

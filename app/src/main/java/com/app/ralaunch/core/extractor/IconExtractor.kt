@@ -9,7 +9,7 @@ import android.renderscript.Allocation
 import android.renderscript.Element
 import android.renderscript.RenderScript
 import android.renderscript.ScriptIntrinsicConvolve3x3
-import com.app.ralaunch.core.logging.AppLog
+import timber.log.Timber
 import java.io.IOException
 import java.io.RandomAccessFile
 import java.nio.ByteBuffer
@@ -24,7 +24,6 @@ import kotlin.io.path.outputStream
  * 纯 Kotlin 实现，不依赖 C# 或 CoreCLR
  */
 object IconExtractor {
-    private const val TAG = "IconExtractor"
 
     // Windows 资源类型
     private const val RT_ICON = 3
@@ -39,76 +38,70 @@ object IconExtractor {
      */
     @JvmStatic
     fun extractIconToPng(exePath: Path, outputPath: Path): Boolean {
-        var file: RandomAccessFile? = null
         return try {
-            file = RandomAccessFile(exePath.toFile(), "r")
-            val reader = PeReader(file)
+            RandomAccessFile(exePath.toFile(), "r").use { file ->
+                val reader = PeReader(file)
 
-            // 验证 PE 格式
-            if (!reader.isPeFormat()) {
-                AppLog.e(TAG, "Not a valid PE file: $exePath")
-                return false
+                // 验证 PE 格式
+                if (!reader.isPeFormat()) {
+                    Timber.e("Not a valid PE file: $exePath")
+                    return false
+                }
+
+                // 读取 PE Header
+                val peHeader = reader.readPeHeader()
+
+                // 读取资源 Section
+                val resourceSection = reader.readResourceSection(peHeader)
+                if (resourceSection == null) {
+                    Timber.e("No resource section found")
+                    return false
+                }
+
+                // 读取根资源目录
+                val rootDir = reader.readResourceDirectory(resourceSection, resourceSection.resourceFileOffset)
+
+                // 查找图标组资源 (RT_GROUP_ICON)
+                val iconGroup = findBestIconGroup(reader, resourceSection, rootDir)
+                if (iconGroup == null) {
+                    Timber.e("No icon group found")
+                    return false
+                }
+
+                // 选择最佳质量的图标（最大尺寸，最高位深度）
+                val bestEntry = selectBestIcon(iconGroup)
+                if (bestEntry == null) {
+                    Timber.e("No suitable icon entry found")
+                    return false
+                }
+
+                Timber.i("Selected icon: ${bestEntry.width}x${bestEntry.height}, ${bestEntry.bitCount} bits")
+
+                // 查找并读取图标数据
+                val iconData = findIconData(reader, resourceSection, rootDir, bestEntry.id)
+                if (iconData == null) {
+                    Timber.e("Icon data not found")
+                    return false
+                }
+
+                // 检测图标格式并解码
+                val bitmap = decodeIconData(iconData)
+                if (bitmap == null) {
+                    Timber.e("Failed to decode icon bitmap")
+                    return false
+                }
+
+                // 保存为 PNG
+                outputPath.outputStream().use { out ->
+                    bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
+                }
+
+                Timber.i("Icon extracted successfully to: $outputPath")
+                true
             }
-
-            // 读取 PE Header
-            val peHeader = reader.readPeHeader()
-
-            // 读取资源 Section
-            val resourceSection = reader.readResourceSection(peHeader)
-            if (resourceSection == null) {
-                AppLog.e(TAG, "No resource section found")
-                return false
-            }
-
-            // 读取根资源目录
-            val rootDir = reader.readResourceDirectory(resourceSection, resourceSection.resourceFileOffset)
-
-            // 查找图标组资源 (RT_GROUP_ICON)
-            val iconGroup = findBestIconGroup(reader, resourceSection, rootDir)
-            if (iconGroup == null) {
-                AppLog.e(TAG, "No icon group found")
-                return false
-            }
-
-            // 选择最佳质量的图标（最大尺寸，最高位深度）
-            val bestEntry = selectBestIcon(iconGroup)
-            if (bestEntry == null) {
-                AppLog.e(TAG, "No suitable icon entry found")
-                return false
-            }
-
-            AppLog.i(TAG, "Selected icon: ${bestEntry.width}x${bestEntry.height}, ${bestEntry.bitCount} bits")
-
-            // 查找并读取图标数据
-            val iconData = findIconData(reader, resourceSection, rootDir, bestEntry.id)
-            if (iconData == null) {
-                AppLog.e(TAG, "Icon data not found")
-                return false
-            }
-
-            // 检测图标格式并解码
-            val bitmap = decodeIconData(iconData)
-            if (bitmap == null) {
-                AppLog.e(TAG, "Failed to decode icon bitmap")
-                return false
-            }
-
-            // 保存为 PNG
-            outputPath.outputStream().use { out ->
-                bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
-            }
-
-            AppLog.i(TAG, "Icon extracted successfully to: $outputPath")
-            true
         } catch (e: Exception) {
-            AppLog.e(TAG, "Failed to extract icon: ${e.message}", e)
+            Timber.e(e, "Failed to extract icon: ${e.message}")
             false
-        } finally {
-            try {
-                file?.close()
-            } catch (e: IOException) {
-                // Ignore
-            }
         }
     }
 
@@ -237,13 +230,13 @@ object IconExtractor {
             (iconData[2].toInt() and 0xFF) == 0x4E &&
             (iconData[3].toInt() and 0xFF) == 0x47
         ) {
-            AppLog.i(TAG, "Detected PNG format icon")
+            Timber.i("Detected PNG format icon")
             // PNG 格式，使用 BitmapFactory 解码
             return BitmapFactory.decodeByteArray(iconData, 0, iconData.size)
         }
 
         // BMP 格式（BITMAPINFOHEADER 开头应该是 0x28 = 40）
-        AppLog.i(TAG, "Attempting BMP format decoding")
+        Timber.i("Attempting BMP format decoding")
         return BmpDecoder.decodeBmpIcon(iconData)
     }
 
@@ -293,18 +286,18 @@ object IconExtractor {
             // 读取原始图标
             val original = BitmapFactory.decodeFile(iconPath.toString())
             if (original == null) {
-                AppLog.e(TAG, "Failed to decode original icon")
+                Timber.e("Failed to decode original icon")
                 return null
             }
 
             val originalWidth = original.width
             val originalHeight = original.height
 
-            AppLog.i(TAG, "Original icon size: ${originalWidth}x$originalHeight")
+            Timber.i("Original icon size: ${originalWidth}x$originalHeight")
 
             // 如果图标已经足够大,不需要高清化
             if (originalWidth >= 128 && originalHeight >= 128) {
-                AppLog.i(TAG, "Icon is already large enough, skipping upscale")
+                Timber.i("Icon is already large enough, skipping upscale")
                 original.recycle()
                 return iconPath
             }
@@ -329,11 +322,11 @@ object IconExtractor {
             upscaled.recycle()
             sharpened.recycle()
 
-            AppLog.i(TAG, "Icon upscaled from ${originalWidth}x$originalHeight to ${targetSize}x$targetSize")
+            Timber.i("Icon upscaled from ${originalWidth}x$originalHeight to ${targetSize}x$targetSize")
 
             upscaledPath
         } catch (e: Exception) {
-            AppLog.e(TAG, "Failed to upscale icon: ${e.message}", e)
+            Timber.e(e, "Failed to upscale icon: ${e.message}")
             null
         }
     }
@@ -374,7 +367,7 @@ object IconExtractor {
 
             result
         } catch (e: Exception) {
-            AppLog.w(TAG, "Failed to apply sharpen filter, using original: ${e.message}")
+            Timber.w("Failed to apply sharpen filter, using original: ${e.message}")
             src
         } finally {
             rs?.destroy()
@@ -394,7 +387,7 @@ object IconExtractor {
             // 如果图标文件小于5KB，可能是16x16或32x32的小图标，需要高清化
             iconPath.fileSize() < 5 * 1024
         } catch (e: Exception) {
-            AppLog.e(TAG, "Failed to check icon size: ${e.message}")
+            Timber.e("Failed to check icon size: ${e.message}")
             false
         }
     }
@@ -428,7 +421,7 @@ object IconExtractor {
             val iconGroup = findBestIconGroup(reader, resourceSection, rootDir)
             iconGroup != null && iconGroup.entries.isNotEmpty()
         } catch (e: Exception) {
-            AppLog.e(TAG, "Failed to check icon: ${e.message}")
+            Timber.e("Failed to check icon: ${e.message}")
             false
         } finally {
             try {

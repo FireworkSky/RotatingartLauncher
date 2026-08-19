@@ -4,12 +4,14 @@ import android.annotation.SuppressLint
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -39,18 +41,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.app.ralaunch.BuildConfig
-import com.app.ralaunch.R
 import com.app.ralaunch.strings.StringsResource.Strings
 
 /*******************************************************************************
@@ -103,8 +102,6 @@ fun MainScreen(
     // 固定导航栏宽度
     val railWidth = 120.dp
     val iconSize = 28.dp
-    val itemSpacing = 8.dp
-    val headerSize = 64.dp
 
     // 导航目的地列表 - 每个都有选中和未选中两种图标
     val destinations = listOf(
@@ -146,80 +143,71 @@ fun MainScreen(
             modifier = Modifier
                 .fillMaxHeight()
                 .width(railWidth),
-            containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp),
-            header = {
-                NavigationRailHeader(
-                    modifier = Modifier.padding(top = 16.dp),
-                    iconSize = headerSize
-                )
-            }
+            containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp)
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .verticalScroll(rememberScrollState())
-                    .padding(vertical = 8.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(itemSpacing)
-            ) {
-                destinations.forEach { destination ->
-                    val isSelected = currentDestination?.hierarchy?.any {
-                        it.route == destination.route
-                    } == true
+            BoxWithConstraints(modifier = Modifier.fillMaxHeight()) {
+                // 高度足够容纳所有条目时撑满侧栏分散排列；不足时滚动
+                val viewportHeight = maxHeight
+                Column(
+                    modifier = Modifier
+                        .verticalScroll(rememberScrollState())
+                        .heightIn(min = viewportHeight),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.SpaceBetween
+                ) {
+                    // 上下留白用 Spacer 而非 padding 计入内容，避免内容恰好放下时多出 ≤16dp 的空滚动
+                    Spacer(modifier = Modifier.height(8.dp))
+                    destinations.forEach { destination ->
+                        val isSelected = currentDestination?.hierarchy?.any {
+                            it.route == destination.route
+                        } == true
 
-                    NavigationRailItem(
-                        selected = isSelected,
-                        onClick = {
-                            navController.navigate(destination.route) {
-                                popUpTo(navController.graph.startDestinationId) {
-                                    saveState = true
+                        NavigationRailItem(
+                            selected = isSelected,
+                            onClick = {
+                                navController.navigate(destination.route) {
+                                    popUpTo(navController.graph.startDestinationId) {
+                                        saveState = true
+                                    }
+                                    launchSingleTop = true
+                                    restoreState = true
                                 }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
-                        },
-                        icon = {
-                            Icon(
-                                imageVector = if (isSelected) {
-                                    destination.selectedIcon
-                                } else {
-                                    destination.unselectedIcon
-                                },
-                                contentDescription = null,
-                                modifier = Modifier.size(iconSize)
-                            )
-                        },
-                        label = {
-                            Text(
-                                destination.label,
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                maxLines = 1,
-                                textAlign = TextAlign.Center
-                            )
-                        },
-                        colors = NavigationRailItemDefaults.colors(
-                            selectedIconColor = colorScheme.primary,
-                            unselectedIconColor = colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
-                            selectedTextColor = colorScheme.primary,
-                            unselectedTextColor = colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-                            indicatorColor = colorScheme.primaryContainer.copy(alpha = 0.8f)
-                        ),
-                        alwaysShowLabel = true,
-                        modifier = Modifier
-                            .width(railWidth - 16.dp)
-                            .padding(vertical = 4.dp)
-                    )
+                            },
+                            icon = {
+                                Icon(
+                                    imageVector = if (isSelected) {
+                                        destination.selectedIcon
+                                    } else {
+                                        destination.unselectedIcon
+                                    },
+                                    contentDescription = null,
+                                    modifier = Modifier.size(iconSize)
+                                )
+                            },
+                            label = {
+                                Text(
+                                    destination.label,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                    maxLines = 1,
+                                    textAlign = TextAlign.Center
+                                )
+                            },
+                            colors = NavigationRailItemDefaults.colors(
+                                selectedIconColor = colorScheme.primary,
+                                unselectedIconColor = colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                                selectedTextColor = colorScheme.primary,
+                                unselectedTextColor = colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                                indicatorColor = colorScheme.primaryContainer.copy(alpha = 0.8f)
+                            ),
+                            alwaysShowLabel = true,
+                            modifier = Modifier
+                                .width(railWidth - 16.dp)
+                                .padding(vertical = 4.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
                 }
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Text(
-                    text = "v${BuildConfig.VERSION_NAME}",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
-                    modifier = Modifier.padding(bottom = 8.dp)
-                )
             }
         }
 
@@ -241,54 +229,6 @@ fun MainScreen(
                 composable("settings") { SettingsScreen() }
             }
         }
-    }
-}
-
-/**
- * 导航栏头部
- */
-@Composable
-private fun NavigationRailHeader(
-    modifier: Modifier = Modifier,
-    iconSize: Dp = 28.dp
-) {
-    val colorScheme = MaterialTheme.colorScheme
-
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = modifier
-    ) {
-        // 应用图标
-        Box(
-            modifier = Modifier
-                .size(iconSize)
-                .background(
-                    colorScheme.primaryContainer,
-                    shape = MaterialTheme.shapes.small
-                ),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                painter = painterResource(R.drawable.ic_init_logo),
-                contentDescription = "Logo",
-                modifier = Modifier.size(iconSize * 0.6f),
-                tint = MaterialTheme.colorScheme.primary
-            )
-        }
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        Text(
-            text = "RaLauncher",
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-            color = colorScheme.onSurface,
-            textAlign = TextAlign.Center,
-            maxLines = 1,
-            modifier = Modifier.padding(horizontal = 4.dp)
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
     }
 }
 
@@ -347,6 +287,15 @@ fun PlaceholderScreen(
             }
         }
     }
+}
+
+// roughly the width and height of pixel 10XL
+@Preview(
+    device = "spec:width=891dp,height=411dp,dpi=420,orientation=landscape"
+)
+@Composable
+fun PreviewMainScreen() {
+    MainScreen()
 }
 
 // ==================== 各页面屏幕函数 ====================

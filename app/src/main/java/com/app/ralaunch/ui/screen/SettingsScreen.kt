@@ -141,7 +141,8 @@ fun SettingsScreen() {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 16.dp, vertical = 12.dp)
+                // 底部不加外层留白，让分页内容铺满到屏幕底边，间距由各页滚动内容内部提供
+                .padding(start = 16.dp, top = 12.dp, end = 16.dp)
         ) {
             M3ETabRow(
                 categories = settingCategories,
@@ -166,7 +167,8 @@ fun SettingsScreen() {
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(horizontal = 4.dp),
-                    shape = RoundedCornerShape(16.dp)
+                    // 底边与屏幕齐平，只保留顶部圆角
+                    shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)
                 ) {
                     when (page) {
                         0 -> AppearanceScreen()

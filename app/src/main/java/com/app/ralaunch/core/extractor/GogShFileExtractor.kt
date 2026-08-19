@@ -1,7 +1,7 @@
 package com.app.ralaunch.core.extractor
 
 import com.app.ralaunch.core.common.util.TemporaryFileAcquirer
-import com.app.ralaunch.core.logging.AppLog
+import timber.log.Timber
 import com.app.ralaunch.strings.StringsResource.Strings
 import java.io.IOException
 import java.io.InputStream
@@ -93,10 +93,10 @@ class GogShFileExtractor private constructor(private val options: Options) {
                 val shFile = MakeSelfShFile.parse(options.sourcePath)
                     ?: throw IOException("解析 MakeSelf Sh 文件头部失败")
 
-                AppLog.d(TAG, "Successfully parsed header - offset: ${shFile.offset}, filesize: ${shFile.filesize}")
+                Timber.d("Successfully parsed header - offset: ${shFile.offset}, filesize: ${shFile.filesize}")
 
                 FileChannel.open(options.sourcePath, StandardOpenOption.READ).use { srcChannel ->
-                    AppLog.d(TAG, "Starting extraction: ${options.sourcePath} to ${options.destinationPath}")
+                    Timber.d("Starting extraction: ${options.sourcePath} to ${options.destinationPath}")
 
                     options.destinationPath.createDirectories()
 
@@ -115,7 +115,7 @@ class GogShFileExtractor private constructor(private val options: Options) {
 
                     // 提取 mojosetup.tar.gz
                     val mojosetupPath = tfa.acquireTempFilePath(EXTRACTED_MOJOSETUP_TAR_GZ_FILENAME)
-                    AppLog.d(TAG, "Extracting mojosetup.tar.gz to $mojosetupPath")
+                    Timber.d("Extracting mojosetup.tar.gz to $mojosetupPath")
                     srcChannel.copyRangeTo(shFile.offset, shFile.filesize, mojosetupPath)
 
                     options.callback?.invoke(
@@ -128,7 +128,7 @@ class GogShFileExtractor private constructor(private val options: Options) {
 
                     // 提取 game_data.zip
                     val gameDataPath = tfa.acquireTempFilePath(EXTRACTED_GAME_DATA_ZIP_FILENAME)
-                    AppLog.d(TAG, "Extracting game_data.zip to $gameDataPath")
+                    Timber.d("Extracting game_data.zip to $gameDataPath")
                     srcChannel.copyRangeTo(
                         shFile.offset + shFile.filesize,
                         srcChannel.size() - (shFile.offset + shFile.filesize),
@@ -142,10 +142,10 @@ class GogShFileExtractor private constructor(private val options: Options) {
                             0.09f
                         )
                     )
-                    AppLog.d(TAG, "Extraction from MakeSelf SH file completed successfully")
+                    Timber.d("Extraction from MakeSelf SH file completed successfully")
 
                     // 解压 game_data.zip
-                    AppLog.d(TAG, "Trying to extract game_data.zip...")
+                    Timber.d("Trying to extract game_data.zip...")
                     val gdzf = GameDataZipFile.parse(gameDataPath)
                         ?: throw IOException("解析 game_data.zip 失败")
 
@@ -194,7 +194,7 @@ class GogShFileExtractor private constructor(private val options: Options) {
                 }
             }
         } catch (ex: Exception) {
-            AppLog.e(TAG, "Error when extracting source file", ex)
+            Timber.e(ex, "Error when extracting source file")
             val message = Strings.extractor.gog.failed
             options.callback?.invoke(Event.Error(options.id, message, ex))
             Result.Failure(message, ex)
@@ -232,11 +232,11 @@ class GogShFileExtractor private constructor(private val options: Options) {
                 try {
                     filePath.inputStream().use { input ->
                         val bytesRead = input.read(headerBuffer)
-                        AppLog.d(TAG, "Read $bytesRead bytes from header")
+                        Timber.d("Read $bytesRead bytes from header")
                         headerContent = String(headerBuffer, 0, bytesRead, Charsets.UTF_8)
                     }
                 } catch (ex: Exception) {
-                    AppLog.e(TAG, "Error when reading MakeSelf SH file", ex)
+                    Timber.e(ex, "Error when reading MakeSelf SH file")
                     return null
                 }
 
@@ -244,7 +244,7 @@ class GogShFileExtractor private constructor(private val options: Options) {
             }
 
             private fun parseMakeSelfShFileContent(content: String): MakeSelfShFile? {
-                AppLog.d(TAG, "Parsing makeself file content, content size: ${content.length}")
+                Timber.d("Parsing makeself file content, content size: ${content.length}")
 
                 val lines = content.split("\n")
                 var lineOffset = 0L
@@ -258,14 +258,14 @@ class GogShFileExtractor private constructor(private val options: Options) {
                             line.contains("head -n") -> {
                                 extractNumber(line.substring(line.indexOf("head -n") + 7))?.let {
                                     lineOffset = it
-                                    AppLog.d(TAG, "Found lineOffset from 'head -n': $lineOffset")
+                                    Timber.d("Found lineOffset from 'head -n': $lineOffset")
                                     foundLineOffset = true
                                 }
                             }
                             line.contains("SKIP=") -> {
                                 extractNumber(line.substring(line.indexOf("SKIP=") + 5))?.let {
                                     lineOffset = it
-                                    AppLog.d(TAG, "Found lineOffset from 'SKIP=': $lineOffset")
+                                    Timber.d("Found lineOffset from 'SKIP=': $lineOffset")
                                     foundLineOffset = true
                                 }
                             }
@@ -277,14 +277,14 @@ class GogShFileExtractor private constructor(private val options: Options) {
                             line.contains("filesizes=") -> {
                                 extractNumber(line.substring(line.indexOf("filesizes=") + 10))?.let {
                                     filesize = it
-                                    AppLog.d(TAG, "Found filesize from 'filesizes=': $filesize")
+                                    Timber.d("Found filesize from 'filesizes=': $filesize")
                                     foundFilesize = true
                                 }
                             }
                             line.contains("SIZE=") -> {
                                 extractNumber(line.substring(line.indexOf("SIZE=") + 5))?.let {
                                     filesize = it
-                                    AppLog.d(TAG, "Found filesize from 'SIZE=': $filesize")
+                                    Timber.d("Found filesize from 'SIZE=': $filesize")
                                     foundFilesize = true
                                 }
                             }
@@ -294,11 +294,11 @@ class GogShFileExtractor private constructor(private val options: Options) {
                     if (foundLineOffset && foundFilesize) break
                 }
 
-                AppLog.d(TAG, "Final parse result - lineOffset: $lineOffset, filesize: $filesize")
+                Timber.d("Final parse result - lineOffset: $lineOffset, filesize: $filesize")
 
                 return if (foundLineOffset && foundFilesize) {
                     if (lineOffset > lines.size) {
-                        AppLog.e(TAG, "Parsed lineOffset is greater than number of lines, invalid makeself file")
+                        Timber.e("Parsed lineOffset is greater than number of lines, invalid makeself file")
                         return null
                     }
                     val offset = lines.take(lineOffset.toInt()).sumOf { it.length + 1 }
@@ -348,7 +348,7 @@ class GogShFileExtractor private constructor(private val options: Options) {
 
             fun parseFromGogShFile(filePath: Path): GameDataZipFile? {
                 val shFile = MakeSelfShFile.parse(filePath) ?: run {
-                    AppLog.e(TAG, "MakeSelf SH file is null")
+                    Timber.e("MakeSelf SH file is null")
                     return null
                 }
 
@@ -372,7 +372,7 @@ class GogShFileExtractor private constructor(private val options: Options) {
                         parse(tempZipFile)
                     }
                 } catch (ex: Exception) {
-                    AppLog.e(TAG, "Error when reading GOG SH file: $filePath", ex)
+                    Timber.e(ex, "Error when reading GOG SH file: $filePath")
                     null
                 }
             }
@@ -387,7 +387,7 @@ class GogShFileExtractor private constructor(private val options: Options) {
                             if (parseGameInfoContent(gameDataZipFile, gameInfoContent)) {
                                 return@use gameDataZipFile
                             }
-                            AppLog.w(TAG, "Failed to parse gameinfo content, trying config.lua...")
+                            Timber.w("Failed to parse gameinfo content, trying config.lua...")
                         }
 
                         val configLuaContent = getFileContent(zip, CONFIG_LUA_PATH)
@@ -395,14 +395,14 @@ class GogShFileExtractor private constructor(private val options: Options) {
                             if (parseConfigLuaContent(gameDataZipFile, configLuaContent)) {
                                 return@use gameDataZipFile
                             }
-                            AppLog.w(TAG, "Failed to parse config.lua content")
+                            Timber.w("Failed to parse config.lua content")
                         }
 
-                        AppLog.e(TAG, "Failed to parse game_data.zip content for id")
+                        Timber.e("Failed to parse game_data.zip content for id")
                         null
                     }
                 } catch (e: Exception) {
-                    AppLog.e(TAG, "Exception when reading game_data.zip", e)
+                    Timber.e(e, "Exception when reading game_data.zip")
                     null
                 }
             }
@@ -410,16 +410,16 @@ class GogShFileExtractor private constructor(private val options: Options) {
             private fun getFileContent(zip: ZipFile, entryPath: String): String? {
                 val entry = zip.getEntry(entryPath)
                 if (entry == null) {
-                    AppLog.w(TAG, "未在压缩包中找到 $entryPath")
+                    Timber.w("未在压缩包中找到 $entryPath")
                     return null
                 }
                 return try {
                     zip.getInputStream(entry).use { stream ->
-                        AppLog.d(TAG, "Reading entry $entryPath...")
+                        Timber.d("Reading entry $entryPath...")
                         getFileContentFromStream(stream)
                     }
                 } catch (e: IOException) {
-                    AppLog.w(TAG, "IOException when reading $entryPath", e)
+                    Timber.w(e, "IOException when reading $entryPath")
                     null
                 }
             }
@@ -427,7 +427,7 @@ class GogShFileExtractor private constructor(private val options: Options) {
             private fun getFileContentFromStream(inputStream: InputStream): String {
                 val contentBuffer = ByteArray(MAX_CONTENT_SIZE)
                 val bytesRead = inputStream.read(contentBuffer)
-                AppLog.d(TAG, "Read $bytesRead bytes!")
+                Timber.d("Read $bytesRead bytes!")
                 return String(contentBuffer, 0, bytesRead, Charsets.UTF_8)
             }
 
@@ -445,19 +445,19 @@ class GogShFileExtractor private constructor(private val options: Options) {
                         }
                         if (idBuilder.isNotEmpty()) {
                             gameDataZipFile.id = idBuilder.toString()
-                            AppLog.d(TAG, "Found id from config.lua: ${gameDataZipFile.id}")
+                            Timber.d("Found id from config.lua: ${gameDataZipFile.id}")
                             return true
                         }
                     }
                 }
-                AppLog.w(TAG, "cannot extract id from $CONFIG_LUA_PATH")
+                Timber.w("cannot extract id from $CONFIG_LUA_PATH")
                 return false
             }
 
             private fun parseGameInfoContent(gameDataZipFile: GameDataZipFile, content: String): Boolean {
                 val lines = content.split("\n")
                 if (lines.isEmpty()) {
-                    AppLog.w(TAG, "cannot even extract id from $GAMEINFO_PATH")
+                    Timber.w("cannot even extract id from $GAMEINFO_PATH")
                     return false
                 }
 
@@ -469,7 +469,7 @@ class GogShFileExtractor private constructor(private val options: Options) {
                 gameDataZipFile.timestamp2 = lines.getOrNull(5)?.trim()
                 gameDataZipFile.gogId = lines.getOrNull(6)?.trim()
 
-                AppLog.d(TAG, "Parsed gameinfo - $gameDataZipFile")
+                Timber.d("Parsed gameinfo - $gameDataZipFile")
 
                 return !gameDataZipFile.id.isNullOrEmpty()
             }
@@ -479,7 +479,6 @@ class GogShFileExtractor private constructor(private val options: Options) {
     }
 
     companion object {
-        private const val TAG = "GogShFileExtractor"
         private const val BUFFER_SIZE = 8192
         private const val EXTRACTED_MOJOSETUP_TAR_GZ_FILENAME = "mojosetup.tar.gz"
         private const val EXTRACTED_GAME_DATA_ZIP_FILENAME = "game_data.zip"

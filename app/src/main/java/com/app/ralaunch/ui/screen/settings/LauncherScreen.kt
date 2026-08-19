@@ -189,7 +189,7 @@ fun LauncherScreen() {
                 .fillMaxSize()
                 .padding(paddingValues)
                 .verticalScroll(rememberScrollState())
-                .padding(vertical = 8.dp)
+                .padding(top = 8.dp, bottom = 20.dp)
         ) {
             SectionTitle(
                 title = "Assets",

@@ -8,6 +8,7 @@ import timber.log.Timber
 import java.io.File
 import java.io.InputStream
 import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream
+import java.util.Map.entry
 
 /*******************************************************************************
  * RotatingArtLauncher - PatchManager
@@ -53,17 +54,11 @@ object PatchManager {
             val zipStream = ZipArchiveInputStream(inputStream)
 
             // 第一次读取：读取 manifest
-            var manifest: PatchManifest? = null
-            var entry = zipStream.nextEntry
-            while (entry != null) {
-                if (entry.name == "patch.json") {
-                    manifest = json.decodeFromString(zipStream.bufferedReader().readText())
-                    break
-                }
-                entry = zipStream.nextEntry
-            }
+            val manifest: PatchManifest? = generateSequence { zipStream.nextEntry }
+                .firstOrNull { it.name == "patch.json" }
+                ?.let { json.decodeFromString(zipStream.bufferedReader().readText()) }
 
-            manifest ?: run {
+            manifest ?: let {
                 Timber.w("Failed to read patch manifest")
                 return false
             }
@@ -87,11 +82,10 @@ object PatchManager {
             val newZipStream = ZipArchiveInputStream(inputStream)
 
             // 第二次读取：解压所有文件
-            var newEntry = newZipStream.nextEntry
-            while (newEntry != null) {
-                val targetFile = patchPath.resolve(newEntry.name)
+            generateSequence { newZipStream.nextEntry } .forEach {
+                val targetFile = patchPath.resolve(it.name)
 
-                if (newEntry.isDirectory) {
+                if (it.isDirectory) {
                     // 创建目录
                     targetFile.mkdirs()
                 } else {
@@ -100,8 +94,6 @@ object PatchManager {
                         newZipStream.copyTo(outputStream)
                     }
                 }
-
-                newEntry = newZipStream.nextEntry
             }
 
             Timber.i("Patch installed successfully: ${manifest.id}")

@@ -221,9 +221,10 @@ object RuntimeManager {
     }
 
     private fun getSharedPreferences(): android.content.SharedPreferences {
-        val context = com.app.ralaunch.MainActivity.context
-            ?: throw IllegalStateException("Application context not available")
-        return context.getSharedPreferences(AppConstants.PREFS_NAME, 0)
+        // 使用 Application 级上下文，避免依赖 MainActivity 静态字段
+        // （该字段在 MainActivity 未创建的场景下为 null，如交互式预览）
+        return com.app.ralaunch.RaLaunchApp.getAppContext()
+            .getSharedPreferences(AppConstants.PREFS_NAME, 0)
     }
 
     // ====== Migration ======

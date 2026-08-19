@@ -1,7 +1,7 @@
 package com.app.ralaunch.core.extractor
 
 import android.graphics.Bitmap
-import com.app.ralaunch.core.logging.AppLog
+import timber.log.Timber
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
@@ -10,7 +10,6 @@ import java.nio.ByteOrder
  * 专门用于解码 Windows 图标中的 BMP 数据
  */
 object BmpDecoder {
-    private const val TAG = "BmpDecoder"
 
     /**
      * 解码图标中的 BMP 数据为 Android Bitmap
@@ -22,7 +21,7 @@ object BmpDecoder {
     fun decodeBmpIcon(data: ByteArray?): Bitmap? {
         return try {
             if (data == null || data.size < 40) {
-                AppLog.e(TAG, "Invalid icon data: too short")
+                Timber.e("Invalid icon data: too short")
                 return null
             }
 
@@ -39,7 +38,7 @@ object BmpDecoder {
 
             // 验证header size
             if (headerSize != 40) {
-                AppLog.e(TAG, "Invalid BITMAPINFOHEADER size: $headerSize")
+                Timber.e("Invalid BITMAPINFOHEADER size: $headerSize")
                 return null
             }
 
@@ -48,7 +47,7 @@ object BmpDecoder {
 
             // 只支持常见的位深度
             if (bitCount !in listOf(32, 24, 8, 4, 1)) {
-                AppLog.e(TAG, "Unsupported bit count: $bitCount")
+                Timber.e("Unsupported bit count: $bitCount")
                 return null
             }
 
@@ -75,7 +74,7 @@ object BmpDecoder {
 
             bitmap
         } catch (e: Exception) {
-            AppLog.e(TAG, "Failed to decode BMP: ${e.message}", e)
+            Timber.e(e, "Failed to decode BMP: ${e.message}")
             null
         }
     }
