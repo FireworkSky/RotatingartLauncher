@@ -72,7 +72,6 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -87,16 +86,20 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.ViewModelStoreOwner
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.app.ralaunch.R
-import com.app.ralaunch.core.common.SettingsAccess
 import com.app.ralaunch.core.common.util.AssetIntegrityChecker
 import com.app.ralaunch.core.common.util.LocaleManager
+import com.app.ralaunch.core.config.AppConfig
+import com.app.ralaunch.core.di.contract.IRuntimeManagerServiceV2
 import com.app.ralaunch.core.logging.LogFilePolicy
+import com.app.ralaunch.core.model.AppInfo
+import com.app.ralaunch.core.model.AppSettings
 import com.app.ralaunch.core.navigation.NavState
 import com.app.ralaunch.core.navigation.navigateToLogViewer
 import com.app.ralaunch.core.navigation.navigateToPatchManagement
 import com.app.ralaunch.core.platform.runtime.AndroidRendererRegistry
+import com.app.ralaunch.core.platform.runtime.RendererRegistry
 import com.app.ralaunch.core.ui.dialog.DotNetRuntimeOption
 import com.app.ralaunch.core.ui.dialog.DotNetRuntimeSelectDialog
 import com.app.ralaunch.core.ui.dialog.LanguageSelectDialog
@@ -115,12 +118,10 @@ import com.app.ralaunch.feature.settings.ui.SettingsScreenContent
 import com.app.ralaunch.feature.settings.ui.SettingsSection
 import com.app.ralaunch.feature.settings.ui.SliderSettingItem
 import com.app.ralaunch.feature.settings.ui.SwitchSettingItem
-import com.app.ralaunch.feature.settings.vm.SettingsEffect
-import com.app.ralaunch.feature.settings.vm.SettingsEvent
-import com.app.ralaunch.feature.settings.vm.SettingsUiState
-import com.app.ralaunch.feature.settings.vm.SettingsViewModel
 import kotlinx.coroutines.launch
-import org.koin.compose.viewmodel.koinViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.koin.compose.koinInject
 import java.util.Locale
 import kotlin.math.roundToInt
 import androidx.compose.ui.res.stringResource as androidStringResource
@@ -132,63 +133,46 @@ fun SettingsScreenWrapper(
 ) {
     val context = LocalContext.current
     val activity = context as? Activity ?: return
-    val viewModelStoreOwner = activity as? ViewModelStoreOwner ?: return
-    val viewModel: SettingsViewModel = koinViewModel(
-        viewModelStoreOwner = viewModelStoreOwner
-    )
-    val uiState by viewModel.uiState.collectAsState()
+    var currentCategory by rememberSaveable { mutableStateOf(SettingsCategory.APPEARANCE) }
     val assetStatusSummaryState = remember { mutableStateOf("") }
+    val runtimeManager: IRuntimeManagerServiceV2 = koinInject()
+    var installedDotNetRuntimeVersions by remember { mutableStateOf(emptyList<String>()) }
 
     LaunchedEffect(Unit) {
         assetStatusSummaryState.value = AssetIntegrityChecker.getStatusSummary(context)
     }
 
-    LaunchedEffect(viewModel, context) {
-        viewModel.effect.collect { effect ->
-            when (effect) {
-                is SettingsEffect.ShowToast -> {
-                    Toast.makeText(context, effect.message, Toast.LENGTH_SHORT).show()
-                }
-            }
+    LaunchedEffect(runtimeManager) {
+        installedDotNetRuntimeVersions = withContext(Dispatchers.IO) {
+            runtimeManager.getInstalledVersions(IRuntimeManagerServiceV2.RuntimeType.DOTNET)
         }
     }
 
     SettingsScreenContent(
-        currentCategory = uiState.currentCategory,
-        onCategoryClick = { viewModel.onEvent(SettingsEvent.SelectCategory(it)) }
+        currentCategory = currentCategory,
+        onCategoryClick = { currentCategory = it }
     ) { category ->
         when (category) {
             SettingsCategory.APPEARANCE -> AppearanceSettingsPane(
-                viewModel = viewModel,
-                activity = activity,
-                uiState = uiState
+                activity = activity
             )
 
-            SettingsCategory.CONTROLS -> ControlsSettingsPane(
-                viewModel = viewModel,
-                uiState = uiState
-            )
+            SettingsCategory.CONTROLS -> ControlsSettingsPane()
 
             SettingsCategory.GAME -> GameSettingsPane(
-                viewModel = viewModel,
-                uiState = uiState
+                installedDotNetRuntimeVersions = installedDotNetRuntimeVersions
             )
 
             SettingsCategory.LAUNCHER -> LauncherSettingsPane(
                 navState = navState,
-                viewModel = viewModel,
-                uiState = uiState,
                 assetStatusSummaryState = assetStatusSummaryState
             )
 
             SettingsCategory.DEVELOPER -> DeveloperSettingsPane(
-                navState = navState,
-                viewModel = viewModel,
-                uiState = uiState
+                navState = navState
             )
 
             SettingsCategory.ABOUT -> AboutSettingsPane(
-                uiState = uiState,
                 onCheckLauncherUpdate = onCheckLauncherUpdate
             )
         }
@@ -226,9 +210,7 @@ private fun themeModeLabel(mode: ThemeMode): String {
 
 @Composable
 private fun AppearanceSettingsPane(
-    viewModel: SettingsViewModel,
-    activity: Activity,
-    uiState: SettingsUiState
+    activity: Activity
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -239,7 +221,7 @@ private fun AppearanceSettingsPane(
     ) { uri ->
         uri?.let { selectedUri ->
             scope.launch {
-                handleImageSelection(context, selectedUri, viewModel)
+                handleImageSelection(context, selectedUri)
             }
         }
     }
@@ -248,217 +230,231 @@ private fun AppearanceSettingsPane(
     ) { uri ->
         uri?.let { selectedUri ->
             scope.launch {
-                handleVideoSelection(context, selectedUri, viewModel)
+                handleVideoSelection(context, selectedUri)
             }
         }
     }
 
-    with(uiState) {
-        SettingsPaneColumn {
-            SettingsSection(title = androidStringResource(R.string.settings_appearance_theme_section)) {
-                ClickableSettingItem(
-                    title = androidStringResource(R.string.settings_appearance_theme_mode_title),
-                    subtitle = androidStringResource(R.string.settings_appearance_theme_mode_subtitle),
-                    value = themeModeLabel(themeMode),
-                    icon = Icons.Default.DarkMode,
-                    onClick = {
-                        val nextModeIndex = (ThemeMode.entries.indexOf(themeMode) + 1) % ThemeMode.entries.size
-                        val nextMode = ThemeMode.entries[nextModeIndex]
-                        SettingsAccess.themeMode = nextMode
-                        viewModel.onEvent(SettingsEvent.SetThemeMode(nextMode))
-                        AppThemeState.updateThemeMode(nextMode)
-                        recreateActivityForUiRefresh(activity)
+    val themeMode by AppConfig.flowOf(AppSettings::themeMode).collectAsStateWithLifecycle(ThemeMode.LIGHT)
+    val themeColor by AppConfig.flowOf(AppSettings::themeColor).collectAsStateWithLifecycle(0xFF6750A4.toInt())
+    val backgroundType by AppConfig.flowOf(AppSettings::backgroundType).collectAsStateWithLifecycle(BackgroundType.DEFAULT)
+    val backgroundOpacity by AppConfig.flowOf(AppSettings::backgroundOpacity).collectAsStateWithLifecycle(0)
+    val videoPlaybackSpeed by AppConfig.flowOf(AppSettings::videoPlaybackSpeed).collectAsStateWithLifecycle(1.0f)
+    val language by AppConfig.flowOf(AppSettings::language).collectAsStateWithLifecycle("auto")
+
+    SettingsPaneColumn {
+        SettingsSection(title = androidStringResource(R.string.settings_appearance_theme_section)) {
+            ClickableSettingItem(
+                title = androidStringResource(R.string.settings_appearance_theme_mode_title),
+                subtitle = androidStringResource(R.string.settings_appearance_theme_mode_subtitle),
+                value = themeModeLabel(themeMode),
+                icon = Icons.Default.DarkMode,
+                onClick = {
+                    val nextModeIndex = (ThemeMode.entries.indexOf(themeMode) + 1) % ThemeMode.entries.size
+                    val nextMode = ThemeMode.entries[nextModeIndex]
+                    AppConfig.s.themeMode = nextMode
+                    AppThemeState.updateThemeMode(nextMode)
+                    recreateActivityForUiRefresh(activity)
+                }
+            )
+
+            SettingsDivider()
+
+            ClickableSettingItem(
+                title = androidStringResource(R.string.settings_appearance_theme_color_title),
+                subtitle = androidStringResource(R.string.settings_appearance_theme_color_subtitle),
+                icon = Icons.Default.Palette,
+                onClick = { showThemeColorDialog = true }
+            )
+        }
+
+        SettingsSection(title = androidStringResource(R.string.settings_appearance_background_section)) {
+            ClickableSettingItem(
+                title = androidStringResource(R.string.settings_appearance_background_image_title),
+                subtitle = if (backgroundType == BackgroundType.IMAGE) {
+                    androidStringResource(R.string.settings_appearance_background_set)
+                } else {
+                    androidStringResource(R.string.settings_appearance_background_select_image)
+                },
+                icon = Icons.Default.Image,
+                onClick = { imagePickerLauncher.launch("image/*") }
+            )
+
+            SettingsDivider()
+
+            ClickableSettingItem(
+                title = androidStringResource(R.string.settings_appearance_background_video_title),
+                subtitle = if (backgroundType == BackgroundType.VIDEO) {
+                    androidStringResource(R.string.settings_appearance_background_set)
+                } else {
+                    androidStringResource(R.string.settings_appearance_background_select_video)
+                },
+                icon = Icons.Default.VideoLibrary,
+                onClick = { videoPickerLauncher.launch("video/*") }
+            )
+
+            if (backgroundType != BackgroundType.DEFAULT) {
+                SettingsDivider()
+
+                SliderSettingItem(
+                    title = androidStringResource(R.string.settings_appearance_background_opacity_title),
+                    subtitle = androidStringResource(R.string.settings_appearance_background_opacity_subtitle),
+                    icon = Icons.Default.Opacity,
+                    value = backgroundOpacity.toFloat(),
+                    valueRange = BACKGROUND_OPACITY_RANGE,
+                    steps = BACKGROUND_OPACITY_STEP_COUNT,
+                    valueLabel = "$backgroundOpacity%",
+                    onValueChange = {
+                        val opacity = it.toInt()
+                        // 拖动期间仅更新内存态，松手才落盘
+                        AppConfig.c.backgroundOpacity = opacity
+                        applyOpacityChange(opacity)
+                    },
+                    onValueChangeFinished = {
+                        AppConfig.s.backgroundOpacity = AppConfig.c.backgroundOpacity
                     }
                 )
+            }
 
+            if (backgroundType == BackgroundType.VIDEO) {
+                SettingsDivider()
+
+                SliderSettingItem(
+                    title = androidStringResource(R.string.settings_appearance_video_speed_title),
+                    subtitle = androidStringResource(R.string.settings_appearance_video_speed_subtitle),
+                    icon = Icons.Default.Speed,
+                    value = videoPlaybackSpeed,
+                    valueRange = VIDEO_PLAYBACK_SPEED_RANGE,
+                    steps = VIDEO_PLAYBACK_SPEED_STEP_COUNT,
+                    valueLabel = String.format(Locale.US, "%.1fx", videoPlaybackSpeed),
+                    onValueChange = { speed ->
+                        AppConfig.c.videoPlaybackSpeed = speed
+                        applyVideoSpeedChange(speed)
+                    },
+                    onValueChangeFinished = {
+                        AppConfig.s.videoPlaybackSpeed = AppConfig.c.videoPlaybackSpeed
+                    }
+                )
+            }
+
+            if (backgroundType != BackgroundType.DEFAULT) {
                 SettingsDivider()
 
                 ClickableSettingItem(
-                    title = androidStringResource(R.string.settings_appearance_theme_color_title),
-                    subtitle = androidStringResource(R.string.settings_appearance_theme_color_subtitle),
-                    icon = Icons.Default.Palette,
-                    onClick = { showThemeColorDialog = true }
-                )
-            }
-
-            SettingsSection(title = androidStringResource(R.string.settings_appearance_background_section)) {
-                ClickableSettingItem(
-                    title = androidStringResource(R.string.settings_appearance_background_image_title),
-                    subtitle = if (backgroundType == BackgroundType.IMAGE) {
-                        androidStringResource(R.string.settings_appearance_background_set)
-                    } else {
-                        androidStringResource(R.string.settings_appearance_background_select_image)
-                    },
-                    icon = Icons.Default.Image,
-                    onClick = { imagePickerLauncher.launch("image/*") }
-                )
-
-                SettingsDivider()
-
-                ClickableSettingItem(
-                    title = androidStringResource(R.string.settings_appearance_background_video_title),
-                    subtitle = if (backgroundType == BackgroundType.VIDEO) {
-                        androidStringResource(R.string.settings_appearance_background_set)
-                    } else {
-                        androidStringResource(R.string.settings_appearance_background_select_video)
-                    },
-                    icon = Icons.Default.VideoLibrary,
-                    onClick = { videoPickerLauncher.launch("video/*") }
-                )
-
-                if (backgroundType != BackgroundType.DEFAULT) {
-                    SettingsDivider()
-
-                    SliderSettingItem(
-                        title = androidStringResource(R.string.settings_appearance_background_opacity_title),
-                        subtitle = androidStringResource(R.string.settings_appearance_background_opacity_subtitle),
-                        icon = Icons.Default.Opacity,
-                        value = backgroundOpacity.toFloat(),
-                        valueRange = BACKGROUND_OPACITY_RANGE,
-                        steps = BACKGROUND_OPACITY_STEP_COUNT,
-                        valueLabel = "$backgroundOpacity%",
-                        onValueChange = {
-                            val opacity = it.toInt()
-                            viewModel.onEvent(SettingsEvent.SetBackgroundOpacity(opacity))
-                            applyOpacityChange(opacity)
-                        }
-                    )
-                }
-
-                if (backgroundType == BackgroundType.VIDEO) {
-                    SettingsDivider()
-
-                    SliderSettingItem(
-                        title = androidStringResource(R.string.settings_appearance_video_speed_title),
-                        subtitle = androidStringResource(R.string.settings_appearance_video_speed_subtitle),
-                        icon = Icons.Default.Speed,
-                        value = videoPlaybackSpeed,
-                        valueRange = VIDEO_PLAYBACK_SPEED_RANGE,
-                        steps = VIDEO_PLAYBACK_SPEED_STEP_COUNT,
-                        valueLabel = String.format(Locale.US, "%.1fx", videoPlaybackSpeed),
-                        onValueChange = { speed ->
-                            viewModel.onEvent(SettingsEvent.SetVideoPlaybackSpeed(speed))
-                            applyVideoSpeedChange(speed)
-                        }
-                    )
-                }
-
-                if (backgroundType != BackgroundType.DEFAULT) {
-                    SettingsDivider()
-
-                    ClickableSettingItem(
-                        title = androidStringResource(R.string.settings_appearance_restore_background_title),
-                        subtitle = androidStringResource(R.string.settings_appearance_restore_background_subtitle),
-                        icon = Icons.Default.Restore,
-                        onClick = {
-                            viewModel.onEvent(SettingsEvent.RestoreDefaultBackground)
-                            AppThemeState.restoreDefaultBackground()
-                            Toast.makeText(
-                                context,
-                                context.getString(R.string.appearance_background_restored),
-                                Toast.LENGTH_SHORT
-                            ).show()
-                        }
-                    )
-                }
-            }
-
-            SettingsSection(title = androidStringResource(R.string.settings_appearance_language_section)) {
-                ClickableSettingItem(
-                    title = androidStringResource(R.string.settings_appearance_language_title),
-                    subtitle = androidStringResource(R.string.settings_appearance_language_subtitle),
-                    value = languageLabel(language),
-                    icon = Icons.Default.Language,
-                    onClick = { showLanguageDialog = true }
+                    title = androidStringResource(R.string.settings_appearance_restore_background_title),
+                    subtitle = androidStringResource(R.string.settings_appearance_restore_background_subtitle),
+                    icon = Icons.Default.Restore,
+                    onClick = {
+                        restoreDefaultBackground()
+                        Toast.makeText(
+                            context,
+                            context.getString(R.string.appearance_background_restored),
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
                 )
             }
         }
 
-        if (showLanguageDialog) {
-            LanguageSelectDialog(
-                currentLanguage = language,
-                onSelect = { code ->
-                    LocaleManager.setLanguage(context, code)
-                    viewModel.onEvent(SettingsEvent.SetLanguage(code))
-                    showLanguageDialog = false
-                    recreateActivityForUiRefresh(activity)
-                },
-                onDismiss = { showLanguageDialog = false }
+        SettingsSection(title = androidStringResource(R.string.settings_appearance_language_section)) {
+            ClickableSettingItem(
+                title = androidStringResource(R.string.settings_appearance_language_title),
+                subtitle = androidStringResource(R.string.settings_appearance_language_subtitle),
+                value = languageLabel(language),
+                icon = Icons.Default.Language,
+                onClick = { showLanguageDialog = true }
             )
         }
+    }
 
-        if (showThemeColorDialog) {
-            ThemeColorSelectDialog(
-                currentColor = themeColor,
-                onSelect = { color ->
-                    viewModel.onEvent(SettingsEvent.SetThemeColor(color))
-                    AppThemeState.updateThemeColor(color)
-                    showThemeColorDialog = false
-                },
-                onDismiss = { showThemeColorDialog = false }
-            )
-        }
+    if (showLanguageDialog) {
+        LanguageSelectDialog(
+            currentLanguage = language,
+            onSelect = { code ->
+                LocaleManager.setLanguage(context, code)
+                AppConfig.s.language = code
+                showLanguageDialog = false
+                recreateActivityForUiRefresh(activity)
+            },
+            onDismiss = { showLanguageDialog = false }
+        )
+    }
+
+    if (showThemeColorDialog) {
+        ThemeColorSelectDialog(
+            currentColor = themeColor,
+            onSelect = { color ->
+                AppConfig.s.themeColor = color
+                AppThemeState.updateThemeColor(color)
+                showThemeColorDialog = false
+            },
+            onDismiss = { showThemeColorDialog = false }
+        )
     }
 }
 
 @Composable
-private fun ControlsSettingsPane(
-    viewModel: SettingsViewModel,
-    uiState: SettingsUiState
-) {
-    with(uiState) {
-        SettingsPaneColumn {
-            SettingsSection(title = androidStringResource(R.string.settings_controls_touch_section)) {
-                SwitchSettingItem(
-                    title = androidStringResource(R.string.settings_controls_multitouch_title),
-                    subtitle = androidStringResource(R.string.settings_controls_multitouch_subtitle),
-                    icon = Icons.Default.TouchApp,
-                    checked = touchMultitouchEnabled,
-                    onCheckedChange = { viewModel.onEvent(SettingsEvent.SetTouchMultitouch(it)) }
+private fun ControlsSettingsPane() {
+    val touchMultitouchEnabled by AppConfig.flowOf(AppSettings::touchMultitouchEnabled).collectAsStateWithLifecycle(true)
+    val vibrationEnabled by AppConfig.flowOf(AppSettings::vibrationEnabled).collectAsStateWithLifecycle(true)
+    val vibrationStrength by AppConfig.flowOf(AppSettings::virtualControllerVibrationIntensity).collectAsStateWithLifecycle(1.0f)
+    val virtualControllerAsFirst by AppConfig.flowOf(AppSettings::virtualControllerAsFirst).collectAsStateWithLifecycle(false)
+
+    SettingsPaneColumn {
+        SettingsSection(title = androidStringResource(R.string.settings_controls_touch_section)) {
+            SwitchSettingItem(
+                title = androidStringResource(R.string.settings_controls_multitouch_title),
+                subtitle = androidStringResource(R.string.settings_controls_multitouch_subtitle),
+                icon = Icons.Default.TouchApp,
+                checked = touchMultitouchEnabled,
+                onCheckedChange = { AppConfig.s.touchMultitouchEnabled = it }
+            )
+        }
+
+        SettingsSection(title = androidStringResource(R.string.settings_controls_vibration_section)) {
+            SwitchSettingItem(
+                title = androidStringResource(R.string.settings_vibration),
+                subtitle = androidStringResource(R.string.settings_vibration_desc),
+                icon = Icons.Default.Gamepad,
+                checked = vibrationEnabled,
+                onCheckedChange = { AppConfig.s.vibrationEnabled = it }
+            )
+
+            if (vibrationEnabled) {
+                SettingsDivider()
+
+                SliderSettingItem(
+                    title = androidStringResource(R.string.settings_controls_vibration_strength_title),
+                    value = vibrationStrength,
+                    valueRange = 0f..1f,
+                    valueLabel = "${(vibrationStrength * 100).toInt()}%",
+                    icon = Icons.Default.Tune,
+                    onValueChange = { AppConfig.c.virtualControllerVibrationIntensity = it },
+                    onValueChangeFinished = {
+                        AppConfig.s.virtualControllerVibrationIntensity =
+                            AppConfig.c.virtualControllerVibrationIntensity
+                    }
                 )
             }
+        }
 
-            SettingsSection(title = androidStringResource(R.string.settings_controls_vibration_section)) {
-                SwitchSettingItem(
-                    title = androidStringResource(R.string.settings_vibration),
-                    subtitle = androidStringResource(R.string.settings_vibration_desc),
-                    icon = Icons.Default.Gamepad,
-                    checked = vibrationEnabled,
-                    onCheckedChange = { viewModel.onEvent(SettingsEvent.SetVibrationEnabled(it)) }
-                )
-
-                if (vibrationEnabled) {
-                    SettingsDivider()
-
-                    SliderSettingItem(
-                        title = androidStringResource(R.string.settings_controls_vibration_strength_title),
-                        value = vibrationStrength,
-                        valueRange = 0f..1f,
-                        valueLabel = "${(vibrationStrength * 100).toInt()}%",
-                        icon = Icons.Default.Tune,
-                        onValueChange = { viewModel.onEvent(SettingsEvent.SetVibrationStrength(it)) }
-                    )
-                }
-            }
-
-            SettingsSection(title = androidStringResource(R.string.settings_controls_controller_section)) {
-                SwitchSettingItem(
-                    title = androidStringResource(R.string.virtual_controller_as_first),
-                    subtitle = androidStringResource(R.string.virtual_controller_as_first_desc),
-                    icon = Icons.Default.Gamepad,
-                    checked = virtualControllerAsFirst,
-                    onCheckedChange = { viewModel.onEvent(SettingsEvent.SetVirtualControllerAsFirst(it)) }
-                )
-            }
+        SettingsSection(title = androidStringResource(R.string.settings_controls_controller_section)) {
+            SwitchSettingItem(
+                title = androidStringResource(R.string.virtual_controller_as_first),
+                subtitle = androidStringResource(R.string.virtual_controller_as_first_desc),
+                icon = Icons.Default.Gamepad,
+                checked = virtualControllerAsFirst,
+                onCheckedChange = { AppConfig.s.virtualControllerAsFirst = it }
+            )
         }
     }
 }
 
 @Composable
 private fun GameSettingsPane(
-    viewModel: SettingsViewModel,
-    uiState: SettingsUiState
+    installedDotNetRuntimeVersions: List<String>
 ) {
+    val context = LocalContext.current
     var showDotNetRuntimeDialog by remember { mutableStateOf(false) }
     var showRendererDialog by remember { mutableStateOf(false) }
     val availableRenderers = remember { buildRendererOptions() }
@@ -473,155 +469,189 @@ private fun GameSettingsPane(
         FpsLimit.FPS_45 to androidStringResource(R.string.settings_fps_45),
         FpsLimit.FPS_60 to androidStringResource(R.string.settings_fps_60)
     )
-    with(uiState) {
-        val dotNetRuntimeOptions = remember(installedDotNetRuntimeVersions) {
-            installedDotNetRuntimeVersions.map { version ->
-                DotNetRuntimeOption(version = version)
-            }
+    val selectedDotNetRuntimeVersionRaw by AppConfig.flowOf(AppSettings::selectedDotnetRuntimeVersion).collectAsStateWithLifecycle("")
+    val selectedDotNetRuntimeVersion = selectedDotNetRuntimeVersionRaw.trim().ifBlank { null }
+    val bigCoreAffinityEnabled by AppConfig.flowOf(AppSettings::setThreadAffinityToBigCore).collectAsStateWithLifecycle(false)
+    val lowLatencyAudioEnabled by AppConfig.flowOf(AppSettings::sdlAaudioLowLatency).collectAsStateWithLifecycle(false)
+    val ralAudioBufferSizeRaw by AppConfig.flowOf(AppSettings::ralAudioBufferSize).collectAsStateWithLifecycle(null)
+    val ralAudioBufferSize = normalizeRalAudioBufferSize(ralAudioBufferSizeRaw)
+    val rendererTypeRaw by AppConfig.flowOf(AppSettings::fnaRenderer).collectAsStateWithLifecycle("native")
+    val rendererType = RendererRegistry.normalizeRendererId(rendererTypeRaw)
+    val qualityLevelRaw by AppConfig.flowOf(AppSettings::qualityLevel).collectAsStateWithLifecycle(0)
+    val qualityLevel = QualityLevel.fromValue(qualityLevelRaw)
+    val shaderLowPrecision by AppConfig.flowOf(AppSettings::shaderLowPrecision).collectAsStateWithLifecycle(false)
+    val targetFpsRaw by AppConfig.flowOf(AppSettings::targetFps).collectAsStateWithLifecycle(0)
+    val targetFps = FpsLimit.fromValue(targetFpsRaw)
+
+    val dotNetRuntimeOptions = remember(installedDotNetRuntimeVersions) {
+        installedDotNetRuntimeVersions.map { version ->
+            DotNetRuntimeOption(version = version)
         }
-        val currentDotNetRuntimeVersion = selectedDotNetRuntimeVersion
-            ?.takeIf { it in installedDotNetRuntimeVersions }
-            ?: installedDotNetRuntimeVersions.firstOrNull()
-        val currentFpsName = fpsOptions.find { it.first == targetFps }?.second
-            ?: androidStringResource(R.string.settings_fps_unlimited)
+    }
+    val currentDotNetRuntimeVersion = selectedDotNetRuntimeVersion
+        ?.takeIf { it in installedDotNetRuntimeVersions }
+        ?: installedDotNetRuntimeVersions.firstOrNull()
+    val currentFpsName = fpsOptions.find { it.first == targetFps }?.second
+        ?: androidStringResource(R.string.settings_fps_unlimited)
 
-        SettingsPaneColumn {
-            SettingsSection(title = androidStringResource(R.string.settings_game_performance_section)) {
-                SwitchSettingItem(
-                    title = androidStringResource(R.string.thread_affinity_big_core),
-                    subtitle = androidStringResource(R.string.thread_affinity_big_core_desc),
-                    icon = Icons.Default.Memory,
-                    checked = bigCoreAffinityEnabled,
-                    onCheckedChange = { viewModel.onEvent(SettingsEvent.SetBigCoreAffinity(it)) }
-                )
+    SettingsPaneColumn {
+        SettingsSection(title = androidStringResource(R.string.settings_game_performance_section)) {
+            SwitchSettingItem(
+                title = androidStringResource(R.string.thread_affinity_big_core),
+                subtitle = androidStringResource(R.string.thread_affinity_big_core_desc),
+                icon = Icons.Default.Memory,
+                checked = bigCoreAffinityEnabled,
+                onCheckedChange = { AppConfig.s.setThreadAffinityToBigCore = it }
+            )
 
-                SettingsDivider()
+            SettingsDivider()
 
-                SwitchSettingItem(
-                    title = androidStringResource(R.string.low_latency_audio),
-                    subtitle = androidStringResource(R.string.settings_game_low_latency_audio_subtitle),
-                    icon = Icons.AutoMirrored.Filled.VolumeUp,
-                    checked = lowLatencyAudioEnabled,
-                    onCheckedChange = { viewModel.onEvent(SettingsEvent.SetLowLatencyAudio(it)) }
-                )
+            SwitchSettingItem(
+                title = androidStringResource(R.string.low_latency_audio),
+                subtitle = androidStringResource(R.string.settings_game_low_latency_audio_subtitle),
+                icon = Icons.AutoMirrored.Filled.VolumeUp,
+                checked = lowLatencyAudioEnabled,
+                onCheckedChange = { AppConfig.s.sdlAaudioLowLatency = it }
+            )
 
-                SettingsDivider()
+            SettingsDivider()
 
-                SliderSettingItem(
-                    title = androidStringResource(R.string.settings_game_audio_buffer_title),
-                    subtitle = androidStringResource(R.string.settings_game_audio_buffer_subtitle),
-                    icon = Icons.Default.Tune,
-                    value = audioBufferSizeToSliderPosition(ralAudioBufferSize),
-                    valueRange = audioBufferSizeSliderRange(),
-                    steps = audioBufferSizeSliderSteps(),
-                    valueLabel = ralAudioBufferSize?.toString()
-                        ?: androidStringResource(R.string.common_auto),
-                    onValueChange = {
-                        viewModel.onEvent(SettingsEvent.SetRalAudioBufferSize(sliderPositionToAudioBufferSize(it)))
-                    }
-                )
-            }
-
-            SettingsSection(title = androidStringResource(R.string.settings_game_runtime_section)) {
-                ClickableSettingItem(
-                    title = androidStringResource(R.string.main_runtime_title),
-                    subtitle = androidStringResource(R.string.settings_game_runtime_subtitle),
-                    value = currentDotNetRuntimeVersion
-                        ?: androidStringResource(R.string.runtime_not_installed),
-                    icon = Icons.Default.Storage,
-                    onClick = {
-                        if (dotNetRuntimeOptions.isNotEmpty()) {
-                            showDotNetRuntimeDialog = true
-                        }
-                    }
-                )
-            }
-
-            SettingsSection(title = androidStringResource(R.string.settings_game_renderer_section)) {
-                ClickableSettingItem(
-                    title = androidStringResource(R.string.renderer_title),
-                    subtitle = androidStringResource(R.string.renderer_desc),
-                    value = AndroidRendererRegistry.getRendererDisplayName(rendererType),
-                    icon = Icons.Default.Tv,
-                    onClick = { showRendererDialog = true }
-                )
-            }
-
-            SettingsSection(title = androidStringResource(R.string.settings_game_quality_section)) {
-                ClickableSettingItem(
-                    title = androidStringResource(R.string.settings_game_quality_preset_title),
-                    subtitle = androidStringResource(R.string.settings_game_quality_preset_subtitle),
-                    value = qualityOptions.find { it.first == qualityLevel }?.second
-                        ?: qualityOptions.first().second,
-                    icon = Icons.Default.Tune,
-                    onClick = {
-                        val currentIndex = qualityOptions.indexOfFirst { it.first == qualityLevel }
-                            .takeIf { it >= 0 } ?: 0
-                        val nextIndex = (currentIndex + 1) % qualityOptions.size
-                        viewModel.onEvent(
-                            SettingsEvent.SetQualityLevel(qualityOptions[nextIndex].first)
-                        )
-                    }
-                )
-
-                SettingsDivider()
-
-                SwitchSettingItem(
-                    title = androidStringResource(R.string.settings_game_shader_low_precision_title),
-                    subtitle = androidStringResource(R.string.settings_game_shader_low_precision_subtitle),
-                    icon = Icons.Default.FilterAlt,
-                    checked = shaderLowPrecision,
-                    onCheckedChange = { viewModel.onEvent(SettingsEvent.SetShaderLowPrecision(it)) }
-                )
-
-                SettingsDivider()
-
-                ClickableSettingItem(
-                    title = androidStringResource(R.string.settings_game_fps_limit_title),
-                    subtitle = androidStringResource(R.string.settings_game_fps_limit_subtitle),
-                    value = currentFpsName,
-                    icon = Icons.Default.Speed,
-                    onClick = {
-                        val currentIndex = fpsOptions.indexOfFirst { it.first == targetFps }
-                            .takeIf { it >= 0 } ?: 0
-                        val nextIndex = (currentIndex + 1) % fpsOptions.size
-                        viewModel.onEvent(SettingsEvent.SetTargetFps(fpsOptions[nextIndex].first))
-                    }
-                )
-            }
-        }
-
-        if (showDotNetRuntimeDialog) {
-            DotNetRuntimeSelectDialog(
-                currentRuntimeVersion = currentDotNetRuntimeVersion,
-                runtimes = dotNetRuntimeOptions,
-                onSelect = { version ->
-                    viewModel.onEvent(SettingsEvent.SetDotNetRuntimeVersion(version))
-                    showDotNetRuntimeDialog = false
+            SliderSettingItem(
+                title = androidStringResource(R.string.settings_game_audio_buffer_title),
+                subtitle = androidStringResource(R.string.settings_game_audio_buffer_subtitle),
+                icon = Icons.Default.Tune,
+                value = audioBufferSizeToSliderPosition(ralAudioBufferSize),
+                valueRange = audioBufferSizeSliderRange(),
+                steps = audioBufferSizeSliderSteps(),
+                valueLabel = ralAudioBufferSize?.toString()
+                    ?: androidStringResource(R.string.common_auto),
+                onValueChange = {
+                    AppConfig.c.ralAudioBufferSize = sliderPositionToAudioBufferSize(it)
                 },
-                onDismiss = { showDotNetRuntimeDialog = false }
+                onValueChangeFinished = {
+                    AppConfig.s.ralAudioBufferSize = AppConfig.c.ralAudioBufferSize
+                }
             )
         }
 
-        if (showRendererDialog) {
-            RendererSelectDialog(
-                currentRenderer = rendererType,
-                renderers = availableRenderers,
-                onSelect = { renderer ->
-                    viewModel.onEvent(SettingsEvent.SetRenderer(renderer))
-                    showRendererDialog = false
-                },
-                onDismiss = { showRendererDialog = false }
+        SettingsSection(title = androidStringResource(R.string.settings_game_runtime_section)) {
+            ClickableSettingItem(
+                title = androidStringResource(R.string.main_runtime_title),
+                subtitle = androidStringResource(R.string.settings_game_runtime_subtitle),
+                value = currentDotNetRuntimeVersion
+                    ?: androidStringResource(R.string.runtime_not_installed),
+                icon = Icons.Default.Storage,
+                onClick = {
+                    if (dotNetRuntimeOptions.isNotEmpty()) {
+                        showDotNetRuntimeDialog = true
+                    }
+                }
             )
         }
+
+        SettingsSection(title = androidStringResource(R.string.settings_game_renderer_section)) {
+            ClickableSettingItem(
+                title = androidStringResource(R.string.renderer_title),
+                subtitle = androidStringResource(R.string.renderer_desc),
+                value = AndroidRendererRegistry.getRendererDisplayName(rendererType),
+                icon = Icons.Default.Tv,
+                onClick = { showRendererDialog = true }
+            )
+        }
+
+        SettingsSection(title = androidStringResource(R.string.settings_game_quality_section)) {
+            ClickableSettingItem(
+                title = androidStringResource(R.string.settings_game_quality_preset_title),
+                subtitle = androidStringResource(R.string.settings_game_quality_preset_subtitle),
+                value = qualityOptions.find { it.first == qualityLevel }?.second
+                    ?: qualityOptions.first().second,
+                icon = Icons.Default.Tune,
+                onClick = {
+                    val currentIndex = qualityOptions.indexOfFirst { it.first == qualityLevel }
+                        .takeIf { it >= 0 } ?: 0
+                    val nextIndex = (currentIndex + 1) % qualityOptions.size
+                    val next = qualityOptions[nextIndex]
+                    AppConfig.s.qualityLevel = next.first.value
+                    Toast.makeText(
+                        context,
+                        context.getString(R.string.settings_quality_applied_toast, next.second),
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            )
+
+            SettingsDivider()
+
+            SwitchSettingItem(
+                title = androidStringResource(R.string.settings_game_shader_low_precision_title),
+                subtitle = androidStringResource(R.string.settings_game_shader_low_precision_subtitle),
+                icon = Icons.Default.FilterAlt,
+                checked = shaderLowPrecision,
+                onCheckedChange = {
+                    AppConfig.s.shaderLowPrecision = it
+                    Toast.makeText(context, context.getString(R.string.settings_restart_required_toast), Toast.LENGTH_SHORT).show()
+                }
+            )
+
+            SettingsDivider()
+
+            ClickableSettingItem(
+                title = androidStringResource(R.string.settings_game_fps_limit_title),
+                subtitle = androidStringResource(R.string.settings_game_fps_limit_subtitle),
+                value = currentFpsName,
+                icon = Icons.Default.Speed,
+                onClick = {
+                    val currentIndex = fpsOptions.indexOfFirst { it.first == targetFps }
+                        .takeIf { it >= 0 } ?: 0
+                    val nextIndex = (currentIndex + 1) % fpsOptions.size
+                    val next = fpsOptions[nextIndex]
+                    AppConfig.s.targetFps = next.first.value
+                    Toast.makeText(
+                        context,
+                        context.getString(R.string.settings_fps_limit_applied_toast, next.second),
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            )
+        }
+    }
+
+    if (showDotNetRuntimeDialog) {
+        DotNetRuntimeSelectDialog(
+            currentRuntimeVersion = currentDotNetRuntimeVersion,
+            runtimes = dotNetRuntimeOptions,
+            onSelect = { version ->
+                val normalized = version.trim()
+                if (normalized.isNotEmpty()) {
+                    AppConfig.s.selectedDotnetRuntimeVersion = normalized
+                    Toast.makeText(
+                        context,
+                        context.getString(R.string.main_runtime_switched, normalized),
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+                showDotNetRuntimeDialog = false
+            },
+            onDismiss = { showDotNetRuntimeDialog = false }
+        )
+    }
+
+    if (showRendererDialog) {
+        RendererSelectDialog(
+            currentRenderer = rendererType,
+            renderers = availableRenderers,
+            onSelect = { renderer ->
+                AppConfig.s.fnaRenderer = renderer
+                showRendererDialog = false
+            },
+            onDismiss = { showRendererDialog = false }
+        )
     }
 }
 
 @Composable
 private fun LauncherSettingsPane(
     navState: NavState,
-    viewModel: SettingsViewModel,
-    uiState: SettingsUiState,
     assetStatusSummaryState: MutableState<String>
 ) {
     val context = LocalContext.current
@@ -633,6 +663,8 @@ private fun LauncherSettingsPane(
     var isCheckingAssets by remember { mutableStateOf(false) }
     var isForceReinstallingAssets by remember { mutableStateOf(false) }
     val assetStatusSummary = assetStatusSummaryState.value
+    val multiplayerEnabled by AppConfig.flowOf(AppSettings::multiplayerEnabled).collectAsStateWithLifecycle(false)
+    val multiplayerDisclaimerAccepted by AppConfig.flowOf(AppSettings::multiplayerDisclaimerAccepted).collectAsStateWithLifecycle(false)
 
     SettingsPaneColumn {
         SettingsSection(title = androidStringResource(R.string.settings_launcher_assets_section)) {
@@ -683,16 +715,12 @@ private fun LauncherSettingsPane(
                 title = androidStringResource(R.string.settings_launcher_enable_multiplayer_title),
                 subtitle = androidStringResource(R.string.settings_launcher_enable_multiplayer_subtitle),
                 icon = Icons.Default.Wifi,
-                checked = uiState.multiplayerEnabled,
+                checked = multiplayerEnabled,
                 onCheckedChange = { enabled ->
-                    if (enabled) {
-                        if (!uiState.multiplayerDisclaimerAccepted) {
-                            showMultiplayerDisclaimerDialog = true
-                        } else {
-                            viewModel.onEvent(SettingsEvent.SetMultiplayerEnabled(true))
-                        }
+                    if (enabled && !multiplayerDisclaimerAccepted) {
+                        showMultiplayerDisclaimerDialog = true
                     } else {
-                        viewModel.onEvent(SettingsEvent.SetMultiplayerEnabled(false))
+                        AppConfig.s.multiplayerEnabled = enabled
                     }
                 }
             )
@@ -721,7 +749,9 @@ private fun LauncherSettingsPane(
         MultiplayerDisclaimerDialog(
             onConfirm = {
                 showMultiplayerDisclaimerDialog = false
-                viewModel.onEvent(SettingsEvent.AcceptMultiplayerDisclaimer)
+                AppConfig.updateSave {
+                    it.copy(multiplayerDisclaimerAccepted = true, multiplayerEnabled = true)
+                }
                 Toast.makeText(
                     context,
                     context.getString(R.string.settings_multiplayer_enabled),
@@ -801,9 +831,7 @@ private fun LauncherSettingsPane(
 
 @Composable
 private fun DeveloperSettingsPane(
-    navState: NavState,
-    viewModel: SettingsViewModel,
-    uiState: SettingsUiState
+    navState: NavState
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -817,177 +845,196 @@ private fun DeveloperSettingsPane(
         }
     }
 
-    with(uiState) {
-        SettingsPaneColumn {
-            SettingsSection(title = androidStringResource(R.string.settings_developer_logging_section)) {
-                SwitchSettingItem(
-                    title = androidStringResource(R.string.settings_developer_logging_enable_title),
-                    subtitle = androidStringResource(R.string.settings_developer_logging_enable_subtitle),
-                    icon = Icons.Default.Description,
-                    checked = loggingEnabled,
-                    onCheckedChange = { viewModel.onEvent(SettingsEvent.SetLoggingEnabled(it)) }
-                )
+    val loggingEnabled by AppConfig.flowOf(AppSettings::logSystemEnabled).collectAsStateWithLifecycle(true)
+    val verboseLogging by AppConfig.flowOf(AppSettings::verboseLogging).collectAsStateWithLifecycle(false)
+    val bigCoreAffinityEnabled by AppConfig.flowOf(AppSettings::setThreadAffinityToBigCore).collectAsStateWithLifecycle(false)
+    val killLauncherUIEnabled by AppConfig.flowOf(AppSettings::killLauncherUIAfterLaunch).collectAsStateWithLifecycle(false)
+    val lowLatencyAudioEnabled by AppConfig.flowOf(AppSettings::sdlAaudioLowLatency).collectAsStateWithLifecycle(false)
+    val serverGCEnabled by AppConfig.flowOf(AppSettings::serverGC).collectAsStateWithLifecycle(false)
+    val concurrentGCEnabled by AppConfig.flowOf(AppSettings::concurrentGC).collectAsStateWithLifecycle(true)
+    val tieredCompilationEnabled by AppConfig.flowOf(AppSettings::tieredCompilation).collectAsStateWithLifecycle(true)
+    val coreClrXiaomiCompatEnabled by AppConfig.flowOf(AppSettings::coreClrXiaomiCompatEnabled).collectAsStateWithLifecycle(false)
+    val fnaMapBufferRangeOptEnabled by AppConfig.flowOf(AppSettings::fnaMapBufferRangeOptimization).collectAsStateWithLifecycle(true)
+    val fnaGlPerfDiagnosticsEnabled by AppConfig.flowOf(AppSettings::fnaGlPerfDiagnosticsEnabled).collectAsStateWithLifecycle(false)
 
-                SettingsDivider()
+    SettingsPaneColumn {
+        SettingsSection(title = androidStringResource(R.string.settings_developer_logging_section)) {
+            SwitchSettingItem(
+                title = androidStringResource(R.string.settings_developer_logging_enable_title),
+                subtitle = androidStringResource(R.string.settings_developer_logging_enable_subtitle),
+                icon = Icons.Default.Description,
+                checked = loggingEnabled,
+                onCheckedChange = { AppConfig.s.logSystemEnabled = it }
+            )
 
-                SwitchSettingItem(
-                    title = androidStringResource(R.string.settings_developer_verbose_logging_title),
-                    subtitle = androidStringResource(R.string.settings_developer_verbose_logging_subtitle),
-                    icon = Icons.Default.BugReport,
-                    checked = verboseLogging,
-                    onCheckedChange = { viewModel.onEvent(SettingsEvent.SetVerboseLogging(it)) }
-                )
+            SettingsDivider()
 
-                SettingsDivider()
+            SwitchSettingItem(
+                title = androidStringResource(R.string.settings_developer_verbose_logging_title),
+                subtitle = androidStringResource(R.string.settings_developer_verbose_logging_subtitle),
+                icon = Icons.Default.BugReport,
+                checked = verboseLogging,
+                onCheckedChange = { AppConfig.s.verboseLogging = it }
+            )
 
-                ClickableSettingItem(
-                    title = androidStringResource(R.string.settings_developer_view_logs_title),
-                    subtitle = androidStringResource(R.string.settings_developer_view_logs_subtitle),
-                    icon = Icons.Default.Visibility,
-                    onClick = { navState.navigateToLogViewer() }
-                )
+            SettingsDivider()
 
-                SettingsDivider()
+            ClickableSettingItem(
+                title = androidStringResource(R.string.settings_developer_view_logs_title),
+                subtitle = androidStringResource(R.string.settings_developer_view_logs_subtitle),
+                icon = Icons.Default.Visibility,
+                onClick = { navState.navigateToLogViewer() }
+            )
 
-                ClickableSettingItem(
-                    title = androidStringResource(R.string.settings_developer_export_logs_title),
-                    subtitle = androidStringResource(R.string.settings_developer_export_logs_subtitle),
-                    icon = Icons.Default.Download,
-                    onClick = { logExportLauncher.launch(LogFilePolicy.appLogFileName()) }
-                )
+            SettingsDivider()
 
-                SettingsDivider()
+            ClickableSettingItem(
+                title = androidStringResource(R.string.settings_developer_export_logs_title),
+                subtitle = androidStringResource(R.string.settings_developer_export_logs_subtitle),
+                icon = Icons.Default.Download,
+                onClick = { logExportLauncher.launch(LogFilePolicy.appLogFileName()) }
+            )
 
-                ClickableSettingItem(
-                    title = androidStringResource(R.string.settings_developer_share_logs_title),
-                    subtitle = androidStringResource(R.string.settings_developer_share_logs_subtitle),
-                    icon = Icons.Default.Share,
-                    onClick = {
-                        scope.launch {
-                            shareLogs(context)
-                        }
+            SettingsDivider()
+
+            ClickableSettingItem(
+                title = androidStringResource(R.string.settings_developer_share_logs_title),
+                subtitle = androidStringResource(R.string.settings_developer_share_logs_subtitle),
+                icon = Icons.Default.Share,
+                onClick = {
+                    scope.launch {
+                        shareLogs(context)
                     }
-                )
-            }
-
-            SettingsSection(title = androidStringResource(R.string.settings_developer_performance_section)) {
-                SwitchSettingItem(
-                    title = androidStringResource(R.string.thread_affinity_big_core),
-                    subtitle = androidStringResource(R.string.thread_affinity_big_core_desc),
-                    icon = Icons.Default.Memory,
-                    checked = bigCoreAffinityEnabled,
-                    onCheckedChange = { viewModel.onEvent(SettingsEvent.SetBigCoreAffinity(it)) }
-                )
-
-                SettingsDivider()
-
-                SwitchSettingItem(
-                    title = androidStringResource(R.string.settings_developer_kill_launcher_ui_title),
-                    subtitle = androidStringResource(R.string.settings_developer_kill_launcher_ui_subtitle),
-                    icon = Icons.AutoMirrored.Filled.ExitToApp,
-                    checked = killLauncherUIEnabled,
-                    onCheckedChange = { viewModel.onEvent(SettingsEvent.SetKillLauncherUI(it)) }
-                )
-
-                SettingsDivider()
-
-                SwitchSettingItem(
-                    title = androidStringResource(R.string.low_latency_audio),
-                    subtitle = androidStringResource(R.string.settings_game_low_latency_audio_subtitle),
-                    icon = Icons.Default.Audiotrack,
-                    checked = lowLatencyAudioEnabled,
-                    onCheckedChange = { viewModel.onEvent(SettingsEvent.SetLowLatencyAudio(it)) }
-                )
-            }
-
-            SettingsSection(title = androidStringResource(R.string.settings_developer_dotnet_section)) {
-                SwitchSettingItem(
-                    title = androidStringResource(R.string.settings_developer_server_gc_title),
-                    subtitle = androidStringResource(R.string.settings_developer_server_gc_subtitle),
-                    icon = Icons.Default.Storage,
-                    checked = serverGCEnabled,
-                    onCheckedChange = { viewModel.onEvent(SettingsEvent.SetServerGC(it)) }
-                )
-
-                SettingsDivider()
-
-                SwitchSettingItem(
-                    title = androidStringResource(R.string.settings_developer_concurrent_gc_title),
-                    subtitle = androidStringResource(R.string.settings_developer_concurrent_gc_subtitle),
-                    icon = Icons.Default.Sync,
-                    checked = concurrentGCEnabled,
-                    onCheckedChange = { viewModel.onEvent(SettingsEvent.SetConcurrentGC(it)) }
-                )
-
-                SettingsDivider()
-
-                SwitchSettingItem(
-                    title = androidStringResource(R.string.settings_developer_tiered_compilation_title),
-                    subtitle = androidStringResource(R.string.settings_developer_tiered_compilation_subtitle),
-                    icon = Icons.Default.Layers,
-                    checked = tieredCompilationEnabled,
-                    onCheckedChange = { viewModel.onEvent(SettingsEvent.SetTieredCompilation(it)) }
-                )
-
-                SettingsDivider()
-
-                SwitchSettingItem(
-                    title = androidStringResource(R.string.settings_developer_coreclr_compat_title),
-                    subtitle = androidStringResource(R.string.settings_developer_coreclr_compat_subtitle),
-                    icon = Icons.Default.Security,
-                    checked = coreClrXiaomiCompatEnabled,
-                    onCheckedChange = { viewModel.onEvent(SettingsEvent.SetCoreClrXiaomiCompat(it)) }
-                )
-            }
-
-            SettingsSection(title = androidStringResource(R.string.settings_developer_fna_section)) {
-                SwitchSettingItem(
-                    title = androidStringResource(R.string.settings_developer_map_buffer_range_title),
-                    subtitle = androidStringResource(R.string.settings_developer_map_buffer_range_subtitle),
-                    icon = Icons.Default.Speed,
-                    checked = fnaMapBufferRangeOptEnabled,
-                    onCheckedChange = { viewModel.onEvent(SettingsEvent.SetFnaMapBufferRangeOpt(it)) }
-                )
-
-                SettingsDivider()
-
-                SwitchSettingItem(
-                    title = androidStringResource(R.string.settings_developer_gl_perf_diag_title),
-                    subtitle = androidStringResource(R.string.settings_developer_gl_perf_diag_subtitle),
-                    icon = Icons.Default.Timeline,
-                    checked = fnaGlPerfDiagnosticsEnabled,
-                    onCheckedChange = { viewModel.onEvent(SettingsEvent.SetFnaGlPerfDiagnostics(it)) }
-                )
-            }
-
-            SettingsSection(title = androidStringResource(R.string.settings_developer_maintenance_section)) {
-                ClickableSettingItem(
-                    title = androidStringResource(R.string.settings_developer_clear_cache_title),
-                    subtitle = androidStringResource(R.string.settings_developer_clear_cache_subtitle),
-                    icon = Icons.Default.DeleteSweep,
-                    onClick = { clearAppCache(context) }
-                )
-
-                SettingsDivider()
-
-                ClickableSettingItem(
-                    title = androidStringResource(R.string.force_reinstall_patches),
-                    subtitle = androidStringResource(R.string.force_reinstall_patches_desc),
-                    icon = Icons.Default.Refresh,
-                    onClick = { forceReinstallPatches(context) }
-                )
-            }
+                }
+            )
         }
 
+        SettingsSection(title = androidStringResource(R.string.settings_developer_performance_section)) {
+            SwitchSettingItem(
+                title = androidStringResource(R.string.thread_affinity_big_core),
+                subtitle = androidStringResource(R.string.thread_affinity_big_core_desc),
+                icon = Icons.Default.Memory,
+                checked = bigCoreAffinityEnabled,
+                onCheckedChange = { AppConfig.s.setThreadAffinityToBigCore = it }
+            )
+
+            SettingsDivider()
+
+            SwitchSettingItem(
+                title = androidStringResource(R.string.settings_developer_kill_launcher_ui_title),
+                subtitle = androidStringResource(R.string.settings_developer_kill_launcher_ui_subtitle),
+                icon = Icons.AutoMirrored.Filled.ExitToApp,
+                checked = killLauncherUIEnabled,
+                onCheckedChange = { AppConfig.s.killLauncherUIAfterLaunch = it }
+            )
+
+            SettingsDivider()
+
+            SwitchSettingItem(
+                title = androidStringResource(R.string.low_latency_audio),
+                subtitle = androidStringResource(R.string.settings_game_low_latency_audio_subtitle),
+                icon = Icons.Default.Audiotrack,
+                checked = lowLatencyAudioEnabled,
+                onCheckedChange = { AppConfig.s.sdlAaudioLowLatency = it }
+            )
+        }
+
+        SettingsSection(title = androidStringResource(R.string.settings_developer_dotnet_section)) {
+            SwitchSettingItem(
+                title = androidStringResource(R.string.settings_developer_server_gc_title),
+                subtitle = androidStringResource(R.string.settings_developer_server_gc_subtitle),
+                icon = Icons.Default.Storage,
+                checked = serverGCEnabled,
+                onCheckedChange = {
+                    AppConfig.s.serverGC = it
+                    Toast.makeText(context, context.getString(R.string.settings_restart_required_toast), Toast.LENGTH_SHORT).show()
+                }
+            )
+
+            SettingsDivider()
+
+            SwitchSettingItem(
+                title = androidStringResource(R.string.settings_developer_concurrent_gc_title),
+                subtitle = androidStringResource(R.string.settings_developer_concurrent_gc_subtitle),
+                icon = Icons.Default.Sync,
+                checked = concurrentGCEnabled,
+                onCheckedChange = {
+                    AppConfig.s.concurrentGC = it
+                    Toast.makeText(context, context.getString(R.string.settings_restart_required_toast), Toast.LENGTH_SHORT).show()
+                }
+            )
+
+            SettingsDivider()
+
+            SwitchSettingItem(
+                title = androidStringResource(R.string.settings_developer_tiered_compilation_title),
+                subtitle = androidStringResource(R.string.settings_developer_tiered_compilation_subtitle),
+                icon = Icons.Default.Layers,
+                checked = tieredCompilationEnabled,
+                onCheckedChange = {
+                    AppConfig.s.tieredCompilation = it
+                    Toast.makeText(context, context.getString(R.string.settings_restart_required_toast), Toast.LENGTH_SHORT).show()
+                }
+            )
+
+            SettingsDivider()
+
+            SwitchSettingItem(
+                title = androidStringResource(R.string.settings_developer_coreclr_compat_title),
+                subtitle = androidStringResource(R.string.settings_developer_coreclr_compat_subtitle),
+                icon = Icons.Default.Security,
+                checked = coreClrXiaomiCompatEnabled,
+                onCheckedChange = { AppConfig.s.coreClrXiaomiCompatEnabled = it }
+            )
+        }
+
+        SettingsSection(title = androidStringResource(R.string.settings_developer_fna_section)) {
+            SwitchSettingItem(
+                title = androidStringResource(R.string.settings_developer_map_buffer_range_title),
+                subtitle = androidStringResource(R.string.settings_developer_map_buffer_range_subtitle),
+                icon = Icons.Default.Speed,
+                checked = fnaMapBufferRangeOptEnabled,
+                onCheckedChange = { AppConfig.s.fnaMapBufferRangeOptimization = it }
+            )
+
+            SettingsDivider()
+
+            SwitchSettingItem(
+                title = androidStringResource(R.string.settings_developer_gl_perf_diag_title),
+                subtitle = androidStringResource(R.string.settings_developer_gl_perf_diag_subtitle),
+                icon = Icons.Default.Timeline,
+                checked = fnaGlPerfDiagnosticsEnabled,
+                onCheckedChange = { AppConfig.s.fnaGlPerfDiagnosticsEnabled = it }
+            )
+        }
+
+        SettingsSection(title = androidStringResource(R.string.settings_developer_maintenance_section)) {
+            ClickableSettingItem(
+                title = androidStringResource(R.string.settings_developer_clear_cache_title),
+                subtitle = androidStringResource(R.string.settings_developer_clear_cache_subtitle),
+                icon = Icons.Default.DeleteSweep,
+                onClick = { clearAppCache(context) }
+            )
+
+            SettingsDivider()
+
+            ClickableSettingItem(
+                title = androidStringResource(R.string.force_reinstall_patches),
+                subtitle = androidStringResource(R.string.force_reinstall_patches_desc),
+                icon = Icons.Default.Refresh,
+                onClick = { forceReinstallPatches(context) }
+            )
+        }
     }
+
 }
 
 @Composable
 private fun AboutSettingsPane(
-    uiState: SettingsUiState,
     onCheckLauncherUpdate: () -> Unit
 ) {
     val context = LocalContext.current
+    val appInfo: AppInfo = koinInject()
     var showLicenseDialog by remember { mutableStateOf(false) }
     var appInfoTapCount by rememberSaveable { mutableIntStateOf(0) }
     val communityLinks = listOf(
@@ -1032,131 +1079,132 @@ private fun AboutSettingsPane(
         )
     )
 
-    with(uiState) {
-        SettingsPaneColumn {
-            SettingsSection(title = androidStringResource(R.string.settings_about_app_info_section)) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable {
-                            val nextTapCount = appInfoTapCount + 1
-                            if (nextTapCount >= APP_INFO_EASTER_EGG_TRIGGER_COUNT) {
-                                appInfoTapCount = 0
-                                openUrl(
-                                    context,
-                                    if (isChineseLanguage(context)) {
-                                        APP_INFO_EASTER_EGG_ZH_URL
-                                    } else {
-                                        APP_INFO_EASTER_EGG_NON_ZH_URL
-                                    }
-                                )
-                            } else {
-                                appInfoTapCount = nextTapCount
-                            }
-                        }
-                        .padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Info,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(48.dp)
-                    )
+    val appVersion = appInfo.versionName
+    val buildInfo = appInfo.versionCode.toString()
 
-                    Spacer(modifier = Modifier.width(16.dp))
-
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = androidStringResource(R.string.app_name),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            text = "${androidStringResource(R.string.about_version_label)} $appVersion",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        if (buildInfo.isNotEmpty()) {
-                            Text(
-                                text = "${androidStringResource(R.string.about_build_label)} $buildInfo",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+    SettingsPaneColumn {
+        SettingsSection(title = androidStringResource(R.string.settings_about_app_info_section)) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable {
+                        val nextTapCount = appInfoTapCount + 1
+                        if (nextTapCount >= APP_INFO_EASTER_EGG_TRIGGER_COUNT) {
+                            appInfoTapCount = 0
+                            openUrl(
+                                context,
+                                if (isChineseLanguage(context)) {
+                                    APP_INFO_EASTER_EGG_ZH_URL
+                                } else {
+                                    APP_INFO_EASTER_EGG_NON_ZH_URL
+                                }
                             )
+                        } else {
+                            appInfoTapCount = nextTapCount
                         }
                     }
-                }
-
-                SettingsDivider()
-
-                ClickableSettingItem(
-                    title = androidStringResource(R.string.settings_about_check_update_title),
-                    subtitle = androidStringResource(R.string.settings_about_check_update_subtitle),
-                    icon = Icons.Default.Update,
-                    onClick = onCheckLauncherUpdate
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Info,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(48.dp)
                 )
-            }
 
-            SettingsSection(title = androidStringResource(R.string.settings_about_community_section)) {
-                communityLinks.forEachIndexed { index, link ->
-                    if (index > 0) {
-                        SettingsDivider()
-                    }
-                    ClickableSettingItem(
-                        title = link.title,
-                        subtitle = androidStringResource(R.string.settings_about_community_subtitle),
-                        icon = link.icon,
-                        onClick = { openUrl(context, link.url) }
+                Spacer(modifier = Modifier.width(16.dp))
+
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = androidStringResource(R.string.app_name),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
                     )
+                    Text(
+                        text = "${androidStringResource(R.string.about_version_label)} $appVersion",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    if (buildInfo.isNotEmpty()) {
+                        Text(
+                            text = "${androidStringResource(R.string.about_build_label)} $buildInfo",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                        )
+                    }
                 }
             }
 
-            SettingsSection(title = androidStringResource(R.string.settings_about_support_section)) {
-                ClickableSettingItem(
-                    title = androidStringResource(R.string.settings_about_sponsor_wall_title),
-                    subtitle = androidStringResource(R.string.settings_about_sponsor_wall_subtitle),
-                    icon = Icons.Default.People,
-                    onClick = { openSponsorsPage(context) }
-                )
+            SettingsDivider()
 
-                sponsorLinks.forEach { link ->
+            ClickableSettingItem(
+                title = androidStringResource(R.string.settings_about_check_update_title),
+                subtitle = androidStringResource(R.string.settings_about_check_update_subtitle),
+                icon = Icons.Default.Update,
+                onClick = onCheckLauncherUpdate
+            )
+        }
+
+        SettingsSection(title = androidStringResource(R.string.settings_about_community_section)) {
+            communityLinks.forEachIndexed { index, link ->
+                if (index > 0) {
                     SettingsDivider()
-                    ClickableSettingItem(
-                        title = link.title,
-                        subtitle = androidStringResource(R.string.settings_about_become_sponsor_subtitle),
-                        icon = link.icon,
-                        onClick = { openUrl(context, link.url) }
-                    )
                 }
-            }
-
-            SettingsSection(title = androidStringResource(R.string.settings_about_contributors_section)) {
-                contributors.forEachIndexed { index, contributor ->
-                    if (index > 0) {
-                        SettingsDivider()
-                    }
-                    ClickableSettingItem(
-                        title = contributor.name,
-                        subtitle = contributor.role,
-                        icon = Icons.Default.Person,
-                        onClick = { openUrl(context, contributor.githubUrl) }
-                    )
-                }
-            }
-
-            SettingsSection(title = androidStringResource(R.string.settings_about_open_source_section)) {
                 ClickableSettingItem(
-                    title = androidStringResource(R.string.settings_open_source_licenses),
-                    subtitle = androidStringResource(R.string.settings_about_open_source_subtitle),
-                    icon = Icons.Default.Description,
-                    onClick = { showLicenseDialog = true }
+                    title = link.title,
+                    subtitle = androidStringResource(R.string.settings_about_community_subtitle),
+                    icon = link.icon,
+                    onClick = { openUrl(context, link.url) }
                 )
             }
         }
 
-        if (showLicenseDialog) {
-            LicenseDialog(onDismiss = { showLicenseDialog = false })
+        SettingsSection(title = androidStringResource(R.string.settings_about_support_section)) {
+            ClickableSettingItem(
+                title = androidStringResource(R.string.settings_about_sponsor_wall_title),
+                subtitle = androidStringResource(R.string.settings_about_sponsor_wall_subtitle),
+                icon = Icons.Default.People,
+                onClick = { openSponsorsPage(context) }
+            )
+
+            sponsorLinks.forEach { link ->
+                SettingsDivider()
+                ClickableSettingItem(
+                    title = link.title,
+                    subtitle = androidStringResource(R.string.settings_about_become_sponsor_subtitle),
+                    icon = link.icon,
+                    onClick = { openUrl(context, link.url) }
+                )
+            }
         }
+
+        SettingsSection(title = androidStringResource(R.string.settings_about_contributors_section)) {
+            contributors.forEachIndexed { index, contributor ->
+                if (index > 0) {
+                    SettingsDivider()
+                }
+                ClickableSettingItem(
+                    title = contributor.name,
+                    subtitle = contributor.role,
+                    icon = Icons.Default.Person,
+                    onClick = { openUrl(context, contributor.githubUrl) }
+                )
+            }
+        }
+
+        SettingsSection(title = androidStringResource(R.string.settings_about_open_source_section)) {
+            ClickableSettingItem(
+                title = androidStringResource(R.string.settings_open_source_licenses),
+                subtitle = androidStringResource(R.string.settings_about_open_source_subtitle),
+                icon = Icons.Default.Description,
+                onClick = { showLicenseDialog = true }
+            )
+        }
+    }
+
+    if (showLicenseDialog) {
+        LicenseDialog(onDismiss = { showLicenseDialog = false })
     }
 }
 
@@ -1188,6 +1236,13 @@ private fun audioBufferSizeSliderSteps(): Int =
 private fun audioBufferSizeToSliderPosition(bufferSize: Int?): Float {
     val index = AUDIO_BUFFER_SIZE_OPTIONS.indexOf(bufferSize).takeIf { it >= 0 } ?: 0
     return index.toFloat()
+}
+
+/** 音频缓冲区仅接受 16..1024 的 2 的幂，其余（含手改配置的脏值）按未设置（Auto）显示 */
+private fun normalizeRalAudioBufferSize(value: Int?): Int? {
+    if (value == null) return null
+    if (value < 16 || value > 1024) return null
+    return if ((value and (value - 1)) == 0) value else null
 }
 
 private fun sliderPositionToAudioBufferSize(sliderValue: Float): Int? {

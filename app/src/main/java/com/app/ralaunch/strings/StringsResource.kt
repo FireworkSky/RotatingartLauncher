@@ -3,28 +3,28 @@ package com.app.ralaunch.strings
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import com.app.ralaunch.ConfigurationState
+import com.app.ralaunch.core.config.AppConfig
 import com.app.ralaunch.strings.generated.*
 
 /*******************************************************************************
  * RotatingArtLauncher - StringsResource
- * 
+ *
  * This file is part of the RotatingArtLauncher project.
- * 
+ *
  * Copyright (C) 2026 RotatingArtLauncher Contributors
- * 
+ *
  * Created by: eternalfuture-e38299 (2026/7/5)
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  *******************************************************************************/
@@ -33,26 +33,41 @@ object StringsResource {
     var Strings by mutableStateOf<LocaleStrings>(ZhHans)
 
     init {
-        setLanguage(ConfigurationState.language)
+        // 只读内存配置（AppConfig.c），避免启动阶段触发落盘
+        updateStrings(Language.fromCode(AppConfig.c.language))
     }
 
     fun setLanguage(code: Language) {
-        ConfigurationState.language = code
-        val code = if (code == Language.System) fromSystemLocale() else code
-        Strings = when (code) {
+        AppConfig.s.language = code.code
+        updateStrings(code)
+    }
+
+    private fun updateStrings(code: Language) {
+        val resolved = if (code == Language.System) fromSystemLocale() else code
+        Strings = when (resolved) {
             Language.ZhHans -> ZhHans
             Language.En -> En
             else -> ZhHans
         }
     }
 
-    enum class Language {
-        System, ZhHans, En;
+    enum class Language(val code: String) {
+        System("auto"), ZhHans("zh"), En("en");
+
         fun string(): String {
             return when(this) {
                 System -> Strings.settings.system
                 ZhHans -> "简体中文"
                 En -> "English"
+            }
+        }
+
+        companion object {
+            /** 将持久化的语言代码（"auto"/"zh"/"en"/...）解析为可选语言，未知代码回退跟随系统 */
+            fun fromCode(code: String): Language = when {
+                code.startsWith("zh") -> ZhHans
+                code.startsWith("en") -> En
+                else -> System
             }
         }
     }
@@ -77,5 +92,5 @@ object StringsResource {
         }
     }
 
-    fun getCurrentLanguage(): Language = ConfigurationState.language
+    fun getCurrentLanguage(): Language = Language.fromCode(AppConfig.c.language)
 }

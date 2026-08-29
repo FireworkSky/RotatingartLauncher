@@ -34,7 +34,7 @@ import com.app.ralaunch.feature.controls.textures.TextureConfig
 import com.app.ralaunch.feature.controls.textures.TextureLoader
 import com.app.ralaunch.feature.controls.ui.ControlLayout as ControlLayoutView
 import com.app.ralaunch.feature.controls.ui.GridOverlayView
-import com.app.ralaunch.core.common.SettingsAccess
+import com.app.ralaunch.core.config.AppConfig
 import com.app.ralaunch.core.platform.network.easytier.EasyTierConnectionState
 import com.app.ralaunch.core.platform.network.easytier.EasyTierManager
 import kotlinx.coroutines.flow.SharedFlow
@@ -48,7 +48,6 @@ import java.io.File
 fun GameControlsOverlay(
     controlLayoutView: ControlLayoutView,
     packManager: ControlPackManager,
-    settingsManager: SettingsAccess,
     toggleFloatingBallEvent: SharedFlow<Unit>,
     onExitGame: () -> Unit,
     onEditModeChanged: (Boolean) -> Unit = {},
@@ -84,8 +83,8 @@ fun GameControlsOverlay(
     
     // 初始化菜单状态 & 启动日志收集
     LaunchedEffect(Unit) {
-        menuState.isFpsDisplayEnabled = settingsManager.isFPSDisplayEnabled
-        menuState.isTouchEventEnabled = settingsManager.isTouchEventEnabled
+        menuState.isFpsDisplayEnabled = AppConfig.c.fpsDisplayEnabled
+        menuState.isTouchEventEnabled = AppConfig.c.touchEventEnabled
         ConsoleManager.start()
         
         // 初始化布局切换状态（优先使用快速切换列表，如果为空则显示全部）
@@ -190,7 +189,7 @@ fun GameControlsOverlay(
     }
     
     // 回调实现
-    val callbacks = remember(controlLayoutView, packManager, settingsManager, context) {
+    val callbacks = remember(controlLayoutView, packManager, context) {
         object : FloatingMenuCallbacks {
             override fun onAddButton() {
                 val layout = controlLayoutView.currentLayout ?: ControlLayout().also {
@@ -283,11 +282,11 @@ fun GameControlsOverlay(
             }
             
             override fun onFpsDisplayChanged(enabled: Boolean) {
-                settingsManager.isFPSDisplayEnabled = enabled
+                AppConfig.s.fpsDisplayEnabled = enabled
             }
-            
+
             override fun onTouchEventChanged(enabled: Boolean) {
-                settingsManager.isTouchEventEnabled = enabled
+                AppConfig.s.touchEventEnabled = enabled
             }
             
             override fun onExitGame() {
@@ -321,7 +320,7 @@ fun GameControlsOverlay(
             }
             
             override fun isMultiplayerFeatureEnabled(): Boolean {
-                return settingsManager.isMultiplayerEnabled
+                return AppConfig.c.multiplayerEnabled
             }
             
             // no_tun 模式下 VPN 权限不再需要，保留接口兼容

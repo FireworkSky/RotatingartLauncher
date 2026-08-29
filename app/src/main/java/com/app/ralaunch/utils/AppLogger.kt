@@ -11,7 +11,7 @@ import java.io.FileWriter
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
-import com.app.ralaunch.ConfigurationState
+import com.app.ralaunch.core.config.AppConfig
 import com.app.ralaunch.core.logging.LogFilePolicy
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -46,8 +46,6 @@ object AppLogger {
     const val LOG_FILE_MAX_COUNT = 20
 
     private const val LOG_DIR = "logs"
-    private val MAX_FILE_SIZE_BYTES = ConfigurationState.logFileMaxSize // 10MB
-    private val MAX_LOG_FILES = ConfigurationState.logFileMaxCount
     private const val LOG_EXTENSION = ".log"
     private const val TIME_FORMAT = "yyyy-MM-dd HH:mm:ss.SSS"
     private const val DEFAULT_TAG = "RaLaunchApp"
@@ -59,10 +57,17 @@ object AppLogger {
     private var isInitialized = false
 
     // 日志级别过滤 - 默认记录所有级别
-    private var currentLogLevel = ConfigurationState.logLevel
+    private var currentLogLevel = LogLevel.fromName(AppConfig.c.logLevel)
 
     // 是否启用文件日志（默认启用）
-    private var fileLogEnabled = ConfigurationState.logFileEnabled
+    private var fileLogEnabled = AppConfig.c.logFileEnabled
+
+    /** 实时读取配置：设置页修改后无需重启即可生效 */
+    private val maxFileSizeBytes: Long
+        get() = AppConfig.c.logFileMaxSizeMb * 1024L * 1024L
+
+    private val maxLogFiles: Int
+        get() = AppConfig.c.logFileMaxCount
 
     /**
      * 日志级别枚举
@@ -87,6 +92,11 @@ object AppLogger {
                 ASSERT -> "ASSERT"
                 NONE -> "NONE"
             }
+
+        companion object {
+            fun fromName(name: String): LogLevel =
+                entries.find { it.name == name } ?: INFO
+        }
     }
 
     /**
@@ -120,7 +130,7 @@ object AppLogger {
     }
 
     /**
-     * 运行时更新日志配置（供未来设置系统接入，当前初始值来自 ConfigurationState）
+     * 运行时更新日志配置（设置页修改 AppConfig 后调用，使其立即生效）
      */
     fun updateLoggingConfig(logLevel: LogLevel? = null, fileEnabled: Boolean? = null) {
         logLevel?.let { currentLogLevel = it }
@@ -146,14 +156,14 @@ object AppLogger {
         val sortedFiles = files.sortedByDescending { it.lastModified() }
 
         // 删除超过数量限制的文件
-        if (sortedFiles.size > MAX_LOG_FILES) {
-            sortedFiles.drop(MAX_LOG_FILES).forEach { it.delete() }
+        if (sortedFiles.size > maxLogFiles) {
+            sortedFiles.drop(maxLogFiles).forEach { it.delete() }
         }
 
         // 计算总大小并删除最旧的文件
         var totalSize = sortedFiles.sumOf { it.length() }
-        if (totalSize > MAX_FILE_SIZE_BYTES * MAX_LOG_FILES) {
-            val toDelete = sortedFiles.drop(MAX_LOG_FILES / 2)
+        if (totalSize > maxFileSizeBytes * maxLogFiles) {
+            val toDelete = sortedFiles.drop(maxLogFiles / 2)
             toDelete.forEach {
                 totalSize -= it.length()
                 it.delete()
@@ -171,7 +181,7 @@ object AppLogger {
         val file = File(dir, fileName)
 
         // 如果文件超过大小限制，创建新文件
-        if (file.exists() && file.length() >= MAX_FILE_SIZE_BYTES) {
+        if (file.exists() && file.length() >= maxFileSizeBytes) {
             val timestamp = SimpleDateFormat("HH-mm-ss", Locale.getDefault()).format(Date())
             return File(dir, fileName.removeSuffix(LOG_EXTENSION) + "_$timestamp$LOG_EXTENSION")
         }

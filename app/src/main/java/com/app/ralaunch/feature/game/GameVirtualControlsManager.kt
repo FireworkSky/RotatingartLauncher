@@ -4,25 +4,22 @@ import android.app.Activity
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.ui.platform.ComposeView
 import androidx.lifecycle.setViewTreeLifecycleOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import com.app.ralaunch.R
+import com.app.ralaunch.core.theme.RaLaunchTheme
 import com.app.ralaunch.feature.controls.bridges.SDLInputBridge
 import com.app.ralaunch.feature.controls.editors.ui.GameControlsOverlay
 import com.app.ralaunch.feature.controls.packs.ControlPackManager
 import com.app.ralaunch.feature.controls.ui.ControlLayout
-import com.app.ralaunch.core.common.SettingsAccess
-import timber.log.Timber
 import com.app.ralaunch.feature.main.ui.background.FPSDisplayView
-import org.koin.java.KoinJavaComponent
-import org.libsdl.app.SDLSurface
-import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.material3.MaterialTheme
-import com.app.ralaunch.core.common.DynamicColorManager
-import com.app.ralaunch.core.theme.RaLaunchTheme
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import org.koin.java.KoinJavaComponent
+import org.libsdl.app.SDLSurface
+import timber.log.Timber
 
 /**
  * 负责虚拟按键和 FPS 叠层的初始化与显示控制
@@ -35,7 +32,6 @@ class GameVirtualControlsManager {
     var inputBridge: SDLInputBridge? = null
         private set
     private var fpsDisplayView: FPSDisplayView? = null
-    private var settingsManager: SettingsAccess? = null
     private var composeOverlay: ComposeView? = null
     private var onExitGameCallback: (() -> Unit)? = null
     
@@ -57,7 +53,6 @@ class GameVirtualControlsManager {
         onExitGame: () -> Unit = {}
     ) {
         try {
-            settingsManager = SettingsAccess
             inputBridge = SDLInputBridge()
             onExitGameCallback = onExitGame
 
@@ -97,7 +92,6 @@ class GameVirtualControlsManager {
 
     private fun setupComposeOverlay(activity: Activity, parentLayout: ViewGroup) {
         val packManager: ControlPackManager = KoinJavaComponent.get(ControlPackManager::class.java)
-        val settings = settingsManager ?: return
         val control = controlLayout ?: return
 
         // 追踪编辑模式状态
@@ -119,7 +113,6 @@ class GameVirtualControlsManager {
                     GameControlsOverlay(
                         controlLayoutView = control,
                         packManager = packManager,
-                        settingsManager = settings,
                         toggleFloatingBallEvent = toggleFloatingBallEvent,
                         onExitGame = { onExitGameCallback?.invoke() },
                         onEditModeChanged = { inEditMode -> 

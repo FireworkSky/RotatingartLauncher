@@ -27,10 +27,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
-import com.app.ralaunch.ConfigurationState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.app.ralaunch.core.config.AppConfig
+import com.app.ralaunch.core.model.AppSettings
+import com.app.ralaunch.core.model.ThemeMode
 import com.app.ralaunch.strings.StringsResource
 import com.app.ralaunch.strings.StringsResource.Strings
 import com.app.ralaunch.ui.component.SectionTitle
@@ -68,12 +72,20 @@ import com.materialkolor.ktx.toHex
 @Composable
 fun AppearanceScreen() {
     var showColorPicker by remember { mutableStateOf(false) }
+    val themeColor by AppConfig.flowOf(AppSettings::themeColor)
+        .collectAsStateWithLifecycle(0xFF6750A4.toInt())
+    val dynamicColor by AppConfig.flowOf(AppSettings::dynamicColor)
+        .collectAsStateWithLifecycle(true)
+    val themeMode by AppConfig.flowOf(AppSettings::themeMode)
+        .collectAsStateWithLifecycle(ThemeMode.LIGHT)
+    val language by AppConfig.flowOf(AppSettings::language)
+        .collectAsStateWithLifecycle("auto")
 
     if (showColorPicker) {
         ColorPickerDialog(
-            initialColor = ConfigurationState.themeSeedColor,
+            initialColor = Color(themeColor),
             onColorSelected = { color ->
-                ConfigurationState.themeSeedColor = color
+                AppConfig.s.themeColor = color.toArgb()
             },
             onDismiss = { showColorPicker = false }
         )
@@ -97,7 +109,7 @@ fun AppearanceScreen() {
                 description = Strings.settings.appearance.themeModeDesc,
                 trailingContent = {
                     var expanded by remember { mutableStateOf(false) }
-                    val themes = ConfigurationState.AppConfig.ThemeMode.entries.map { it.string() }
+                    val themes = ThemeMode.entries.map { it.string() }
 
                     Box {
                         OutlinedButton(
@@ -108,7 +120,7 @@ fun AppearanceScreen() {
                             )
                         ) {
                             Text(
-                                text = ConfigurationState.themeMode.string(),
+                                text = themeMode.string(),
                                 style = MaterialTheme.typography.labelMedium
                             )
                             Icon(
@@ -130,8 +142,7 @@ fun AppearanceScreen() {
                                         )
                                     },
                                     onClick = {
-                                        ConfigurationState.themeMode =
-                                            ConfigurationState.AppConfig.ThemeMode.entries.toTypedArray()[index]
+                                        AppConfig.s.themeMode = ThemeMode.entries[index]
                                         expanded = false
                                     }
                                 )
@@ -146,8 +157,8 @@ fun AppearanceScreen() {
                 description = Strings.settings.appearance.dynamicColorDesc,
                 trailingContent = {
                     Switch(
-                        checked = ConfigurationState.dynamicColor,
-                        onCheckedChange = { ConfigurationState.dynamicColor = it },
+                        checked = dynamicColor,
+                        onCheckedChange = { AppConfig.s.dynamicColor = it },
                     )
                 },
                 enabled = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
@@ -157,18 +168,18 @@ fun AppearanceScreen() {
                 icon = Icons.Rounded.ColorLens,
                 title = Strings.settings.appearance.themeColor,
                 description = Strings.settings.appearance.themeColorDesc,
-                enabled = !ConfigurationState.dynamicColor, trailingContent = {
+                enabled = !dynamicColor, trailingContent = {
                     Surface(
                         shape = CircleShape,
-                        color = if (!ConfigurationState.dynamicColor) {
-                            ConfigurationState.themeSeedColor
+                        color = if (!dynamicColor) {
+                            Color(themeColor)
                         } else {
-                            ConfigurationState.themeSeedColor.copy(alpha = 0.3f)
+                            Color(themeColor).copy(alpha = 0.3f)
                         },
                         modifier = Modifier
                             .size(32.dp)
-                            .clickable(enabled = !ConfigurationState.dynamicColor) {
-                                if (!ConfigurationState.dynamicColor) showColorPicker = true
+                            .clickable(enabled = !dynamicColor) {
+                                if (!dynamicColor) showColorPicker = true
                             }
                     ) {}
                 })
@@ -199,7 +210,7 @@ fun AppearanceScreen() {
                             )
                         ) {
                             Text(
-                                text = ConfigurationState.language.string(),
+                                text = StringsResource.Language.fromCode(language).string(),
                                 style = MaterialTheme.typography.labelMedium
                             )
                             Icon(
@@ -221,8 +232,7 @@ fun AppearanceScreen() {
                                         )
                                     },
                                     onClick = {
-                                        ConfigurationState.language =
-                                            StringsResource.Language.entries[index]
+                                        StringsResource.setLanguage(StringsResource.Language.entries[index])
                                         expanded = false
                                     }
                                 )
@@ -232,6 +242,13 @@ fun AppearanceScreen() {
                 })
         }
     }
+}
+
+/** 主题模式的旧字符串系统显示名（旧设置界面专用） */
+private fun ThemeMode.string(): String = when (this) {
+    ThemeMode.LIGHT -> Strings.settings.theme.light
+    ThemeMode.DARK -> Strings.settings.theme.dark
+    ThemeMode.FOLLOW_SYSTEM -> Strings.settings.system
 }
 
 @Composable

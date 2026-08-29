@@ -5,6 +5,7 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.plugin.serialization)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.ksp)
 }
 
 val generateStrings by tasks.registering {
@@ -112,6 +113,9 @@ android {
 }
 
 dependencies {
+    // KSP 处理器（@FlowJsonConfig 代码生成）
+    ksp(project(":ksp:jsonconfig-processor"))
+
     // 本地 JAR/AAR 依赖
     implementation(files("../external/libs/libSystem.Security.Cryptography.Native.Android.jar"))
     implementation(files("../external/libs/fmod.jar"))

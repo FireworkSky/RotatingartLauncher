@@ -25,7 +25,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.app.ralaunch.R
 import com.app.ralaunch.feature.controls.ControlData
-import com.app.ralaunch.core.common.SettingsAccess
+import com.app.ralaunch.core.config.AppConfig
 import kotlin.math.roundToInt
 
 private val PropertyPanelWidth = 384.dp
@@ -456,15 +456,14 @@ private fun formatPercentWithSingleDecimal(value: Float): String {
  */
 @Composable
 fun MouseModeSettings() {
-    val settingsManager = remember { SettingsAccess }
     
     var mouseSpeed by remember {
-        mutableStateOf(settingsManager.mouseRightStickSpeed.coerceIn(60, 500))
+        mutableStateOf(AppConfig.c.mouseRightStickSpeed.coerceIn(60, 500))
     }
-    var rangeLeft by remember { mutableStateOf(settingsManager.mouseRightStickRangeLeft) }
-    var rangeTop by remember { mutableStateOf(settingsManager.mouseRightStickRangeTop) }
-    var rangeRight by remember { mutableStateOf(settingsManager.mouseRightStickRangeRight) }
-    var rangeBottom by remember { mutableStateOf(settingsManager.mouseRightStickRangeBottom) }
+    var rangeLeft by remember { mutableStateOf(AppConfig.c.mouseRightStickRangeLeft) }
+    var rangeTop by remember { mutableStateOf(AppConfig.c.mouseRightStickRangeTop) }
+    var rangeRight by remember { mutableStateOf(AppConfig.c.mouseRightStickRangeRight) }
+    var rangeBottom by remember { mutableStateOf(AppConfig.c.mouseRightStickRangeBottom) }
     
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Column {
@@ -479,7 +478,11 @@ fun MouseModeSettings() {
                 value = (mouseSpeed - 60f) / 440f,
                 onValueChange = { 
                     mouseSpeed = (60 + (it * 440)).toInt()
-                    settingsManager.mouseRightStickSpeed = mouseSpeed
+                    // 拖动期间仅更新内存态（VirtualJoystick 实时可读），松手才落盘
+                    AppConfig.c.mouseRightStickSpeed = mouseSpeed
+                },
+                onValueChangeFinished = {
+                    AppConfig.s.mouseRightStickSpeed = AppConfig.c.mouseRightStickSpeed
                 },
                 valueRange = 0f..1f
             )
@@ -504,7 +507,10 @@ fun MouseModeSettings() {
                 value = rangeLeft,
                 onValueChange = { 
                     rangeLeft = it
-                    settingsManager.mouseRightStickRangeLeft = it
+                    AppConfig.c.mouseRightStickRangeLeft = it
+                },
+                onValueChangeFinished = {
+                    AppConfig.s.mouseRightStickRangeLeft = AppConfig.c.mouseRightStickRangeLeft
                 },
                 valueRange = 0f..1f
             )
@@ -522,7 +528,10 @@ fun MouseModeSettings() {
                 value = rangeTop,
                 onValueChange = { 
                     rangeTop = it
-                    settingsManager.mouseRightStickRangeTop = it
+                    AppConfig.c.mouseRightStickRangeTop = it
+                },
+                onValueChangeFinished = {
+                    AppConfig.s.mouseRightStickRangeTop = AppConfig.c.mouseRightStickRangeTop
                 },
                 valueRange = 0f..1f
             )
@@ -540,7 +549,10 @@ fun MouseModeSettings() {
                 value = rangeRight,
                 onValueChange = { 
                     rangeRight = it
-                    settingsManager.mouseRightStickRangeRight = it
+                    AppConfig.c.mouseRightStickRangeRight = it
+                },
+                onValueChangeFinished = {
+                    AppConfig.s.mouseRightStickRangeRight = AppConfig.c.mouseRightStickRangeRight
                 },
                 valueRange = 0f..1f
             )
@@ -558,7 +570,10 @@ fun MouseModeSettings() {
                 value = rangeBottom,
                 onValueChange = { 
                     rangeBottom = it
-                    settingsManager.mouseRightStickRangeBottom = it
+                    AppConfig.c.mouseRightStickRangeBottom = it
+                },
+                onValueChangeFinished = {
+                    AppConfig.s.mouseRightStickRangeBottom = AppConfig.c.mouseRightStickRangeBottom
                 },
                 valueRange = 0f..1f
             )
@@ -571,20 +586,28 @@ fun MouseModeSettings() {
             SuggestionChip(
                 onClick = {
                     rangeLeft = 1f; rangeTop = 1f; rangeRight = 1f; rangeBottom = 1f
-                    settingsManager.mouseRightStickRangeLeft = 1f
-                    settingsManager.mouseRightStickRangeTop = 1f
-                    settingsManager.mouseRightStickRangeRight = 1f
-                    settingsManager.mouseRightStickRangeBottom = 1f
+                    AppConfig.updateSave {
+                        it.copy(
+                            mouseRightStickRangeLeft = 1f,
+                            mouseRightStickRangeTop = 1f,
+                            mouseRightStickRangeRight = 1f,
+                            mouseRightStickRangeBottom = 1f
+                        )
+                    }
                 },
                 label = { Text(stringResource(R.string.control_editor_full_screen)) }
             )
             SuggestionChip(
                 onClick = {
                     rangeLeft = 0.5f; rangeTop = 0.5f; rangeRight = 0.5f; rangeBottom = 0.5f
-                    settingsManager.mouseRightStickRangeLeft = 0.5f
-                    settingsManager.mouseRightStickRangeTop = 0.5f
-                    settingsManager.mouseRightStickRangeRight = 0.5f
-                    settingsManager.mouseRightStickRangeBottom = 0.5f
+                    AppConfig.updateSave {
+                        it.copy(
+                            mouseRightStickRangeLeft = 0.5f,
+                            mouseRightStickRangeTop = 0.5f,
+                            mouseRightStickRangeRight = 0.5f,
+                            mouseRightStickRangeBottom = 0.5f
+                        )
+                    }
                 },
                 label = { Text(stringResource(R.string.control_editor_half_screen)) }
             )

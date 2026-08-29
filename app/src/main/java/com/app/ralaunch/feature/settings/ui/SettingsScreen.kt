@@ -457,7 +457,8 @@ fun SliderSettingItem(
     valueRange: ClosedFloatingPointRange<Float> = 0f..1f,
     steps: Int = 0,
     valueLabel: String? = null,
-    onValueChange: (Float) -> Unit
+    onValueChange: (Float) -> Unit,
+    onValueChangeFinished: (() -> Unit)? = null
 ) {
     Column(
         modifier = Modifier
@@ -515,6 +516,7 @@ fun SliderSettingItem(
         Slider(
             value = value,
             onValueChange = onValueChange,
+            onValueChangeFinished = onValueChangeFinished,
             valueRange = valueRange,
             steps = steps,
             modifier = Modifier.fillMaxWidth()

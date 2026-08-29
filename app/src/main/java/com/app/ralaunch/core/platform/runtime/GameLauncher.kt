@@ -17,7 +17,7 @@ package com.app.ralaunch.core.platform.runtime
 
 import android.content.Context
 import android.os.Environment
-import com.app.ralaunch.core.common.SettingsAccess
+import com.app.ralaunch.core.config.AppConfig
 import org.koin.java.KoinJavaComponent
 import com.app.ralaunch.core.platform.runtime.dotnet.DotNetLauncher
 import timber.log.Timber
@@ -218,10 +218,9 @@ object GameLauncher {
 
             // 步骤5：应用用户设置
             // Step 5: Apply user settings
-            val settings = SettingsAccess
             Timber.d("应用用户设置 / Applying settings configuration...")
-            Timber.d("  - 大核亲和性 / Big core affinity: ${settings.setThreadAffinityToBigCoreEnabled}")
-            Timber.d("  - 多点触控 / Touch multitouch: ${settings.isTouchMultitouchEnabled}")
+            Timber.d("  - 大核亲和性 / Big core affinity: ${AppConfig.c.setThreadAffinityToBigCore}")
+            Timber.d("  - 多点触控 / Touch multitouch: ${AppConfig.c.touchMultitouchEnabled}")
 
             // 步骤6：配置启动钩子（补丁）
             // Step 6: Configure startup hooks (patches)
@@ -254,17 +253,17 @@ object GameLauncher {
                 // 触摸输入配置
                 // Touch input configuration
                 "SDL_TOUCH_MOUSE_EVENTS" to "1",
-                "SDL_TOUCH_MOUSE_MULTITOUCH" to if (settings.isTouchMultitouchEnabled) "1" else "0",
+                "SDL_TOUCH_MOUSE_MULTITOUCH" to if (AppConfig.c.touchMultitouchEnabled) "1" else "0",
 
                 // 音频配置
                 // Audio configuration
-                "SDL_AAUDIO_LOW_LATENCY" to if (settings.isSdlAaudioLowLatency) "1" else "0",
-                "RAL_AUDIO_BUFFERSIZE" to settings.ralAudioBufferSize?.toString(),
+                "SDL_AAUDIO_LOW_LATENCY" to if (AppConfig.c.sdlAaudioLowLatency) "1" else "0",
+                "RAL_AUDIO_BUFFERSIZE" to AppConfig.c.ralAudioBufferSize?.toString(),
 
                 // OpenGL 运行时诊断（用于 FPS 旁性能分析）
                 // OpenGL runtime diagnostics (for FPS-adjacent performance analysis)
                 "RAL_GL_DIAGNOSTICS" to if (
-                    settings.isFnaGlPerfDiagnosticsEnabled && settings.isFPSDisplayEnabled
+                    AppConfig.c.fnaGlPerfDiagnosticsEnabled && AppConfig.c.fpsDisplayEnabled
                 ) "1" else "0",
                 "RAL_GL_DIAG" to null,
                 "RAL_GL_PATH" to null,
@@ -298,7 +297,7 @@ object GameLauncher {
 
             // 步骤9：设置线程亲和性
             // Step 9: Set thread affinity
-            if (settings.setThreadAffinityToBigCoreEnabled) {
+            if (AppConfig.c.setThreadAffinityToBigCore) {
                 Timber.d("设置线程亲和性到大核 / Setting thread affinity to big cores...")
                 val result = ThreadAffinityManager.setThreadAffinityToBigCores()
                 Timber.d("线程亲和性设置完成 / Thread affinity to big cores set: Result=$result")

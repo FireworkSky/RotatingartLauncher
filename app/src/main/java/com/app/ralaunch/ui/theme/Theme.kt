@@ -6,9 +6,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import com.app.ralaunch.ConfigurationState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.app.ralaunch.core.config.AppConfig
+import com.app.ralaunch.core.model.AppSettings
+import com.app.ralaunch.core.model.ThemeMode
 import com.materialkolor.rememberDynamicColorScheme
 
 /*******************************************************************************
@@ -38,14 +42,19 @@ import com.materialkolor.rememberDynamicColorScheme
 fun RaLaunchTheme(
     content: @Composable () -> Unit
 ) {
-    val themeColor: Color = ConfigurationState.themeSeedColor
-    val dynamicColor: Boolean = ConfigurationState.dynamicColor
-    val themeMode: ConfigurationState.AppConfig.ThemeMode = ConfigurationState.themeMode
+    val themeColorInt by AppConfig.flowOf(AppSettings::themeColor)
+        .collectAsStateWithLifecycle(0xFF6750A4.toInt())
+    val dynamicColor by AppConfig.flowOf(AppSettings::dynamicColor)
+        .collectAsStateWithLifecycle(true)
+    val themeMode by AppConfig.flowOf(AppSettings::themeMode)
+        .collectAsStateWithLifecycle(ThemeMode.LIGHT)
+
+    val themeColor: Color = Color(themeColorInt)
 
     val darkTheme = when (themeMode) {
-        ConfigurationState.AppConfig.ThemeMode.LIGHT -> false
-        ConfigurationState.AppConfig.ThemeMode.DARK -> true
-        ConfigurationState.AppConfig.ThemeMode.SYSTEM -> isSystemInDarkTheme()
+        ThemeMode.LIGHT -> false
+        ThemeMode.DARK -> true
+        ThemeMode.FOLLOW_SYSTEM -> isSystemInDarkTheme()
     }
 
     val colorScheme = when {

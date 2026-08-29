@@ -17,7 +17,7 @@ import org.koin.java.KoinJavaComponent
 import com.app.ralaunch.feature.controls.bridges.ControlInputBridge
 import com.app.ralaunch.feature.controls.bridges.SDLInputBridge
 import com.app.ralaunch.feature.controls.ControlData
-import com.app.ralaunch.core.common.SettingsAccess
+import com.app.ralaunch.core.config.AppConfig
 import kotlin.math.pow
 import kotlin.math.sqrt
 
@@ -115,10 +115,9 @@ class VirtualTouchPad(
 
     private var currentMouseButton = if (ControlsSharedState.isTouchPadRightButton) ControlData.KeyCode.MOUSE_RIGHT else ControlData.KeyCode.MOUSE_LEFT
 
-    private val settingsManager = SettingsAccess
 
     private val mouseMoveRatio
-        get() = settingsManager.mouseRightStickSpeed.toFloat() / 100f // 移动距离放大倍数
+        get() = AppConfig.c.mouseRightStickSpeed.toFloat() / 100f // 移动距离放大倍数
 
     init {
         initPaints()
@@ -321,10 +320,10 @@ class VirtualTouchPad(
                 var onScreenMouseX: Float = (screenWidth / 2) + (centeredDeltaX * mouseMoveRatio)
                 var onScreenMouseY: Float = (screenHeight / 2) + (centeredDeltaY * mouseMoveRatio)
                 // Sanity check
-                var minRangeX = (0.5f - settingsManager.mouseRightStickRangeLeft / 2) * screenWidth
-                var maxRangeX = (0.5f + settingsManager.mouseRightStickRangeRight / 2) * screenWidth
-                var minRangeY = (0.5f - settingsManager.mouseRightStickRangeTop / 2) * screenHeight
-                var maxRangeY = (0.5f + settingsManager.mouseRightStickRangeBottom / 2) * screenHeight
+                var minRangeX = (0.5f - AppConfig.c.mouseRightStickRangeLeft / 2) * screenWidth
+                var maxRangeX = (0.5f + AppConfig.c.mouseRightStickRangeRight / 2) * screenWidth
+                var minRangeY = (0.5f - AppConfig.c.mouseRightStickRangeTop / 2) * screenHeight
+                var maxRangeY = (0.5f + AppConfig.c.mouseRightStickRangeBottom / 2) * screenHeight
                 if (minRangeX >= maxRangeX || minRangeY >= maxRangeY) {
                     minRangeX = screenWidth * 0.5f
                     maxRangeX = screenWidth * 0.5f
@@ -410,10 +409,10 @@ class VirtualTouchPad(
                     var onScreenMouseX: Float = (screenWidth / 2) + (centeredDeltaX * mouseMoveRatio)
                     var onScreenMouseY: Float = (screenHeight / 2) + (centeredDeltaY * mouseMoveRatio)
                     // Sanity check
-                    var minRangeX = (0.5f - settingsManager.mouseRightStickRangeLeft / 2) * screenWidth
-                    var maxRangeX = (0.5f + settingsManager.mouseRightStickRangeRight / 2) * screenWidth
-                    var minRangeY = (0.5f - settingsManager.mouseRightStickRangeTop / 2) * screenHeight
-                    var maxRangeY = (0.5f + settingsManager.mouseRightStickRangeBottom / 2) * screenHeight
+                    var minRangeX = (0.5f - AppConfig.c.mouseRightStickRangeLeft / 2) * screenWidth
+                    var maxRangeX = (0.5f + AppConfig.c.mouseRightStickRangeRight / 2) * screenWidth
+                    var minRangeY = (0.5f - AppConfig.c.mouseRightStickRangeTop / 2) * screenHeight
+                    var maxRangeY = (0.5f + AppConfig.c.mouseRightStickRangeBottom / 2) * screenHeight
                     if (minRangeX >= maxRangeX || minRangeY >= maxRangeY) {
                         minRangeX = screenWidth * 0.5f
                         maxRangeX = screenWidth * 0.5f

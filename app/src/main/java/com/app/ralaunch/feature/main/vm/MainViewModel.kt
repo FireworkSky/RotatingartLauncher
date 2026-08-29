@@ -5,11 +5,10 @@ import android.content.pm.PackageManager
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.app.ralaunch.core.common.GameLaunchManager
-import com.app.ralaunch.core.common.SettingsAccess
+import com.app.ralaunch.core.config.AppConfig
 import timber.log.Timber
 import com.app.ralaunch.R
 import com.app.ralaunch.core.di.contract.IGameRepositoryServiceV3
-import com.app.ralaunch.core.di.contract.ISettingsRepositoryServiceV2
 import com.app.ralaunch.core.navigation.NavDestination
 import com.app.ralaunch.core.navigation.NavigationEvent
 import com.app.ralaunch.core.model.GameItem
@@ -39,7 +38,6 @@ class MainViewModel(
     private val appContext: Context,
     private val gameRepository: IGameRepositoryServiceV3,
     private val gameLaunchManager: GameLaunchManager,
-    private val settingsRepository: ISettingsRepositoryServiceV2,
     private val announcementRepositoryService: AnnouncementRepositoryService,
     private val launcherUpdateChecker: LauncherUpdateChecker
 ) : ViewModel() {
@@ -136,14 +134,12 @@ class MainViewModel(
                     ?.takeIf { it.isNotBlank() }
                 latestAnnouncementId = latestId
 
-                val settings = settingsRepository.getSettingsSnapshot()
+                val settings = AppConfig.value
                 val lastAnnouncementId = settings.lastAnnouncementId.trim()
                 val shouldShowBadge = latestId != null && latestId != lastAnnouncementId
                 if (settings.isAnnouncementBadgeShown != shouldShowBadge) {
                     runCatching {
-                        settingsRepository.update {
-                            isAnnouncementBadgeShown = shouldShowBadge
-                        }
+                        AppConfig.s.isAnnouncementBadgeShown = shouldShowBadge
                     }.onFailure { error ->
                         Timber.w(error, "Failed to persist isAnnouncementBadgeShown: ${error.message}")
                     }
@@ -188,7 +184,7 @@ class MainViewModel(
     private fun loadAnnouncementBadgeFromSettings() {
         viewModelScope.launch(Dispatchers.IO) {
             val shouldShowBadge = runCatching {
-                settingsRepository.getSettingsSnapshot().isAnnouncementBadgeShown
+                AppConfig.value.isAnnouncementBadgeShown
             }.getOrDefault(false)
             withContext(Dispatchers.Main) {
                 _uiState.update { it.copy(showAnnouncementBadge = shouldShowBadge) }
@@ -206,11 +202,11 @@ class MainViewModel(
 
         viewModelScope.launch(Dispatchers.IO) {
             runCatching {
-                settingsRepository.update {
-                    isAnnouncementBadgeShown = false
-                    if (latestId != null) {
-                        lastAnnouncementId = latestId
-                    }
+                AppConfig.updateSave {
+                    it.copy(
+                        isAnnouncementBadgeShown = false,
+                        lastAnnouncementId = if (latestId != null) latestId else it.lastAnnouncementId
+                    )
                 }
             }.onFailure { error ->
                 Timber.w(error, "Failed to persist announcement read state: ${error.message}")
@@ -329,7 +325,7 @@ class MainViewModel(
                 emitEffect(MainUiEffect.ShowToast(appContext.getString(R.string.game_launch_failed)))
                 return@launch
             }
-            if (SettingsAccess.isKillLauncherUIAfterLaunch) {
+            if (AppConfig.c.killLauncherUIAfterLaunch) {
                 emitEffect(MainUiEffect.ExitLauncher)
             }
         }

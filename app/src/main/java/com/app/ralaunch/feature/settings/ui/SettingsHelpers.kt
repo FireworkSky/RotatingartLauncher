@@ -14,10 +14,8 @@ import com.app.ralaunch.core.logging.service.LogExportHelper
 import com.app.ralaunch.core.platform.android.provider.RaLaunchFileProvider
 import com.app.ralaunch.core.ui.dialog.RendererOption
 import com.app.ralaunch.core.model.BackgroundType
-import com.app.ralaunch.core.di.contract.ISettingsRepositoryServiceV2
+import com.app.ralaunch.core.config.AppConfig
 import com.app.ralaunch.core.platform.AppConstants
-import com.app.ralaunch.feature.settings.vm.SettingsEvent
-import com.app.ralaunch.feature.settings.vm.SettingsViewModel
 import com.app.ralaunch.core.theme.AppThemeState
 import com.app.ralaunch.feature.sponsor.ui.SponsorsActivity
 import com.app.ralaunch.core.common.util.LocaleManager
@@ -31,7 +29,7 @@ internal const val RESTORE_SETTINGS_AFTER_RECREATE_KEY = "restore_settings_after
 
 // ==================== 背景处理 ====================
 
-internal suspend fun handleImageSelection(context: Context, uri: Uri, viewModel: SettingsViewModel) {
+internal suspend fun handleImageSelection(context: Context, uri: Uri) {
     withContext(Dispatchers.IO) {
         try {
             val backgroundDir = File(context.filesDir, "backgrounds")
@@ -44,10 +42,7 @@ internal suspend fun handleImageSelection(context: Context, uri: Uri, viewModel:
                 }
             }
             
-            val settingsRepository: ISettingsRepositoryServiceV2 =
-                KoinJavaComponent.get(ISettingsRepositoryServiceV2::class.java)
-
-            val oldPath = settingsRepository.getSettingsSnapshot().backgroundImagePath
+            val oldPath = AppConfig.value.backgroundImagePath
             if (!oldPath.isNullOrEmpty()) {
                 val oldFile = File(oldPath)
                 if (oldFile.exists()) {
@@ -56,11 +51,13 @@ internal suspend fun handleImageSelection(context: Context, uri: Uri, viewModel:
             }
 
             val newPath = destFile.absolutePath
-            settingsRepository.update {
-                backgroundImagePath = newPath
-                backgroundType = BackgroundType.IMAGE
-                backgroundVideoPath = ""
-                backgroundOpacity = 90
+            AppConfig.updateSave {
+                it.copy(
+                    backgroundImagePath = newPath,
+                    backgroundType = BackgroundType.IMAGE,
+                    backgroundVideoPath = "",
+                    backgroundOpacity = 90
+                )
             }
 
             withContext(Dispatchers.Main) {
@@ -69,8 +66,6 @@ internal suspend fun handleImageSelection(context: Context, uri: Uri, viewModel:
                 AppThemeState.updateBackgroundVideoPath("")
                 AppThemeState.updateBackgroundOpacity(90)
 
-                viewModel.onEvent(SettingsEvent.SetBackgroundType(BackgroundType.IMAGE))
-                viewModel.onEvent(SettingsEvent.SetBackgroundOpacity(90))
                 Toast.makeText(context, context.getString(R.string.appearance_background_image_set), Toast.LENGTH_SHORT).show()
             }
         } catch (e: Exception) {
@@ -81,7 +76,7 @@ internal suspend fun handleImageSelection(context: Context, uri: Uri, viewModel:
     }
 }
 
-internal suspend fun handleVideoSelection(context: Context, uri: Uri, viewModel: SettingsViewModel) {
+internal suspend fun handleVideoSelection(context: Context, uri: Uri) {
     withContext(Dispatchers.IO) {
         try {
             val backgroundDir = File(context.filesDir, "backgrounds")
@@ -95,14 +90,13 @@ internal suspend fun handleVideoSelection(context: Context, uri: Uri, viewModel:
             }
 
             val newPath = destFile.absolutePath
-            val settingsRepository: ISettingsRepositoryServiceV2 =
-                KoinJavaComponent.get(ISettingsRepositoryServiceV2::class.java)
-
-            settingsRepository.update {
-                backgroundVideoPath = newPath
-                backgroundType = BackgroundType.VIDEO
-                backgroundImagePath = ""
-                backgroundOpacity = 90
+            AppConfig.updateSave {
+                it.copy(
+                    backgroundVideoPath = newPath,
+                    backgroundType = BackgroundType.VIDEO,
+                    backgroundImagePath = "",
+                    backgroundOpacity = 90
+                )
             }
 
             withContext(Dispatchers.Main) {
@@ -111,8 +105,6 @@ internal suspend fun handleVideoSelection(context: Context, uri: Uri, viewModel:
                 AppThemeState.updateBackgroundImagePath("")
                 AppThemeState.updateBackgroundOpacity(90)
 
-                viewModel.onEvent(SettingsEvent.SetBackgroundType(BackgroundType.VIDEO))
-                viewModel.onEvent(SettingsEvent.SetBackgroundOpacity(90))
                 Toast.makeText(context, context.getString(R.string.appearance_background_video_set), Toast.LENGTH_SHORT).show()
             }
         } catch (e: Exception) {
@@ -257,29 +249,21 @@ internal fun applyVideoSpeedChange(speed: Float) {
     AppThemeState.updateVideoPlaybackSpeed(speed)
 }
 
-internal fun restoreDefaultBackground(context: Context) {
-    val settingsRepository: ISettingsRepositoryServiceV2 =
-        KoinJavaComponent.get(ISettingsRepositoryServiceV2::class.java)
-    kotlinx.coroutines.runBlocking {
-        settingsRepository.update {
-            backgroundType = BackgroundType.DEFAULT
-            backgroundImagePath = ""
-            backgroundVideoPath = ""
-            backgroundOpacity = 0
+internal fun restoreDefaultBackground() {
+    AppConfig.updateSave {
+        it.copy(
+            backgroundType = BackgroundType.DEFAULT,
+            backgroundImagePath = "",
+            backgroundVideoPath = "",
+            backgroundOpacity = 0,
             videoPlaybackSpeed = 1.0f
-        }
+        )
     }
     AppThemeState.restoreDefaultBackground()
 }
 
 internal fun applyThemeColor(context: Context, colorId: Int) {
-    val settingsRepository: ISettingsRepositoryServiceV2 =
-        KoinJavaComponent.get(ISettingsRepositoryServiceV2::class.java)
-    kotlinx.coroutines.runBlocking {
-        settingsRepository.update {
-            themeColor = colorId
-        }
-    }
+    AppConfig.s.themeColor = colorId
     AppThemeState.updateThemeColor(colorId)
     Toast.makeText(context, context.getString(R.string.theme_color_changed), Toast.LENGTH_SHORT).show()
 }

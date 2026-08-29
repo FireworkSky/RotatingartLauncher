@@ -1,7 +1,7 @@
 package com.app.ralaunch.core.di.service
 
 import com.app.ralaunch.core.di.contract.IRuntimeManagerServiceV2
-import com.app.ralaunch.core.di.contract.ISettingsRepositoryServiceV2
+import com.app.ralaunch.core.config.AppConfig
 import kotlinx.coroutines.runBlocking
 import java.nio.file.Path
 import kotlin.io.path.ExperimentalPathApi
@@ -21,28 +21,23 @@ import kotlin.io.path.name
  */
 @OptIn(ExperimentalPathApi::class)
 class RuntimeManagerServiceV2(
-    private val settingsRepository: ISettingsRepositoryServiceV2,
     private val runtimesRootPathProvider: () -> Path,
     private val legacyDotnetRootPathProvider: () -> Path,
     private val filesRootPathProvider: (() -> Path)? = null
 ) : IRuntimeManagerServiceV2 {
 
     constructor(
-        settingsRepository: ISettingsRepositoryServiceV2,
         pathsProvider: StoragePathsProviderServiceV1
     ) : this(
-        settingsRepository = settingsRepository,
         runtimesRootPathProvider = { Path(pathsProvider.runtimesDirPathFull()) },
         legacyDotnetRootPathProvider = { Path(pathsProvider.legacyDotnetDirPathFull()) },
         filesRootPathProvider = { Path(pathsProvider.filesDirPathFull()) }
     )
 
     constructor(
-        settingsRepository: ISettingsRepositoryServiceV2,
         runtimesRootPath: Path,
         legacyDotnetRootPath: Path
     ) : this(
-        settingsRepository = settingsRepository,
         runtimesRootPathProvider = { runtimesRootPath },
         legacyDotnetRootPathProvider = { legacyDotnetRootPath }
     )
@@ -88,8 +83,8 @@ class RuntimeManagerServiceV2(
 
     override fun getSelectedRuntimeVersion(type: IRuntimeManagerServiceV2.RuntimeType): String? {
         val selected = when (type) {
-            IRuntimeManagerServiceV2.RuntimeType.DOTNET -> settingsRepository.Settings.selectedDotnetRuntimeVersion
-            IRuntimeManagerServiceV2.RuntimeType.BOX64 -> settingsRepository.Settings.selectedBox64RuntimeVersion
+            IRuntimeManagerServiceV2.RuntimeType.DOTNET -> AppConfig.c.selectedDotnetRuntimeVersion
+            IRuntimeManagerServiceV2.RuntimeType.BOX64 -> AppConfig.c.selectedBox64RuntimeVersion
         }.trim()
 
         return selected.ifBlank { null }
@@ -97,10 +92,10 @@ class RuntimeManagerServiceV2(
 
     override suspend fun setSelectedRuntimeVersion(type: IRuntimeManagerServiceV2.RuntimeType, version: String) {
         val normalizedVersion = version.trim()
-        settingsRepository.update {
+        AppConfig.updateSave {
             when (type) {
-                IRuntimeManagerServiceV2.RuntimeType.DOTNET -> selectedDotnetRuntimeVersion = normalizedVersion
-                IRuntimeManagerServiceV2.RuntimeType.BOX64 -> selectedBox64RuntimeVersion = normalizedVersion
+                IRuntimeManagerServiceV2.RuntimeType.DOTNET -> it.copy(selectedDotnetRuntimeVersion = normalizedVersion)
+                IRuntimeManagerServiceV2.RuntimeType.BOX64 -> it.copy(selectedBox64RuntimeVersion = normalizedVersion)
             }
         }
     }

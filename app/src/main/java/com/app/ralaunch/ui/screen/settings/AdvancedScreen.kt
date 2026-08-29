@@ -47,7 +47,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.app.ralaunch.ConfigurationState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.app.ralaunch.core.config.AppConfig
+import com.app.ralaunch.core.model.AppSettings
 import com.app.ralaunch.MainActivity
 import com.app.ralaunch.ui.component.SectionTitle
 
@@ -91,6 +93,14 @@ import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream
 @Composable
 fun AdvancedScreen() {
     var killUI by remember { mutableStateOf(false) }
+    val logFileEnabled by AppConfig.flowOf(AppSettings::logFileEnabled)
+        .collectAsStateWithLifecycle(true)
+    val logLevel by AppConfig.flowOf(AppSettings::logLevel)
+        .collectAsStateWithLifecycle("INFO")
+    val logFileMaxSizeMb by AppConfig.flowOf(AppSettings::logFileMaxSizeMb)
+        .collectAsStateWithLifecycle(10)
+    val logFileMaxCount by AppConfig.flowOf(AppSettings::logFileMaxCount)
+        .collectAsStateWithLifecycle(10)
 
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
@@ -153,8 +163,11 @@ fun AdvancedScreen() {
                     description = "记录应用运行日志到文件",
                     trailingContent = {
                         Switch(
-                            checked = ConfigurationState.logFileEnabled,
-                            onCheckedChange = { ConfigurationState.logFileEnabled = it }
+                            checked = logFileEnabled,
+                            onCheckedChange = {
+                                AppConfig.s.logFileEnabled = it
+                                AppLogger.updateLoggingConfig(fileEnabled = it)
+                            }
                         )
                     }
                 )
@@ -176,7 +189,7 @@ fun AdvancedScreen() {
                                 )
                             ) {
                                 Text(
-                                    text = ConfigurationState.logLevel.string(),
+                                    text = AppLogger.LogLevel.fromName(logLevel).string(),
                                     style = MaterialTheme.typography.labelMedium
                                 )
                                 Icon(
@@ -198,8 +211,9 @@ fun AdvancedScreen() {
                                             )
                                         },
                                         onClick = {
-                                            ConfigurationState.logLevel =
-                                                AppLogger.LogLevel.entries.toTypedArray()[index]
+                                            val level = AppLogger.LogLevel.entries.toTypedArray()[index]
+                                            AppConfig.s.logLevel = level.name
+                                            AppLogger.updateLoggingConfig(logLevel = level)
                                             expanded = false
                                         }
                                     )
@@ -212,11 +226,11 @@ fun AdvancedScreen() {
                 SettingItem(
                     icon = Icons.Rounded.Storage,
                     title = "日志文件最大大小",
-                    description = "单个日志文件的大小限制 (${ConfigurationState.logFileMaxSize / 1024 / 1024}MB)",
-                    enabled = ConfigurationState.logFileEnabled,
+                    description = "单个日志文件的大小限制 (${logFileMaxSizeMb}MB)",
+                    enabled = logFileEnabled,
                     trailingContent = {
                         Text(
-                            text = "${ConfigurationState.logFileMaxSize / 1024 / 1024}MB",
+                            text = "${logFileMaxSizeMb}MB",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.primary,
                             fontWeight = FontWeight.Medium
@@ -233,11 +247,14 @@ fun AdvancedScreen() {
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Slider(
-                                    enabled = ConfigurationState.logFileEnabled,
-                                    value = (ConfigurationState.logFileMaxSize / 1024 / 1024).toFloat(),
+                                    enabled = logFileEnabled,
+                                    value = logFileMaxSizeMb.toFloat(),
                                     onValueChange = { newValue ->
-                                        ConfigurationState.logFileMaxSize =
-                                            (newValue.toLong() * 1024 * 1024)
+                                        // 拖动期间仅更新内存态，松手才落盘
+                                        AppConfig.c.logFileMaxSizeMb = newValue.toInt()
+                                    },
+                                    onValueChangeFinished = {
+                                        AppConfig.s.logFileMaxSizeMb = AppConfig.c.logFileMaxSizeMb
                                     },
                                     valueRange = AppLogger.LOG_FILE_MIN_SIZE_MB.toFloat()..AppLogger.LOG_FILE_MAX_SIZE_MB.toFloat(),
                                     steps = AppLogger.LOG_FILE_MAX_SIZE_MB,
@@ -252,11 +269,11 @@ fun AdvancedScreen() {
                 SettingItem(
                     icon = Icons.Rounded.Storage,
                     title = "日志文件最大数量",
-                    enabled = ConfigurationState.logFileEnabled,
-                    description = "保留的日志文件最大数量 (${ConfigurationState.logFileMaxCount}个)",
+                    enabled = logFileEnabled,
+                    description = "保留的日志文件最大数量 (${logFileMaxCount}个)",
                     trailingContent = {
                         Text(
-                            text = "${ConfigurationState.logFileMaxCount}个",
+                            text = "${logFileMaxCount}个",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.primary,
                             fontWeight = FontWeight.Medium
@@ -274,10 +291,13 @@ fun AdvancedScreen() {
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Slider(
-                                    enabled = ConfigurationState.logFileEnabled,
-                                    value = ConfigurationState.logFileMaxCount.toFloat(),
+                                    enabled = logFileEnabled,
+                                    value = logFileMaxCount.toFloat(),
                                     onValueChange = { newValue ->
-                                        ConfigurationState.logFileMaxCount = newValue.toInt()
+                                        AppConfig.c.logFileMaxCount = newValue.toInt()
+                                    },
+                                    onValueChangeFinished = {
+                                        AppConfig.s.logFileMaxCount = AppConfig.c.logFileMaxCount
                                     },
                                     valueRange = AppLogger.LOG_FILE_MIN_COUNT.toFloat()..AppLogger.LOG_FILE_MAX_COUNT.toFloat(),
                                     steps = AppLogger.LOG_FILE_MAX_COUNT,

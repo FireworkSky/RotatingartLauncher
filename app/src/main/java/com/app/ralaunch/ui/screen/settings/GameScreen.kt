@@ -1,10 +1,6 @@
 package com.app.ralaunch.ui.screen.settings
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -12,7 +8,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ArrowDropDown
 import androidx.compose.material.icons.rounded.Audiotrack
 import androidx.compose.material.icons.rounded.Build
-import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.GraphicEq
 import androidx.compose.material.icons.rounded.IntegrationInstructions
 import androidx.compose.material.icons.rounded.Memory
@@ -21,33 +16,29 @@ import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Speed
 import androidx.compose.material.icons.rounded.Storage
 import androidx.compose.material.icons.rounded.Texture
-import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.RadioButton
-import androidx.compose.material3.IconButton
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
-import com.app.ralaunch.ConfigurationState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.app.ralaunch.core.config.AppConfig
+import com.app.ralaunch.core.model.AppSettings
+import com.app.ralaunch.core.model.FpsLimit
+import com.app.ralaunch.core.model.QualityLevel
+import com.app.ralaunch.core.platform.runtime.AndroidRendererRegistry
+import com.app.ralaunch.core.platform.runtime.RendererRegistry
+import com.app.ralaunch.core.ui.dialog.RendererSelectDialog
+import com.app.ralaunch.feature.settings.ui.buildRendererOptions
 import com.app.ralaunch.strings.StringsResource.Strings
+import kotlinx.coroutines.flow.map
 import com.app.ralaunch.ui.component.SectionTitle
 
 import com.app.ralaunch.ui.component.SettingsGroup
@@ -81,6 +72,24 @@ import java.io.File
 fun GameScreen() {
     var showRendererDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
+    val availableRenderers = remember { buildRendererOptions() }
+    val rendererId by AppConfig.flowOf(AppSettings::fnaRenderer)
+        .map { RendererRegistry.normalizeRendererId(it) }
+        .collectAsStateWithLifecycle("native")
+    val qualityLevel by AppConfig.flowOf(AppSettings::qualityLevel)
+        .map { QualityLevel.fromValue(it) }
+        .collectAsStateWithLifecycle(QualityLevel.HIGH)
+    val targetFps by AppConfig.flowOf(AppSettings::targetFps)
+        .map { FpsLimit.fromValue(it) }
+        .collectAsStateWithLifecycle(FpsLimit.UNLIMITED)
+    val bigCore by AppConfig.flowOf(AppSettings::setThreadAffinityToBigCore)
+        .collectAsStateWithLifecycle(false)
+    val lowLatency by AppConfig.flowOf(AppSettings::sdlAaudioLowLatency)
+        .collectAsStateWithLifecycle(false)
+    val shaderLowPrecision by AppConfig.flowOf(AppSettings::shaderLowPrecision)
+        .collectAsStateWithLifecycle(false)
+    val dotnetVersion by AppConfig.flowOf(AppSettings::selectedDotnetRuntimeVersion)
+        .collectAsStateWithLifecycle("")
 
     Column(
         modifier = Modifier
@@ -100,8 +109,8 @@ fun GameScreen() {
                 description = Strings.settings.game.bigCoreDesc,
                 trailingContent = {
                     Switch(
-                        checked = ConfigurationState.bigCore,
-                        onCheckedChange = { ConfigurationState.bigCore = it }
+                        checked = bigCore,
+                        onCheckedChange = { AppConfig.s.setThreadAffinityToBigCore = it }
                     )
                 })
 
@@ -110,8 +119,8 @@ fun GameScreen() {
                 title = Strings.settings.game.lowLatency,
                 description = Strings.settings.game.lowLatencyDesc, trailingContent = {
                     Switch(
-                        checked = ConfigurationState.lowLatency,
-                        onCheckedChange = { ConfigurationState.lowLatency = it }
+                        checked = lowLatency,
+                        onCheckedChange = { AppConfig.s.sdlAaudioLowLatency = it }
                     )
                 })
         }
@@ -130,8 +139,7 @@ fun GameScreen() {
                 description = Strings.settings.game.qualityPresetDesc,
                 trailingContent = {
                     var expanded by remember { mutableStateOf(false) }
-                    val presets = ConfigurationState.AppConfig.QualityPreset.entries.toTypedArray()
-                        .map { it.getDisplayName() }
+                    val presets = QualityLevel.entries.map { it.displayName() }
 
                     Box {
                         OutlinedButton(
@@ -142,7 +150,7 @@ fun GameScreen() {
                             )
                         ) {
                             Text(
-                                text = ConfigurationState.qualityPreset.getDisplayName(),
+                                text = qualityLevel.displayName(),
                                 style = MaterialTheme.typography.labelMedium
                             )
                             Icon(
@@ -164,8 +172,7 @@ fun GameScreen() {
                                         )
                                     },
                                     onClick = {
-                                        ConfigurationState.qualityPreset =
-                                            ConfigurationState.AppConfig.QualityPreset.entries.toTypedArray()[index]
+                                        AppConfig.s.qualityLevel = QualityLevel.entries[index].value
                                         expanded = false
                                     }
                                 )
@@ -180,8 +187,8 @@ fun GameScreen() {
                 description = Strings.settings.game.shaderPrecisionDesc,
                 trailingContent = {
                     Switch(
-                        checked = ConfigurationState.shaderPrecision,
-                        onCheckedChange = { ConfigurationState.shaderPrecision = it }
+                        checked = shaderLowPrecision,
+                        onCheckedChange = { AppConfig.s.shaderLowPrecision = it }
                     )
                 })
 
@@ -190,7 +197,7 @@ fun GameScreen() {
                 title = Strings.settings.game.fpsLimit,
                 description = Strings.settings.game.fpsLimitDesc, trailingContent = {
                     var expanded by remember { mutableStateOf(false) }
-                    val limits = ConfigurationState.AppConfig.FpsLimit.entries.toTypedArray()
+                    val limits = FpsLimit.entries.toList()
 
                     Box {
                         OutlinedButton(
@@ -201,9 +208,9 @@ fun GameScreen() {
                             )
                         ) {
                             Text(
-                                text = if (ConfigurationState.fpsLimit.value == 0)
+                                text = if (targetFps.value == 0)
                                     Strings.settings.game.fpsUnlimited
-                                else "${ConfigurationState.fpsLimit.value} fps",
+                                else "${targetFps.value} fps",
                                 style = MaterialTheme.typography.labelMedium
                             )
                             Icon(
@@ -227,8 +234,7 @@ fun GameScreen() {
                                         )
                                     },
                                     onClick = {
-                                        ConfigurationState.fpsLimit =
-                                            ConfigurationState.AppConfig.FpsLimit.entries.toTypedArray()[index]
+                                        AppConfig.s.targetFps = FpsLimit.entries[index].value
                                         expanded = false
                                     }
                                 )
@@ -270,7 +276,7 @@ fun GameScreen() {
                             )
                         ) {
                             Text(
-                                text = ConfigurationState.dotnetVersion.ifEmpty {
+                                text = dotnetVersion.ifEmpty {
                                     Strings.settings.game.dotnetNotSelected
                                 },
                                 style = MaterialTheme.typography.labelMedium
@@ -294,7 +300,7 @@ fun GameScreen() {
                                         )
                                     },
                                     onClick = {
-                                        ConfigurationState.dotnetVersion = version
+                                        AppConfig.s.selectedDotnetRuntimeVersion = version
                                         expanded = false
                                     }
                                 )
@@ -311,7 +317,7 @@ fun GameScreen() {
                 },
                 trailingContent = {
                     Text(
-                        text = ConfigurationState.renderer.displayName,
+                        text = AndroidRendererRegistry.getRendererDisplayName(rendererId),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.Medium
@@ -320,10 +326,11 @@ fun GameScreen() {
         }
 
         if (showRendererDialog) {
-            RendererSelectionDialog(
-                currentRenderer = ConfigurationState.renderer,
-                onRendererSelected = { selected ->
-                    ConfigurationState.renderer = selected
+            RendererSelectDialog(
+                currentRenderer = rendererId,
+                renderers = availableRenderers,
+                onSelect = { selected ->
+                    AppConfig.s.fnaRenderer = selected
                 },
                 onDismiss = { showRendererDialog = false }
             )
@@ -331,196 +338,9 @@ fun GameScreen() {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun RendererSelectionDialog(
-    currentRenderer: ConfigurationState.AppConfig.Renderer,
-    onRendererSelected: (ConfigurationState.AppConfig.Renderer) -> Unit,
-    onDismiss: () -> Unit
-) {
-    var selectedRenderer by remember { mutableStateOf(currentRenderer) }
-
-    Dialog(
-        onDismissRequest = onDismiss,
-        properties = DialogProperties(usePlatformDefaultWidth = false)
-    ) {
-        Card(
-            modifier = Modifier
-                .widthIn(max = 420.dp)
-                .wrapContentHeight()
-                .padding(horizontal = 24.dp, vertical = 16.dp),
-            shape = RoundedCornerShape(24.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
-            )
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(20.dp)
-            ) {
-                // 标题
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column {
-                        Text(
-                            text = Strings.settings.game.renderer,
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                        Text(
-                            text = Strings.settings.game.rendererDesc,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                    IconButton(
-                        onClick = onDismiss,
-                        modifier = Modifier.size(32.dp)
-                    ) {
-                        Icon(
-                            Icons.Rounded.Close,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.size(18.dp)
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                // 渲染器列表
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(max = 320.dp),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    items(ConfigurationState.AppConfig.Renderer.entries) { renderer ->
-                        RendererItem(
-                            renderer = renderer,
-                            isSelected = selectedRenderer == renderer,
-                            onClick = { selectedRenderer = renderer }
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                // 底部按钮
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End
-                ) {
-                    TextButton(
-                        onClick = onDismiss,
-                        modifier = Modifier.height(32.dp)
-                    ) {
-                        Text(Strings.cancel, fontWeight = FontWeight.Medium)
-                    }
-
-                    Button(
-                        onClick = {
-                            onRendererSelected(selectedRenderer)
-                            onDismiss()
-                        },
-                        shape = RoundedCornerShape(10.dp),
-                        modifier = Modifier
-                            .height(32.dp)
-                            .padding(start = 4.dp),
-                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp)
-                    ) {
-                        Text(Strings.apply, fontWeight = FontWeight.SemiBold)
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun RendererItem(
-    renderer: ConfigurationState.AppConfig.Renderer,
-    isSelected: Boolean,
-    onClick: () -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .clickable { onClick() }
-            .background(
-                if (isSelected) MaterialTheme.colorScheme.primaryContainer
-                else MaterialTheme.colorScheme.surfaceContainerLow
-            )
-            .padding(horizontal = 12.dp, vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        RadioButton(
-            selected = isSelected,
-            onClick = onClick,
-            modifier = Modifier.size(20.dp)
-        )
-
-        Spacer(modifier = Modifier.width(8.dp))
-
-        Column(
-            modifier = Modifier.weight(1f)
-        ) {
-            Row(
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(
-                    text = renderer.displayName,
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
-                    color = if (isSelected)
-                        MaterialTheme.colorScheme.onPrimaryContainer
-                    else
-                        MaterialTheme.colorScheme.onSurface
-                )
-
-                when (renderer) {
-                    ConfigurationState.AppConfig.Renderer.GL4ES_ANGLE ->
-                        Tag(Strings.settings.renderer.recommended, isSelected)
-
-                    ConfigurationState.AppConfig.Renderer.VULKAN ->
-                        Tag(Strings.settings.renderer.experimental, isSelected)
-
-                    else -> Unit
-                }
-            }
-
-            Text(
-                text = renderer.getDescription(),
-                style = MaterialTheme.typography.bodySmall,
-                color = if (isSelected)
-                    MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
-                else
-                    MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
-            )
-        }
-    }
-}
-
-@Composable
-private fun Tag(text: String, isSelected: Boolean) {
-    Surface(
-        shape = RoundedCornerShape(8.dp),
-        color = MaterialTheme.colorScheme.primary.copy(alpha = if (isSelected) 0.15f else 0.08f)
-    ) {
-        Text(
-            text = text,
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-        )
-    }
+/** 画质预设的旧字符串系统显示名（旧设置界面专用） */
+private fun QualityLevel.displayName(): String = when (this) {
+    QualityLevel.HIGH -> Strings.settings.game.qualityHigh
+    QualityLevel.MEDIUM -> Strings.settings.game.qualityMedium
+    QualityLevel.LOW -> Strings.settings.game.qualityLow
 }

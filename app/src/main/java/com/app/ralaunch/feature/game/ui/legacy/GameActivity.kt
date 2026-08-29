@@ -21,7 +21,7 @@ import com.app.ralaunch.feature.game.GameVirtualControlsManager
 import com.app.ralaunch.core.error.ui.CrashReportActivity
 import com.app.ralaunch.feature.game.legacy.GameContract
 import com.app.ralaunch.feature.game.legacy.GamePresenter
-import com.app.ralaunch.core.common.SettingsAccess
+import com.app.ralaunch.core.config.AppConfig
 import com.app.ralaunch.core.common.GameFullscreenManager
 import timber.log.Timber
 import com.app.ralaunch.core.common.util.DensityAdapter
@@ -156,7 +156,7 @@ class GameActivity : SDLActivity(), GameContract.View {
     }
 
     private fun applyThemeMode() {
-        val themeMode = SettingsAccess.themeMode
+        val themeMode = AppConfig.c.themeMode
         val nightMode = when (themeMode) {
             ThemeMode.FOLLOW_SYSTEM -> AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
             ThemeMode.DARK -> AppCompatDelegate.MODE_NIGHT_YES

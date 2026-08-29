@@ -5,7 +5,7 @@ import android.os.Build
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
-import com.app.ralaunch.core.common.SettingsAccess
+import com.app.ralaunch.core.config.AppConfig
 import com.app.ralaunch.core.di.contract.IVibrationManagerServiceV1
 import com.app.ralaunch.core.di.contract.VibrationType
 
@@ -28,10 +28,8 @@ class VibrationManagerServiceV1(context: Context) : IVibrationManagerServiceV1 {
         context.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
     }
 
-    private val settingsManager = SettingsAccess
-
     private val isVibrationEnabled: Boolean
-        get() = vibrator?.hasVibrator() == true && settingsManager.vibrationEnabled
+        get() = vibrator?.hasVibrator() == true && AppConfig.c.vibrationEnabled
 
     // ==================== IVibrationManagerServiceV1 接口实现 ====================
 
@@ -40,13 +38,13 @@ class VibrationManagerServiceV1(context: Context) : IVibrationManagerServiceV1 {
     override fun isEnabled(): Boolean = isVibrationEnabled
 
     override fun setEnabled(enabled: Boolean) {
-        settingsManager.vibrationEnabled = enabled
+        AppConfig.s.vibrationEnabled = enabled
     }
 
-    override fun getIntensity(): Float = settingsManager.virtualControllerVibrationIntensity
+    override fun getIntensity(): Float = AppConfig.c.virtualControllerVibrationIntensity
 
     override fun setIntensity(intensity: Float) {
-        settingsManager.virtualControllerVibrationIntensity = intensity.coerceIn(0f, 1f)
+        AppConfig.s.virtualControllerVibrationIntensity = intensity.coerceIn(0f, 1f)
     }
 
     override fun vibrate(type: VibrationType) {

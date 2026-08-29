@@ -26,10 +26,13 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.app.ralaunch.ConfigurationState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.app.ralaunch.core.config.AppConfig
+import com.app.ralaunch.core.model.AppSettings
 import com.app.ralaunch.strings.StringsResource.Strings
 import com.app.ralaunch.ui.component.SectionTitle
 
@@ -61,6 +64,15 @@ import com.app.ralaunch.ui.component.Switch
 
 @Composable
 fun ControlsScreen() {
+    val multitouch by AppConfig.flowOf(AppSettings::touchMultitouchEnabled)
+        .collectAsStateWithLifecycle(true)
+    val vibration by AppConfig.flowOf(AppSettings::vibrationEnabled)
+        .collectAsStateWithLifecycle(true)
+    val vibrationLevel by AppConfig.flowOf(AppSettings::virtualControllerVibrationIntensity)
+        .collectAsStateWithLifecycle(1.0f)
+    val virtualControllerAsFirst by AppConfig.flowOf(AppSettings::virtualControllerAsFirst)
+        .collectAsStateWithLifecycle(false)
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -78,8 +90,8 @@ fun ControlsScreen() {
                 title = Strings.settings.controls.multitouch,
                 description = Strings.settings.controls.multitouchDesc, trailingContent = {
                     Switch(
-                        checked = ConfigurationState.multitouch,
-                        onCheckedChange = { ConfigurationState.multitouch = it }
+                        checked = multitouch,
+                        onCheckedChange = { AppConfig.s.touchMultitouchEnabled = it }
                     )
                 })
         }
@@ -98,8 +110,8 @@ fun ControlsScreen() {
                 description = Strings.settings.controls.vibrationFeedbackDesc,
                 trailingContent = {
                     Switch(
-                        checked = ConfigurationState.vibration,
-                        onCheckedChange = { ConfigurationState.vibration = it }
+                        checked = vibration,
+                        onCheckedChange = { AppConfig.s.vibrationEnabled = it }
                     )
                 })
 
@@ -107,10 +119,10 @@ fun ControlsScreen() {
                 icon = Icons.AutoMirrored.Rounded.VolumeUp,
                 title = Strings.settings.controls.vibrationIntensity,
                 description = Strings.settings.controls.vibrationIntensityDesc,
-                enabled = ConfigurationState.vibration,
+                enabled = vibration,
                 trailingContent = {
                     Text(
-                        text = "${(ConfigurationState.vibrationLevel * 100).toInt()}%",
+                        text = "${(vibrationLevel * 100).toInt()}%",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.Medium
@@ -140,9 +152,13 @@ fun ControlsScreen() {
                 }
 
                 Slider(
-                    enabled = ConfigurationState.vibration,
-                    value = ConfigurationState.vibrationLevel,
-                    onValueChange = { ConfigurationState.vibrationLevel = it },
+                    enabled = vibration,
+                    value = vibrationLevel,
+                    onValueChange = { AppConfig.c.virtualControllerVibrationIntensity = it },
+                    onValueChangeFinished = {
+                        AppConfig.s.virtualControllerVibrationIntensity =
+                            AppConfig.c.virtualControllerVibrationIntensity
+                    },
                     valueRange = 0f..1f,
                     steps = 9,
                     colors = SliderDefaults.colors(
@@ -168,8 +184,8 @@ fun ControlsScreen() {
                 title = Strings.settings.controls.virtualController,
                 description = Strings.settings.controls.virtualControllerDesc, trailingContent = {
                     Switch(
-                        checked = ConfigurationState.virtualController,
-                        onCheckedChange = { ConfigurationState.virtualController = it },
+                        checked = virtualControllerAsFirst,
+                        onCheckedChange = { AppConfig.s.virtualControllerAsFirst = it },
                     )
                 })
         }

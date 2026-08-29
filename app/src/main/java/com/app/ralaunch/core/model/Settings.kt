@@ -1,6 +1,7 @@
 package com.app.ralaunch.core.model
 
 import kotlinx.serialization.Serializable
+import com.app.ralaunch.jsonconfig.FlowJsonConfig
 
 /**
  * 主题模式
@@ -78,89 +79,90 @@ enum class KeyboardType(val value: String, val displayName: String) {
 /**
  * 应用设置 (跨平台版本)
  */
+@FlowJsonConfig
 @Serializable
 data class AppSettings(
     // 外观设置
-    var themeMode: ThemeMode = ThemeMode.LIGHT,
-    var themeColor: Int = 0xFF6750A4.toInt(),
-    var backgroundType: BackgroundType = BackgroundType.DEFAULT,
-    var backgroundColor: Int = 0xFFFFFFFF.toInt(),
-    var backgroundImagePath: String = "",
-    var backgroundVideoPath: String = "",
-    var backgroundOpacity: Int = 0,
-    var videoPlaybackSpeed: Float = 1.0f,
-    var language: String = "auto",
+    val themeMode: ThemeMode = ThemeMode.LIGHT,
+    val themeColor: Int = 0xFF6750A4.toInt(),
+    val dynamicColor: Boolean = true,
+    val backgroundType: BackgroundType = BackgroundType.DEFAULT,
+    val backgroundColor: Int = 0xFFFFFFFF.toInt(),
+    val backgroundImagePath: String = "",
+    val backgroundVideoPath: String = "",
+    val backgroundOpacity: Int = 0,
+    val videoPlaybackSpeed: Float = 1.0f,
+    val language: String = "auto",
 
     // 控制设置
-    var controlsOpacity: Float = 0.7f,
-    var vibrationEnabled: Boolean = true,
-    var virtualControllerVibrationEnabled: Boolean = false,
-    var virtualControllerVibrationIntensity: Float = 1.0f,
-    var virtualControllerAsFirst: Boolean = false,
-    var backButtonOpenMenu: Boolean = false,
-    var touchMultitouchEnabled: Boolean = true,
-    var fpsDisplayEnabled: Boolean = false,
-    var fpsDisplayX: Float = -1f,
-    var fpsDisplayY: Float = -1f,
-    var keyboardType: KeyboardType = KeyboardType.VIRTUAL,
-    var touchEventEnabled: Boolean = true,
+    val controlsOpacity: Float = 0.7f,
+    val vibrationEnabled: Boolean = true,
+    val virtualControllerVibrationEnabled: Boolean = false,
+    val virtualControllerVibrationIntensity: Float = 1.0f,
+    val virtualControllerAsFirst: Boolean = false,
+    val backButtonOpenMenu: Boolean = false,
+    val touchMultitouchEnabled: Boolean = true,
+    val fpsDisplayEnabled: Boolean = false,
+    val fpsDisplayX: Float = -1f,
+    val fpsDisplayY: Float = -1f,
+    val keyboardType: KeyboardType = KeyboardType.VIRTUAL,
+    val touchEventEnabled: Boolean = true,
 
     // 触屏设置
-    var mouseRightStickSpeed: Int = 200,
-    var mouseRightStickRangeLeft: Float = 1.0f,
-    var mouseRightStickRangeTop: Float = 1.0f,
-    var mouseRightStickRangeRight: Float = 1.0f,
-    var mouseRightStickRangeBottom: Float = 1.0f,
+    val mouseRightStickSpeed: Int = 200,
+    val mouseRightStickRangeLeft: Float = 1.0f,
+    val mouseRightStickRangeTop: Float = 1.0f,
+    val mouseRightStickRangeRight: Float = 1.0f,
+    val mouseRightStickRangeBottom: Float = 1.0f,
 
     // 开发者设置
-    var logSystemEnabled: Boolean = true,
-    var verboseLogging: Boolean = false,
-    var setThreadAffinityToBigCore: Boolean = false,
+    val logSystemEnabled: Boolean = true,
+    val verboseLogging: Boolean = false,
+    val setThreadAffinityToBigCore: Boolean = false,
+    val logFileEnabled: Boolean = true,
+    val logFileMaxSizeMb: Int = 10,
+    val logFileMaxCount: Int = 10,
+    val logLevel: String = "INFO",
 
     // FNA 设置
-    var fnaRenderer: String = "native",
-    var fnaMapBufferRangeOptimization: Boolean = true,
-    var fnaGlPerfDiagnosticsEnabled: Boolean = false,
+    val fnaRenderer: String = "native",
+    val fnaMapBufferRangeOptimization: Boolean = true,
+    val fnaGlPerfDiagnosticsEnabled: Boolean = false,
 
     // 画质设置
-    var qualityLevel: Int = 0,
-    var fnaTextureLodBias: Float = 0f,
-    var fnaMaxAnisotropy: Int = 4,
-    var fnaRenderScale: Float = 1.0f,
-    var shaderLowPrecision: Boolean = false,
-    var targetFps: Int = 0,
+    val qualityLevel: Int = 0,
+    val fnaTextureLodBias: Float = 0f,
+    val fnaMaxAnisotropy: Int = 4,
+    val fnaRenderScale: Float = 1.0f,
+    val shaderLowPrecision: Boolean = false,
+    val targetFps: Int = 0,
 
     // CoreCLR 设置
-    var serverGC: Boolean = false,
-    var concurrentGC: Boolean = true,
-    var gcHeapCount: String = "auto",
-    var tieredCompilation: Boolean = true,
-    var quickJIT: Boolean = true,
-    var jitOptimizeType: Int = 0,
-    var coreClrXiaomiCompatEnabled: Boolean = false,
-    var retainVM: Boolean = false,
+    val serverGC: Boolean = false,
+    val concurrentGC: Boolean = true,
+    val gcHeapCount: String = "auto",
+    val tieredCompilation: Boolean = true,
+    val quickJIT: Boolean = true,
+    val jitOptimizeType: Int = 0,
+    val coreClrXiaomiCompatEnabled: Boolean = false,
+    val retainVM: Boolean = false,
 
     // 内存优化
-    var killLauncherUIAfterLaunch: Boolean = false,
+    val killLauncherUIAfterLaunch: Boolean = false,
 
     // 音频设置
-    var sdlAaudioLowLatency: Boolean = false,
-    var ralAudioBufferSize: Int? = null,
+    val sdlAaudioLowLatency: Boolean = false,
+    val ralAudioBufferSize: Int? = null,
 
     // 联机设置
-    var multiplayerEnabled: Boolean = false,
-    var multiplayerDisclaimerAccepted: Boolean = false,
+    val multiplayerEnabled: Boolean = false,
+    val multiplayerDisclaimerAccepted: Boolean = false,
 
     // 公告
-    var lastAnnouncementId: String = "",
-    var isAnnouncementBadgeShown: Boolean = false,
+    val lastAnnouncementId: String = "",
+    val isAnnouncementBadgeShown: Boolean = false,
 
     // Runtime 设置
-    var selectedDotnetRuntimeVersion: String = "",
-    var selectedBox64RuntimeVersion: String = ""
-) {
-    companion object {
-        val Default: AppSettings
-            get() = AppSettings()
-    }
-}
+    val selectedDotnetRuntimeVersion: String = "",
+    val selectedBox64RuntimeVersion: String = ""
+)

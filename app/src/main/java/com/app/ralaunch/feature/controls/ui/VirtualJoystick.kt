@@ -14,7 +14,7 @@ import org.koin.java.KoinJavaComponent
 import com.app.ralaunch.feature.controls.bridges.ControlInputBridge
 import com.app.ralaunch.feature.controls.textures.TextureLoader
 import com.app.ralaunch.feature.controls.textures.TextureRenderer
-import com.app.ralaunch.core.common.SettingsAccess
+import com.app.ralaunch.core.config.AppConfig
 import java.io.File
 import kotlin.math.atan2
 import kotlin.math.cos
@@ -150,12 +150,11 @@ class VirtualJoystick(
 
         // 读取全局设置（攻击模式、鼠标速度、鼠标范围）
         try {
-            val settingsManager = SettingsAccess
-            mGlobalMouseSpeed = settingsManager.mouseRightStickSpeed.toFloat()
-            mGlobalMouseRangeLeft = settingsManager.mouseRightStickRangeLeft
-            mGlobalMouseRangeTop = settingsManager.mouseRightStickRangeTop
-            mGlobalMouseRangeRight = settingsManager.mouseRightStickRangeRight
-            mGlobalMouseRangeBottom = settingsManager.mouseRightStickRangeBottom
+            mGlobalMouseSpeed = AppConfig.c.mouseRightStickSpeed.toFloat()
+            mGlobalMouseRangeLeft = AppConfig.c.mouseRightStickRangeLeft
+            mGlobalMouseRangeTop = AppConfig.c.mouseRightStickRangeTop
+            mGlobalMouseRangeRight = AppConfig.c.mouseRightStickRangeRight
+            mGlobalMouseRangeBottom = AppConfig.c.mouseRightStickRangeBottom
 
 
             // 验证范围有效性（从中心扩展模式）
@@ -180,10 +179,14 @@ class VirtualJoystick(
 
             // 保存修正后的值（只在检测到无效值时才保存）
             if (needsReset) {
-                settingsManager.mouseRightStickRangeLeft = mGlobalMouseRangeLeft
-                settingsManager.mouseRightStickRangeTop = mGlobalMouseRangeTop
-                settingsManager.mouseRightStickRangeRight = mGlobalMouseRangeRight
-                settingsManager.mouseRightStickRangeBottom = mGlobalMouseRangeBottom
+                AppConfig.updateSave {
+                    it.copy(
+                        mouseRightStickRangeLeft = mGlobalMouseRangeLeft,
+                        mouseRightStickRangeTop = mGlobalMouseRangeTop,
+                        mouseRightStickRangeRight = mGlobalMouseRangeRight,
+                        mouseRightStickRangeBottom = mGlobalMouseRangeBottom
+                    )
+                }
             }
 
             Timber.i("Global settings loaded: speed=" + mGlobalMouseSpeed + ", range=(" + mGlobalMouseRangeLeft + "," + mGlobalMouseRangeTop + "," + mGlobalMouseRangeRight + "," + mGlobalMouseRangeBottom + ")")
@@ -729,18 +732,17 @@ class VirtualJoystick(
         }
 
         // 获取设置管理器以读取鼠标速度
-        val settingsManager = SettingsAccess
-        val mouseMoveRatio = settingsManager.mouseRightStickSpeed.toFloat() / 100f
+        val mouseMoveRatio = AppConfig.c.mouseRightStickSpeed.toFloat() / 100f
 
         // 计算绝对鼠标位置（基于屏幕中心 + 摇杆偏移）
         var onScreenMouseX: Float = (mScreenWidth / 2) + (dx * mouseMoveRatio)
         var onScreenMouseY: Float = (mScreenHeight / 2) + (dy * mouseMoveRatio)
 
         // 计算用户设置的 range 边界（从中心扩展模式）
-        var minRangeX = (0.5f - settingsManager.mouseRightStickRangeLeft / 2) * mScreenWidth
-        var maxRangeX = (0.5f + settingsManager.mouseRightStickRangeRight / 2) * mScreenWidth
-        var minRangeY = (0.5f - settingsManager.mouseRightStickRangeTop / 2) * mScreenHeight
-        var maxRangeY = (0.5f + settingsManager.mouseRightStickRangeBottom / 2) * mScreenHeight
+        var minRangeX = (0.5f - AppConfig.c.mouseRightStickRangeLeft / 2) * mScreenWidth
+        var maxRangeX = (0.5f + AppConfig.c.mouseRightStickRangeRight / 2) * mScreenWidth
+        var minRangeY = (0.5f - AppConfig.c.mouseRightStickRangeTop / 2) * mScreenHeight
+        var maxRangeY = (0.5f + AppConfig.c.mouseRightStickRangeBottom / 2) * mScreenHeight
 
         // 验证范围有效性
         if (minRangeX >= maxRangeX || minRangeY >= maxRangeY) {

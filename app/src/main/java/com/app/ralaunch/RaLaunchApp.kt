@@ -8,7 +8,7 @@ import android.content.res.Configuration
 import android.os.Build
 import android.system.Os
 import androidx.appcompat.app.AppCompatDelegate
-import com.app.ralaunch.core.common.SettingsAccess
+import com.app.ralaunch.core.config.AppConfig
 import com.app.ralaunch.core.common.util.DensityAdapter
 import com.app.ralaunch.core.common.util.LocaleManager
 import com.app.ralaunch.core.di.KoinInitializer
@@ -67,22 +67,25 @@ class RaLaunchApp : Application(), KoinComponent {
         // 2. 初始化 Koin DI（必须在使用 inject 之前）
         KoinInitializer.init(this)
 
-        // 3. 初始化日志系统（Timber：Logcat + 文件日志）
+        // 3. 加载应用配置（settings.json）
+        AppConfig.load()
+
+        // 4. 初始化日志系统（Timber：Logcat + 文件日志）
         AppLogger.init(this)
 
-        // 4. 启动时迁移旧运行时布局
+        // 5. 启动时迁移旧运行时布局
         RuntimeManager.initialize(this.filesDir)
 
-        // 5. 应用主题设置
+        // 6. 应用主题设置
         applyThemeFromSettings()
 
-        // 6. 初始化崩溃捕获
+        // 7. 初始化崩溃捕获
         initCrashHandler()
 
-        // 7. 后台安装补丁
+        // 8. 后台安装补丁
         installPatchesInBackground()
 
-        // 8. 设置环境变量
+        // 9. 设置环境变量
         setupEnvironmentVariables()
 
         applyIconAlias()
@@ -101,8 +104,7 @@ class RaLaunchApp : Application(), KoinComponent {
 
     private fun applyThemeFromSettings() {
         try {
-            val settingsManager = SettingsAccess
-            val nightMode = when (settingsManager.themeMode) {
+            val nightMode = when (AppConfig.c.themeMode) {
                 ThemeMode.FOLLOW_SYSTEM -> AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
                 ThemeMode.DARK -> AppCompatDelegate.MODE_NIGHT_YES
                 ThemeMode.LIGHT -> AppCompatDelegate.MODE_NIGHT_NO

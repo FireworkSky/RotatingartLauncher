@@ -9,7 +9,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.fragment.app.DialogFragment
 import com.app.ralaunch.core.common.DynamicColorManager
-import com.app.ralaunch.core.common.SettingsAccess
+import com.app.ralaunch.core.config.AppConfig
 import timber.log.Timber
 import com.app.ralaunch.core.config.ThemeConfig
 import com.app.ralaunch.core.di.contract.IThemeManagerServiceV1
@@ -27,7 +27,6 @@ class ThemeManagerServiceV1(private val activity: AppCompatActivity) : IThemeMan
     companion object {
     }
 
-    private val settingsManager: SettingsAccess = SettingsAccess
     private val dynamicColorManager: DynamicColorManager = DynamicColorManager.getInstance()
 
     /**
@@ -42,7 +41,7 @@ class ThemeManagerServiceV1(private val activity: AppCompatActivity) : IThemeMan
      * 应用深色/浅色模式
      */
     private fun applyNightMode() {
-        when (settingsManager.themeMode) {
+        when (AppConfig.c.themeMode) {
             ThemeMode.FOLLOW_SYSTEM ->
                 AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
             ThemeMode.DARK ->
@@ -69,7 +68,7 @@ class ThemeManagerServiceV1(private val activity: AppCompatActivity) : IThemeMan
      */
     fun applyCustomThemeColor(color: Int) {
         try {
-            settingsManager.themeColor = color
+            AppConfig.s.themeColor = color
             dynamicColorManager.applyCustomThemeColor(activity, color)
             Timber.i("自定义主题颜色已应用: ${String.format("#%06X", 0xFFFFFF and color)}")
         } catch (e: Exception) {
@@ -84,7 +83,7 @@ class ThemeManagerServiceV1(private val activity: AppCompatActivity) : IThemeMan
      * 此方法仅设置 window 级别的背景色作为底层
      */
     fun applyBackgroundFromSettings() {
-        val type = settingsManager.backgroundType
+        val type = AppConfig.c.backgroundType
         Timber.i("applyBackgroundFromSettings - type: $type")
 
         when (type) {
@@ -103,7 +102,7 @@ class ThemeManagerServiceV1(private val activity: AppCompatActivity) : IThemeMan
     }
 
     private fun applyImageBackground() {
-        val imagePath = settingsManager.backgroundImagePath
+        val imagePath = AppConfig.c.backgroundImagePath
         Timber.i("背景类型: image，路径: $imagePath（图片由 Compose 渲染）")
         // 图片背景由 Compose 的 BackgroundLayer 组件处理
         // 这里设置透明背景，让 Compose 层的图片可见
@@ -111,7 +110,7 @@ class ThemeManagerServiceV1(private val activity: AppCompatActivity) : IThemeMan
     }
 
     private fun applyColorBackground() {
-        val color = settingsManager.backgroundColor
+        val color = AppConfig.c.backgroundColor
         activity.window?.setBackgroundDrawable(ColorDrawable(color))
         Timber.i("纯色背景已应用")
     }
@@ -131,19 +130,19 @@ class ThemeManagerServiceV1(private val activity: AppCompatActivity) : IThemeMan
      * 检查是否使用视频背景
      */
     val isVideoBackground: Boolean
-        get() = settingsManager.backgroundType == BackgroundType.VIDEO
+        get() = AppConfig.c.backgroundType == BackgroundType.VIDEO
 
     /**
      * 获取视频背景路径
      */
     val videoBackgroundPath: String?
-        get() = settingsManager.backgroundVideoPath
+        get() = AppConfig.c.backgroundVideoPath
 
     /**
      * 处理配置变化（主题切换）
      */
     fun handleConfigurationChanged(newConfig: Configuration) {
-        if (settingsManager.themeMode != ThemeMode.FOLLOW_SYSTEM) return
+        if (AppConfig.c.themeMode != ThemeMode.FOLLOW_SYSTEM) return
 
         // 先关闭所有对话框
         activity.supportFragmentManager.fragments.forEach { fragment ->
@@ -162,18 +161,18 @@ class ThemeManagerServiceV1(private val activity: AppCompatActivity) : IThemeMan
 
     override fun getThemeConfig(): ThemeConfig {
         return ThemeConfig(
-            mode = settingsManager.themeMode,
-            primaryColor = settingsManager.themeColor,
-            backgroundType = settingsManager.backgroundType,
-            backgroundColor = settingsManager.backgroundColor,
-            backgroundImagePath = settingsManager.backgroundImagePath,
-            backgroundVideoPath = settingsManager.backgroundVideoPath,
-            backgroundOpacity = settingsManager.backgroundOpacity
+            mode = AppConfig.c.themeMode,
+            primaryColor = AppConfig.c.themeColor,
+            backgroundType = AppConfig.c.backgroundType,
+            backgroundColor = AppConfig.c.backgroundColor,
+            backgroundImagePath = AppConfig.c.backgroundImagePath,
+            backgroundVideoPath = AppConfig.c.backgroundVideoPath,
+            backgroundOpacity = AppConfig.c.backgroundOpacity
         )
     }
 
     override fun setThemeMode(mode: ThemeMode) {
-        settingsManager.themeMode = mode
+        AppConfig.s.themeMode = mode
         applyNightMode()
     }
 
@@ -182,20 +181,20 @@ class ThemeManagerServiceV1(private val activity: AppCompatActivity) : IThemeMan
     }
 
     override fun setBackgroundType(type: BackgroundType) {
-        settingsManager.backgroundType = type
+        AppConfig.s.backgroundType = type
         applyBackgroundFromSettings()
     }
 
     override fun setBackgroundImagePath(path: String?) {
-        settingsManager.backgroundImagePath = path ?: ""
+        AppConfig.s.backgroundImagePath = path ?: ""
     }
 
     override fun setBackgroundVideoPath(path: String?) {
-        settingsManager.backgroundVideoPath = path ?: ""
+        AppConfig.s.backgroundVideoPath = path ?: ""
     }
 
     override fun setBackgroundOpacity(opacity: Int) {
-        settingsManager.backgroundOpacity = opacity
+        AppConfig.s.backgroundOpacity = opacity
     }
 
     override fun applyTheme() {

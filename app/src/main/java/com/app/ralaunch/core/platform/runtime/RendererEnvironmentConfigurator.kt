@@ -2,7 +2,7 @@ package com.app.ralaunch.core.platform.runtime
 
 import android.content.Context
 import timber.log.Timber
-import com.app.ralaunch.core.common.SettingsAccess
+import com.app.ralaunch.core.config.AppConfig
 import com.app.ralaunch.core.platform.runtime.EnvVarsManager
 import com.app.ralaunch.core.platform.runtime.AndroidRendererRegistry
 import com.app.ralaunch.core.platform.runtime.RendererRegistry
@@ -11,7 +11,7 @@ object RendererEnvironmentConfigurator {
 
     @JvmStatic
     fun getEffectiveRenderer(): String {
-        return RendererRegistry.normalizeRendererId(SettingsAccess.fnaRenderer)
+        return RendererRegistry.normalizeRendererId(AppConfig.c.fnaRenderer)
     }
 
     internal fun resolveRendererForLaunch(
@@ -93,10 +93,9 @@ object RendererEnvironmentConfigurator {
     }
 
     private fun getQualityConfig(): Map<String, String?> {
-        val settings = SettingsAccess
         val envVars = mutableMapOf<String, String?>()
 
-        val qualityLevel = settings.fnaQualityLevel
+        val qualityLevel = AppConfig.c.qualityLevel
         when (qualityLevel) {
             1 -> {
                 envVars["FNA3D_TEXTURE_LOD_BIAS"] = "1.0"
@@ -110,10 +109,10 @@ object RendererEnvironmentConfigurator {
                 envVars["FNA3D_SHADER_LOW_PRECISION"] = "1"
             }
             else -> {
-                val lodBias = settings.fnaTextureLodBias
-                val maxAnisotropy = settings.fnaMaxAnisotropy
-                val renderScale = settings.fnaRenderScale
-                val shaderLowPrecision = settings.isFnaShaderLowPrecision
+                val lodBias = AppConfig.c.fnaTextureLodBias
+                val maxAnisotropy = AppConfig.c.fnaMaxAnisotropy
+                val renderScale = AppConfig.c.fnaRenderScale
+                val shaderLowPrecision = AppConfig.c.shaderLowPrecision
 
                 if (lodBias > 0f) {
                     envVars["FNA3D_TEXTURE_LOD_BIAS"] = lodBias.toString()
@@ -130,7 +129,7 @@ object RendererEnvironmentConfigurator {
             }
         }
 
-        val targetFps = settings.fnaTargetFps
+        val targetFps = AppConfig.c.targetFps
         if (targetFps > 0) {
             envVars["FNA3D_TARGET_FPS"] = targetFps.toString()
         }
@@ -168,8 +167,7 @@ object RendererEnvironmentConfigurator {
         return when {
             renderer in vulkanTranslatedRenderers -> "0"
             else -> {
-                val settings = SettingsAccess
-                if (settings.isFnaEnableMapBufferRangeOptimization) null else "0"
+                if (AppConfig.c.fnaMapBufferRangeOptimization) null else "0"
             }
         }
     }

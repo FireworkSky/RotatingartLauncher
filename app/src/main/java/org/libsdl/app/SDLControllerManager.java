@@ -557,11 +557,9 @@ class SDLJoyStickHandler_API19_VirtualJoystick extends SDLJoystickHandler_API19 
         // Check if virtual controller should be registered as first controller
         boolean asFirst = false; // default to false
         try {
-            com.app.ralaunch.core.common.SettingsAccess settingsManager = 
-                com.app.ralaunch.core.common.SettingsAccess.getInstance();
-            asFirst = settingsManager.isVirtualControllerAsFirst();
+            asFirst = com.app.ralaunch.core.config.AppConfig.INSTANCE.getC().getVirtualControllerAsFirst();
         } catch (Exception e) {
-            // If SettingsAccess is not available, use default
+            // If AppConfig is not available, use default
         }
         
         // Register virtual Xbox controller first if setting is enabled
@@ -711,13 +709,12 @@ class SDLHapticHandler_API31 extends SDLHapticHandler {
     public void rumble(int device_id, float low_frequency_intensity, float high_frequency_intensity, int length) {
         // Check VIBRATOR_SERVICE
         if (device_id == deviceId_VIBRATOR_SERVICE) {
-            var settings = com.app.ralaunch.core.common.SettingsAccess.getInstance();
-
-            if (!settings.isVirtualControllerVibrationEnabled())
+            if (!com.app.ralaunch.core.config.AppConfig.INSTANCE.getC().getVirtualControllerVibrationEnabled())
                 return;
 
-            low_frequency_intensity *= settings.getVirtualControllerVibrationIntensity();
-            high_frequency_intensity *= settings.getVirtualControllerVibrationIntensity();
+            float vibrationIntensity = com.app.ralaunch.core.config.AppConfig.INSTANCE.getC().getVirtualControllerVibrationIntensity();
+            low_frequency_intensity *= vibrationIntensity;
+            high_frequency_intensity *= vibrationIntensity;
 
             if (Build.VERSION.SDK_INT < 31 /* Android 12.0 (S) */) {
                 Vibrator vibrator = (Vibrator) SDL.getContext().getSystemService(Context.VIBRATOR_SERVICE);

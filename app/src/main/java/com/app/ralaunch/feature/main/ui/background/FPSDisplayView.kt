@@ -13,7 +13,7 @@ import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
 import com.app.ralaunch.feature.controls.bridges.SDLInputBridge
-import com.app.ralaunch.core.common.SettingsAccess
+import com.app.ralaunch.core.config.AppConfig
 import java.io.BufferedReader
 import java.io.FileReader
 import kotlin.math.max
@@ -89,7 +89,6 @@ class FPSDisplayView @JvmOverloads constructor(
 
     private val handler = Handler(Looper.getMainLooper())
     private var inputBridge: SDLInputBridge? = null
-    private val settingsManager = SettingsAccess
     private val activityManager = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
 
     // 拖动相关
@@ -103,8 +102,8 @@ class FPSDisplayView @JvmOverloads constructor(
     private var isTrackingTouch = false
 
     // 固定位置
-    private var fixedX = settingsManager.fpsDisplayX
-    private var fixedY = settingsManager.fpsDisplayY
+    private var fixedX = AppConfig.c.fpsDisplayX
+    private var fixedY = AppConfig.c.fpsDisplayY
 
     // 文本边界
     private var textLeft = 0f
@@ -460,7 +459,7 @@ class FPSDisplayView @JvmOverloads constructor(
     }
 
     private fun updateVisibility() {
-        visibility = if (settingsManager.isFPSDisplayEnabled) VISIBLE else GONE
+        visibility = if (AppConfig.c.fpsDisplayEnabled) VISIBLE else GONE
     }
 
     private fun isTouchInTextArea(touchX: Float, touchY: Float): Boolean {
@@ -514,8 +513,8 @@ class FPSDisplayView @JvmOverloads constructor(
                 if (isDragging) {
                     isDragging = false
                     parent?.requestDisallowInterceptTouchEvent(false)
-                    settingsManager.fpsDisplayX = fixedX
-                    settingsManager.fpsDisplayY = fixedY
+                    AppConfig.s.fpsDisplayX = fixedX
+                    AppConfig.s.fpsDisplayY = fixedY
                 }
                 return true
             }
@@ -525,7 +524,7 @@ class FPSDisplayView @JvmOverloads constructor(
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
-        if (!settingsManager.isFPSDisplayEnabled) return
+        if (!AppConfig.c.fpsDisplayEnabled) return
 
         // FPS 和帧时间显示
         val fpsText = if (currentFPS > 0) {

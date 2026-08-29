@@ -20,7 +20,7 @@ import com.app.ralaunch.feature.controls.editors.vm.ControlEditorViewModel
 import com.app.ralaunch.core.theme.AppThemeState
 import com.app.ralaunch.core.theme.RaLaunchTheme
 import com.app.ralaunch.feature.controls.packs.ControlPackManager
-import com.app.ralaunch.core.common.SettingsAccess
+import com.app.ralaunch.core.config.AppConfig
 import com.app.ralaunch.core.common.DynamicColorManager
 import com.app.ralaunch.feature.controls.textures.TextureLoader
 import com.app.ralaunch.core.common.util.DensityAdapter
@@ -71,12 +71,11 @@ class ControlEditorActivity : AppCompatActivity() {
 
         // 应用动态颜色主题
         val dynamicColorManager = DynamicColorManager.getInstance()
-        val settingsManager = SettingsAccess
-        dynamicColorManager.applyCustomThemeColor(this, settingsManager.themeColor)
+        dynamicColorManager.applyCustomThemeColor(this, AppConfig.c.themeColor)
 
         // 应用其他主题设置
         AppCompatDelegate.setDefaultNightMode(
-            when (settingsManager.themeMode) {
+            when (AppConfig.c.themeMode) {
                 ThemeMode.FOLLOW_SYSTEM -> AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
                 ThemeMode.DARK -> AppCompatDelegate.MODE_NIGHT_YES
                 ThemeMode.LIGHT -> AppCompatDelegate.MODE_NIGHT_NO

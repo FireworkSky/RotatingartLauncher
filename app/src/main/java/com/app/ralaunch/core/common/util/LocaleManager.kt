@@ -6,10 +6,8 @@ import android.os.Build
 import android.os.LocaleList
 import com.app.ralaunch.R
 import com.app.ralaunch.RaLaunchApp
-import com.app.ralaunch.core.di.contract.ISettingsRepositoryServiceV2
+import com.app.ralaunch.core.config.AppConfig
 import com.app.ralaunch.core.platform.AppConstants
-import kotlinx.coroutines.runBlocking
-import org.koin.java.KoinJavaComponent
 import org.json.JSONObject
 import java.io.File
 import java.util.Locale
@@ -36,7 +34,7 @@ object LocaleManager : AppLocaleManager {
 
     @JvmStatic
     fun getLanguage(context: Context): String {
-        val language = readLanguageFromRepository(context)
+        val language = readLanguage(context)
         currentLanguage = language
         return language
     }
@@ -119,7 +117,7 @@ object LocaleManager : AppLocaleManager {
 
     override fun getCurrentLanguage(): String {
         val appContext = runCatching { RaLaunchApp.getAppContext() }.getOrNull()
-        val language = readLanguageFromRepository(appContext)
+        val language = readLanguage(appContext)
         currentLanguage = language
         return language
     }
@@ -134,16 +132,12 @@ object LocaleManager : AppLocaleManager {
         return SupportedLanguage.primaryLanguages()
     }
 
-    private fun readLanguageFromRepository(context: Context? = null): String {
-        val languageFromRepository = runCatching {
-            KoinJavaComponent.get<ISettingsRepositoryServiceV2>(ISettingsRepositoryServiceV2::class.java).Settings.language
-        }.getOrNull()
+    private fun readLanguage(context: Context? = null): String {
+        // 启动早期（AppConfig 尚未 load）直接读设置文件；写入均同步落盘，两者始终一致
+        val language = context?.let { readLanguageFromSettingsFile(it) }
+            ?: AppConfig.value.language
 
-        val language = languageFromRepository
-            ?: context?.let { readLanguageFromSettingsFile(it) }
-
-        return language?.takeIf { it.isNotBlank() }
-            ?.let(::normalizeLanguageCode)
+        return language.takeIf { it.isNotBlank() }
             ?: currentLanguage.takeIf { it.isNotBlank() }
             ?: LANGUAGE_AUTO
     }
@@ -178,11 +172,6 @@ object LocaleManager : AppLocaleManager {
     }
 
     private fun persistLanguage(language: String) {
-        runCatching {
-            val repository = KoinJavaComponent.get<ISettingsRepositoryServiceV2>(ISettingsRepositoryServiceV2::class.java)
-            runBlocking {
-                repository.update { this.language = normalizeLanguageCode(language) }
-            }
-        }
+        AppConfig.s.language = normalizeLanguageCode(language)
     }
 }

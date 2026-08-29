@@ -8,6 +8,8 @@ constraintlayout = "2.2.1"
 annotationJvm = "1.9.1"
 activity = "1.10.1"
 kotlin = "2.4.10"
+ksp = "2.3.11"
+kotlinpoet = "2.3.0"
 coreKtx = "1.17.0"
 kotlinx-serialization-json = "1.11.0"
 kotlinx-coroutines = "1.10.2"
@@ -47,6 +49,9 @@ gson = "2.14.0"
 material3 = "1.4.0"
 
 [libraries]
+ksp-symbol-processing-api = { group = "com.google.devtools.ksp", name = "symbol-processing-api", version.ref = "ksp" }
+kotlinpoet = { group = "com.squareup", name = "kotlinpoet", version.ref = "kotlinpoet" }
+kotlinpoet-ksp = { group = "com.squareup", name = "kotlinpoet-ksp", version.ref = "kotlinpoet" }
 colorpicker-compose = { module = "com.github.skydoves:colorpicker-compose", version.ref = "colorpickerCompose" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
@@ -109,3 +114,4 @@ android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-plugin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }

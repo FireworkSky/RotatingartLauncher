@@ -7,12 +7,10 @@ import androidx.appcompat.app.AppCompatActivity
 import com.app.ralaunch.core.common.GameLaunchManager
 import com.app.ralaunch.core.di.contract.IGameRepositoryServiceV3
 import com.app.ralaunch.core.di.contract.IRuntimeManagerServiceV2
-import com.app.ralaunch.core.di.contract.ISettingsRepositoryServiceV2
 import com.app.ralaunch.core.di.contract.IThemeManagerServiceV1
 import com.app.ralaunch.core.di.service.GameRepositoryServiceV3
 import com.app.ralaunch.core.di.service.PermissionManagerServiceV1
 import com.app.ralaunch.core.di.service.RuntimeManagerServiceV2
-import com.app.ralaunch.core.di.service.SettingsRepositoryServiceV2
 import com.app.ralaunch.core.di.service.StoragePathsProviderServiceV1
 import com.app.ralaunch.core.di.service.ThemeManagerServiceV1
 import com.app.ralaunch.core.di.service.VibrationManagerServiceV1
@@ -39,8 +37,7 @@ import com.app.ralaunch.feature.main.vm.GameInfoEditViewModel
 import com.app.ralaunch.feature.patch.data.PatchManager
 import com.app.ralaunch.feature.patch.vm.PatchManagementViewModel
 import com.app.ralaunch.feature.script.JavaScriptExecutor
-import com.app.ralaunch.feature.settings.vm.AppInfo
-import com.app.ralaunch.feature.settings.vm.SettingsViewModel
+import com.app.ralaunch.core.model.AppInfo
 import com.app.ralaunch.feature.sponsor.SponsorRepositoryService
 import com.app.ralaunch.feature.sponsor.vm.SponsorsViewModel
 import org.koin.android.ext.koin.androidContext
@@ -74,13 +71,8 @@ val appModule = module {
         GameRepositoryServiceV3(pathsProvider = get())
     }
 
-    single<ISettingsRepositoryServiceV2> {
-        SettingsRepositoryServiceV2(storagePathsProvider = get())
-    }
-
     single<IRuntimeManagerServiceV2> {
         RuntimeManagerServiceV2(
-            settingsRepository = get(),
             pathsProvider = get()
         )
     }
@@ -166,19 +158,10 @@ val appModule = module {
     // ==================== ViewModels ====================
 
     viewModel {
-        SettingsViewModel(
-            settingsRepository = get<ISettingsRepositoryServiceV2>(),
-            runtimeManager = get(),
-            appInfo = getOrNull<AppInfo>() ?: AppInfo()
-        )
-    }
-
-    viewModel {
         MainViewModel(
             appContext = androidContext(),
             gameRepository = get(),
             gameLaunchManager = get(),
-            settingsRepository = get(),
             announcementRepositoryService = get(),
             launcherUpdateChecker = get()
         )

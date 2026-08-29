@@ -1,6 +1,6 @@
 package com.app.ralaunch.core.platform.runtime.dotnet
 
-import com.app.ralaunch.core.common.SettingsAccess
+import com.app.ralaunch.core.config.AppConfig
 import timber.log.Timber
 import com.app.ralaunch.core.di.contract.IRuntimeManagerServiceV2
 import com.app.ralaunch.core.platform.runtime.EnvVarsManager
@@ -51,7 +51,7 @@ object DotNetLauncher {
 
         EnvVarsManager.quickSetEnvVar("DOTNET_ROOT", dotnetRoot)
         CoreCLRConfig.applyConfigAndInitHooking()
-        val compatEnabled = SettingsAccess.isCoreClrXiaomiCompatEnabled
+        val compatEnabled = AppConfig.c.coreClrXiaomiCompatEnabled
         if (compatEnabled) {
             CoreHostHooks.initCompatHooks()
         }

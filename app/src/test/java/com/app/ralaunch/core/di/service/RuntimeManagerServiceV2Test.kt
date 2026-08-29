@@ -1,15 +1,17 @@
 package com.app.ralaunch.core.di.service
 
+import com.app.ralaunch.core.config.AppConfig
 import com.app.ralaunch.core.di.contract.IRuntimeManagerServiceV2
-import com.app.ralaunch.core.di.contract.ISettingsRepositoryServiceV2
 import com.app.ralaunch.core.model.AppSettings
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.runBlocking
+import io.mockk.every
+import io.mockk.mockkObject
+import io.mockk.unmockkAll
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
+import org.junit.After
+import org.junit.Before
 import org.junit.Test
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.createDirectories
@@ -23,6 +25,21 @@ import kotlin.io.path.writeText
 @OptIn(ExperimentalPathApi::class)
 class RuntimeManagerServiceV2Test {
 
+    @Before
+    fun setUp() {
+        // AppConfig 为进程级单例，测试间重置内存态
+        AppConfig.update { AppSettings() }
+        // save 显式 mock 为无操作：避免依赖"无 Koin 时静默失败"的隐式行为
+        // （configPath 解析依赖 Context/磁盘 IO）
+        mockkObject(AppConfig)
+        every { AppConfig.save() } returns false
+    }
+
+    @After
+    fun tearDown() {
+        unmockkAll()
+    }
+
     @Test
     fun `getSelectedRuntime falls back to newest installed version`() {
         val runtimesRoot = createTempDirectory("runtime-root-")
@@ -32,10 +49,8 @@ class RuntimeManagerServiceV2Test {
             createDotNetRuntimeLayout(runtimesRoot.resolve("dotnet").resolve("10.0.0"), "10.0.0")
             createDotNetRuntimeLayout(runtimesRoot.resolve("dotnet").resolve("10.0.4"), "10.0.4")
 
-            val repository = FakeSettingsRepository(
-                AppSettings(selectedDotnetRuntimeVersion = "9.0.0")
-            )
-            val service = RuntimeManagerServiceV2(repository, runtimesRoot, legacyDotnetRoot)
+            AppConfig.c.selectedDotnetRuntimeVersion = "9.0.0"
+            val service = RuntimeManagerServiceV2(runtimesRoot, legacyDotnetRoot)
 
             val selected = service.getSelectedRuntime(IRuntimeManagerServiceV2.RuntimeType.DOTNET)
 
@@ -56,10 +71,8 @@ class RuntimeManagerServiceV2Test {
             createDotNetRuntimeLayout(runtimesRoot.resolve("dotnet").resolve("10.0.0"), "10.0.0")
             createDotNetRuntimeLayout(runtimesRoot.resolve("dotnet").resolve("10.0.4"), "10.0.4")
 
-            val repository = FakeSettingsRepository(
-                AppSettings(selectedDotnetRuntimeVersion = "10.0.0")
-            )
-            val service = RuntimeManagerServiceV2(repository, runtimesRoot, legacyDotnetRoot)
+            AppConfig.c.selectedDotnetRuntimeVersion = "10.0.0"
+            val service = RuntimeManagerServiceV2(runtimesRoot, legacyDotnetRoot)
 
             val selected = service.getSelectedRuntime(IRuntimeManagerServiceV2.RuntimeType.DOTNET)
 
@@ -80,8 +93,7 @@ class RuntimeManagerServiceV2Test {
         try {
             createDotNetRuntimeLayout(legacyDotnetRoot, "10.0.4")
 
-            val repository = FakeSettingsRepository()
-            val service = RuntimeManagerServiceV2(repository, runtimesRoot, legacyDotnetRoot)
+            val service = RuntimeManagerServiceV2(runtimesRoot, legacyDotnetRoot)
 
             service.migrateLegacyInstallations()
 
@@ -90,7 +102,7 @@ class RuntimeManagerServiceV2Test {
             assertTrue(legacyDotnetRoot.notExists())
             assertEquals(
                 "10.0.4",
-                repository.Settings.selectedDotnetRuntimeVersion
+                AppConfig.c.selectedDotnetRuntimeVersion
             )
         } finally {
             runtimesRoot.deleteRecursively()
@@ -107,7 +119,7 @@ class RuntimeManagerServiceV2Test {
         try {
             createDotNetRuntimeLayout(legacyDotnetRoot, "10.0.4")
 
-            val service = RuntimeManagerServiceV2(FakeSettingsRepository(), runtimesRoot, legacyDotnetRoot)
+            val service = RuntimeManagerServiceV2(runtimesRoot, legacyDotnetRoot)
 
             val installed = service.getInstalledRuntimes(IRuntimeManagerServiceV2.RuntimeType.DOTNET)
 
@@ -129,7 +141,7 @@ class RuntimeManagerServiceV2Test {
             val box64RuntimeDir = runtimesRoot.resolve("box64").resolve("2.0.0").createDirectories()
             box64RuntimeDir.resolve("box64").createFile().writeText("binary")
 
-            val service = RuntimeManagerServiceV2(FakeSettingsRepository(), runtimesRoot, legacyDotnetRoot)
+            val service = RuntimeManagerServiceV2(runtimesRoot, legacyDotnetRoot)
 
             val installed = service.getInstalledRuntimes(IRuntimeManagerServiceV2.RuntimeType.BOX64)
 
@@ -153,28 +165,6 @@ class RuntimeManagerServiceV2Test {
 
         listOf("libcoreclr.so", "libclrjit.so", "libhostpolicy.so").forEach { fileName ->
             sharedDir.resolve(fileName).createFile().writeText(fileName)
-        }
-    }
-
-    private class FakeSettingsRepository(
-        initialSettings: AppSettings = AppSettings()
-    ) : ISettingsRepositoryServiceV2 {
-        private val backingFlow = MutableStateFlow(initialSettings)
-
-        override val settings: StateFlow<AppSettings> = backingFlow
-
-        override suspend fun getSettingsSnapshot(): AppSettings = backingFlow.value.copy()
-
-        override suspend fun updateSettings(settings: AppSettings) {
-            backingFlow.value = settings.copy()
-        }
-
-        override suspend fun update(block: AppSettings.() -> Unit) {
-            backingFlow.value = backingFlow.value.copy().apply(block)
-        }
-
-        override suspend fun resetToDefaults() {
-            backingFlow.value = AppSettings.Default
         }
     }
 }

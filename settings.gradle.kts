@@ -26,3 +26,4 @@ dependencyResolutionManagement {
 rootProject.name = "Rotating-art-Launcher"
 
 include(":app")
+include(":ksp:jsonconfig-processor")

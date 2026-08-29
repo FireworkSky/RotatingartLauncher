@@ -6,7 +6,7 @@ import android.content.res.Configuration
 import android.graphics.Color
 import android.os.Build
 import androidx.annotation.ColorInt
-import com.app.ralaunch.core.common.SettingsAccess
+import com.app.ralaunch.core.config.AppConfig
 import timber.log.Timber
 import com.google.android.material.color.DynamicColors
 import com.google.android.material.color.DynamicColorsOptions
@@ -43,7 +43,7 @@ class DynamicColorManager private constructor() {
                 }
             }
 
-            val themeColor = SettingsAccess.themeColor
+            val themeColor = AppConfig.c.themeColor
             applyCustomThemeColor(activity, themeColor)
         } catch (e: Exception) {
             Timber.e(e, "应用动态颜色失败: ${e.message}")
@@ -92,7 +92,7 @@ class DynamicColorManager private constructor() {
     }
 
     private fun shouldUseSystemDynamicColors(): Boolean {
-        val themeColor = SettingsAccess.themeColor
+        val themeColor = AppConfig.c.themeColor
         return themeColor == DEFAULT_COLOR
     }
 

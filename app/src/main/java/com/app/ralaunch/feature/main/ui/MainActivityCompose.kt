@@ -78,7 +78,7 @@ import coil.compose.AsyncImage
 import com.app.ralaunch.R
 import com.app.ralaunch.core.error.ErrorHandler
 import com.app.ralaunch.core.common.MessageHelper
-import com.app.ralaunch.core.common.SettingsAccess
+import com.app.ralaunch.core.config.AppConfig
 import timber.log.Timber
 import com.app.ralaunch.core.common.util.DensityAdapter
 import com.app.ralaunch.core.di.service.PermissionManagerServiceV1
@@ -167,7 +167,7 @@ class MainActivityCompose : BaseActivity() {
 
         super.onCreate(savedInstanceState)
 
-        // 初始化全局主题状态（从 SettingsAccess 加载）
+        // 初始化全局主题状态（从 AppConfig 加载）
         initializeThemeState()
 
         ErrorHandler.init(this)
@@ -239,19 +239,18 @@ class MainActivityCompose : BaseActivity() {
     }
     
     /**
-     * 初始化全局主题状态（从 SettingsAccess 加载）
+     * 初始化全局主题状态（从 AppConfig 加载）
      */
     private fun initializeThemeState() {
-        val settings = SettingsAccess
 
         AppThemeState.initializeState(
-            themeMode = settings.themeMode,
-            themeColor = settings.themeColor,
-            backgroundType = settings.backgroundType,
-            backgroundImagePath = settings.backgroundImagePath,
-            backgroundVideoPath = settings.backgroundVideoPath,
-            backgroundOpacity = settings.backgroundOpacity,
-            videoPlaybackSpeed = settings.videoPlaybackSpeed
+            themeMode = AppConfig.c.themeMode,
+            themeColor = AppConfig.c.themeColor,
+            backgroundType = AppConfig.c.backgroundType,
+            backgroundImagePath = AppConfig.c.backgroundImagePath,
+            backgroundVideoPath = AppConfig.c.backgroundVideoPath,
+            backgroundOpacity = AppConfig.c.backgroundOpacity,
+            videoPlaybackSpeed = AppConfig.c.videoPlaybackSpeed
         )
     }
 
