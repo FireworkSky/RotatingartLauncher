@@ -44,7 +44,7 @@ object PatchExtractor {
 
     private fun extractAndApplyMonoMod(context: Context) {
         val monoModDir = File(context.filesDir, "MonoMod")
-        if (monoModDir.exists()) FileUtils.deleteDirectoryRecursivelyWithinRoot(monoModDir, context.filesDir)
+        if (monoModDir.exists()) monoModDir.deleteRecursively()
         monoModDir.mkdirs()
 
         context.assets.open("MonoMod.zip").use { inputStream ->

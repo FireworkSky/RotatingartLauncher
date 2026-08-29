@@ -1,7 +1,6 @@
 package com.app.ralaunch.utils
 
 import androidx.core.content.edit
-import com.app.ralaunch.core.common.util.FileUtils
 import com.app.ralaunch.core.platform.AppConstants
 import kotlinx.coroutines.runBlocking
 import java.io.File
@@ -260,7 +259,7 @@ object RuntimeManager {
 
         when {
             targetFile.exists() && isRuntimeLayoutValid(RuntimeType.DOTNET, targetPath) -> {
-                FileUtils.deleteDirectoryRecursivelyWithinRoot(legacyFile, getRuntimeStorageRootPath().toFile())
+                legacyFile.deleteRecursively()
             }
             targetFile.exists() -> {
                 return

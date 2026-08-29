@@ -9,6 +9,8 @@ import org.apache.commons.compress.archivers.ArchiveInputStream
 import org.apache.commons.compress.archivers.ArchiveStreamFactory
 import org.apache.commons.compress.archivers.sevenz.SevenZFile
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry
+import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
+import org.apache.commons.compress.archivers.zip.ZipFile
 import org.apache.commons.compress.compressors.CompressorStreamFactory
 import timber.log.Timber
 import java.nio.file.Path
@@ -23,11 +25,12 @@ import kotlin.io.path.inputStream
 import kotlin.io.path.isSymbolicLink
 import kotlin.io.path.outputStream
 
-/** Extracts content-detected archives and 7z archives. */
+/** Extracts content-detected archives, 7z archives and already-opened zip files. */
 class ArchiveExtractor private constructor(private val options: Options) {
     data class Options(
         val id: String,
-        val sourcePath: Path,
+        val sourcePath: Path?,
+        val sourceZipFile: ZipFile?,
         val sourceExtractionPrefix: Path,
         val destinationPath: Path,
         val callback: ((Event) -> Unit)?
@@ -64,6 +67,7 @@ class ArchiveExtractor private constructor(private val options: Options) {
     class Builder {
         private var id = ""
         private var sourcePath: Path? = null
+        private var sourceZipFile: ZipFile? = null
         private var sourceExtractionPrefix = Path("")
         private var destinationPath: Path? = null
         private var callback: ((Event) -> Unit)? = null
@@ -71,6 +75,8 @@ class ArchiveExtractor private constructor(private val options: Options) {
         fun id(id: String) = apply { this.id = id }
 
         fun from(sourcePath: Path) = apply { this.sourcePath = sourcePath }
+
+        fun from(sourceZipFile: ZipFile) = apply { this.sourceZipFile = sourceZipFile }
 
         fun prefix(sourceExtractionPrefix: Path) = apply {
             this.sourceExtractionPrefix = sourceExtractionPrefix
@@ -83,12 +89,17 @@ class ArchiveExtractor private constructor(private val options: Options) {
         fun build() = ArchiveExtractor(
             Options(
                 id = id,
-                sourcePath = requireNotNull(sourcePath) { "sourcePath is required" },
+                sourcePath = sourcePath,
+                sourceZipFile = sourceZipFile,
                 sourceExtractionPrefix = sourceExtractionPrefix,
                 destinationPath = requireNotNull(destinationPath) { "destinationPath is required" },
                 callback = callback
             )
         )
+    }
+
+    init {
+        require(options.sourcePath != null || options.sourceZipFile != null) { "sourcePath is required" }
     }
 
     private class ExtractionState(
@@ -99,20 +110,26 @@ class ArchiveExtractor private constructor(private val options: Options) {
         val root = options.destinationPath.toAbsolutePath().normalize().also { it.createDirectories() }
         val state = ExtractionState()
 
-        options.sourcePath.inputStream().buffered().use { source ->
-            val compressorName = runCatching {
-                CompressorStreamFactory.detect(source)
-            }.getOrNull()
+        val sourceZipFile = options.sourceZipFile
+        if (sourceZipFile != null) {
+            extractZipFileEntries(root, sourceZipFile, state)
+        } else {
+            val sourcePath = checkNotNull(options.sourcePath)
+            sourcePath.inputStream().buffered().use { source ->
+                val compressorName = runCatching {
+                    CompressorStreamFactory.detect(source)
+                }.getOrNull()
 
-            if (compressorName != null) { // if is tar.gz / tar.xz ...
-                CompressorStreamFactory()
-                    .createCompressorInputStream(compressorName, source)
-                    .buffered()
-                    .use { decompressed ->
-                        extractDetectedArchive(root, decompressed, state, supportsSevenZ = false)
-                    }
-            } else { // if is zip / 7z ...
-                extractDetectedArchive(root, source, state)
+                if (compressorName != null) { // if is tar.gz / tar.xz ...
+                    CompressorStreamFactory()
+                        .createCompressorInputStream(compressorName, source)
+                        .buffered()
+                        .use { decompressed ->
+                            extractDetectedArchive(root, decompressed, state, supportsSevenZ = false)
+                        }
+                } else { // if is zip / 7z ...
+                    extractDetectedArchive(root, source, state)
+                }
             }
         }
 
@@ -128,6 +145,39 @@ class ArchiveExtractor private constructor(private val options: Options) {
         val message = Strings.extractor.failed
         options.callback?.invoke(Event.Error(options.id, message, ex))
         Result.Failure(message, ex)
+    }
+
+    /** Extracts entries from an already-opened [ZipFile] (e.g. a zip embedded in another container). */
+    private fun extractZipFileEntries(root: Path, zipFile: ZipFile, state: ExtractionState) {
+        val entries = zipFile.entriesInPhysicalOrder.toList()
+            .mapNotNull { entry -> entryTargetPath(root, entry)?.let { target -> entry to target } }
+        val totalSize = entries.sumOf { it.first.size.coerceAtLeast(0) }
+        var extractedSize = 0L
+
+        for ((entry, target) in entries) {
+            if (!zipFile.canReadEntryData(entry)) continue
+
+            when {
+                entry.isDirectory -> target.createDirectories()
+                entry.isUnixSymlink -> extractSymlink(root, target, zipFile.getUnixSymlink(entry))
+                else -> zipFile.getInputStream(entry).use { input ->
+                    extractFile(target, input::read, entry.unixMode)
+                }
+            }
+
+            state.processedEntries++
+            extractedSize += entry.size.coerceAtLeast(0)
+
+            // emit progress
+            options.callback?.invoke(
+                Event.Progress(
+                    options.id,
+                    Strings.extractor.inProgress.format(entry.name),
+                    if (totalSize > 0) (extractedSize.toFloat() / totalSize).coerceIn(0f, 1f) else 1f,
+                    state.processedEntries
+                )
+            )
+        }
     }
 
     private fun extractDetectedArchive(
@@ -148,7 +198,7 @@ class ArchiveExtractor private constructor(private val options: Options) {
 
     private fun extractSevenZip(root: Path, state: ExtractionState) {
         SevenZFile.builder()
-            .setPath(options.sourcePath)
+            .setPath(checkNotNull(options.sourcePath))
             .get()
             .use { archive ->
                 val total = archive.entries.sumOf { it.size.coerceAtLeast(0) }
@@ -179,7 +229,7 @@ class ArchiveExtractor private constructor(private val options: Options) {
     private fun extractArchive(root: Path, input: java.io.InputStream, archiverName: String, state: ExtractionState) {
         val archive: ArchiveInputStream<*> =
             ArchiveStreamFactory().createArchiveInputStream(archiverName, input)
-        val archiveSize = options.sourcePath.fileSize().toFloat()
+        val archiveSize = checkNotNull(options.sourcePath).fileSize().toFloat()
         archive.use {
             archive.forEach { entry ->
                 if (!archive.canReadEntryData(entry)) return@forEach
@@ -206,22 +256,7 @@ class ArchiveExtractor private constructor(private val options: Options) {
         entry: ArchiveEntry,
         read: (ByteArray) -> Int
     ): Boolean {
-        val entryPath = Path(entry.name).normalize()
-        val prefix = options.sourceExtractionPrefix.normalize()
-        val relativePath = if (prefix.toString().isEmpty()) {
-            entryPath
-        } else {
-            if (!entryPath.startsWith(prefix))
-                return false
-            prefix.relativize(entryPath)
-        }
-        if (relativePath == Path("."))
-            return false
-
-        val target = (root / relativePath).normalize()
-        require(target.startsWith(root)) {
-            "Archive entry escapes destination directory: $target"
-        }
+        val target = entryTargetPath(root, entry) ?: return false
 
         when {
             entry.isDirectory ->
@@ -231,11 +266,35 @@ class ArchiveExtractor private constructor(private val options: Options) {
                 extractSymlink(root, target, entry.linkName)
 
             else ->
-                extractFile(target, read, (entry as? TarArchiveEntry)?.mode ?: 0)
+                extractFile(target, read, entryMode(entry))
         }
 
         return true
     }
+
+    /** Resolves an archive entry to its destination path, or null when it is outside the extraction prefix. */
+    private fun entryTargetPath(root: Path, entry: ArchiveEntry): Path? {
+        val entryPath = Path(entry.name).normalize()
+        val prefix = options.sourceExtractionPrefix.normalize()
+        val relativePath = if (prefix.toString().isEmpty()) {
+            entryPath
+        } else {
+            if (!entryPath.startsWith(prefix))
+                return null
+            prefix.relativize(entryPath)
+        }
+        if (relativePath == Path("."))
+            return null
+
+        val target = (root / relativePath).normalize()
+        require(target.startsWith(root)) {
+            "Archive entry escapes destination directory: $target"
+        }
+        return target
+    }
+
+    private fun entryMode(entry: ArchiveEntry): Int =
+        (entry as? TarArchiveEntry)?.mode ?: (entry as? ZipArchiveEntry)?.unixMode ?: 0
 
     private fun extractSymlink(root: Path, target: Path, linkTarget: String) {
         val resolvedTarget = requireNotNull(target.parent).resolve(linkTarget).normalize()

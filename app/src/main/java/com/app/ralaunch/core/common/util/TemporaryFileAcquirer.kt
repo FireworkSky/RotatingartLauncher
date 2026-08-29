@@ -1,10 +1,11 @@
 package com.app.ralaunch.core.common.util
 
 import android.content.Context
-import com.app.ralaunch.core.logging.AppLog
 import org.koin.java.KoinJavaComponent
 import java.io.Closeable
 import java.nio.file.Path
+import kotlin.io.path.ExperimentalPathApi
+import kotlin.io.path.deleteRecursively
 
 /**
  * 临时文件管理器
@@ -31,21 +32,15 @@ class TemporaryFileAcquirer : Closeable {
         return tempFilePath
     }
 
+    @OptIn(ExperimentalPathApi::class)
     fun cleanupTempFiles() {
         tmpFilePaths.forEach { tmpFilePath ->
-            val isSuccessful = FileUtils.deleteDirectoryRecursivelyWithinRoot(tmpFilePath, preferredTempDir)
-            if (!isSuccessful) {
-                AppLog.w(TAG, "Failed to delete temporary file or directory: $tmpFilePath")
-            }
+            tmpFilePath.deleteRecursively()
         }
         tmpFilePaths.clear()
     }
 
     override fun close() {
         cleanupTempFiles()
-    }
-
-    companion object {
-        private const val TAG = "TemporaryFileAcquirer"
     }
 }

@@ -1,6 +1,5 @@
 package com.app.ralaunch.core.di.service
 
-import com.app.ralaunch.core.common.util.FileUtils
 import com.app.ralaunch.core.di.contract.IRuntimeManagerServiceV2
 import com.app.ralaunch.core.di.contract.ISettingsRepositoryServiceV2
 import com.app.ralaunch.core.model.AppSettings
@@ -12,13 +11,16 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.createDirectories
 import kotlin.io.path.createFile
 import kotlin.io.path.createTempDirectory
+import kotlin.io.path.deleteRecursively
 import kotlin.io.path.exists
 import kotlin.io.path.notExists
 import kotlin.io.path.writeText
 
+@OptIn(ExperimentalPathApi::class)
 class RuntimeManagerServiceV2Test {
 
     @Test
@@ -40,8 +42,8 @@ class RuntimeManagerServiceV2Test {
             assertNotNull(selected)
             assertEquals("10.0.4", selected?.version)
         } finally {
-            FileUtils.deleteDirectoryRecursively(runtimesRoot)
-            FileUtils.deleteDirectoryRecursively(legacyDotnetRoot)
+            runtimesRoot.deleteRecursively()
+            legacyDotnetRoot.deleteRecursively()
         }
     }
 
@@ -64,8 +66,8 @@ class RuntimeManagerServiceV2Test {
             assertNotNull(selected)
             assertEquals("10.0.0", selected?.version)
         } finally {
-            FileUtils.deleteDirectoryRecursively(runtimesRoot)
-            FileUtils.deleteDirectoryRecursively(legacyDotnetRoot)
+            runtimesRoot.deleteRecursively()
+            legacyDotnetRoot.deleteRecursively()
         }
     }
 
@@ -91,8 +93,8 @@ class RuntimeManagerServiceV2Test {
                 repository.Settings.selectedDotnetRuntimeVersion
             )
         } finally {
-            FileUtils.deleteDirectoryRecursively(runtimesRoot)
-            FileUtils.deleteDirectoryRecursively(legacyParent)
+            runtimesRoot.deleteRecursively()
+            legacyParent.deleteRecursively()
         }
     }
 
@@ -113,8 +115,8 @@ class RuntimeManagerServiceV2Test {
             assertTrue(legacyDotnetRoot.exists())
             assertFalse(runtimesRoot.resolve("dotnet").resolve("10.0.4").exists())
         } finally {
-            FileUtils.deleteDirectoryRecursively(runtimesRoot)
-            FileUtils.deleteDirectoryRecursively(legacyParent)
+            runtimesRoot.deleteRecursively()
+            legacyParent.deleteRecursively()
         }
     }
 
@@ -133,8 +135,8 @@ class RuntimeManagerServiceV2Test {
 
             assertEquals(listOf("2.0.0"), installed.map { it.version })
         } finally {
-            FileUtils.deleteDirectoryRecursively(runtimesRoot)
-            FileUtils.deleteDirectoryRecursively(legacyDotnetRoot)
+            runtimesRoot.deleteRecursively()
+            legacyDotnetRoot.deleteRecursively()
         }
     }
 

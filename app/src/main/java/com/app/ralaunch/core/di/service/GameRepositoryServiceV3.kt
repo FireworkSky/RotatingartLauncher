@@ -1,7 +1,6 @@
 package com.app.ralaunch.core.di.service
 
 import com.app.ralaunch.core.logging.AppLog
-import com.app.ralaunch.core.common.util.FileUtils
 import com.app.ralaunch.core.di.contract.IGameRepositoryServiceV3
 import com.app.ralaunch.core.model.GameItem
 import com.app.ralaunch.core.model.GameList
@@ -16,6 +15,7 @@ import kotlinx.serialization.json.Json
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.Path
 import kotlin.io.path.createDirectories
+import kotlin.io.path.deleteRecursively
 import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
 import kotlin.io.path.listDirectoryEntries
@@ -105,7 +105,8 @@ class GameRepositoryServiceV3(
         return try {
             val gamesDir = gamesDirPathFull.toAbsolutePath().normalize()
             val gameDir = gamesDir.resolve(storageRootPathRelative).normalize()
-            FileUtils.deleteDirectoryRecursivelyWithinRoot(gameDir, gamesDir)
+            gameDir.deleteRecursively()
+            true
         } catch (e: Exception) {
             AppLog.e(TAG, "删除游戏文件时发生错误: ${e.message}", e)
             false

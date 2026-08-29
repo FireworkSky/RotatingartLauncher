@@ -15,7 +15,6 @@ import android.system.ErrnoException
 import android.system.Os
 import android.webkit.MimeTypeMap
 import com.app.ralaunch.R
-import com.app.ralaunch.core.common.util.FileUtils
 import com.app.ralaunch.core.logging.AppLog
 import java.io.File
 import java.io.FileNotFoundException
@@ -181,8 +180,7 @@ class RaLaunchDocumentsProvider : DocumentsProvider() {
             return
         }
 
-        // 使用 ralib 的 FileUtils 删除目录
-        val success = FileUtils.deleteDirectoryRecursively(file.toPath())
+        val success = file.deleteRecursively()
         if (!success) {
             throw FileNotFoundException("Failed to delete document $documentId")
         }

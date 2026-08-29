@@ -76,7 +76,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import coil.compose.AsyncImage
 import com.app.ralaunch.R
-import com.app.ralaunch.core.common.util.FileUtils
 import com.app.ralaunch.core.error.ErrorHandler
 import com.app.ralaunch.core.common.MessageHelper
 import com.app.ralaunch.core.common.SettingsAccess
@@ -316,7 +315,7 @@ class MainActivityCompose : BaseActivity() {
             }
         }
         if (targetFile.exists()) {
-            FileUtils.deleteFileWithinRoot(targetFile, targetDir)
+            targetFile.delete()
         }
 
         val request = DownloadManager.Request(downloadUrl.toUri()).apply {

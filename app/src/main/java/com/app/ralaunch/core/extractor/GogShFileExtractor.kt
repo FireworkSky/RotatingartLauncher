@@ -1,21 +1,22 @@
 package com.app.ralaunch.core.extractor
 
-import com.app.ralaunch.core.common.util.TemporaryFileAcquirer
+import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
+import org.apache.commons.compress.archivers.zip.ZipFile
+import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream
+import org.apache.commons.compress.utils.BoundedInputStream
 import timber.log.Timber
 import com.app.ralaunch.strings.StringsResource.Strings
 import java.io.IOException
 import java.io.InputStream
-import java.io.RandomAccessFile
-import java.nio.ByteBuffer
+import java.nio.channels.Channels
 import java.nio.channels.FileChannel
+import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
-import org.apache.commons.compress.archivers.zip.ZipFile
 import kotlin.io.path.Path
 import kotlin.io.path.createDirectories
 import kotlin.io.path.div
 import kotlin.io.path.inputStream
-import kotlin.io.path.outputStream
 
 /**
  * GOG .sh 文件提取器
@@ -81,117 +82,108 @@ class GogShFileExtractor private constructor(private val options: Options) {
 
     fun extract(): Result {
         return try {
-            TemporaryFileAcquirer().use { tfa ->
-                // 获取 MakeSelf SH 文件的头部信息
+            // 获取 MakeSelf SH 文件的头部信息
+            options.callback?.invoke(
+                Event.Progress(
+                    options.id,
+                    Strings.extractor.gog.script,
+                    0.01f
+                )
+            )
+            val shFile = MakeSelfShFile.parse(options.sourcePath)
+                ?: throw IOException("解析 MakeSelf Sh 文件头部失败")
+
+            Timber.d("Successfully parsed header - offset: ${shFile.offset}, filesize: ${shFile.filesize}")
+            Timber.d("Starting extraction: ${options.sourcePath} to ${options.destinationPath}")
+
+            options.destinationPath.createDirectories()
+
+            // sanity check
+            if (shFile.offset + shFile.filesize > Files.size(options.sourcePath)) {
+                throw IOException("MakeSelf Sh 文件头部信息无效，超出文件总大小")
+            }
+
+            options.callback?.invoke(
+                Event.Progress(
+                    options.id,
+                    Strings.extractor.gog.mojosetup,
+                    0.02f
+                )
+            )
+
+            // 校验并解析 mojosetup.tar.gz：用 BoundedInputStream 限定 gzip 载荷区间，流式解析，无需落盘
+            if (shFile.filesize > 0) {
+                parseMojoSetupPayload(shFile)
+            }
+
+            options.callback?.invoke(
+                Event.Progress(
+                    options.id,
+                    Strings.extractor.gog.gameData,
+                    0.03f
+                )
+            )
+
+            // game_data.zip 直接用 commons-compress ZipFile 解析完整 .sh 文件：
+            // makeself 脚本与 mojosetup.tar.gz 会被识别为 zip 前导数据(preamble)并自动跳过
+            ZipFile.builder().setPath(options.sourcePath).get().use { zipFile ->
+                Timber.d("Opened game data zip, first local file header at ${zipFile.firstLocalFileHeaderOffset}")
+
                 options.callback?.invoke(
                     Event.Progress(
                         options.id,
-                        Strings.extractor.gog.script,
-                        0.01f
+                        Strings.extractor.gog.parseGameData,
+                        0.09f
                     )
                 )
-                val shFile = MakeSelfShFile.parse(options.sourcePath)
-                    ?: throw IOException("解析 MakeSelf Sh 文件头部失败")
+                Timber.d("Parsing game_data.zip from MakeSelf SH file")
 
-                Timber.d("Successfully parsed header - offset: ${shFile.offset}, filesize: ${shFile.filesize}")
+                // 解析 game_data.zip
+                val gdzf = GameDataZipFile.parse(zipFile)
+                    ?: throw IOException("解析 game_data.zip 失败")
 
-                FileChannel.open(options.sourcePath, StandardOpenOption.READ).use { srcChannel ->
-                    Timber.d("Starting extraction: ${options.sourcePath} to ${options.destinationPath}")
-
-                    options.destinationPath.createDirectories()
-
-                    // sanity check
-                    if (shFile.offset + shFile.filesize > srcChannel.size()) {
-                        throw IOException("MakeSelf Sh 文件头部信息无效，超出文件总大小")
-                    }
-
-                    options.callback?.invoke(
-                        Event.Progress(
-                            options.id,
-                            Strings.extractor.gog.mojosetup,
-                            0.02f
-                        )
+                options.callback?.invoke(
+                    Event.Progress(
+                        options.id,
+                        Strings.extractor.gog.decompressGameData,
+                        0.1f
                     )
+                )
 
-                    // 提取 mojosetup.tar.gz
-                    val mojosetupPath = tfa.acquireTempFilePath(EXTRACTED_MOJOSETUP_TAR_GZ_FILENAME)
-                    Timber.d("Extracting mojosetup.tar.gz to $mojosetupPath")
-                    srcChannel.copyRangeTo(shFile.offset, shFile.filesize, mojosetupPath)
-
-                    options.callback?.invoke(
-                        Event.Progress(
-                            options.id,
-                            Strings.extractor.gog.gameData,
-                            0.03f
-                        )
-                    )
-
-                    // 提取 game_data.zip
-                    val gameDataPath = tfa.acquireTempFilePath(EXTRACTED_GAME_DATA_ZIP_FILENAME)
-                    Timber.d("Extracting game_data.zip to $gameDataPath")
-                    srcChannel.copyRangeTo(
-                        shFile.offset + shFile.filesize,
-                        srcChannel.size() - (shFile.offset + shFile.filesize),
-                        gameDataPath
-                    )
-
-                    options.callback?.invoke(
-                        Event.Progress(
-                            options.id,
-                            Strings.extractor.gog.parseGameData,
-                            0.09f
-                        )
-                    )
-                    Timber.d("Extraction from MakeSelf SH file completed successfully")
-
-                    // 解压 game_data.zip
-                    Timber.d("Trying to extract game_data.zip...")
-                    val gdzf = GameDataZipFile.parse(gameDataPath)
-                        ?: throw IOException("解析 game_data.zip 失败")
-
-                    options.callback?.invoke(
-                        Event.Progress(
-                            options.id,
-                            Strings.extractor.gog.decompressGameData,
-                            0.1f
-                        )
-                    )
-
-                    val gamePath = options.destinationPath / Path("GoG Games", requireNotNull(gdzf.id))
-                    val gameDataResult = ArchiveExtractor.builder()
-                        .id(options.id)
-                        .from(gameDataPath)
-                        .prefix(Path("data/noarch/game"))
-                        .to(gamePath)
-                        .callback { event ->
-                            when (event) {
-                                is ArchiveExtractor.Event.Progress -> options.callback?.invoke(
-                                    Event.Progress(options.id, event.message, 0.1f + event.progress * 0.9f)
-                                )
-                                is ArchiveExtractor.Event.Complete -> Unit
-                                is ArchiveExtractor.Event.Error -> Unit
-                            }
+                val gamePath = options.destinationPath / Path("GoG Games", requireNotNull(gdzf.id))
+                val gameDataResult = ArchiveExtractor.builder()
+                    .id(options.id)
+                    .from(zipFile)
+                    .prefix(Path("data/noarch/game"))
+                    .to(gamePath)
+                    .callback { event ->
+                        when (event) {
+                            is ArchiveExtractor.Event.Progress -> options.callback?.invoke(
+                                Event.Progress(options.id, event.message, 0.1f + event.progress * 0.9f)
+                            )
+                            is ArchiveExtractor.Event.Complete -> Unit
+                            is ArchiveExtractor.Event.Error -> Unit
                         }
-                        .build()
-                        .extract()
-                    if (gameDataResult is ArchiveExtractor.Result.Failure) {
-                        throw IOException(gameDataResult.message, gameDataResult.cause)
                     }
-
-                    // 提取图标
-                    ArchiveExtractor.builder()
-                        .from(gameDataPath)
-                        .prefix(Path("data/noarch/support"))
-                        .to(gamePath / "support")
-                        .build()
-                        .extract()
-
-                    val completedMessage = Strings.extractor.gog.gameDataComplete
-                    options.callback?.invoke(Event.Progress(options.id, completedMessage, 1f))
-                    options.callback?.invoke(Event.Complete(options.id, completedMessage))
-
-                    Result.Success(gamePath, gdzf)
+                    .build()
+                    .extract()
+                if (gameDataResult is ArchiveExtractor.Result.Failure) {
+                    throw IOException(gameDataResult.message, gameDataResult.cause)
                 }
+
+                // 提取图标
+                ArchiveExtractor.builder()
+                    .from(zipFile)
+                    .prefix(Path("data/noarch/support"))
+                    .to(gamePath / "support")
+                    .build()
+                    .extract()
+
+                val completedMessage = Strings.extractor.gog.gameDataComplete
+                options.callback?.invoke(Event.Progress(options.id, completedMessage, 1f))
+                options.callback?.invoke(Event.Complete(options.id, completedMessage))
+
+                Result.Success(gamePath, gdzf)
             }
         } catch (ex: Exception) {
             Timber.e(ex, "Error when extracting source file")
@@ -201,18 +193,19 @@ class GogShFileExtractor private constructor(private val options: Options) {
         }
     }
 
-    private fun FileChannel.copyRangeTo(offset: Long, length: Long, target: Path) {
-        position(offset)
-        target.outputStream().use { output ->
-            val buffer = ByteBuffer.allocate(BUFFER_SIZE)
-            var remaining = length
-            while (remaining > 0) {
-                buffer.clear()
-                buffer.limit(minOf(buffer.capacity().toLong(), remaining).toInt())
-                val bytesRead = read(buffer)
-                if (bytesRead < 0) throw IOException("Unexpected end of MakeSelf archive")
-                output.write(buffer.array(), 0, bytesRead)
-                remaining -= bytesRead
+    /**
+     * 流式解析 makeself 载荷（mojosetup.tar.gz），仅校验结构，不产生临时文件
+     */
+    private fun parseMojoSetupPayload(shFile: MakeSelfShFile) {
+        FileChannel.open(options.sourcePath, StandardOpenOption.READ).use { channel ->
+            channel.position(shFile.offset)
+            val bounded = BoundedInputStream(Channels.newInputStream(channel), shFile.filesize)
+            GzipCompressorInputStream(bounded).use { gzip ->
+                TarArchiveInputStream(gzip).use { tar ->
+                    generateSequence { tar.nextEntry }.forEach { entry ->
+                        Timber.d("mojosetup payload entry: %s", entry.name)
+                    }
+                }
             }
         }
     }
@@ -346,65 +339,50 @@ class GogShFileExtractor private constructor(private val options: Options) {
             const val GAMEINFO_PATH = "data/noarch/gameinfo"
             const val ICON_PATH = "data/noarch/support/icon.png"
 
+            /**
+             * 从 GOG .sh 文件解析游戏数据信息。
+             *
+             * commons-compress ZipFile 可直接打开带 makeself 前导数据的完整 .sh 文件（preamble 自动跳过），
+             * 因此无需先将 game_data.zip 解出为临时文件。
+             */
             fun parseFromGogShFile(filePath: Path): GameDataZipFile? {
-                val shFile = MakeSelfShFile.parse(filePath) ?: run {
+                if (MakeSelfShFile.parse(filePath) == null) {
                     Timber.e("MakeSelf SH file is null")
                     return null
                 }
-
-                return try {
-                    TemporaryFileAcquirer().use { tfa ->
-                        val tempZipFile = tfa.acquireTempFilePath("temp_game_data.zip")
-
-                        RandomAccessFile(filePath.toFile(), "r").use { raf ->
-                            tempZipFile.outputStream().use { output ->
-                                val gameDataStart = shFile.offset + shFile.filesize
-                                raf.seek(gameDataStart)
-
-                                val buffer = ByteArray(8192)
-                                var bytesRead: Int
-                                while (raf.read(buffer).also { bytesRead = it } != -1) {
-                                    output.write(buffer, 0, bytesRead)
-                                }
-                            }
-                        }
-
-                        parse(tempZipFile)
-                    }
-                } catch (ex: Exception) {
-                    Timber.e(ex, "Error when reading GOG SH file: $filePath")
-                    null
-                }
+                return parse(filePath)
             }
 
             fun parse(filePath: Path): GameDataZipFile? {
                 return try {
-                    ZipFile(filePath.toFile()).use { zip ->
-                        val gameDataZipFile = GameDataZipFile()
-
-                        val gameInfoContent = getFileContent(zip, GAMEINFO_PATH)
-                        if (gameInfoContent != null) {
-                            if (parseGameInfoContent(gameDataZipFile, gameInfoContent)) {
-                                return@use gameDataZipFile
-                            }
-                            Timber.w("Failed to parse gameinfo content, trying config.lua...")
-                        }
-
-                        val configLuaContent = getFileContent(zip, CONFIG_LUA_PATH)
-                        if (configLuaContent != null) {
-                            if (parseConfigLuaContent(gameDataZipFile, configLuaContent)) {
-                                return@use gameDataZipFile
-                            }
-                            Timber.w("Failed to parse config.lua content")
-                        }
-
-                        Timber.e("Failed to parse game_data.zip content for id")
-                        null
-                    }
+                    ZipFile.builder().setPath(filePath).get().use(::parse)
                 } catch (e: Exception) {
                     Timber.e(e, "Exception when reading game_data.zip")
                     null
                 }
+            }
+
+            fun parse(zipFile: ZipFile): GameDataZipFile? {
+                val gameDataZipFile = GameDataZipFile()
+
+                val gameInfoContent = getFileContent(zipFile, GAMEINFO_PATH)
+                if (gameInfoContent != null) {
+                    if (parseGameInfoContent(gameDataZipFile, gameInfoContent)) {
+                        return gameDataZipFile
+                    }
+                    Timber.w("Failed to parse gameinfo content, trying config.lua...")
+                }
+
+                val configLuaContent = getFileContent(zipFile, CONFIG_LUA_PATH)
+                if (configLuaContent != null) {
+                    if (parseConfigLuaContent(gameDataZipFile, configLuaContent)) {
+                        return gameDataZipFile
+                    }
+                    Timber.w("Failed to parse config.lua content")
+                }
+
+                Timber.e("Failed to parse game_data.zip content for id")
+                return null
             }
 
             private fun getFileContent(zip: ZipFile, entryPath: String): String? {
@@ -479,10 +457,6 @@ class GogShFileExtractor private constructor(private val options: Options) {
     }
 
     companion object {
-        private const val BUFFER_SIZE = 8192
-        private const val EXTRACTED_MOJOSETUP_TAR_GZ_FILENAME = "mojosetup.tar.gz"
-        private const val EXTRACTED_GAME_DATA_ZIP_FILENAME = "game_data.zip"
-
         fun builder() = Builder()
     }
 }

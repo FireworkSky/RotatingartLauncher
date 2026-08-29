@@ -3,7 +3,6 @@ package com.app.ralaunch.feature.controls.ui
 import android.net.Uri
 import android.widget.Toast
 import com.app.ralaunch.R
-import com.app.ralaunch.core.common.util.FileUtils
 import com.app.ralaunch.feature.controls.packs.ControlPackManager
 import java.io.File
 
@@ -32,7 +31,7 @@ internal fun exportPackToZip(
             Toast.makeText(context, context.getString(R.string.control_export_failed, error.message ?: ""), Toast.LENGTH_SHORT).show()
         }
         
-        FileUtils.deleteFileWithinRoot(tempFile, context.cacheDir)
+        tempFile.delete()
     } catch (e: Exception) {
         Toast.makeText(context, context.getString(R.string.control_export_failed, e.message ?: ""), Toast.LENGTH_SHORT).show()
     }
@@ -65,7 +64,7 @@ internal fun importPackFromUri(
             Toast.makeText(context, context.getString(R.string.control_import_failed, error.message ?: ""), Toast.LENGTH_SHORT).show()
         }
         
-        FileUtils.deleteFileWithinRoot(tempFile, context.cacheDir)
+        tempFile.delete()
         
     } catch (e: Exception) {
         Toast.makeText(context, context.getString(R.string.control_import_failed, e.message ?: ""), Toast.LENGTH_SHORT).show()

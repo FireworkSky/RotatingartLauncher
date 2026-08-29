@@ -5,7 +5,6 @@ import android.content.SharedPreferences
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.app.ralaunch.R
-import com.app.ralaunch.core.common.util.FileUtils
 import com.app.ralaunch.core.di.contract.IRuntimeManagerServiceV2
 import com.app.ralaunch.core.extractor.ArchiveExtractor
 import com.app.ralaunch.core.extractor.AssetExtractor
@@ -24,7 +23,9 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.io.File
 import kotlin.io.path.Path
+import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.createDirectories
+import kotlin.io.path.deleteRecursively
 import kotlin.io.path.exists
 import kotlin.io.path.moveTo
 
@@ -127,6 +128,7 @@ class InitializationViewModel(
         }
     }
 
+    @OptIn(ExperimentalPathApi::class)
     private suspend fun extractAll(components: List<ComponentState>) {
         components.forEachIndexed { index, component ->
             if (!component.needsExtraction) {
@@ -145,10 +147,8 @@ class InitializationViewModel(
                 ?: error("Unsupported runtime component: ${component.name}")
             val stagingRootDir = Path(appContext.cacheDir.absolutePath, "runtime-staging")
             val stagingDir = stagingRootDir.resolve(component.name)
-            if (stagingDir.exists() &&
-                !FileUtils.deleteDirectoryRecursivelyWithinRoot(stagingDir, stagingRootDir)
-            ) {
-                throw IllegalStateException("Failed to clear staging directory for ${component.name}")
+            if (stagingDir.exists()) {
+                stagingDir.deleteRecursively()
             }
             stagingDir.createDirectories()
 
@@ -183,15 +183,13 @@ class InitializationViewModel(
             val installDir = runtimeManager.getRuntimeInstallPath(runtimeType, runtimeVersion)
             val runtimeTypeDir = runtimeManager.getRuntimeTypeRootPath(runtimeType)
             runtimeTypeDir.createDirectories()
-            if (installDir.exists() &&
-                !FileUtils.deleteDirectoryRecursivelyWithinRoot(installDir, runtimeTypeDir)
-            ) {
-                throw IllegalStateException("Failed to replace runtime directory: $installDir")
+            if (installDir.exists()) {
+                installDir.deleteRecursively()
             }
             stagingDir.moveTo(installDir)
             runtimeManager.setSelectedRuntimeVersion(runtimeType, runtimeVersion)
 
-            FileUtils.deleteFileWithinRoot(tempFile, appContext.cacheDir)
+            tempFile.delete()
             updateComponent(index, 100, true, appContext.getString(R.string.init_complete))
         }
     }

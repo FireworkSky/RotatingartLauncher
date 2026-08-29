@@ -4,7 +4,6 @@ import android.content.Context
 import com.app.ralaunch.R
 import com.app.ralaunch.utils.JsonHttpRepositoryClient
 import com.app.ralaunch.core.logging.AppLog
-import com.app.ralaunch.core.common.util.FileUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
@@ -180,7 +179,7 @@ class ControlPackRepositoryService(private val context: Context) {
                 
                 // 如果已存在，先删除
                 if (packDir.exists()) {
-                    FileUtils.deleteDirectoryRecursivelyWithinRoot(packDir, packManager.packsDir)
+                    packDir.deleteRecursively()
                 }
                 packDir.mkdirs()
                 
@@ -193,7 +192,7 @@ class ControlPackRepositoryService(private val context: Context) {
                 val manifestFile = File(packDir, ControlPackInfo.MANIFEST_FILE_NAME)
                 val manifestResult = downloadFile("$baseUrl/${ControlPackInfo.MANIFEST_FILE_NAME}", manifestFile)
                 if (manifestResult.isFailure) {
-                    FileUtils.deleteDirectoryRecursivelyWithinRoot(packDir, packManager.packsDir)
+                    packDir.deleteRecursively()
                     listener?.onError(
                         context.getString(R.string.pack_download_failed, ControlPackInfo.MANIFEST_FILE_NAME)
                     )
@@ -207,7 +206,7 @@ class ControlPackRepositoryService(private val context: Context) {
                 val layoutFile = File(packDir, ControlPackInfo.LAYOUT_FILE_NAME)
                 val layoutResult = downloadFile("$baseUrl/${ControlPackInfo.LAYOUT_FILE_NAME}", layoutFile)
                 if (layoutResult.isFailure) {
-                    FileUtils.deleteDirectoryRecursivelyWithinRoot(packDir, packManager.packsDir)
+                    packDir.deleteRecursively()
                     listener?.onError(
                         context.getString(R.string.pack_download_failed, ControlPackInfo.LAYOUT_FILE_NAME)
                     )
@@ -361,6 +360,6 @@ class ControlPackRepositoryService(private val context: Context) {
         // 清除预览图缓存
         val cacheDir = context.externalCacheDir ?: context.cacheDir
         val previewDir = File(cacheDir, "pack_previews")
-        FileUtils.deleteDirectoryRecursivelyWithinRoot(previewDir, cacheDir)
+        previewDir.deleteRecursively()
     }
 }

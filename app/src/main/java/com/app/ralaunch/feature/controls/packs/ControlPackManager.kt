@@ -5,7 +5,6 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.os.Environment
 import com.app.ralaunch.core.logging.AppLog
-import com.app.ralaunch.core.common.util.FileUtils
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import java.io.File
@@ -410,7 +409,7 @@ class ControlPackManager(private val context: Context) {
         if (!packDir.exists()) return false
         
         return try {
-            FileUtils.deleteDirectoryRecursivelyWithinRoot(packDir, packsDir)
+            packDir.deleteRecursively()
             
             // 如果删除的是当前选中的包，选择其他包
             if (getSelectedPackId() == packId) {
@@ -591,7 +590,7 @@ class ControlPackManager(private val context: Context) {
                 // 创建目标目录
                 val packDir = File(packsDir, info.id)
                 if (packDir.exists()) {
-                    FileUtils.deleteDirectoryRecursivelyWithinRoot(packDir, packsDir)
+                    packDir.deleteRecursively()
                 }
                 packDir.mkdirs()
                 

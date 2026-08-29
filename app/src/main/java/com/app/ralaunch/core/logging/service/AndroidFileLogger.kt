@@ -1,7 +1,6 @@
 package com.app.ralaunch.core.logging.service
 
 import android.util.Log
-import com.app.ralaunch.core.common.util.FileUtils
 import com.app.ralaunch.core.logging.LogFilePolicy
 import com.app.ralaunch.core.logging.LogLevel
 import com.app.ralaunch.core.logging.contract.Logger
@@ -248,7 +247,7 @@ class AndroidFileLogger(
 
     private fun clearExpiredLogFiles(directory: File) {
         LogFilePolicy.filesOlderThanRetention(directory).forEach { file ->
-            runCatching { FileUtils.deleteFileWithinRoot(file, directory) }
+            runCatching { file.delete() }
                 .onFailure { w(TAG, "Failed to delete expired log file: ${file.absolutePath}", it) }
         }
     }

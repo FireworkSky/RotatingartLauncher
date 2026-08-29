@@ -1,6 +1,5 @@
 package com.app.ralaunch.core.di.service
 
-import com.app.ralaunch.core.common.util.FileUtils
 import com.app.ralaunch.core.di.contract.IRuntimeManagerServiceV2
 import com.app.ralaunch.core.di.contract.ISettingsRepositoryServiceV2
 import kotlinx.coroutines.runBlocking
@@ -8,6 +7,7 @@ import java.nio.file.Path
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.Path
 import kotlin.io.path.createDirectories
+import kotlin.io.path.deleteRecursively
 import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
 import kotlin.io.path.listDirectoryEntries
@@ -198,7 +198,7 @@ class RuntimeManagerServiceV2(
 
         when {
             targetPath.exists() && isRuntimeLayoutValid(IRuntimeManagerServiceV2.RuntimeType.DOTNET, targetPath) -> {
-                FileUtils.deleteDirectoryRecursivelyWithinRoot(legacyRootPath, getRuntimeStorageRootPath())
+                legacyRootPath.deleteRecursively()
             }
 
             targetPath.exists() -> {

@@ -7,7 +7,6 @@ import android.net.Uri
 import android.widget.Toast
 import androidx.core.content.FileProvider
 import com.app.ralaunch.R
-import com.app.ralaunch.core.common.util.FileUtils
 import com.app.ralaunch.feature.patch.data.PatchManager
 import com.app.ralaunch.core.platform.runtime.AndroidRendererRegistry
 import com.app.ralaunch.core.logging.LogFilePolicy
@@ -52,7 +51,7 @@ internal suspend fun handleImageSelection(context: Context, uri: Uri, viewModel:
             if (!oldPath.isNullOrEmpty()) {
                 val oldFile = File(oldPath)
                 if (oldFile.exists()) {
-                    FileUtils.deleteFileWithinRoot(oldFile, backgroundDir)
+                    oldFile.delete()
                 }
             }
 
@@ -222,8 +221,8 @@ private fun logExportHelper(): LogExportHelper =
 
 internal fun clearAppCache(context: Context) {
     try {
-        FileUtils.clearDirectory(context.cacheDir)
-        context.externalCacheDir?.let(FileUtils::clearDirectory)
+        context.cacheDir.listFiles()?.forEach { it.deleteRecursively() }
+        context.externalCacheDir?.listFiles()?.forEach { it.deleteRecursively() }
         Toast.makeText(context, context.getString(R.string.settings_cache_cleared), Toast.LENGTH_SHORT).show()
     } catch (e: Exception) {
         Toast.makeText(context, context.getString(R.string.settings_clear_cache_failed), Toast.LENGTH_SHORT).show()

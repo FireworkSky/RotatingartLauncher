@@ -3,7 +3,6 @@ package com.app.ralaunch.feature.patch.data
 import android.content.Context
 import com.app.ralaunch.core.logging.AppLog
 import com.app.ralaunch.core.extractor.ArchiveExtractor
-import com.app.ralaunch.core.common.util.FileUtils
 import com.app.ralaunch.core.common.util.TemporaryFileAcquirer
 import org.koin.java.KoinJavaComponent
 import java.io.IOException
@@ -12,6 +11,9 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.Objects
 import java.util.stream.Collectors
+import kotlin.io.path.ExperimentalPathApi
+import kotlin.io.path.deleteIfExists
+import kotlin.io.path.deleteRecursively
 
 /**
  * 补丁管理器
@@ -28,7 +30,7 @@ class PatchManager @JvmOverloads constructor(
         val patchStorageBasePath = getPatchStorageBaseDirectory(customStoragePath)
         patchStoragePath = patchStorageBasePath.resolve(PATCH_STORAGE_DIR).normalize()
         if (!Files.isDirectory(patchStoragePath) || !Files.exists(patchStoragePath)) {
-            FileUtils.deleteFileWithinRoot(patchStoragePath, patchStorageBasePath)
+            patchStoragePath.deleteIfExists()
             Files.createDirectories(patchStoragePath)
         }
         configFilePath = patchStoragePath.resolve(PatchManagerConfig.CONFIG_FILE_NAME)
@@ -128,6 +130,7 @@ class PatchManager @JvmOverloads constructor(
     /**
      * Install a patch archive (ZIP/7z).
      */
+    @OptIn(ExperimentalPathApi::class)
     fun installPatch(patchZipPath: Path): Boolean {
         if (!Files.exists(patchZipPath) || !Files.isRegularFile(patchZipPath)) {
             AppLog.w(TAG, "补丁安装失败: 补丁文件不存在或不是一个有效的文件, path: $patchZipPath")
@@ -144,10 +147,7 @@ class PatchManager @JvmOverloads constructor(
 
         if (Files.exists(patchPath)) {
             AppLog.i(TAG, "补丁已存在, 将删除原补丁目录，重新安装, patch id: ${manifest.id}")
-            if (!FileUtils.deleteDirectoryRecursivelyWithinRoot(patchPath, patchStoragePath)) {
-                AppLog.w(TAG, "删除原补丁目录时发生错误")
-                return false
-            }
+            patchPath.deleteRecursively()
         } else {
             AppLog.i(TAG, "正在安装新补丁, patch id: ${manifest.id}")
         }
@@ -218,7 +218,7 @@ class PatchManager @JvmOverloads constructor(
             val dllPath = patchStoragePath.resolve(dllName)
             try {
                 if (Files.exists(dllPath)) {
-                    FileUtils.deleteFileWithinRoot(dllPath, patchStoragePath)
+                    dllPath.deleteIfExists()
                     AppLog.i(TAG, "已清理旧的共享 DLL: $dllName")
                 }
             } catch (e: IOException) {

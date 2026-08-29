@@ -213,8 +213,7 @@ object AssetIntegrityChecker {
                 val componentDir = File(context.filesDir, component.dirName)
                 val componentName = context.getString(component.nameResId)
 
-                val deleteSucceeded = !componentDir.exists() ||
-                    FileUtils.deleteDirectoryRecursivelyWithinRoot(componentDir, context.filesDir)
+                val deleteSucceeded = !componentDir.exists() || componentDir.deleteRecursively()
 
                 if (deleteSucceeded) {
                     fixedCount++

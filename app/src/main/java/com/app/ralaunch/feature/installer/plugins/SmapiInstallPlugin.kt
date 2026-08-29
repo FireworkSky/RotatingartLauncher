@@ -4,7 +4,6 @@ import android.os.Environment
 import com.app.ralaunch.core.logging.AppLog
 import com.app.ralaunch.R
 import com.app.ralaunch.RaLaunchApp
-import com.app.ralaunch.core.common.util.FileUtils
 import com.app.ralaunch.feature.installer.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -328,7 +327,7 @@ class SmapiInstallPlugin : BaseInstallPlugin() {
             processInstallerFiles(tempDir, outputDir, callback)
             
         } finally {
-            FileUtils.deleteDirectoryRecursivelyWithinRoot(tempDir, outputDir)
+            tempDir.deleteRecursively()
         }
     }
     

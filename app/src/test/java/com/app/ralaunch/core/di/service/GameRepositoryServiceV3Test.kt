@@ -1,6 +1,5 @@
 package com.app.ralaunch.core.di.service
 
-import com.app.ralaunch.core.common.util.FileUtils
 import com.app.ralaunch.core.model.GameItem
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -8,13 +7,16 @@ import org.junit.Assume.assumeNoException
 import org.junit.Test
 import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.createDirectories
 import kotlin.io.path.createFile
 import kotlin.io.path.createTempDirectory
+import kotlin.io.path.deleteRecursively
 import kotlin.io.path.exists
 import kotlin.io.path.notExists
 import kotlin.io.path.writeText
 
+@OptIn(ExperimentalPathApi::class)
 class GameRepositoryServiceV3Test {
 
     @Test
@@ -35,7 +37,7 @@ class GameRepositoryServiceV3Test {
             assertTrue(siblingDir.exists())
             assertTrue(siblingDir.resolve("keep.txt").exists())
         } finally {
-            FileUtils.deleteDirectoryRecursively(gamesDir)
+            gamesDir.deleteRecursively()
         }
     }
 
@@ -58,8 +60,8 @@ class GameRepositoryServiceV3Test {
             assertTrue(outsideDir.exists())
             assertTrue(symlink.notExists())
         } finally {
-            FileUtils.deleteDirectoryRecursively(gamesDir)
-            FileUtils.deleteDirectoryRecursively(outsideDir)
+            gamesDir.deleteRecursively()
+            outsideDir.deleteRecursively()
         }
     }
 
@@ -73,7 +75,7 @@ class GameRepositoryServiceV3Test {
             assertFalse(repository.deleteGameFiles(game("")))
             assertTrue(gamesDir.exists())
         } finally {
-            FileUtils.deleteDirectoryRecursively(gamesDir)
+            gamesDir.deleteRecursively()
         }
     }
 

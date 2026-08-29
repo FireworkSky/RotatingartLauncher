@@ -51,7 +51,8 @@ class GogShFileExtractorTest {
 
     @Test
     fun parsesTerrariaMakeselfSample() {
-        val sample = Path.of("testcases/gogsh/terraria_v1_4_5_6_89299.sh").toFile()
+        // 单元测试工作目录是 app/ 模块目录，样例文件位于仓库根目录下
+        val sample = Path.of("..", "testcases", "gogsh", "terraria_v1_4_5_6_89299.sh").toFile()
         assumeTrue("Local GOG sample is not available", sample.isFile)
 
         val gameData = GogShFileExtractor.GameDataZipFile.parseFromGogShFile(sample.toPath())
