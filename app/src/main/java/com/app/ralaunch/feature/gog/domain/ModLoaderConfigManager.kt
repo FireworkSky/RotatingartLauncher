@@ -2,7 +2,7 @@ package com.app.ralaunch.feature.gog.domain
 
 import android.content.Context
 import com.app.ralaunch.R
-import com.app.ralaunch.core.logging.AppLog
+import timber.log.Timber
 import org.json.JSONArray
 import java.io.BufferedReader
 import java.io.InputStreamReader
@@ -14,7 +14,6 @@ import java.nio.charset.StandardCharsets
 class ModLoaderConfigManager(context: Context) {
 
     companion object {
-        private const val TAG = "ModLoaderConfigManager"
         private const val CONFIG_NAME = "gog_modloader_rules.json"
     }
 
@@ -69,9 +68,9 @@ class ModLoaderConfigManager(context: Context) {
         if (fetchedVersions.isNotEmpty()) {
             rule.versions.clear()
             rule.versions.addAll(fetchedVersions)
-            AppLog.i(TAG, "从 GitHub 获取到 ${rule.name} 的 ${fetchedVersions.size} 个版本")
+            Timber.i("从 GitHub 获取到 ${rule.name} 的 ${fetchedVersions.size} 个版本")
         } else {
-            AppLog.w(TAG, "无法从 GitHub 获取 ${rule.name} 版本，使用本地配置")
+            Timber.w("无法从 GitHub 获取 ${rule.name} 版本，使用本地配置")
         }
 
         return rule.versions
@@ -120,7 +119,7 @@ class ModLoaderConfigManager(context: Context) {
                 }
             }
         } catch (e: Exception) {
-            AppLog.e(TAG, "读取 ModLoader 配置失败: ${e.message}", e)
+            Timber.e(e, "读取 ModLoader 配置失败: ${e.message}")
         }
     }
 }

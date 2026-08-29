@@ -1,7 +1,7 @@
 package com.app.ralaunch.feature.main
 
 import com.app.ralaunch.core.di.service.ThemeManagerServiceV1
-import com.app.ralaunch.core.logging.AppLog
+import timber.log.Timber
 import com.app.ralaunch.feature.main.ui.background.VideoBackgroundView
 import java.lang.ref.WeakReference
 
@@ -15,7 +15,6 @@ class VideoBackgroundManager(
     private val themeManager: ThemeManagerServiceV1
 ) {
     companion object {
-        private const val TAG = "VideoBackgroundManager"
     }
 
     // 使用弱引用避免内存泄漏
@@ -26,7 +25,7 @@ class VideoBackgroundManager(
      */
     fun registerVideoView(view: VideoBackgroundView?) {
         videoViewRef = view?.let { WeakReference(it) }
-        AppLog.d(TAG, "视频 View ${if (view != null) "已注册" else "已注销"}")
+        Timber.d("视频 View ${if (view != null) "已注册" else "已注销"}")
     }
 
     private val videoView: VideoBackgroundView?
@@ -45,7 +44,7 @@ class VideoBackgroundManager(
         try {
             videoView?.takeIf { themeManager.isVideoBackground }?.start()
         } catch (e: Exception) {
-            AppLog.e(TAG, "恢复视频背景失败: ${e.message}")
+            Timber.e("恢复视频背景失败: ${e.message}")
         }
     }
 
@@ -56,7 +55,7 @@ class VideoBackgroundManager(
         try {
             videoView?.pause()
         } catch (e: Exception) {
-            AppLog.e(TAG, "暂停视频背景失败: ${e.message}")
+            Timber.e("暂停视频背景失败: ${e.message}")
         }
     }
 
@@ -68,7 +67,7 @@ class VideoBackgroundManager(
             videoView?.release()
             videoViewRef = null
         } catch (e: Exception) {
-            AppLog.e(TAG, "释放视频背景失败: ${e.message}")
+            Timber.e("释放视频背景失败: ${e.message}")
         }
     }
 

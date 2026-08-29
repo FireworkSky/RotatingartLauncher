@@ -1,14 +1,13 @@
 package com.app.ralaunch.core.platform.runtime
 
 import android.content.Context
-import com.app.ralaunch.core.logging.AppLog
+import timber.log.Timber
 import com.app.ralaunch.core.common.SettingsAccess
 import com.app.ralaunch.core.platform.runtime.EnvVarsManager
 import com.app.ralaunch.core.platform.runtime.AndroidRendererRegistry
 import com.app.ralaunch.core.platform.runtime.RendererRegistry
 
 object RendererEnvironmentConfigurator {
-    private const val TAG = "RendererEnvironmentConfigurator"
 
     @JvmStatic
     fun getEffectiveRenderer(): String {
@@ -49,24 +48,18 @@ object RendererEnvironmentConfigurator {
             val rawOverride = rendererOverride.trim()
             when {
                 rawOverride.isEmpty() || !AndroidRendererRegistry.isKnownRendererId(rawOverride) ->
-                    AppLog.w(
-                        TAG,
-                        "Renderer override is invalid: $rendererOverride, fallback to global: $globalRenderer"
-                    )
+                    Timber.w("Renderer override is invalid: $rendererOverride, fallback to global: $globalRenderer")
                 !overrideCompatible ->
-                    AppLog.w(
-                        TAG,
-                        "Renderer override is incompatible on this device: $rawOverride, fallback to global: $globalRenderer"
-                    )
+                    Timber.w("Renderer override is incompatible on this device: $rawOverride, fallback to global: $globalRenderer")
                 else ->
-                    AppLog.i(TAG, "Using per-game renderer override: ${RendererRegistry.normalizeRendererId(rawOverride)}")
+                    Timber.i("Using per-game renderer override: ${RendererRegistry.normalizeRendererId(rawOverride)}")
             }
         }
 
         loadRendererLibraries(context, renderer)
         applyFna3dEnvironment(renderer)
 
-        AppLog.i(TAG, "Renderer environment applied successfully for: $renderer")
+        Timber.i("Renderer environment applied successfully for: $renderer")
     }
 
     private fun loadRendererLibraries(context: Context?, renderer: String) {
@@ -74,9 +67,9 @@ object RendererEnvironmentConfigurator {
         val success = RendererLoader.loadRenderer(context, renderer)
 
         if (success) {
-            AppLog.i(TAG, "当前渲染器: ${RendererLoader.getCurrentRenderer()}")
+            Timber.i("当前渲染器: ${RendererLoader.getCurrentRenderer()}")
         } else {
-            AppLog.e(TAG, "Failed to load renderer: $renderer")
+            Timber.e("Failed to load renderer: $renderer")
         }
     }
 
@@ -182,18 +175,18 @@ object RendererEnvironmentConfigurator {
     }
 
     private fun logFna3dConfiguration(renderer: String, envVars: Map<String, String?>) {
-        AppLog.i(TAG, "=== FNA3D Configuration ===")
-        AppLog.i(TAG, "Renderer ID: $renderer")
-        AppLog.i(TAG, "FNA3D_OPENGL_DRIVER = ${envVars["FNA3D_OPENGL_DRIVER"]}")
-        AppLog.i(TAG, "FNA3D_FORCE_DRIVER = ${envVars["FNA3D_FORCE_DRIVER"]}")
+        Timber.i("=== FNA3D Configuration ===")
+        Timber.i("Renderer ID: $renderer")
+        Timber.i("FNA3D_OPENGL_DRIVER = ${envVars["FNA3D_OPENGL_DRIVER"]}")
+        Timber.i("FNA3D_FORCE_DRIVER = ${envVars["FNA3D_FORCE_DRIVER"]}")
 
         when (renderer) {
             AndroidRendererRegistry.ID_GL4ES ->
-                AppLog.i(TAG, "OpenGL Profile: Desktop OpenGL 2.1 Compatibility Profile")
+                Timber.i("OpenGL Profile: Desktop OpenGL 2.1 Compatibility Profile")
             AndroidRendererRegistry.ID_ZINK ->
-                AppLog.i(TAG, "OpenGL Profile: Desktop OpenGL 4.3 (Mesa Zink over Vulkan)")
+                Timber.i("OpenGL Profile: Desktop OpenGL 4.3 (Mesa Zink over Vulkan)")
             else ->
-                AppLog.i(TAG, "OpenGL Profile: OpenGL ES 3.0")
+                Timber.i("OpenGL Profile: OpenGL ES 3.0")
         }
 
         val mapBufferRange = envVars["FNA3D_OPENGL_USE_MAP_BUFFER_RANGE"]
@@ -202,14 +195,14 @@ object RendererEnvironmentConfigurator {
                 AndroidRendererRegistry.ID_ANGLE,
                 AndroidRendererRegistry.ID_GL4ES_ANGLE
             ) ->
-                AppLog.i(TAG, "Map Buffer Range: Disabled (Vulkan-translated renderer)")
+                Timber.i("Map Buffer Range: Disabled (Vulkan-translated renderer)")
             mapBufferRange == "0" ->
-                AppLog.i(TAG, "Map Buffer Range: Disabled (via settings)")
+                Timber.i("Map Buffer Range: Disabled (via settings)")
             else ->
-                AppLog.i(TAG, "Map Buffer Range: Enabled by default")
+                Timber.i("Map Buffer Range: Enabled by default")
         }
 
-        AppLog.i(TAG, "VSync: Forced ON")
-        AppLog.i(TAG, "===========================")
+        Timber.i("VSync: Forced ON")
+        Timber.i("===========================")
     }
 }

@@ -3,7 +3,7 @@ package com.app.ralaunch.core.common
 import android.content.Context
 import com.app.ralaunch.core.model.GameItem
 import com.app.ralaunch.feature.game.ui.legacy.GameActivity
-import com.app.ralaunch.core.logging.AppLog
+import timber.log.Timber
 import java.io.File
 
 /**
@@ -15,32 +15,31 @@ import java.io.File
 class GameLaunchManager(private val context: Context) {
 
     companion object {
-        private const val TAG = "GameLaunchManager"
     }
 
     fun launchGame(game: GameItem): Boolean {
-        AppLog.d(TAG, ">>> launchGame called for: ${game.displayedName}")
-        AppLog.i(TAG, "launchGame called for: ${game.displayedName}, path: ${game.gameExePathRelative}")
+        Timber.d(">>> launchGame called for: ${game.displayedName}")
+        Timber.i("launchGame called for: ${game.displayedName}, path: ${game.gameExePathRelative}")
 
         if (game.id.isBlank()) {
-            AppLog.e(TAG, "Game storage ID is blank, cannot launch")
+            Timber.e("Game storage ID is blank, cannot launch")
             return false
         }
 
         val gamePathFull = game.gameExePathFull
         if (gamePathFull == null) {
-            AppLog.e(TAG, "Game storage path is null for game: ${game.displayedName}")
+            Timber.e("Game storage path is null for game: ${game.displayedName}")
             return false
         }
 
         val gameFile = File(gamePathFull)
 
         if (!gameFile.exists() || !gameFile.isFile) {
-            AppLog.e(TAG, "Assembly file not found: ${gameFile.absolutePath}")
+            Timber.e("Assembly file not found: ${gameFile.absolutePath}")
             return false
         }
 
-        AppLog.i(TAG, "Game runtime: dotnet")
+        Timber.i("Game runtime: dotnet")
 
         GameActivity.launch(
             context = context,

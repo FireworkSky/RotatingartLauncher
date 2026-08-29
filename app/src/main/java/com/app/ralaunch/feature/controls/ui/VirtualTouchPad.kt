@@ -8,7 +8,7 @@ import android.graphics.RectF
 import android.graphics.Region
 import android.os.Handler
 import android.text.TextPaint
-import com.app.ralaunch.core.logging.AppLog
+import timber.log.Timber
 import android.view.MotionEvent
 import android.view.View
 import com.app.ralaunch.core.di.service.VibrationManagerServiceV1
@@ -32,7 +32,6 @@ class VirtualTouchPad(
 ) : View(context), ControlView {
 
     companion object {
-        private const val TAG = "VirtualTouchPad"
 
         private const val TOUCHPAD_STATE_IDLE_TIMEOUT = 200L // 毫秒
         private const val TOUCHPAD_CLICK_TIMEOUT = 50L // 毫秒
@@ -44,7 +43,7 @@ class VirtualTouchPad(
         try {
             KoinJavaComponent.get(VibrationManagerServiceV1::class.java)
         } catch (e: Exception) {
-            AppLog.w(TAG, "VibrationManagerServiceV1 not available: ${e.message}")
+            Timber.w("VibrationManagerServiceV1 not available: ${e.message}")
             null
         }
     }

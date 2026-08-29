@@ -1,6 +1,6 @@
 package com.app.ralaunch.feature.patch.data
 
-import com.app.ralaunch.core.logging.AppLog
+import timber.log.Timber
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.annotations.SerializedName
@@ -73,7 +73,6 @@ data class PatchManifest(
     )
 
     companion object {
-        private const val TAG = "PatchManifest"
         const val MANIFEST_FILE_NAME = "patch.json"
 
         @JvmStatic
@@ -89,12 +88,12 @@ data class PatchManifest(
 
         @JvmStatic
         fun fromZip(file: File): PatchManifest? {
-            AppLog.i(TAG, "load Patch zip, file: ${file.absolutePath}")
+            Timber.i("load Patch zip, file: ${file.absolutePath}")
             return try {
                 ZipFile(file).use { zip ->
                     val manifestEntry = zip.getEntry(MANIFEST_FILE_NAME)
                     if (manifestEntry == null) {
-                        AppLog.w(TAG, "Not found in the compressed file $MANIFEST_FILE_NAME")
+                        Timber.w("Not found in the compressed file $MANIFEST_FILE_NAME")
                         return null
                     }
                     zip.getInputStream(manifestEntry).use { stream ->
@@ -104,7 +103,7 @@ data class PatchManifest(
                     }
                 }
             } catch (e: Exception) {
-                AppLog.w(TAG, AppLog.getStackTraceString(e))
+                Timber.w(e)
                 null
             }
         }
@@ -130,10 +129,10 @@ data class PatchManifest(
 
         @JvmStatic
         fun fromJson(pathToJson: Path): PatchManifest? {
-            AppLog.i(TAG, "load $MANIFEST_FILE_NAME, pathToJson: $pathToJson")
+            Timber.i("load $MANIFEST_FILE_NAME, pathToJson: $pathToJson")
 
             if (!Files.exists(pathToJson) || !Files.isRegularFile(pathToJson)) {
-                AppLog.w(TAG, "路径不存在 $MANIFEST_FILE_NAME 文件")
+                Timber.w("路径不存在 $MANIFEST_FILE_NAME 文件")
                 return null
             }
 
@@ -144,7 +143,7 @@ data class PatchManifest(
                     }
                 }
             } catch (e: Exception) {
-                AppLog.w(TAG, AppLog.getStackTraceString(e))
+                Timber.w(e)
                 null
             }
         }

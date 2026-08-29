@@ -6,7 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.app.ralaunch.core.common.GameLaunchManager
 import com.app.ralaunch.core.common.SettingsAccess
-import com.app.ralaunch.core.logging.AppLog
+import timber.log.Timber
 import com.app.ralaunch.R
 import com.app.ralaunch.core.di.contract.IGameRepositoryServiceV3
 import com.app.ralaunch.core.di.contract.ISettingsRepositoryServiceV2
@@ -145,11 +145,7 @@ class MainViewModel(
                             isAnnouncementBadgeShown = shouldShowBadge
                         }
                     }.onFailure { error ->
-                        AppLog.w(
-                            "MainViewModel",
-                            "Failed to persist isAnnouncementBadgeShown: ${error.message}",
-                            error
-                        )
+                        Timber.w(error, "Failed to persist isAnnouncementBadgeShown: ${error.message}")
                     }
                 }
 
@@ -184,11 +180,7 @@ class MainViewModel(
                     }
                 }
             }.onFailure { error ->
-                AppLog.w(
-                    "MainViewModel",
-                    "Failed to fetch announcements on startup: ${error.message}",
-                    error
-                )
+                Timber.w(error, "Failed to fetch announcements on startup: ${error.message}")
             }
         }
     }
@@ -221,11 +213,7 @@ class MainViewModel(
                     }
                 }
             }.onFailure { error ->
-                AppLog.w(
-                    "MainViewModel",
-                    "Failed to persist announcement read state: ${error.message}",
-                    error
-                )
+                Timber.w(error, "Failed to persist announcement read state: ${error.message}")
             }
             withContext(Dispatchers.Main) {
                 _uiState.update {
@@ -377,7 +365,7 @@ class MainViewModel(
 
                 result.onSuccess { info ->
                     if (info == null) {
-                        AppLog.i("MainViewModel", "No update. currentVersion=$currentVersion")
+                        Timber.i("No update. currentVersion=$currentVersion")
                         if (fromUserAction) {
                             emitEffect(MainUiEffect.ShowToast("当前已是最新版本"))
                         }
@@ -386,12 +374,9 @@ class MainViewModel(
                     _uiState.update { state ->
                         state.copy(availableUpdate = info.toAppUpdateUiModel())
                     }
-                    AppLog.i(
-                        "MainViewModel",
-                        "Update available current=${info.currentVersion}, latest=${info.latestVersion}"
-                    )
+                    Timber.i("Update available current=${info.currentVersion}, latest=${info.latestVersion}")
                 }.onFailure { error ->
-                    AppLog.w("MainViewModel", "Check update failed: ${error.message}", error)
+                    Timber.w(error, "Check update failed: ${error.message}")
                 }
             } finally {
                 isUpdateCheckInProgress = false

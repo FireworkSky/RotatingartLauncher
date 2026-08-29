@@ -7,7 +7,7 @@ import android.util.AttributeSet
 import android.view.SurfaceHolder
 import android.view.SurfaceView
 import android.view.ViewGroup
-import com.app.ralaunch.core.logging.AppLog
+import timber.log.Timber
 import java.io.File
 import kotlin.math.max
 import kotlin.math.min
@@ -52,7 +52,7 @@ class VideoBackgroundView @JvmOverloads constructor(
         try {
             val h = holder
             if (h.surface == null || !h.surface.isValid) {
-                AppLog.w("VideoBackgroundView", "Surface 不可用，延迟准备视频")
+                Timber.w("Surface 不可用，延迟准备视频")
                 return
             }
             mediaPlayer = MediaPlayer().apply {
@@ -64,9 +64,9 @@ class VideoBackgroundView @JvmOverloads constructor(
                 setDisplay(h)
                 prepareAsync()
             }
-            AppLog.i("VideoBackgroundView", "开始准备视频: $videoPath")
+            Timber.i("开始准备视频: $videoPath")
         } catch (e: Exception) {
-            AppLog.e("VideoBackgroundView", "准备视频失败: ${e.message}")
+            Timber.e("准备视频失败: ${e.message}")
             releaseMediaPlayer()
         }
     }
@@ -79,7 +79,7 @@ class VideoBackgroundView @JvmOverloads constructor(
         } else {
             alpha = alphaValue
         }
-        AppLog.i("VideoBackgroundView", "视频透明度已设置: $opacity% (alpha: $alphaValue)")
+        Timber.i("视频透明度已设置: $opacity% (alpha: $alphaValue)")
     }
 
     fun setPlaybackSpeed(speed: Float) {
@@ -88,10 +88,10 @@ class VideoBackgroundView @JvmOverloads constructor(
             try {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                     mediaPlayer?.playbackParams = mediaPlayer!!.playbackParams.setSpeed(playbackSpeed)
-                    AppLog.i("VideoBackgroundView", "视频播放速度已设置: ${playbackSpeed}x")
+                    Timber.i("视频播放速度已设置: ${playbackSpeed}x")
                 }
             } catch (e: Exception) {
-                AppLog.e("VideoBackgroundView", "设置播放速度失败: ${e.message}")
+                Timber.e("设置播放速度失败: ${e.message}")
             }
         }
     }
@@ -103,17 +103,17 @@ class VideoBackgroundView @JvmOverloads constructor(
                 try {
                     if (!mp.isPlaying) {
                         mp.start()
-                        AppLog.i("VideoBackgroundView", "视频播放已开始")
+                        Timber.i("视频播放已开始")
                     }
                 } catch (e: IllegalStateException) {
-                    AppLog.e("VideoBackgroundView", "播放失败，尝试重新准备: ${e.message}")
+                    Timber.e("播放失败，尝试重新准备: ${e.message}")
                     releaseMediaPlayer()
                     if (!videoPath.isNullOrEmpty()) prepareMediaPlayer()
                 }
             }
         } ?: run {
             if (!videoPath.isNullOrEmpty()) {
-                AppLog.i("VideoBackgroundView", "MediaPlayer 为 null，重新创建")
+                Timber.i("MediaPlayer 为 null，重新创建")
                 prepareMediaPlayer()
             }
         }
@@ -125,10 +125,10 @@ class VideoBackgroundView @JvmOverloads constructor(
             try {
                 if (mp.isPlaying) {
                     mp.pause()
-                    AppLog.i("VideoBackgroundView", "视频播放已暂停")
+                    Timber.i("视频播放已暂停")
                 }
             } catch (e: IllegalStateException) {
-                AppLog.e("VideoBackgroundView", "暂停失败: ${e.message}")
+                Timber.e("暂停失败: ${e.message}")
             }
         }
     }
@@ -148,7 +148,7 @@ class VideoBackgroundView @JvmOverloads constructor(
                 if (mp.isPlaying) mp.stop()
                 mp.release()
             } catch (e: Exception) {
-                AppLog.e("VideoBackgroundView", "释放 MediaPlayer 失败: ${e.message}")
+                Timber.e("释放 MediaPlayer 失败: ${e.message}")
             }
         }
         mediaPlayer = null
@@ -156,22 +156,22 @@ class VideoBackgroundView @JvmOverloads constructor(
     }
 
     override fun surfaceCreated(holder: SurfaceHolder) {
-        AppLog.i("VideoBackgroundView", "Surface 已创建，shouldPlay=$shouldPlay")
+        Timber.i("Surface 已创建，shouldPlay=$shouldPlay")
         mediaPlayer?.let { mp ->
             try {
                 mp.setDisplay(holder)
                 if (shouldPlay && isPrepared) {
                     mp.start()
-                    AppLog.i("VideoBackgroundView", "Surface 创建后恢复播放")
+                    Timber.i("Surface 创建后恢复播放")
                 }
             } catch (e: Exception) {
-                AppLog.e("VideoBackgroundView", "设置 Surface 失败: ${e.message}")
+                Timber.e("设置 Surface 失败: ${e.message}")
                 releaseMediaPlayer()
                 if (shouldPlay && !videoPath.isNullOrEmpty()) prepareMediaPlayer()
             }
         } ?: run {
             if (shouldPlay && !videoPath.isNullOrEmpty()) {
-                AppLog.i("VideoBackgroundView", "Surface 创建时重新准备 MediaPlayer")
+                Timber.i("Surface 创建时重新准备 MediaPlayer")
                 prepareMediaPlayer()
             }
         }
@@ -215,16 +215,16 @@ class VideoBackgroundView @JvmOverloads constructor(
         translationX = 0f
         translationY = 0f
 
-        AppLog.i("VideoBackgroundView", "视频缩放（centerCrop）- 原始: ${videoWidth}x$videoHeight, 屏幕: ${surfaceWidth}x$surfaceHeight, scale: $scale, scaleX: $scaleX, scaleY: $scaleY")
+        Timber.i("视频缩放（centerCrop）- 原始: ${videoWidth}x$videoHeight, 屏幕: ${surfaceWidth}x$surfaceHeight, scale: $scale, scaleX: $scaleX, scaleY: $scaleY")
     }
 
     override fun surfaceDestroyed(holder: SurfaceHolder) {
-        AppLog.i("VideoBackgroundView", "Surface 已销毁")
+        Timber.i("Surface 已销毁")
     }
 
     override fun onPrepared(mp: MediaPlayer) {
         isPrepared = true
-        AppLog.i("VideoBackgroundView", "视频已准备完成")
+        Timber.i("视频已准备完成")
         if (playbackSpeed != 1.0f) setPlaybackSpeed(playbackSpeed)
         videoWidth = mp.videoWidth
         videoHeight = mp.videoHeight
@@ -233,11 +233,11 @@ class VideoBackgroundView @JvmOverloads constructor(
         if (shouldPlay) {
             try {
                 mp.start()
-                AppLog.i("VideoBackgroundView", "视频开始播放")
+                Timber.i("视频开始播放")
                 alpha = 0f
                 animate().alpha(opacity / 100f).setDuration(300).start()
             } catch (e: Exception) {
-                AppLog.e("VideoBackgroundView", "启动播放失败: ${e.message}")
+                Timber.e("启动播放失败: ${e.message}")
             }
         } else {
             setOpacity(opacity)
@@ -247,9 +247,9 @@ class VideoBackgroundView @JvmOverloads constructor(
     override fun onError(mp: MediaPlayer?, what: Int, extra: Int): Boolean {
         val isSurfaceError = what == 1 && extra == Int.MIN_VALUE
         if (isSurfaceError) {
-            AppLog.i("VideoBackgroundView", "MediaPlayer 因 Surface 销毁而停止")
+            Timber.i("MediaPlayer 因 Surface 销毁而停止")
         } else {
-            AppLog.e("VideoBackgroundView", "MediaPlayer 错误 - what: $what, extra: $extra")
+            Timber.e("MediaPlayer 错误 - what: $what, extra: $extra")
         }
         releaseMediaPlayer()
         return true

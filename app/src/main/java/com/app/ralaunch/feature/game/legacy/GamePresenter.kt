@@ -7,7 +7,7 @@ import com.app.ralaunch.feature.patch.data.Patch
 import com.app.ralaunch.feature.patch.data.PatchManager
 import com.app.ralaunch.core.di.contract.IGameRepositoryServiceV3
 import org.koin.java.KoinJavaComponent
-import com.app.ralaunch.core.logging.AppLog
+import timber.log.Timber
 import com.app.ralaunch.feature.game.ui.legacy.GameActivity
 import java.io.BufferedReader
 import java.io.File
@@ -24,7 +24,6 @@ import java.util.Locale
 class GamePresenter : GameContract.Presenter {
 
     companion object {
-        private const val TAG = "GamePresenter"
         private const val MAX_LOG_LINES = 200
         private const val MAX_LOG_LENGTH = 50000
     }
@@ -53,7 +52,7 @@ class GamePresenter : GameContract.Presenter {
 
             when {
                 gameStorageId != null && gameExePath != null -> {
-                    AppLog.e(TAG, "Invalid launch intent: both storage ID and direct launch params are provided")
+                    Timber.e("Invalid launch intent: both storage ID and direct launch params are provided")
                     showLaunchError(view, view.getStringRes(R.string.game_launch_invalid_params_conflict))
                     -1
                 }
@@ -73,13 +72,13 @@ class GamePresenter : GameContract.Presenter {
                     )
                 }
                 else -> {
-                    AppLog.e(TAG, "No supported launch parameters found in intent")
+                    Timber.e("No supported launch parameters found in intent")
                     showLaunchError(view, view.getStringRes(R.string.game_launch_no_params))
                     -1
                 }
             }
         } catch (e: Exception) {
-            AppLog.e(TAG, "Exception in launchGame: ${e.message}", e)
+            Timber.e(e, "Exception in launchGame: ${e.message}")
             showLaunchError(view, e.message ?: view.getStringRes(R.string.common_unknown_error))
             -6
         }
@@ -89,28 +88,28 @@ class GamePresenter : GameContract.Presenter {
         val gameRepository: IGameRepositoryServiceV3 = try {
             KoinJavaComponent.get(IGameRepositoryServiceV3::class.java)
         } catch (e: Exception) {
-            AppLog.e(TAG, "Failed to resolve IGameRepositoryServiceV3", e)
+            Timber.e(e, "Failed to resolve IGameRepositoryServiceV3")
             showLaunchError(view, view.getStringRes(R.string.game_launch_repository_load_failed))
             return -2
         }
 
         val game = gameRepository.games.value.find { it.id == gameStorageId }
         if (game == null) {
-            AppLog.e(TAG, "Game not found for storage ID: $gameStorageId")
+            Timber.e("Game not found for storage ID: $gameStorageId")
             showLaunchError(view, view.getStringRes(R.string.main_game_not_found, gameStorageId))
             return -3
         }
 
         val assemblyPath = game.gameExePathFull
         if (assemblyPath.isNullOrEmpty()) {
-            AppLog.e(TAG, "Assembly path is null or empty")
+            Timber.e("Assembly path is null or empty")
             showLaunchError(view, view.getStringRes(R.string.game_launch_assembly_path_empty))
             return -4
         }
 
         val assemblyFile = File(assemblyPath)
         if (!assemblyFile.exists() || !assemblyFile.isFile) {
-            AppLog.e(TAG, "Assembly file not found: $assemblyPath")
+            Timber.e("Assembly file not found: $assemblyPath")
             showLaunchError(view, view.getStringRes(R.string.game_launch_assembly_not_exist, assemblyPath))
             return -5
         }
@@ -143,14 +142,14 @@ class GamePresenter : GameContract.Presenter {
         gameEnvVars: Map<String, String?>
     ): Int {
         if (gameExePath.isBlank()) {
-            AppLog.e(TAG, "Direct launch assembly path is blank")
+            Timber.e("Direct launch assembly path is blank")
             showLaunchError(view, view.getStringRes(R.string.game_launch_assembly_path_empty))
             return -4
         }
 
         val assemblyFile = File(gameExePath)
         if (!assemblyFile.exists() || !assemblyFile.isFile) {
-            AppLog.e(TAG, "Direct launch assembly file not found: $gameExePath")
+            Timber.e("Direct launch assembly file not found: $gameExePath")
             showLaunchError(view, view.getStringRes(R.string.game_launch_assembly_not_exist, gameExePath))
             return -5
         }
@@ -196,9 +195,9 @@ class GamePresenter : GameContract.Presenter {
         }
 
         if (exitCode == 0) {
-            AppLog.i(TAG, "Game exited successfully.")
+            Timber.i("Game exited successfully.")
         } else {
-            AppLog.e(TAG, "Failed to launch game: $exitCode")
+            Timber.e("Failed to launch game: $exitCode")
         }
         return exitCode
     }
@@ -251,7 +250,7 @@ class GamePresenter : GameContract.Presenter {
             val nativeError = try {
                 GameLauncher.getLastErrorMessage()
             } catch (e: Exception) {
-                AppLog.w(TAG, "Failed to get native error", e)
+                Timber.w(e, "Failed to get native error")
                 null
             }
 
@@ -267,7 +266,7 @@ class GamePresenter : GameContract.Presenter {
                 exceptionMessage = message
             )
         } catch (e: Exception) {
-            AppLog.e(TAG, "Failed to show crash report", e)
+            Timber.e(e, "Failed to show crash report")
             val message = buildExitMessage(view, exitCode, errorMessage)
             view.showError(view.getStringRes(R.string.game_run_failed), message)
             view.finishActivity()
@@ -389,7 +388,7 @@ class GamePresenter : GameContract.Presenter {
 
             result.takeIf { it.isNotEmpty() }
         } catch (e: Exception) {
-            AppLog.w(TAG, "Failed to get logcat logs", e)
+            Timber.w(e, "Failed to get logcat logs")
             getErrorLevelLogs()
         }
     }

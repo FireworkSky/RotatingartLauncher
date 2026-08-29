@@ -1,6 +1,6 @@
 package com.app.ralaunch.feature.controls.editors.managers
 
-import com.app.ralaunch.core.logging.AppLog
+import timber.log.Timber
 import android.view.View
 import android.widget.FrameLayout
 import com.app.ralaunch.feature.controls.ControlData
@@ -12,7 +12,6 @@ import com.app.ralaunch.feature.controls.ui.ControlView
  * 统一管理 ControlData 到 ControlView 的同步逻辑
  */
 object ControlDataSyncManager {
-    private const val TAG = "ControlDataSyncManager"
     
     /**
      * 同步控件数据到视图
@@ -23,11 +22,11 @@ object ControlDataSyncManager {
     @JvmStatic
     fun syncControlDataToView(layout: ControlLayout?, controlData: ControlData?): Boolean {
         if (layout == null || controlData == null) {
-            AppLog.w(TAG, "syncControlDataToView: layout=$layout, controlData=$controlData")
+            Timber.w("syncControlDataToView: layout=$layout, controlData=$controlData")
             return false
         }
         
-        AppLog.d(TAG, "syncControlDataToView: looking for controlData@${System.identityHashCode(controlData)} (name='${controlData.name}'), childCount=${layout.childCount}")
+        Timber.d("syncControlDataToView: looking for controlData@${System.identityHashCode(controlData)} (name='${controlData.name}'), childCount=${layout.childCount}")
 
         for (i in 0 until layout.childCount) {
             val child = layout.getChildAt(i)
@@ -38,7 +37,7 @@ object ControlDataSyncManager {
                 // 这确保即使多个控件有相同名称，也只更新正确的那个控件
                 val isMatch = viewData === controlData
 
-                AppLog.d(TAG, "  child[$i]: viewData@${System.identityHashCode(viewData)} (name='${viewData?.name}'), isMatch=$isMatch")
+                Timber.d("  child[$i]: viewData@${System.identityHashCode(viewData)} (name='${viewData?.name}'), isMatch=$isMatch")
 
                 if (isMatch) {
                     // Get screen dimensions from the layout
@@ -68,7 +67,7 @@ object ControlDataSyncManager {
                     
                     // 验证纹理是否同步成功
                     if (viewData is ControlData.Button && controlData is ControlData.Button) {
-                        AppLog.i(TAG, "Button texture synced: path='${viewData.texture.normal.path}', enabled=${viewData.texture.normal.enabled}")
+                        Timber.i("Button texture synced: path='${viewData.texture.normal.path}', enabled=${viewData.texture.normal.enabled}")
                     }
 
                     // 重新设置 controlData 以触发 initPaints() 更新颜色/透明度
@@ -78,13 +77,13 @@ object ControlDataSyncManager {
                     // 刷新控件绘制
                     child.invalidate()
 
-                    AppLog.i(TAG, "syncControlDataToView: SUCCESS for '${controlData.name}'")
+                    Timber.i("syncControlDataToView: SUCCESS for '${controlData.name}'")
                     return true
                 }
             }
         }
 
-        AppLog.w(TAG, "syncControlDataToView: FAILED - no matching control found for '${controlData.name}'")
+        Timber.w("syncControlDataToView: FAILED - no matching control found for '${controlData.name}'")
         return false
     }
 

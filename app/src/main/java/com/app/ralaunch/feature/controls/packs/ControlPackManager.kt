@@ -4,7 +4,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.os.Environment
-import com.app.ralaunch.core.logging.AppLog
+import timber.log.Timber
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import java.io.File
@@ -33,7 +33,6 @@ import org.apache.commons.compress.archivers.zip.ZipFile
 class ControlPackManager(private val context: Context) {
     
     companion object {
-        private const val TAG = "ControlPackManager"
         
         /** SD卡存储目录名 */
         const val STORAGE_DIR_NAME = "RALauncher"
@@ -124,7 +123,7 @@ class ControlPackManager(private val context: Context) {
             val content = managerStateFile.readText()
             json.decodeFromString<ManagerState>(content)
         } catch (e: Exception) {
-            AppLog.e(TAG, "Failed to load manager state", e)
+            Timber.e(e, "Failed to load manager state")
             ManagerState()
         }
     }
@@ -136,7 +135,7 @@ class ControlPackManager(private val context: Context) {
         try {
             managerStateFile.writeText(json.encodeToString(ManagerState.serializer(), state))
         } catch (e: Exception) {
-            AppLog.e(TAG, "Failed to save manager state", e)
+            Timber.e(e, "Failed to save manager state")
         }
     }
     
@@ -253,44 +252,44 @@ class ControlPackManager(private val context: Context) {
     fun getInstalledPacks(): List<ControlPackInfo> {
         val packs = mutableListOf<ControlPackInfo>()
         
-        AppLog.d(TAG, "Loading installed packs from: ${packsDir.absolutePath}")
+        Timber.d("Loading installed packs from: ${packsDir.absolutePath}")
         
         if (!packsDir.exists()) {
-            AppLog.w(TAG, "Packs directory does not exist: ${packsDir.absolutePath}")
+            Timber.w("Packs directory does not exist: ${packsDir.absolutePath}")
             return packs
         }
         
         val dirs = packsDir.listFiles { file -> file.isDirectory }
         if (dirs == null || dirs.isEmpty()) {
-            AppLog.d(TAG, "No pack directories found")
+            Timber.d("No pack directories found")
             return packs
         }
         
-        AppLog.d(TAG, "Found ${dirs.size} directories")
+        Timber.d("Found ${dirs.size} directories")
         
         for (dir in dirs) {
             val manifestFile = File(dir, ControlPackInfo.MANIFEST_FILE_NAME)
-            AppLog.d(TAG, "Checking: ${manifestFile.absolutePath}, exists=${manifestFile.exists()}")
+            Timber.d("Checking: ${manifestFile.absolutePath}, exists=${manifestFile.exists()}")
             
             if (manifestFile.exists()) {
                 try {
                     val content = manifestFile.readText()
-                    AppLog.d(TAG, "Manifest content length: ${content.length}")
+                    Timber.d("Manifest content length: ${content.length}")
                     
                     val info = ControlPackInfo.fromJson(content)
                     if (info != null) {
                         packs.add(info)
-                        AppLog.i(TAG, "Loaded pack: ${info.id} - ${info.name}")
+                        Timber.i("Loaded pack: ${info.id} - ${info.name}")
                     } else {
-                        AppLog.e(TAG, "Failed to parse manifest: ${dir.name}")
+                        Timber.e("Failed to parse manifest: ${dir.name}")
                     }
                 } catch (e: Exception) {
-                    AppLog.e(TAG, "Failed to load pack manifest: ${dir.name}", e)
+                    Timber.e(e, "Failed to load pack manifest: ${dir.name}")
                 }
             }
         }
         
-        AppLog.i(TAG, "Total loaded packs: ${packs.size}")
+        Timber.i("Total loaded packs: ${packs.size}")
         return packs
     }
     
@@ -329,7 +328,7 @@ class ControlPackManager(private val context: Context) {
         return try {
             ControlLayout.loadFrom(layoutFile)?.also { it.id = packId }
         } catch (e: Exception) {
-            AppLog.e(TAG, "Failed to load pack layout: $packId", e)
+            Timber.e(e, "Failed to load pack layout: $packId")
             null
         }
     }
@@ -369,7 +368,7 @@ class ControlPackManager(private val context: Context) {
         }
         info?.saveTo(manifestFile)
         
-        AppLog.i(TAG, "Saved layout to pack: $packId")
+        Timber.i("Saved layout to pack: $packId")
     }
     
     /**
@@ -397,7 +396,7 @@ class ControlPackManager(private val context: Context) {
         layout.id = packId
         layout.saveTo(File(packDir, ControlPackInfo.LAYOUT_FILE_NAME))
         
-        AppLog.i(TAG, "Created new pack: $packId ($name)")
+        Timber.i("Created new pack: $packId ($name)")
         return info
     }
     
@@ -416,10 +415,10 @@ class ControlPackManager(private val context: Context) {
                 setSelectedPackId(listPackIds().firstOrNull())
             }
             
-            AppLog.i(TAG, "Deleted pack: $packId")
+            Timber.i("Deleted pack: $packId")
             true
         } catch (e: Exception) {
-            AppLog.e(TAG, "Failed to delete pack: $packId", e)
+            Timber.e(e, "Failed to delete pack: $packId")
             false
         }
     }
@@ -457,7 +456,7 @@ class ControlPackManager(private val context: Context) {
             sourceIcon.copyTo(targetIcon, overwrite = true)
         }
         
-        AppLog.i(TAG, "Duplicated pack: $packId -> ${newPack.id}")
+        Timber.i("Duplicated pack: $packId -> ${newPack.id}")
         return getPackInfo(newPack.id)
     }
     
@@ -524,16 +523,16 @@ class ControlPackManager(private val context: Context) {
     fun getOrCreatePackAssetsDir(packId: String): File? {
         val packDir = File(packsDir, packId)
         if (!packDir.exists()) {
-            AppLog.w(TAG, "Pack directory does not exist: $packId")
+            Timber.w("Pack directory does not exist: $packId")
             return null
         }
         val assetsDir = File(packDir, ControlPackInfo.ASSETS_DIR_NAME)
         if (!assetsDir.exists()) {
             if (!assetsDir.mkdirs()) {
-                AppLog.e(TAG, "Failed to create assets directory: ${assetsDir.absolutePath}")
+                Timber.e("Failed to create assets directory: ${assetsDir.absolutePath}")
                 return null
             }
-            AppLog.i(TAG, "Created assets directory: ${assetsDir.absolutePath}")
+            Timber.i("Created assets directory: ${assetsDir.absolutePath}")
         }
         return assetsDir
     }
@@ -575,7 +574,7 @@ class ControlPackManager(private val context: Context) {
                     if (manifestEntry != null) {
                         // 提取前缀目录 (如 "pack_123/")
                         prefixToRemove = manifestEntry.name.substringBeforeLast(ControlPackInfo.MANIFEST_FILE_NAME)
-                        AppLog.i(TAG, "Found manifest in subdirectory: $prefixToRemove")
+                        Timber.i("Found manifest in subdirectory: $prefixToRemove")
                     }
                 }
                 
@@ -619,11 +618,11 @@ class ControlPackManager(private val context: Context) {
                     }
                 }
                 
-                AppLog.i(TAG, "Installed pack from file: ${info.name} (${info.id})")
+                Timber.i("Installed pack from file: ${info.name} (${info.id})")
                 Result.success(info)
             }
         } catch (e: Exception) {
-            AppLog.e(TAG, "Failed to install pack from file", e)
+            Timber.e(e, "Failed to install pack from file")
             Result.failure(e)
         }
     }
@@ -643,10 +642,10 @@ class ControlPackManager(private val context: Context) {
             layout.name = packName
             savePackLayout(info.id, layout)
             
-            AppLog.i(TAG, "Imported layout from JSON: $packName")
+            Timber.i("Imported layout from JSON: $packName")
             Result.success(getPackInfo(info.id)!!)
         } catch (e: Exception) {
-            AppLog.e(TAG, "Failed to import from JSON", e)
+            Timber.e(e, "Failed to import from JSON")
             Result.failure(e)
         }
     }
@@ -666,10 +665,10 @@ class ControlPackManager(private val context: Context) {
             layout.name = packName
             savePackLayout(info.id, layout)
             
-            AppLog.i(TAG, "Imported layout from JSON string: $packName")
+            Timber.i("Imported layout from JSON string: $packName")
             Result.success(getPackInfo(info.id)!!)
         } catch (e: Exception) {
-            AppLog.e(TAG, "Failed to import from JSON string", e)
+            Timber.e(e, "Failed to import from JSON string")
             Result.failure(e)
         }
     }
@@ -695,10 +694,10 @@ class ControlPackManager(private val context: Context) {
                 }
             }
             
-            AppLog.i(TAG, "Exported pack to file: $packId -> ${outputFile.path}")
+            Timber.i("Exported pack to file: $packId -> ${outputFile.path}")
             Result.success(outputFile)
         } catch (e: Exception) {
-            AppLog.e(TAG, "Failed to export pack", e)
+            Timber.e(e, "Failed to export pack")
             Result.failure(e)
         }
     }

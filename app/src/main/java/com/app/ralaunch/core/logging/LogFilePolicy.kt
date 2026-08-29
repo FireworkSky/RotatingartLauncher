@@ -16,7 +16,9 @@ object LogFilePolicy {
     private val dateFormatter = DateTimeFormatter
         .ofPattern("yyyy-MM-dd", Locale.US)
         .withZone(ZoneId.systemDefault())
-    private val appLogFileRegex = Regex("^${Regex.escape(PREFIX)}\\d{4}-\\d{2}-\\d{2}${Regex.escape(EXTENSION)}$")
+    // 可选的 _HH-mm-ss 后缀用于大小超限后的滚动文件
+    private val appLogFileRegex =
+        Regex("^${Regex.escape(PREFIX)}\\d{4}-\\d{2}-\\d{2}(_\\d{2}-\\d{2}-\\d{2})?${Regex.escape(EXTENSION)}$")
     private val logcatLogFileRegex = Regex(
         "^${Regex.escape(PREFIX)}\\d{4}-\\d{2}-\\d{2}${Regex.escape(LOGCAT_SUFFIX)}${Regex.escape(EXTENSION)}$"
     )

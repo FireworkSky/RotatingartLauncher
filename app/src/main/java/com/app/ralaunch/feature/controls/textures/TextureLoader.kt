@@ -7,7 +7,7 @@ import android.graphics.Canvas
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.PictureDrawable
 import android.util.LruCache
-import com.app.ralaunch.core.logging.AppLog
+import timber.log.Timber
 import com.caverock.androidsvg.SVG
 import java.io.File
 import java.io.FileInputStream
@@ -28,7 +28,6 @@ import java.lang.ref.WeakReference
 class TextureLoader private constructor(context: Context) {
     
     companion object {
-        private const val TAG = "TextureLoader"
         
         /** 缓存大小: 可用内存的 1/8 */
         private val MAX_CACHE_SIZE = (Runtime.getRuntime().maxMemory() / 8).toInt()
@@ -81,7 +80,7 @@ class TextureLoader private constructor(context: Context) {
         
         val file = File(path)
         if (!file.exists()) {
-            AppLog.w(TAG, "Texture file not found: $path")
+            Timber.w("Texture file not found: $path")
             return null
         }
         
@@ -98,14 +97,14 @@ class TextureLoader private constructor(context: Context) {
                 extension == SVG_EXTENSION -> loadSvg(file, targetWidth, targetHeight)
                 extension in SUPPORTED_IMAGE_EXTENSIONS -> loadBitmap(file, targetWidth, targetHeight)
                 else -> {
-                    AppLog.w(TAG, "Unsupported texture format: $extension")
+                    Timber.w("Unsupported texture format: $extension")
                     null
                 }
             }
             
             bitmap?.also { bitmapCache.put(cacheKey, it) }
         } catch (e: Exception) {
-            AppLog.e(TAG, "Failed to load texture: $path", e)
+            Timber.e(e, "Failed to load texture: $path")
             null
         }
     }
@@ -166,7 +165,7 @@ class TextureLoader private constructor(context: Context) {
                 }
             }
         } catch (e: Exception) {
-            AppLog.e(TAG, "Failed to load bitmap: ${file.path}", e)
+            Timber.e(e, "Failed to load bitmap: ${file.path}")
             null
         }
     }
@@ -200,7 +199,7 @@ class TextureLoader private constructor(context: Context) {
             svg.renderToCanvas(canvas)
             bitmap
         } catch (e: Exception) {
-            AppLog.e(TAG, "Failed to load SVG: ${file.path}", e)
+            Timber.e(e, "Failed to load SVG: ${file.path}")
             null
         }
     }
@@ -244,7 +243,7 @@ class TextureLoader private constructor(context: Context) {
                 .forEach { file ->
                     loadTexture(file.absolutePath)
                 }
-            AppLog.i(TAG, "Preloaded textures from: ${packAssetsDir.path}")
+            Timber.i("Preloaded textures from: ${packAssetsDir.path}")
         }.start()
     }
     
@@ -269,7 +268,7 @@ class TextureLoader private constructor(context: Context) {
     fun clearCache() {
         bitmapCache.evictAll()
         svgCache.evictAll()
-        AppLog.i(TAG, "Texture cache cleared")
+        Timber.i("Texture cache cleared")
     }
     
     /**

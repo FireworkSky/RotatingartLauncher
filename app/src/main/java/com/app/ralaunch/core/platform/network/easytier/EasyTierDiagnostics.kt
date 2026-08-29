@@ -1,7 +1,7 @@
 package com.app.ralaunch.core.platform.network.easytier
 
 import android.content.Context
-import com.app.ralaunch.core.logging.AppLog
+import timber.log.Timber
 import com.app.ralaunch.R
 import kotlinx.coroutines.*
 import org.koin.java.KoinJavaComponent
@@ -35,7 +35,6 @@ data class DiagStepResult(
  */
 object EasyTierDiagnostics {
 
-    private const val TAG = "EasyTierDiag"
     private const val TEST_INSTANCE_NAME = "diag_test"
     private const val TEST_NETWORK_NAME = "diag_net_${Long.MAX_VALUE}"
     private const val TEST_NETWORK_SECRET = "diag_secret_test"
@@ -452,9 +451,9 @@ object EasyTierDiagnostics {
             )
         }
 
-        AppLog.i(TAG, "Diagnostics complete. Results:")
+        Timber.i("Diagnostics complete. Results:")
         results.forEachIndexed { i, r ->
-            AppLog.i(TAG, "  [$i] ${r.name}: ${r.status} - ${r.message}")
+            Timber.i("  [$i] ${r.name}: ${r.status} - ${r.message}")
         }
 
         results
@@ -470,7 +469,7 @@ object EasyTierDiagnostics {
                 true
             }
         } catch (e: Exception) {
-            AppLog.d(TAG, "Port $host:$port not listening: ${e.message}")
+            Timber.d("Port $host:$port not listening: ${e.message}")
             false
         }
     }

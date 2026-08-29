@@ -1,6 +1,6 @@
 package com.app.ralaunch.core.platform.network.easytier
 
-import com.app.ralaunch.core.logging.AppLog
+import timber.log.Timber
 
 /**
  * EasyTier TOML 配置构建器
@@ -8,7 +8,6 @@ import com.app.ralaunch.core.logging.AppLog
  */
 internal object EasyTierConfigBuilder {
 
-    private const val TAG = "EasyTierConfig"
 
     /**
      * 构建 EasyTier 配置
@@ -31,7 +30,7 @@ internal object EasyTierConfigBuilder {
     ): String {
         val hostname = if (isHost) "host" else "guest_${System.currentTimeMillis() % 1000}"
 
-        AppLog.d(TAG, "buildConfig: isHost=$isHost, withPortForward=$withPortForward, hostname=$hostname")
+        Timber.d("buildConfig: isHost=$isHost, withPortForward=$withPortForward, hostname=$hostname")
 
         val sb = StringBuilder()
 
@@ -112,7 +111,7 @@ internal object EasyTierConfigBuilder {
         sb.appendLine("mtu = 1380")
 
         val config = sb.toString().trim()
-        AppLog.d(TAG, "Generated config (${config.length} chars):\n$config")
+        Timber.d("Generated config (${config.length} chars):\n$config")
         return config
     }
 }

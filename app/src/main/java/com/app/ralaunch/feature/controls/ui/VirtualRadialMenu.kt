@@ -13,7 +13,7 @@ import android.graphics.RectF
 import android.graphics.Shader
 import android.graphics.Typeface
 import android.text.TextPaint
-import com.app.ralaunch.core.logging.AppLog
+import timber.log.Timber
 import android.view.View
 import android.view.animation.DecelerateInterpolator
 import android.view.animation.OvershootInterpolator
@@ -42,7 +42,6 @@ class VirtualRadialMenu(
 ) : View(context), ControlView {
 
     companion object {
-        private const val TAG = "VirtualRadialMenu"
     }
 
     // 震动管理器
@@ -50,7 +49,7 @@ class VirtualRadialMenu(
         try {
             KoinJavaComponent.get(VibrationManagerServiceV1::class.java)
         } catch (e: Exception) {
-            AppLog.w(TAG, "VibrationManagerServiceV1 not available: ${e.message}")
+            Timber.w("VibrationManagerServiceV1 not available: ${e.message}")
             null
         }
     }

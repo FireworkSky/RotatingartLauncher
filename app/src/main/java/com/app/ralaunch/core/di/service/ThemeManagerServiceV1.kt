@@ -10,7 +10,7 @@ import androidx.appcompat.app.AppCompatDelegate
 import androidx.fragment.app.DialogFragment
 import com.app.ralaunch.core.common.DynamicColorManager
 import com.app.ralaunch.core.common.SettingsAccess
-import com.app.ralaunch.core.logging.AppLog
+import timber.log.Timber
 import com.app.ralaunch.core.config.ThemeConfig
 import com.app.ralaunch.core.di.contract.IThemeManagerServiceV1
 import com.app.ralaunch.core.model.BackgroundType
@@ -25,7 +25,6 @@ import com.app.ralaunch.core.model.ThemeMode
 class ThemeManagerServiceV1(private val activity: AppCompatActivity) : IThemeManagerServiceV1 {
 
     companion object {
-        private const val TAG = "ThemeManagerServiceV1"
     }
 
     private val settingsManager: SettingsAccess = SettingsAccess
@@ -59,9 +58,9 @@ class ThemeManagerServiceV1(private val activity: AppCompatActivity) : IThemeMan
     fun applyDynamicColors() {
         try {
             dynamicColorManager.applyDynamicColors(activity)
-            AppLog.i(TAG, "动态颜色主题已应用")
+            Timber.i("动态颜色主题已应用")
         } catch (e: Exception) {
-            AppLog.e(TAG, "应用动态颜色失败: ${e.message}", e)
+            Timber.e(e, "应用动态颜色失败: ${e.message}")
         }
     }
 
@@ -72,9 +71,9 @@ class ThemeManagerServiceV1(private val activity: AppCompatActivity) : IThemeMan
         try {
             settingsManager.themeColor = color
             dynamicColorManager.applyCustomThemeColor(activity, color)
-            AppLog.i(TAG, "自定义主题颜色已应用: ${String.format("#%06X", 0xFFFFFF and color)}")
+            Timber.i("自定义主题颜色已应用: ${String.format("#%06X", 0xFFFFFF and color)}")
         } catch (e: Exception) {
-            AppLog.e(TAG, "应用自定义主题颜色失败: ${e.message}", e)
+            Timber.e(e, "应用自定义主题颜色失败: ${e.message}")
         }
     }
 
@@ -86,7 +85,7 @@ class ThemeManagerServiceV1(private val activity: AppCompatActivity) : IThemeMan
      */
     fun applyBackgroundFromSettings() {
         val type = settingsManager.backgroundType
-        AppLog.i(TAG, "applyBackgroundFromSettings - type: $type")
+        Timber.i("applyBackgroundFromSettings - type: $type")
 
         when (type) {
             BackgroundType.VIDEO -> applyVideoBackground()
@@ -97,7 +96,7 @@ class ThemeManagerServiceV1(private val activity: AppCompatActivity) : IThemeMan
     }
 
     private fun applyVideoBackground() {
-        AppLog.i(TAG, "背景类型: video，设置透明底层（视频由 Compose 渲染）")
+        Timber.i("背景类型: video，设置透明底层（视频由 Compose 渲染）")
         // 视频背景由 Compose 的 VideoBackground 组件处理
         // 这里设置透明背景，让 Compose 层的视频可见
         activity.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
@@ -105,7 +104,7 @@ class ThemeManagerServiceV1(private val activity: AppCompatActivity) : IThemeMan
 
     private fun applyImageBackground() {
         val imagePath = settingsManager.backgroundImagePath
-        AppLog.i(TAG, "背景类型: image，路径: $imagePath（图片由 Compose 渲染）")
+        Timber.i("背景类型: image，路径: $imagePath（图片由 Compose 渲染）")
         // 图片背景由 Compose 的 BackgroundLayer 组件处理
         // 这里设置透明背景，让 Compose 层的图片可见
         activity.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
@@ -114,7 +113,7 @@ class ThemeManagerServiceV1(private val activity: AppCompatActivity) : IThemeMan
     private fun applyColorBackground() {
         val color = settingsManager.backgroundColor
         activity.window?.setBackgroundDrawable(ColorDrawable(color))
-        AppLog.i(TAG, "纯色背景已应用")
+        Timber.i("纯色背景已应用")
     }
 
     private fun applyDefaultBackground() {
@@ -125,7 +124,7 @@ class ThemeManagerServiceV1(private val activity: AppCompatActivity) : IThemeMan
             ColorDrawable(0xFFF5F5F5.toInt())
         }
         activity.window?.setBackgroundDrawable(background)
-        AppLog.i(TAG, "默认纯色背景已应用")
+        Timber.i("默认纯色背景已应用")
     }
 
     /**

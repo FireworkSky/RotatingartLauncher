@@ -1,6 +1,6 @@
 package com.app.ralaunch.feature.controls
 
-import com.app.ralaunch.core.logging.AppLog
+import timber.log.Timber
 import org.libsdl.app.SDLActivity
 
 /**
@@ -9,7 +9,6 @@ import org.libsdl.app.SDLActivity
  * 同时通知 SDL 层，让被占用的触摸点不会转换为鼠标事件
  */
 object TouchPointerTracker {
-    private const val TAG = "TouchPointerTracker"
 
     // 被虚拟控件占用的触摸点 ID
     private val sConsumedPointers: MutableSet<Int?> = HashSet<Int?>()
@@ -25,7 +24,7 @@ object TouchPointerTracker {
         try {
             SDLActivity.nativeConsumeFingerTouch(pointerId)
         } catch (e: Exception) {
-            AppLog.w(TAG, "Failed to notify SDL about consumed pointer: " + e.message)
+            Timber.w("Failed to notify SDL about consumed pointer: " + e.message)
         }
     }
 
@@ -40,7 +39,7 @@ object TouchPointerTracker {
         try {
             SDLActivity.nativeReleaseFingerTouch(pointerId)
         } catch (e: Exception) {
-            AppLog.w(TAG, "Failed to notify SDL about released pointer: " + e.message)
+            Timber.w("Failed to notify SDL about released pointer: " + e.message)
         }
     }
 
@@ -71,7 +70,7 @@ object TouchPointerTracker {
         try {
             SDLActivity.nativeClearConsumedFingers()
         } catch (e: Exception) {
-            AppLog.w(TAG, "Failed to notify SDL about cleared pointers: " + e.message)
+            Timber.w("Failed to notify SDL about cleared pointers: " + e.message)
         }
     }
 }

@@ -4,7 +4,7 @@ import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.RectF
-import com.app.ralaunch.core.logging.AppLog
+import timber.log.Timber
 import android.view.View
 import com.app.ralaunch.feature.controls.bridges.ControlInputBridge
 import com.app.ralaunch.feature.controls.ControlData
@@ -27,7 +27,6 @@ class VirtualDPad(
 ) : View(context), ControlView {
 
     companion object {
-        private const val TAG = "VirtualDPad"
 
         // D-Pad方向索引（仅4个主方向）
         private const val DIR_UP = 0
@@ -41,7 +40,7 @@ class VirtualDPad(
         try {
             KoinJavaComponent.get(VibrationManagerServiceV1::class.java)
         } catch (e: Exception) {
-            AppLog.w(TAG, "VibrationManagerServiceV1 not available: ${e.message}")
+            Timber.w("VibrationManagerServiceV1 not available: ${e.message}")
             null
         }
     }

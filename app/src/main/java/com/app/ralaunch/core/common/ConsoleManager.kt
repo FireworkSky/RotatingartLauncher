@@ -3,7 +3,7 @@ package com.app.ralaunch.core.common
 import androidx.annotation.StringRes
 import com.app.ralaunch.R
 import com.app.ralaunch.RaLaunchApp
-import com.app.ralaunch.core.logging.AppLog
+import timber.log.Timber
 import com.app.ralaunch.core.common.util.LocaleManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -22,7 +22,6 @@ import java.util.concurrent.CopyOnWriteArrayList
  */
 object ConsoleManager {
 
-    private const val TAG = "ConsoleManager"
     private const val MAX_LOG_LINES = 500
     private const val MAX_DEBUG_LOG_LINES = 30
 
@@ -94,7 +93,7 @@ object ConsoleManager {
                 process.destroy()
             } catch (e: Exception) {
                 if (isRunning) {
-                    AppLog.e(TAG, "日志收集异常: ${e.message}")
+                    Timber.e("日志收集异常: ${e.message}")
                 }
             }
         }, "ConsoleLogCollector").apply {

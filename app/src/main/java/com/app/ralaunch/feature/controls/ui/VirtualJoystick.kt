@@ -6,7 +6,7 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.RectF
-import com.app.ralaunch.core.logging.AppLog
+import timber.log.Timber
 import android.view.View
 import com.app.ralaunch.core.di.service.VibrationManagerServiceV1
 import com.app.ralaunch.feature.controls.ControlData
@@ -65,7 +65,6 @@ class VirtualJoystick(
     }
 
     companion object {
-        private const val TAG = "VirtualJoystick"
 
         // 8个方向常量（对应游戏中的实际方向）
         const val DIR_NONE: Int = -1
@@ -103,7 +102,7 @@ class VirtualJoystick(
         try {
             KoinJavaComponent.get(VibrationManagerServiceV1::class.java)
         } catch (e: Exception) {
-            AppLog.w(TAG, "VibrationManagerServiceV1 not available: ${e.message}")
+            Timber.w("VibrationManagerServiceV1 not available: ${e.message}")
             null
         }
     }
@@ -167,12 +166,7 @@ class VirtualJoystick(
 
             // 检查是否有无效值（负数或超过最大值1.0）
             if (mGlobalMouseRangeLeft < 0 || mGlobalMouseRangeLeft > 1.0 || mGlobalMouseRangeTop < 0 || mGlobalMouseRangeTop > 1.0 || mGlobalMouseRangeRight < 0 || mGlobalMouseRangeRight > 1.0 || mGlobalMouseRangeBottom < 0 || mGlobalMouseRangeBottom > 1.0) {
-                AppLog.w(
-                    TAG,
-                    "Invalid mouse range detected (must be 0.0-1.0), resetting to full screen. Current: (" +
-                            mGlobalMouseRangeLeft + "," + mGlobalMouseRangeTop + "," +
-                            mGlobalMouseRangeRight + "," + mGlobalMouseRangeBottom + ")"
-                )
+                Timber.w("Invalid mouse range detected (must be 0.0-1.0), resetting to full screen. Current: (" + mGlobalMouseRangeLeft + "," + mGlobalMouseRangeTop + "," + mGlobalMouseRangeRight + "," + mGlobalMouseRangeBottom + ")")
 
 
                 // 重置为全屏：100%
@@ -192,11 +186,7 @@ class VirtualJoystick(
                 settingsManager.mouseRightStickRangeBottom = mGlobalMouseRangeBottom
             }
 
-            AppLog.i(
-                TAG, "Global settings loaded: speed=" + mGlobalMouseSpeed +
-                        ", range=(" + mGlobalMouseRangeLeft + "," + mGlobalMouseRangeTop +
-                        "," + mGlobalMouseRangeRight + "," + mGlobalMouseRangeBottom + ")"
-            )
+            Timber.i("Global settings loaded: speed=" + mGlobalMouseSpeed + ", range=(" + mGlobalMouseRangeLeft + "," + mGlobalMouseRangeTop + "," + mGlobalMouseRangeRight + "," + mGlobalMouseRangeBottom + ")")
         } catch (_: Exception) {
             mGlobalMouseSpeed = 80.0f // 默认速度80（范围60-200）
             mGlobalMouseRangeLeft = 0.0f

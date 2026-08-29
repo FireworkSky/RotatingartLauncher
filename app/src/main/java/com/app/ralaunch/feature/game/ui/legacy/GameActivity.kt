@@ -23,7 +23,7 @@ import com.app.ralaunch.feature.game.legacy.GameContract
 import com.app.ralaunch.feature.game.legacy.GamePresenter
 import com.app.ralaunch.core.common.SettingsAccess
 import com.app.ralaunch.core.common.GameFullscreenManager
-import com.app.ralaunch.core.logging.AppLog
+import timber.log.Timber
 import com.app.ralaunch.core.common.util.DensityAdapter
 import com.app.ralaunch.core.common.util.LocaleManager
 import com.app.ralaunch.core.error.ErrorHandler
@@ -38,7 +38,6 @@ import kotlin.system.exitProcess
 class GameActivity : SDLActivity(), GameContract.View {
 
     companion object {
-        private const val TAG = "GameActivity"
         private const val CONTROL_EDITOR_REQUEST_CODE = 2001
         const val EXTRA_GAME_STORAGE_ID = "GAME_STORAGE_ID"
         const val EXTRA_GAME_EXE_PATH = "GAME_EXE_PATH"
@@ -151,9 +150,9 @@ class GameActivity : SDLActivity(), GameContract.View {
         initializeFullscreenManager()
         initializeVirtualControls()
         requestHighRefreshRate("onCreate")
-        AppLog.i(TAG, "=== GameActivity Process Started ===")
-        AppLog.i(TAG, "Game process PID: ${Process.myPid()}")
-        AppLog.i(TAG, "GameActivity onCreate completed")
+        Timber.i("=== GameActivity Process Started ===")
+        Timber.i("Game process PID: ${Process.myPid()}")
+        Timber.i("GameActivity onCreate completed")
     }
 
     private fun applyThemeMode() {
@@ -170,7 +169,7 @@ class GameActivity : SDLActivity(), GameContract.View {
         try {
             ErrorHandler.init(this)
         } catch (e: Exception) {
-            AppLog.e(TAG, "设置 ErrorHandler 失败: ${e.message}")
+            Timber.e("设置 ErrorHandler 失败: ${e.message}")
         }
     }
 
@@ -231,7 +230,7 @@ class GameActivity : SDLActivity(), GameContract.View {
     }
 
     override fun onDestroy() {
-        AppLog.d(TAG, "GameActivity.onDestroy() called")
+        Timber.d("GameActivity.onDestroy() called")
 
         virtualControlsManager.stop()
         presenter.detach()
@@ -241,7 +240,7 @@ class GameActivity : SDLActivity(), GameContract.View {
         // [重要] .NET runtime 不支持多次初始化
         // GameActivity 运行在独立进程，终止不影响主应用
         Handler(Looper.getMainLooper()).postDelayed({
-            AppLog.d(TAG, "Terminating game process to ensure clean .NET runtime state")
+            Timber.d("Terminating game process to ensure clean .NET runtime state")
             Process.killProcess(Process.myPid())
             exitProcess(0)
         }, 100)
@@ -331,7 +330,7 @@ class GameActivity : SDLActivity(), GameContract.View {
 
     private fun requestHighRefreshRate(caller: String) {
         val display = getCurrentDisplay() ?: run {
-            AppLog.w(TAG, "[$caller] Display is null, skip refresh vote")
+            Timber.w("[$caller] Display is null, skip refresh vote")
             return
         }
 
@@ -345,13 +344,9 @@ class GameActivity : SDLActivity(), GameContract.View {
                     params.preferredDisplayModeId = targetMode.modeId
                     window.attributes = params
                 }
-                AppLog.i(
-                    TAG,
-                    "[$caller] Requested display mode id=${targetMode.modeId}, " +
-                        "rate=${targetMode.refreshRate}Hz, size=${targetMode.physicalWidth}x${targetMode.physicalHeight}"
-                )
+                Timber.i("[$caller] Requested display mode id=${targetMode.modeId}, " + "rate=${targetMode.refreshRate}Hz, size=${targetMode.physicalWidth}x${targetMode.physicalHeight}")
             } catch (e: Exception) {
-                AppLog.w(TAG, "[$caller] Failed to request preferred display mode: ${e.message}")
+                Timber.w("[$caller] Failed to request preferred display mode: ${e.message}")
             }
         }
 
@@ -371,18 +366,18 @@ class GameActivity : SDLActivity(), GameContract.View {
                             Surface.FRAME_RATE_COMPATIBILITY_DEFAULT
                         )
                     }
-                    AppLog.i(TAG, "[$caller] Surface frame-rate vote applied: ${targetRefresh}Hz")
+                    Timber.i("[$caller] Surface frame-rate vote applied: ${targetRefresh}Hz")
                 } catch (e: Throwable) {
-                    AppLog.w(TAG, "[$caller] Failed to apply frame-rate vote: ${e.message}")
+                    Timber.w("[$caller] Failed to apply frame-rate vote: ${e.message}")
                 }
             } else {
-                AppLog.d(TAG, "[$caller] SDL surface is not ready for frame-rate vote")
+                Timber.d("[$caller] SDL surface is not ready for frame-rate vote")
             }
         }
 
         if (lastRequestedRefreshRate != targetRefresh) {
             lastRequestedRefreshRate = targetRefresh
-            AppLog.i(TAG, "[$caller] Target refresh updated to ${targetRefresh}Hz")
+            Timber.i("[$caller] Target refresh updated to ${targetRefresh}Hz")
         }
     }
 
@@ -406,7 +401,7 @@ class GameActivity : SDLActivity(), GameContract.View {
             val candidates = sameResolutionModes.ifEmpty { supportedModes.toList() }
             candidates.maxByOrNull { it.refreshRate }
         } catch (e: Exception) {
-            AppLog.w(TAG, "Failed to select target display mode: ${e.message}")
+            Timber.w("Failed to select target display mode: ${e.message}")
             null
         }
     }

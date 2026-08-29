@@ -2,7 +2,7 @@ package com.app.ralaunch.feature.sponsor
 
 import android.content.Context
 import com.app.ralaunch.utils.JsonHttpRepositoryClient
-import com.app.ralaunch.core.logging.AppLog
+import timber.log.Timber
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
@@ -14,7 +14,6 @@ import kotlinx.serialization.json.Json
 class SponsorRepositoryService(context: Context) {
 
     companion object {
-        private const val TAG = "SponsorRepoService"
 
         /** GitHub 仓库地址 */
         const val REPO_URL_GITHUB = "https://raw.githubusercontent.com/RotatingArtDev/RAL-Sponsors/main"
@@ -83,7 +82,7 @@ class SponsorRepositoryService(context: Context) {
             
             // 如果失败，尝试备用源
             if (result.isFailure) {
-                AppLog.i(TAG, "Primary source failed, trying fallback: $fallbackUrl")
+                Timber.i("Primary source failed, trying fallback: $fallbackUrl")
                 result = tryFetchFrom(fallbackUrl)
             }
             
@@ -102,11 +101,11 @@ class SponsorRepositoryService(context: Context) {
         result.getOrNull()?.let { repository ->
             cachedRepository = repository
             cacheTimestamp = System.currentTimeMillis()
-            AppLog.i(TAG, "Fetched sponsors from $baseUrl: ${repository.sponsors.size} sponsors")
+            Timber.i("Fetched sponsors from $baseUrl: ${repository.sponsors.size} sponsors")
         }
 
         result.exceptionOrNull()?.let { error ->
-            AppLog.e(TAG, "Failed to fetch from $baseUrl", error)
+            Timber.e(error, "Failed to fetch from $baseUrl")
         }
 
         return result

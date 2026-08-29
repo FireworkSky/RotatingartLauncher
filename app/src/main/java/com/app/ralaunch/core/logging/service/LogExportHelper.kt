@@ -4,7 +4,7 @@ import android.os.Build
 import com.app.ralaunch.RaLaunchApp
 import com.app.ralaunch.core.di.contract.IGameRepositoryServiceV3
 import com.app.ralaunch.core.di.service.StoragePathsProviderServiceV1
-import com.app.ralaunch.core.logging.AppLog
+import timber.log.Timber
 import com.app.ralaunch.core.logging.LogFilePolicy
 import com.app.ralaunch.feature.patch.data.Patch
 import com.app.ralaunch.feature.patch.data.PatchManager
@@ -109,7 +109,7 @@ internal class LogExportHelper(
                 }
             }
         } catch (e: Throwable) {
-            AppLog.e(TAG, "Failed to build game repository info", e)
+            Timber.e(e, "Failed to build game repository info")
             buildFailureSection("Game Repository Information", e)
         }
     }
@@ -178,7 +178,7 @@ internal class LogExportHelper(
                 }
             }
         } catch (e: Throwable) {
-            AppLog.e(TAG, "Failed to build patch management info", e)
+            Timber.e(e, "Failed to build patch management info")
             buildFailureSection("Patch Management Information", e)
         }
     }
@@ -208,7 +208,7 @@ internal class LogExportHelper(
                 appendLine("Android: ${Build.VERSION.RELEASE} (SDK ${Build.VERSION.SDK_INT})")
             }
         } catch (e: Throwable) {
-            AppLog.e(TAG, "Failed to build device info", e)
+            Timber.e(e, "Failed to build device info")
             return ""
         }
     }
@@ -269,6 +269,5 @@ internal class LogExportHelper(
     }
 
     companion object {
-        private const val TAG = "LogExportHelper"
     }
 }

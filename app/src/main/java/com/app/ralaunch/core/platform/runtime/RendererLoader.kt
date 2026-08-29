@@ -3,7 +3,7 @@ package com.app.ralaunch.core.platform.runtime
 import android.content.Context
 import android.system.Os
 import com.app.ralaunch.core.platform.runtime.EnvVarsManager
-import com.app.ralaunch.core.logging.AppLog
+import timber.log.Timber
 import com.app.ralaunch.core.platform.runtime.AndroidRendererRegistry
 import com.app.ralaunch.core.platform.runtime.RendererRegistry
 
@@ -11,19 +11,18 @@ import com.app.ralaunch.core.platform.runtime.RendererRegistry
  * 渲染器加载器 - 基于环境变量的简化实现
  */
 object RendererLoader {
-    private const val TAG = "RendererLoader"
 
     fun loadRenderer(context: Context, renderer: String): Boolean {
         return try {
             val normalizedRenderer = RendererRegistry.normalizeRendererId(renderer)
             val rendererInfo = AndroidRendererRegistry.getRendererInfo(normalizedRenderer)
             if (rendererInfo == null) {
-                AppLog.e(TAG, "Unknown renderer: $renderer")
+                Timber.e("Unknown renderer: $renderer")
                 return false
             }
 
             if (!AndroidRendererRegistry.isRendererCompatible(normalizedRenderer)) {
-                AppLog.e(TAG, "Renderer is not compatible with this device")
+                Timber.e("Renderer is not compatible with this device")
                 return false
             }
 
@@ -35,7 +34,7 @@ object RendererLoader {
                     val eglLibPath = AndroidRendererRegistry.getRendererLibraryPath(rendererInfo.eglLibrary)
                     EnvVarsManager.quickSetEnvVar("FNA3D_OPENGL_LIBRARY", eglLibPath)
                 } catch (e: UnsatisfiedLinkError) {
-                    AppLog.e(TAG, "Failed to preload renderer library: ${e.message}")
+                    Timber.e("Failed to preload renderer library: ${e.message}")
                 }
             }
 
@@ -47,7 +46,7 @@ object RendererLoader {
             if (runtimeLibsDir.exists()) {
                 val runtimePath = runtimeLibsDir.absolutePath
                 EnvVarsManager.quickSetEnvVar("RALCORE_RUNTIMEDIR", runtimePath)
-                AppLog.i(TAG, "RALCORE_RUNTIMEDIR = $runtimePath")
+                Timber.i("RALCORE_RUNTIMEDIR = $runtimePath")
                 
                 // 设置 LD_LIBRARY_PATH 包含 runtime_libs 目录，让 dlopen 能找到库
                 val currentLdPath = Os.getenv("LD_LIBRARY_PATH") ?: ""
@@ -57,12 +56,12 @@ object RendererLoader {
                     "$runtimePath:$nativeLibDir"
                 }
                 EnvVarsManager.quickSetEnvVar("LD_LIBRARY_PATH", newLdPath)
-                AppLog.i(TAG, "LD_LIBRARY_PATH = $newLdPath")
+                Timber.i("LD_LIBRARY_PATH = $newLdPath")
             }
 
             true
         } catch (e: Exception) {
-            AppLog.e(TAG, "Renderer loading failed: ${e.message}", e)
+            Timber.e(e, "Renderer loading failed: ${e.message}")
             false
         }
     }

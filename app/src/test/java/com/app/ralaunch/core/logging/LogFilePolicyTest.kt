@@ -33,12 +33,17 @@ class LogFilePolicyTest {
         val dir = Files.createTempDirectory("ralaunch-log-policy-predicates").toFile()
         try {
             val appLog = File(dir, "ralaunch_2026-04-25.log").apply { writeText("app") }
+            val rolloverLog = File(dir, "ralaunch_2026-04-25_13-45-02.log").apply { writeText("rollover") }
             val logcatLog = File(dir, "ralaunch_2026-04-25_logcat.log").apply { writeText("logcat") }
             val legacyLog = File(dir, "ralaunch_2026-04-25_1234.log").apply { writeText("legacy") }
 
             assertTrue(LogFilePolicy.isAppLogFile(appLog))
             assertFalse(LogFilePolicy.isLogcatLogFile(appLog))
             assertTrue(LogFilePolicy.isManagedLogFile(appLog))
+
+            assertTrue(LogFilePolicy.isAppLogFile(rolloverLog))
+            assertTrue(LogFilePolicy.isManagedLogFile(rolloverLog))
+            assertFalse(LogFilePolicy.isLogcatLogFile(rolloverLog))
 
             assertFalse(LogFilePolicy.isAppLogFile(logcatLog))
             assertTrue(LogFilePolicy.isLogcatLogFile(logcatLog))

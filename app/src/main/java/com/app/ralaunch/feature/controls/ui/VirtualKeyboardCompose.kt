@@ -1,6 +1,6 @@
 package com.app.ralaunch.feature.controls.ui
 
-import com.app.ralaunch.core.logging.AppLog
+import timber.log.Timber
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
@@ -24,7 +24,6 @@ import com.app.ralaunch.R
 import com.app.ralaunch.feature.controls.bridges.ControlInputBridge
 import com.app.ralaunch.feature.controls.ControlData
 
-private const val TAG = "VirtualKeyboardCompose"
 
 /**
  * 虚拟键盘组件 - Compose 版本
@@ -216,13 +215,13 @@ private fun VirtualKey(
                 detectTapGestures(
                     onPress = {
                         isPressed = true
-                        AppLog.d(TAG, "Key pressed: $keyCode")
+                        Timber.d("Key pressed: $keyCode")
                         inputBridge?.sendKey(keyCode, true)
                         try {
                             awaitRelease()
                         } finally {
                             isPressed = false
-                            AppLog.d(TAG, "Key released: $keyCode")
+                            Timber.d("Key released: $keyCode")
                             inputBridge?.sendKey(keyCode, false)
                         }
                     }
@@ -262,13 +261,13 @@ private fun VirtualMouseKey(
                 detectTapGestures(
                     onPress = {
                         isPressed = true
-                        AppLog.d(TAG, "Mouse button pressed: $mouseButton")
+                        Timber.d("Mouse button pressed: $mouseButton")
                         inputBridge?.sendMouseButton(mouseButton, true)
                         try {
                             awaitRelease()
                         } finally {
                             isPressed = false
-                            AppLog.d(TAG, "Mouse button released: $mouseButton")
+                            Timber.d("Mouse button released: $mouseButton")
                             inputBridge?.sendMouseButton(mouseButton, false)
                         }
                     }

@@ -1,6 +1,6 @@
 package com.app.ralaunch.feature.controls.packs
 
-import com.app.ralaunch.core.logging.AppLog
+import timber.log.Timber
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import kotlinx.serialization.json.Json
@@ -115,7 +115,7 @@ data class ControlPackInfo(
             return try {
                 json.decodeFromString<ControlPackInfo>(jsonString)
             } catch (e: Exception) {
-                AppLog.e("ControlPackInfo", "Failed to parse JSON: ${e.message}", e)
+                Timber.e(e, "Failed to parse JSON: ${e.message}")
                 null
             }
         }

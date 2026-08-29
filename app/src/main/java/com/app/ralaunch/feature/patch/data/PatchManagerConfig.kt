@@ -1,6 +1,6 @@
 package com.app.ralaunch.feature.patch.data
 
-import com.app.ralaunch.core.logging.AppLog
+import timber.log.Timber
 import com.google.gson.FieldNamingPolicy
 import com.google.gson.GsonBuilder
 import com.google.gson.annotations.SerializedName
@@ -99,7 +99,7 @@ class PatchManagerConfig {
      * @return true if save succeeds, false otherwise
      */
     fun saveToJson(pathToJson: Path): Boolean {
-        AppLog.i(TAG, "Save $CONFIG_FILE_NAME, pathToJson: $pathToJson")
+        Timber.i("Save $CONFIG_FILE_NAME, pathToJson: $pathToJson")
 
         return try {
             // Ensure parent directory exists
@@ -109,18 +109,17 @@ class PatchManagerConfig {
                 OutputStreamWriter(stream, StandardCharsets.UTF_8).use { writer ->
                     gson.toJson(this, writer)
                     writer.flush()
-                    AppLog.i(TAG, "Configuration file saved successfully")
+                    Timber.i("Configuration file saved successfully")
                     true
                 }
             }
         } catch (e: Exception) {
-            AppLog.w(TAG, "Save configuration file failed: ${AppLog.getStackTraceString(e)}")
+            Timber.w(e, "Save configuration file failed")
             false
         }
     }
 
     companion object {
-        private const val TAG = "PatchManagerConfig"
         const val CONFIG_FILE_NAME = "patch_manager.json"
 
         private val gson = GsonBuilder()
@@ -135,10 +134,10 @@ class PatchManagerConfig {
          */
         @JvmStatic
         fun fromJson(pathToJson: Path): PatchManagerConfig? {
-            AppLog.i(TAG, "加载 $CONFIG_FILE_NAME, pathToJson: $pathToJson")
+            Timber.i("加载 $CONFIG_FILE_NAME, pathToJson: $pathToJson")
 
             if (!Files.exists(pathToJson) || !Files.isRegularFile(pathToJson)) {
-                AppLog.w(TAG, "路径不存在 $CONFIG_FILE_NAME 文件")
+                Timber.w("路径不存在 $CONFIG_FILE_NAME 文件")
                 return null
             }
 
@@ -149,7 +148,7 @@ class PatchManagerConfig {
                     }
                 }
             } catch (e: Exception) {
-                AppLog.w(TAG, "加载配置文件失败: ${AppLog.getStackTraceString(e)}")
+                Timber.w(e, "加载配置文件失败")
                 null
             }
         }

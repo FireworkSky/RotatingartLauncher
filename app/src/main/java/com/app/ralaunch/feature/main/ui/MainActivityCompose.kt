@@ -79,7 +79,7 @@ import com.app.ralaunch.R
 import com.app.ralaunch.core.error.ErrorHandler
 import com.app.ralaunch.core.common.MessageHelper
 import com.app.ralaunch.core.common.SettingsAccess
-import com.app.ralaunch.core.logging.AppLog
+import timber.log.Timber
 import com.app.ralaunch.core.common.util.DensityAdapter
 import com.app.ralaunch.core.di.service.PermissionManagerServiceV1
 import com.app.ralaunch.core.di.service.ThemeManagerServiceV1
@@ -196,7 +196,7 @@ class MainActivityCompose : BaseActivity() {
         try {
             super.onResume()
         } catch (e: Exception) {
-            AppLog.e("MainActivityCompose", "onResume error: ${e.message}")
+            Timber.e("onResume error: ${e.message}")
         }
 
         ErrorHandler.init(this)

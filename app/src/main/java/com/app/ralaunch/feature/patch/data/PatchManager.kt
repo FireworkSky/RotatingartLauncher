@@ -1,7 +1,7 @@
 package com.app.ralaunch.feature.patch.data
 
 import android.content.Context
-import com.app.ralaunch.core.logging.AppLog
+import timber.log.Timber
 import com.app.ralaunch.core.extractor.ArchiveExtractor
 import com.app.ralaunch.core.common.util.TemporaryFileAcquirer
 import org.koin.java.KoinJavaComponent
@@ -133,26 +133,26 @@ class PatchManager @JvmOverloads constructor(
     @OptIn(ExperimentalPathApi::class)
     fun installPatch(patchZipPath: Path): Boolean {
         if (!Files.exists(patchZipPath) || !Files.isRegularFile(patchZipPath)) {
-            AppLog.w(TAG, "补丁安装失败: 补丁文件不存在或不是一个有效的文件, path: $patchZipPath")
+            Timber.w("补丁安装失败: 补丁文件不存在或不是一个有效的文件, path: $patchZipPath")
             return false
         }
 
         val manifest = PatchManifest.fromZip(patchZipPath)
         if (manifest == null) {
-            AppLog.w(TAG, "补丁安装失败: 无法读取补丁清单, path: $patchZipPath")
+            Timber.w("补丁安装失败: 无法读取补丁清单, path: $patchZipPath")
             return false
         }
 
         val patchPath = patchStoragePath.resolve(manifest.id)
 
         if (Files.exists(patchPath)) {
-            AppLog.i(TAG, "补丁已存在, 将删除原补丁目录，重新安装, patch id: ${manifest.id}")
+            Timber.i("补丁已存在, 将删除原补丁目录，重新安装, patch id: ${manifest.id}")
             patchPath.deleteRecursively()
         } else {
-            AppLog.i(TAG, "正在安装新补丁, patch id: ${manifest.id}")
+            Timber.i("正在安装新补丁, patch id: ${manifest.id}")
         }
 
-        AppLog.i(TAG, "正在解压补丁文件到补丁目录...")
+        Timber.i("正在解压补丁文件到补丁目录...")
         when (val result = ArchiveExtractor.builder()
             .from(patchZipPath)
             .to(patchPath)
@@ -161,7 +161,7 @@ class PatchManager @JvmOverloads constructor(
         ) {
             is ArchiveExtractor.Result.Success -> Unit
             is ArchiveExtractor.Result.Failure -> {
-                AppLog.e(TAG, "补丁安装失败: ${result.message}", result.cause)
+                Timber.e(result.cause, "补丁安装失败: ${result.message}")
                 return false
             }
         }
@@ -195,17 +195,17 @@ class PatchManager @JvmOverloads constructor(
     private fun loadConfig(): PatchManagerConfig {
         val loadedConfig = PatchManagerConfig.fromJson(configFilePath)
         return if (loadedConfig == null) {
-            AppLog.i(TAG, "配置文件不存在或加载失败，创建新配置")
+            Timber.i("配置文件不存在或加载失败，创建新配置")
             PatchManagerConfig().also { it.saveToJson(configFilePath) }
         } else {
-            AppLog.i(TAG, "配置文件加载成功")
+            Timber.i("配置文件加载成功")
             loadedConfig
         }
     }
 
     private fun saveConfig() {
         if (!config.saveToJson(configFilePath)) {
-            AppLog.w(TAG, "保存配置文件失败")
+            Timber.w("保存配置文件失败")
         }
     }
 
@@ -219,10 +219,10 @@ class PatchManager @JvmOverloads constructor(
             try {
                 if (Files.exists(dllPath)) {
                     dllPath.deleteIfExists()
-                    AppLog.i(TAG, "已清理旧的共享 DLL: $dllName")
+                    Timber.i("已清理旧的共享 DLL: $dllName")
                 }
             } catch (e: IOException) {
-                AppLog.w(TAG, "清理 $dllName 失败: ${e.message}")
+                Timber.w("清理 $dllName 失败: ${e.message}")
             }
         }
     }
@@ -230,7 +230,6 @@ class PatchManager @JvmOverloads constructor(
     //endregion
 
     companion object {
-        private const val TAG = "PatchManager"
         private const val IS_DEFAULT_PATCH_STORAGE_DIR_EXTERNAL = true
         private const val PATCH_STORAGE_DIR = "patches"
 
@@ -292,11 +291,11 @@ class PatchManager @JvmOverloads constructor(
 
                                 when {
                                     forceReinstall -> {
-                                        AppLog.i(TAG, "正在强制重新安装内置补丁: ${patchZip.fileName} (id: ${manifest.id})")
+                                        Timber.i("正在强制重新安装内置补丁: ${patchZip.fileName} (id: ${manifest.id})")
                                         patchManager.installPatch(patchZip)
                                     }
                                     installedPatch == null -> {
-                                        AppLog.i(TAG, "正在安装内置补丁: ${patchZip.fileName} (id: ${manifest.id}, version: ${manifest.version})")
+                                        Timber.i("正在安装内置补丁: ${patchZip.fileName} (id: ${manifest.id}, version: ${manifest.version})")
                                         patchManager.installPatch(patchZip)
                                     }
                                     else -> {
@@ -304,10 +303,10 @@ class PatchManager @JvmOverloads constructor(
                                         val bundledVersion = manifest.version
                                         val cmp = PatchManifest.compareVersions(bundledVersion, installedVersion)
                                         if (cmp > 0) {
-                                            AppLog.i(TAG, "检测到补丁更新: ${manifest.id} (${installedVersion} -> ${bundledVersion})，正在自动更新...")
+                                            Timber.i("检测到补丁更新: ${manifest.id} (${installedVersion} -> ${bundledVersion})，正在自动更新...")
                                             patchManager.installPatch(patchZip)
                                         } else {
-                                            AppLog.i(TAG, "补丁已是最新版本，跳过: ${manifest.id} (installed: ${installedVersion}, bundled: ${bundledVersion})")
+                                            Timber.i("补丁已是最新版本，跳过: ${manifest.id} (installed: ${installedVersion}, bundled: ${bundledVersion})")
                                         }
                                     }
                                 }
@@ -324,9 +323,9 @@ class PatchManager @JvmOverloads constructor(
          */
         @JvmStatic
         fun constructStartupHooksEnvVar(patches: List<Patch>): String {
-            AppLog.d(TAG, "constructStartupHooksEnvVar: Input patches count = ${patches.size}")
+            Timber.d("constructStartupHooksEnvVar: Input patches count = ${patches.size}")
             patches.forEachIndexed { index, p ->
-                AppLog.d(TAG, "  [$index] id=${p.manifest.id}, path=${p.getEntryAssemblyAbsolutePath()}")
+                Timber.d("  [$index] id=${p.manifest.id}, path=${p.getEntryAssemblyAbsolutePath()}")
             }
 
             val seenPatchIds = linkedSetOf<String>()
@@ -334,7 +333,7 @@ class PatchManager @JvmOverloads constructor(
                 .filter { p ->
                     val isNew = seenPatchIds.add(p.manifest.id)
                     if (!isNew) {
-                        AppLog.w(TAG, "constructStartupHooksEnvVar: Duplicate patch ID filtered: ${p.manifest.id}")
+                        Timber.w("constructStartupHooksEnvVar: Duplicate patch ID filtered: ${p.manifest.id}")
                     }
                     isNew
                 }
@@ -342,7 +341,7 @@ class PatchManager @JvmOverloads constructor(
                 .distinct()
                 .joinToString(":")
 
-            AppLog.d(TAG, "constructStartupHooksEnvVar: Result = $result")
+            Timber.d("constructStartupHooksEnvVar: Result = $result")
             return result
         }
     }

@@ -20,7 +20,7 @@ import android.os.Environment
 import com.app.ralaunch.core.common.SettingsAccess
 import org.koin.java.KoinJavaComponent
 import com.app.ralaunch.core.platform.runtime.dotnet.DotNetLauncher
-import com.app.ralaunch.core.logging.AppLog
+import timber.log.Timber
 import com.app.ralaunch.core.common.util.NativeMethods
 import com.app.ralaunch.core.platform.runtime.RendererEnvironmentConfigurator
 import com.app.ralaunch.feature.patch.data.Patch
@@ -47,7 +47,6 @@ import kotlin.io.path.exists
  */
 object GameLauncher {
 
-    private const val TAG = "GameLauncher"
 
     /**
      * 默认数据目录名称
@@ -70,7 +69,7 @@ object GameLauncher {
      */
     fun resetInitializationState() {
         isSDLJNIInitialized = false
-        AppLog.i(TAG, "初始化状态已重置 / Initialization state reset")
+        Timber.i("初始化状态已重置 / Initialization state reset")
     }
 
     /**
@@ -103,7 +102,7 @@ object GameLauncher {
             System.loadLibrary("SkiaSharp")
 
         } catch (e: UnsatisfiedLinkError) {
-            AppLog.e(TAG, "加载 Native 库失败 / Failed to load native libraries: ${e.message}")
+            Timber.e("加载 Native 库失败 / Failed to load native libraries: ${e.message}")
         }
     }
 
@@ -172,22 +171,22 @@ object GameLauncher {
         gameEnvVars: Map<String, String?> = emptyMap()
     ): Int {
         try {
-            AppLog.i(TAG, "=== 开始启动 .NET 程序集 / Starting .NET Assembly Launch ===")
-            AppLog.i(TAG, "程序集路径 / Assembly path: $assemblyPath")
-            AppLog.i(TAG, "启动参数 / Arguments: ${args.joinToString(", ")}")
-            AppLog.i(TAG, "启用补丁数 / Enabled patches: ${enabledPatches?.size ?: 0}")
+            Timber.i("=== 开始启动 .NET 程序集 / Starting .NET Assembly Launch ===")
+            Timber.i("程序集路径 / Assembly path: $assemblyPath")
+            Timber.i("启动参数 / Arguments: ${args.joinToString(", ")}")
+            Timber.i("启用补丁数 / Enabled patches: ${enabledPatches?.size ?: 0}")
 
             // 步骤1：验证程序集文件存在
             // Step 1: Verify assembly file exists
             if (!Path(assemblyPath).exists()) {
-                AppLog.e(TAG, "程序集文件不存在 / Assembly file does not exist: $assemblyPath")
+                Timber.e("程序集文件不存在 / Assembly file does not exist: $assemblyPath")
                 return -1
             }
-            AppLog.d(TAG, "程序集文件验证通过 / Assembly file exists: OK")
+            Timber.d("程序集文件验证通过 / Assembly file exists: OK")
 
             // 步骤2：设置基础环境变量
             // Step 2: Set basic environment variables
-            AppLog.d(TAG, "设置环境变量 / Setting up environment variables...")
+            Timber.d("设置环境变量 / Setting up environment variables...")
             val appContext: Context = KoinJavaComponent.get(Context::class.java)
             EnvVarsManager.quickSetEnvVars(
                 "PACKAGE_NAME" to appContext.packageName,
@@ -197,16 +196,16 @@ object GameLauncher {
             // 步骤3：切换工作目录
             // Step 3: Change working directory
             val workingDir = Path(assemblyPath).parent.toString()
-            AppLog.d(TAG, "切换工作目录 / Changing working directory to: $workingDir")
+            Timber.d("切换工作目录 / Changing working directory to: $workingDir")
             NativeMethods.chdir(workingDir)
-            AppLog.d(TAG, "工作目录切换完成 / Working directory changed: OK")
+            Timber.d("工作目录切换完成 / Working directory changed: OK")
 
             // 步骤4：准备数据目录
             // Step 4: Prepare data directory
-            AppLog.d(TAG, "准备数据目录 / Preparing data directory...")
+            Timber.d("准备数据目录 / Preparing data directory...")
             val dataDir = prepareDataDirectory(assemblyPath)
             val cacheDir = appContext.cacheDir.absolutePath
-            AppLog.i(TAG, "数据目录 / Data directory: $dataDir")
+            Timber.i("数据目录 / Data directory: $dataDir")
 
             EnvVarsManager.quickSetEnvVars(
                 "HOME" to dataDir,
@@ -215,14 +214,14 @@ object GameLauncher {
                 "XDG_CACHE_HOME" to cacheDir,
                 "TMPDIR" to cacheDir
             )
-            AppLog.d(TAG, "XDG 环境变量设置完成 / XDG environment variables set: OK")
+            Timber.d("XDG 环境变量设置完成 / XDG environment variables set: OK")
 
             // 步骤5：应用用户设置
             // Step 5: Apply user settings
             val settings = SettingsAccess
-            AppLog.d(TAG, "应用用户设置 / Applying settings configuration...")
-            AppLog.d(TAG, "  - 大核亲和性 / Big core affinity: ${settings.setThreadAffinityToBigCoreEnabled}")
-            AppLog.d(TAG, "  - 多点触控 / Touch multitouch: ${settings.isTouchMultitouchEnabled}")
+            Timber.d("应用用户设置 / Applying settings configuration...")
+            Timber.d("  - 大核亲和性 / Big core affinity: ${settings.setThreadAffinityToBigCoreEnabled}")
+            Timber.d("  - 多点触控 / Touch multitouch: ${settings.isTouchMultitouchEnabled}")
 
             // 步骤6：配置启动钩子（补丁）
             // Step 6: Configure startup hooks (patches)
@@ -230,18 +229,18 @@ object GameLauncher {
                 PatchManager.constructStartupHooksEnvVar(enabledPatches) else null
 
             if (startupHooks != null) {
-                AppLog.i(TAG, "已配置 ${enabledPatches!!.size} 个补丁的启动钩子 / DOTNET_STARTUP_HOOKS configured with ${enabledPatches.size} patch(es)")
-                AppLog.d(TAG, "DOTNET_STARTUP_HOOKS 值 / value: $startupHooks")
+                Timber.i("已配置 ${enabledPatches!!.size} 个补丁的启动钩子 / DOTNET_STARTUP_HOOKS configured with ${enabledPatches.size} patch(es)")
+                Timber.d("DOTNET_STARTUP_HOOKS 值 / value: $startupHooks")
                 val hookCount = startupHooks.split(":").filter { it.isNotEmpty() }.size
-                AppLog.d(TAG, "实际钩子数量 / Actual hook count: $hookCount")
+                Timber.d("实际钩子数量 / Actual hook count: $hookCount")
             } else {
-                AppLog.d(TAG, "未配置启动钩子 / No startup hooks configured")
+                Timber.d("未配置启动钩子 / No startup hooks configured")
             }
 
             // 步骤7：设置 MonoMod 路径（供补丁使用）
             // Step 7: Set MonoMod path (for patches)
             val monoModPath = AssemblyPatcher.getMonoModInstallPath().toString()
-            AppLog.i(TAG, "MonoMod 路径 / path: $monoModPath")
+            Timber.i("MonoMod 路径 / path: $monoModPath")
 
             EnvVarsManager.quickSetEnvVars(
                 // 启动钩子配置
@@ -286,31 +285,31 @@ object GameLauncher {
                 "RAL_GL_MAP_RATIO" to null,
                 "RAL_GL_MAP_ENABLED" to null,
             )
-            AppLog.d(TAG, "游戏设置环境变量配置完成 / Game settings environment variables set: OK")
+            Timber.d("游戏设置环境变量配置完成 / Game settings environment variables set: OK")
 
             // 步骤8：配置渲染器
             // Step 8: Configure renderer
-            AppLog.d(TAG, "配置渲染器环境 / Applying renderer environment...")
+            Timber.d("配置渲染器环境 / Applying renderer environment...")
             RendererEnvironmentConfigurator.apply(
                 context = appContext,
                 rendererOverride = rendererOverride
             )
-            AppLog.d(TAG, "渲染器环境配置完成 / Renderer environment applied: OK")
+            Timber.d("渲染器环境配置完成 / Renderer environment applied: OK")
 
             // 步骤9：设置线程亲和性
             // Step 9: Set thread affinity
             if (settings.setThreadAffinityToBigCoreEnabled) {
-                AppLog.d(TAG, "设置线程亲和性到大核 / Setting thread affinity to big cores...")
+                Timber.d("设置线程亲和性到大核 / Setting thread affinity to big cores...")
                 val result = ThreadAffinityManager.setThreadAffinityToBigCores()
-                AppLog.d(TAG, "线程亲和性设置完成 / Thread affinity to big cores set: Result=$result")
+                Timber.d("线程亲和性设置完成 / Thread affinity to big cores set: Result=$result")
             } else {
-                AppLog.d(TAG, "未启用大核亲和性，跳过 / Thread affinity to big cores not enabled, skipping.")
+                Timber.d("未启用大核亲和性，跳过 / Thread affinity to big cores not enabled, skipping.")
             }
 
             // 步骤10：应用游戏级环境变量（优先级高于全局/渲染器配置）
             // Step 10: Apply per-game env vars (higher priority than global/renderer config)
             if (gameEnvVars.isNotEmpty()) {
-                AppLog.d(TAG, "应用游戏环境变量 / Applying per-game env vars: ${gameEnvVars.size} item(s)")
+                Timber.d("应用游戏环境变量 / Applying per-game env vars: ${gameEnvVars.size} item(s)")
                 val availableInterpolations = linkedMapOf(
                     "PACKAGE_NAME" to appContext.packageName,
                     "EXTERNAL_STORAGE_DIRECTORY" to Environment.getExternalStorageDirectory().path,
@@ -328,24 +327,24 @@ object GameLauncher {
                     availableInterpolations = availableInterpolations
                 )
                 EnvVarsManager.quickSetEnvVars(resolvedGameEnvVars)
-                AppLog.d(TAG, "游戏环境变量应用完成 / Per-game env vars applied: OK")
+                Timber.d("游戏环境变量应用完成 / Per-game env vars applied: OK")
             }
 
             // 步骤11：启动 .NET 运行时
             // Step 11: Launch .NET runtime
-            AppLog.i(TAG, "通过 hostfxr 启动 .NET 运行时 / Launching .NET runtime with hostfxr...")
+            Timber.i("通过 hostfxr 启动 .NET 运行时 / Launching .NET runtime with hostfxr...")
             val result = DotNetLauncher.hostfxrLaunch(
                 assemblyPath = assemblyPath,
                 args = args,
                 dotNetRuntimeVersionOverride = dotNetRuntimeVersionOverride
             )
 
-            AppLog.i(TAG, "=== .NET 程序集启动完成 / .NET Assembly Launch Completed ===")
-            AppLog.i(TAG, "退出代码 / Exit code: $result")
+            Timber.i("=== .NET 程序集启动完成 / .NET Assembly Launch Completed ===")
+            Timber.i("退出代码 / Exit code: $result")
 
             return result
         } catch (e: Exception) {
-            AppLog.e(TAG, "启动程序集失败 / Failed to launch assembly: $assemblyPath", e)
+            Timber.e(e, "启动程序集失败 / Failed to launch assembly: $assemblyPath")
             return -1
         }
     }
@@ -374,17 +373,17 @@ object GameLauncher {
     @JvmStatic
     fun launchNewDotNetProcess(assemblyPath: String, args: Array<String>, title: String, gameId: String): Int {
         try {
-            AppLog.i(TAG, "=== 收到新进程启动请求 / launchNewDotNetProcess called ===")
-            AppLog.i(TAG, "程序集 / Assembly: $assemblyPath")
-            AppLog.i(TAG, "标题 / Title: $title")
-            AppLog.i(TAG, "游戏ID / Game ID: $gameId")
-            AppLog.i(TAG, "参数 / Arguments: ${args.joinToString(", ")}")
+            Timber.i("=== 收到新进程启动请求 / launchNewDotNetProcess called ===")
+            Timber.i("程序集 / Assembly: $assemblyPath")
+            Timber.i("标题 / Title: $title")
+            Timber.i("游戏ID / Game ID: $gameId")
+            Timber.i("参数 / Arguments: ${args.joinToString(", ")}")
 
             ProcessLauncherService.launch(assemblyPath, args, title, gameId)
 
             return 0
         } catch (e: Exception) {
-            AppLog.e(TAG, "启动新 .NET 进程失败 / Failed to launch new .NET process", e)
+            Timber.e(e, "启动新 .NET 进程失败 / Failed to launch new .NET process")
             return -1
         }
     }
@@ -415,7 +414,7 @@ object GameLauncher {
         // 初始回退目录为程序集所在目录
         // Initial fallback is the assembly's parent directory
         var finalDataDir = Path(assemblyPath).parent
-        AppLog.d(TAG, "初始数据目录（程序集父目录）/ Initial data directory (assembly parent): $finalDataDir")
+        Timber.d("初始数据目录（程序集父目录）/ Initial data directory (assembly parent): $finalDataDir")
 
         try {
             // 尝试使用外部存储的默认数据目录
@@ -424,36 +423,36 @@ object GameLauncher {
                 .resolve(DEFAULT_DATA_DIR_NAME)
                 .toPath()
 
-            AppLog.d(TAG, "目标数据目录 / Target data directory: $defaultDataDirPath")
+            Timber.d("目标数据目录 / Target data directory: $defaultDataDirPath")
 
             // 创建目录（如果不存在）
             // Create directory if it doesn't exist
             if (!defaultDataDirPath.exists()) {
-                AppLog.d(TAG, "创建数据目录 / Creating data directory: $defaultDataDirPath")
+                Timber.d("创建数据目录 / Creating data directory: $defaultDataDirPath")
                 defaultDataDirPath.createDirectories()
-                AppLog.d(TAG, "数据目录创建成功 / Data directory created: OK")
+                Timber.d("数据目录创建成功 / Data directory created: OK")
             } else {
-                AppLog.d(TAG, "数据目录已存在 / Data directory already exists")
+                Timber.d("数据目录已存在 / Data directory already exists")
             }
 
             // 创建 .nomedia 文件防止媒体扫描
             // Create .nomedia file to prevent media scanning
             val nomediaFilePath = defaultDataDirPath.resolve(".nomedia")
             if (!nomediaFilePath.exists()) {
-                AppLog.d(TAG, "创建 .nomedia 文件 / Creating .nomedia file: $nomediaFilePath")
+                Timber.d("创建 .nomedia 文件 / Creating .nomedia file: $nomediaFilePath")
                 nomediaFilePath.createFile()
-                AppLog.d(TAG, ".nomedia 文件创建成功 / .nomedia file created: OK")
+                Timber.d(".nomedia 文件创建成功 / .nomedia file created: OK")
             } else {
-                AppLog.d(TAG, ".nomedia 文件已存在 / .nomedia file already exists")
+                Timber.d(".nomedia 文件已存在 / .nomedia file already exists")
             }
 
             finalDataDir = defaultDataDirPath
-            AppLog.i(TAG, "使用默认数据目录 / Using default data directory: $finalDataDir")
+            Timber.i("使用默认数据目录 / Using default data directory: $finalDataDir")
         } catch (e: Exception) {
             // 无法访问外部存储，使用程序集目录作为回退
             // Cannot access external storage, use assembly directory as fallback
-            AppLog.w(TAG, "无法访问默认数据目录，使用程序集目录 / Failed to access default data directory, using assembly directory instead.", e)
-            AppLog.w(TAG, "回退数据目录 / Fallback data directory: $finalDataDir")
+            Timber.w(e, "无法访问默认数据目录，使用程序集目录 / Failed to access default data directory, using assembly directory instead.")
+            Timber.w("回退数据目录 / Fallback data directory: $finalDataDir")
         }
 
         return finalDataDir.toString()

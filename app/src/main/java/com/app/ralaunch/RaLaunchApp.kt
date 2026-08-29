@@ -13,10 +13,8 @@ import com.app.ralaunch.core.common.util.DensityAdapter
 import com.app.ralaunch.core.common.util.LocaleManager
 import com.app.ralaunch.core.di.KoinInitializer
 import com.app.ralaunch.core.di.contract.IRuntimeManagerServiceV2
-import com.app.ralaunch.core.di.service.StoragePathsProviderServiceV1
 import com.app.ralaunch.core.di.service.VibrationManagerServiceV1
-import com.app.ralaunch.core.logging.AppLog
-import com.app.ralaunch.core.logging.service.AndroidFileLogger
+import timber.log.Timber
 import com.app.ralaunch.core.model.ThemeMode
 import com.app.ralaunch.feature.controls.packs.ControlPackManager
 import com.app.ralaunch.feature.patch.data.PatchManager
@@ -36,7 +34,6 @@ import java.io.File
 class RaLaunchApp : Application(), KoinComponent {
 
     companion object {
-        private const val TAG = "RaLaunchApp"
 
         @Volatile
         private var instance: RaLaunchApp? = null
@@ -59,8 +56,6 @@ class RaLaunchApp : Application(), KoinComponent {
     private val _vibrationManager: VibrationManagerServiceV1 by inject()
     private val _controlPackManager: ControlPackManager by inject()
     private val _patchManager: PatchManager? by inject()
-    private val _fileLogger: AndroidFileLogger by inject()
-    private val _storagePathsProvider: StoragePathsProviderServiceV1 by inject()
 
     override fun onCreate() {
         super.onCreate()
@@ -72,12 +67,10 @@ class RaLaunchApp : Application(), KoinComponent {
         // 2. 初始化 Koin DI（必须在使用 inject 之前）
         KoinInitializer.init(this)
 
+        // 3. 初始化日志系统（Timber：Logcat + 文件日志）
         AppLogger.init(this)
 
-        // 3. 初始化进程级文件日志捕获
-        initFileLogger()
-
-        // 4. 启动时迁移旧运行时布局，仅在主进程执行一次
+        // 4. 启动时迁移旧运行时布局
         RuntimeManager.initialize(this.filesDir)
 
         // 5. 应用主题设置
@@ -116,23 +109,8 @@ class RaLaunchApp : Application(), KoinComponent {
             }
             AppCompatDelegate.setDefaultNightMode(nightMode)
         } catch (e: Exception) {
-            AppLog.e(TAG, "Failed to apply theme: ${e.message}")
+            Timber.e("Failed to apply theme: ${e.message}")
             AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
-        }
-    }
-
-    private fun isMainAppProcess(): Boolean = getProcessName() == packageName
-
-    private fun initFileLogger() {
-        try {
-            val logDir = File(_storagePathsProvider.logsDirPathFull())
-            _fileLogger.start(
-                logDirectory = logDir,
-                clearExistingLogs = isMainAppProcess()
-            )
-            AppLog.i(TAG, "File log capture initialized for process=${getProcessName()}, pid=${android.os.Process.myPid()}")
-        } catch (e: Exception) {
-            AppLog.e(TAG, "Failed to initialize file log capture", e)
         }
     }
 
@@ -156,7 +134,7 @@ class RaLaunchApp : Application(), KoinComponent {
                     com.app.ralaunch.core.common.util.PatchExtractor.extractPatchesIfNeeded(applicationContext)
                     PatchManager.installBuiltInPatches(manager, false)
                 } catch (e: Exception) {
-                    AppLog.e(TAG, "Failed to install patches: ${e.message}")
+                    Timber.e("Failed to install patches: ${e.message}")
                 }
             }, "PatchInstaller").start()
         }
@@ -172,10 +150,10 @@ class RaLaunchApp : Application(), KoinComponent {
             val externalStorage = android.os.Environment.getExternalStorageDirectory()
             externalStorage?.let {
                 Os.setenv("EXTERNAL_STORAGE_DIRECTORY", it.absolutePath, true)
-                AppLog.d(TAG, "EXTERNAL_STORAGE_DIRECTORY: ${it.absolutePath}")
+                Timber.d("EXTERNAL_STORAGE_DIRECTORY: ${it.absolutePath}")
             }
         } catch (e: Exception) {
-            AppLog.e(TAG, "Failed to set environment variables: ${e.message}")
+            Timber.e("Failed to set environment variables: ${e.message}")
         }
     }
 

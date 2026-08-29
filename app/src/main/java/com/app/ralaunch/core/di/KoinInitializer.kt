@@ -1,8 +1,6 @@
 package com.app.ralaunch.core.di
 
 import android.app.Application
-import com.app.ralaunch.core.logging.AppLog
-import com.app.ralaunch.core.logging.contract.Logger
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
 import org.koin.core.context.startKoin
@@ -29,6 +27,5 @@ object KoinInitializer {
                 getAppModules()
             )
         }
-        AppLog.install(koinApplication.koin.get<Logger>())
     }
 }

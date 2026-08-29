@@ -4,7 +4,7 @@ import android.content.Context
 import androidx.annotation.StringRes
 import com.app.ralaunch.R
 import com.app.ralaunch.feature.gog.data.GogConstants
-import com.app.ralaunch.core.logging.AppLog
+import timber.log.Timber
 import org.json.JSONObject
 import java.io.*
 import java.net.*
@@ -41,7 +41,7 @@ class GogAuthClient(context: Context) {
     @Throws(IOException::class)
     fun login(username: String, password: String): Boolean {
         val authFormToken = getAuthFormToken() ?: run {
-            AppLog.e(TAG, "无法获取登录表单令牌")
+            Timber.e("无法获取登录表单令牌")
             return false
         }
 
@@ -116,7 +116,7 @@ class GogAuthClient(context: Context) {
                 conn.disconnect()
             }
         } catch (e: Exception) {
-            AppLog.e(TAG, "令牌刷新失败", e)
+            Timber.e(e, "令牌刷新失败")
             false
         }
     }
@@ -143,7 +143,7 @@ class GogAuthClient(context: Context) {
             return extractFormToken(html, "name=\"login[_token]\" value=\"", "\"")
                 ?: extractFormToken(html, "name='login[_token]' value='", "'")
         } catch (e: Exception) {
-            AppLog.e(TAG, "无法从登录表单提取令牌", e)
+            Timber.e(e, "无法从登录表单提取令牌")
             return null
         } finally {
             conn.disconnect()
@@ -218,7 +218,7 @@ class GogAuthClient(context: Context) {
     @Throws(IOException::class)
     private fun handleTwoStepAuth(redirectUrl: String, type: String): String? {
         val callback = twoFactorCallback ?: run {
-            AppLog.e(TAG, "需要两步验证，但未设置回调")
+            Timber.e("需要两步验证，但未设置回调")
             return null
         }
 
@@ -395,7 +395,7 @@ class GogAuthClient(context: Context) {
                 conn.disconnect()
             }
         } catch (e: Exception) {
-            AppLog.e(TAG, "令牌交换错误", e)
+            Timber.e(e, "令牌交换错误")
             return false
         }
     }
@@ -445,7 +445,6 @@ class GogAuthClient(context: Context) {
     }
 
     companion object {
-        private const val TAG = "GogAuthClient"
         private const val USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
     }
 }

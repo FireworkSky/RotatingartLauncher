@@ -10,7 +10,7 @@ import android.graphics.RectF
 import android.graphics.Region
 import android.graphics.Typeface
 import android.text.TextPaint
-import com.app.ralaunch.core.logging.AppLog
+import timber.log.Timber
 import android.view.View
 import com.app.ralaunch.core.di.service.VibrationManagerServiceV1
 import org.koin.java.KoinJavaComponent
@@ -36,7 +36,6 @@ class VirtualButton(
 ) : View(context), ControlView {
 
     companion object {
-        private const val TAG = "VirtualButton"
     }
 
     // 使用 Koin 延迟获取 VibrationManagerServiceV1
@@ -44,7 +43,7 @@ class VirtualButton(
         try {
             KoinJavaComponent.get(VibrationManagerServiceV1::class.java)
         } catch (e: Exception) {
-            AppLog.w(TAG, "VibrationManagerServiceV1 not available: ${e.message}")
+            Timber.w("VibrationManagerServiceV1 not available: ${e.message}")
             null
         }
     }

@@ -5,7 +5,7 @@ import android.content.Context
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import com.app.ralaunch.core.logging.AppLog
+import timber.log.Timber
 import android.view.View
 import android.view.WindowManager
 import androidx.activity.compose.setContent
@@ -43,7 +43,6 @@ import org.koin.androidx.viewmodel.ext.android.viewModel
 class ControlEditorActivity : AppCompatActivity() {
 
     companion object {
-        private const val TAG = "ControlEditorActivity"
         const val EXTRA_LAYOUT_ID = "layout_id"
 
         fun start(context: Context, layoutId: String?) {
@@ -183,9 +182,9 @@ class ControlEditorActivity : AppCompatActivity() {
             val relativePath = "textures/$fileName"
             viewModel.onImagePicked(relativePath)
             
-            AppLog.d(TAG, "Image copied to: ${destFile.absolutePath}")
+            Timber.d("Image copied to: ${destFile.absolutePath}")
         } catch (e: Exception) {
-            AppLog.e(TAG, "Failed to copy image", e)
+            Timber.e(e, "Failed to copy image")
         }
     }
 
@@ -213,7 +212,7 @@ class ControlEditorActivity : AppCompatActivity() {
         super.onStop()
         // 自动保存草稿（如果有未保存的更改）
         if (viewModel.hasUnsavedChanges.value) {
-            AppLog.d(TAG, "onStop: Auto-saving layout draft...")
+            Timber.d("onStop: Auto-saving layout draft...")
             viewModel.saveLayout()
         }
     }
@@ -225,7 +224,7 @@ class ControlEditorActivity : AppCompatActivity() {
     override fun onDestroy() {
         // 在非配置变化的销毁情况下保存数据
         if (!isChangingConfigurations && viewModel.hasUnsavedChanges.value) {
-            AppLog.d(TAG, "onDestroy: Saving layout before destruction...")
+            Timber.d("onDestroy: Saving layout before destruction...")
             viewModel.saveLayout()
         }
         super.onDestroy()

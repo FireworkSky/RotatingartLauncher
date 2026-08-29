@@ -5,7 +5,7 @@ import android.os.Environment
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.app.ralaunch.R
-import com.app.ralaunch.core.logging.AppLog
+import timber.log.Timber
 import com.app.ralaunch.feature.gog.data.GogDownloader
 import com.app.ralaunch.feature.gog.data.api.GogAuthClient
 import com.app.ralaunch.feature.gog.data.api.GogWebsiteApi
@@ -97,7 +97,7 @@ class GogViewModel(
                     _effect.emit(GogUiEffect.ShowToast(appContext.getString(R.string.gog_login_failed)))
                 }
             } catch (e: Exception) {
-                AppLog.e(TAG, "WebView 登录异常", e)
+                Timber.e(e, "WebView 登录异常")
                 showError(appContext.getString(R.string.gog_login_error, e.message ?: ""))
             }
         }
@@ -177,7 +177,7 @@ class GogViewModel(
                     )
                 }
             } catch (e: Exception) {
-                AppLog.e(TAG, "获取游戏详情失败", e)
+                Timber.e(e, "获取游戏详情失败")
                 updateGogState { it.copy(isLoading = false) }
                 _effect.emit(GogUiEffect.ShowToast(appContext.getString(R.string.gog_get_details_failed)))
             }
@@ -253,7 +253,7 @@ class GogViewModel(
                 )
 
                 downloadedGamePath = gameTargetFile.absolutePath
-                AppLog.i(TAG, "游戏下载完成: $downloadedGamePath")
+                Timber.i("游戏下载完成: $downloadedGamePath")
 
                 if (selectedModLoaderVersion != null && selectedModLoaderVersion.url.isNotEmpty()) {
                     val modLoaderFileName = selectedModLoaderVersion.fileName
@@ -289,7 +289,7 @@ class GogViewModel(
                     }
 
                     downloadedModLoaderPath = modLoaderTargetFile.absolutePath
-                    AppLog.i(TAG, "ModLoader 下载完成: $downloadedModLoaderPath")
+                    Timber.i("ModLoader 下载完成: $downloadedModLoaderPath")
                 }
 
                 _uiState.update {
@@ -301,7 +301,7 @@ class GogViewModel(
                 }
                 _effect.emit(GogUiEffect.ShowToast(appContext.getString(R.string.gog_download_complete)))
             } catch (e: Exception) {
-                AppLog.e(TAG, "下载失败", e)
+                Timber.e(e, "下载失败")
                 val errorMsg = if (e.message?.contains("cancelled", ignoreCase = true) == true) {
                     appContext.getString(R.string.gog_download_cancelled)
                 } else {
@@ -387,7 +387,7 @@ class GogViewModel(
                     )
                 )
             } catch (e: Exception) {
-                AppLog.e(TAG, "加载数据失败", e)
+                Timber.e(e, "加载数据失败")
                 showError(appContext.getString(R.string.gog_load_games_failed, e.message ?: ""))
             }
         }
@@ -460,6 +460,5 @@ class GogViewModel(
     }
 
     companion object {
-        private const val TAG = "GogViewModel"
     }
 }

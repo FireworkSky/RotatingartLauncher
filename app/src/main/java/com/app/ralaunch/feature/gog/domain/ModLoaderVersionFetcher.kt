@@ -1,7 +1,7 @@
 package com.app.ralaunch.feature.gog.domain
 
 import com.app.ralaunch.feature.gog.domain.ModLoaderConfigManager.ModLoaderVersion
-import com.app.ralaunch.core.logging.AppLog
+import timber.log.Timber
 import org.json.JSONArray
 import java.io.BufferedReader
 import java.io.InputStreamReader
@@ -15,7 +15,6 @@ import java.nio.charset.StandardCharsets
  */
 object ModLoaderVersionFetcher {
 
-    private const val TAG = "ModLoaderVersionFetcher"
     private const val GITHUB_API = "https://api.github.com/repos"
     private const val MAX_STABLE_VERSIONS = 5  // 返回的稳定版本数
     private const val FETCH_COUNT = 30  // 从 API 获取的版本数（用于筛选稳定版）
@@ -89,7 +88,7 @@ object ModLoaderVersionFetcher {
         @Suppress("UNUSED_PARAMETER") includePrerelease: Boolean = false
     ): List<ModLoaderVersion> {
         val repo = ModLoaderRepo.fromModLoaderName(modLoaderName) ?: run {
-            AppLog.w(TAG, "未知的 ModLoader: $modLoaderName")
+            Timber.w("未知的 ModLoader: $modLoaderName")
             return emptyList()
         }
 
@@ -121,7 +120,7 @@ object ModLoaderVersionFetcher {
                     }
                 }
         } catch (e: Exception) {
-            AppLog.e(TAG, "获取 $modLoaderName 版本失败", e)
+            Timber.e(e, "获取 $modLoaderName 版本失败")
             emptyList()
         }
     }
@@ -141,7 +140,7 @@ object ModLoaderVersionFetcher {
             conn.readTimeout = 15000
 
             if (conn.responseCode != 200) {
-                AppLog.w(TAG, "GitHub API 返回 ${conn.responseCode}")
+                Timber.w("GitHub API 返回 ${conn.responseCode}")
                 return emptyList()
             }
 

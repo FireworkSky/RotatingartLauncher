@@ -6,7 +6,7 @@ import android.content.ComponentCallbacks
 import android.content.Context
 import android.content.res.Configuration
 import android.util.DisplayMetrics
-import com.app.ralaunch.core.logging.AppLog
+import timber.log.Timber
 import kotlin.math.max
 import kotlin.math.min
 
@@ -14,7 +14,6 @@ import kotlin.math.min
  * 屏幕适配工具类
  */
 object DensityAdapter {
-    private const val TAG = "DensityAdapter"
 
     private const val BASE_WIDTH = 2560f
     private const val BASE_HEIGHT = 1080f
@@ -52,7 +51,7 @@ object DensityAdapter {
                 override fun onConfigurationChanged(newConfig: Configuration) {
                     if (newConfig.fontScale > 0) {
                         appScaledDensity = application.resources.displayMetrics.scaledDensity
-                        AppLog.d(TAG, "系统字体大小变化，更新 scaledDensity: $appScaledDensity")
+                        Timber.d("系统字体大小变化，更新 scaledDensity: $appScaledDensity")
                     }
                 }
 
@@ -83,7 +82,7 @@ object DensityAdapter {
 
     @JvmStatic
     fun cancelAdapt(activity: Activity) {
-        AppLog.d(TAG, "取消适配: ${activity.javaClass.simpleName}（本方案无需取消）")
+        Timber.d("取消适配: ${activity.javaClass.simpleName}（本方案无需取消）")
     }
 
     @JvmStatic

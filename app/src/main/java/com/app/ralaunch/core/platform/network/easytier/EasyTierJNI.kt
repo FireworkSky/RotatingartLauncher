@@ -1,6 +1,6 @@
 package com.app.ralaunch.core.platform.network.easytier
 
-import com.app.ralaunch.core.logging.AppLog
+import timber.log.Timber
 
 /**
  * EasyTier JNI 包装类
@@ -8,7 +8,6 @@ import com.app.ralaunch.core.logging.AppLog
  */
 object EasyTierJNI {
     
-    private const val TAG = "EasyTierJNI"
     
     private var isLoaded = false
     private var loadError: String? = null
@@ -18,15 +17,15 @@ object EasyTierJNI {
             // 触发原生 JNI 类的加载
             com.easytier.jni.EasyTierJNI.getLastError()
             isLoaded = true
-            AppLog.i(TAG, "EasyTier native library loaded successfully")
+            Timber.i("EasyTier native library loaded successfully")
         } catch (e: UnsatisfiedLinkError) {
             isLoaded = false
             loadError = e.message
-            AppLog.w(TAG, "EasyTier native library not found: ${e.message}")
+            Timber.w("EasyTier native library not found: ${e.message}")
         } catch (e: Exception) {
             isLoaded = false
             loadError = e.message
-            AppLog.w(TAG, "EasyTier native library load error: ${e.message}")
+            Timber.w("EasyTier native library load error: ${e.message}")
         }
     }
     

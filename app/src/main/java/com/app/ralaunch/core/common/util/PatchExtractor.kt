@@ -2,7 +2,7 @@ package com.app.ralaunch.core.common.util
 
 import android.content.Context
 import com.app.ralaunch.core.di.contract.IGameRepositoryServiceV3
-import com.app.ralaunch.core.logging.AppLog
+import timber.log.Timber
 import com.app.ralaunch.core.platform.runtime.AssemblyPatcher
 import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream
 import org.koin.java.KoinJavaComponent
@@ -15,7 +15,6 @@ import java.io.FileOutputStream
  * 补丁提取工具
  */
 object PatchExtractor {
-    private const val TAG = "PatchExtractor"
     private const val PREFS_NAME = "patch_extractor_prefs"
     private const val KEY_MONOMOD_EXTRACTED = "monomod_extracted"
 
@@ -37,7 +36,7 @@ object PatchExtractor {
                 extractAndApplyMonoMod(context)
                 prefs.edit().putBoolean(KEY_MONOMOD_EXTRACTED, true).apply()
             } catch (e: Exception) {
-                AppLog.e(TAG, "提取失败", e)
+                Timber.e(e, "提取失败")
             }
         }.start()
     }
@@ -94,7 +93,7 @@ object PatchExtractor {
                 AssemblyPatcher.applyMonoModPatches(context, gameDir, false)
             }
         } catch (e: Exception) {
-            AppLog.e(TAG, "应用 MonoMod 补丁失败", e)
+            Timber.e(e, "应用 MonoMod 补丁失败")
         }
     }
 

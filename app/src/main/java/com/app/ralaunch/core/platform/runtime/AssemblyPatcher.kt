@@ -1,7 +1,7 @@
 package com.app.ralaunch.core.platform.runtime
 
 import android.content.Context
-import com.app.ralaunch.core.logging.AppLog
+import timber.log.Timber
 import com.app.ralaunch.core.extractor.ArchiveExtractor
 import com.app.ralaunch.core.common.util.TemporaryFileAcquirer
 import org.koin.java.KoinJavaComponent
@@ -16,7 +16,6 @@ import java.nio.file.StandardCopyOption
  * 程序集补丁工具
  */
 object AssemblyPatcher {
-    private const val TAG = "AssemblyPatcher"
     const val MONOMOD_DIR = "monomod"
     private const val ASSETS_MONOMOD_ZIP = "MonoMod.zip"
 
@@ -30,7 +29,7 @@ object AssemblyPatcher {
     @JvmStatic
     fun extractMonoMod(context: Context): Boolean {
         val targetDir = getMonoModInstallPath()
-        AppLog.i(TAG, "正在解压 MonoMod 到 $targetDir")
+        Timber.i("正在解压 MonoMod 到 $targetDir")
 
         return try {
             TemporaryFileAcquirer().use { tfa ->
@@ -47,11 +46,11 @@ object AssemblyPatcher {
                     .callback { event ->
                         when (event) {
                             is ArchiveExtractor.Event.Progress -> {
-                                AppLog.d(TAG, "解压中: ${event.message} (${(event.progress * 100).toInt()}%)")
+                                Timber.d("解压中: ${event.message} (${(event.progress * 100).toInt()}%)")
                             }
-                            is ArchiveExtractor.Event.Complete -> AppLog.i(TAG, "MonoMod 解压完成")
+                            is ArchiveExtractor.Event.Complete -> Timber.i("MonoMod 解压完成")
                             is ArchiveExtractor.Event.Error -> {
-                                AppLog.e(TAG, "解压错误: ${event.message}", event.cause)
+                                Timber.e(event.cause, "解压错误: ${event.message}")
                             }
                         }
                     }
@@ -62,11 +61,11 @@ object AssemblyPatcher {
                     is ArchiveExtractor.Result.Failure -> return false
                 }
 
-                AppLog.i(TAG, "MonoMod 已解压到 $targetDir")
+                Timber.i("MonoMod 已解压到 $targetDir")
                 true
             }
         } catch (e: Exception) {
-            AppLog.e(TAG, "解压 MonoMod 失败", e)
+            Timber.e(e, "解压 MonoMod 失败")
             false
         }
     }
@@ -81,7 +80,7 @@ object AssemblyPatcher {
         return try {
             val patchAssemblies = loadPatchArchive(context)
             if (patchAssemblies.isEmpty()) {
-                if (verboseLog) AppLog.w(TAG, "MonoMod 目录为空或不存在")
+                if (verboseLog) Timber.w("MonoMod 目录为空或不存在")
                 return 0
             }
 
@@ -93,16 +92,16 @@ object AssemblyPatcher {
                 val assemblyName = assemblyFile.name
                 patchAssemblies[assemblyName]?.let { data ->
                     if (replaceAssembly(assemblyFile, data)) {
-                        if (verboseLog) AppLog.d(TAG, "已替换: $assemblyName")
+                        if (verboseLog) Timber.d("已替换: $assemblyName")
                         patchedCount++
                     }
                 }
             }
 
-            if (verboseLog) AppLog.i(TAG, "已应用 MonoMod 补丁，替换了 $patchedCount 个文件")
+            if (verboseLog) Timber.i("已应用 MonoMod 补丁，替换了 $patchedCount 个文件")
             patchedCount
         } catch (e: Exception) {
-            AppLog.e(TAG, "应用补丁失败", e)
+            Timber.e(e, "应用补丁失败")
             -1
         }
     }
@@ -114,23 +113,23 @@ object AssemblyPatcher {
             val monoModDir = monoModPath.toFile()
 
             if (!monoModDir.exists() || !monoModDir.isDirectory) {
-                AppLog.w(TAG, "MonoMod 目录不存在: $monoModPath")
+                Timber.w("MonoMod 目录不存在: $monoModPath")
                 return assemblies
             }
 
             val dllFiles = findDllFiles(monoModDir)
-            AppLog.d(TAG, "从 $monoModPath 找到 ${dllFiles.size} 个 DLL 文件")
+            Timber.d("从 $monoModPath 找到 ${dllFiles.size} 个 DLL 文件")
 
             for (dllFile in dllFiles) {
                 try {
                     val assemblyData = Files.readAllBytes(dllFile.toPath())
                     assemblies[dllFile.name] = assemblyData
                 } catch (e: Exception) {
-                    AppLog.w(TAG, "读取 DLL 失败: ${dllFile.name}", e)
+                    Timber.w(e, "读取 DLL 失败: ${dllFile.name}")
                 }
             }
         } catch (e: Exception) {
-            AppLog.e(TAG, "加载 MonoMod 补丁失败", e)
+            Timber.e(e, "加载 MonoMod 补丁失败")
         }
         return assemblies
     }
@@ -166,7 +165,7 @@ object AssemblyPatcher {
             FileOutputStream(targetFile).use { it.write(assemblyData) }
             true
         } catch (e: Exception) {
-            AppLog.e(TAG, "替换失败: ${targetFile.name}", e)
+            Timber.e(e, "替换失败: ${targetFile.name}")
             false
         }
     }

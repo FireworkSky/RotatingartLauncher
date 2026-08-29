@@ -2,7 +2,7 @@ package com.app.ralaunch.feature.announcement
 
 import android.content.Context
 import com.app.ralaunch.utils.JsonHttpRepositoryClient
-import com.app.ralaunch.core.logging.AppLog
+import timber.log.Timber
 import com.app.ralaunch.core.common.util.LocaleManager
 import com.app.ralaunch.core.common.util.LocaleHelper
 import kotlinx.coroutines.Dispatchers
@@ -20,7 +20,6 @@ import java.util.Locale
  */
 class AnnouncementRepositoryService(private val context: Context) {
     companion object {
-        private const val TAG = "AnnouncementRepoService"
 
         const val REPO_URL_GITHUB = "https://raw.githubusercontent.com/RotatingArtDev/RAL-Announcements/main"
         const val REPO_URL_GITEE = "https://gitee.com/daohei/RAL-Announcements/raw/main"
@@ -61,7 +60,7 @@ class AnnouncementRepositoryService(private val context: Context) {
 
             var result = tryFetchIndexFrom(primaryUrl)
             if (result.isFailure) {
-                AppLog.i(TAG, "Primary source failed, trying fallback: $fallbackUrl")
+                Timber.i("Primary source failed, trying fallback: $fallbackUrl")
                 result = tryFetchIndexFrom(fallbackUrl)
             }
 
@@ -70,11 +69,11 @@ class AnnouncementRepositoryService(private val context: Context) {
                 resolvedAnnouncements = payload.resolvedById
                 cacheTimestamp = System.currentTimeMillis()
                 pruneMarkdownCache(payload.announcements)
-                AppLog.i(TAG, "Fetched announcements: ${payload.announcements.size}")
+                Timber.i("Fetched announcements: ${payload.announcements.size}")
             }
 
             result.exceptionOrNull()?.let { error ->
-                AppLog.e(TAG, "Failed to fetch announcements", error)
+                Timber.e(error, "Failed to fetch announcements")
             }
 
             result.map { it.announcements }
@@ -133,7 +132,7 @@ class AnnouncementRepositoryService(private val context: Context) {
             }
 
             val error = lastError ?: IllegalStateException("Failed to fetch README for $announcementId")
-            AppLog.e(TAG, "Failed to fetch markdown: $announcementId", error)
+            Timber.e(error, "Failed to fetch markdown: $announcementId")
             Result.failure(error)
         }
     }
@@ -250,7 +249,7 @@ class AnnouncementRepositoryService(private val context: Context) {
         resolvedAnnouncements[announcementId]?.let { return it }
         val refreshResult = fetchAnnouncements(forceRefresh = true)
         if (refreshResult.isFailure) {
-            AppLog.w(TAG, "Failed to refresh announcements before markdown fetch")
+            Timber.w("Failed to refresh announcements before markdown fetch")
         }
         return resolvedAnnouncements[announcementId]
     }

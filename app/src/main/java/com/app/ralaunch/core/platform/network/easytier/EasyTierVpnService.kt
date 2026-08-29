@@ -8,7 +8,7 @@ import android.content.Intent
 import android.net.VpnService
 import android.os.Build
 import android.os.ParcelFileDescriptor
-import com.app.ralaunch.core.logging.AppLog
+import timber.log.Timber
 import androidx.core.app.NotificationCompat
 import com.app.ralaunch.R
 import com.easytier.jni.EasyTierJNI
@@ -22,7 +22,6 @@ import java.io.IOException
 class EasyTierVpnService : VpnService() {
 
     companion object {
-        private const val TAG = "EasyTierVpnService"
         private const val CHANNEL_ID = "easytier_vpn_channel"
         private const val NOTIFICATION_ID = 2001
         
@@ -78,7 +77,7 @@ class EasyTierVpnService : VpnService() {
                 if (config != null && instanceName != null) {
                     startVpn(config, virtualIp)
                 } else {
-                    AppLog.e(TAG, "Missing config or instance name")
+                    Timber.e("Missing config or instance name")
                     stopSelf()
                 }
             }
@@ -111,7 +110,7 @@ class EasyTierVpnService : VpnService() {
             vpnInterface = builder.establish()
             
             if (vpnInterface == null) {
-                AppLog.e(TAG, "Failed to establish VPN interface")
+                Timber.e("Failed to establish VPN interface")
                 sendErrorBroadcast(getString(R.string.easytier_vpn_error_create_interface))
                 stopSelf()
                 return
@@ -119,7 +118,7 @@ class EasyTierVpnService : VpnService() {
             
             tunFd = vpnInterface!!.fd
             isRunning = true
-            AppLog.i(TAG, "TUN interface established, fd=$tunFd")
+            Timber.i("TUN interface established, fd=$tunFd")
             
             updateNotification(getString(R.string.easytier_vpn_status_ready))
             
@@ -127,7 +126,7 @@ class EasyTierVpnService : VpnService() {
             sendReadyBroadcast(tunFd)
             
         } catch (e: Exception) {
-            AppLog.e(TAG, "Failed to init TUN interface", e)
+            Timber.e(e, "Failed to init TUN interface")
             sendErrorBroadcast(e.message ?: getString(R.string.common_unknown_error))
             stopSelf()
         }
@@ -142,7 +141,7 @@ class EasyTierVpnService : VpnService() {
             putExtra(EXTRA_TUN_FD, fd)
         }
         sendBroadcast(intent)
-        AppLog.d(TAG, "VPN ready broadcast sent, fd=$fd")
+        Timber.d("VPN ready broadcast sent, fd=$fd")
     }
     
     /**
@@ -154,7 +153,7 @@ class EasyTierVpnService : VpnService() {
             putExtra(EXTRA_ERROR_MESSAGE, error)
         }
         sendBroadcast(intent)
-        AppLog.d(TAG, "VPN error broadcast sent: $error")
+        Timber.d("VPN error broadcast sent: $error")
     }
     
     override fun onDestroy() {
@@ -184,13 +183,13 @@ class EasyTierVpnService : VpnService() {
             vpnInterface = builder.establish()
             
             if (vpnInterface == null) {
-                AppLog.e(TAG, "Failed to establish VPN interface")
+                Timber.e("Failed to establish VPN interface")
                 stopSelf()
                 return
             }
             
             val fd = vpnInterface!!.fd
-            AppLog.i(TAG, "VPN interface established, fd=$fd")
+            Timber.i("VPN interface established, fd=$fd")
             
             // 启动 EasyTier
             scope.launch {
@@ -199,7 +198,7 @@ class EasyTierVpnService : VpnService() {
                     val result = EasyTierJNI.runNetworkInstance(config)
                     if (result != 0) {
                         val error = EasyTierJNI.getLastError()
-                        AppLog.e(TAG, "Failed to run network instance: $error")
+                        Timber.e("Failed to run network instance: $error")
                         withContext(Dispatchers.Main) {
                             updateNotification(
                                 getString(R.string.easytier_vpn_status_connect_failed, error)
@@ -212,7 +211,7 @@ class EasyTierVpnService : VpnService() {
                     val fdResult = EasyTierJNI.setTunFd(instanceName!!, fd)
                     if (fdResult != 0) {
                         val error = EasyTierJNI.getLastError()
-                        AppLog.e(TAG, "Failed to set TUN fd: $error")
+                        Timber.e("Failed to set TUN fd: $error")
                         withContext(Dispatchers.Main) {
                             updateNotification(
                                 getString(R.string.easytier_vpn_status_tun_set_failed, error)
@@ -222,7 +221,7 @@ class EasyTierVpnService : VpnService() {
                     }
                     
                     isRunning = true
-                    AppLog.i(TAG, "EasyTier VPN started successfully")
+                    Timber.i("EasyTier VPN started successfully")
                     
                     withContext(Dispatchers.Main) {
                         updateNotification(
@@ -230,7 +229,7 @@ class EasyTierVpnService : VpnService() {
                         )
                     }
                 } catch (e: Exception) {
-                    AppLog.e(TAG, "Error starting EasyTier", e)
+                    Timber.e(e, "Error starting EasyTier")
                     withContext(Dispatchers.Main) {
                         updateNotification(
                             getString(
@@ -243,7 +242,7 @@ class EasyTierVpnService : VpnService() {
             }
             
         } catch (e: Exception) {
-            AppLog.e(TAG, "Failed to start VPN", e)
+            Timber.e(e, "Failed to start VPN")
             stopSelf()
         }
     }
@@ -257,7 +256,7 @@ class EasyTierVpnService : VpnService() {
             try {
                 EasyTierJNI.stopAllInstances()
             } catch (e: Exception) {
-                AppLog.e(TAG, "Error stopping EasyTier", e)
+                Timber.e(e, "Error stopping EasyTier")
             }
         }
         
@@ -266,13 +265,13 @@ class EasyTierVpnService : VpnService() {
             try {
                 it.close()
             } catch (e: IOException) {
-                AppLog.e(TAG, "Error closing VPN interface", e)
+                Timber.e(e, "Error closing VPN interface")
             }
         }
         vpnInterface = null
         instanceName = null
         
-        AppLog.i(TAG, "VPN stopped")
+        Timber.i("VPN stopped")
     }
     
     private fun createNotificationChannel() {

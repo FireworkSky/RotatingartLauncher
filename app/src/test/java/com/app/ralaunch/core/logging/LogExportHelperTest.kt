@@ -1,18 +1,15 @@
 package com.app.ralaunch.core.logging
 
 import com.app.ralaunch.core.di.contract.IGameRepositoryServiceV3
-import com.app.ralaunch.core.logging.contract.Logger
 import com.app.ralaunch.core.logging.service.LogExportHelper
 import com.app.ralaunch.core.model.GameItem
 import com.app.ralaunch.feature.patch.data.PatchManager
 import com.app.ralaunch.feature.patch.data.PatchManagerConfig
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
-import org.junit.Before
 import org.junit.Test
 import java.io.File
 import java.nio.file.Files
@@ -20,16 +17,6 @@ import java.nio.file.Path
 import java.nio.file.Paths
 
 class LogExportHelperTest {
-
-    @Before
-    fun setUp() {
-        AppLog.install(NoOpLogger)
-    }
-
-    @After
-    fun tearDown() {
-        AppLog.reset()
-    }
 
     @Test
     fun managedFilesListAppLogsThenLogcatOldestFirstWithinGroups() = withTempLogDir { dir ->
@@ -287,16 +274,4 @@ class LogExportHelperTest {
         }
     }
 
-    private object NoOpLogger : Logger {
-        override fun v(tag: String, message: String): Int = 0
-        override fun v(tag: String, message: String, throwable: Throwable?): Int = 0
-        override fun d(tag: String, message: String): Int = 0
-        override fun d(tag: String, message: String, throwable: Throwable?): Int = 0
-        override fun i(tag: String, message: String): Int = 0
-        override fun i(tag: String, message: String, throwable: Throwable?): Int = 0
-        override fun w(tag: String, message: String): Int = 0
-        override fun w(tag: String, message: String, throwable: Throwable?): Int = 0
-        override fun e(tag: String, message: String): Int = 0
-        override fun e(tag: String, message: String, throwable: Throwable?): Int = 0
-    }
 }

@@ -3,7 +3,7 @@ package com.app.ralaunch.feature.gog.data.api
 import com.app.ralaunch.R
 import com.app.ralaunch.feature.gog.data.GogConstants
 import com.app.ralaunch.feature.gog.data.model.*
-import com.app.ralaunch.core.logging.AppLog
+import timber.log.Timber
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.*
@@ -57,7 +57,7 @@ class GogWebsiteApi(private val authClient: GogAuthClient) {
                 }
             }
         } catch (e: org.json.JSONException) {
-            AppLog.e(TAG, "解析用户头像失败", e)
+            Timber.e(e, "解析用户头像失败")
         }
 
         return GogUserInfo(username, email, avatarUrl, userId)
@@ -101,14 +101,14 @@ class GogWebsiteApi(private val authClient: GogAuthClient) {
                     page++
                 } else break
             } catch (e: Exception) {
-                AppLog.e(TAG, "获取游戏列表失败", e)
+                Timber.e(e, "获取游戏列表失败")
                 break
             } finally {
                 conn.disconnect()
             }
         }
 
-        AppLog.i(TAG, "获取到 ${games.size} 个游戏")
+        Timber.i("获取到 ${games.size} 个游戏")
         return games
     }
 
@@ -152,7 +152,7 @@ class GogWebsiteApi(private val authClient: GogAuthClient) {
                 }
             }
         } catch (e: org.json.JSONException) {
-            AppLog.e(TAG, "解析游戏图标失败", e)
+            Timber.e(e, "解析游戏图标失败")
         }
 
         val changelog = json.optString("changelog", "")
@@ -174,7 +174,7 @@ class GogWebsiteApi(private val authClient: GogAuthClient) {
                 }
             }
         } catch (e: org.json.JSONException) {
-            AppLog.e(TAG, "解析游戏下载列表失败", e)
+            Timber.e(e, "解析游戏下载列表失败")
         }
 
         // 解析 DLC
@@ -190,7 +190,7 @@ class GogWebsiteApi(private val authClient: GogAuthClient) {
                         dlcs.add(dlcDetails)
                     }
                 } catch (e: Exception) {
-                    AppLog.e(TAG, "解析 DLC 失败", e)
+                    Timber.e(e, "解析 DLC 失败")
                 }
             }
         }
@@ -281,7 +281,7 @@ class GogWebsiteApi(private val authClient: GogAuthClient) {
                                 path = galaxyApi.getPathFromDownlinkUrl(downlinkUrl, gamename)
                             }
                         } catch (e: Exception) {
-                            AppLog.w(TAG, "解析 downlink 失败: ${e.message}")
+                            Timber.w("解析 downlink 失败: ${e.message}")
                         }
                     }
 
@@ -302,7 +302,7 @@ class GogWebsiteApi(private val authClient: GogAuthClient) {
                     ))
                 }
             } catch (e: Exception) {
-                AppLog.e(TAG, "解析游戏文件失败", e)
+                Timber.e(e, "解析游戏文件失败")
             }
         }
         return files
@@ -330,12 +330,12 @@ class GogWebsiteApi(private val authClient: GogAuthClient) {
                 val response = readResponse(inputStream)
                 return if (response.isEmpty()) JSONObject() else JSONObject(response)
             } else {
-                AppLog.w(TAG, "API请求失败，响应码: ${conn.responseCode}")
+                Timber.w("API请求失败，响应码: ${conn.responseCode}")
                 return JSONObject()
             }
         } catch (e: Exception) {
             if (e is IOException) throw e
-            AppLog.e(TAG, "获取JSON响应失败: $urlString", e)
+            Timber.e(e, "获取JSON响应失败: $urlString")
             return JSONObject()
         } finally {
             conn.disconnect()
@@ -351,6 +351,5 @@ class GogWebsiteApi(private val authClient: GogAuthClient) {
     }
 
     companion object {
-        private const val TAG = "GogWebsiteApi"
     }
 }

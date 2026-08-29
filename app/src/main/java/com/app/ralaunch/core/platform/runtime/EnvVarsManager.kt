@@ -1,17 +1,16 @@
 package com.app.ralaunch.core.platform.runtime
 
 import android.system.Os
-import com.app.ralaunch.core.logging.AppLog
+import timber.log.Timber
 
 object EnvVarsManager {
-    const val TAG = "EnvVarsManager"
     private val INTERPOLATION_PATTERN = Regex("\\{([A-Za-z0-9_\\-]+)\\}")
 
     fun getEnvVar(key: String): String? {
         return try {
             Os.getenv(key)
         } catch (e: Exception) {
-            AppLog.e(TAG, "Failed to get env var $key: ${e.message}")
+            Timber.e("Failed to get env var $key: ${e.message}")
             null
         }
     }
@@ -23,13 +22,13 @@ object EnvVarsManager {
             try {
                 if (value != null) {
                     Os.setenv(key, value, true)
-                    AppLog.d(TAG, "Set env var $key=$value")
+                    Timber.d("Set env var $key=$value")
                 } else {
                     Os.unsetenv(key)
-                    AppLog.d(TAG, "Set env var $key=(null)")
+                    Timber.d("Set env var $key=(null)")
                 }
             } catch (e: Exception) {
-                AppLog.e(TAG, "Failed to set env var $key: ${e.message}")
+                Timber.e("Failed to set env var $key: ${e.message}")
             }
         }
     }
@@ -38,13 +37,13 @@ object EnvVarsManager {
         try {
             if (value != null) {
                 Os.setenv(key, value, true)
-                AppLog.d(TAG, "Set env var $key=$value")
+                Timber.d("Set env var $key=$value")
             } else {
                 Os.unsetenv(key)
-                AppLog.d(TAG, "Set env var $key=(null)")
+                Timber.d("Set env var $key=(null)")
             }
         } catch (e: Exception) {
-            AppLog.e(TAG, "Failed to set env var $key: ${e.message}")
+            Timber.e("Failed to set env var $key: ${e.message}")
         }
     }
 

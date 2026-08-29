@@ -11,8 +11,8 @@ import java.io.FileWriter
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
-import com.app.ralaunch.BuildConfig
 import com.app.ralaunch.ConfigurationState
+import com.app.ralaunch.core.logging.LogFilePolicy
 import kotlin.time.Duration.Companion.milliseconds
 
 /*******************************************************************************
@@ -49,7 +49,6 @@ object AppLogger {
     private val MAX_FILE_SIZE_BYTES = ConfigurationState.logFileMaxSize // 10MB
     private val MAX_LOG_FILES = ConfigurationState.logFileMaxCount
     private const val LOG_EXTENSION = ".log"
-    private const val DATE_FORMAT = "yyyy-MM-dd"
     private const val TIME_FORMAT = "yyyy-MM-dd HH:mm:ss.SSS"
     private const val DEFAULT_TAG = "RaLaunchApp"
 
@@ -121,6 +120,14 @@ object AppLogger {
     }
 
     /**
+     * 运行时更新日志配置（供未来设置系统接入，当前初始值来自 ConfigurationState）
+     */
+    fun updateLoggingConfig(logLevel: LogLevel? = null, fileEnabled: Boolean? = null) {
+        logLevel?.let { currentLogLevel = it }
+        fileEnabled?.let { fileLogEnabled = it }
+    }
+
+    /**
      * 检查是否应该输出该级别的日志
      */
     private fun shouldLog(priority: Int): Boolean {
@@ -159,15 +166,14 @@ object AppLogger {
      */
     private fun getCurrentLogFile(): File? {
         val dir = logDir ?: return null
-        val dateStr = SimpleDateFormat(DATE_FORMAT, Locale.getDefault()).format(Date())
-        val fileName = "$dateStr$LOG_EXTENSION"
+        // 文件名遵循 LogFilePolicy，保证 LogExportHelper / 日志查看器能识别
+        val fileName = LogFilePolicy.appLogFileName()
         val file = File(dir, fileName)
 
         // 如果文件超过大小限制，创建新文件
         if (file.exists() && file.length() >= MAX_FILE_SIZE_BYTES) {
             val timestamp = SimpleDateFormat("HH-mm-ss", Locale.getDefault()).format(Date())
-            val newFileName = "${dateStr}_$timestamp$LOG_EXTENSION"
-            return File(dir, newFileName)
+            return File(dir, fileName.removeSuffix(LOG_EXTENSION) + "_$timestamp$LOG_EXTENSION")
         }
 
         return file
@@ -222,6 +228,7 @@ object AppLogger {
      */
     private fun formatLogMessage(
         priority: Int,
+        tag: String,
         message: String,
         throwable: Throwable?
     ): String {
@@ -240,7 +247,7 @@ object AppLogger {
         } else {
             message
         }
-        return "$timestamp $priorityStr/$DEFAULT_TAG: $msg"
+        return "$timestamp $priorityStr/$tag: $msg"
     }
 
     /**
@@ -252,15 +259,16 @@ object AppLogger {
             // 检查是否达到输出级别
             if (!shouldLog(priority)) return
 
-            // 统一使用 DEFAULT_TAG
+            // 使用 Timber 自动生成的调用类名 tag
+            val logTag = tag ?: DEFAULT_TAG
             when (priority) {
-                Log.VERBOSE -> Log.v(DEFAULT_TAG, message)
-                Log.DEBUG -> Log.d(DEFAULT_TAG, message)
-                Log.INFO -> Log.i(DEFAULT_TAG, message)
-                Log.WARN -> Log.w(DEFAULT_TAG, message)
-                Log.ERROR -> Log.e(DEFAULT_TAG, message, t)
-                Log.ASSERT -> Log.wtf(DEFAULT_TAG, message, t)
-                else -> Log.println(priority, DEFAULT_TAG, message)
+                Log.VERBOSE -> Log.v(logTag, message, t)
+                Log.DEBUG -> Log.d(logTag, message, t)
+                Log.INFO -> Log.i(logTag, message, t)
+                Log.WARN -> Log.w(logTag, message, t)
+                Log.ERROR -> Log.e(logTag, message, t)
+                Log.ASSERT -> Log.wtf(logTag, message, t)
+                else -> Log.println(priority, logTag, message)
             }
         }
     }
@@ -273,7 +281,7 @@ object AppLogger {
             // 检查是否达到输出级别
             if (!shouldLog(priority)) return
 
-            val formatted = formatLogMessage(priority, message, t)
+            val formatted = formatLogMessage(priority, tag ?: DEFAULT_TAG, message, t)
             writeLogToFile(formatted)
         }
     }

@@ -2,7 +2,7 @@ package com.app.ralaunch.feature.controls.bridges
 
 import android.os.Handler
 import android.os.Looper
-import com.app.ralaunch.core.logging.AppLog
+import timber.log.Timber
 import android.view.KeyEvent
 import android.view.MotionEvent
 import com.app.ralaunch.feature.controls.ControlData
@@ -139,7 +139,7 @@ class SDLInputBridge : ControlInputBridge {
             231 -> return KeyEvent.KEYCODE_META_RIGHT // 118
 
             else -> {
-                AppLog.w(TAG, "Unknown scancode: " + scancode + ", passing through")
+                Timber.w("Unknown scancode: " + scancode + ", passing through")
                 return scancode // 未知的直接传递
             }
         }
@@ -151,9 +151,6 @@ class SDLInputBridge : ControlInputBridge {
             val keycode = scancodeToKeycode(scancode.code)
 
 
-//            AppLog.d(TAG, "sendKey: scancode=" + scancode + " -> keycode=" + keycode +
-//                  ", isDown=" + isDown + ", calling SDLActivity.onNativeKey" + (isDown ? "Down" : "Up"));
-
             // 确保在主线程上调用SDL方法（SDL的native方法需要在主线程调用）
             val mainHandler = Handler(Looper.getMainLooper())
             val finalKeycode = keycode
@@ -164,17 +161,17 @@ class SDLInputBridge : ControlInputBridge {
                     // 调用SDLActivity的静态native方法
                     if (finalIsDown) {
                         SDLActivity.onNativeKeyDown(finalKeycode)
-                        //                        AppLog.d(TAG, "SDLActivity.onNativeKeyDown(" + finalKeycode + ") called successfully");
+                        //                        Timber.d("SDLActivity.onNativeKeyDown(" + finalKeycode + ") called successfully");
                     } else {
                         SDLActivity.onNativeKeyUp(finalKeycode)
-                        //                        AppLog.d(TAG, "SDLActivity.onNativeKeyUp(" + finalKeycode + ") called successfully");
+                        //                        Timber.d("SDLActivity.onNativeKeyUp(" + finalKeycode + ") called successfully");
                     }
                 } catch (e: Exception) {
-                    AppLog.e(TAG, "Error in SDL native key method: keycode=" + finalKeycode, e)
+                    Timber.e(e, "Error in SDL native key method: keycode=" + finalKeycode)
                 }
             })
         } catch (e: Exception) {
-            AppLog.e(TAG, "Error sending key: scancode=" + scancode, e)
+            Timber.e(e, "Error sending key: scancode=" + scancode)
         }
     }
 
@@ -199,14 +196,14 @@ class SDLInputBridge : ControlInputBridge {
                 ControlData.KeyCode.MOUSE_RIGHT -> MotionEvent.BUTTON_SECONDARY
                 ControlData.KeyCode.MOUSE_MIDDLE -> MotionEvent.BUTTON_TERTIARY
                 else -> {
-                    AppLog.w(TAG, "Unknown mouse button: $button")
+                    Timber.w("Unknown mouse button: $button")
                     return
                 }
             }
 
 
             // 添加日志查看发送的值
-//            AppLog.d(TAG, "Sending mouse button (no cursor move): button=" + button + " -> sdlButton=" + sdlButton +
+//            Timber.d("Sending mouse button (no cursor move): button=" + button + " -> sdlButton=" + sdlButton +
 //                  ", isDown=" + isDown);
 
             sdlOnNativeMouseDirect(
@@ -215,7 +212,7 @@ class SDLInputBridge : ControlInputBridge {
                 0f, 0f,
                 true)
         } catch (e: Exception) {
-            AppLog.e(TAG, "Error sending mouse button: $button", e)
+            Timber.e(e, "Error sending mouse button: $button")
         }
     }
 
@@ -224,7 +221,7 @@ class SDLInputBridge : ControlInputBridge {
             // 调用SDLActivity的静态native方法，使用绝对位置（relative = false）
             SDLActivity.onNativeMouseDirect(0, MotionEvent.ACTION_MOVE, x, y, false)
         } catch (e: Exception) {
-            AppLog.e(TAG, "Error sending mouse position", e)
+            Timber.e(e, "Error sending mouse position")
         }
     }
 
@@ -232,7 +229,7 @@ class SDLInputBridge : ControlInputBridge {
         try {
             SDLActivity.onNativeMouseDirect(0, MotionEvent.ACTION_MOVE, deltaX, deltaY, true)
         } catch (e: Exception) {
-            AppLog.e(TAG, "Error sending mouse move", e)
+            Timber.e(e, "Error sending mouse move")
         }
     }
 
@@ -240,9 +237,9 @@ class SDLInputBridge : ControlInputBridge {
         try {
             // 调用native方法发送鼠标滚轮事件
             nativeSendMouseWheelSDL(scrollY)
-            //            AppLog.d(TAG, "Sending mouse wheel: scrollY=" + scrollY);
+            //            Timber.d("Sending mouse wheel: scrollY=" + scrollY);
         } catch (e: Exception) {
-            AppLog.e(TAG, "Error sending mouse wheel", e)
+            Timber.e(e, "Error sending mouse wheel")
         }
     }
 
@@ -253,10 +250,10 @@ class SDLInputBridge : ControlInputBridge {
             if (controller != null) {
                 controller.setLeftStick(x, y)
             } else {
-                AppLog.w(TAG, "Virtual Xbox controller not available")
+                Timber.w("Virtual Xbox controller not available")
             }
         } catch (e: Exception) {
-            AppLog.e(TAG, "Error sending Xbox left stick", e)
+            Timber.e(e, "Error sending Xbox left stick")
         }
     }
 
@@ -267,10 +264,10 @@ class SDLInputBridge : ControlInputBridge {
             if (controller != null) {
                 controller.setRightStick(x, y)
             } else {
-                AppLog.w(TAG, "Virtual Xbox controller not available")
+                Timber.w("Virtual Xbox controller not available")
             }
         } catch (e: Exception) {
-            AppLog.e(TAG, "Error sending Xbox right stick", e)
+            Timber.e(e, "Error sending Xbox right stick")
         }
     }
 
@@ -279,7 +276,7 @@ class SDLInputBridge : ControlInputBridge {
             val controller =
                 SDLControllerManager.getVirtualController()
             if (controller == null) {
-                AppLog.w(TAG, "Virtual Xbox controller not available")
+                Timber.w("Virtual Xbox controller not available")
                 return
             }
 
@@ -288,10 +285,10 @@ class SDLInputBridge : ControlInputBridge {
             if (buttonIndex >= 0) {
                 controller.setButton(buttonIndex, isDown)
             } else {
-                AppLog.w(TAG, "Unknown Xbox button code: " + xboxButton)
+                Timber.w("Unknown Xbox button code: " + xboxButton)
             }
         } catch (e: Exception) {
-            AppLog.e(TAG, "Error sending Xbox button", e)
+            Timber.e(e, "Error sending Xbox button")
         }
     }
 
@@ -300,7 +297,7 @@ class SDLInputBridge : ControlInputBridge {
             val controller =
                 SDLControllerManager.getVirtualController()
             if (controller == null) {
-                AppLog.w(TAG, "Virtual Xbox controller not available")
+                Timber.w("Virtual Xbox controller not available")
                 return
             }
 
@@ -312,11 +309,11 @@ class SDLInputBridge : ControlInputBridge {
                     controller.setAxis(VirtualXboxController.AXIS_RIGHT_TRIGGER, value)
                 }
                 else -> {
-                    AppLog.w(TAG, "Unknown Xbox trigger code: " + xboxTrigger)
+                    Timber.w("Unknown Xbox trigger code: " + xboxTrigger)
                 }
             }
         } catch (e: Exception) {
-            AppLog.e(TAG, "Error sending Xbox trigger", e)
+            Timber.e(e, "Error sending Xbox trigger")
         }
     }
 
@@ -324,7 +321,7 @@ class SDLInputBridge : ControlInputBridge {
         try {
             nativeStartTextInput()
         } catch (e: Exception) {
-            AppLog.e(TAG, "Error starting text input", e)
+            Timber.e(e, "Error starting text input")
         }
     }
 
@@ -332,7 +329,7 @@ class SDLInputBridge : ControlInputBridge {
         try {
             nativeStopTextInput()
         } catch (e: Exception) {
-            AppLog.e(TAG, "Error stopping text input", e)
+            Timber.e(e, "Error stopping text input")
         }
     }
 
@@ -361,8 +358,6 @@ class SDLInputBridge : ControlInputBridge {
     }
 
     companion object {
-        private const val TAG = "SDLInputBridge"
-
         // SDL 原生方法（在 sdl_input_bridge_extend.c 中实现）
         @JvmStatic
         private external fun nativeSendMouseWheelSDL(scrollY: Float)
@@ -379,7 +374,7 @@ class SDLInputBridge : ControlInputBridge {
             try {
                 System.loadLibrary("main")
             } catch (e: UnsatisfiedLinkError) {
-                AppLog.w(TAG, "Native library not loaded yet")
+                Timber.w("Native library not loaded yet")
             }
         }
     }

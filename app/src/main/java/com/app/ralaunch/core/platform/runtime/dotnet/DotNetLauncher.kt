@@ -1,13 +1,12 @@
 package com.app.ralaunch.core.platform.runtime.dotnet
 
 import com.app.ralaunch.core.common.SettingsAccess
-import com.app.ralaunch.core.logging.AppLog
+import timber.log.Timber
 import com.app.ralaunch.core.di.contract.IRuntimeManagerServiceV2
 import com.app.ralaunch.core.platform.runtime.EnvVarsManager
 import org.koin.java.KoinJavaComponent
 
 object DotNetLauncher {
-    const val TAG = "DotNetLauncher"
     private val XIAOMI_COMPAT_ENV_KEYS = arrayOf(
         "RAL_CORECLR_XIAOMI_COMPAT",
         "DOTNET_EnableDiagnostics",
@@ -40,15 +39,15 @@ object DotNetLauncher {
             runtimeManager = runtimeManager,
             versionOverride = dotNetRuntimeVersionOverride
         ) ?: run {
-            AppLog.e(TAG, "Failed to resolve selected dotnet runtime")
+            Timber.e("Failed to resolve selected dotnet runtime")
             return -1
         }
         val dotnetRoot = dotnetRuntime.rootPath.toString()
 
         // Implementation to launch .NET assembly
-        AppLog.i(TAG, "Launching .NET assembly at $assemblyPath with arguments: ${args.joinToString(", ")}")
-        AppLog.i(TAG, "Using .NET root path: $dotnetRoot")
-        AppLog.i(TAG, "Using .NET runtime version: ${dotnetRuntime.version}")
+        Timber.i("Launching .NET assembly at $assemblyPath with arguments: ${args.joinToString(", ")}")
+        Timber.i("Using .NET root path: $dotnetRoot")
+        Timber.i("Using .NET runtime version: ${dotnetRuntime.version}")
 
         EnvVarsManager.quickSetEnvVar("DOTNET_ROOT", dotnetRoot)
         CoreCLRConfig.applyConfigAndInitHooking()
@@ -58,10 +57,7 @@ object DotNetLauncher {
         }
 
         val compatEnvSnapshot = if (compatEnabled) {
-            AppLog.w(
-                TAG,
-                "Applying Xiaomi CoreCLR compatibility env before first hostfxr initialization"
-            )
+            Timber.w("Applying Xiaomi CoreCLR compatibility env before first hostfxr initialization")
             captureXiaomiCoreClrCompatEnv()
         } else {
             null
@@ -78,13 +74,10 @@ object DotNetLauncher {
         try {
             val exitCode = nativeDotNetLauncherHostfxrLaunch(assemblyPath, args, dotnetRoot)
             if (exitCode == 0) {
-                AppLog.i(TAG, "Successfully launched .NET assembly.")
+                Timber.i("Successfully launched .NET assembly.")
             } else {
                 val errorMsg = getNativeDotNetLauncherHostfxrLastErrorMsg()
-                AppLog.e(
-                    TAG,
-                    "Failed to launch .NET assembly. Exit code: $exitCode, Error: $errorMsg"
-                )
+                Timber.e("Failed to launch .NET assembly. Exit code: $exitCode, Error: $errorMsg")
             }
             return exitCode
         } finally {
@@ -127,13 +120,10 @@ object DotNetLauncher {
                 .getInstalledRuntimes(IRuntimeManagerServiceV2.RuntimeType.DOTNET)
                 .firstOrNull { it.version == normalizedOverride }
             if (overriddenRuntime != null) {
-                AppLog.i(TAG, "Using per-game .NET runtime override: $normalizedOverride")
+                Timber.i("Using per-game .NET runtime override: $normalizedOverride")
                 return overriddenRuntime
             }
-            AppLog.w(
-                TAG,
-                "Requested .NET runtime override is not installed: $normalizedOverride, falling back to selected runtime"
-            )
+            Timber.w("Requested .NET runtime override is not installed: $normalizedOverride, falling back to selected runtime")
         }
         return runtimeManager.getSelectedRuntime(IRuntimeManagerServiceV2.RuntimeType.DOTNET)
     }

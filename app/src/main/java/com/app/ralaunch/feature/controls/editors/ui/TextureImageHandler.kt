@@ -2,7 +2,7 @@ package com.app.ralaunch.feature.controls.editors.ui
 
 import android.content.Context
 import android.net.Uri
-import com.app.ralaunch.core.logging.AppLog
+import timber.log.Timber
 import com.app.ralaunch.feature.controls.ControlData
 import com.app.ralaunch.feature.controls.packs.ControlPackManager
 import com.app.ralaunch.feature.controls.textures.TextureConfig
@@ -97,6 +97,6 @@ internal fun handleImagePicked(
             onControlUpdated(updated)
         }
     } catch (e: Exception) {
-        AppLog.e("TextureImageHandler", "Failed to apply imported texture", e)
+        Timber.e(e, "Failed to apply imported texture")
     }
 }

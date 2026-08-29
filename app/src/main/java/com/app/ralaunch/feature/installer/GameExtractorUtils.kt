@@ -3,7 +3,7 @@ package com.app.ralaunch.feature.installer
 import com.app.ralaunch.strings.StringsResource.Strings
 import com.app.ralaunch.core.extractor.ArchiveExtractor
 import com.app.ralaunch.core.extractor.GogShFileExtractor
-import com.app.ralaunch.core.logging.AppLog
+import timber.log.Timber
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -14,7 +14,6 @@ import java.nio.file.Paths
  * 封装 ralib 中现有的解压实现
  */
 object GameExtractorUtils {
-    private const val TAG = "GameExtractorUtils"
 
     /**
      * 解析 GOG .sh 文件，获取游戏信息
@@ -33,7 +32,7 @@ object GameExtractorUtils {
                 null
             }
         } catch (e: Exception) {
-            AppLog.e(TAG, "Failed to parse GOG .sh file", e)
+            Timber.e(e, "Failed to parse GOG .sh file")
             null
         }
     }
@@ -62,7 +61,7 @@ object GameExtractorUtils {
                 is GogShFileExtractor.Result.Failure -> ExtractResult.Error(result.message)
             }
         } catch (e: Exception) {
-            AppLog.e(TAG, "Failed to extract GOG .sh file", e)
+            Timber.e(e, "Failed to extract GOG .sh file")
             ExtractResult.Error(
                 e.message ?: Strings.extractor.failed
             )
@@ -99,7 +98,7 @@ object GameExtractorUtils {
                 is ArchiveExtractor.Result.Failure -> ExtractResult.Error(result.message)
             }
         } catch (e: Exception) {
-            AppLog.e(TAG, "Failed to extract ZIP file", e)
+            Timber.e(e, "Failed to extract ZIP file")
             ExtractResult.Error(
                 e.message ?: Strings.extractor.failed
             )

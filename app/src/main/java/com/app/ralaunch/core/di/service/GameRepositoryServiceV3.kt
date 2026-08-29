@@ -1,6 +1,6 @@
 package com.app.ralaunch.core.di.service
 
-import com.app.ralaunch.core.logging.AppLog
+import timber.log.Timber
 import com.app.ralaunch.core.di.contract.IGameRepositoryServiceV3
 import com.app.ralaunch.core.model.GameItem
 import com.app.ralaunch.core.model.GameList
@@ -108,7 +108,7 @@ class GameRepositoryServiceV3(
             gameDir.deleteRecursively()
             true
         } catch (e: Exception) {
-            AppLog.e(TAG, "删除游戏文件时发生错误: ${e.message}", e)
+            Timber.e(e, "删除游戏文件时发生错误: ${e.message}")
             false
         }
     }
@@ -120,7 +120,7 @@ class GameRepositoryServiceV3(
             val gameList = json.decodeFromString<GameList>(gameListPathFull.readText())
             gameList.games.mapNotNull(::loadGameInfo).also(::attachRepository)
         } catch (e: Exception) {
-            AppLog.e(TAG, "加载游戏列表失败: ${e.message}", e)
+            Timber.e(e, "加载游戏列表失败: ${e.message}")
             emptyList()
         }
     }
@@ -136,7 +136,7 @@ class GameRepositoryServiceV3(
                 it.gameRepositoryParent = this
             }
         } catch (e: Exception) {
-            AppLog.e(TAG, "加载游戏信息失败: ${e.message}", e)
+            Timber.e(e, "加载游戏信息失败: ${e.message}")
             null
         }
     }
@@ -150,7 +150,7 @@ class GameRepositoryServiceV3(
 
             games.forEach(::saveGameInfo)
         } catch (e: Exception) {
-            AppLog.e(TAG, "保存游戏列表失败: ${e.message}", e)
+            Timber.e(e, "保存游戏列表失败: ${e.message}")
         }
     }
 
@@ -162,7 +162,7 @@ class GameRepositoryServiceV3(
             storageRootPathFull.createDirectories()
             gameInfoPathFull.writeText(json.encodeToString(game))
         } catch (e: Exception) {
-            AppLog.e(TAG, "保存游戏信息失败: ${e.message}", e)
+            Timber.e(e, "保存游戏信息失败: ${e.message}")
         }
     }
 
@@ -201,6 +201,5 @@ class GameRepositoryServiceV3(
         get() = gamesDirPathFull.resolve(AppConstants.Files.GAME_LIST)
 
     private companion object {
-        const val TAG = "GameRepositoryServiceV3"
     }
 }

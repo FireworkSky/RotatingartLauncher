@@ -8,7 +8,7 @@ import com.app.ralaunch.R
 import com.app.ralaunch.RaLaunchApp
 import com.app.ralaunch.core.common.util.LocaleManager
 import com.app.ralaunch.core.error.ui.CrashReportActivity
-import com.app.ralaunch.core.logging.AppLog
+import timber.log.Timber
 import java.io.PrintWriter
 import java.io.StringWriter
 import java.lang.ref.WeakReference
@@ -20,7 +20,6 @@ import java.util.Locale
  * Crash-only process error handler.
  */
 object ErrorHandler {
-    private const val TAG = "ErrorHandler"
     private const val MAX_STACK_TRACE_SIZE = 100000
 
     @Volatile
@@ -62,7 +61,7 @@ object ErrorHandler {
                 exceptionMessage = throwable.message
             )
         } catch (e: Exception) {
-            AppLog.e(TAG, "Failed to launch crash report", e)
+            Timber.e(e, "Failed to launch crash report")
             delegateOrKill(thread, throwable)
             return
         }
@@ -117,7 +116,7 @@ object ErrorHandler {
         return runCatching {
             (LocaleManager.applyLanguage(context) ?: context).getString(resId)
         }.getOrElse {
-            AppLog.w(TAG, "Failed to get localized string for $resId, using default: $defaultValue")
+            Timber.w("Failed to get localized string for $resId, using default: $defaultValue")
             defaultValue
         }
     }

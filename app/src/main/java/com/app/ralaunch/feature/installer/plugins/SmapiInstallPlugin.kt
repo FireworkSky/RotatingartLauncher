@@ -1,7 +1,7 @@
 package com.app.ralaunch.feature.installer.plugins
 
 import android.os.Environment
-import com.app.ralaunch.core.logging.AppLog
+import timber.log.Timber
 import com.app.ralaunch.R
 import com.app.ralaunch.RaLaunchApp
 import com.app.ralaunch.feature.installer.*
@@ -20,7 +20,6 @@ import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream
 class SmapiInstallPlugin : BaseInstallPlugin() {
     
     companion object {
-        private const val TAG = "SmapiInstallPlugin"
         private const val SMAPI_MODS_PATH_ENV_KEY = "SMAPI_MODS_PATH"
         private const val SMAPI_MODS_PATH_VALUE_TEMPLATE = "{XDG_DATA_HOME}/Stardew Valley/Mods"
         
@@ -142,9 +141,9 @@ class SmapiInstallPlugin : BaseInstallPlugin() {
                     // Create mods folder in external storage RALauncher directory
                     val externalModsDir = getSmapiModsDirectory()
                     if (externalModsDir.mkdirs() || externalModsDir.exists()) {
-                        AppLog.i(TAG, "SMAPI 模组目录已创建 / SMAPI mods directory created: ${externalModsDir.absolutePath}")
+                        Timber.i("SMAPI 模组目录已创建 / SMAPI mods directory created: ${externalModsDir.absolutePath}")
                     } else {
-                        AppLog.w(TAG, "无法创建 SMAPI 模组目录 / Failed to create SMAPI mods directory: ${externalModsDir.absolutePath}")
+                        Timber.w("无法创建 SMAPI 模组目录 / Failed to create SMAPI mods directory: ${externalModsDir.absolutePath}")
                         // 回退到游戏目录下的 Mods 文件夹
                         File(actualGameDir, "Mods").mkdirs()
                     }

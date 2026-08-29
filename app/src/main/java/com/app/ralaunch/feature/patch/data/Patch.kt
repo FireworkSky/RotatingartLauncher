@@ -1,6 +1,6 @@
 package com.app.ralaunch.feature.patch.data
 
-import com.app.ralaunch.core.logging.AppLog
+import timber.log.Timber
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -16,19 +16,18 @@ data class Patch(
     }
 
     companion object {
-        private const val TAG = "Patch"
 
         @JvmStatic
         fun fromPatchPath(patchPath: Path): Patch? {
             val normalizedPath = patchPath.normalize()
             if (!Files.exists(normalizedPath) || !Files.isDirectory(normalizedPath)) {
-                AppLog.w(TAG, "fromPatchPath: Patch path does not exist or is not a directory: $normalizedPath")
+                Timber.w("fromPatchPath: Patch path does not exist or is not a directory: $normalizedPath")
                 return null
             }
 
             val manifest = PatchManifest.fromJson(normalizedPath.resolve(PatchManifest.MANIFEST_FILE_NAME))
             if (manifest == null) {
-                AppLog.w(TAG, "fromPatchPath: Failed to load manifest from path: $normalizedPath")
+                Timber.w("fromPatchPath: Failed to load manifest from path: $normalizedPath")
                 return null
             }
 
