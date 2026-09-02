@@ -12,9 +12,12 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.unit.LayoutDirection
 import com.app.ralaunch.feature.controls.editors.ui.ControlEditorScreen
 import com.app.ralaunch.feature.controls.editors.vm.ControlEditorViewModel
 import com.app.ralaunch.core.theme.AppThemeState
@@ -132,14 +135,18 @@ class ControlEditorActivity : AppCompatActivity() {
                 themeMode = themeMode,
                 themeColor = themeColor
             ) {
-                ControlEditorScreen(
-                    viewModel = viewModel,
-                    layout = layout,
-                    selectedControl = selectedControl,
-                    isPropertyPanelVisible = isPropertyPanelVisible,
-                    isPaletteVisible = isPaletteVisible,
-                    onExit = { finish() }
-                )
+                // 编辑器浮窗按绝对像素定位，RTL 语言下 offset{} 与 align()
+                // 会镜像导致拖拽左右反转，强制 LTR
+                CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+                    ControlEditorScreen(
+                        viewModel = viewModel,
+                        layout = layout,
+                        selectedControl = selectedControl,
+                        isPropertyPanelVisible = isPropertyPanelVisible,
+                        isPaletteVisible = isPaletteVisible,
+                        onExit = { finish() }
+                    )
+                }
             }
         }
     }

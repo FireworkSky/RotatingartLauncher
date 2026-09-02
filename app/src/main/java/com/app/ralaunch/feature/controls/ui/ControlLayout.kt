@@ -265,6 +265,10 @@ class ControlLayout : FrameLayout {
     private fun init() {
         setWillNotDraw(false)
 
+        // 控件坐标以 leftMargin 绝对定位，FrameLayout 默认重力 TOP|START 在 RTL 语言下
+        // 解析为 RIGHT 会忽略 leftMargin，导致控件全部堆叠在右侧且拖动无效，必须强制 LTR
+        layoutDirection = LAYOUT_DIRECTION_LTR
+
         // 禁用子View裁剪，让控件的绘制效果（如摇杆方向线）完整显示
         clipChildren = false
         clipToPadding = false

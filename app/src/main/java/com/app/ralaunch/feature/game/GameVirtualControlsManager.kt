@@ -4,7 +4,10 @@ import android.app.Activity
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.lifecycle.setViewTreeLifecycleOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import com.app.ralaunch.R
@@ -116,20 +119,24 @@ class GameVirtualControlsManager {
 
             setContent {
                 RaLaunchTheme {
-                    GameControlsOverlay(
-                        controlLayoutView = control,
-                        packManager = packManager,
-                        settingsManager = settings,
-                        toggleFloatingBallEvent = toggleFloatingBallEvent,
-                        onExitGame = { onExitGameCallback?.invoke() },
-                        onEditModeChanged = { inEditMode -> 
-                            isInEditMode = inEditMode
-                            control.isModifiable = inEditMode
-                        },
-                        onActiveAreaChanged = { rect ->
-                            composeActiveRect = rect
-                        }
-                    )
+                    // 悬浮球/属性面板等浮窗按绝对像素定位，RTL 语言下
+                    // offset{} 与 align() 会镜像导致拖拽左右反转，强制 LTR
+                    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+                        GameControlsOverlay(
+                            controlLayoutView = control,
+                            packManager = packManager,
+                            settingsManager = settings,
+                            toggleFloatingBallEvent = toggleFloatingBallEvent,
+                            onExitGame = { onExitGameCallback?.invoke() },
+                            onEditModeChanged = { inEditMode ->
+                                isInEditMode = inEditMode
+                                control.isModifiable = inEditMode
+                            },
+                            onActiveAreaChanged = { rect ->
+                                composeActiveRect = rect
+                            }
+                        )
+                    }
                 }
             }
         }
