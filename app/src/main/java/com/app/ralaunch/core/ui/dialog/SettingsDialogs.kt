@@ -111,7 +111,8 @@ fun defaultLanguages() = listOf(
     LanguageOption("zh", "Chinese (Simplified)", "简体中文"),
     LanguageOption("en", "English", "English"),
     LanguageOption("ru", "Russian", "Русский"),
-    LanguageOption("es", "Spanish", "Español")
+    LanguageOption("es", "Spanish", "Español"),
+    LanguageOption("pt-BR", "Portuguese (Brazil)", "Português (Brasil)")
 )
 
 // ==================== 颜色选择器 ====================

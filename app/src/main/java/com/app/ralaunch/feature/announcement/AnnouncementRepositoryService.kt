@@ -243,6 +243,7 @@ class AnnouncementRepositoryService(private val context: Context) {
         LocaleHelper.LANGUAGE_RU -> "ru-RU"
         LocaleHelper.LANGUAGE_ES -> "es-ES"
         LocaleHelper.LANGUAGE_JA -> "ja-JP"
+        LocaleHelper.LANGUAGE_PT_BR.lowercase(Locale.ROOT) -> "pt-BR"
         else -> Locale.forLanguageTag(languageCode).toLanguageTag()
     }
 

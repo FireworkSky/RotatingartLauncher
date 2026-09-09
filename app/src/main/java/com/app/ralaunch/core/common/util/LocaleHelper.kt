@@ -17,7 +17,7 @@ enum class SupportedLanguage(
     KOREAN("ko", "Korean", "한국어"),
     FRENCH("fr", "French", "Français"),
     GERMAN("de", "German", "Deutsch"),
-    PORTUGUESE("pt", "Portuguese", "Português");
+    PORTUGUESE_BRAZIL("pt-BR", "Portuguese (Brazil)", "Português (Brasil)");
 
     companion object {
         fun fromCode(code: String): SupportedLanguage {
@@ -28,7 +28,7 @@ enum class SupportedLanguage(
          * 获取主要支持的语言（用于 UI 显示）
          */
         fun primaryLanguages(): List<SupportedLanguage> = listOf(
-            AUTO, CHINESE, ENGLISH, RUSSIAN, SPANISH
+            AUTO, CHINESE, ENGLISH, RUSSIAN, SPANISH, PORTUGUESE_BRAZIL
         )
 
         /**
@@ -80,6 +80,7 @@ object LocaleHelper {
     const val LANGUAGE_RU = "ru"
     const val LANGUAGE_ES = "es"
     const val LANGUAGE_JA = "ja"
+    const val LANGUAGE_PT_BR = "pt-BR"
 
     /**
      * 根据语言代码获取显示名称

@@ -28,9 +28,11 @@ object LocaleManager : AppLocaleManager {
     const val LANGUAGE_EN = LocaleHelper.LANGUAGE_EN
     const val LANGUAGE_RU = LocaleHelper.LANGUAGE_RU
     const val LANGUAGE_ES = LocaleHelper.LANGUAGE_ES
+    const val LANGUAGE_PT_BR = LocaleHelper.LANGUAGE_PT_BR
 
     private val LOCALE_RUSSIAN = Locale.forLanguageTag("ru")
     private val LOCALE_SPANISH = Locale.forLanguageTag("es")
+    private val LOCALE_PORTUGUESE_BRAZIL = Locale.forLanguageTag("pt-BR")
 
     private var currentLanguage: String = LANGUAGE_AUTO
 
@@ -82,6 +84,7 @@ object LocaleManager : AppLocaleManager {
         LANGUAGE_EN -> Locale.ENGLISH
         LANGUAGE_RU -> LOCALE_RUSSIAN
         LANGUAGE_ES -> LOCALE_SPANISH
+        LANGUAGE_PT_BR -> LOCALE_PORTUGUESE_BRAZIL
         else -> Locale.getDefault()
     }
 
@@ -100,6 +103,7 @@ object LocaleManager : AppLocaleManager {
             LANGUAGE_EN -> localizedContext.getString(R.string.language_english)
             LANGUAGE_RU -> localizedContext.getString(R.string.language_russian)
             LANGUAGE_ES -> localizedContext.getString(R.string.language_spanish)
+            LANGUAGE_PT_BR -> localizedContext.getString(R.string.language_portuguese_brazilian)
             else -> fallback
         }
     }
@@ -114,7 +118,8 @@ object LocaleManager : AppLocaleManager {
         LANGUAGE_ZH,
         LANGUAGE_EN,
         LANGUAGE_RU,
-        LANGUAGE_ES
+        LANGUAGE_ES,
+        LANGUAGE_PT_BR
     )
 
     override fun getCurrentLanguage(): String {
@@ -173,6 +178,7 @@ object LocaleManager : AppLocaleManager {
             value.startsWith("en") || value == "english" -> LANGUAGE_EN
             value.startsWith("ru") || value == "русский" -> LANGUAGE_RU
             value.startsWith("es") || value == "español" -> LANGUAGE_ES
+            value.startsWith("pt") || value == "português" -> LANGUAGE_PT_BR
             else -> LANGUAGE_AUTO
         }
     }

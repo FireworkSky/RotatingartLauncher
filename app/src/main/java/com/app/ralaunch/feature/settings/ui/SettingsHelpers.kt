@@ -302,6 +302,7 @@ internal fun getLanguageCode(languageName: String): String {
         "English" -> LocaleManager.LANGUAGE_EN
         "Русский" -> LocaleManager.LANGUAGE_RU
         "Español" -> LocaleManager.LANGUAGE_ES
+        "Português (Brasil)" -> LocaleManager.LANGUAGE_PT_BR
         else -> LocaleManager.LANGUAGE_AUTO
     }
 }
