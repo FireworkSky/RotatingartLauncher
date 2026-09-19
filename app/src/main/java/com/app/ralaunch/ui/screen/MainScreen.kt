@@ -301,12 +301,6 @@ fun PreviewMainScreen() {
 // ==================== 各页面屏幕函数 ====================
 
 @Composable
-private fun GameListScreen() = PlaceholderScreen(
-    title = "游戏列表",
-    subtitle = "浏览和启动你的游戏"
-)
-
-@Composable
 private fun ControlScreen() = PlaceholderScreen(
     title = "控制台",
     subtitle = "管理游戏和系统设置"
