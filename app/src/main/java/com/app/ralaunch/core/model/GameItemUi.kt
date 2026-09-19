@@ -1,7 +1,5 @@
 package com.app.ralaunch.core.model
 
-import com.app.ralaunch.core.model.GameItem
-
 /**
  * 游戏项 UI 数据模型 (跨平台)
  * 

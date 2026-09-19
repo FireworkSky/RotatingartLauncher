@@ -81,7 +81,7 @@
 
   "extractor.failed": "Extraction failed",
   "extractor.complete": "Extraction complete",
-  "extractor.inProgress": "Extracting: %s",
+  "extractor.inProgress": "Extracting: ${entry}",
   "extractor.sevenZip.failed": "7z extraction failed",
   "extractor.gog.script": "Extracting installer script...",
   "extractor.gog.mojosetup": "Extracting MojoSetup archive...",
@@ -89,5 +89,41 @@
   "extractor.gog.parseGameData": "Parsing game data...",
   "extractor.gog.decompressGameData": "Decompressing game data...",
   "extractor.gog.gameDataComplete": "Game data extraction complete",
-  "extractor.gog.failed": "Failed to extract GOG .sh file"
+  "extractor.gog.failed": "Failed to extract GOG .sh file",
+
+  "installer.starting": "Starting installation...",
+  "installer.extractGameFailed": "Failed to extract game files",
+  "installer.extractIcon": "Extracting icon...",
+  "installer.finishing": "Finishing installation...",
+  "installer.complete": "Installation complete!",
+  "installer.failed": "Installation failed",
+  "installer.cancelled": "Import cancelled",
+  "installer.monoMod": "Installing MonoMod libraries...",
+  "installer.pluginNotFound": "No installation plugin found for this game",
+
+  "installer.celeste.name": "Celeste / Everest",
+  "installer.celeste.everest.installing": "Installing Everest...",
+  "installer.celeste.everest.withDetail": "Installing Everest: ${detail}",
+  "installer.celeste.everest.miniInstaller": "Running Everest MiniInstaller...",
+  "installer.celeste.everest.miniInstallerPatchMissing": "Everest MiniInstaller patch not found, or duplicate patch IDs detected",
+  "installer.celeste.everest.miniInstallerFailed": "Everest MiniInstaller failed, error code: ${code}",
+
+  "installer.smapi.name": "Stardew Valley / SMAPI",
+  "installer.smapi.installing": "Installing SMAPI...",
+  "installer.smapi.withDetail": "Installing SMAPI: ${detail}",
+  "installer.smapi.extractWithDetail": "Extracting SMAPI: ${detail}",
+  "installer.smapi.processFiles": "Processing SMAPI files...",
+  "installer.smapi.extractCoreFiles": "Extracting SMAPI core files...",
+  "installer.smapi.installDatFailed": "Failed to extract install.dat: ${reason}",
+  "installer.smapi.copyFiles": "Copying SMAPI files...",
+  "installer.smapi.configure": "Configuring SMAPI...",
+  "installer.smapi.applyMonoModPatch": "Applying MonoMod patch...",
+  "installer.smapi.patchArm64": "Patching ARM64 architecture...",
+  "installer.smapi.patchConfig": "Patching configuration files...",
+
+  "installer.terraria.name": "Terraria / tModLoader",
+  "installer.terraria.tModLoader.prepareDir": "Preparing tModLoader directory...",
+  "installer.terraria.tModLoader.installing": "Installing tModLoader...",
+  "installer.terraria.tModLoader.withDetail": "Installing tModLoader: ${detail}",
+  "installer.terraria.tModLoader.copyFiles": "Copying tModLoader files..."
 }

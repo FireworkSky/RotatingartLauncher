@@ -745,7 +745,6 @@
 
     <!-- GameLaunchDelegate Messages -->
     <string name="game_launch_failed">Launch Failed</string>
-    <string name="game_launch_invalid_params_conflict">Invalid launch parameters: conflicting launch modes</string>
     <string name="game_launch_no_params">No launch parameters provided</string>
     <string name="game_launch_assembly_path_empty">Assembly path is empty</string>
     <string name="game_launch_assembly_not_exist">Assembly file not found: %s</string>

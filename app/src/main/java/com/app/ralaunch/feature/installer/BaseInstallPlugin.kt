@@ -2,13 +2,17 @@ package com.app.ralaunch.feature.installer
 
 import android.content.Context
 import timber.log.Timber
+import com.app.ralaunch.utils.GameManager
 import com.app.ralaunch.core.platform.runtime.AssemblyPatcher
 import org.koin.java.KoinJavaComponent
 import com.app.ralaunch.core.model.GameItem
 import com.app.ralaunch.core.extractor.IconExtractor
-import kotlinx.coroutines.Job
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
+import com.app.ralaunch.strings.StringsResource.Strings
+import com.app.ralaunch.feature.installer.GameInstallPlugin.Event
+import com.app.ralaunch.feature.installer.GameInstallPlugin.Result
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.io.File
 
 /**
@@ -16,15 +20,83 @@ import java.io.File
  * 提供通用的安装工具方法，减少代码重复
  *
  * 使用新的存储结构: games/{GameDirName}/game_info.json
+ *
+ * install 由基类统一封装：在 IO 调度器上执行 [performInstall]，
+ * 异常转换为 [Result.Failure] 并发出 [Event.Error]；
+ * 存储根目录由插件自行创建（见 [createStorageRoot]），
+ * GameItem 的持久化也由插件负责（见 [finishInstall]）。
  */
 abstract class BaseInstallPlugin : GameInstallPlugin {
 
-    protected var installJob: Job? = null
     protected var isCancelled = false
 
     override fun cancel() {
         isCancelled = true
-        installJob?.cancel()
+    }
+
+    final override suspend fun install(
+        gameFile: File,
+        modLoaderFile: File?,
+        callback: ((Event) -> Unit)?
+    ): Result {
+        isCancelled = false
+        return try {
+            withContext(Dispatchers.IO) {
+                performInstall(gameFile, modLoaderFile, callback)
+            }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            val message = e.message ?: Strings.installer.failed
+            callback?.invoke(Event.Error(message, e))
+            Result.Failure(message, e)
+        }
+    }
+
+    /**
+     * 具体的安装流程；只需返回成功结果，异常与取消由基类/辅助方法处理
+     */
+    protected abstract suspend fun performInstall(
+        gameFile: File,
+        modLoaderFile: File?,
+        callback: ((Event) -> Unit)?
+    ): Result
+
+    /**
+     * 创建本次安装的存储根目录：解析目标定义（模组加载器优先，其次游戏本体），
+     * 调用 [GameManager.createDirectory] 以其 gameId 分配唯一目录并返回
+     */
+    protected suspend fun createStorageRoot(gameFile: File, modLoaderFile: File?): File {
+        val definition = modLoaderFile?.let { detectModLoader(it) }?.definition
+            ?: detectGame(gameFile)?.definition
+            ?: error("Install plugin selected without a matching detection: $pluginId")
+        return GameManager.createDirectory(definition.gameId).toFile()
+    }
+
+    /**
+     * 取消安装的收尾：发出 [Event.Cancelled] 并返回 [Result.Cancelled]
+     */
+    protected fun cancelledInstall(callback: ((Event) -> Unit)?): Result {
+        val message = Strings.installer.cancelled
+        callback?.invoke(Event.Cancelled(message))
+        return Result.Cancelled(message)
+    }
+
+    /**
+     * 保存 GameItem（保存权在插件）并发出完成进度与 [Event.Complete]
+     */
+    protected suspend fun finishInstall(
+        gameItem: GameItem,
+        callback: ((Event) -> Unit)?
+    ): Result {
+        callback?.invoke(
+            Event.Progress(Strings.installer.finishing, 98)
+        )
+        val saved = GameManager.save(gameItem, 0)
+        val message = Strings.installer.complete
+        callback?.invoke(Event.Progress(message, 100))
+        callback?.invoke(Event.Complete(message, saved))
+        return Result.Success(saved)
     }
 
     /**
@@ -134,80 +206,6 @@ abstract class BaseInstallPlugin : GameInstallPlugin {
     }
 
     /**
-     * 创建游戏信息文件 (game_info.json)
-     *
-     * 注意：此方法处理两种情况：
-     * 1. GOG .sh 等会创建嵌套目录结构的安装包：
-     *    - storageRootDir: 由 IGameRepositoryServiceV3.createGameStorageRoot() 创建的目录
-     *    - actualGameDir: 游戏实际解压到的子目录（如 data/noarch/game/）
-     *    - game_info.json 将创建在 storageRootDir，路径相对于 storageRootDir
-     *
-     * 2. ZIP 等直接解压的安装包：
-     *    - 使用简化版本，storageRootDir 和 actualGameDir 相同
-     *
-     * @param storageRootDir 存储根目录（由 IGameRepositoryServiceV3 创建的目录）
-     * @param actualGameDir 实际游戏文件所在目录（可能是 storageRootDir 的子目录）
-     * @param definition 游戏定义
-     * @param iconPath 图标路径（相对于 actualGameDir）
-     */
-    protected fun createGameInfo(
-        storageRootDir: File,
-        actualGameDir: File,
-        definition: GameDefinition,
-        iconPath: String?
-    ) {
-        val infoFile = File(storageRootDir, "game_info.json")
-
-        // 使用目录名作为存储 ID（与 GameRepositoryServiceV3 保持一致）
-        val storageId = storageRootDir.name
-
-        // 计算相对于 storageRootDir 的路径
-        val gameExePathRelative = if (actualGameDir.canonicalPath == storageRootDir.canonicalPath) {
-            definition.launchTarget
-        } else {
-            val relativePath = actualGameDir.toRelativeString(storageRootDir)
-            "$relativePath/${definition.launchTarget}"
-        }
-
-        val iconPathRelative = iconPath?.let { icon ->
-            if (actualGameDir.canonicalPath == storageRootDir.canonicalPath) {
-                icon
-            } else {
-                val relativePath = actualGameDir.toRelativeString(storageRootDir)
-                "$relativePath/$icon"
-            }
-        }
-
-        val gameItem = GameItem(
-            id = storageId,  // 使用目录名作为存储 ID
-            displayedName = definition.displayName,
-            displayedDescription = "",
-            gameId = definition.gameId,
-            gameExePathRelative = gameExePathRelative,
-            iconPathRelative = iconPathRelative,
-            modLoaderEnabled = definition.isModLoader
-        )
-
-        val json = Json {
-            prettyPrint = true
-            encodeDefaults = true
-        }
-        val jsonString = json.encodeToString(gameItem)
-        infoFile.writeText(jsonString)
-    }
-
-    /**
-     * 创建游戏信息文件 (game_info.json) - 简化版本
-     * 当 storageRootDir 和 actualGameDir 相同时使用
-     * @param outputDir 游戏目录
-     * @param definition 游戏定义
-     * @param iconPath 图标路径（相对路径）
-     */
-    protected fun createGameInfo(outputDir: File, definition: GameDefinition, iconPath: String?) {
-        createGameInfo(outputDir, outputDir, definition, iconPath)
-    }
-
-    /**
      * 安装 MonoMod 库到游戏目录
      * @param gameDir 游戏目录
      * @return 是否成功
@@ -263,7 +261,7 @@ abstract class BaseInstallPlugin : GameInstallPlugin {
      * 从 GameDefinition 创建 GameItem
      *
      * @param definition 游戏定义
-     * @param storageRootDir 存储根目录（由 IGameRepositoryServiceV3 创建的目录）
+     * @param storageRootDir 存储根目录（由 GameManager 创建的目录）
      * @param actualGameDir 实际游戏文件所在目录（可能是 storageRootDir 的子目录）
      * @param iconPath 图标路径（相对于 actualGameDir）
      */
@@ -273,7 +271,7 @@ abstract class BaseInstallPlugin : GameInstallPlugin {
         actualGameDir: File,
         iconPath: String?
     ): GameItem {
-        // 使用目录名作为存储 ID（与 GameRepositoryServiceV3 保持一致）
+        // 使用目录名作为存储 ID（与 GameManager 保持一致）
         val storageId = storageRootDir.name
 
         // 计算相对于 storageRootDir 的路径
@@ -320,8 +318,5 @@ abstract class BaseInstallPlugin : GameInstallPlugin {
         iconPath: String?
     ): GameItem {
         return createGameItem(definition, gameDir, gameDir, iconPath)
-    }
-
-    companion object {
     }
 }

@@ -1396,7 +1396,6 @@
     <string name="control_layout_created">Diseño creado</string>
     <string name="key_selector_keyboard_mode">Teclado</string>
     <string name="key_selector_gamepad_mode">Mando</string>
-    <string name="game_launch_invalid_params_conflict">Parámetros de inicio no válidos: modos de inicio en conflicto</string>
     <string name="game_launch_no_params">No se proporcionaron parámetros de inicio</string>
     <string name="game_launch_repository_load_failed">No se pudo cargar el repositorio de juegos</string>
     <string name="gog_email_label">Dirección de correo</string>

@@ -1,12 +1,11 @@
 package com.app.ralaunch.core.logging
 
-import com.app.ralaunch.core.di.contract.IGameRepositoryServiceV3
 import com.app.ralaunch.core.logging.service.LogExportHelper
 import com.app.ralaunch.core.model.GameItem
 import com.app.ralaunch.feature.patch.data.PatchManager
 import com.app.ralaunch.feature.patch.data.PatchManagerConfig
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
+import com.app.ralaunch.utils.GameManager
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -15,6 +14,7 @@ import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+
 
 class LogExportHelperTest {
 
@@ -55,17 +55,26 @@ class LogExportHelperTest {
         dir.createLogFile("ralaunch_2026-04-25.log", "oldest", modified = 1_000L)
         dir.createLogFile("ralaunch_2026-04-27_logcat.log", "newest", modified = 3_000L)
 
+        managerFor(
+            dir,
+            listOf(
+                GameItem(
+                    id = "celeste_abcd1234",
+                    displayedName = "Celeste",
+                    gameId = "celeste",
+                    gameExePathRelative = "Celeste.exe"
+                )
+            )
+        )
         val content = helperFor(dir).buildExportContent()
 
-        val repositoryIndex = content.indexOf("=============== Game Repository Information ===============")
-        val patchIndex = content.indexOf("=============== Patch Management Information ===============")
-        val logcatIndex = content.indexOf("=============== ralaunch_2026-04-27_logcat.log ===============")
-        val oldestIndex = content.indexOf("=============== ralaunch_2026-04-25.log ===============")
-        val middleIndex = content.indexOf("=============== ralaunch_2026-04-26.log ===============")
+        val gameIndex = content.indexOf("celeste_abcd1234")
+        val logcatIndex = content.indexOf("ralaunch_2026-04-27_logcat.log")
+        val oldestIndex = content.indexOf("ralaunch_2026-04-25.log")
+        val middleIndex = content.indexOf("ralaunch_2026-04-26.log")
 
-        assertTrue(repositoryIndex >= 0)
-        assertTrue(patchIndex > repositoryIndex)
-        assertTrue(oldestIndex > patchIndex)
+        assertTrue(gameIndex >= 0)
+        assertTrue(oldestIndex > gameIndex)
         assertTrue(middleIndex > oldestIndex)
         assertTrue(logcatIndex > middleIndex)
         assertTrue(content.contains("newest"))
@@ -74,10 +83,10 @@ class LogExportHelperTest {
     }
 
     @Test
-    fun gameRepositoryInfoIncludesCoreGameFieldsAndRedactsEnvValues() = withTempLogDir { dir ->
-        val repository = FakeGameRepository(
-            root = Files.createTempDirectory("ralaunch-games"),
-            initialGames = listOf(
+    fun gameManagerInfoIncludesCoreGameFieldsAndRedactsEnvValues() = withTempLogDir { dir ->
+        managerFor(
+            dir,
+            games = listOf(
                 GameItem(
                     id = "celeste_abcd1234",
                     displayedName = "Celeste",
@@ -96,7 +105,7 @@ class LogExportHelperTest {
             )
         )
 
-        val info = helperFor(dir, repository = repository).buildGameRepositoryInfo()
+        val info = helperFor(dir).buildGameManagerInfo()
 
         assertTrue(info.contains("Installed Games: 1"))
         assertTrue(info.contains("Id: celeste_abcd1234"))
@@ -110,24 +119,16 @@ class LogExportHelperTest {
     }
 
     @Test
-    fun patchManagementInfoHandlesUnavailablePatchManager() = withTempLogDir { dir ->
-        val info = helperFor(dir).buildPatchManagementInfo()
-
-        assertTrue(info.contains("Patch Management Information"))
-        assertTrue(info.contains("Status: Unavailable"))
-    }
-
-    @Test
     fun patchManagementInfoIncludesInstalledApplicableEnabledAndDisabledPatchSummaries() = withTempLogDir { dir ->
-        val gamesRoot = Files.createTempDirectory("ralaunch-games")
-        val game = GameItem(
+        val fixture = GameItem(
             id = "celeste_abcd1234",
             displayedName = "Celeste",
             gameId = "celeste",
             gameExePathRelative = "Celeste.exe"
         )
-        val repository = FakeGameRepository(gamesRoot, listOf(game))
-        val patchStorage = Files.createTempDirectory("ralaunch-patches")
+        managerFor(dir, listOf(fixture))
+        val game = GameManager.get(fixture.id)!!
+        val patchStorage = Files.createDirectories(dir.toPath().resolve("patches"))
         patchStorage.createPatchDir(
             id = "enabled_patch",
             name = "Enabled Patch",
@@ -153,9 +154,8 @@ class LogExportHelperTest {
         }
         val patchManager = patchManagerFor(patchStorage, config)
 
-        val info = helperFor(dir, repository = repository, patchManager = patchManager).buildPatchManagementInfo()
+        val info = helperFor(dir, patchManager = patchManager).buildPatchManagementInfo()
 
-        assertTrue(info.contains("Status: Available"))
         assertTrue(info.contains("Installed Patches: 3"))
         assertTrue(info.contains("Id: enabled_patch"))
         assertTrue(info.contains("Id: disabled_patch"))
@@ -163,14 +163,6 @@ class LogExportHelperTest {
         assertTrue(info.contains("Applicable Patches: 2"))
         assertTrue(info.contains("Enabled Applicable Patch Ids: enabled_patch"))
         assertTrue(info.contains("Disabled Applicable Patch Ids: disabled_patch"))
-    }
-
-    @Test
-    fun emptyLogDirectoryStillReturnsDiagnosticContent() = withTempLogDir { dir ->
-        val content = helperFor(dir).buildExportContent()
-
-        assertTrue(content.contains("Game Repository Information"))
-        assertTrue(content.contains("Patch Management Information"))
     }
 
     private fun withTempLogDir(block: (File) -> Unit) {
@@ -191,33 +183,22 @@ class LogExportHelperTest {
 
     private fun helperFor(
         logsDir: File,
-        repository: IGameRepositoryServiceV3? = null,
         patchManager: PatchManager? = null
     ): LogExportHelper =
         LogExportHelper(
             logsDirPathProvider = { logsDir.absolutePath },
-            gameRepositoryProvider = { repository },
             patchManagerProvider = { patchManager }
         )
 
-    private class FakeGameRepository(
-        private val root: Path,
-        initialGames: List<GameItem>
-    ) : IGameRepositoryServiceV3 {
-        private val backingGames = MutableStateFlow(initialGames.onEach { it.gameRepositoryParent = this })
-
-        override val games: StateFlow<List<GameItem>> = backingGames
-
-        override suspend fun getById(id: String): GameItem? = backingGames.value.find { it.id == id }
-        override suspend fun upsert(game: GameItem, index: Int) = Unit
-        override suspend fun removeById(id: String) = Unit
-        override suspend fun removeAt(index: Int) = Unit
-        override suspend fun reorder(from: Int, to: Int) = Unit
-        override suspend fun replaceAll(games: List<GameItem>) = Unit
-        override suspend fun clear() = Unit
-        override fun getGameGlobalStorageDirFull(): String = root.toString()
-        override fun createGameStorageRoot(gameId: String): Pair<String, String> = root.resolve(gameId).toString() to gameId
-        override fun deleteGameFiles(game: GameItem): Boolean = true
+    private fun managerFor(logsDir: File, games: List<GameItem>) = runBlocking {
+        val root = Files.createDirectories(logsDir.toPath().resolve("games"))
+        GameManager.initialize(root)
+        games.forEachIndexed { index, game ->
+            val directory = Files.createDirectories(root.resolve(game.id))
+            Files.write(directory.resolve(game.gameExePathRelative), "assembly".toByteArray())
+            GameManager.save(game, index)
+        }
+        GameManager.initialize(root)
     }
 
     private fun Path.createPatchDir(

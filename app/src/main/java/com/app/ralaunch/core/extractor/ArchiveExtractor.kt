@@ -172,7 +172,7 @@ class ArchiveExtractor private constructor(private val options: Options) {
             options.callback?.invoke(
                 Event.Progress(
                     options.id,
-                    Strings.extractor.inProgress.format(entry.name),
+                    Strings.extractor.inProgress(entry.name),
                     if (totalSize > 0) (extractedSize.toFloat() / totalSize).coerceIn(0f, 1f) else 1f,
                     state.processedEntries
                 )
@@ -216,7 +216,7 @@ class ArchiveExtractor private constructor(private val options: Options) {
                         options.callback?.invoke(
                             Event.Progress(
                                 options.id,
-                                Strings.extractor.inProgress.format(entry.name),
+                                Strings.extractor.inProgress(entry.name),
                                 if (total > 0) (done.toFloat() / total).coerceIn(0f, 1f) else 1f,
                                 state.processedEntries
                             )
@@ -241,7 +241,7 @@ class ArchiveExtractor private constructor(private val options: Options) {
                     options.callback?.invoke(
                         Event.Progress(
                             options.id,
-                            Strings.extractor.inProgress.format(entry.name),
+                            Strings.extractor.inProgress(entry.name),
                             (archive.bytesRead.toFloat() / archiveSize).coerceIn(0f, 1f),
                             state.processedEntries
                         )

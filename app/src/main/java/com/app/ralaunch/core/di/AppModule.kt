@@ -4,11 +4,8 @@ import android.content.Context
 import android.content.SharedPreferences
 import androidx.activity.ComponentActivity
 import androidx.appcompat.app.AppCompatActivity
-import com.app.ralaunch.core.common.GameLaunchManager
-import com.app.ralaunch.core.di.contract.IGameRepositoryServiceV3
 import com.app.ralaunch.core.di.contract.IRuntimeManagerServiceV2
 import com.app.ralaunch.core.di.contract.IThemeManagerServiceV1
-import com.app.ralaunch.core.di.service.GameRepositoryServiceV3
 import com.app.ralaunch.core.di.service.PermissionManagerServiceV1
 import com.app.ralaunch.core.di.service.RuntimeManagerServiceV2
 import com.app.ralaunch.core.di.service.StoragePathsProviderServiceV1
@@ -60,16 +57,11 @@ val appModule = module {
     single {
         LogExportHelper(
             storagePathsProvider = get(),
-            gameRepository = get(),
             patchManager = getOrNull()
         )
     }
 
     // ==================== Repositories ====================
-
-    single<IGameRepositoryServiceV3> {
-        GameRepositoryServiceV3(pathsProvider = get())
-    }
 
     single<IRuntimeManagerServiceV2> {
         RuntimeManagerServiceV2(
@@ -120,10 +112,6 @@ val appModule = module {
     }
 
     single {
-        GameLaunchManager(androidContext())
-    }
-
-    single {
         JavaScriptExecutor()
     }
 
@@ -160,8 +148,6 @@ val appModule = module {
     viewModel {
         MainViewModel(
             appContext = androidContext(),
-            gameRepository = get(),
-            gameLaunchManager = get(),
             announcementRepositoryService = get(),
             launcherUpdateChecker = get()
         )
@@ -175,8 +161,7 @@ val appModule = module {
 
     viewModel {
         InstallerViewModel(
-            appContext = androidContext(),
-            gameRepository = get()
+            appContext = androidContext()
         )
     }
 
@@ -234,7 +219,6 @@ val appModule = module {
     viewModel {
         PatchManagementViewModel(
             appContext = androidContext(),
-            gameRepository = get(),
             patchManager = getOrNull()
         )
     }

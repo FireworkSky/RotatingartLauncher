@@ -39,11 +39,11 @@ class GameActivity : SDLActivity(), GameContract.View {
 
     companion object {
         private const val CONTROL_EDITOR_REQUEST_CODE = 2001
-        const val EXTRA_GAME_STORAGE_ID = "GAME_STORAGE_ID"
         const val EXTRA_GAME_EXE_PATH = "GAME_EXE_PATH"
         const val EXTRA_GAME_ARGS = "GAME_ARGS"
         const val EXTRA_GAME_ID = "GAME_ID"
         const val EXTRA_GAME_RENDERER_OVERRIDE = "GAME_RENDERER_OVERRIDE"
+        const val EXTRA_GAME_RUNTIME_VERSION_OVERRIDE = "GAME_RUNTIME_VERSION_OVERRIDE"
         const val EXTRA_GAME_ENV_VARS = "GAME_ENV_VARS"
 
         @JvmStatic
@@ -53,22 +53,12 @@ class GameActivity : SDLActivity(), GameContract.View {
         @JvmStatic
         fun createLaunchIntent(
             context: Context,
-            gameStorageId: String
-        ): Intent {
-            require(gameStorageId.isNotBlank()) { "gameStorageId must not be blank" }
-            return Intent(context, GameActivity::class.java).apply {
-                putExtra(EXTRA_GAME_STORAGE_ID, gameStorageId)
-            }
-        }
-
-        @JvmStatic
-        fun createLaunchIntent(
-            context: Context,
             gameExePath: String,
             gameArgs: Array<String>,
             gameId: String?,
             gameRendererOverride: String?,
-            gameEnvVars: Map<String, String?> = emptyMap()
+            gameEnvVars: Map<String, String?> = emptyMap(),
+            gameRuntimeVersionOverride: String? = null
         ): Intent {
             require(gameExePath.isNotBlank()) { "gameExePath must not be blank" }
             return Intent(context, GameActivity::class.java).apply {
@@ -76,25 +66,9 @@ class GameActivity : SDLActivity(), GameContract.View {
                 putExtra(EXTRA_GAME_ARGS, gameArgs)
                 putExtra(EXTRA_GAME_ID, gameId)
                 putExtra(EXTRA_GAME_RENDERER_OVERRIDE, gameRendererOverride)
+                putExtra(EXTRA_GAME_RUNTIME_VERSION_OVERRIDE, gameRuntimeVersionOverride)
                 putExtra(EXTRA_GAME_ENV_VARS, HashMap(gameEnvVars))
             }
-        }
-
-        @JvmStatic
-        fun launch(
-            context: Context,
-            gameStorageId: String
-        ) {
-            val intent = createLaunchIntent(
-                context = context,
-                gameStorageId = gameStorageId
-            ).apply {
-                if (context !is Activity) {
-                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                }
-            }
-            context.startActivity(intent)
-            (context as? Activity)?.overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
         }
 
         @JvmStatic
@@ -104,7 +78,8 @@ class GameActivity : SDLActivity(), GameContract.View {
             gameArgs: Array<String>,
             gameId: String?,
             gameRendererOverride: String?,
-            gameEnvVars: Map<String, String?> = emptyMap()
+            gameEnvVars: Map<String, String?> = emptyMap(),
+            gameRuntimeVersionOverride: String? = null
         ) {
             val intent = createLaunchIntent(
                 context = context,
@@ -112,7 +87,8 @@ class GameActivity : SDLActivity(), GameContract.View {
                 gameArgs = gameArgs,
                 gameId = gameId,
                 gameRendererOverride = gameRendererOverride,
-                gameEnvVars = gameEnvVars
+                gameEnvVars = gameEnvVars,
+                gameRuntimeVersionOverride = gameRuntimeVersionOverride
             ).apply {
                 if (context !is Activity) {
                     addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)

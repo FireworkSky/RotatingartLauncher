@@ -5,7 +5,6 @@ import com.app.ralaunch.R
 import com.app.ralaunch.core.platform.runtime.GameLauncher
 import com.app.ralaunch.feature.patch.data.Patch
 import com.app.ralaunch.feature.patch.data.PatchManager
-import com.app.ralaunch.core.di.contract.IGameRepositoryServiceV3
 import org.koin.java.KoinJavaComponent
 import timber.log.Timber
 import com.app.ralaunch.feature.game.ui.legacy.GameActivity
@@ -47,35 +46,27 @@ class GamePresenter : GameContract.Presenter {
 
         return try {
             val intent = view.getActivityIntent()
-            val gameStorageId = normalizeOptional(intent.getStringExtra(GameActivity.EXTRA_GAME_STORAGE_ID))
             val gameExePath = normalizeOptional(intent.getStringExtra(GameActivity.EXTRA_GAME_EXE_PATH))
 
-            when {
-                gameStorageId != null && gameExePath != null -> {
-                    Timber.e("Invalid launch intent: both storage ID and direct launch params are provided")
-                    showLaunchError(view, view.getStringRes(R.string.game_launch_invalid_params_conflict))
-                    -1
-                }
-                gameStorageId != null -> launchFromStorageId(view, gameStorageId)
-                gameExePath != null -> {
-                    val gameArgs = intent.getStringArrayExtra(GameActivity.EXTRA_GAME_ARGS) ?: emptyArray()
-                    val gameId = normalizeOptional(intent.getStringExtra(GameActivity.EXTRA_GAME_ID))
-                    val rendererOverride = normalizeOptional(intent.getStringExtra(GameActivity.EXTRA_GAME_RENDERER_OVERRIDE))
-                    val gameEnvVars = parseGameEnvVars(intent)
-                    launchFromDirectParams(
-                        view = view,
-                        gameExePath = gameExePath,
-                        gameArgs = gameArgs,
-                        gameId = gameId,
-                        gameRendererOverride = rendererOverride,
-                        gameEnvVars = gameEnvVars
-                    )
-                }
-                else -> {
-                    Timber.e("No supported launch parameters found in intent")
-                    showLaunchError(view, view.getStringRes(R.string.game_launch_no_params))
-                    -1
-                }
+            if (gameExePath != null) {
+                val gameArgs = intent.getStringArrayExtra(GameActivity.EXTRA_GAME_ARGS) ?: emptyArray()
+                val gameId = normalizeOptional(intent.getStringExtra(GameActivity.EXTRA_GAME_ID))
+                val rendererOverride = normalizeOptional(intent.getStringExtra(GameActivity.EXTRA_GAME_RENDERER_OVERRIDE))
+                val runtimeVersionOverride = normalizeOptional(intent.getStringExtra(GameActivity.EXTRA_GAME_RUNTIME_VERSION_OVERRIDE))
+                val gameEnvVars = parseGameEnvVars(intent)
+                launchFromDirectParams(
+                    view = view,
+                    gameExePath = gameExePath,
+                    gameArgs = gameArgs,
+                    gameId = gameId,
+                    gameRendererOverride = rendererOverride,
+                    gameEnvVars = gameEnvVars,
+                    gameRuntimeVersionOverride = runtimeVersionOverride
+                )
+            } else {
+                Timber.e("No supported launch parameters found in intent")
+                showLaunchError(view, view.getStringRes(R.string.game_launch_no_params))
+                -1
             }
         } catch (e: Exception) {
             Timber.e(e, "Exception in launchGame: ${e.message}")
@@ -84,62 +75,14 @@ class GamePresenter : GameContract.Presenter {
         }
     }
 
-    private fun launchFromStorageId(view: GameContract.View, gameStorageId: String): Int {
-        val gameRepository: IGameRepositoryServiceV3 = try {
-            KoinJavaComponent.get(IGameRepositoryServiceV3::class.java)
-        } catch (e: Exception) {
-            Timber.e(e, "Failed to resolve IGameRepositoryServiceV3")
-            showLaunchError(view, view.getStringRes(R.string.game_launch_repository_load_failed))
-            return -2
-        }
-
-        val game = gameRepository.games.value.find { it.id == gameStorageId }
-        if (game == null) {
-            Timber.e("Game not found for storage ID: $gameStorageId")
-            showLaunchError(view, view.getStringRes(R.string.main_game_not_found, gameStorageId))
-            return -3
-        }
-
-        val assemblyPath = game.gameExePathFull
-        if (assemblyPath.isNullOrEmpty()) {
-            Timber.e("Assembly path is null or empty")
-            showLaunchError(view, view.getStringRes(R.string.game_launch_assembly_path_empty))
-            return -4
-        }
-
-        val assemblyFile = File(assemblyPath)
-        if (!assemblyFile.exists() || !assemblyFile.isFile) {
-            Timber.e("Assembly file not found: $assemblyPath")
-            showLaunchError(view, view.getStringRes(R.string.game_launch_assembly_not_exist, assemblyPath))
-            return -5
-        }
-
-        val patchManager: PatchManager? = try {
-            KoinJavaComponent.getOrNull(PatchManager::class.java)
-        } catch (_: Exception) {
-            null
-        }
-        val enabledPatches = patchManager
-            ?.getApplicableAndEnabledPatches(game.gameId, assemblyFile.toPath())
-            ?: emptyList()
-
-        return launchAssembly(
-            assemblyPath = assemblyPath,
-            args = emptyArray(),
-            enabledPatches = enabledPatches,
-            rendererOverride = normalizeOptional(game.rendererOverride),
-            dotNetRuntimeVersionOverride = normalizeOptional(game.dotNetRuntimeVersionOverride),
-            gameEnvVars = game.gameEnvVars
-        )
-    }
-
     private fun launchFromDirectParams(
         view: GameContract.View,
         gameExePath: String,
         gameArgs: Array<String>,
         gameId: String?,
         gameRendererOverride: String?,
-        gameEnvVars: Map<String, String?>
+        gameEnvVars: Map<String, String?>,
+        gameRuntimeVersionOverride: String?
     ): Int {
         if (gameExePath.isBlank()) {
             Timber.e("Direct launch assembly path is blank")
@@ -170,7 +113,7 @@ class GamePresenter : GameContract.Presenter {
             args = gameArgs,
             enabledPatches = enabledPatches,
             rendererOverride = gameRendererOverride,
-            dotNetRuntimeVersionOverride = null,
+            dotNetRuntimeVersionOverride = gameRuntimeVersionOverride,
             gameEnvVars = gameEnvVars
         )
     }

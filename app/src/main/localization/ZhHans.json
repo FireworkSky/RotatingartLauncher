@@ -81,7 +81,7 @@
 
   "extractor.failed": "解压失败",
   "extractor.complete": "解压完成",
-  "extractor.inProgress": "正在解压: %s",
+  "extractor.inProgress": "正在解压: ${entry}",
   "extractor.sevenZip.failed": "基础7z解压器解压失败",
   "extractor.gog.script": "正在提取安装脚本...",
   "extractor.gog.mojosetup": "正在提取MojoSetup归档...",
@@ -89,5 +89,41 @@
   "extractor.gog.parseGameData": "正在解析游戏数据...",
   "extractor.gog.decompressGameData": "正在解压游戏数据...",
   "extractor.gog.gameDataComplete": "游戏数据提取完成",
-  "extractor.gog.failed": "GoG Sh 文件解压失败"
+  "extractor.gog.failed": "GoG Sh 文件解压失败",
+
+  "installer.starting": "开始安装...",
+  "installer.extractGameFailed": "游戏解压失败",
+  "installer.extractIcon": "提取图标...",
+  "installer.finishing": "完成安装...",
+  "installer.complete": "安装完成!",
+  "installer.failed": "安装失败",
+  "installer.cancelled": "导入已取消",
+  "installer.monoMod": "安装 MonoMod 库...",
+  "installer.pluginNotFound": "未找到支持此游戏的安装插件",
+
+  "installer.celeste.name": "Celeste / Everest",
+  "installer.celeste.everest.installing": "安装 Everest...",
+  "installer.celeste.everest.withDetail": "安装 Everest: ${detail}",
+  "installer.celeste.everest.miniInstaller": "执行 Everest MiniInstaller...",
+  "installer.celeste.everest.miniInstallerPatchMissing": "未找到 Everest MiniInstaller 修补程序，或者存在多个同 ID 修补程序",
+  "installer.celeste.everest.miniInstallerFailed": "Everest MiniInstaller 执行失败，错误码：${code}",
+
+  "installer.smapi.name": "Stardew Valley / SMAPI",
+  "installer.smapi.installing": "安装 SMAPI...",
+  "installer.smapi.withDetail": "安装 SMAPI: ${detail}",
+  "installer.smapi.extractWithDetail": "解压 SMAPI: ${detail}",
+  "installer.smapi.processFiles": "处理 SMAPI 文件...",
+  "installer.smapi.extractCoreFiles": "解压 SMAPI 核心文件...",
+  "installer.smapi.installDatFailed": "解压 install.dat 失败: ${reason}",
+  "installer.smapi.copyFiles": "复制 SMAPI 文件...",
+  "installer.smapi.configure": "配置 SMAPI...",
+  "installer.smapi.applyMonoModPatch": "应用 MonoMod 补丁...",
+  "installer.smapi.patchArm64": "修补 ARM64 架构...",
+  "installer.smapi.patchConfig": "修补配置文件...",
+
+  "installer.terraria.name": "Terraria / tModLoader",
+  "installer.terraria.tModLoader.prepareDir": "准备 tModLoader 目录...",
+  "installer.terraria.tModLoader.installing": "安装 tModLoader...",
+  "installer.terraria.tModLoader.withDetail": "安装 tModLoader: ${detail}",
+  "installer.terraria.tModLoader.copyFiles": "复制 tModLoader 文件..."
 }

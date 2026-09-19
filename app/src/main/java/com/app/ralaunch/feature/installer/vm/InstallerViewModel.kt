@@ -4,10 +4,9 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.app.ralaunch.R
-import com.app.ralaunch.core.di.contract.IGameRepositoryServiceV3
-import com.app.ralaunch.core.model.GameItem
 import com.app.ralaunch.feature.installer.GameInstaller
-import com.app.ralaunch.feature.installer.InstallCallback
+import com.app.ralaunch.feature.installer.GameInstallPlugin.Event
+import com.app.ralaunch.feature.installer.GameInstallPlugin.Result
 import com.app.ralaunch.feature.installer.InstallPluginRegistry
 import com.app.ralaunch.feature.installer.contract.InstallerFileType
 import com.app.ralaunch.feature.installer.contract.InstallerUiEffect
@@ -26,8 +25,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class InstallerViewModel(
-    private val appContext: Context,
-    private val gameRepository: IGameRepositoryServiceV3
+    private val appContext: Context
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(InstallerUiState())
@@ -180,93 +178,76 @@ class InstallerViewModel(
             )
         }
 
-        val installer = GameInstaller(gameRepository)
+        val installer = GameInstaller()
         activeInstaller = installer
 
-        installer.install(
-            gameFilePath = state.gameFilePath.orEmpty(),
-            modLoaderFilePath = state.modLoaderFilePath,
-            callback = object : InstallCallback {
-                override fun onProgress(message: String, progress: Int) {
-                    _uiState.update {
-                        it.copy(
-                            status = message,
-                            progress = progress.coerceIn(0, 100)
-                        )
-                    }
+        // 进度驱动 UI；终态（Complete/Error/Cancelled）由 install 返回的 Result 统一处理
+        val onEvent: (Event) -> Unit = { event ->
+            when (event) {
+                is Event.Progress -> _uiState.update {
+                    it.copy(
+                        status = event.message,
+                        progress = event.progress.coerceIn(0, 100)
+                    )
                 }
 
-                override fun onComplete(gameItem: GameItem) {
-                    activeInstaller = null
-                    viewModelScope.launch(Dispatchers.IO) {
-                        try {
-                            gameRepository.upsert(gameItem, 0)
-                            withContext(Dispatchers.Main) {
-                                _uiState.update {
-                                    it.copy(
-                                        isImporting = false,
-                                        progress = 100,
-                                        status = appContext.getString(R.string.import_complete_exclamation),
-                                        errorMessage = null
-                                    )
-                                }
-                                _effects.tryEmit(
-                                    InstallerUiEffect.ShowSuccess(
-                                        appContext.getString(R.string.game_added_success)
-                                    )
-                                )
-                                _effects.tryEmit(InstallerUiEffect.NavigateToGames)
-                                resetSelections()
-                            }
-                        } catch (e: Exception) {
-                            val message = e.message
-                                ?: appContext.getString(R.string.import_error_game_import_failed)
-                            withContext(Dispatchers.Main) {
-                                _uiState.update {
-                                    it.copy(
-                                        isImporting = false,
-                                        errorMessage = message
-                                    )
-                                }
-                                _effects.tryEmit(
-                                    InstallerUiEffect.ShowToast(
-                                        appContext.getString(
-                                            R.string.import_failed_colon,
-                                            e.message ?: appContext.getString(R.string.common_unknown_error)
-                                        )
-                                    )
-                                )
-                            }
-                        }
-                    }
-                }
+                is Event.Complete, is Event.Error, is Event.Cancelled -> Unit
+            }
+        }
 
-                override fun onError(error: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            when (
+                val result = installer.install(
+                    gameFilePath = state.gameFilePath.orEmpty(),
+                    modLoaderFilePath = state.modLoaderFilePath,
+                    callback = onEvent
+                )
+            ) {
+                is Result.Success -> {
                     activeInstaller = null
                     _uiState.update {
                         it.copy(
                             isImporting = false,
-                            errorMessage = error
+                            progress = 100,
+                            status = appContext.getString(R.string.import_complete_exclamation),
+                            errorMessage = null
+                        )
+                    }
+                    _effects.tryEmit(
+                        InstallerUiEffect.ShowSuccess(
+                            appContext.getString(R.string.game_added_success)
+                        )
+                    )
+                    _effects.tryEmit(InstallerUiEffect.NavigateToGames)
+                    resetSelections()
+                }
+
+                is Result.Failure -> {
+                    activeInstaller = null
+                    _uiState.update {
+                        it.copy(
+                            isImporting = false,
+                            errorMessage = result.message
                         )
                     }
                     _effects.tryEmit(
                         InstallerUiEffect.ShowToast(
-                            appContext.getString(R.string.import_failed_colon, error)
+                            appContext.getString(R.string.import_failed_colon, result.message)
                         )
                     )
                 }
 
-                override fun onCancelled() {
+                is Result.Cancelled -> {
                     activeInstaller = null
                     _uiState.update {
                         it.copy(
                             isImporting = false,
-                            errorMessage = appContext.getString(R.string.import_cancelled)
+                            errorMessage = result.message
                         )
                     }
                 }
             }
-        )
+        }
     }
 
     private fun clearError() {

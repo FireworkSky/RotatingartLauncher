@@ -1,15 +1,16 @@
 package com.app.ralaunch.core.model
 
-import com.app.ralaunch.core.di.contract.IGameRepositoryServiceV3
+import com.app.ralaunch.jsonconfig.FlowJsonConfig
+import com.app.ralaunch.utils.GameManager
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.Transient
 import kotlin.io.path.Path
 
 /**
  * 游戏项数据模型 - 统一跨平台版本
  *
  * 序列化到 game_info.json，使用相对路径存储。
- * 通过 gameRepositoryParent 延迟解析绝对路径。
+ * 绝对路径 getter 经 GameManager.directory(id) 解析，目录缺失或
+ * 未初始化时返回 null，不持有根目录字段。
  *
  * @property id 唯一安装标识符，用作存储目录名（游戏名+随机哈希）
  * @property displayedName 显示名称
@@ -21,23 +22,21 @@ import kotlin.io.path.Path
  * @property rendererOverride 渲染器覆盖（null 表示跟随全局设置）
  * @property dotNetRuntimeVersionOverride .NET 运行时版本覆盖（null 表示跟随全局设置）
  * @property gameEnvVars 游戏环境变量（null 值表示在启动前 unset 对应变量）
- * @property gameRepositoryParent 父仓库实例引用（非序列化，反序列化后需手动设置）
  */
+// 构造参数默认值由 @FlowJsonConfig 生成代码要求（initial = GameItem()）
+@FlowJsonConfig
 @Serializable
 data class GameItem(
-    val id: String,
-    var displayedName: String,
+    val id: String = "",
+    var displayedName: String = "",
     var displayedDescription: String = "",
-    var gameId: String,
-    var gameExePathRelative: String,
+    var gameId: String = "",
+    var gameExePathRelative: String = "",
     var iconPathRelative: String? = null,
     var modLoaderEnabled: Boolean = true,
     var rendererOverride: String? = null,
     var dotNetRuntimeVersionOverride: String? = null,
-    var gameEnvVars: Map<String, String?> = emptyMap(),
-
-    @Transient
-    var gameRepositoryParent: IGameRepositoryServiceV3? = null
+    var gameEnvVars: Map<String, String?> = emptyMap()
 ) {
     /**
      * 游戏存储目录名称（相对于全局 games 目录）
@@ -52,15 +51,12 @@ data class GameItem(
     /**
      * 游戏存储根目录的绝对路径
      *
-     * 通过全局存储目录与 [id] 拼接得到。
-     * 若 [gameRepositoryParent] 未设置则返回 null。
+     * 经 [GameManager.directory] 解析；目录缺失、越界或未初始化时返回 null。
      *
      * 例: `/data/games/celeste_a1b2c3d4/`
      */
     val storageRootPathFull: String?
-        get() = gameRepositoryParent?.getGameGlobalStorageDirFull()?.let {
-            Path(it).resolve(id).toString()
-        }
+        get() = runCatching { GameManager.directory(id).toString() }.getOrNull()
 
     /**
      * 游戏主程序的绝对路径

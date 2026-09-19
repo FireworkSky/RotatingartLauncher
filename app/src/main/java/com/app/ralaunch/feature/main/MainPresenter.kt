@@ -6,17 +6,15 @@ import com.app.ralaunch.R
 import timber.log.Timber
 import com.app.ralaunch.core.platform.AppConstants
 import com.app.ralaunch.core.model.GameItem
-import com.app.ralaunch.core.di.contract.IGameRepositoryServiceV3
+import com.app.ralaunch.utils.GameManager
 import com.app.ralaunch.core.model.GameItemUi
 import com.app.ralaunch.core.model.applyFromUiModel
-import com.app.ralaunch.core.common.GameLaunchManager
 import com.app.ralaunch.core.ui.BasePresenter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.runBlocking
-import org.koin.java.KoinJavaComponent.get
 
 /**
  * 主界面 Presenter
@@ -37,12 +35,7 @@ class MainPresenter(
         SETTINGS(4)
     }
 
-    // 通过 Koin 获取 GameRepository
-    private val gameRepository: IGameRepositoryServiceV3 = get(IGameRepositoryServiceV3::class.java)
-    private val gameLaunchManager: GameLaunchManager = GameLaunchManager(context)
-    
     private val presenterScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
-    
     private var gameList: MutableList<GameItem> = mutableListOf()
     private var selectedGame: GameItem? = null
     private var currentPage: NavPage = NavPage.GAME
@@ -72,9 +65,9 @@ class MainPresenter(
     // ==================== 游戏列表 ====================
 
     override fun loadGameList() {
-        // 同步加载：数据已在 Repository 初始化时读入内存，此处直接读取几乎无开销
+        // 同步加载：数据已在 GameManager 初始化时读入内存，此处读取独立快照
         // 避免异步加载导致 Compose 首帧无数据，出现空白闪烁
-        val games = gameRepository.games.value
+        val games = GameManager.currentGames
         gameList = games.toMutableList()
         withView { showGameList(gameList) }
     }
@@ -88,6 +81,13 @@ class MainPresenter(
     }
 
     override fun deleteGame(game: GameItem, position: Int) {
+        if (position !in gameList.indices) return
+        val gameId = gameList[position].id
+        runBlocking {
+            GameManager.remove(gameId)
+        }
+        gameList.removeAt(position)
+
         if (selectedGame == game) {
             selectedGame = null
             withView { 
@@ -95,14 +95,7 @@ class MainPresenter(
                 hideLaunchButton()
             }
         }
-        
-        if (position in gameList.indices) {
-            gameList.removeAt(position)
-            runBlocking {
-                gameRepository.removeAt(position)
-            }
-            withView { refreshGameList() }
-        }
+        withView { refreshGameList() }
     }
 
     override fun launchSelectedGame() {
@@ -118,10 +111,10 @@ class MainPresenter(
     }
 
     override fun addGame(game: GameItem) {
-        gameList.add(0, game)
-        runBlocking {
-            gameRepository.upsert(game, 0)
+        val savedGame = runBlocking {
+            GameManager.save(game, 0)
         }
+        gameList.add(0, savedGame)
         withView {
             refreshGameList()
             showToast(context.getString(R.string.game_added_success))
@@ -148,7 +141,7 @@ class MainPresenter(
             game.applyFromUiModel(updatedGameUi)
 
             runBlocking {
-                gameRepository.upsert(game, index)
+                GameManager.save(game, index)
             }
 
             // 如果是当前选中的游戏，更新选中状态
@@ -194,8 +187,4 @@ class MainPresenter(
     override fun onGameImportComplete(gameType: String, game: GameItem) {
         addGame(game)
     }
-
-    // ==================== 工具方法 ====================
-
-    fun getGameLaunchManager(): GameLaunchManager = gameLaunchManager
 }

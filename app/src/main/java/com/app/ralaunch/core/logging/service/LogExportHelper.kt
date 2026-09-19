@@ -2,7 +2,7 @@ package com.app.ralaunch.core.logging.service
 
 import android.os.Build
 import com.app.ralaunch.RaLaunchApp
-import com.app.ralaunch.core.di.contract.IGameRepositoryServiceV3
+import com.app.ralaunch.utils.GameManager
 import com.app.ralaunch.core.di.service.StoragePathsProviderServiceV1
 import timber.log.Timber
 import com.app.ralaunch.core.logging.LogFilePolicy
@@ -16,16 +16,13 @@ import java.util.Locale
 
 internal class LogExportHelper(
     private val logsDirPathProvider: () -> String,
-    private val gameRepositoryProvider: () -> IGameRepositoryServiceV3? = { null },
     private val patchManagerProvider: () -> PatchManager? = { null }
 ) {
     constructor(
         storagePathsProvider: StoragePathsProviderServiceV1,
-        gameRepository: IGameRepositoryServiceV3? = null,
         patchManager: PatchManager? = null
     ) : this(
         logsDirPathProvider = storagePathsProvider::logsDirPathFull,
-        gameRepositoryProvider = { gameRepository },
         patchManagerProvider = { patchManager }
     )
 
@@ -53,7 +50,7 @@ internal class LogExportHelper(
 
         return buildString {
             appendDiagnosticSection(buildDeviceInfo())
-            appendDiagnosticSection(buildGameRepositoryInfo())
+            appendDiagnosticSection(buildGameManagerInfo())
             appendDiagnosticSection(buildPatchManagementInfo())
 
             files.forEachIndexed { index, file ->
@@ -73,16 +70,12 @@ internal class LogExportHelper(
         }
     }
 
-    fun buildGameRepositoryInfo(): String {
+    fun buildGameManagerInfo(): String {
         return try {
-            val gameRepository = gameRepositoryProvider()
-                ?: return buildDiagnosticSection("Game Repository Information") {
-                    appendLine("Status: Unavailable")
-                }
-            val games = gameRepository.games.value
+            val games = GameManager.currentGames
 
-            buildDiagnosticSection("Game Repository Information") {
-                appendLine("Games Root: ${safeValue { gameRepository.getGameGlobalStorageDirFull() }}")
+            buildDiagnosticSection("Game Manager Information") {
+                appendLine("Games Root: ${safeValue { GameManager.gamesDirectory.toString() }}")
                 appendLine("Installed Games: ${games.size}")
 
                 if (games.isEmpty()) {
@@ -109,8 +102,8 @@ internal class LogExportHelper(
                 }
             }
         } catch (e: Throwable) {
-            Timber.e(e, "Failed to build game repository info")
-            buildFailureSection("Game Repository Information", e)
+            Timber.e(e, "Failed to build game manager info")
+            buildFailureSection("Game Manager Information", e)
         }
     }
 
@@ -121,7 +114,7 @@ internal class LogExportHelper(
                     appendLine("Status: Unavailable")
                 }
             val installedPatches = patchManager.installedPatches
-            val games = gameRepositoryProvider()?.games?.value.orEmpty()
+            val games = GameManager.currentGames
 
             buildDiagnosticSection("Patch Management Information") {
                 appendLine("Status: Available")

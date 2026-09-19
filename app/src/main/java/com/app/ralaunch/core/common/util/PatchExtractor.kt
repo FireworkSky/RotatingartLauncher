@@ -1,11 +1,10 @@
 package com.app.ralaunch.core.common.util
 
 import android.content.Context
-import com.app.ralaunch.core.di.contract.IGameRepositoryServiceV3
+import com.app.ralaunch.utils.GameManager
 import timber.log.Timber
 import com.app.ralaunch.core.platform.runtime.AssemblyPatcher
 import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream
-import org.koin.java.KoinJavaComponent
 import java.io.BufferedInputStream
 import java.io.BufferedOutputStream
 import java.io.File
@@ -81,11 +80,7 @@ object PatchExtractor {
 
     private fun applyMonoModToAllGames(context: Context, monoModDir: File) {
         try {
-            val gameRepository: IGameRepositoryServiceV3? = try {
-                KoinJavaComponent.getOrNull(IGameRepositoryServiceV3::class.java)
-            } catch (e: Exception) { null }
-            if (gameRepository == null) return
-            val games = gameRepository.games.value
+            val games = GameManager.currentGames
             if (games.isEmpty()) return
 
             games.forEach { game ->

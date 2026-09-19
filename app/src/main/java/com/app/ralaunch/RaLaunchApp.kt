@@ -13,17 +13,20 @@ import com.app.ralaunch.core.common.util.DensityAdapter
 import com.app.ralaunch.core.common.util.LocaleManager
 import com.app.ralaunch.core.di.KoinInitializer
 import com.app.ralaunch.core.di.contract.IRuntimeManagerServiceV2
+import com.app.ralaunch.core.di.service.StoragePathsProviderServiceV1
 import com.app.ralaunch.core.di.service.VibrationManagerServiceV1
 import timber.log.Timber
 import com.app.ralaunch.core.model.ThemeMode
 import com.app.ralaunch.feature.controls.packs.ControlPackManager
 import com.app.ralaunch.feature.patch.data.PatchManager
 import com.app.ralaunch.utils.AppLogger
+import com.app.ralaunch.utils.GameManager
 import com.app.ralaunch.utils.RuntimeManager
 import com.kyant.fishnet.Fishnet
 import org.koin.android.ext.android.inject
 import org.koin.core.component.KoinComponent
 import java.io.File
+import kotlin.io.path.Path
 
 
 /**
@@ -76,16 +79,19 @@ class RaLaunchApp : Application(), KoinComponent {
         // 5. 启动时迁移旧运行时布局
         RuntimeManager.initialize(this.filesDir)
 
-        // 6. 应用主题设置
+        // 6. 初始化游戏管理器（games 目录固定后才能被各组件直接使用）
+        GameManager.initialize(Path(StoragePathsProviderServiceV1(this).gamesDirPathFull()))
+
+        // 7. 应用主题设置
         applyThemeFromSettings()
 
-        // 7. 初始化崩溃捕获
+        // 8. 初始化崩溃捕获
         initCrashHandler()
 
-        // 8. 后台安装补丁
+        // 9. 后台安装补丁
         installPatchesInBackground()
 
-        // 9. 设置环境变量
+        // 10. 设置环境变量
         setupEnvironmentVariables()
 
         applyIconAlias()

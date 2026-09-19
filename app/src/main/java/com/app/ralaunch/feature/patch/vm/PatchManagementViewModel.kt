@@ -6,7 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.app.ralaunch.core.common.util.StreamUtils
 import com.app.ralaunch.core.common.util.TemporaryFileAcquirer
-import com.app.ralaunch.core.di.contract.IGameRepositoryServiceV3
+import com.app.ralaunch.utils.GameManager
 import com.app.ralaunch.core.model.GameItem
 import com.app.ralaunch.feature.patch.data.Patch
 import com.app.ralaunch.feature.patch.data.PatchManager
@@ -30,7 +30,6 @@ data class PatchManagementUiState(
 
 class PatchManagementViewModel(
     private val appContext: Context,
-    private val gameRepository: IGameRepositoryServiceV3,
     private val patchManager: PatchManager?
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(PatchManagementUiState())
@@ -38,14 +37,14 @@ class PatchManagementViewModel(
 
     init {
         viewModelScope.launch {
-            gameRepository.games.collectLatest { repositoryGames ->
+            GameManager.games.collectLatest { games ->
                 val currentSelected = _uiState.value.selectedGame
-                val selectedGame = repositoryGames.find { it.id == currentSelected?.id }
+                val selectedGame = games.find { it.id == currentSelected?.id }
                 _uiState.update {
                     it.copy(
-                        games = repositoryGames,
+                        games = games,
                         selectedGame = selectedGame,
-                        selectedGameIndex = repositoryGames.indexOfFirst { game -> game.id == selectedGame?.id }
+                        selectedGameIndex = games.indexOfFirst { game -> game.id == selectedGame?.id }
                     )
                 }
                 refreshPatches()
@@ -73,15 +72,13 @@ class PatchManagementViewModel(
 
     fun isPatchEnabled(patchId: String): Boolean {
         val selectedGame = _uiState.value.selectedGame ?: return false
-        val gameAsmPath = selectedGame.gameExePathFull?.let { Paths.get(it) }
-            ?: Paths.get(selectedGame.gameExePathRelative)
+        val gameAsmPath = selectedGame.gameExePathFull?.let { Paths.get(it) } ?: return false
         return patchManager?.isPatchEnabled(gameAsmPath, patchId) ?: false
     }
 
     fun setPatchEnabled(patchId: String, enabled: Boolean) {
         val selectedGame = _uiState.value.selectedGame ?: return
-        val gameAsmPath = selectedGame.gameExePathFull?.let { Paths.get(it) }
-            ?: Paths.get(selectedGame.gameExePathRelative)
+        val gameAsmPath = selectedGame.gameExePathFull?.let { Paths.get(it) } ?: return
         patchManager?.setPatchEnabled(gameAsmPath, patchId, enabled)
     }
 

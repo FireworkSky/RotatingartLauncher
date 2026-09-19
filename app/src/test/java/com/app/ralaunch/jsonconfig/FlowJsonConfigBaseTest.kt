@@ -7,6 +7,7 @@ import kotlinx.coroutines.yield
 import kotlinx.coroutines.flow.take
 import kotlinx.serialization.Serializable
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.File
@@ -127,6 +128,45 @@ class FlowJsonConfigBaseTest {
 
             assertEquals(TestConfigData(name = "persisted", port = 65535), second.value)
             assertEquals("persisted", second.c.name)
+        } finally {
+            dir.deleteRecursively()
+        }
+    }
+
+    @Test
+    fun saveAndLoadRoundTripsThroughExplicitFile() {
+        val dir = newTempDir()
+        try {
+            val config = TestConfig(File(dir, "primary.json").absolutePath)
+            val alt = File(File(dir, "nested"), "alt.json") // 父目录不存在，验证 save 自动创建
+            config.c.name = "explicit"
+
+            assertTrue(config.save(alt))
+            assertFalse(File(dir, "primary.json").exists()) // configPath 未被动用
+
+            val other = TestConfig(File(dir, "other.json").absolutePath)
+            other.load(alt)
+            assertEquals(TestConfigData(name = "explicit", port = 8080), other.value)
+        } finally {
+            dir.deleteRecursively()
+        }
+    }
+
+    @Test
+    fun loadExplicitMissingFileResetsStateAndWritesDefaultThere() {
+        val dir = newTempDir()
+        try {
+            val config = TestConfig(File(dir, "primary.json").absolutePath)
+            val alt = File(dir, "alt.json")
+            config.c.name = "dirty"
+
+            config.load(alt)
+
+            assertEquals(TestConfigData(), config.value)
+            assertTrue(alt.exists())
+            val reloaded = TestConfig(File(dir, "other.json").absolutePath)
+            reloaded.load(alt)
+            assertEquals(TestConfigData(), reloaded.value)
         } finally {
             dir.deleteRecursively()
         }

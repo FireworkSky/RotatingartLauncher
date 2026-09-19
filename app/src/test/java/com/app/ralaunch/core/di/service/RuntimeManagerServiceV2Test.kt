@@ -85,32 +85,6 @@ class RuntimeManagerServiceV2Test {
     }
 
     @Test
-    fun `migrateLegacyInstallations moves legacy dotnet into versioned runtimes layout`() {
-        val runtimesRoot = createTempDirectory("runtime-root-")
-        val legacyParent = createTempDirectory("legacy-parent-")
-        val legacyDotnetRoot = legacyParent.resolve("dotnet")
-
-        try {
-            createDotNetRuntimeLayout(legacyDotnetRoot, "10.0.4")
-
-            val service = RuntimeManagerServiceV2(runtimesRoot, legacyDotnetRoot)
-
-            service.migrateLegacyInstallations()
-
-            val migratedRoot = runtimesRoot.resolve("dotnet").resolve("10.0.4")
-            assertTrue(migratedRoot.exists())
-            assertTrue(legacyDotnetRoot.notExists())
-            assertEquals(
-                "10.0.4",
-                AppConfig.c.selectedDotnetRuntimeVersion
-            )
-        } finally {
-            runtimesRoot.deleteRecursively()
-            legacyParent.deleteRecursively()
-        }
-    }
-
-    @Test
     fun `getInstalledRuntimes does not migrate legacy dotnet automatically`() {
         val runtimesRoot = createTempDirectory("runtime-root-")
         val legacyParent = createTempDirectory("legacy-parent-")

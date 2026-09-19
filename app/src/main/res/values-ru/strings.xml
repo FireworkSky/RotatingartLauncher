@@ -1395,7 +1395,6 @@
     <string name="control_layout_created">Макет создан</string>
     <string name="key_selector_keyboard_mode">Клавиатура</string>
     <string name="key_selector_gamepad_mode">Геймпад</string>
-    <string name="game_launch_invalid_params_conflict">Неверные параметры запуска: конфликтующие режимы запуска</string>
     <string name="game_launch_no_params">Параметры запуска не указаны</string>
     <string name="game_launch_repository_load_failed">Не удалось загрузить репозиторий игры.</string>
     <string name="gog_email_label">Адрес электронной почты</string>

@@ -26,8 +26,7 @@ import kotlin.reflect.KProperty1
  *   解析失败回退默认值。
  *
  * 用法（推荐：用 `@FlowJsonConfig` 注解让 KSP 处理器生成样板代码，
- * 见 [FlowJsonConfig]；生成类为 `<Model>FlowJsonConfigGenerated`，
- * 子类只需 override [configPath]）：
+ * 见 [FlowJsonConfig]；生成类为 `<Model>FlowJsonConfigGenerated`）：
  * ```kotlin
  * @FlowJsonConfig
  * @Serializable
@@ -45,6 +44,9 @@ import kotlin.reflect.KProperty1
  * AppConfig.s.abc = "hello"                          // 读写并在写入后自动落盘
  * AppConfig.flowOf(AppConfigData::abc)              // 观察单个字段
  * AppConfig.save()                                  // 写入磁盘
+ *
+ * 单一模型需读写多个文件时（如每个游戏一份配置），可不 override [configPath]，
+ * 对 [load] / [save] 显式传入目标文件。
  * ```
  *
  * @param Data immutable 配置数据类型
@@ -63,8 +65,12 @@ abstract class FlowJsonConfigBase<Data>(
 
     private val dataSerializer: KSerializer<Data> = serializer
 
-    /** 配置文件路径，由子类 override 声明 */
-    protected abstract val configPath: String
+    /**
+     * 缺省配置文件路径，由子类 override 声明；
+     * 不 override 时必须对 [load] / [save] 显式传入文件，否则报错。
+     */
+    protected open val configPath: String
+        get() = error("configPath is not set; override it or pass a file to load()/save()")
 
     protected val _state = MutableStateFlow(initial)
 
@@ -120,26 +126,25 @@ abstract class FlowJsonConfigBase<Data>(
     }
 
     /**
-     * 从磁盘加载配置：文件存在则解码（解析失败回退默认值），不存在则写入默认配置
+     * 从磁盘加载配置：文件存在则解码（解析失败回退默认值），不存在则写入默认配置。
+     * 缺省读写 [configPath]，传入 [file] 可读写任意文件。
      */
-    fun load() {
-        val file = File(configPath)
+    fun load(file: File = File(configPath)) {
         if (file.exists()) {
             _state.value = runCatching {
                 json.decodeFromString(dataSerializer, file.readText())
             }.getOrDefault(default)
         } else {
             _state.value = default
-            save()
+            save(file)
         }
     }
 
     /**
-     * 将当前配置写入磁盘
+     * 将当前配置写入磁盘；缺省写入 [configPath]，传入 [file] 可写入任意文件。
      * @return 是否保存成功
      */
-    fun save(): Boolean = runCatching {
-            val file = File(configPath)
+    fun save(file: File = File(configPath)): Boolean = runCatching {
             file.parentFile?.let { parent ->
                 if (!parent.exists()) {
                     parent.mkdirs()

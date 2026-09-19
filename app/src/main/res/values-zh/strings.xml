@@ -1991,7 +1991,6 @@
     <string name="gog_game_id">ID：%1$d</string>
     <string name="appearance_image_background_set">图片背景已设置，不透明度已自动调整为 90%%</string>
     <string name="appearance_video_background_set">视频背景已设置，不透明度已自动调整为 90%%</string>
-    <string name="game_launch_invalid_params_conflict">启动参数无效：启动模式冲突</string>
     <string name="game_launch_no_params">未提供启动参数</string>
     <string name="game_launch_repository_load_failed">加载游戏仓库失败</string>
     <string name="key_escape">ESC</string>

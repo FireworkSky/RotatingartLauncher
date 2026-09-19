@@ -4,11 +4,10 @@ import android.content.Context
 import android.content.pm.PackageManager
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.app.ralaunch.core.common.GameLaunchManager
 import com.app.ralaunch.core.config.AppConfig
 import timber.log.Timber
 import com.app.ralaunch.R
-import com.app.ralaunch.core.di.contract.IGameRepositoryServiceV3
+import com.app.ralaunch.utils.GameManager
 import com.app.ralaunch.core.navigation.NavDestination
 import com.app.ralaunch.core.navigation.NavigationEvent
 import com.app.ralaunch.core.model.GameItem
@@ -36,8 +35,6 @@ import kotlinx.coroutines.withContext
 
 class MainViewModel(
     private val appContext: Context,
-    private val gameRepository: IGameRepositoryServiceV3,
-    private val gameLaunchManager: GameLaunchManager,
     private val announcementRepositoryService: AnnouncementRepositoryService,
     private val launcherUpdateChecker: LauncherUpdateChecker
 ) : ViewModel() {
@@ -94,7 +91,7 @@ class MainViewModel(
 
     private fun observeGames() {
         viewModelScope.launch {
-            gameRepository.games.collectLatest { games ->
+            GameManager.games.collectLatest { games ->
                 val distinctGames = games.distinctBy { it.id }
                 gameItemsMap.clear()
                 distinctGames.forEach { game ->
@@ -231,9 +228,9 @@ class MainViewModel(
         viewModelScope.launch(Dispatchers.IO) {
             val game = gameItemsMap[updatedGameUi.id] ?: return@launch
             game.applyFromUiModel(updatedGameUi)
-            val index = gameRepository.games.value.indexOfFirst { it.id == game.id }
+            val index = GameManager.currentGames.indexOfFirst { it.id == game.id }
             if (index >= 0) {
-                gameRepository.upsert(game, index)
+                GameManager.save(game, index)
             }
         }
     }
@@ -286,14 +283,8 @@ class MainViewModel(
                     return@launch
                 }
 
-                val filesDeleted = gameRepository.deleteGameFiles(game)
-                gameRepository.removeById(game.id)
-
-                if (filesDeleted) {
-                    emitEffect(MainUiEffect.ShowSuccess(appContext.getString(R.string.main_game_deleted)))
-                } else {
-                    emitEffect(MainUiEffect.ShowToast(appContext.getString(R.string.main_game_deleted_partial)))
-                }
+                GameManager.remove(game.id)
+                emitEffect(MainUiEffect.ShowSuccess(appContext.getString(R.string.main_game_deleted)))
             } catch (_: Exception) {
                 emitEffect(MainUiEffect.ShowToast(appContext.getString(R.string.error_operation_failed)))
             } finally {
@@ -318,10 +309,12 @@ class MainViewModel(
         }
 
         viewModelScope.launch {
-            val success = withContext(Dispatchers.Main) {
-                gameLaunchManager.launchGame(game)
-            }
-            if (!success) {
+            try {
+                withContext(Dispatchers.IO) {
+                    GameManager.launch(game.id).start()
+                }
+            } catch (e: Exception) {
+                Timber.e(e, "Launch failed: ${game.displayedName}")
                 emitEffect(MainUiEffect.ShowToast(appContext.getString(R.string.game_launch_failed)))
                 return@launch
             }
