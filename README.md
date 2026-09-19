@@ -100,7 +100,7 @@ Supports FNA/XNA framework games and mod loaders like tModLoader, SMAPI, and Eve
 <td width="50%" valign="top">
 
 ### 🌐 More Features
-- **GOG Integration** — Download purchased games
+- **GOG Installer Support** — Import GOG Linux .sh installers
 - **EasyTier Multiplayer** — P2P VPN networking
 - **Patch System** — Auto game compatibility
 - **Multi-Process** — Isolated game process
@@ -137,7 +137,7 @@ Supports FNA/XNA framework games and mod loaders like tModLoader, SMAPI, and Eve
 ### Usage
 
 1. Open Rotating Art Launcher
-2. Tap **"+"** to add a game (or download via GOG)
+2. Tap **"+"** to add a game
 3. Select the game executable
 4. Configure renderer and controls
 5. Launch and enjoy 🎮
@@ -186,7 +186,6 @@ RotatingartLauncher/
 │       │   ├── dotnet/           #   .NET runtime integration
 │       │   ├── renderer/         #   Renderer config & loading
 │       │   ├── controls/         #   Virtual control system
-│       │   ├── gog/              #   GOG Galaxy integration
 │       │   ├── easytier/         #   EasyTier multiplayer service
 │       │   ├── patch/            #   Patch management system
 │       │   └── ui/               #   Compose UI screens

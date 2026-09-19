@@ -97,7 +97,6 @@ fun MainApp(
                 }
                 val navGamesLabel = stringResource(R.string.game_list_title)
                 val navControlsLabel = stringResource(R.string.main_control_layout)
-                val navDownloadLabel = stringResource(R.string.main_download)
                 val navImportLabel = stringResource(R.string.main_import_game)
                 val navAnnouncementsLabel = stringResource(R.string.main_announcements)
                 val navSettingsLabel = stringResource(R.string.main_settings)
@@ -111,7 +110,6 @@ fun MainApp(
                         when (destination) {
                             NavDestination.GAMES -> navGamesLabel
                             NavDestination.CONTROLS -> navControlsLabel
-                            NavDestination.DOWNLOAD -> navDownloadLabel
                             NavDestination.IMPORT -> navImportLabel
                             NavDestination.ANNOUNCEMENTS -> navAnnouncementsLabel
                             NavDestination.SETTINGS -> navSettingsLabel

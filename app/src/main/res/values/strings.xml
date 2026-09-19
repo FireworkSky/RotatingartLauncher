@@ -481,34 +481,6 @@
     <string name="editor_joystick_side_right">Right Joystick</string>
 
     <!-- GogClientFragment Messages -->
-    <string name="gog_email_verification">Email Verification</string>
-    <string name="gog_email_code_prompt">Please enter the 4-digit code sent to your email</string>
-    <string name="gog_4_digit_code">4-digit code</string>
-    <string name="gog_authenticator">Authenticator</string>
-    <string name="gog_totp_code_prompt">Please enter the 6-digit code from your TOTP authenticator</string>
-    <string name="gog_6_digit_code">6-digit code</string>
-    <string name="gog_games_count">%d games</string>
-    <string name="gog_logged_in">Logged in</string>
-    <string name="gog_enter_email">Please enter email address</string>
-    <string name="gog_enter_password">Please enter password</string>
-    <string name="gog_login_success">Login successful</string>
-    <string name="gog_login_failed">Login failed, please check email and password</string>
-    <string name="gog_login_error">Login error: %s</string>
-    <string name="gog_library_empty">Your game library is empty</string>
-    <string name="gog_load_failed">Load failed: %s</string>
-    <string name="gog_logged_out">Logged out</string>
-    <string name="gog_one_click_not_supported">This game does not support one-click installation</string>
-    <string name="gog_no_game_version">No available game version</string>
-    <string name="gog_no_modloader_version">No available ModLoader version</string>
-    <string name="gog_install_game">Install %s</string>
-    <string name="gog_modloader_version">%s version</string>
-    <string name="gog_cannot_access_storage">Cannot access external storage</string>
-    <string name="gog_cannot_get_download_link">Cannot get installer download link</string>
-    <string name="gog_modloader_link_invalid">ModLoader link invalid</string>
-    <string name="gog_download_failed">Download failed: %s</string>
-    <string name="gog_download_game">Download Game</string>
-    <string name="gog_game_id">ID: %1$d</string>
-    <string name="gog_download_game_modloader_hint">Tap to download game and ModLoader</string>
 
     <!-- LocalImportDialog Messages -->
     <string name="dialog_modloader_zip">Mod Loader (.zip)</string>
@@ -546,21 +518,6 @@
     <string name="editor_delete_control_confirm">Are you sure you want to delete this control?</string>
 
     <!-- GogClientFragment Additional Messages -->
-    <string name="gog_logout_confirm_title">Confirm Logout</string>
-    <string name="gog_logout_confirm_message">Are you sure you want to logout from GOG account?</string>
-    <string name="gog_loading_user_info">Loading user info...</string>
-    <string name="gog_logging_in">Logging in...</string>
-    <string name="gog_loading_games">Loading game list...</string>
-    <string name="gog_loading_version_info">Loading version info for %s...</string>
-    <string name="gog_load_failed_title">Load Failed</string>
-    <string name="gog_network_abort">Network connection aborted, please check network and retry</string>
-    <string name="gog_network_timeout">Connection timeout, please check network or try again later</string>
-    <string name="gog_network_dns">Cannot connect to GOG server, please check network or use VPN</string>
-    <string name="gog_get_details_failed">Failed to get game details, please retry</string>
-    <string name="gog_error_details">Error details: %s</string>
-    <string name="gog_retry">Retry</string>
-    <string name="gog_load_games_failed">Failed to load game list: %s</string>
-    <string name="gog_games_loaded">Loaded %d games</string>
 
     <!-- ControlEditorActivity Messages -->
     <string name="editor_exit_title">Exit Editor</string>
@@ -654,10 +611,6 @@
     <string name="filebrowser_file_type">File</string>
 
     <!-- GogClientFragment Download Status -->
-    <string name="gog_download_status_getting_link">Getting Link</string>
-    <string name="gog_download_status_downloading">Downloading</string>
-    <string name="gog_download_status_completed">Completed</string>
-    <string name="gog_installed_and_added">Installed and added to home: %s</string>
 
     <!-- ControlEditDialogMD Messages -->
     <string name="editor_copy_suffix">Copy</string>
@@ -896,25 +849,7 @@
     <string name="settings_off">Off</string>
     
     <!-- GOG Client -->
-    <string name="gog_login_title">Login to GOG</string>
-    <string name="gog_login_subtitle">Access your DRM-Free game library</string>
-    <string name="gog_email_hint">Email Address</string>
-    <string name="gog_email_label">Email Address</string>
-    <string name="gog_password_hint">Password</string>
-    <string name="gog_password_label">Password</string>
-    <string name="gog_visit_website">Visit Website</string>
-    <string name="gog_login_button">Login</string>
-    <string name="gog_user">GOG User</string>
-    <string name="gog_library">Library</string>
-    <string name="gog_search_hint">Search Games</string>
-    <string name="gog_search_placeholder">Search games...</string>
-    <string name="gog_logout_button">Logout</string>
-    <string name="gog_logout">Logout</string>
-    <string name="gog_select_game">Select a game</string>
     <string name="installed">Installed</string>
-    <string name="gog_no_games_found">No Games Found</string>
-    <string name="gog_no_games_message">Your GOG library is empty</string>
-    <string name="gog_loading">Loading...</string>
     
     <!-- Local Import -->
     <string name="import_game_title">Import Game</string>
@@ -982,37 +917,14 @@
     <string name="version_start_install">Start Installation</string>
     
     <!-- GOG Download Progress Dialog -->
-    <string name="gog_download_title">Download Game</string>
-    <string name="gog_download_game_main">Game Main</string>
-    <string name="gog_download_waiting">Waiting</string>
-    <string name="gog_download_modloader">Mod Loader</string>
-    <string name="gog_download_game_progress">Game Progress</string>
-    <string name="gog_download_modloader_progress">ModLoader Progress</string>
-    <string name="gog_download_background">Run in Background</string>
     
     <!-- GOG API Error Messages -->
-    <string name="gog_error_retry_interrupted">Retry interrupted</string>
-    <string name="gog_error_dns_failed">Cannot connect to GOG server - DNS resolution failed. Please check your network connection or try using VPN</string>
-    <string name="gog_error_connection_timeout">Connection to GOG server timed out. Please check your network connection</string>
-    <string name="gog_error_network_failed">Network request failed</string>
-    <string name="gog_error_invalid_target_file">Invalid target file</string>
-    <string name="gog_error_cannot_create_download_dir">Cannot create download directory: %s</string>
-    <string name="gog_error_download_failed">Download failed, HTTP %d</string>
-    <string name="gog_error_login_failed_check_credentials">Login failed - Please check username and password</string>
-    <string name="gog_error_login_failed_wrong_credentials">Login failed - Incorrect username or password</string>
-    <string name="gog_error_login_failed_response_code">Login failed - Response code: %d</string>
-    <string name="gog_error_two_factor_redirect">Two-factor authentication page redirected, session may have expired</string>
-    <string name="gog_error_cannot_access_two_factor">Cannot access two-factor authentication page</string>
-    <string name="gog_error_cannot_get_game_info">Cannot get game information</string>
-    <string name="gog_error_not_logged_in">Not logged in</string>
     
     <!-- Import Task Error Messages -->
     <string name="import_error_game_file_path_empty">Game file path cannot be empty</string>
     <string name="import_error_output_directory_empty">Output directory cannot be empty</string>
     
     <!-- Layout Placeholders -->
-    <string name="gog_game_title_placeholder">Game Title</string>
-    <string name="gog_games_count_placeholder">%d games</string>
     <string name="component_name_placeholder">Component Name</string>
     <string name="component_description_placeholder">Component Description</string>
     <string name="component_management">Component Management</string>
@@ -1179,7 +1091,6 @@
     <string name="nav_game">Games</string>
     <string name="nav_file">Files</string>
     <string name="nav_control">Controls</string>
-    <string name="nav_download">Downloads</string>
     <string name="nav_add_game">Add Game</string>
     <string name="nav_settings">Settings</string>
     
@@ -1799,20 +1710,8 @@
     <string name="settings_game_renderer_section">Rendering</string>
 
     <string name="download_enter">Enter</string>
-    <string name="gog_no_linux_version">This game has no Linux version</string>
-    <string name="gog_select_game_version_prompt">Please select a game version</string>
-    <string name="gog_download_complete">Download Complete</string>
-    <string name="gog_download_cancelled">Download Cancelled</string>
     <string name="common_unknown_error">Unknown error</string>
-    <string name="gog_select_game_version">Select Game Version</string>
-    <string name="gog_start_download">Start Download</string>
-    <string name="gog_select_modloader_version">Select %1$s Version</string>
-    <string name="gog_select_version">Select Version</string>
-    <string name="gog_game_downloaded">Game downloaded</string>
-    <string name="gog_modloader_downloaded">ModLoader downloaded</string>
-    <string name="gog_install_now">Install Now</string>
-    <string name="gog_install_later">Install Later</string>
-    <string name="gog_download_failed_title">Download Failed</string>
+    <string name="main_update_install_now">Install Now</string>
 
     <string name="main_deleting_game_files">Deleting game files...</string>
     <string name="main_delete_game_confirm_message">Delete \"%1$s\"?</string>
@@ -1826,7 +1725,6 @@
     <string name="main_dotnet_runtime_optional">.NET Runtime (Optional)</string>
     <string name="main_dotnet_runtime_override">.NET Runtime Override</string>
     <string name="main_control_editor_placeholder">Layout Editor</string>
-    <string name="main_download">Download</string>
     <string name="main_announcements">Announcements</string>
     <string name="main_import_game">Import Game</string>
     <string name="main_control_store">Control Store</string>

@@ -38,12 +38,6 @@ class InstallerViewModel(
 
     fun onEvent(event: InstallerUiEvent) {
         when (event) {
-            is InstallerUiEvent.PrefillFromDownload -> prefillFromDownload(
-                gameFilePath = event.gameFilePath,
-                modLoaderFilePath = event.modLoaderFilePath,
-                detectedGameName = event.detectedGameName
-            )
-
             is InstallerUiEvent.BrowseRequested -> browseFor(event.fileType)
             is InstallerUiEvent.FileSelected -> selectFile(
                 fileType = event.fileType,
@@ -55,30 +49,6 @@ class InstallerViewModel(
             InstallerUiEvent.DismissError -> clearError()
             InstallerUiEvent.ResetSelections -> resetSelections()
         }
-    }
-
-    private fun prefillFromDownload(
-        gameFilePath: String?,
-        modLoaderFilePath: String?,
-        detectedGameName: String?
-    ) {
-        if (_uiState.value.isImporting) return
-
-        _uiState.update {
-            it.copy(
-                gameFilePath = gameFilePath,
-                detectedGameName = detectedGameName
-                    ?: gameFilePath?.let(::fallbackDisplayName),
-                modLoaderFilePath = modLoaderFilePath,
-                detectedModLoaderName = modLoaderFilePath?.let(::fallbackDisplayName),
-                progress = 0,
-                status = "",
-                errorMessage = null
-            )
-        }
-
-        gameFilePath?.let { detectSelection(InstallerFileType.GAME, it, detectedGameName) }
-        modLoaderFilePath?.let { detectSelection(InstallerFileType.MOD_LOADER, it, null) }
     }
 
     private fun browseFor(fileType: InstallerFileType) {

@@ -102,7 +102,6 @@ import com.app.ralaunch.feature.announcement.ui.AnnouncementScreenWrapper
 import com.app.ralaunch.feature.controls.packs.ui.ControlStoreScreenWrapper
 import com.app.ralaunch.feature.controls.ui.ControlLayoutScreenWrapper
 import com.app.ralaunch.feature.filebrowser.ui.FileBrowserScreenWrapper
-import com.app.ralaunch.feature.gog.ui.DownloadScreenWrapper
 import com.app.ralaunch.feature.installer.ui.InstallerScreenWrapper
 import com.app.ralaunch.feature.installer.ui.rememberInstallerRouteActions
 import com.app.ralaunch.feature.main.contracts.AppUpdateUiModel
@@ -391,7 +390,7 @@ class MainActivityCompose : BaseActivity() {
                         totalBytes = totalBytes,
                         downloadedApkUri = downloadedUri
                     )
-                    MessageHelper.showSuccess(this, getString(R.string.gog_download_complete))
+                    MessageHelper.showSuccess(this, getString(R.string.main_update_status_completed))
                 }
                 DownloadManager.STATUS_FAILED -> {
                     val reason = it.getInt(it.getColumnIndexOrThrow(DownloadManager.COLUMN_REASON))
@@ -698,15 +697,6 @@ class MainActivityCompose : BaseActivity() {
                             ControlLayoutScreenWrapper(
                                 onBack = { navState.navigateToGames() },
                                 onOpenStore = { navState.navigateToControlStore() }
-                            )
-                        }
-                        is Screen.Download -> {
-                            DownloadScreenWrapper(
-                                onBack = { navState.navigateToGames() },
-                                onNavigateToImport = { gamePath, modLoaderPath, gameName ->
-                                    installerActions.prefillFromDownload(gamePath, modLoaderPath, gameName)
-                                    navState.navigateTo(Screen.Import)
-                                }
                             )
                         }
                         is Screen.Announcements -> AnnouncementScreenWrapper()
@@ -1267,7 +1257,7 @@ private fun UpdateDownloadComposeDialog(
         confirmButton = {
             when (state.status) {
                 UpdateDownloadStatus.COMPLETED -> {
-                    Button(onClick = onInstall) { Text(stringResource(R.string.gog_install_now)) }
+                    Button(onClick = onInstall) { Text(stringResource(R.string.main_update_install_now)) }
                 }
                 UpdateDownloadStatus.FAILED -> {
                     Button(onClick = onRetry) { Text(stringResource(R.string.main_update_action_retry_download)) }

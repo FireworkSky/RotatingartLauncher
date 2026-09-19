@@ -21,9 +21,6 @@ sealed class Screen(
     /** 控制布局页 */
     data object Controls : Screen("controls")
     
-    /** 下载页 (GOG Client) */
-    data object Download : Screen("download")
-    
     /** 导入游戏页 */
     data object Import : Screen("import")
 
@@ -73,7 +70,6 @@ sealed class Screen(
             return when (parts.firstOrNull()) {
                 "games" -> Games
                 "controls" -> Controls
-                "download" -> Download
                 "import" -> Import
                 "announcements" -> Announcements
                 "settings" -> Settings
@@ -108,11 +104,6 @@ enum class NavDestination(
         screen = Screen.Controls,
         selectedIcon = Icons.Filled.TouchApp,
         unselectedIcon = Icons.Outlined.TouchApp
-    ),
-    DOWNLOAD(
-        screen = Screen.Download,
-        selectedIcon = Icons.Filled.RocketLaunch,
-        unselectedIcon = Icons.Outlined.RocketLaunch
     ),
     IMPORT(
         screen = Screen.Import,

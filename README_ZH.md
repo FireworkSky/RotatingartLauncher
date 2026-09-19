@@ -100,7 +100,7 @@
 <td width="50%" valign="top">
 
 ### 🌐 更多特性
-- **GOG 集成** — 登录 GOG 下载已购游戏
+- **GOG 安装包支持** — 导入 GOG Linux .sh 安装包
 - **EasyTier 联机** — P2P VPN 多人组网
 - **补丁系统** — 自动游戏兼容性修复
 - **多进程隔离** — 游戏独立进程运行
@@ -137,7 +137,7 @@
 ### 使用方法
 
 1. 打开 Rotating Art Launcher
-2. 点击 **「+」** 添加游戏（或通过 GOG 下载）
+2. 点击 **「+」** 添加游戏
 3. 选择游戏可执行文件
 4. 配置渲染器和控件布局
 5. 启动游戏 🎮
@@ -186,7 +186,6 @@ RotatingartLauncher/
 │       │   ├── dotnet/           #   .NET 运行时集成
 │       │   ├── renderer/         #   渲染器配置与加载
 │       │   ├── controls/         #   虚拟控件系统
-│       │   ├── gog/              #   GOG Galaxy 集成
 │       │   ├── easytier/         #   EasyTier 联机服务
 │       │   ├── patch/            #   补丁管理系统
 │       │   └── ui/               #   Compose UI 界面

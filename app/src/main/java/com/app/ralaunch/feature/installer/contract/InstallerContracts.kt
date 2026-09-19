@@ -32,12 +32,6 @@ enum class InstallerFileType(
 }
 
 sealed interface InstallerUiEvent {
-    data class PrefillFromDownload(
-        val gameFilePath: String?,
-        val modLoaderFilePath: String?,
-        val detectedGameName: String?
-    ) : InstallerUiEvent
-
     data class BrowseRequested(val fileType: InstallerFileType) : InstallerUiEvent
 
     data class FileSelected(

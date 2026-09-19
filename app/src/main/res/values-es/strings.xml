@@ -438,32 +438,6 @@
     <string name="editor_joystick_side_right">Joystick derecho</string>
 
     <!-- Mensajes de GogClientFragment -->
-    <string name="gog_email_verification">Verificación de correo electrónico</string>
-    <string name="gog_email_code_prompt">Por favor ingresa el código de 4 dígitos enviado a tu correo electrónico</string>
-    <string name="gog_4_digit_code">Código de 4 dígitos</string>
-    <string name="gog_authenticator">Autenticador</string>
-    <string name="gog_totp_code_prompt">Por favor ingresa el código de 6 dígitos de tu autenticador TOTP</string>
-    <string name="gog_6_digit_code">Código de 6 dígitos</string>
-    <string name="gog_games_count">%d juegos</string>
-    <string name="gog_logged_in">Sesión iniciada</string>
-    <string name="gog_enter_email">Por favor ingresa la dirección de correo electrónico</string>
-    <string name="gog_enter_password">Por favor ingresa la contraseña</string>
-    <string name="gog_login_success">Inicio de sesión exitoso</string>
-    <string name="gog_login_failed">Inicio de sesión fallido, por favor verifica el correo electrónico y la contraseña</string>
-    <string name="gog_login_error">Error de inicio de sesión: %s</string>
-    <string name="gog_library_empty">Tu biblioteca de juegos está vacía</string>
-    <string name="gog_load_failed">Error al cargar: %s</string>
-    <string name="gog_logged_out">Sesión cerrada</string>
-    <string name="gog_one_click_not_supported">Este juego no admite instalación con un clic</string>
-    <string name="gog_no_game_version">No hay versión de juego disponible</string>
-    <string name="gog_no_modloader_version">No hay versión de ModLoader disponible</string>
-    <string name="gog_install_game">Instalar %s</string>
-    <string name="gog_modloader_version">Versión %s</string>
-    <string name="gog_cannot_access_storage">No se puede acceder al almacenamiento externo</string>
-    <string name="gog_cannot_get_download_link">No se puede obtener el enlace de descarga del instalador</string>
-    <string name="gog_modloader_link_invalid">Enlace ModLoader inválido</string>
-    <string name="gog_download_failed">Error al descargar: %s</string>
-    <string name="gog_download_game">Descargar juego</string>
 
     <!-- Mensajes de LocalImportDialog -->
     <string name="dialog_modloader_zip">Cargador de mods (.zip)</string>
@@ -498,21 +472,6 @@
     <string name="editor_delete_control_confirm">¿Estás seguro de que quieres eliminar este control?</string>
 
     <!-- Mensajes adicionales de GogClientFragment -->
-    <string name="gog_logout_confirm_title">Confirmar cierre de sesión</string>
-    <string name="gog_logout_confirm_message">¿Estás seguro de que quieres cerrar sesión de la cuenta GOG?</string>
-    <string name="gog_loading_user_info">Cargando información del usuario...</string>
-    <string name="gog_logging_in">Iniciando sesión...</string>
-    <string name="gog_loading_games">Cargando lista de juegos...</string>
-    <string name="gog_loading_version_info">Cargando información de versión para %s...</string>
-    <string name="gog_load_failed_title">Error al cargar</string>
-    <string name="gog_network_abort">Conexión de red interrumpida, por favor verifica la red e intenta de nuevo</string>
-    <string name="gog_network_timeout">Tiempo de espera de conexión agotado, por favor verifica la red o intenta más tarde</string>
-    <string name="gog_network_dns">No se puede conectar al servidor GOG, por favor verifica la red o usa VPN</string>
-    <string name="gog_get_details_failed">Error al obtener detalles del juego, por favor intenta de nuevo</string>
-    <string name="gog_error_details">Detalles del error: %s</string>
-    <string name="gog_retry">Reintentar</string>
-    <string name="gog_load_games_failed">Error al cargar la lista de juegos: %s</string>
-    <string name="gog_games_loaded">%d juegos cargados</string>
 
     <!-- Mensajes de ControlEditorActivity -->
     <string name="editor_exit_title">Salir del editor</string>
@@ -605,10 +564,6 @@
     <string name="filebrowser_file_type">Archivo</string>
 
     <!-- Estado de descarga de GogClientFragment -->
-    <string name="gog_download_status_getting_link">Obteniendo enlace</string>
-    <string name="gog_download_status_downloading">Descargando</string>
-    <string name="gog_download_status_completed">Completado</string>
-    <string name="gog_installed_and_added">Instalado y añadido a inicio: %s</string>
 
     <!-- Mensajes de ControlEditDialogMD -->
     <string name="editor_copy_suffix">Copia</string>
@@ -842,19 +797,6 @@
     <string name="settings_off">Desactivado</string>
     
     <!-- Cliente GOG -->
-    <string name="gog_login_title">Iniciar sesión en GOG</string>
-    <string name="gog_login_subtitle">Acceder a tu biblioteca de juegos sin DRM</string>
-    <string name="gog_email_hint">Dirección de correo electrónico</string>
-    <string name="gog_password_hint">Contraseña</string>
-    <string name="gog_visit_website">Visitar sitio web</string>
-    <string name="gog_login_button">Iniciar sesión</string>
-    <string name="gog_user">Usuario GOG</string>
-    <string name="gog_library">Biblioteca</string>
-    <string name="gog_search_hint">Buscar juegos</string>
-    <string name="gog_logout_button">Cerrar sesión</string>
-    <string name="gog_no_games_found">No se encontraron juegos</string>
-    <string name="gog_no_games_message">Tu biblioteca GOG está vacía</string>
-    <string name="gog_loading">Cargando...</string>
     
     <!-- Importación Local -->
     <string name="import_game_title">Importar juego</string>
@@ -922,37 +864,14 @@
     <string name="version_start_install">Iniciar instalación</string>
     
     <!-- Diálogo de Progreso de Descarga GOG -->
-    <string name="gog_download_title">Descargar juego</string>
-    <string name="gog_download_game_main">Juego principal</string>
-    <string name="gog_download_waiting">Esperando</string>
-    <string name="gog_download_modloader">Cargador de mods</string>
-    <string name="gog_download_game_progress">Progreso del juego</string>
-    <string name="gog_download_modloader_progress">Progreso de mods</string>
-    <string name="gog_download_background">Ejecutar en segundo plano</string>
     
     <!-- Mensajes de error de la API GOG -->
-    <string name="gog_error_retry_interrupted">Reintento interrumpido</string>
-    <string name="gog_error_dns_failed">No se puede conectar al servidor GOG - Error de resolución DNS. Por favor verifica tu conexión de red o intenta usar VPN</string>
-    <string name="gog_error_connection_timeout">Tiempo de espera de conexión al servidor GOG agotado. Por favor verifica tu conexión de red</string>
-    <string name="gog_error_network_failed">Error en la solicitud de red</string>
-    <string name="gog_error_invalid_target_file">Archivo objetivo inválido</string>
-    <string name="gog_error_cannot_create_download_dir">No se puede crear el directorio de descarga: %s</string>
-    <string name="gog_error_download_failed">Error al descargar, HTTP %d</string>
-    <string name="gog_error_login_failed_check_credentials">Error al iniciar sesión - Por favor verifica el nombre de usuario y la contraseña</string>
-    <string name="gog_error_login_failed_wrong_credentials">Error al iniciar sesión - Nombre de usuario o contraseña incorrectos</string>
-    <string name="gog_error_login_failed_response_code">Error al iniciar sesión - Código de respuesta: %d</string>
-    <string name="gog_error_two_factor_redirect">Página de autenticación de dos factores redirigida, la sesión puede haber expirado</string>
-    <string name="gog_error_cannot_access_two_factor">No se puede acceder a la página de autenticación de dos factores</string>
-    <string name="gog_error_cannot_get_game_info">No se puede obtener información del juego</string>
-    <string name="gog_error_not_logged_in">No se ha iniciado sesión</string>
     
     <!-- Mensajes de error de tarea de importación -->
     <string name="import_error_game_file_path_empty">La ruta del archivo de juego no puede estar vacía</string>
     <string name="import_error_output_directory_empty">El directorio de salida no puede estar vacío</string>
     
     <!-- Marcadores de posición de diseño -->
-    <string name="gog_game_title_placeholder">Título del juego</string>
-    <string name="gog_games_count_placeholder">%d juegos</string>
     <string name="component_name_placeholder">Nombre del componente</string>
     <string name="component_description_placeholder">Descripción del componente</string>
     <string name="component_management">Gestión de componentes</string>
@@ -1097,7 +1016,6 @@
     <string name="nav_game">Juegos</string>
     <string name="nav_file">Archivos</string>
     <string name="nav_control">Controles</string>
-    <string name="nav_download">Descargas</string>
     <string name="nav_add_game">Añadir juego</string>
     <string name="nav_settings">Configuración</string>
     
@@ -1388,8 +1306,6 @@
     <string name="renderer_zink_desc">OpenGL de escritorio sobre Vulkan (Mesa Zink + Turnip)</string>
     <string name="patch_status_changed_message">%1$s - %2$s: %3$s</string>
     <string name="import_storage_init_failed">No se pudo inicializar el almacenamiento del juego</string>
-    <string name="gog_game_id">ID: %1$d</string>
-    <string name="gog_download_game_modloader_hint">Toca para descargar el juego y ModLoader</string>
     <string name="appearance_image_background_set">Fondo de imagen establecido, opacidad ajustada automáticamente al 90%%</string>
     <string name="appearance_background_image_set">Imagen de fondo establecida</string>
     <string name="appearance_video_background_set">Fondo de video establecido, opacidad ajustada automáticamente al 90%%</string>
@@ -1398,11 +1314,6 @@
     <string name="key_selector_gamepad_mode">Mando</string>
     <string name="game_launch_no_params">No se proporcionaron parámetros de inicio</string>
     <string name="game_launch_repository_load_failed">No se pudo cargar el repositorio de juegos</string>
-    <string name="gog_email_label">Dirección de correo</string>
-    <string name="gog_password_label">Contraseña</string>
-    <string name="gog_search_placeholder">Buscar juegos...</string>
-    <string name="gog_logout">Cerrar sesión</string>
-    <string name="gog_select_game">Selecciona un juego</string>
     <string name="installed">Instalado</string>
     <string name="filebrowser_detail_size">Tamaño</string>
     <string name="filebrowser_detail_path">Ruta</string>
@@ -1780,20 +1691,8 @@ Invitado: resultado=%3$d%4$s</string>
     <string name="settings_game_runtime_subtitle">Establece la versión predeterminada de .NET Runtime para los juegos</string>
     <string name="settings_game_renderer_section">Renderizado</string>
     <string name="download_enter">Entrar</string>
-    <string name="gog_no_linux_version">Este juego no tiene versión para Linux</string>
-    <string name="gog_select_game_version_prompt">Selecciona una versión del juego</string>
-    <string name="gog_download_complete">Descarga completa</string>
-    <string name="gog_download_cancelled">Descarga cancelada</string>
     <string name="common_unknown_error">Error desconocido</string>
-    <string name="gog_select_game_version">Seleccionar versión del juego</string>
-    <string name="gog_start_download">Iniciar descarga</string>
-    <string name="gog_select_modloader_version">Seleccionar versión de %1$s</string>
-    <string name="gog_select_version">Seleccionar versión</string>
-    <string name="gog_game_downloaded">Juego descargado</string>
-    <string name="gog_modloader_downloaded">ModLoader descargado</string>
-    <string name="gog_install_now">Instalar ahora</string>
-    <string name="gog_install_later">Instalar después</string>
-    <string name="gog_download_failed_title">Descarga fallida</string>
+    <string name="main_update_install_now">Instalar ahora</string>
     <string name="main_deleting_game_files">Eliminando archivos del juego...</string>
     <string name="main_delete_game_confirm_message">¿Eliminar \&quot;%1$s\&quot;?</string>
     <string name="main_delete_game_irreversible">Esta acción eliminará los archivos del juego y no se puede deshacer.</string>
@@ -1806,7 +1705,6 @@ Invitado: resultado=%3$d%4$s</string>
     <string name="main_dotnet_runtime_optional">.NET Runtime (Opcional)</string>
     <string name="main_dotnet_runtime_override">Sobrescribir .NET Runtime</string>
     <string name="main_control_editor_placeholder">Editor de diseño</string>
-    <string name="main_download">Descargar</string>
     <string name="main_announcements">Anuncios</string>
     <string name="main_import_game">Importar juego</string>
     <string name="main_control_store">Tienda de controles</string>

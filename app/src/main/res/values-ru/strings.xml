@@ -461,32 +461,6 @@
     <string name="editor_joystick_side_right">Правый джойстик</string>
 
     <!-- GogClientFragment Messages -->
-    <string name="gog_email_verification">Проверка электронной почты</string>
-    <string name="gog_email_code_prompt">Пожалуйста, введите 4-значный код подтверждения, отправленный на вашу электронную почту</string>
-    <string name="gog_4_digit_code">4-значный код</string>
-    <string name="gog_authenticator">Аутентификатор</string>
-    <string name="gog_totp_code_prompt">Пожалуйста, введите 6-значный код подтверждения из вашего TOTP аутентификатора</string>
-    <string name="gog_6_digit_code">6-значный код</string>
-    <string name="gog_games_count">%d игр</string>
-    <string name="gog_logged_in">Вход выполнен</string>
-    <string name="gog_enter_email">Пожалуйста, введите адрес электронной почты</string>
-    <string name="gog_enter_password">Пожалуйста, введите пароль</string>
-    <string name="gog_login_success">Вход выполнен успешно</string>
-    <string name="gog_login_failed">Вход не удался, проверьте электронную почту и пароль</string>
-    <string name="gog_login_error">Ошибка входа: %s</string>
-    <string name="gog_library_empty">Ваша библиотека игр пуста</string>
-    <string name="gog_load_failed">Загрузка не удалась: %s</string>
-    <string name="gog_logged_out">Выход выполнен</string>
-    <string name="gog_one_click_not_supported">Эта игра пока не поддерживает установку одним кликом</string>
-    <string name="gog_no_game_version">Нет доступных версий игры</string>
-    <string name="gog_no_modloader_version">Нет доступных версий ModLoader</string>
-    <string name="gog_install_game">Установить %s</string>
-    <string name="gog_modloader_version">Версия %s</string>
-    <string name="gog_cannot_access_storage">Не удалось получить доступ к внешнему хранилищу</string>
-    <string name="gog_cannot_get_download_link">Не удалось получить ссылку для загрузки установщика</string>
-    <string name="gog_modloader_link_invalid">Ссылка ModLoader недействительна</string>
-    <string name="gog_download_failed">Загрузка не удалась: %s</string>
-    <string name="gog_download_game">Загрузить игру</string>
 
     <!-- LocalImportDialog Messages -->
     <string name="dialog_modloader_zip">Загрузчик модов (.zip)</string>
@@ -501,21 +475,6 @@
     <string name="editor_delete_control_confirm">Вы уверены, что хотите удалить этот элемент управления?</string>
 
     <!-- GogClientFragment Additional Messages -->
-    <string name="gog_logout_confirm_title">Подтверждение выхода</string>
-    <string name="gog_logout_confirm_message">Вы уверены, что хотите выйти из аккаунта GOG?</string>
-    <string name="gog_loading_user_info">Загрузка информации о пользователе...</string>
-    <string name="gog_logging_in">Вход...</string>
-    <string name="gog_loading_games">Загрузка списка игр...</string>
-    <string name="gog_loading_version_info">Получение информации о версии %s...</string>
-    <string name="gog_load_failed_title">Загрузка не удалась</string>
-    <string name="gog_network_abort">Сетевое соединение прервано, проверьте сеть и повторите попытку</string>
-    <string name="gog_network_timeout">Тайм-аут соединения, проверьте сеть или повторите попытку позже</string>
-    <string name="gog_network_dns">Не удалось подключиться к серверу GOG, проверьте сеть или используйте VPN</string>
-    <string name="gog_get_details_failed">Не удалось получить детали игры, повторите попытку</string>
-    <string name="gog_error_details">Детали ошибки: %s</string>
-    <string name="gog_retry">Повторить</string>
-    <string name="gog_load_games_failed">Не удалось получить список игр: %s</string>
-    <string name="gog_games_loaded">Загружено %d игр</string>
 
     <!-- ControlEditorActivity Messages -->
     <string name="editor_exit_title">Выйти из редактора</string>
@@ -608,10 +567,6 @@
     <string name="filebrowser_file_type">Файл</string>
 
     <!-- GogClientFragment Download Status -->
-    <string name="gog_download_status_getting_link">Получение ссылки</string>
-    <string name="gog_download_status_downloading">Загрузка</string>
-    <string name="gog_download_status_completed">Завершено</string>
-    <string name="gog_installed_and_added">Установлено и добавлено на главную страницу: %s</string>
 
     <!-- ControlEditDialogMD Messages -->
     <string name="editor_copy_suffix">Копия</string>
@@ -845,19 +800,6 @@
     <string name="settings_off">Выключить</string>
     
     <!-- GOG Client -->
-    <string name="gog_login_title">Вход в GOG</string>
-    <string name="gog_login_subtitle">Доступ к вашей библиотеке игр без DRM</string>
-    <string name="gog_email_hint">Адрес электронной почты</string>
-    <string name="gog_password_hint">Пароль</string>
-    <string name="gog_visit_website">Посетить официальный сайт</string>
-    <string name="gog_login_button">Войти</string>
-    <string name="gog_user">Пользователь GOG</string>
-    <string name="gog_library">Библиотека игр</string>
-    <string name="gog_search_hint">Поиск игр</string>
-    <string name="gog_logout_button">Выйти</string>
-    <string name="gog_no_games_found">Игры не найдены</string>
-    <string name="gog_no_games_message">В вашей библиотеке GOG пока нет игр</string>
-    <string name="gog_loading">Загрузка...</string>
     
     <!-- Local Import -->
     <string name="import_game_title">Импорт игры</string>
@@ -925,37 +867,14 @@
     <string name="version_start_install">Начать установку</string>
     
     <!-- GOG Download Progress Dialog -->
-    <string name="gog_download_title">Загрузка игры</string>
-    <string name="gog_download_game_main">Основная игра</string>
-    <string name="gog_download_waiting">Ожидание</string>
-    <string name="gog_download_modloader">Загрузчик модов</string>
-    <string name="gog_download_game_progress">Прогресс игры</string>
-    <string name="gog_download_modloader_progress">Прогресс модов</string>
-    <string name="gog_download_background">Фоновый режим</string>
     
     <!-- GOG API Error Messages -->
-    <string name="gog_error_retry_interrupted">Повторная попытка прервана</string>
-    <string name="gog_error_dns_failed">Не удалось подключиться к серверу GOG - сбой разрешения DNS. Пожалуйста, проверьте сетевое соединение или попробуйте использовать VPN</string>
-    <string name="gog_error_connection_timeout">Тайм-аут соединения с сервером GOG. Пожалуйста, проверьте сетевое соединение</string>
-    <string name="gog_error_network_failed">Сетевой запрос не удался</string>
-    <string name="gog_error_invalid_target_file">Неверный целевой файл</string>
-    <string name="gog_error_cannot_create_download_dir">Не удалось создать каталог загрузки: %s</string>
-    <string name="gog_error_download_failed">Загрузка не удалась, HTTP %d</string>
-    <string name="gog_error_login_failed_check_credentials">Вход не удался - проверьте имя пользователя и пароль</string>
-    <string name="gog_error_login_failed_wrong_credentials">Вход не удался - неверное имя пользователя или пароль</string>
-    <string name="gog_error_login_failed_response_code">Вход не удался - код ответа: %d</string>
-    <string name="gog_error_two_factor_redirect">Перенаправление на страницу двухфакторной аутентификации, возможно сеанс истек</string>
-    <string name="gog_error_cannot_access_two_factor">Не удалось получить доступ к странице двухфакторной аутентификации</string>
-    <string name="gog_error_cannot_get_game_info">Не удалось получить информацию об игре</string>
-    <string name="gog_error_not_logged_in">Не выполнен вход</string>
     
     <!-- Import Task Error Messages -->
     <string name="import_error_game_file_path_empty">Путь к файлу игры не может быть пустым</string>
     <string name="import_error_output_directory_empty">Выходной каталог не может быть пустым</string>
     
     <!-- Layout Placeholders -->
-    <string name="gog_game_title_placeholder">Название игры</string>
-    <string name="gog_games_count_placeholder">%d игр</string>
     <string name="component_name_placeholder">Название компонента</string>
     <string name="component_description_placeholder">Описание компонента</string>
     <string name="component_management">Управление компонентами</string>
@@ -1100,7 +1019,6 @@
     <string name="nav_game">Игра</string>
     <string name="nav_file">Файл</string>
     <string name="nav_control">Управление</string>
-    <string name="nav_download">Загрузка</string>
     <string name="nav_add_game">Добавить игру</string>
     <string name="nav_settings">Настройки</string>
     
@@ -1390,18 +1308,11 @@
     <string name="renderer_zink_desc">Рабочий стол OpenGL поверх Vulkan (Mesa Zink + Turnip)</string>
     <string name="patch_status_changed_message">%1$s – %2$s: %3$s</string>
     <string name="import_storage_init_failed">Не удалось инициализировать игровое хранилище.</string>
-    <string name="gog_game_id">Идентификатор: %1$d</string>
-    <string name="gog_download_game_modloader_hint">Нажмите, чтобы загрузить игру и ModLoader</string>
     <string name="control_layout_created">Макет создан</string>
     <string name="key_selector_keyboard_mode">Клавиатура</string>
     <string name="key_selector_gamepad_mode">Геймпад</string>
     <string name="game_launch_no_params">Параметры запуска не указаны</string>
     <string name="game_launch_repository_load_failed">Не удалось загрузить репозиторий игры.</string>
-    <string name="gog_email_label">Адрес электронной почты</string>
-    <string name="gog_password_label">Пароль</string>
-    <string name="gog_search_placeholder">Поиск игр...</string>
-    <string name="gog_logout">Выход из системы</string>
-    <string name="gog_select_game">Выберите игру</string>
     <string name="installed">Установлено</string>
     <string name="filebrowser_detail_size">Размер</string>
     <string name="filebrowser_detail_path">Путь</string>
@@ -1774,20 +1685,8 @@
     <string name="settings_game_runtime_subtitle">Выберите версию .NET Runtime по умолчанию для игр</string>
     <string name="settings_game_renderer_section">Рендеринг</string>
     <string name="download_enter">Входить</string>
-    <string name="gog_no_linux_version">У этой игры нет версии для Linux.</string>
-    <string name="gog_select_game_version_prompt">Пожалуйста, выберите версию игры</string>
-    <string name="gog_download_complete">Загрузка завершена</string>
-    <string name="gog_download_cancelled">Загрузка отменена</string>
     <string name="common_unknown_error">Неизвестная ошибка</string>
-    <string name="gog_select_game_version">Выберите версию игры</string>
-    <string name="gog_start_download">Начать загрузку</string>
-    <string name="gog_select_modloader_version">Выберите версию %1$s</string>
-    <string name="gog_select_version">Выберите версию</string>
-    <string name="gog_game_downloaded">Игра скачана</string>
-    <string name="gog_modloader_downloaded">МодЛоадер скачан</string>
-    <string name="gog_install_now">Установить сейчас</string>
-    <string name="gog_install_later">Установить позже</string>
-    <string name="gog_download_failed_title">Загрузка не удалась</string>
+    <string name="main_update_install_now">Установить сейчас</string>
     <string name="main_deleting_game_files">Удаление файлов игры...</string>
     <string name="main_delete_game_confirm_message">Удалить \\"%1$s\\"?</string>
     <string name="main_delete_game_irreversible">Это действие приведет к удалению файлов игры и не может быть отменено.</string>
@@ -1800,7 +1699,6 @@
     <string name="main_dotnet_runtime_optional">Среда выполнения .NET (необязательно)</string>
     <string name="main_dotnet_runtime_override">Переопределение среды выполнения .NET</string>
     <string name="main_control_editor_placeholder">Редактор макетов</string>
-    <string name="main_download">Скачать</string>
     <string name="main_announcements">Объявления</string>
     <string name="main_import_game">Импортировать игру</string>
     <string name="main_control_store">Контрольный магазин</string>

@@ -18,11 +18,6 @@ fun NavState.navigateToGames() = navigateTo(NavDestination.GAMES)
 fun NavState.navigateToControls() = navigateTo(NavDestination.CONTROLS)
 
 /**
- * NavState 导航扩展：导航到下载
- */
-fun NavState.navigateToDownload() = navigateTo(NavDestination.DOWNLOAD)
-
-/**
  * NavState 导航扩展：导航到导入
  */
 fun NavState.navigateToImport() = navigateTo(NavDestination.IMPORT)

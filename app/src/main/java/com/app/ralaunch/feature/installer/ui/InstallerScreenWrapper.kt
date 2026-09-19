@@ -17,7 +17,6 @@ import com.app.ralaunch.feature.installer.vm.InstallerViewModel
 import org.koin.compose.viewmodel.koinViewModel
 
 data class InstallerRouteActions(
-    val prefillFromDownload: (String?, String?, String?) -> Unit,
     val onFileSelected: (String?, String) -> Unit
 )
 
@@ -27,15 +26,6 @@ fun rememberInstallerRouteActions(): InstallerRouteActions {
 
     return remember(viewModel) {
         InstallerRouteActions(
-            prefillFromDownload = { gamePath, modLoaderPath, gameName ->
-                viewModel.onEvent(
-                    InstallerUiEvent.PrefillFromDownload(
-                        gameFilePath = gamePath,
-                        modLoaderFilePath = modLoaderPath,
-                        detectedGameName = gameName
-                    )
-                )
-            },
             onFileSelected = { fileType, path ->
                 val installerFileType = InstallerFileType.fromRouteValue(fileType)
                 if (installerFileType != null) {
