@@ -1,5 +1,6 @@
 package com.app.ralaunch.ui.screen.settings
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -23,7 +24,6 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -43,6 +43,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.app.ralaunch.MainActivity
+import com.app.ralaunch.strings.StringsResource
+import com.app.ralaunch.strings.StringsResource.Strings
 import com.app.ralaunch.ui.component.SectionTitle
 
 import com.app.ralaunch.ui.component.SettingsGroup
@@ -105,7 +107,7 @@ fun LauncherScreen() {
 
             if (result.isValid) {
                 snackbarHostState.showSnackbar(
-                    message = "✅ Integrity check passed",
+                    message = Strings.settings.launcher.integrityCheckPassed,
                     duration = SnackbarDuration.Short
                 )
                 showAssetCheckDialog = false
@@ -114,7 +116,9 @@ fun LauncherScreen() {
             }
         } catch (e: Exception) {
             snackbarHostState.showSnackbar(
-                message = "❌ Check failed: ${e.message ?: "Unknown error"}",
+                message = Strings.settings.launcher.checkFailed(
+                    e.message ?: Strings.settings.launcher.unknownError
+                ),
                 duration = SnackbarDuration.Short
             )
         } finally {
@@ -128,14 +132,16 @@ fun LauncherScreen() {
             isReinstalling = true
             showReinstallProgress = true
             reinstallProgress = 0
-            reinstallMessage = "Starting force reinstall..."
+            reinstallMessage = Strings.settings.launcher.startingReinstall
 
             // Collect progress from AssetsManager state
             val progressJob = scope.launch {
                 AssetsManager.state.collectLatest { state ->
                     if (state.isExtracting || state.isComplete) {
                         reinstallProgress = state.overallProgress.coerceIn(0, 100)
-                        reinstallMessage = state.statusMessage.ifBlank { "Installing..." }
+                        reinstallMessage = state.statusMessage.ifBlank {
+                            Strings.settings.launcher.installing
+                        }
                     }
                 }
             }
@@ -145,7 +151,7 @@ fun LauncherScreen() {
                 onComplete = {
                     scope.launch {
                         snackbarHostState.showSnackbar(
-                            message = "✅ Assets reinstalled successfully",
+                            message = Strings.settings.launcher.reinstallDone,
                             duration = SnackbarDuration.Long
                         )
                     }
@@ -166,7 +172,7 @@ fun LauncherScreen() {
                 )
             } else {
                 snackbarHostState.showSnackbar(
-                    message = "❌ Reinstall failed: ${fixResult.message}",
+                    message = Strings.settings.launcher.reinstallFailed(fixResult.message),
                     duration = SnackbarDuration.Long
                 )
             }
@@ -174,32 +180,31 @@ fun LauncherScreen() {
             isReinstalling = false
             showReinstallProgress = false
             snackbarHostState.showSnackbar(
-                message = "❌ Reinstall failed: ${e.message ?: "Unknown error"}",
+                message = Strings.settings.launcher.reinstallFailed(
+                    e.message ?: Strings.settings.launcher.unknownError
+                ),
                 duration = SnackbarDuration.Long
             )
         }
     }
 
-    Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) }
-    ) { innerPadding ->
+    Box(modifier = Modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding)
                 .verticalScroll(rememberScrollState())
                 .padding(top = 8.dp, bottom = 20.dp)
         ) {
             SectionTitle(
-                title = "Assets",
+                title = Strings.settings.launcher.assets,
                 icon = Icons.Rounded.Folder
             )
 
             SettingsGroup {
                 SettingItem(
                     icon = Icons.Rounded.Info,
-                    title = "Status Summary",
-                    description = "Runtime Status",
+                    title = Strings.settings.launcher.statusSummary,
+                    description = Strings.settings.launcher.runtimeStatus,
                     trailingContent = {
                         Text(
                             text = AssetIntegrityChecker.getStatusSummary(),
@@ -211,8 +216,8 @@ fun LauncherScreen() {
 
                 SettingItem(
                     icon = Icons.Rounded.Verified,
-                    title = "Check Integrity",
-                    description = "Check launcher asset file integrity",
+                    title = Strings.settings.launcher.checkIntegrity,
+                    description = Strings.settings.launcher.checkIntegrityDesc,
                     trailingContent = {},
                     onClick = {
                         scope.launch {
@@ -222,8 +227,8 @@ fun LauncherScreen() {
 
                 SettingItem(
                     icon = Icons.Rounded.Download,
-                    title = "Force Reinstall Assets",
-                    description = "Re-extract all runtime assets", trailingContent = {},
+                    title = Strings.settings.launcher.forceReinstall,
+                    description = Strings.settings.launcher.forceReinstallDesc, trailingContent = {},
                     onClick = {
                         scope.launch {
                             performForceReinstall()
@@ -234,22 +239,26 @@ fun LauncherScreen() {
             Spacer(modifier = Modifier.height(4.dp))
 
             SectionTitle(
-                title = "Multiplayer",
+                title = Strings.settings.launcher.multiplayer,
                 icon = Icons.Rounded.Wifi
             )
 
             SettingsGroup {
                 SettingItem(
                     icon = Icons.Rounded.Wifi,
-                    title = "Enable Multiplayer",
-                    description = "Enable multiplayer support", trailingContent = {
+                    title = Strings.settings.launcher.enableMultiplayer,
+                    description = Strings.settings.launcher.enableMultiplayerDesc, trailingContent = {
                         Switch(
                             checked = multiplayer,
                             onCheckedChange = {
                                 multiplayer = it
                                 scope.launch {
                                     snackbarHostState.showSnackbar(
-                                        message = if (it) "✅ Multiplayer enabled" else "Multiplayer disabled",
+                                        message = if (it) {
+                                            Strings.settings.launcher.multiplayerEnabled
+                                        } else {
+                                            Strings.settings.launcher.multiplayerDisabled
+                                        },
                                         duration = SnackbarDuration.Short
                                     )
                                 }
@@ -261,26 +270,28 @@ fun LauncherScreen() {
             Spacer(modifier = Modifier.height(4.dp))
 
             SectionTitle(
-                title = "Patches",
+                title = Strings.settings.launcher.patches,
                 icon = Icons.Rounded.Sync
             )
 
             SettingsGroup {
                 SettingItem(
                     icon = Icons.Rounded.Update,
-                    title = "Force Reinstall Patches",
-                    description = "Reinstall all built-in patches", trailingContent = {},
+                    title = Strings.settings.launcher.reinstallPatches,
+                    description = Strings.settings.launcher.reinstallPatchesDesc, trailingContent = {},
                     onClick = {
                         scope.launch {
                             try {
                                 PatchManager.installBuiltInPatches(MainActivity.context!!)
                                 snackbarHostState.showSnackbar(
-                                    message = "✅ Patches installed successfully",
+                                    message = Strings.settings.launcher.patchesInstalled,
                                     duration = SnackbarDuration.Short
                                 )
                             } catch (e: Exception) {
                                 snackbarHostState.showSnackbar(
-                                    message = "❌ Patch installation failed: ${e.message}",
+                                    message = Strings.settings.launcher.patchInstallFailed(
+                                        e.message ?: Strings.settings.launcher.unknownError
+                                    ),
                                     duration = SnackbarDuration.Short
                                 )
                             }
@@ -288,32 +299,37 @@ fun LauncherScreen() {
                     })
             }
         }
-    }
 
-    // Asset Check Result Dialog
-    if (showAssetCheckDialog && !isCheckingAssets) {
-        AssetCheckResultDialog(
-            isChecking = false,
-            result = assetCheckResult,
-            onAutoFix = {
-                scope.launch {
-                    performForceReinstall()
+        // Asset Check Result Dialog
+        if (showAssetCheckDialog && !isCheckingAssets) {
+            AssetCheckResultDialog(
+                isChecking = false,
+                result = assetCheckResult,
+                onAutoFix = {
+                    scope.launch {
+                        performForceReinstall()
+                    }
+                },
+                onDismiss = {
+                    showAssetCheckDialog = false
                 }
-            },
-            onDismiss = {
-                showAssetCheckDialog = false
-            }
-        )
-    }
+            )
+        }
 
-    // Reinstall Progress Dialog
-    if (showReinstallProgress) {
-        ReinstallProgressDialog(
-            progress = reinstallProgress,
-            message = reinstallMessage,
-            onDismiss = {
-                // Prevent dismissal during installation
-            }
+        // Reinstall Progress Dialog
+        if (showReinstallProgress) {
+            ReinstallProgressDialog(
+                progress = reinstallProgress,
+                message = reinstallMessage,
+                onDismiss = {
+                    // Prevent dismissal during installation
+                }
+            )
+        }
+
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier.align(Alignment.BottomCenter)
         )
     }
 }
@@ -343,9 +359,9 @@ internal fun AssetCheckResultDialog(
         },
         title = {
             Text(
-                if (isChecking) "Checking..."
-                else if (result?.isValid == true) "Integrity Check Passed"
-                else "Integrity Issues Found"
+                if (isChecking) Strings.settings.launcher.checking
+                else if (result?.isValid == true) Strings.settings.launcher.checkPassedTitle
+                else Strings.settings.launcher.issuesFoundTitle
             )
         },
         text = {
@@ -357,7 +373,7 @@ internal fun AssetCheckResultDialog(
                         modifier = Modifier.fillMaxWidth()
                     )
                     Spacer(modifier = Modifier.height(16.dp))
-                    Text("Checking asset file integrity...")
+                    Text(Strings.settings.launcher.checkingDetail)
                 } else if (result != null) {
                     Text(
                         result.summary,
@@ -395,7 +411,7 @@ internal fun AssetCheckResultDialog(
                         if (canFix) {
                             Spacer(modifier = Modifier.height(16.dp))
                             Text(
-                                "Click 'Auto Fix' below to reinstall affected components.",
+                                Strings.settings.launcher.autoFixHint,
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.primary
                             )
@@ -407,7 +423,7 @@ internal fun AssetCheckResultDialog(
         confirmButton = {
             if (!isChecking && result?.issues?.any { it.canAutoFix } == true) {
                 TextButton(onClick = onAutoFix) {
-                    Text("Auto Fix")
+                    Text(Strings.settings.launcher.autoFix)
                 }
             }
         },
@@ -416,7 +432,7 @@ internal fun AssetCheckResultDialog(
                 onClick = onDismiss,
                 enabled = !isChecking
             ) {
-                Text("Close")
+                Text(Strings.close)
             }
         }
     )
@@ -439,7 +455,7 @@ internal fun ReinstallProgressDialog(
             )
         },
         title = {
-            Text("Reinstalling Assets...")
+            Text(Strings.settings.launcher.reinstallingTitle)
         },
         text = {
             Column(
@@ -472,7 +488,7 @@ internal fun ReinstallProgressDialog(
                 onClick = onDismiss,
                 enabled = false
             ) {
-                Text("Please wait...")
+                Text(Strings.settings.launcher.pleaseWait)
             }
         },
         dismissButton = null

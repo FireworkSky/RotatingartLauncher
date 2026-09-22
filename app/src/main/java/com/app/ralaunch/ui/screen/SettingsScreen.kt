@@ -108,19 +108,19 @@ fun SettingsScreen() {
         ),
         SettingCategory(
             id = "launcher",
-            title = "启动器设置",
+            title = Strings.settings.launcher.title,
             icon = Icons.Outlined.Rocket,
             iconFilled = Icons.Filled.Rocket
         ),
         SettingCategory(
             id = "advanced",
-            title = "高级设置",
+            title = Strings.settings.advanced.title,
             icon = Icons.Outlined.Code,
             iconFilled = Icons.Filled.Code
         ),
         SettingCategory(
             id = "about",
-            title = "关于",
+            title = Strings.settings.about.title,
             icon = Icons.Outlined.Info,
             iconFilled = Icons.Filled.Info
         )

@@ -32,7 +32,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -51,6 +50,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.app.ralaunch.core.config.AppConfig
 import com.app.ralaunch.core.model.AppSettings
 import com.app.ralaunch.MainActivity
+import com.app.ralaunch.strings.StringsResource
+import com.app.ralaunch.strings.StringsResource.Strings
 import com.app.ralaunch.ui.component.SectionTitle
 
 import com.app.ralaunch.ui.component.SettingsGroup
@@ -120,19 +121,21 @@ fun AdvancedScreen() {
                             }
                         // Clean up temp file
                         snackbarHostState.showSnackbar(
-                            message = "Logs exported successfully",
+                            message = Strings.settings.advanced.logsExported,
                             duration = SnackbarDuration.Short
                         )
                     } else {
                         snackbarHostState.showSnackbar(
-                            message = "No log files found",
+                            message = Strings.settings.advanced.noLogFiles,
                             duration = SnackbarDuration.Short
                         )
                     }
                     zipFile?.delete()
                 } catch (e: Exception) {
                     snackbarHostState.showSnackbar(
-                        message = "Export failed: ${e.message}",
+                        message = Strings.settings.advanced.exportFailed(
+                            e.message ?: Strings.settings.launcher.unknownError
+                        ),
                         duration = SnackbarDuration.Short
                     )
                 }
@@ -141,26 +144,23 @@ fun AdvancedScreen() {
     }
 
 
-    Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) }
-    ) { innerPadding ->
+    Box(modifier = Modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding)
                 .verticalScroll(rememberScrollState())
                 .padding(top = 8.dp, bottom = 20.dp),
         ) {
             SectionTitle(
-                title = "日志",
+                title = Strings.settings.advanced.logs,
                 icon = Icons.Rounded.Description
             )
 
             SettingsGroup {
                 SettingItem(
                     icon = Icons.Rounded.Description,
-                    title = "启用日志文件",
-                    description = "记录应用运行日志到文件",
+                    title = Strings.settings.advanced.enableLogFile,
+                    description = Strings.settings.advanced.enableLogFileDesc,
                     trailingContent = {
                         Switch(
                             checked = logFileEnabled,
@@ -174,8 +174,8 @@ fun AdvancedScreen() {
 
                 SettingItem(
                     icon = Icons.Rounded.Visibility,
-                    title = "日志级别",
-                    description = "记录日志的最低级别",
+                    title = Strings.settings.advanced.logLevel,
+                    description = Strings.settings.advanced.logLevelDesc,
                     trailingContent = {
                         var expanded by remember { mutableStateOf(false) }
                         val levels = AppLogger.LogLevel.entries.map { it.string() }
@@ -225,8 +225,8 @@ fun AdvancedScreen() {
 
                 SettingItem(
                     icon = Icons.Rounded.Storage,
-                    title = "日志文件最大大小",
-                    description = "单个日志文件的大小限制 (${logFileMaxSizeMb}MB)",
+                    title = Strings.settings.advanced.logMaxSize,
+                    description = Strings.settings.advanced.logMaxSizeDesc(logFileMaxSizeMb),
                     enabled = logFileEnabled,
                     trailingContent = {
                         Text(
@@ -268,12 +268,12 @@ fun AdvancedScreen() {
 
                 SettingItem(
                     icon = Icons.Rounded.Storage,
-                    title = "日志文件最大数量",
+                    title = Strings.settings.advanced.logMaxCount,
                     enabled = logFileEnabled,
-                    description = "保留的日志文件最大数量 (${logFileMaxCount}个)",
+                    description = Strings.settings.advanced.logMaxCountDesc(logFileMaxCount),
                     trailingContent = {
                         Text(
-                            text = "${logFileMaxCount}个",
+                            text = Strings.settings.advanced.fileCount(logFileMaxCount),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.primary,
                             fontWeight = FontWeight.Medium
@@ -311,8 +311,8 @@ fun AdvancedScreen() {
 
                 SettingItem(
                     icon = Icons.Rounded.Download,
-                    title = "导出日志",
-                    description = "导出日志文件到外部存储",
+                    title = Strings.settings.advanced.exportLogs,
+                    description = Strings.settings.advanced.exportLogsDesc,
                     trailingContent = {},
                     onClick = {
                         saveLogLauncher.launch("logs_${System.currentTimeMillis()}.zip")
@@ -321,13 +321,13 @@ fun AdvancedScreen() {
 
                 SettingItem(
                     icon = Icons.Rounded.Download,
-                    title = "清空日志",
-                    description = "删除所有日志文件", trailingContent = {},
+                    title = Strings.settings.advanced.clearLogs,
+                    description = Strings.settings.advanced.clearLogsDesc, trailingContent = {},
                     onClick = {
                         scope.launch {
                             AppLogger.clearLogs()
                             snackbarHostState.showSnackbar(
-                                message = "已清空日志文件",
+                                message = Strings.settings.advanced.logsCleared,
                                 duration = SnackbarDuration.Long
                             )
                         }
@@ -337,15 +337,15 @@ fun AdvancedScreen() {
             Spacer(modifier = Modifier.height(4.dp))
 
             SectionTitle(
-                title = "调试",
+                title = Strings.settings.advanced.debug,
                 icon = Icons.Rounded.Build
             )
 
             SettingsGroup {
                 SettingItem(
                     icon = Icons.Rounded.ClearAll,
-                    title = "结束后台UI",
-                    description = "启动游戏后关闭启动器UI", trailingContent = {
+                    title = Strings.settings.advanced.killUi,
+                    description = Strings.settings.advanced.killUiDesc, trailingContent = {
                         Switch(
                             checked = killUI,
                             onCheckedChange = { killUI = it }
@@ -356,15 +356,15 @@ fun AdvancedScreen() {
             Spacer(modifier = Modifier.height(4.dp))
 
             SectionTitle(
-                title = ".NET",
+                title = Strings.settings.advanced.dotnet,
                 icon = Icons.Rounded.IntegrationInstructions
             )
 
             SettingsGroup {
                 SettingItem(
                     icon = Icons.Rounded.Storage,
-                    title = "Server GC",
-                    description = "使用服务器垃圾回收模式",
+                    title = Strings.settings.advanced.serverGc,
+                    description = Strings.settings.advanced.serverGcDesc,
                     trailingContent = {
                         Switch(
                             checked = true,
@@ -375,8 +375,8 @@ fun AdvancedScreen() {
 
                 SettingItem(
                     icon = Icons.Rounded.Sync,
-                    title = "Concurrent GC",
-                    description = "启用并发垃圾回收",
+                    title = Strings.settings.advanced.concurrentGc,
+                    description = Strings.settings.advanced.concurrentGcDesc,
                     trailingContent = {
                         Switch(
                             checked = true,
@@ -387,8 +387,8 @@ fun AdvancedScreen() {
 
                 SettingItem(
                     icon = Icons.Rounded.Speed,
-                    title = "分层编译",
-                    description = "启用分层编译优化", trailingContent = {
+                    title = Strings.settings.advanced.tieredCompilation,
+                    description = Strings.settings.advanced.tieredCompilationDesc, trailingContent = {
                         Switch(
                             checked = true,
                             onCheckedChange = {}
@@ -396,6 +396,11 @@ fun AdvancedScreen() {
                     })
             }
         }
+
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier.align(Alignment.BottomCenter)
+        )
     }
 }
 

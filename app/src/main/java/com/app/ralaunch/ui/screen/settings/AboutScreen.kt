@@ -23,7 +23,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -34,8 +33,10 @@ import com.app.ralaunch.BuildConfig
 import com.app.ralaunch.MainActivity
 import com.app.ralaunch.R
 import com.app.ralaunch.core.ui.dialog.LicenseInfo
-import com.app.ralaunch.core.ui.dialog.defaultLicenses
 import com.app.ralaunch.feature.settings.ui.openSponsorsPage
+import com.app.ralaunch.strings.StringsResource
+import com.app.ralaunch.strings.StringsResource.Strings
+import com.app.ralaunch.strings.generated.ZhHans
 import com.app.ralaunch.ui.component.SectionTitle
 
 import com.app.ralaunch.ui.component.SettingsGroup
@@ -101,12 +102,12 @@ fun AboutScreen() {
                     } else {
                         isLatest = true
                         snackbarHostState.showSnackbar(
-                            message = "已是最新版本",
+                            message = Strings.settings.about.alreadyLatest,
                             duration = SnackbarDuration.Short
                         )
                     }
                 }.onFailure { error ->
-                    updateErrorMessage = error.message ?: "检查更新失败"
+                    updateErrorMessage = error.message ?: Strings.settings.about.checkFailed
 
                     snackbarHostState.showSnackbar(
                         message = updateErrorMessage!!,
@@ -114,7 +115,7 @@ fun AboutScreen() {
                     )
                 }
             } catch (e: Exception) {
-                updateErrorMessage = e.message ?: "检查更新失败"
+                updateErrorMessage = e.message ?: Strings.settings.about.checkFailed
                 snackbarHostState.showSnackbar(
                     message = updateErrorMessage!!,
                     duration = SnackbarDuration.Short
@@ -125,9 +126,7 @@ fun AboutScreen() {
         }
     }
 
-    Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) }
-    ) { _ ->
+    Box(modifier = Modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -135,7 +134,7 @@ fun AboutScreen() {
                 .padding(top = 8.dp, bottom = 20.dp),
         ) {
             SectionTitle(
-                title = "应用信息",
+                title = Strings.settings.about.appInfo,
                 icon = Icons.Rounded.Info
             )
 
@@ -188,23 +187,23 @@ fun AboutScreen() {
 
                 SettingItem(
                     icon = Icons.Rounded.Update,
-                    title = "检查更新",
-                    description = "检查应用是否有新版本", trailingContent = {},
+                    title = Strings.settings.about.checkUpdate,
+                    description = Strings.settings.about.checkUpdateDesc, trailingContent = {},
                     onClick = { checkForUpdate() })
             }
 
             Spacer(modifier = Modifier.height(4.dp))
 
             SectionTitle(
-                title = "社区",
+                title = Strings.settings.about.community,
                 icon = Icons.Rounded.Group
             )
 
             SettingsGroup {
                 SettingItem(
                     icon = Icons.Rounded.Group,
-                    title = "Discord 社区",
-                    description = "加入Discord讨论群组",
+                    title = Strings.settings.about.discord,
+                    description = Strings.settings.about.discordDesc,
                     trailingContent = {},
                     onClick = {
                         openUrl("https://discord.gg/cVkrRdffGp")
@@ -212,8 +211,8 @@ fun AboutScreen() {
 
                 SettingItem(
                     icon = Icons.Rounded.Group,
-                    title = "QQ 群",
-                    description = "加入QQ讨论群组",
+                    title = Strings.settings.about.qqGroup,
+                    description = Strings.settings.about.qqGroupDesc,
                     trailingContent = {},
                     onClick = {
                         openUrl("https://qm.qq.com/q/BWiPSj6wWQ")
@@ -221,8 +220,8 @@ fun AboutScreen() {
 
                 SettingItem(
                     icon = Icons.Rounded.Code,
-                    title = "GitHub",
-                    description = "查看项目源代码", trailingContent = {},
+                    title = Strings.settings.about.github,
+                    description = Strings.settings.about.githubDesc, trailingContent = {},
                     onClick = {
                         openUrl("https://github.com/FireworkSky/RotatingartLauncher")
                     })
@@ -231,22 +230,22 @@ fun AboutScreen() {
             Spacer(modifier = Modifier.height(4.dp))
 
             SectionTitle(
-                title = "支持",
+                title = Strings.settings.about.support,
                 icon = Icons.Rounded.Verified
             )
 
             SettingsGroup {
                 SettingItem(
                     icon = Icons.Rounded.Verified,
-                    title = "赞助墙",
-                    description = "查看所有赞助者",
+                    title = Strings.settings.about.sponsorWall,
+                    description = Strings.settings.about.sponsorWallDesc,
                     trailingContent = {},
                     onClick = { openSponsorsPage(MainActivity.context!!) })
 
                 SettingItem(
                     icon = Icons.Rounded.Verified,
-                    title = "爱发电",
-                    description = "支持项目开发",
+                    title = Strings.settings.about.afdian,
+                    description = Strings.settings.about.supportDesc,
                     trailingContent = {},
                     onClick = {
                         openUrl("https://afdian.com/a/RotatingartLauncher")
@@ -254,8 +253,8 @@ fun AboutScreen() {
 
                 SettingItem(
                     icon = Icons.Rounded.Verified,
-                    title = "Patreon",
-                    description = "支持项目开发", trailingContent = {},
+                    title = Strings.settings.about.patreon,
+                    description = Strings.settings.about.supportDesc, trailingContent = {},
                     onClick = {
                         openUrl("https://www.patreon.com/c/RotatingArtLauncher")
                     })
@@ -264,18 +263,23 @@ fun AboutScreen() {
             Spacer(modifier = Modifier.height(4.dp))
 
             SectionTitle(
-                title = "开源",
+                title = Strings.settings.about.openSource,
                 icon = Icons.Rounded.Copyright
             )
 
             SettingsGroup {
                 SettingItem(
                     icon = Icons.Rounded.Copyright,
-                    title = "开源许可证",
-                    description = "查看使用的开源许可证", trailingContent = {},
+                    title = Strings.settings.about.openSourceLicenses,
+                    description = Strings.settings.about.openSourceLicensesDesc, trailingContent = {},
                     onClick = { showLicenseDialog = true })
             }
         }
+
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier.align(Alignment.BottomCenter)
+        )
 
         if (showUpdateDialog && updateInfo != null) {
             UpdateDialog(
@@ -348,7 +352,7 @@ private fun UpdateDialogHeader(updateInfo: LauncherUpdateInfo) {
     ) {
         Column {
             Text(
-                text = "发现新版本",
+                text = Strings.settings.about.newVersionFound,
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary
@@ -366,7 +370,7 @@ private fun UpdateDialogHeader(updateInfo: LauncherUpdateInfo) {
             color = MaterialTheme.colorScheme.primaryContainer
         ) {
             Text(
-                text = "最新",
+                text = Strings.settings.about.latestBadge,
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary,
@@ -409,7 +413,7 @@ private fun UpdateVersionInfo(updateInfo: LauncherUpdateInfo) {
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
-                text = "当前版本",
+                text = Strings.settings.about.currentVersion,
                 fontSize = 14.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -425,7 +429,7 @@ private fun UpdateVersionInfo(updateInfo: LauncherUpdateInfo) {
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
-                text = "最新版本",
+                text = Strings.settings.about.latestVersion,
                 fontSize = 14.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -443,7 +447,7 @@ private fun UpdateVersionInfo(updateInfo: LauncherUpdateInfo) {
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = "发布日期",
+                    text = Strings.settings.about.publishDate,
                     fontSize = 14.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -461,7 +465,7 @@ private fun UpdateVersionInfo(updateInfo: LauncherUpdateInfo) {
 private fun UpdateChangelog(updateInfo: LauncherUpdateInfo) {
     Column {
         Text(
-            text = "更新内容",
+            text = Strings.settings.about.changelog,
             fontSize = 14.sp,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onSurface,
@@ -496,7 +500,7 @@ private fun UpdateChangelog(updateInfo: LauncherUpdateInfo) {
             }
         } else {
             Text(
-                text = "暂无更新说明",
+                text = Strings.settings.about.noReleaseNotes,
                 fontSize = 13.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
             )
@@ -540,14 +544,14 @@ private fun UpdateDialogActions(
             onClick = onDismiss,
             modifier = Modifier.weight(1f)
         ) {
-            Text("稍后更新")
+            Text(Strings.settings.about.updateLater)
         }
 
         Button(
             onClick = onUpdate,
             modifier = Modifier.weight(1f)
         ) {
-            Text("立即更新")
+            Text(Strings.settings.about.updateNow)
         }
     }
 }
@@ -556,8 +560,8 @@ private fun UpdateDialogActions(
 private fun LicenseDialog(
     onDismiss: () -> Unit
 ) {
-    val titleText = stringResource(R.string.settings_open_source_licenses)
-    val closeText = stringResource(R.string.close)
+    val titleText = Strings.settings.about.openSourceLicenses
+    val closeText = Strings.close
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -611,16 +615,16 @@ private fun LicenseDialog(
 }
 
 private fun defaultLicenses() = listOf(
-    LicenseInfo("Kotlin", "Apache 2.0", "Kotlin 编程语言"),
-    LicenseInfo("Jetpack Compose", "Apache 2.0", "Android UI 框架"),
-    LicenseInfo("Coil", "Apache 2.0", "图片加载库"),
-    LicenseInfo("OkHttp", "Apache 2.0", "HTTP 客户端"),
-    LicenseInfo("Kotlinx Coroutines", "Apache 2.0", "协程库"),
-    LicenseInfo("Kotlinx Serialization", "Apache 2.0", "序列化库"),
-    LicenseInfo("Material Icons", "Apache 2.0", "Material Design 图标"),
-    LicenseInfo("AndroidX", "Apache 2.0", "Android 扩展库"),
-    LicenseInfo("FNA", "Ms-PL", "XNA 移植框架"),
-    LicenseInfo("MonoMod", "MIT", "Mono 修改框架")
+    LicenseInfo("Kotlin", "Apache 2.0", Strings.settings.about.licenseKotlin),
+    LicenseInfo("Jetpack Compose", "Apache 2.0", Strings.settings.about.licenseCompose),
+    LicenseInfo("Coil", "Apache 2.0", Strings.settings.about.licenseCoil),
+    LicenseInfo("OkHttp", "Apache 2.0", Strings.settings.about.licenseOkhttp),
+    LicenseInfo("Kotlinx Coroutines", "Apache 2.0", Strings.settings.about.licenseCoroutines),
+    LicenseInfo("Kotlinx Serialization", "Apache 2.0", Strings.settings.about.licenseSerialization),
+    LicenseInfo("Material Icons", "Apache 2.0", Strings.settings.about.licenseMaterialIcons),
+    LicenseInfo("AndroidX", "Apache 2.0", Strings.settings.about.licenseAndroidx),
+    LicenseInfo("FNA", "Ms-PL", Strings.settings.about.licenseFna),
+    LicenseInfo("MonoMod", "MIT", Strings.settings.about.licenseMonomod)
 )
 
 
@@ -630,7 +634,12 @@ private fun formatDate(dateString: String): String {
         inputFormat.timeZone = TimeZone.getTimeZone("UTC")
         val date = inputFormat.parse(dateString)
 
-        val outputFormat = SimpleDateFormat("yyyy年MM月dd日", Locale.getDefault())
+        // 日期格式跟随应用语言（而非系统区域设置）
+        val isZh = StringsResource.Strings === ZhHans
+        val outputFormat = SimpleDateFormat(
+            if (isZh) "yyyy年MM月dd日" else "MMM d, yyyy",
+            if (isZh) Locale.CHINA else Locale.US
+        )
         date?.let { outputFormat.format(it) } ?: dateString
     } catch (e: Exception) {
         dateString
