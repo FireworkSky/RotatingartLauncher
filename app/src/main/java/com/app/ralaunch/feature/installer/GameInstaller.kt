@@ -3,15 +3,15 @@ package com.app.ralaunch.feature.installer
 import com.app.ralaunch.feature.installer.GameInstallPlugin.Event
 import com.app.ralaunch.feature.installer.GameInstallPlugin.Result
 import com.app.ralaunch.strings.StringsResource.Strings
-import java.io.File
 import kotlinx.coroutines.CancellationException
 
 /**
  * 统一的游戏安装器
  * 使用插件系统处理不同游戏的安装逻辑
+ * 游戏文件支持本地路径与 SAF content URI（见 [GameFile]）
  *
  * 安装目录结构：
- * - GameInstaller 按文件选择安装插件
+ * - GameInstaller 按文件内部特征选择安装插件（不依赖文件名）
  * - 插件检测游戏类型获取 gameId（如 "SMAPI", "Celeste", "Terraria"），
  *   调用 GameManager.createDirectory 生成存储 ID（如 "SMAPI_abc12345"）并创建目录
  * - 插件将游戏文件提取到此目录或其子目录，并负责保存 GameItem
@@ -36,22 +36,19 @@ class GameInstaller {
 
     /**
      * 安装游戏
-     * @param gameFilePath 游戏本体文件路径（.sh 或 .zip）
-     * @param modLoaderFilePath 模组加载器文件路径（.zip）
+     * @param gameFile 游戏本体文件（本地路径或 SAF URI）
+     * @param modLoaderFile 模组加载器文件（本地路径或 SAF URI，可选）
      * @param callback 安装事件回调
      * @return 安装结果；成功时 GameItem 已由插件保存
      */
     suspend fun install(
-        gameFilePath: String,
-        modLoaderFilePath: String? = null,
+        gameFile: GameFile?,
+        modLoaderFile: GameFile? = null,
         callback: ((Event) -> Unit)? = null
     ): Result = try {
-        val gameFile = File(gameFilePath)
-        val modLoaderFile = modLoaderFilePath?.let { File(it) }
-
-        // 选择合适的插件：优先按模组加载器，其次按游戏本体
+        // 选择合适的插件：优先按模组加载器，其次按游戏本体（均基于文件内容）
         val plugin = modLoaderFile?.let { InstallPluginRegistry.selectPluginForModLoader(it) }
-                ?: InstallPluginRegistry.selectPluginForGame(gameFile)
+            ?: gameFile?.let { InstallPluginRegistry.selectPluginForGame(it) }
             ?: return Result.Failure(Strings.installer.pluginNotFound)
 
         currentPlugin = plugin
@@ -69,16 +66,14 @@ class GameInstaller {
     /**
      * 检测游戏
      */
-    fun detectGame(gameFilePath: String): GameDetectResult? {
-        val gameFile = File(gameFilePath)
+    fun detectGame(gameFile: GameFile): GameDetectResult? {
         return InstallPluginRegistry.detectGame(gameFile)?.second
     }
 
     /**
      * 检测模组加载器
      */
-    fun detectModLoader(modLoaderFilePath: String): ModLoaderDetectResult? {
-        val modLoaderFile = File(modLoaderFilePath)
+    fun detectModLoader(modLoaderFile: GameFile): ModLoaderDetectResult? {
         return InstallPluginRegistry.detectModLoader(modLoaderFile)?.second
     }
 

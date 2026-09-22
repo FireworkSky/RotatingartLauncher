@@ -10,7 +10,6 @@ import com.app.ralaunch.feature.patch.data.PatchManager
 import org.koin.java.KoinJavaComponent
 import java.io.File
 import kotlin.io.path.Path
-import org.apache.commons.compress.archivers.zip.ZipFile
 
 /**
  * Celeste/Everest 安装插件
@@ -22,29 +21,29 @@ class CelesteInstallPlugin : BaseInstallPlugin() {
         get() = Strings.installer.celeste.name
     override val supportedGames = listOf(GameDefinition.CELESTE, GameDefinition.EVEREST)
 
-    override fun detectGame(gameFile: File): GameDetectResult? {
-        val fileName = gameFile.name.lowercase()
-
-        if (fileName.endsWith(".zip") && fileName.contains("celeste")) {
-            return GameDetectResult(GameDefinition.CELESTE)
+    override fun detectGame(gameFile: GameFile): GameDetectResult? {
+        // ZIP：包含 Celeste 主程序
+        val zip = gameFile.container as? GameFileInspector.Container.Zip ?: return null
+        return if (zip.hasEntryNamed("Celeste.exe")) {
+            GameDetectResult(GameDefinition.CELESTE)
+        } else {
+            null
         }
-
-        return null
     }
 
-    override fun detectModLoader(modLoaderFile: File): ModLoaderDetectResult? {
-        ZipFile(modLoaderFile).use { zip ->
-            val everestLibEntry = zip.getEntry("main/everest-lib")
-            if (everestLibEntry != null) {
-                return ModLoaderDetectResult(GameDefinition.EVEREST)
-            }
+    override fun detectModLoader(modLoaderFile: GameFile): ModLoaderDetectResult? {
+        // ZIP：Everest 发行包特征（main/everest-lib 目录）
+        val zip = modLoaderFile.container as? GameFileInspector.Container.Zip ?: return null
+        return if (zip.hasPath("main/everest-lib")) {
+            ModLoaderDetectResult(GameDefinition.EVEREST)
+        } else {
+            null
         }
-        return null
     }
 
     override suspend fun performInstall(
-        gameFile: File,
-        modLoaderFile: File?,
+        gameFile: GameFile?,
+        modLoaderFile: GameFile?,
         callback: ((Event) -> Unit)?
     ): Result {
         callback?.invoke(
@@ -54,13 +53,15 @@ class CelesteInstallPlugin : BaseInstallPlugin() {
             )
         )
 
+        val gameFile = gameFile ?: throw Exception(Strings.installer.extractGameFailed)
+
         // 创建存储根目录
         val gameStorageRoot = createStorageRoot(gameFile, modLoaderFile)
 
         // 解压游戏本体
         when (
             val extractResult = ArchiveExtractor.builder()
-                .from(gameFile.toPath())
+                .from(gameFile.source)
                 .to(gameStorageRoot.toPath())
                 .callback { event ->
                     if (event is ArchiveExtractor.Event.Progress && !isCancelled) {
@@ -110,10 +111,10 @@ class CelesteInstallPlugin : BaseInstallPlugin() {
         return finishInstall(gameItem, callback)
     }
 
-    private suspend fun installEverest(modLoaderFile: File, outputDir: File, callback: ((Event) -> Unit)?) {
+    private suspend fun installEverest(modLoaderFile: GameFile, outputDir: File, callback: ((Event) -> Unit)?) {
         when (
             val extractResult = ArchiveExtractor.builder()
-                .from(modLoaderFile.toPath())
+                .from(modLoaderFile.source)
                 .prefix(Path("main"))
                 .to(outputDir.toPath())
                 .callback { event ->

@@ -1,7 +1,6 @@
 package com.app.ralaunch.feature.installer
 
 import com.app.ralaunch.core.model.GameItem
-import java.io.File
 
 /**
  * 游戏安装插件接口
@@ -28,31 +27,31 @@ interface GameInstallPlugin {
     val supportedGames: List<GameDefinition>
 
     /**
-     * 检测游戏文件
-     * @param gameFile 游戏文件路径
+     * 检测游戏文件（基于文件内部特征，不依赖文件名）
+     * @param gameFile 游戏文件（本地路径或 SAF URI）
      * @return 游戏检测结果，如果不支持返回 null
      */
-    fun detectGame(gameFile: File): GameDetectResult?
+    fun detectGame(gameFile: GameFile): GameDetectResult?
 
     /**
-     * 检测模组加载器文件
-     * @param modLoaderFile 模组加载器文件路径
+     * 检测模组加载器文件（基于文件内部特征，不依赖文件名）
+     * @param modLoaderFile 模组加载器文件（本地路径或 SAF URI）
      * @return 模组加载器检测结果，如果不支持返回 null
      */
-    fun detectModLoader(modLoaderFile: File): ModLoaderDetectResult?
+    fun detectModLoader(modLoaderFile: GameFile): ModLoaderDetectResult?
 
     /**
      * 安装游戏；成功时 GameItem 已持久化
      * 存储根目录由插件经 GameManager.createDirectory 自行创建
      *
-     * @param gameFile 游戏本体文件
+     * @param gameFile 游戏本体文件（本地路径或 SAF URI；仅模组加载器导入时可为 null）
      * @param modLoaderFile 模组加载器文件（可选）
      * @param callback 安装事件回调
      * @return 安装结果；除协程取消（CancellationException）外不抛异常
      */
     suspend fun install(
-        gameFile: File,
-        modLoaderFile: File?,
+        gameFile: GameFile?,
+        modLoaderFile: GameFile?,
         callback: ((Event) -> Unit)? = null
     ): Result
 

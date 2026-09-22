@@ -19,6 +19,7 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 import java.io.OutputStream
 import java.nio.file.Files
@@ -95,6 +96,44 @@ class ArchiveExtractorTest {
 
         assertTrue(result is ArchiveExtractor.Result.Success)
         assertEquals("content", Files.readString(destination / "nested/file.txt"))
+    }
+
+    @Test
+    fun extractsZipFromSafUri() {
+        val archive = createZip("nested/file.txt" to "content")
+        val context = RuntimeEnvironment.getApplication()
+        val uri = SafUriSources.register(context, archive.toFile())
+        val destination = tempDir / "destination"
+
+        val result = ArchiveExtractor.builder()
+            .from(context, uri)
+            .to(destination)
+            .build()
+            .extract()
+
+        assertTrue(result is ArchiveExtractor.Result.Success)
+        assertEquals("content", Files.readString(destination / "nested/file.txt"))
+    }
+
+    @Test
+    fun extractsSevenZipFromSafUri() {
+        val archive = createSevenZip(
+            "first.txt" to "first",
+            "second.txt" to "second"
+        )
+        val context = RuntimeEnvironment.getApplication()
+        val uri = SafUriSources.register(context, archive.toFile())
+        val destination = tempDir / "destination"
+
+        val result = ArchiveExtractor.builder()
+            .from(context, uri)
+            .to(destination)
+            .build()
+            .extract()
+
+        assertTrue(result is ArchiveExtractor.Result.Success)
+        assertEquals("first", Files.readString(destination / "first.txt"))
+        assertEquals("second", Files.readString(destination / "second.txt"))
     }
 
     @Test

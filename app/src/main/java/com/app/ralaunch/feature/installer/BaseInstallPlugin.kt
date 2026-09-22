@@ -35,8 +35,8 @@ abstract class BaseInstallPlugin : GameInstallPlugin {
     }
 
     final override suspend fun install(
-        gameFile: File,
-        modLoaderFile: File?,
+        gameFile: GameFile?,
+        modLoaderFile: GameFile?,
         callback: ((Event) -> Unit)?
     ): Result {
         isCancelled = false
@@ -57,8 +57,8 @@ abstract class BaseInstallPlugin : GameInstallPlugin {
      * 具体的安装流程；只需返回成功结果，异常与取消由基类/辅助方法处理
      */
     protected abstract suspend fun performInstall(
-        gameFile: File,
-        modLoaderFile: File?,
+        gameFile: GameFile?,
+        modLoaderFile: GameFile?,
         callback: ((Event) -> Unit)?
     ): Result
 
@@ -66,9 +66,9 @@ abstract class BaseInstallPlugin : GameInstallPlugin {
      * 创建本次安装的存储根目录：解析目标定义（模组加载器优先，其次游戏本体），
      * 调用 [GameManager.createDirectory] 以其 gameId 分配唯一目录并返回
      */
-    protected suspend fun createStorageRoot(gameFile: File, modLoaderFile: File?): File {
+    protected suspend fun createStorageRoot(gameFile: GameFile?, modLoaderFile: GameFile?): File {
         val definition = modLoaderFile?.let { detectModLoader(it) }?.definition
-            ?: detectGame(gameFile)?.definition
+            ?: gameFile?.let { detectGame(it) }?.definition
             ?: error("Install plugin selected without a matching detection: $pluginId")
         return GameManager.createDirectory(definition.gameId).toFile()
     }

@@ -1,5 +1,7 @@
 package com.app.ralaunch.core.extractor
 
+import android.content.Context
+import android.net.Uri
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
 import org.apache.commons.compress.archivers.zip.ZipFile
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream
@@ -9,22 +11,18 @@ import com.app.ralaunch.strings.StringsResource.Strings
 import java.io.IOException
 import java.io.InputStream
 import java.nio.channels.Channels
-import java.nio.channels.FileChannel
-import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.StandardOpenOption
 import kotlin.io.path.Path
 import kotlin.io.path.createDirectories
 import kotlin.io.path.div
-import kotlin.io.path.inputStream
 
 /**
- * GOG .sh 文件提取器
+ * GOG .sh 文件提取器（支持本地文件与 SAF URI）
  */
 class GogShFileExtractor private constructor(private val options: Options) {
     data class Options(
         val id: String,
-        val sourcePath: Path,
+        val source: ArchiveSource,
         val destinationPath: Path,
         val callback: ((Event) -> Unit)?
     )
@@ -58,13 +56,18 @@ class GogShFileExtractor private constructor(private val options: Options) {
 
     class Builder {
         private var id = ""
-        private var sourcePath: Path? = null
+        private var source: ArchiveSource? = null
         private var destinationPath: Path? = null
         private var callback: ((Event) -> Unit)? = null
 
         fun id(id: String) = apply { this.id = id }
 
-        fun from(sourcePath: Path) = apply { this.sourcePath = sourcePath }
+        fun from(sourcePath: Path) = apply { this.source = ArchiveSource.of(sourcePath) }
+
+        fun from(source: ArchiveSource) = apply { this.source = source }
+
+        fun from(context: Context, sourceUri: Uri) =
+            apply { this.source = ArchiveSource.of(context, sourceUri) }
 
         fun to(destinationPath: Path) = apply { this.destinationPath = destinationPath }
 
@@ -73,7 +76,7 @@ class GogShFileExtractor private constructor(private val options: Options) {
         fun build() = GogShFileExtractor(
             Options(
                 id = id,
-                sourcePath = requireNotNull(sourcePath) { "sourcePath is required" },
+                source = requireNotNull(source) { "source is required" },
                 destinationPath = requireNotNull(destinationPath) { "destinationPath is required" },
                 callback = callback
             )
@@ -90,16 +93,16 @@ class GogShFileExtractor private constructor(private val options: Options) {
                     0.01f
                 )
             )
-            val shFile = MakeSelfShFile.parse(options.sourcePath)
+            val shFile = MakeSelfShFile.parse(options.source)
                 ?: throw IOException("解析 MakeSelf Sh 文件头部失败")
 
             Timber.d("Successfully parsed header - offset: ${shFile.offset}, filesize: ${shFile.filesize}")
-            Timber.d("Starting extraction: ${options.sourcePath} to ${options.destinationPath}")
+            Timber.d("Starting extraction: ${options.source} to ${options.destinationPath}")
 
             options.destinationPath.createDirectories()
 
             // sanity check
-            if (shFile.offset + shFile.filesize > Files.size(options.sourcePath)) {
+            if (shFile.offset + shFile.filesize > options.source.size()) {
                 throw IOException("MakeSelf Sh 文件头部信息无效，超出文件总大小")
             }
 
@@ -126,7 +129,7 @@ class GogShFileExtractor private constructor(private val options: Options) {
 
             // game_data.zip 直接用 commons-compress ZipFile 解析完整 .sh 文件：
             // makeself 脚本与 mojosetup.tar.gz 会被识别为 zip 前导数据(preamble)并自动跳过
-            ZipFile.builder().setPath(options.sourcePath).get().use { zipFile ->
+            ZipFile.builder().setSeekableByteChannel(options.source.openSeekableChannel()).get().use { zipFile ->
                 Timber.d("Opened game data zip, first local file header at ${zipFile.firstLocalFileHeaderOffset}")
 
                 options.callback?.invoke(
@@ -197,7 +200,7 @@ class GogShFileExtractor private constructor(private val options: Options) {
      * 流式解析 makeself 载荷（mojosetup.tar.gz），仅校验结构，不产生临时文件
      */
     private fun parseMojoSetupPayload(shFile: MakeSelfShFile) {
-        FileChannel.open(options.sourcePath, StandardOpenOption.READ).use { channel ->
+        options.source.openSeekableChannel().use { channel ->
             channel.position(shFile.offset)
             val bounded = BoundedInputStream(Channels.newInputStream(channel), shFile.filesize)
             GzipCompressorInputStream(bounded).use { gzip ->
@@ -218,12 +221,12 @@ class GogShFileExtractor private constructor(private val options: Options) {
         val filesize: Long
     ) {
         companion object {
-            fun parse(filePath: Path): MakeSelfShFile? {
+            fun parse(source: ArchiveSource): MakeSelfShFile? {
                 val headerBuffer = ByteArray(HEADER_SIZE)
                 val headerContent: String
 
                 try {
-                    filePath.inputStream().use { input ->
+                    source.openInputStream().use { input ->
                         val bytesRead = input.read(headerBuffer)
                         Timber.d("Read $bytesRead bytes from header")
                         headerContent = String(headerBuffer, 0, bytesRead, Charsets.UTF_8)
@@ -345,17 +348,17 @@ class GogShFileExtractor private constructor(private val options: Options) {
              * commons-compress ZipFile 可直接打开带 makeself 前导数据的完整 .sh 文件（preamble 自动跳过），
              * 因此无需先将 game_data.zip 解出为临时文件。
              */
-            fun parseFromGogShFile(filePath: Path): GameDataZipFile? {
-                if (MakeSelfShFile.parse(filePath) == null) {
+            fun parseFromGogShFile(source: ArchiveSource): GameDataZipFile? {
+                if (MakeSelfShFile.parse(source) == null) {
                     Timber.e("MakeSelf SH file is null")
                     return null
                 }
-                return parse(filePath)
+                return parse(source)
             }
 
-            fun parse(filePath: Path): GameDataZipFile? {
+            fun parse(source: ArchiveSource): GameDataZipFile? {
                 return try {
-                    ZipFile.builder().setPath(filePath).get().use(::parse)
+                    ZipFile.builder().setSeekableByteChannel(source.openSeekableChannel()).get().use(::parse)
                 } catch (e: Exception) {
                     Timber.e(e, "Exception when reading game_data.zip")
                     null

@@ -18,6 +18,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.koin.java.KoinJavaComponent
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 import java.nio.file.Files
 import java.nio.file.Path
@@ -55,7 +56,9 @@ class GogShFileExtractorTest {
         val sample = Path.of("..", "testcases", "gogsh", "terraria_v1_4_5_6_89299.sh").toFile()
         assumeTrue("Local GOG sample is not available", sample.isFile)
 
-        val gameData = GogShFileExtractor.GameDataZipFile.parseFromGogShFile(sample.toPath())
+        val gameData = GogShFileExtractor.GameDataZipFile.parseFromGogShFile(
+            ArchiveSource.of(sample.toPath())
+        )
 
         val parsed = requireNotNull(gameData)
         assertTrue(!parsed.id.isNullOrBlank())
@@ -66,20 +69,7 @@ class GogShFileExtractorTest {
 
     @Test
     fun builderExtractsGameDataAndReturnsTypedResult() {
-        val gameData = tempDir / "game_data.zip"
-        ZipOutputStream(Files.newOutputStream(gameData)).use { zip ->
-            zip.putNextEntry(ZipEntry("data/noarch/gameinfo"))
-            zip.write("test-game\n1.0\nbuild\nen".toByteArray())
-            zip.closeEntry()
-            zip.putNextEntry(ZipEntry("data/noarch/game/game.txt"))
-            zip.write("game".toByteArray())
-            zip.closeEntry()
-        }
-        val gogSh = tempDir / "game.sh"
-        Files.newOutputStream(gogSh).use { output ->
-            output.write("SKIP=2\nSIZE=0\n".toByteArray())
-            output.write(Files.readAllBytes(gameData))
-        }
+        val gogSh = createGogSh("game.sh")
 
         val events = mutableListOf<GogShFileExtractor.Event>()
         val result = GogShFileExtractor.builder()
@@ -110,6 +100,25 @@ class GogShFileExtractorTest {
     }
 
     @Test
+    fun extractsFromSafUri() {
+        val gogSh = createGogSh("saf-game.sh")
+        val context = RuntimeEnvironment.getApplication()
+        val uri = SafUriSources.register(context, gogSh.toFile())
+
+        val result = GogShFileExtractor.builder()
+            .id("gog-install-saf")
+            .from(context, uri)
+            .to(tempDir / "saf-output")
+            .build()
+            .extract()
+
+        assertTrue(result is GogShFileExtractor.Result.Success)
+        result as GogShFileExtractor.Result.Success
+        assertEquals("test-game", result.gameDataZipFile.id)
+        assertEquals("game", Files.readString(result.gamePath / "game.txt"))
+    }
+
+    @Test
     fun emitsLocalizedFailureForInvalidScript() {
         val events = mutableListOf<GogShFileExtractor.Event>()
 
@@ -128,5 +137,23 @@ class GogShFileExtractorTest {
             "Failed to extract GOG .sh file",
             (events.last() as GogShFileExtractor.Event.Error).message
         )
+    }
+
+    private fun createGogSh(fileName: String): Path {
+        val gameData = tempDir / "game_data.zip"
+        ZipOutputStream(Files.newOutputStream(gameData)).use { zip ->
+            zip.putNextEntry(ZipEntry("data/noarch/gameinfo"))
+            zip.write("test-game\n1.0\nbuild\nen".toByteArray())
+            zip.closeEntry()
+            zip.putNextEntry(ZipEntry("data/noarch/game/game.txt"))
+            zip.write("game".toByteArray())
+            zip.closeEntry()
+        }
+        val gogSh = tempDir / fileName
+        Files.newOutputStream(gogSh).use { output ->
+            output.write("SKIP=2\nSIZE=0\n".toByteArray())
+            output.write(Files.readAllBytes(gameData))
+        }
+        return gogSh
     }
 }

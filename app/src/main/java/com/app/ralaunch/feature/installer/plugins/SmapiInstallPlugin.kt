@@ -9,7 +9,6 @@ import com.app.ralaunch.feature.installer.*
 import com.app.ralaunch.feature.installer.GameInstallPlugin.Event
 import com.app.ralaunch.feature.installer.GameInstallPlugin.Result
 import java.io.File
-import java.io.FileInputStream
 import java.io.RandomAccessFile
 import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream
 
@@ -21,6 +20,7 @@ class SmapiInstallPlugin : BaseInstallPlugin() {
     companion object {
         private const val SMAPI_MODS_PATH_ENV_KEY = "SMAPI_MODS_PATH"
         private const val SMAPI_MODS_PATH_VALUE_TEMPLATE = "{XDG_DATA_HOME}/Stardew Valley/Mods"
+        private val SMAPI_VERSION_PATTERN = Regex("""(?i)^smapi[ _-]?v?(\d+(?:\.\d+)+)""")
 
         /** RALauncher 外部存储目录名 */
         private const val RALAUNCHER_DIR = "RALauncher"
@@ -42,49 +42,58 @@ class SmapiInstallPlugin : BaseInstallPlugin() {
         get() = Strings.installer.smapi.name
     override val supportedGames = listOf(GameDefinition.STARDEW_VALLEY, GameDefinition.SMAPI)
 
-    override fun detectGame(gameFile: File): GameDetectResult? {
-        val fileName = gameFile.name.lowercase()
-
-        if (fileName.endsWith(".sh") && (fileName.contains("stardew") || fileName.contains("valley"))) {
-            return GameDetectResult(GameDefinition.STARDEW_VALLEY)
+    override fun detectGame(gameFile: GameFile): GameDetectResult? {
+        // GOG 安装器：game_data.zip 内 gameinfo 首行为游戏名
+        val gogInstaller = gameFile.container as? GameFileInspector.Container.GogInstaller
+        if (gogInstaller != null) {
+            return if (gogInstaller.gameInfo.id.equals("Stardew Valley", ignoreCase = true)) {
+                GameDetectResult(GameDefinition.STARDEW_VALLEY, gogInstaller.gameInfo.version.orEmpty())
+            } else {
+                null
+            }
         }
 
-        if (fileName.endsWith(".zip") && (fileName.contains("stardew") || fileName.contains("valley"))) {
-            return GameDetectResult(GameDefinition.STARDEW_VALLEY)
+        // ZIP：包含 Stardew Valley 主程序
+        val zip = gameFile.container as? GameFileInspector.Container.Zip ?: return null
+        return if (zip.hasEntryNamed("Stardew Valley.exe")) {
+            GameDetectResult(GameDefinition.STARDEW_VALLEY)
+        } else {
+            null
         }
-
-        return null
     }
 
-    override fun detectModLoader(modLoaderFile: File): ModLoaderDetectResult? {
-        val fileName = modLoaderFile.name.lowercase()
+    override fun detectModLoader(modLoaderFile: GameFile): ModLoaderDetectResult? {
+        val zip = modLoaderFile.container as? GameFileInspector.Container.Zip ?: return null
 
-        if (fileName.contains("smapi") && fileName.endsWith(".zip")) {
-            return ModLoaderDetectResult(GameDefinition.SMAPI)
+        // 安装器格式：internal/<平台>/install.dat 或 SMAPI.Installer.dll
+        val isInstallerFormat = zip.findEntryNamed("install.dat")?.contains("/internal/") == true ||
+            zip.hasEntryNamed("SMAPI.Installer.dll")
+        // 已安装格式：StardewModdingAPI 主程序
+        if (isInstallerFormat || zip.hasEntryNamed("StardewModdingAPI.dll")) {
+            return ModLoaderDetectResult(GameDefinition.SMAPI, detectSmapiVersion(zip))
         }
 
         return null
     }
 
     /**
-     * 检测 SMAPI 是否为安装器格式（包含 .dat 文件）
+     * 检测 SMAPI 是否为安装器格式（包含 internal/&lt;平台&gt;/install.dat）
      */
-    private fun isSmapiInstaller(modLoaderFile: File): Boolean {
-        try {
-            ZipArchiveInputStream(FileInputStream(modLoaderFile)).use { zis ->
-                var entry = zis.nextEntry
-                while (entry != null) {
-                    if (entry.name.lowercase().endsWith(".dat")) return true
-                    entry = zis.nextEntry
-                }
-            }
-        } catch (e: Exception) { /* 忽略 */ }
-        return false
+    private fun isSmapiInstaller(modLoaderFile: GameFile): Boolean {
+        val zip = modLoaderFile.container as? GameFileInspector.Container.Zip ?: return false
+        return zip.findEntryNamed("install.dat")?.contains("/internal/") == true
+    }
+
+    /** 安装包根目录形如 "SMAPI 4.5.2 installer/"，从中提取版本号 */
+    private fun detectSmapiVersion(zip: GameFileInspector.Container.Zip): String {
+        return zip.entryPaths.firstNotNullOfOrNull { path ->
+            SMAPI_VERSION_PATTERN.find(path.substringBefore('/'))?.groupValues?.get(1)
+        }.orEmpty()
     }
 
     override suspend fun performInstall(
-        gameFile: File,
-        modLoaderFile: File?,
+        gameFile: GameFile?,
+        modLoaderFile: GameFile?,
         callback: ((Event) -> Unit)?
     ): Result {
         callback?.invoke(
@@ -94,16 +103,17 @@ class SmapiInstallPlugin : BaseInstallPlugin() {
             )
         )
 
+        val gameFile = gameFile ?: throw Exception(Strings.installer.extractGameFailed)
+
         // 创建存储根目录
         val gameStorageRoot = createStorageRoot(gameFile, modLoaderFile)
 
-        // 解压游戏本体（GOG .sh 或 ZIP）
-        val gameFileName = gameFile.name.lowercase()
+        // 解压游戏本体（GOG 安装器或 ZIP，按容器特征分派）
         val actualGameDir: File? = when {
-            gameFileName.endsWith(".sh") ->
+            gameFile.container is GameFileInspector.Container.GogInstaller ->
                 when (
                     val result = GogShFileExtractor.builder()
-                        .from(gameFile.toPath())
+                        .from(gameFile.source)
                         .to(gameStorageRoot.toPath())
                         .callback { event ->
                             if (event is GogShFileExtractor.Event.Progress && !isCancelled) {
@@ -118,10 +128,10 @@ class SmapiInstallPlugin : BaseInstallPlugin() {
                     is GogShFileExtractor.Result.Failure -> null
                 }
 
-            gameFileName.endsWith(".zip") ->
+            gameFile.container is GameFileInspector.Container.Zip ->
                 when (
                     val result = ArchiveExtractor.builder()
-                        .from(gameFile.toPath())
+                        .from(gameFile.source)
                         .to(gameStorageRoot.toPath())
                         .callback { event ->
                             if (event is ArchiveExtractor.Event.Progress && !isCancelled) {
@@ -207,10 +217,10 @@ class SmapiInstallPlugin : BaseInstallPlugin() {
         return finishInstall(finalGameItem, callback)
     }
 
-    private suspend fun installSmapi(modLoaderFile: File, outputDir: File, callback: ((Event) -> Unit)?) {
+    private suspend fun installSmapi(modLoaderFile: GameFile, outputDir: File, callback: ((Event) -> Unit)?) {
         when (
             val result = ArchiveExtractor.builder()
-                .from(modLoaderFile.toPath())
+                .from(modLoaderFile.source)
                 .to(outputDir.toPath())
                 .callback { event ->
                     if (event is ArchiveExtractor.Event.Progress && !isCancelled) {
@@ -255,14 +265,14 @@ class SmapiInstallPlugin : BaseInstallPlugin() {
         }
     }
 
-    private suspend fun installSmapiFromInstaller(modLoaderFile: File, outputDir: File, callback: ((Event) -> Unit)?) {
+    private suspend fun installSmapiFromInstaller(modLoaderFile: GameFile, outputDir: File, callback: ((Event) -> Unit)?) {
         val tempDir = File(outputDir, "_smapi_temp")
         tempDir.mkdirs()
 
         try {
             when (
                 val result = ArchiveExtractor.builder()
-                    .from(modLoaderFile.toPath())
+                    .from(modLoaderFile.source)
                     .to(tempDir.toPath())
                     .callback { event ->
                         if (event is ArchiveExtractor.Event.Progress && !isCancelled) {

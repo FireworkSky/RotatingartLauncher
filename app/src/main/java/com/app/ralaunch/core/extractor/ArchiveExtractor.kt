@@ -1,6 +1,8 @@
 package com.app.ralaunch.core.extractor
 
 import android.annotation.SuppressLint
+import android.content.Context
+import android.net.Uri
 import android.system.Os
 import com.app.ralaunch.strings.StringsResource.Strings
 import kotlinx.coroutines.CancellationException
@@ -20,16 +22,14 @@ import kotlin.io.path.createDirectories
 import kotlin.io.path.deleteIfExists
 import kotlin.io.path.div
 import kotlin.io.path.exists
-import kotlin.io.path.fileSize
-import kotlin.io.path.inputStream
 import kotlin.io.path.isSymbolicLink
 import kotlin.io.path.outputStream
 
-/** Extracts content-detected archives, 7z archives and already-opened zip files. */
+/** Extracts content-detected archives, 7z archives and already-opened zip files, from files or SAF URIs. */
 class ArchiveExtractor private constructor(private val options: Options) {
     data class Options(
         val id: String,
-        val sourcePath: Path?,
+        val source: ArchiveSource?,
         val sourceZipFile: ZipFile?,
         val sourceExtractionPrefix: Path,
         val destinationPath: Path,
@@ -66,7 +66,7 @@ class ArchiveExtractor private constructor(private val options: Options) {
 
     class Builder {
         private var id = ""
-        private var sourcePath: Path? = null
+        private var source: ArchiveSource? = null
         private var sourceZipFile: ZipFile? = null
         private var sourceExtractionPrefix = Path("")
         private var destinationPath: Path? = null
@@ -74,7 +74,12 @@ class ArchiveExtractor private constructor(private val options: Options) {
 
         fun id(id: String) = apply { this.id = id }
 
-        fun from(sourcePath: Path) = apply { this.sourcePath = sourcePath }
+        fun from(sourcePath: Path) = apply { this.source = ArchiveSource.of(sourcePath) }
+
+        fun from(source: ArchiveSource) = apply { this.source = source }
+
+        fun from(context: Context, sourceUri: Uri) =
+            apply { this.source = ArchiveSource.of(context, sourceUri) }
 
         fun from(sourceZipFile: ZipFile) = apply { this.sourceZipFile = sourceZipFile }
 
@@ -89,7 +94,7 @@ class ArchiveExtractor private constructor(private val options: Options) {
         fun build() = ArchiveExtractor(
             Options(
                 id = id,
-                sourcePath = sourcePath,
+                source = source,
                 sourceZipFile = sourceZipFile,
                 sourceExtractionPrefix = sourceExtractionPrefix,
                 destinationPath = requireNotNull(destinationPath) { "destinationPath is required" },
@@ -99,7 +104,7 @@ class ArchiveExtractor private constructor(private val options: Options) {
     }
 
     init {
-        require(options.sourcePath != null || options.sourceZipFile != null) { "sourcePath is required" }
+        require(options.source != null || options.sourceZipFile != null) { "source is required" }
     }
 
     private class ExtractionState(
@@ -114,21 +119,21 @@ class ArchiveExtractor private constructor(private val options: Options) {
         if (sourceZipFile != null) {
             extractZipFileEntries(root, sourceZipFile, state)
         } else {
-            val sourcePath = checkNotNull(options.sourcePath)
-            sourcePath.inputStream().buffered().use { source ->
+            val source = checkNotNull(options.source)
+            source.openInputStream().buffered().use { input ->
                 val compressorName = runCatching {
-                    CompressorStreamFactory.detect(source)
+                    CompressorStreamFactory.detect(input)
                 }.getOrNull()
 
                 if (compressorName != null) { // if is tar.gz / tar.xz ...
                     CompressorStreamFactory()
-                        .createCompressorInputStream(compressorName, source)
+                        .createCompressorInputStream(compressorName, input)
                         .buffered()
                         .use { decompressed ->
-                            extractDetectedArchive(root, decompressed, state, supportsSevenZ = false)
+                            extractDetectedArchive(root, source, decompressed, state, supportsSevenZ = false)
                         }
                 } else { // if is zip / 7z ...
-                    extractDetectedArchive(root, source, state)
+                    extractDetectedArchive(root, source, input, state)
                 }
             }
         }
@@ -182,6 +187,7 @@ class ArchiveExtractor private constructor(private val options: Options) {
 
     private fun extractDetectedArchive(
         root: Path,
+        source: ArchiveSource,
         input: java.io.InputStream,
         state: ExtractionState,
         supportsSevenZ: Boolean = true
@@ -189,16 +195,16 @@ class ArchiveExtractor private constructor(private val options: Options) {
         val archiverName = ArchiveStreamFactory.detect(input)
         if (archiverName == ArchiveStreamFactory.SEVEN_Z) {
             require(supportsSevenZ) { "7z archives wrapped in a compressor are not supported" }
-            extractSevenZip(root, state)
+            extractSevenZip(root, source, state)
             return
         }
 
-        extractArchive(root, input, archiverName, state)
+        extractArchive(root, source, input, archiverName, state)
     }
 
-    private fun extractSevenZip(root: Path, state: ExtractionState) {
+    private fun extractSevenZip(root: Path, source: ArchiveSource, state: ExtractionState) {
         SevenZFile.builder()
-            .setPath(checkNotNull(options.sourcePath))
+            .setSeekableByteChannel(source.openSeekableChannel())
             .get()
             .use { archive ->
                 val total = archive.entries.sumOf { it.size.coerceAtLeast(0) }
@@ -226,10 +232,16 @@ class ArchiveExtractor private constructor(private val options: Options) {
             }
     }
 
-    private fun extractArchive(root: Path, input: java.io.InputStream, archiverName: String, state: ExtractionState) {
+    private fun extractArchive(
+        root: Path,
+        source: ArchiveSource,
+        input: java.io.InputStream,
+        archiverName: String,
+        state: ExtractionState
+    ) {
         val archive: ArchiveInputStream<*> =
             ArchiveStreamFactory().createArchiveInputStream(archiverName, input)
-        val archiveSize = checkNotNull(options.sourcePath).fileSize().toFloat()
+        val archiveSize = source.size().toFloat()
         archive.use {
             archive.forEach { entry ->
                 if (!archive.canReadEntryData(entry)) return@forEach

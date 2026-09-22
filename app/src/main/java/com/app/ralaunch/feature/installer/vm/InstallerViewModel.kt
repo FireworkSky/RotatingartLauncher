@@ -12,6 +12,7 @@ import com.app.ralaunch.feature.installer.contract.InstallerFileType
 import com.app.ralaunch.feature.installer.contract.InstallerUiEffect
 import com.app.ralaunch.feature.installer.contract.InstallerUiEvent
 import com.app.ralaunch.feature.installer.contract.InstallerUiState
+import com.app.ralaunch.feature.installer.GameFile
 import java.io.File
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -23,6 +24,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlin.io.path.Path
 
 class InstallerViewModel(
     private val appContext: Context
@@ -92,15 +94,15 @@ class InstallerViewModel(
         path: String,
         preferredName: String?
     ) {
-        val file = File(path)
+        val gameFile = GameFile.of(Path(path))
         viewModelScope.launch(Dispatchers.IO) {
             val detectedName = when (fileType) {
-                InstallerFileType.GAME -> InstallPluginRegistry.detectGame(file)
+                InstallerFileType.GAME -> InstallPluginRegistry.detectGame(gameFile)
                     ?.second
                     ?.definition
                     ?.displayName
 
-                InstallerFileType.MOD_LOADER -> InstallPluginRegistry.detectModLoader(file)
+                InstallerFileType.MOD_LOADER -> InstallPluginRegistry.detectModLoader(gameFile)
                     ?.second
                     ?.definition
                     ?.displayName
@@ -168,8 +170,8 @@ class InstallerViewModel(
         viewModelScope.launch(Dispatchers.IO) {
             when (
                 val result = installer.install(
-                    gameFilePath = state.gameFilePath.orEmpty(),
-                    modLoaderFilePath = state.modLoaderFilePath,
+                    gameFile = state.gameFilePath?.let { GameFile.of(Path(it)) },
+                    modLoaderFile = state.modLoaderFilePath?.let { GameFile.of(Path(it)) },
                     callback = onEvent
                 )
             ) {

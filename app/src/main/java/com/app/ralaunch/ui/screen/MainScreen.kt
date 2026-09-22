@@ -21,9 +21,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Campaign
 import androidx.compose.material.icons.filled.Extension
 import androidx.compose.material.icons.filled.Gamepad
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.outlined.Campaign
+import androidx.compose.material.icons.outlined.Download
 import androidx.compose.material.icons.outlined.Extension
 import androidx.compose.material.icons.outlined.Gamepad
 import androidx.compose.material.icons.outlined.Settings
@@ -110,6 +112,12 @@ fun MainScreen(
             label = Strings.nav.games,
             selectedIcon = Icons.Filled.Gamepad,
             unselectedIcon = Icons.Outlined.Gamepad
+        ),
+        NavDestination(
+            route = "import",
+            label = Strings.nav.importGame,
+            selectedIcon = Icons.Filled.Download,
+            unselectedIcon = Icons.Outlined.Download
         ),
         NavDestination(
             route = "controls",
@@ -223,6 +231,7 @@ fun MainScreen(
                 modifier = Modifier.fillMaxSize()
             ) {
                 composable("games") { GameListScreen() }
+                composable("import") { GameInstallScreen() }
                 composable("controls") { ControlScreen() }
                 composable("plugins") { PluginsScreen() }
                 composable("announcements") { AnnouncementScreen() }

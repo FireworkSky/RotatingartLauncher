@@ -3,7 +3,6 @@ package com.app.ralaunch.feature.installer
 import com.app.ralaunch.feature.installer.plugins.CelesteInstallPlugin
 import com.app.ralaunch.feature.installer.plugins.SmapiInstallPlugin
 import com.app.ralaunch.feature.installer.plugins.TerrariaInstallPlugin
-import java.io.File
 
 /**
  * 游戏安装插件注册表
@@ -33,9 +32,9 @@ object InstallPluginRegistry {
     fun getAllPlugins(): List<GameInstallPlugin> = plugins.toList()
     
     /**
-     * 根据游戏文件自动选择合适的插件
+     * 根据游戏文件内容自动选择合适的插件
      */
-    fun selectPluginForGame(gameFile: File): GameInstallPlugin? {
+    fun selectPluginForGame(gameFile: GameFile): GameInstallPlugin? {
         for (plugin in plugins) {
             val result = plugin.detectGame(gameFile)
             if (result != null) {
@@ -46,9 +45,9 @@ object InstallPluginRegistry {
     }
     
     /**
-     * 根据模组加载器文件自动选择合适的插件
+     * 根据模组加载器文件内容自动选择合适的插件
      */
-    fun selectPluginForModLoader(modLoaderFile: File): GameInstallPlugin? {
+    fun selectPluginForModLoader(modLoaderFile: GameFile): GameInstallPlugin? {
         for (plugin in plugins) {
             val result = plugin.detectModLoader(modLoaderFile)
             if (result != null) {
@@ -66,9 +65,9 @@ object InstallPluginRegistry {
     }
     
     /**
-     * 检测游戏文件
+     * 检测游戏文件（基于文件内部特征）
      */
-    fun detectGame(gameFile: File): Pair<GameInstallPlugin, GameDetectResult>? {
+    fun detectGame(gameFile: GameFile): Pair<GameInstallPlugin, GameDetectResult>? {
         for (plugin in plugins) {
             val result = plugin.detectGame(gameFile)
             if (result != null) {
@@ -79,9 +78,9 @@ object InstallPluginRegistry {
     }
     
     /**
-     * 检测模组加载器文件
+     * 检测模组加载器文件（基于文件内部特征）
      */
-    fun detectModLoader(modLoaderFile: File): Pair<GameInstallPlugin, ModLoaderDetectResult>? {
+    fun detectModLoader(modLoaderFile: GameFile): Pair<GameInstallPlugin, ModLoaderDetectResult>? {
         for (plugin in plugins) {
             val result = plugin.detectModLoader(modLoaderFile)
             if (result != null) {

@@ -18,36 +18,39 @@ class TerrariaInstallPlugin : BaseInstallPlugin() {
         get() = Strings.installer.terraria.name
     override val supportedGames = listOf(GameDefinition.TERRARIA, GameDefinition.TMODLOADER)
 
-    override fun detectGame(gameFile: File): GameDetectResult? {
-        val fileName = gameFile.name.lowercase()
-
-        // 检测 Terraria GOG .sh 文件
-        if (fileName.endsWith(".sh") && fileName.contains("terraria")) {
-            return GameDetectResult(GameDefinition.TERRARIA)
+    override fun detectGame(gameFile: GameFile): GameDetectResult? {
+        // GOG 安装器：game_data.zip 内 gameinfo 首行为游戏名
+        val gogInstaller = gameFile.container as? GameFileInspector.Container.GogInstaller
+        if (gogInstaller != null) {
+            return if (gogInstaller.gameInfo.id.equals("Terraria", ignoreCase = true)) {
+                GameDetectResult(GameDefinition.TERRARIA, gogInstaller.gameInfo.version.orEmpty())
+            } else {
+                null
+            }
         }
 
-        // 检测 Terraria ZIP
-        if (fileName.endsWith(".zip") && fileName.contains("terraria")) {
-            return GameDetectResult(GameDefinition.TERRARIA)
+        // ZIP：包含 Terraria 主程序
+        val zip = gameFile.container as? GameFileInspector.Container.Zip ?: return null
+        return if (zip.hasEntryNamed("Terraria.exe")) {
+            GameDetectResult(GameDefinition.TERRARIA)
+        } else {
+            null
         }
-
-        return null
     }
 
-    override fun detectModLoader(modLoaderFile: File): ModLoaderDetectResult? {
-        val fileName = modLoaderFile.name.lowercase()
-
-        // 检测 tModLoader
-        if (fileName.contains("tmodloader") && fileName.endsWith(".zip")) {
-            return ModLoaderDetectResult(GameDefinition.TMODLOADER)
+    override fun detectModLoader(modLoaderFile: GameFile): ModLoaderDetectResult? {
+        // ZIP：tModLoader 发行包特征（主程序 + deps 清单）
+        val zip = modLoaderFile.container as? GameFileInspector.Container.Zip ?: return null
+        return if (zip.hasEntryNamed("tModLoader.dll") && zip.hasEntryNamed("tModLoader.deps.json")) {
+            ModLoaderDetectResult(GameDefinition.TMODLOADER)
+        } else {
+            null
         }
-
-        return null
     }
 
     override suspend fun performInstall(
-        gameFile: File,
-        modLoaderFile: File?,
+        gameFile: GameFile?,
+        modLoaderFile: GameFile?,
         callback: ((Event) -> Unit)?
     ): Result {
         callback?.invoke(
@@ -57,16 +60,17 @@ class TerrariaInstallPlugin : BaseInstallPlugin() {
             )
         )
 
+        val gameFile = gameFile ?: throw Exception(Strings.installer.extractGameFailed)
+
         // 创建存储根目录
         val gameStorageRoot = createStorageRoot(gameFile, modLoaderFile)
 
-        // 解压游戏本体（GOG .sh 或 ZIP）
-        val gameFileName = gameFile.name.lowercase()
+        // 解压游戏本体（GOG 安装器或 ZIP，按容器特征分派）
         val terrariaExeParent: File? = when {
-            gameFileName.endsWith(".sh") ->
+            gameFile.container is GameFileInspector.Container.GogInstaller ->
                 when (
                     val result = GogShFileExtractor.builder()
-                        .from(gameFile.toPath())
+                        .from(gameFile.source)
                         .to(gameStorageRoot.toPath())
                         .callback { event ->
                             if (event is GogShFileExtractor.Event.Progress && !isCancelled) {
@@ -81,10 +85,10 @@ class TerrariaInstallPlugin : BaseInstallPlugin() {
                     is GogShFileExtractor.Result.Failure -> null
                 }
 
-            gameFileName.endsWith(".zip") ->
+            gameFile.container is GameFileInspector.Container.Zip ->
                 when (
                     val result = ArchiveExtractor.builder()
-                        .from(gameFile.toPath())
+                        .from(gameFile.source)
                         .to(gameStorageRoot.toPath())
                         .callback { event ->
                             if (event is ArchiveExtractor.Event.Progress && !isCancelled) {
@@ -170,14 +174,14 @@ class TerrariaInstallPlugin : BaseInstallPlugin() {
         return finishInstall(gameItem, callback)
     }
 
-    private suspend fun installTModLoader(modLoaderFile: File, outputDir: File, callback: ((Event) -> Unit)?) {
+    private suspend fun installTModLoader(modLoaderFile: GameFile, outputDir: File, callback: ((Event) -> Unit)?) {
         val tempDir = File(outputDir.parentFile, "temp_tmodloader_${System.currentTimeMillis()}")
         tempDir.mkdirs()
 
         try {
             when (
                 val result = ArchiveExtractor.builder()
-                    .from(modLoaderFile.toPath())
+                    .from(modLoaderFile.source)
                     .to(tempDir.toPath())
                     .callback { event ->
                         if (event is ArchiveExtractor.Event.Progress && !isCancelled) {
