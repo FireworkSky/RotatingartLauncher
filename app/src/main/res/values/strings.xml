@@ -668,11 +668,6 @@
     <string name="init_component_sdl_desc">Cross-platform multimedia and input handling library</string>
     <string name="init_component_netcorehost_desc">.NET Core runtime host</string>
     <string name="init_component_dotnet_desc">.NET 10 runtime environment</string>
-    <string name="init_component_mono_desc">Mono runtime base class library (BCL)</string>
-    <string name="settings_mono_llvm_title">Enable Mono LLVM JIT</string>
-    <string name="settings_mono_llvm_subtitle">Use the LLVM backend for Mono JIT (MONO_ENV_OPTIONS=--llvm)</string>
-    <string name="settings_mono_verbose_log_title">Mono verbose logging</string>
-    <string name="settings_mono_verbose_log_subtitle">Print detailed Mono runtime logs (MONO_LOG_LEVEL=debug, MONO_LOG_MASK=all)</string>
     <string name="init_component_monomod_desc">MonoMod is a universal .NET assembly modding tool</string>
     <string name="init_component_patches_desc">Game fix patches</string>
 

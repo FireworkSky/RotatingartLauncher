@@ -37,7 +37,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.app.ralaunch.R
 import com.app.ralaunch.core.ui.dialog.DotNetRuntimeOption
-import com.app.ralaunch.core.platform.runtime.RuntimeSpec
 import com.app.ralaunch.core.ui.dialog.DotNetRuntimeSelectDialog
 import com.app.ralaunch.core.ui.dialog.RendererOption
 import com.app.ralaunch.core.ui.dialog.RendererSelectDialog
@@ -77,46 +76,21 @@ fun GameInfoEditSubScreen(
     }
     val installedDotNetRuntimeVersions = runtimeState.installedDotNetRuntimeVersions
     val globalDotNetRuntimeVersion = runtimeState.globalDotNetRuntimeVersion
-    val installedMonoRuntimeVersions = runtimeState.installedMonoRuntimeVersions
-
-    // 全局选中的运行时标识串（CoreCLR 版本号 或 mono:<版本>）
-    val globalRuntimeSpec: String? =
-        if (runtimeState.globalRuntimeEngine == RuntimeSpec.ENGINE_MONO) {
-            RuntimeSpec.encodeMono(
-                runtimeState.globalMonoRuntimeVersion ?: RuntimeSpec.MONO_DEFAULT_VERSION
-            )
-        } else {
-            globalDotNetRuntimeVersion
-        }
-
-    // 可选运行时：CoreCLR 各版本 + Mono
-    val allRuntimeSpecs = remember(installedDotNetRuntimeVersions, installedMonoRuntimeVersions) {
-        buildList {
-            installedDotNetRuntimeVersions.forEach {
-                add(RuntimeSpec.encode(RuntimeSpec.ENGINE_DOTNET, it))
-            }
-            installedMonoRuntimeVersions.forEach { add(RuntimeSpec.encodeMono(it)) }
-        }
-    }
-    val dotNetRuntimeOptions = remember(allRuntimeSpecs) {
-        allRuntimeSpecs.map { spec ->
-            DotNetRuntimeOption(
-                version = spec,
-                description = if (RuntimeSpec.isMono(spec)) "Mono" else "CoreCLR"
-            )
+    val dotNetRuntimeOptions = remember(installedDotNetRuntimeVersions) {
+        installedDotNetRuntimeVersions.map { version ->
+            DotNetRuntimeOption(version = version)
         }
     }
     val effectiveDotNetRuntimeVersion = remember(
         editedDotNetRuntimeVersionOverride,
-        allRuntimeSpecs,
-        globalRuntimeSpec
+        installedDotNetRuntimeVersions,
+        globalDotNetRuntimeVersion
     ) {
         editedDotNetRuntimeVersionOverride
-            ?.takeIf { it in allRuntimeSpecs }
-            ?: globalRuntimeSpec
+            ?.takeIf { it in installedDotNetRuntimeVersions }
+            ?: globalDotNetRuntimeVersion
     }
     val dotNetRuntimeDisplayName = editedDotNetRuntimeVersionOverride
-        ?.let { RuntimeSpec.displayName(it) }
         ?: stringResource(R.string.runtime_follow_global_settings)
 
     Scaffold(

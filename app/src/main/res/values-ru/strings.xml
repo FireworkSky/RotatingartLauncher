@@ -622,11 +622,6 @@
     <string name="init_component_sdl_desc">Кроссплатформенная библиотека для мультимедиа и обработки ввода</string>
     <string name="init_component_netcorehost_desc">Хост среды выполнения .NET Core</string>
     <string name="init_component_dotnet_desc">Среда выполнения .NET10</string>
-    <string name="init_component_mono_desc">Базовая библиотека классов (BCL) среды Mono</string>
-    <string name="settings_mono_llvm_title">Включить Mono LLVM JIT</string>
-    <string name="settings_mono_llvm_subtitle">Использовать бэкенд LLVM для JIT Mono (MONO_ENV_OPTIONS=--llvm)</string>
-    <string name="settings_mono_verbose_log_title">Подробный лог Mono</string>
-    <string name="settings_mono_verbose_log_subtitle">Выводить подробные логи среды Mono (MONO_LOG_LEVEL=debug, MONO_LOG_MASK=all)</string>
     <string name="init_component_monomod_desc">MonoMod - универсальный инструмент модификации сборок .NET</string>
     <string name="init_component_patches_desc">Патчи исправления игры</string>
 

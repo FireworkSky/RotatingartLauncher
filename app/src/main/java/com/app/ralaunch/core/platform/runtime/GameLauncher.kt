@@ -20,8 +20,6 @@ import android.os.Environment
 import com.app.ralaunch.core.common.SettingsAccess
 import org.koin.java.KoinJavaComponent
 import com.app.ralaunch.core.platform.runtime.dotnet.DotNetLauncher
-import com.app.ralaunch.core.platform.runtime.mono.MonoLauncher
-import com.app.ralaunch.core.di.contract.ISettingsRepositoryServiceV2
 import com.app.ralaunch.core.logging.AppLog
 import com.app.ralaunch.core.common.util.NativeMethods
 import com.app.ralaunch.core.platform.runtime.RendererEnvironmentConfigurator
@@ -99,9 +97,6 @@ object GameLauncher {
             System.loadLibrary("FAudio")
             System.loadLibrary("theorafile")
             System.loadLibrary("SDL3")
-            // SDL2 兼容层（sdl2-compat -> libSDL3.so）。预加载是为了让游戏自带库
-            // 声明的 DT_NEEDED=libSDL2-2.0.so.0 能按 SONAME 命中已加载的这份库。
-            System.loadLibrary("SDL2")
             System.loadLibrary("main")
             System.loadLibrary("openal32")
             System.loadLibrary("lwjgl_lz4")
@@ -113,47 +108,6 @@ object GameLauncher {
     }
 
     /**
-     * 记录最后一次实际使用的运行时引擎，供 [getLastErrorMessage] 取对应错误
-     */
-    @Volatile
-    private var lastUsedEngine: String = RuntimeSpec.ENGINE_DOTNET
-
-    /**
-     * 通过 Koin 取设置仓库（懒加载，避免启动期无 Koin 环境时崩溃）
-     */
-    private val settingsRepository: ISettingsRepositoryServiceV2 by lazy {
-        KoinJavaComponent.get(ISettingsRepositoryServiceV2::class.java)
-    }
-
-    /**
-     * 解析本次启动要使用的运行时标识串
-     *
-     * 优先使用条目级覆盖（游戏单独指定），否则回退到全局设置里选中的引擎与版本。
-     */
-    private fun resolveRuntimeSpec(override: String?): String {
-        val normalizedOverride = override?.trim()?.takeIf { it.isNotEmpty() }
-        if (normalizedOverride != null) {
-            AppLog.i(TAG, "使用游戏级运行时覆盖 / Per-game runtime override: $normalizedOverride")
-            return normalizedOverride
-        }
-
-        return try {
-            val settings = settingsRepository.Settings
-            val engine = settings.selectedRuntimeEngine.trim().ifBlank { RuntimeSpec.ENGINE_DOTNET }
-            if (engine == RuntimeSpec.ENGINE_MONO) {
-                val version = settings.selectedMonoRuntimeVersion.trim()
-                    .ifBlank { RuntimeSpec.MONO_DEFAULT_VERSION }
-                RuntimeSpec.encodeMono(version)
-            } else {
-                settings.selectedDotnetRuntimeVersion.trim()
-            }
-        } catch (e: Exception) {
-            AppLog.w(TAG, "读取全局运行时设置失败，回退到 CoreCLR / Failed to read global runtime settings", e)
-            ""
-        }
-    }
-
-    /**
      * 获取最后一次错误信息
      * Get the last error message
      *
@@ -161,11 +115,7 @@ object GameLauncher {
      *         Error message string, or empty string if no error
      */
     fun getLastErrorMessage(): String {
-        return if (lastUsedEngine == RuntimeSpec.ENGINE_MONO) {
-            MonoLauncher.lastErrorMsg
-        } else {
-            DotNetLauncher.hostfxrLastErrorMsg
-        }
+        return DotNetLauncher.hostfxrLastErrorMsg
     }
 
     /**
@@ -381,30 +331,14 @@ object GameLauncher {
                 AppLog.d(TAG, "游戏环境变量应用完成 / Per-game env vars applied: OK")
             }
 
-            // 步骤11：按选中的运行时引擎启动（CoreCLR / Mono）
-            // Step 11: Launch with the selected runtime engine (CoreCLR / Mono)
-            val runtimeSpec = resolveRuntimeSpec(dotNetRuntimeVersionOverride)
-            val decodedRuntime = RuntimeSpec.decode(runtimeSpec)
-            lastUsedEngine = decodedRuntime.engine
-
-            val result = if (decodedRuntime.isMono) {
-                AppLog.i(
-                    TAG,
-                    "通过 Mono 启动程序集 / Launching assembly with Mono, version=${decodedRuntime.version}"
-                )
-                MonoLauncher.launchAssembly(
-                    assemblyPath = assemblyPath,
-                    args = args,
-                    monoRuntimeVersionOverride = decodedRuntime.version
-                )
-            } else {
-                AppLog.i(TAG, "通过 hostfxr 启动 .NET 运行时 / Launching .NET runtime with hostfxr...")
-                DotNetLauncher.hostfxrLaunch(
-                    assemblyPath = assemblyPath,
-                    args = args,
-                    dotNetRuntimeVersionOverride = decodedRuntime.version.ifBlank { null }
-                )
-            }
+            // 步骤11：启动 .NET 运行时
+            // Step 11: Launch .NET runtime
+            AppLog.i(TAG, "通过 hostfxr 启动 .NET 运行时 / Launching .NET runtime with hostfxr...")
+            val result = DotNetLauncher.hostfxrLaunch(
+                assemblyPath = assemblyPath,
+                args = args,
+                dotNetRuntimeVersionOverride = dotNetRuntimeVersionOverride
+            )
 
             AppLog.i(TAG, "=== .NET 程序集启动完成 / .NET Assembly Launch Completed ===")
             AppLog.i(TAG, "退出代码 / Exit code: $result")

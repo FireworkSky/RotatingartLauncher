@@ -21,8 +21,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
-import androidx.compose.material.icons.filled.List
-import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Audiotrack
 import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.Code
@@ -98,7 +96,6 @@ import com.app.ralaunch.core.logging.LogFilePolicy
 import com.app.ralaunch.core.navigation.NavState
 import com.app.ralaunch.core.navigation.navigateToLogViewer
 import com.app.ralaunch.core.navigation.navigateToPatchManagement
-import com.app.ralaunch.core.platform.runtime.RuntimeSpec
 import com.app.ralaunch.core.platform.runtime.AndroidRendererRegistry
 import com.app.ralaunch.core.ui.dialog.DotNetRuntimeOption
 import com.app.ralaunch.core.ui.dialog.DotNetRuntimeSelectDialog
@@ -477,33 +474,14 @@ private fun GameSettingsPane(
         FpsLimit.FPS_60 to androidStringResource(R.string.settings_fps_60)
     )
     with(uiState) {
-        // 运行时列表：CoreCLR 各版本 + Mono（Mono 用 "mono:<版本>" 标识）
-        val runtimeOptions = remember(installedDotNetRuntimeVersions, installedMonoRuntimeVersions) {
-            buildList {
-                installedDotNetRuntimeVersions.forEach { version ->
-                    add(DotNetRuntimeOption(version = version, description = "CoreCLR"))
-                }
-                installedMonoRuntimeVersions.forEach { version ->
-                    add(
-                        DotNetRuntimeOption(
-                            version = RuntimeSpec.encodeMono(version),
-                            description = "Mono"
-                        )
-                    )
-                }
+        val dotNetRuntimeOptions = remember(installedDotNetRuntimeVersions) {
+            installedDotNetRuntimeVersions.map { version ->
+                DotNetRuntimeOption(version = version)
             }
         }
-        val currentRuntimeOption: String? =
-            if (selectedRuntimeEngine == RuntimeSpec.ENGINE_MONO) {
-                val monoVersion = selectedMonoRuntimeVersion
-                    ?.takeIf { it in installedMonoRuntimeVersions }
-                    ?: installedMonoRuntimeVersions.firstOrNull()
-                monoVersion?.let { RuntimeSpec.encodeMono(it) }
-            } else {
-                selectedDotNetRuntimeVersion
-                    ?.takeIf { it in installedDotNetRuntimeVersions }
-                    ?: installedDotNetRuntimeVersions.firstOrNull()
-            }
+        val currentDotNetRuntimeVersion = selectedDotNetRuntimeVersion
+            ?.takeIf { it in installedDotNetRuntimeVersions }
+            ?: installedDotNetRuntimeVersions.firstOrNull()
         val currentFpsName = fpsOptions.find { it.first == targetFps }?.second
             ?: androidStringResource(R.string.settings_fps_unlimited)
 
@@ -548,35 +526,14 @@ private fun GameSettingsPane(
                 ClickableSettingItem(
                     title = androidStringResource(R.string.main_runtime_title),
                     subtitle = androidStringResource(R.string.settings_game_runtime_subtitle),
-                    value = currentRuntimeOption
-                        ?.let { RuntimeSpec.displayName(it) }
+                    value = currentDotNetRuntimeVersion
                         ?: androidStringResource(R.string.runtime_not_installed),
                     icon = Icons.Default.Storage,
                     onClick = {
-                        if (runtimeOptions.isNotEmpty()) {
+                        if (dotNetRuntimeOptions.isNotEmpty()) {
                             showDotNetRuntimeDialog = true
                         }
                     }
-                )
-
-                SettingsDivider()
-
-                SwitchSettingItem(
-                    title = androidStringResource(R.string.settings_mono_llvm_title),
-                    subtitle = androidStringResource(R.string.settings_mono_llvm_subtitle),
-                    icon = Icons.Default.Build,
-                    checked = monoLlvmEnabled,
-                    onCheckedChange = { viewModel.onEvent(SettingsEvent.SetMonoLlvmEnabled(it)) }
-                )
-
-                SettingsDivider()
-
-                SwitchSettingItem(
-                    title = androidStringResource(R.string.settings_mono_verbose_log_title),
-                    subtitle = androidStringResource(R.string.settings_mono_verbose_log_subtitle),
-                    icon = Icons.Default.List,
-                    checked = monoVerboseLoggingEnabled,
-                    onCheckedChange = { viewModel.onEvent(SettingsEvent.SetMonoVerboseLoggingEnabled(it)) }
                 )
             }
 
@@ -636,10 +593,10 @@ private fun GameSettingsPane(
 
         if (showDotNetRuntimeDialog) {
             DotNetRuntimeSelectDialog(
-                currentRuntimeVersion = currentRuntimeOption,
-                runtimes = runtimeOptions,
-                onSelect = { spec ->
-                    viewModel.onEvent(SettingsEvent.SetRuntimeSpec(spec))
+                currentRuntimeVersion = currentDotNetRuntimeVersion,
+                runtimes = dotNetRuntimeOptions,
+                onSelect = { version ->
+                    viewModel.onEvent(SettingsEvent.SetDotNetRuntimeVersion(version))
                     showDotNetRuntimeDialog = false
                 },
                 onDismiss = { showDotNetRuntimeDialog = false }

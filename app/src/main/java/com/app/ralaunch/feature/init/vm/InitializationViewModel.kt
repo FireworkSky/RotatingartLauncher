@@ -9,7 +9,6 @@ import com.app.ralaunch.core.common.util.FileUtils
 import com.app.ralaunch.core.di.contract.IRuntimeManagerServiceV2
 import com.app.ralaunch.core.extractor.ArchiveExtractor
 import com.app.ralaunch.core.platform.AppConstants
-import com.app.ralaunch.core.platform.runtime.RuntimeSpec
 import com.app.ralaunch.feature.init.model.ComponentState
 import com.app.ralaunch.feature.init.model.InitStep
 import com.app.ralaunch.feature.init.model.InitUiState
@@ -60,12 +59,6 @@ class InitializationViewModel(
                     name = "dotnet",
                     description = appContext.getString(R.string.init_component_dotnet_desc),
                     fileName = "dotnet.tar.xz",
-                    needsExtraction = true
-                ),
-                ComponentState(
-                    name = "mono",
-                    description = appContext.getString(R.string.init_component_mono_desc),
-                    fileName = "mono-bcl.tar.xz",
                     needsExtraction = true
                 )
             )
@@ -179,8 +172,6 @@ class InitializationViewModel(
 
             val runtimeVersion = when (runtimeType) {
                 IRuntimeManagerServiceV2.RuntimeType.DOTNET -> runtimeManager.detectDotNetRuntimeVersion(stagingDir)
-                // Mono 的 BCL 不带版本目录，使用 mono/4.5 profile 作为版本名
-                IRuntimeManagerServiceV2.RuntimeType.MONO -> RuntimeSpec.MONO_DEFAULT_VERSION
                 IRuntimeManagerServiceV2.RuntimeType.BOX64 -> throw IllegalStateException("Box64 archive extraction is not configured")
             } ?: throw IllegalStateException("Failed to detect runtime version for ${component.name}")
 

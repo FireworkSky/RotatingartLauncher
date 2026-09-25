@@ -155,17 +155,8 @@ data class AppSettings(
     var lastAnnouncementId: String = "",
     var isAnnouncementBadgeShown: Boolean = false,
 
-    // Mono 运行时设置
-    /** 让 Mono 使用 LLVM 后端（MONO_ENV_OPTIONS=--llvm） */
-    var monoLlvmEnabled: Boolean = false,
-    /** 输出 Mono 运行时详细日志（MONO_LOG_LEVEL/MONO_LOG_MASK） */
-    var monoVerboseLoggingEnabled: Boolean = false,
-
     // Runtime 设置
     var selectedDotnetRuntimeVersion: String = "",
-    var selectedMonoRuntimeVersion: String = "",
-    /** 选中的 .NET 运行时引擎："dotnet"（CoreCLR）或 "mono" */
-    var selectedRuntimeEngine: String = "dotnet",
     var selectedBox64RuntimeVersion: String = ""
 ) {
     companion object {

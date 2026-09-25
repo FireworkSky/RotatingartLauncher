@@ -216,8 +216,7 @@ val appModule = module {
 
     viewModel {
         GameInfoEditViewModel(
-            runtimeManager = get(),
-            settingsRepository = get()
+            runtimeManager = get()
         )
     }
 

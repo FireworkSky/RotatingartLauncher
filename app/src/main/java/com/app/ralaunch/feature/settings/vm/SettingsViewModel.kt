@@ -5,7 +5,6 @@ import androidx.lifecycle.viewModelScope
 import com.app.ralaunch.core.di.contract.IRuntimeManagerServiceV2
 import com.app.ralaunch.core.logging.service.AndroidFileLogger
 import com.app.ralaunch.core.platform.runtime.RendererRegistry
-import com.app.ralaunch.core.platform.runtime.RuntimeSpec
 import com.app.ralaunch.core.model.BackgroundType
 import com.app.ralaunch.core.model.FpsLimit
 import com.app.ralaunch.core.model.QualityLevel
@@ -52,11 +51,6 @@ data class SettingsUiState(
     val rendererType: String = DEFAULT_RENDERER_ID,
     val selectedDotNetRuntimeVersion: String? = null,
     val installedDotNetRuntimeVersions: List<String> = emptyList(),
-    val selectedRuntimeEngine: String = RuntimeSpec.ENGINE_DOTNET,
-    val selectedMonoRuntimeVersion: String? = null,
-    val installedMonoRuntimeVersions: List<String> = emptyList(),
-    val monoLlvmEnabled: Boolean = false,
-    val monoVerboseLoggingEnabled: Boolean = false,
 
     // 启动器设置
     val multiplayerEnabled: Boolean = false,
@@ -110,9 +104,6 @@ sealed class SettingsEvent {
     data class SetRalAudioBufferSize(val size: Int?) : SettingsEvent()
     data class SetRenderer(val renderer: String) : SettingsEvent()
     data class SetDotNetRuntimeVersion(val version: String) : SettingsEvent()
-    data class SetRuntimeSpec(val spec: String) : SettingsEvent()
-    data class SetMonoLlvmEnabled(val enabled: Boolean) : SettingsEvent()
-    data class SetMonoVerboseLoggingEnabled(val enabled: Boolean) : SettingsEvent()
 
     // 启动器
     data class SetMultiplayerEnabled(val enabled: Boolean) : SettingsEvent()
@@ -190,9 +181,6 @@ class SettingsViewModel(
             is SettingsEvent.SetRalAudioBufferSize -> setRalAudioBufferSize(event.size)
             is SettingsEvent.SetRenderer -> setRenderer(event.renderer)
             is SettingsEvent.SetDotNetRuntimeVersion -> setDotNetRuntimeVersion(event.version)
-            is SettingsEvent.SetRuntimeSpec -> setRuntimeSpec(event.spec)
-            is SettingsEvent.SetMonoLlvmEnabled -> setMonoLlvmEnabled(event.enabled)
-            is SettingsEvent.SetMonoVerboseLoggingEnabled -> setMonoVerboseLoggingEnabled(event.enabled)
 
             // 启动器
             is SettingsEvent.SetMultiplayerEnabled -> setMultiplayerEnabled(event.enabled)
@@ -226,9 +214,6 @@ class SettingsViewModel(
             val installedDotNetRuntimeVersions = runtimeManager.getInstalledVersions(
                 IRuntimeManagerServiceV2.RuntimeType.DOTNET
             )
-            val installedMonoRuntimeVersions = runtimeManager.getInstalledVersions(
-                IRuntimeManagerServiceV2.RuntimeType.MONO
-            )
             _uiState.update { state ->
                 state.copy(
                     // 外观
@@ -252,15 +237,6 @@ class SettingsViewModel(
                         .trim()
                         .ifBlank { null },
                     installedDotNetRuntimeVersions = installedDotNetRuntimeVersions,
-                    selectedRuntimeEngine = settings.selectedRuntimeEngine
-                        .trim()
-                        .ifBlank { RuntimeSpec.ENGINE_DOTNET },
-                    selectedMonoRuntimeVersion = settings.selectedMonoRuntimeVersion
-                        .trim()
-                        .ifBlank { null },
-                    installedMonoRuntimeVersions = installedMonoRuntimeVersions,
-                    monoLlvmEnabled = settings.monoLlvmEnabled,
-                    monoVerboseLoggingEnabled = settings.monoVerboseLoggingEnabled,
                     // 启动器
                     multiplayerEnabled = settings.multiplayerEnabled,
                     multiplayerDisclaimerAccepted = settings.multiplayerDisclaimerAccepted,
@@ -431,53 +407,6 @@ class SettingsViewModel(
             sendEffect(
                 SettingsEffect.ShowToast(
                     getAppString(R.string.main_runtime_switched, normalized)
-                )
-            )
-        }
-    }
-
-    private fun setMonoLlvmEnabled(enabled: Boolean) {
-        viewModelScope.launch {
-            settingsRepository.update { monoLlvmEnabled = enabled }
-            _uiState.update { it.copy(monoLlvmEnabled = enabled) }
-        }
-    }
-
-    private fun setMonoVerboseLoggingEnabled(enabled: Boolean) {
-        viewModelScope.launch {
-            settingsRepository.update { monoVerboseLoggingEnabled = enabled }
-            _uiState.update { it.copy(monoVerboseLoggingEnabled = enabled) }
-        }
-    }
-
-    /**
-     * 切换运行时（CoreCLR / Mono）
-     *
-     * spec 为运行时标识串：CoreCLR 直接用版本号，Mono 用 "mono:<版本>"。
-     */
-    private fun setRuntimeSpec(spec: String) {
-        val decoded = RuntimeSpec.decode(spec)
-        if (decoded.version.isEmpty()) return
-
-        viewModelScope.launch {
-            settingsRepository.update {
-                selectedRuntimeEngine = decoded.engine
-                if (decoded.isMono) {
-                    selectedMonoRuntimeVersion = decoded.version
-                } else {
-                    selectedDotnetRuntimeVersion = decoded.version
-                }
-            }
-            _uiState.update {
-                it.copy(
-                    selectedRuntimeEngine = decoded.engine,
-                    selectedMonoRuntimeVersion = if (decoded.isMono) decoded.version else it.selectedMonoRuntimeVersion,
-                    selectedDotNetRuntimeVersion = if (decoded.isMono) it.selectedDotNetRuntimeVersion else decoded.version
-                )
-            }
-            sendEffect(
-                SettingsEffect.ShowToast(
-                    getAppString(R.string.main_runtime_switched, RuntimeSpec.displayName(spec))
                 )
             )
         }

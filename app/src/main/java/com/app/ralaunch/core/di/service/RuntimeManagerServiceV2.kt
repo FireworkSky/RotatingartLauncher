@@ -89,7 +89,6 @@ class RuntimeManagerServiceV2(
     override fun getSelectedRuntimeVersion(type: IRuntimeManagerServiceV2.RuntimeType): String? {
         val selected = when (type) {
             IRuntimeManagerServiceV2.RuntimeType.DOTNET -> settingsRepository.Settings.selectedDotnetRuntimeVersion
-            IRuntimeManagerServiceV2.RuntimeType.MONO -> settingsRepository.Settings.selectedMonoRuntimeVersion
             IRuntimeManagerServiceV2.RuntimeType.BOX64 -> settingsRepository.Settings.selectedBox64RuntimeVersion
         }.trim()
 
@@ -101,7 +100,6 @@ class RuntimeManagerServiceV2(
         settingsRepository.update {
             when (type) {
                 IRuntimeManagerServiceV2.RuntimeType.DOTNET -> selectedDotnetRuntimeVersion = normalizedVersion
-                IRuntimeManagerServiceV2.RuntimeType.MONO -> selectedMonoRuntimeVersion = normalizedVersion
                 IRuntimeManagerServiceV2.RuntimeType.BOX64 -> selectedBox64RuntimeVersion = normalizedVersion
             }
         }
@@ -127,23 +125,8 @@ class RuntimeManagerServiceV2(
     private fun isRuntimeLayoutValid(type: IRuntimeManagerServiceV2.RuntimeType, runtimeRootPath: Path): Boolean {
         return when (type) {
             IRuntimeManagerServiceV2.RuntimeType.DOTNET -> isDotNetLayoutValid(runtimeRootPath)
-            IRuntimeManagerServiceV2.RuntimeType.MONO -> isMonoLayoutValid(runtimeRootPath)
             IRuntimeManagerServiceV2.RuntimeType.BOX64 -> hasAnyChildren(runtimeRootPath)
         }
-    }
-
-    /**
-     * Mono 运行时的布局校验
-     *
-     * 只校验 BCL：Mono 的 JIT（libmonosgen-2.0.so）随 APK 分发，
-     * 安装目录里放的是 bcl/（含 mscorlib.dll）。
-     */
-    private fun isMonoLayoutValid(runtimeRootPath: Path): Boolean {
-        val requiredPaths = listOf(
-            runtimeRootPath.resolve("bcl").resolve("mscorlib.dll"),
-            runtimeRootPath.resolve("bcl").resolve("System.dll")
-        )
-        return requiredPaths.all { it.exists() }
     }
 
     private fun getRuntimeStorageRootPath(): Path {

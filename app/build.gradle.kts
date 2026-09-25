@@ -1,6 +1,5 @@
 import org.gradle.kotlin.dsl.support.kotlinCompilerOptions
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-import java.io.File
 
 plugins {
     alias(libs.plugins.android.application)
@@ -9,21 +8,10 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 }
 
-// 本地（Termux）工具链适配：仅当本地存在该 NDK 路径时启用，
-// 其他环境仍使用仓库默认的 NDK / CMake 版本。
-val localNdkPath = "/data/data/com.termux/files/usr/opt/android-ndk"
-val useLocalToolchain = File(localNdkPath).exists()
-
 android {
     namespace = "com.app.ralaunch"
     compileSdk = 36
-    if (useLocalToolchain) {
-        buildToolsVersion = "36.0.0"
-        ndkVersion = "27.1.12297006"
-        ndkPath = localNdkPath
-    } else {
-        ndkVersion = "29.0.14206865"
-    }
+    ndkVersion = "29.0.14206865"
 
     defaultConfig {
         applicationId = "com.app.ralaunch"
@@ -38,7 +26,7 @@ android {
     externalNativeBuild {
         cmake {
             path = file("../core/CMakeLists.txt")
-            version = if (useLocalToolchain) "3.30.5" else "3.22.1"
+            version = "3.22.1"
         }
     }
 

@@ -651,11 +651,6 @@
     <string name="init_component_sdl_desc">跨平台多媒体和输入处理库</string>
     <string name="init_component_netcorehost_desc">.NET核心运行时宿主</string>
     <string name="init_component_dotnet_desc">.NET10运行时环境</string>
-    <string name="init_component_mono_desc">Mono 运行时基础类库（BCL）</string>
-    <string name="settings_mono_llvm_title">启用 Mono LLVM JIT</string>
-    <string name="settings_mono_llvm_subtitle">为 Mono JIT 使用 LLVM 后端（MONO_ENV_OPTIONS=--llvm）</string>
-    <string name="settings_mono_verbose_log_title">Mono 详细日志</string>
-    <string name="settings_mono_verbose_log_subtitle">输出 Mono 运行时详细日志（MONO_LOG_LEVEL=debug，MONO_LOG_MASK=all）</string>
     <string name="init_component_monomod_desc">MonoMod是一个通用的.NET程序集模组化工具</string>
     <string name="init_component_patches_desc">游戏修复补丁</string>
 
