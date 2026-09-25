@@ -22,3 +22,6 @@
 [submodule "app/src/main/cpp/SDL"]
 	path = core/libs/SDL
 	url = https://github.com/RotatingArtDev/SDL.git
+[submodule "core/libs/sdl2-compat"]
+	path = core/libs/sdl2-compat
+	url = https://github.com/libsdl-org/sdl2-compat.git
