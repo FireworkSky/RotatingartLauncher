@@ -26,4 +26,40 @@
         <item name="cornerSize">50%</item>
     </style>
 
+
+    <!-- 这些对话框样式原先只在 values-night 声明，白天模式引用会 MissingDefaultResource（并可能崩溃）；
+         这里补一份 base 声明，夜间配置仍以 values-night 为准。 -->
+    <style name="SettingsDialogStyle" parent="Theme.raLaunch">
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowIsFloating">true</item>
+        <item name="android:backgroundDimEnabled">true</item>
+        <item name="android:windowAnimationStyle">@style/DialogAnimation</item>
+    </style>
+
+    <style name="RuntimeDialogStyle" parent="Theme.raLaunch">
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowIsFloating">true</item>
+        <item name="android:backgroundDimEnabled">true</item>
+        <item name="android:backgroundDimAmount">0.6</item>
+        <item name="android:windowAnimationStyle">@style/DialogAnimation</item>
+    </style>
+
+    <style name="ControlEditDialogStyle" parent="Theme.raLaunch">
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowIsFloating">true</item>
+        <item name="android:backgroundDimEnabled">true</item>
+        <item name="android:backgroundDimAmount">0.6</item>
+        <item name="android:windowAnimationStyle">@style/DialogAnimation</item>
+        <!-- 窗口宽度设置 -->
+        <item name="android:windowMinWidthMajor">90%</item>
+        <item name="android:windowMinWidthMinor">90%</item>
+    </style>
+
+    <style name="AddGameDialogStyle" parent="Theme.raLaunch">
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowIsFloating">true</item>
+        <item name="android:backgroundDimEnabled">true</item>
+        <item name="android:backgroundDimAmount">0.7</item>
+        <item name="android:windowAnimationStyle">@style/DialogAnimation</item>
+    </style>
 </resources>
