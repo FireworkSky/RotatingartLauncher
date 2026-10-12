@@ -731,6 +731,7 @@
 
     <!-- GameLaunchDelegate 消息 -->
     <string name="game_launch_failed">启动失败</string>
+    <string name="game_launch_failed_detail">启动失败：%s</string>
     <string name="game_launch_assembly_path_empty">程序集路径为空</string>
     <string name="game_launch_assembly_not_exist">程序集文件不存在: %s</string>
     <string name="game_launch_set_params_failed">设置启动参数失败: %s</string>
@@ -1632,6 +1633,10 @@
     <string name="settings_game_low_latency_audio_subtitle">降低音频延迟，可能增加功耗</string>
     <string name="settings_game_runtime_section">运行时</string>
     <string name="settings_game_runtime_subtitle">设置游戏默认使用的 .NET 运行时版本</string>
+    <string name="settings_sdl_version_title">SDL 版本</string>
+    <string name="settings_sdl_version_subtitle">SDL2 走 Wayland 后端，使用内置合成器呈现画面，不占用 SDL3 的 Java 绑定层；SDL3 走 Android 后端，使用 SDLActivity 绑定</string>
+    <string name="settings_sdl_version_sdl2">SDL2 · Wayland</string>
+    <string name="settings_sdl_version_sdl3">SDL3 · Android</string>
     <string name="settings_game_renderer_section">渲染</string>
     <string name="download_enter">进入</string>
     <string name="gog_no_linux_version">该游戏没有 Linux 版本</string>

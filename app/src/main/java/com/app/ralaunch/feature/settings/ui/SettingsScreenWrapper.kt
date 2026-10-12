@@ -99,6 +99,7 @@ import com.app.ralaunch.core.navigation.NavState
 import com.app.ralaunch.core.navigation.navigateToLogViewer
 import com.app.ralaunch.core.navigation.navigateToPatchManagement
 import com.app.ralaunch.core.platform.runtime.RuntimeSpec
+import com.app.ralaunch.core.platform.runtime.SdlVersion
 import com.app.ralaunch.core.platform.runtime.AndroidRendererRegistry
 import com.app.ralaunch.core.ui.dialog.DotNetRuntimeOption
 import com.app.ralaunch.core.ui.dialog.DotNetRuntimeSelectDialog
@@ -556,6 +557,24 @@ private fun GameSettingsPane(
                         if (runtimeOptions.isNotEmpty()) {
                             showDotNetRuntimeDialog = true
                         }
+                    }
+                )
+
+                SettingsDivider()
+
+                // RAL: SDL2/3 切换——位于"运行时"下方。SDL2 走 Wayland 后端 + 应用内合成器，
+                // 不占用 SDL3 的 Java 绑定层，因此两套可共存于同一 APK。
+                SwitchSettingItem(
+                    title = androidStringResource(R.string.settings_sdl_version_title),
+                    subtitle = androidStringResource(R.string.settings_sdl_version_subtitle),
+                    icon = Icons.Default.Layers,
+                    checked = SdlVersion.isSdl2(selectedSdlVersion),
+                    onCheckedChange = { useSdl2 ->
+                        viewModel.onEvent(
+                            SettingsEvent.SetSdlVersion(
+                                if (useSdl2) SdlVersion.SDL2 else SdlVersion.SDL3
+                            )
+                        )
                     }
                 )
 

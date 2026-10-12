@@ -750,6 +750,7 @@
 
     <!-- GameLaunchDelegate Messages -->
     <string name="game_launch_failed">Launch Failed</string>
+    <string name="game_launch_failed_detail">Launch failed: %s</string>
     <string name="game_launch_invalid_params_conflict">Invalid launch parameters: conflicting launch modes</string>
     <string name="game_launch_no_params">No launch parameters provided</string>
     <string name="game_launch_assembly_path_empty">Assembly path is empty</string>
@@ -1802,6 +1803,10 @@
     <string name="settings_game_low_latency_audio_subtitle">Reduce audio latency. May increase power usage</string>
     <string name="settings_game_runtime_section">Runtime</string>
     <string name="settings_game_runtime_subtitle">Set the default .NET runtime version for games</string>
+    <string name="settings_sdl_version_title">SDL Version</string>
+    <string name="settings_sdl_version_subtitle">SDL2 runs on a Wayland backend with the built-in compositor and no Java binding layer; SDL3 uses the Android backend with the SDLActivity binding</string>
+    <string name="settings_sdl_version_sdl2">SDL2 · Wayland</string>
+    <string name="settings_sdl_version_sdl3">SDL3 · Android</string>
     <string name="settings_game_renderer_section">Rendering</string>
 
     <string name="download_enter">Enter</string>

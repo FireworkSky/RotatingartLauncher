@@ -65,8 +65,25 @@ object RendererEnvironmentConfigurator {
 
         loadRendererLibraries(context, renderer)
         applyFna3dEnvironment(renderer)
+        applySdl2EnvironmentIfNeeded(context)
 
         AppLog.i(TAG, "Renderer environment applied successfully for: $renderer")
+    }
+
+    /**
+     * SDL2 模式下覆盖渲染器环境（最后应用，保证生效）
+     *
+     * SDL2 使用自己的 Android 视频后端，只支持 FNA3D 的 OpenGL 驱动；
+     * 全局渲染器若选中 Vulkan/SDL_GPU，上面的 [applyFna3dEnvironment] 会让
+     * FNA3D 找不到可用驱动（"No supported FNA3D driver found!"），此处纠正。
+     */
+    private fun applySdl2EnvironmentIfNeeded(context: Context?) {
+        val useSdl2 = runCatching { SdlVersion.isSdl2(SettingsAccess.getInstance().selectedSdlVersion) }
+            .getOrDefault(false)
+        if (!useSdl2) return
+
+        Sdl2Environment.apply()
+        AppLog.i(TAG, "SDL2 环境已应用：FNA3D 强制 OpenGL/ES3，视频与音频交回 SDL2 的 Android 驱动")
     }
 
     private fun loadRendererLibraries(context: Context?, renderer: String) {

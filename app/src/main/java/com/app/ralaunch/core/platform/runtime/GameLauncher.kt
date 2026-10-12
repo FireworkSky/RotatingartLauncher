@@ -90,18 +90,36 @@ object GameLauncher {
      * - SkiaSharp: 2D 图形库 / 2D graphics library
      */
     init {
+        // RAL: 依据「SDL 版本」设置决定加载哪套 SDL。GameLauncher 在 :game 进程内运行，
+        // SDL2 与 SDL3 必须互斥加载，否则会发生 native 库冲突。
+        // SDL2-Wayland 路径额外预载 Mesa（改名）与 wayland 客户端栈。
+        val useSdl2 = runCatching { SdlVersion.isSdl2(SettingsAccess.getInstance().selectedSdlVersion) }
+            .getOrDefault(false)
         try {
             System.loadLibrary("fmodL")
             System.loadLibrary("fmod")
             System.loadLibrary("fmodstudioL")
             System.loadLibrary("fmodstudio")
             System.loadLibrary("dotnethost")
-            System.loadLibrary("FAudio")
             System.loadLibrary("theorafile")
-            System.loadLibrary("SDL3")
-            // SDL2 兼容层（sdl2-compat -> libSDL3.so）。预加载是为了让游戏自带库
-            // 声明的 DT_NEEDED=libSDL2-2.0.so.0 能按 SONAME 命中已加载的这份库。
-            System.loadLibrary("SDL2")
+            if (useSdl2) {
+                // RAL: SDL2 路径使用「从源码编译的 SDL2 版」FAudio/FNA3D：
+                //   core/libs/{FAudio,FNA3D} + -DBUILD_SDL3=OFF + 官方 androidbuildlibs 构建的
+                //   libSDL2.so（scripts/sdl2/build-fna-sdl2.sh / build-sdl2-wayland.sh）。
+                // 包内不存在名为 libFNA3D.so / libFAudio.so 的文件（两套都以 _sdl2/_sdl3 命名，
+                // SONAME 统一为 libFNA3D.so / libFAudio.so），而游戏侧 P/Invoke 是
+                // dlopen("libFNA3D.so")：bionic 按文件名找不到文件时会回退到「已加载库的
+                // SONAME 匹配」，因此这里预载哪一套就生效哪一套。
+                // 注意：libSDL2.so 由 SDL 胶水层（org.libsdl.app2.SDLActivity）自己加载，
+                // 不在这里预载，避免与 SDLActivity 的加载顺序互相干扰。
+                System.loadLibrary("FAudio_sdl2")
+                System.loadLibrary("FNA3D_sdl2")
+            } else {
+                // SDL3 版同样以 _sdl3 命名，理由见上（游戏侧按 SONAME 命中已加载的这份）
+                System.loadLibrary("FAudio_sdl3")
+                System.loadLibrary("FNA3D_sdl3")
+                System.loadLibrary("SDL3")
+            }
             System.loadLibrary("main")
             System.loadLibrary("openal32")
             System.loadLibrary("lwjgl_lz4")

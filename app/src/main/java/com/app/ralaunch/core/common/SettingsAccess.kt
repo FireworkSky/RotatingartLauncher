@@ -6,6 +6,7 @@ import com.app.ralaunch.core.model.KeyboardType
 import com.app.ralaunch.core.model.ThemeMode
 import com.app.ralaunch.core.di.contract.ISettingsRepositoryServiceV2
 import com.app.ralaunch.core.platform.runtime.RendererRegistry
+import com.app.ralaunch.core.platform.runtime.SdlVersion
 import kotlinx.coroutines.runBlocking
 import org.koin.java.KoinJavaComponent
 
@@ -90,6 +91,14 @@ object SettingsAccess {
 
     val isTouchMultitouchEnabled: Boolean
         get() = settings.touchMultitouchEnabled
+
+    /** 选中的 SDL 版本（"sdl3"/"sdl2"），归一化后返回；默认 SDL3 */
+    val selectedSdlVersion: String
+        get() = SdlVersion.normalize(settings.selectedSdlVersion)
+
+    var isUseSdl2: Boolean
+        get() = SdlVersion.isSdl2(settings.selectedSdlVersion)
+        set(value) = update { selectedSdlVersion = if (value) SdlVersion.SDL2 else SdlVersion.SDL3 }
 
     // FNA 触屏设置
     var mouseRightStickSpeed: Int

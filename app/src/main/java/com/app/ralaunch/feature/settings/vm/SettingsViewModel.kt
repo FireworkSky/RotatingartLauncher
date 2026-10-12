@@ -6,6 +6,7 @@ import com.app.ralaunch.core.di.contract.IRuntimeManagerServiceV2
 import com.app.ralaunch.core.logging.service.AndroidFileLogger
 import com.app.ralaunch.core.platform.runtime.RendererRegistry
 import com.app.ralaunch.core.platform.runtime.RuntimeSpec
+import com.app.ralaunch.core.platform.runtime.SdlVersion
 import com.app.ralaunch.core.model.BackgroundType
 import com.app.ralaunch.core.model.FpsLimit
 import com.app.ralaunch.core.model.QualityLevel
@@ -57,6 +58,8 @@ data class SettingsUiState(
     val installedMonoRuntimeVersions: List<String> = emptyList(),
     val monoLlvmEnabled: Boolean = false,
     val monoVerboseLoggingEnabled: Boolean = false,
+    /** 选中的 SDL 版本（"sdl3"/"sdl2"），见 [SdlVersion] */
+    val selectedSdlVersion: String = SdlVersion.SDL3,
 
     // 启动器设置
     val multiplayerEnabled: Boolean = false,
@@ -113,6 +116,7 @@ sealed class SettingsEvent {
     data class SetRuntimeSpec(val spec: String) : SettingsEvent()
     data class SetMonoLlvmEnabled(val enabled: Boolean) : SettingsEvent()
     data class SetMonoVerboseLoggingEnabled(val enabled: Boolean) : SettingsEvent()
+    data class SetSdlVersion(val version: String) : SettingsEvent()
 
     // 启动器
     data class SetMultiplayerEnabled(val enabled: Boolean) : SettingsEvent()
@@ -193,6 +197,7 @@ class SettingsViewModel(
             is SettingsEvent.SetRuntimeSpec -> setRuntimeSpec(event.spec)
             is SettingsEvent.SetMonoLlvmEnabled -> setMonoLlvmEnabled(event.enabled)
             is SettingsEvent.SetMonoVerboseLoggingEnabled -> setMonoVerboseLoggingEnabled(event.enabled)
+            is SettingsEvent.SetSdlVersion -> setSdlVersion(event.version)
 
             // 启动器
             is SettingsEvent.SetMultiplayerEnabled -> setMultiplayerEnabled(event.enabled)
@@ -261,6 +266,7 @@ class SettingsViewModel(
                     installedMonoRuntimeVersions = installedMonoRuntimeVersions,
                     monoLlvmEnabled = settings.monoLlvmEnabled,
                     monoVerboseLoggingEnabled = settings.monoVerboseLoggingEnabled,
+                    selectedSdlVersion = SdlVersion.normalize(settings.selectedSdlVersion),
                     // 启动器
                     multiplayerEnabled = settings.multiplayerEnabled,
                     multiplayerDisclaimerAccepted = settings.multiplayerDisclaimerAccepted,
@@ -447,6 +453,22 @@ class SettingsViewModel(
         viewModelScope.launch {
             settingsRepository.update { monoVerboseLoggingEnabled = enabled }
             _uiState.update { it.copy(monoVerboseLoggingEnabled = enabled) }
+        }
+    }
+
+    /**
+     * 切换 SDL 版本（SDL3 / SDL2-Wayland）。
+     *
+     * 该选择决定游戏启动链走哪套 Activity：
+     *  - SDL3：GameActivity（继承 SDLActivity，Android 视频后端）
+     *  - SDL2：GameActivitySdl2（不继承 SDLActivity，Wayland 视频后端 + 应用内合成器）
+     */
+    private fun setSdlVersion(version: String) {
+        val normalized = SdlVersion.normalize(version)
+        viewModelScope.launch {
+            settingsRepository.update { selectedSdlVersion = normalized }
+            _uiState.update { it.copy(selectedSdlVersion = normalized) }
+            sendEffect(SettingsEffect.ShowToast(SdlVersion.displayName(normalized)))
         }
     }
 

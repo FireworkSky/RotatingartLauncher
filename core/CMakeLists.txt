@@ -6,6 +6,13 @@ cmake_minimum_required(VERSION 3.22.1)
 # 必须在 project() 之前设置。
 set(CMAKE_PLATFORM_NO_VERSIONED_SONAME ON)
 
+# RAL: 不生成 RUNPATH/RPATH。APK 内库由 bionic 按文件名在应用 nativeLibraryDir 解析，
+# 构建机的绝对路径在设备上无效，残留会导致 libmain.so 加载失败。
+set(CMAKE_SKIP_RPATH TRUE)
+set(CMAKE_SKIP_BUILD_RPATH TRUE)
+set(CMAKE_SKIP_INSTALL_RPATH TRUE)
+set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
+
 project("main")
 
 # =========================
@@ -33,33 +40,18 @@ add_subdirectory(${LIBS_DIR}/dobby)
 add_subdirectory(${LIBS_DIR}/spdlog-1.17.0)
 
 # =========================
-# SDL2 兼容层（sdl2-compat）
+# SDL2（真实 SDL2 + Wayland 后端，替代 sdl2-compat）
 # =========================
-# 用 SDL3 实现 SDL2 ABI，产出 libSDL2.so，供仍按 SDL2 链接的程序/库使用。
-# 编译期复用上面的 SDL3（SDL3::Headers 已由 core/libs/SDL 定义），
-# 运行期 sdl2-compat 会自行 dlopen("libSDL3.so")，与 APK 内的 libSDL3.so 对应。
-set(SDL2COMPAT_TESTS   OFF CACHE BOOL "" FORCE)
-set(SDL2COMPAT_INSTALL OFF CACHE BOOL "" FORCE)
-set(SDL2COMPAT_WERROR  OFF CACHE BOOL "" FORCE)
-set(SDL2COMPAT_SHARED  ON  CACHE BOOL "" FORCE)
-# Android 上 SDL2COMPAT_STATIC=ON 会直接 FATAL_ERROR
-set(SDL2COMPAT_STATIC  OFF CACHE BOOL "" FORCE)
-set(SDL2COMPAT_ASAN    OFF CACHE BOOL "" FORCE)
-# Android 上必须关闭 X11，否则 sdl2-compat 会 find_package(X11 REQUIRED) 直接失败
-set(SDL2COMPAT_X11     OFF CACHE BOOL "" FORCE)
-add_subdirectory(${LIBS_DIR}/sdl2-compat)
-
-# 这两个静态库本项目不用（AGP 会把所有目标都编一遍，排除掉省时省事）
-set_target_properties(SDL2main SDL2_test PROPERTIES EXCLUDE_FROM_ALL TRUE)
-
-# SDL2 使用 Linux 惯例的 SONAME，以兼容游戏自带库的依赖名。
-# 例如 Terraria 的 libnfd.so 记录的是 DT_NEEDED=libSDL2-2.0.so.0，
-# 而文件名保持 libSDL2.so，故 DT_NEEDED=libSDL2.so 的库也能按文件名命中同一份库。
-# NO_SONAME 让 CMake 不再自行追加 -soname（否则它会覆盖下面指定的名字），
-# 再通过 LINK_FLAGS 显式指定 Linux 惯例的 SONAME。
-set_target_properties(SDL2 PROPERTIES NO_SONAME TRUE)
-set_target_properties(SDL2 PROPERTIES LINK_FLAGS "-Wl,-soname,libSDL2-2.0.so.0")
-
+# 已移除 sdl2-compat：它以 SDL3 模拟 SDL2 ABI，对按真实 SDL2 语义编写的游戏兼容性不足。
+# 改为内建真实 SDL2（2.32.10，Wayland 视频后端）：
+#   - Wayland 后端不需要 Android Java 绑定层（org.libsdl.app.*），
+#     故可与 SDL3 的 Java 绑定共存于同一 APK，不会发生类冲突。
+#   - 画面由应用内 Wayland 合成器呈现到 Android Surface。
+# SDL2-Wayland 构建落地后再在此接入（add_subdirectory 或 import 预编译库）。
+#
+# 仍需沿用「文件名 libSDL2.so + SONAME libSDL2-2.0.so.0」策略：
+# 例如 Terraria 的 libnfd.so 记录 DT_NEEDED=libSDL2-2.0.so.0，
+# 预加载 libSDL2.so 后其 SONAME 与之一致，即可按已加载库命中。
 
 # =========================
 # 主程序（保持独立）
@@ -80,11 +72,18 @@ add_library(${CMAKE_PROJECT_NAME} SHARED
         src/thread_affinity_manager.cpp
 )
 
+# RAL: 曾在此编译内嵌 Wayland 合成器（core/src/wlcomp + vendored libwayland-server/libffi）。
+# 该方案已废弃并删除；SDL2 路径改用 SDL 官方 Android 视频后端 + org.libsdl.app2 胶水层，
+# 详见 scripts/sdl2/README.md。
+
 target_link_libraries(${CMAKE_PROJECT_NAME}
         android
         SDL3::SDL3
-        FAudio-shared
-        FNA3D
+        # RAL: 不要链接 FAudio/FNA3D —— libmain 不引用它们任何符号，但会因此写入
+        # DT_NEEDED=libFAudio.so / libFNA3D.so；这两个文件名在包内刻意不存在
+        # （见文件末尾的 SDL2/SDL3 双版本说明），而 SDL3 的 Java 层 SDLActivity 会
+        # 在 GameLauncher 预载之前就 System.loadLibrary("main")，于是直接 dlopen 失败：
+        #   library "libFAudio.so" not found: needed by libmain.so
         mojoshader
         dotnethost
         dobby
@@ -105,8 +104,23 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
 # =========================
 # 安装
 # =========================
+# RAL: FNA3D / FAudio 需要「SDL2 版」和「SDL3 版」两套（运行时按设置切换）。
+# 游戏侧 P/Invoke 是 dlopen("libFNA3D.so")（无路径），bionic 按「文件路径」命中，
+# 所以包内不能存在名为 libFNA3D.so / libFAudio.so 的文件，否则它永远优先。
+# 做法：两套都以 _sdl2 / _sdl3 命名，SONAME 统一为 libFNA3D.so / libFAudio.so；
+# bionic 在按文件名找不到文件时会回退到「已加载库的 SONAME 匹配」，
+# 于是 GameLauncher 预载哪一套，游戏侧拿到的就是哪一套。
+# （AGP 按 CMake codemodel 收集各 target 产物，因此必须改 OUTPUT_NAME；
+#   _sdl2 版由 scripts/sdl2/fna_sdl2.sh 用同一份源码编译后放进 jniLibs。）
+# NO_SONAME 关掉 CMake 自带的 -soname（它来自 OUTPUT_NAME，会排在自定义 flag 之后覆盖掉），
+# 再由 target_link_options 显式指定统一 SONAME。
+set_target_properties(FNA3D PROPERTIES OUTPUT_NAME "FNA3D_sdl3" NO_SONAME TRUE)
+target_link_options(FNA3D PRIVATE "-Wl,-soname,libFNA3D.so")
+set_target_properties(FAudio-shared PROPERTIES OUTPUT_NAME "FAudio_sdl3" NO_SONAME TRUE)
+target_link_options(FAudio-shared PRIVATE "-Wl,-soname,libFAudio.so")
+
 # fmod_SDL 是 SDL2 时代的桥接库（include <SDL.h>），SDL3 分支不再使用，已移除
-install(TARGETS SDL3-shared FAudio-shared FNA3D dotnethost SDL2
+install(TARGETS SDL3-shared FAudio-shared FNA3D dotnethost
         DESTINATION lib)
 
 install(TARGETS GL_gl4es EGL_gl4es
