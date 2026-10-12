@@ -1,5 +1,7 @@
 import org.gradle.kotlin.dsl.support.kotlinCompilerOptions
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import java.io.File
+import java.util.Properties
 
 plugins {
     alias(libs.plugins.android.application)
@@ -8,15 +10,35 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 }
 
+// 发布签名：从根目录 keystore.properties 读取（该文件与 keystore 均不入库）。
+// 文件缺失时 release 变体不签名，仅便于本地构建，不会影响 debug。
+val keystorePropsFile = rootProject.file("keystore.properties")
+val keystoreProps = Properties().apply {
+    if (keystorePropsFile.exists()) {
+        keystorePropsFile.inputStream().use { load(it) }
+    }
+}
+
+// 本地（Termux）工具链适配：仅当本地存在该 NDK 路径时启用，
+// 其他环境仍使用仓库默认的 NDK / CMake 版本。
+val localNdkPath = "/data/data/com.termux/files/usr/opt/android-ndk"
+val useLocalToolchain = File(localNdkPath).exists()
+
 android {
     namespace = "com.app.ralaunch"
-    compileSdk = 37
-    ndkVersion = "30.0.14904198 rc1"
+    compileSdk = 36
+    if (useLocalToolchain) {
+        buildToolsVersion = "36.0.0"
+        ndkVersion = "27.1.12297006"
+        ndkPath = localNdkPath
+    } else {
+        ndkVersion = "29.0.14206865"
+    }
 
     defaultConfig {
         applicationId = "com.app.ralaunch"
         minSdk = 28
-        targetSdk = 37
+        targetSdk = 36
         versionCode = 4
         versionName = "2.1.1"
 
@@ -26,7 +48,7 @@ android {
     externalNativeBuild {
         cmake {
             path = file("../core/CMakeLists.txt")
-            version = "3.22.1"
+            version = if (useLocalToolchain) "3.30.5" else "3.22.1"
         }
     }
 
@@ -51,6 +73,21 @@ android {
         }
     }
 
+    signingConfigs {
+        if (!keystoreProps.isEmpty) {
+            create("release") {
+                storeFile = rootProject.file(keystoreProps.getProperty("storeFile"))
+                storePassword = keystoreProps.getProperty("storePassword")
+                keyAlias = keystoreProps.getProperty("keyAlias")
+                keyPassword = keystoreProps.getProperty("keyPassword")
+                // minSdk 28 起 V2 签名即可（V1 仅老系统需要）
+                enableV1Signing = false
+                enableV2Signing = true
+                enableV3Signing = true
+            }
+        }
+    }
+
     buildTypes {
         getByName("debug") {
             isDebuggable = true
@@ -59,6 +96,9 @@ android {
         }
 
         getByName("release") {
+            if (!keystoreProps.isEmpty) {
+                signingConfig = signingConfigs.getByName("release")
+            }
             isDebuggable = false
             isMinifyEnabled = false // TODO: 修复类重复后启用 R8
             isShrinkResources = false

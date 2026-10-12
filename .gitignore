@@ -152,3 +152,6 @@ tools/sponsors/
 
 # Generated reports
 strings_xml_analysis_report.txt
+
+# 发布签名配置（含密码，禁止入库；keystore 本身由 *.jks 规则忽略）
+keystore.properties

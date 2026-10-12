@@ -11,6 +11,7 @@ interface IRuntimeManagerServiceV2 {
 
     enum class RuntimeType(val dirName: String) {
         DOTNET("dotnet"),
+        MONO("mono"),
         BOX64("box64");
 
         companion object {

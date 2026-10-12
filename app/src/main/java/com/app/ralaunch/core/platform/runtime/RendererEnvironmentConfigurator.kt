@@ -65,8 +65,25 @@ object RendererEnvironmentConfigurator {
 
         loadRendererLibraries(context, renderer)
         applyFna3dEnvironment(renderer)
+        applySdl2EnvironmentIfNeeded(context)
 
         AppLog.i(TAG, "Renderer environment applied successfully for: $renderer")
+    }
+
+    /**
+     * SDL2 模式下覆盖渲染器环境（最后应用，保证生效）
+     *
+     * SDL2 使用自己的 Android 视频后端，只支持 FNA3D 的 OpenGL 驱动；
+     * 全局渲染器若选中 Vulkan/SDL_GPU，上面的 [applyFna3dEnvironment] 会让
+     * FNA3D 找不到可用驱动（"No supported FNA3D driver found!"），此处纠正。
+     */
+    private fun applySdl2EnvironmentIfNeeded(context: Context?) {
+        val useSdl2 = runCatching { SdlVersion.isSdl2(SettingsAccess.getInstance().selectedSdlVersion) }
+            .getOrDefault(false)
+        if (!useSdl2) return
+
+        Sdl2Environment.apply()
+        AppLog.i(TAG, "SDL2 环境已应用：FNA3D 强制 OpenGL/ES3，视频与音频交回 SDL2 的 Android 驱动")
     }
 
     private fun loadRendererLibraries(context: Context?, renderer: String) {
@@ -89,8 +106,16 @@ object RendererEnvironmentConfigurator {
     private fun buildFna3dEnvVars(renderer: String): Map<String, String?> {
         val envVars = mutableMapOf<String, String?>()
 
-        envVars["FNA3D_OPENGL_DRIVER"] = renderer
-        envVars["FNA3D_FORCE_DRIVER"] = "OpenGL"
+        if (renderer == AndroidRendererRegistry.ID_VULKAN) {
+            envVars["FNA3D_FORCE_DRIVER"] = "Vulkan"
+            envVars["SDL_GPU_DRIVER"] = "vulkan"
+            envVars["FNA3D_OPENGL_DRIVER"] = null
+            envVars["FNA3D_OPENGL_LIBRARY"] = null
+        } else {
+            envVars["FNA3D_OPENGL_DRIVER"] = renderer
+            envVars["FNA3D_FORCE_DRIVER"] = "OpenGL"
+            envVars["SDL_GPU_DRIVER"] = null
+        }
         envVars.putAll(getOpenGlVersionConfig(renderer))
 //        envVars["FNA3D_OPENGL_USE_MAP_BUFFER_RANGE"] = getMapBufferRangeValue(renderer)
         envVars.putAll(getQualityConfig())
@@ -148,6 +173,7 @@ object RendererEnvironmentConfigurator {
     private fun getOpenGlVersionConfig(renderer: String): Map<String, String?> {
         return when (renderer) {
             AndroidRendererRegistry.ID_GL4ES,
+            AndroidRendererRegistry.ID_VULKAN,
             AndroidRendererRegistry.ID_ZINK -> {
                 buildMap {
                     put("FNA3D_OPENGL_FORCE_ES3", null)
@@ -186,8 +212,11 @@ object RendererEnvironmentConfigurator {
         AppLog.i(TAG, "Renderer ID: $renderer")
         AppLog.i(TAG, "FNA3D_OPENGL_DRIVER = ${envVars["FNA3D_OPENGL_DRIVER"]}")
         AppLog.i(TAG, "FNA3D_FORCE_DRIVER = ${envVars["FNA3D_FORCE_DRIVER"]}")
+        AppLog.i(TAG, "SDL_GPU_DRIVER = ${envVars["SDL_GPU_DRIVER"]}")
 
         when (renderer) {
+            AndroidRendererRegistry.ID_VULKAN ->
+                AppLog.i(TAG, "GPU Profile: SDL_GPU Vulkan")
             AndroidRendererRegistry.ID_GL4ES ->
                 AppLog.i(TAG, "OpenGL Profile: Desktop OpenGL 2.1 Compatibility Profile")
             AndroidRendererRegistry.ID_ZINK ->
@@ -198,6 +227,8 @@ object RendererEnvironmentConfigurator {
 
         val mapBufferRange = envVars["FNA3D_OPENGL_USE_MAP_BUFFER_RANGE"]
         when {
+            renderer == AndroidRendererRegistry.ID_VULKAN ->
+                AppLog.i(TAG, "Map Buffer Range: Not applicable (SDL_GPU Vulkan)")
             mapBufferRange == "0" && renderer in setOf(
                 AndroidRendererRegistry.ID_ANGLE,
                 AndroidRendererRegistry.ID_GL4ES_ANGLE

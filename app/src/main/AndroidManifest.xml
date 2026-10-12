@@ -77,6 +77,18 @@
             <meta-data android:name="SDL_HINT_ORIENTATIONS" android:value="LandscapeLeft LandscapeRight" />
         </activity>
 
+        <!-- SDL2（Wayland 后端）游戏运行界面：与 GameActivity 共用 :game 进程与主题。
+             不继承 SDLActivity（无 Java 绑定层），画面由应用内 Wayland 合成器呈现。 -->
+        <activity
+            android:name=".feature.game.ui.sdl2.GameActivitySdl2"
+            android:exported="true"
+            android:configChanges="orientation|keyboardHidden|screenSize|screenLayout|smallestScreenSize|uiMode"
+            android:screenOrientation="sensorLandscape"
+            android:theme="@style/GameTheme"
+            android:hardwareAccelerated="true"
+            android:windowSoftInputMode="adjustPan"
+            android:process=":game" />
+
         <!-- 控制布局编辑器 -->
         <activity
             android:name=".feature.controls.editors.ui.ControlEditorActivity"

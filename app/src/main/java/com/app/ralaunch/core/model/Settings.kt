@@ -155,8 +155,23 @@ data class AppSettings(
     var lastAnnouncementId: String = "",
     var isAnnouncementBadgeShown: Boolean = false,
 
+    // Mono 运行时设置
+    /** 让 Mono 使用 LLVM 后端（MONO_ENV_OPTIONS=--llvm） */
+    var monoLlvmEnabled: Boolean = false,
+    /** 输出 Mono 运行时详细日志（MONO_LOG_LEVEL/MONO_LOG_MASK） */
+    var monoVerboseLoggingEnabled: Boolean = false,
+
     // Runtime 设置
     var selectedDotnetRuntimeVersion: String = "",
+    var selectedMonoRuntimeVersion: String = "",
+    /** 选中的 .NET 运行时引擎："dotnet"（CoreCLR）或 "mono" */
+    var selectedRuntimeEngine: String = "dotnet",
+    /**
+     * 选中的 SDL 版本："sdl3"（Android 后端 + SDLActivity Java 绑定）或
+     * "sdl2"（Wayland 后端 + 应用内合成器，无 Java 绑定层）。
+     * 见 [com.app.ralaunch.core.platform.runtime.SdlVersion]。
+     */
+    var selectedSdlVersion: String = "sdl3",
     var selectedBox64RuntimeVersion: String = ""
 ) {
     companion object {

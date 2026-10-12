@@ -3,6 +3,8 @@ package com.app.ralaunch.feature.installer
 import com.app.ralaunch.R
 import com.app.ralaunch.RaLaunchApp
 import com.app.ralaunch.core.di.contract.IGameRepositoryServiceV3
+import com.app.ralaunch.core.logging.AppLog
+import com.app.ralaunch.core.model.GameItem
 import java.io.File
 
 /**
@@ -31,6 +33,42 @@ import java.io.File
 class GameInstaller(private val gameRepository: IGameRepositoryServiceV3) {
     
     private var currentPlugin: GameInstallPlugin? = null
+    
+    /**
+     * 安装回调包装：导入完成后做统一后处理，再交给调用方
+     *
+     * 后处理内容：删除游戏自带的 Mono dllmap 配置 [LEGACY_DLL_MAP_CONFIG]。
+     * 这类配置（Terraria/FNA 系列自带）把库名映射成「带版本号」的形式，例如
+     *   <dllmap dll="FNA3D" os="linux" target="libFNA3D.so.0"/>
+     * 而 APK 内所有原生库都是「去版本化」命名（libFNA3D.so / libSDL3.so / libSDL2.so），
+     * 于是 Mono 按配置里的名字 dlopen 必然失败：
+     *   dlopen failed: library "libFNA3D.so.0" not found
+     * 删掉后 Mono 走默认探测（"FNA3D" → "libFNA3D.so"），
+     * 由 GameLauncher 预载的 SDL2/SDL3 版变体通过 SONAME 命中。
+     * .NET(CoreCLR) 不读取 dllmap，因此该步骤只影响 Mono 路径，删掉对 CoreCLR 无害。
+     */
+    private class CleanupCallback(
+        private val gameStorageRoot: File,
+        private val delegate: InstallCallback
+    ) : InstallCallback {
+
+        override fun onProgress(message: String, progress: Int) {
+            delegate.onProgress(message, progress)
+        }
+
+        override fun onComplete(gameItem: GameItem) {
+            removeLegacyDllMapConfigs(gameStorageRoot)
+            delegate.onComplete(gameItem)
+        }
+
+        override fun onError(error: String) {
+            delegate.onError(error)
+        }
+
+        override fun onCancelled() {
+            delegate.onCancelled()
+        }
+    }
     
     /**
      * 安装游戏
@@ -77,7 +115,13 @@ class GameInstaller(private val gameRepository: IGameRepositoryServiceV3) {
         val gameStorageRootFile = File(gameStorageRoot)
         
         // 执行安装
-        plugin.install(gameFile, modLoaderFile, gameStorageRootFile, callback)
+        // RAL: 包一层回调，导入完成后统一做后处理（见 CleanupCallback 注释）
+        plugin.install(
+            gameFile,
+            modLoaderFile,
+            gameStorageRootFile,
+            CleanupCallback(gameStorageRootFile, callback)
+        )
     }
     
     /**
@@ -123,5 +167,33 @@ class GameInstaller(private val gameRepository: IGameRepositoryServiceV3) {
         return name.split(' ')
             .filter { it.isNotBlank() }
             .joinToString(" ") { it.replaceFirstChar { c -> c.uppercase() } }
+    }
+
+    companion object {
+        private const val TAG = "GameInstaller"
+
+        /** 游戏自带的 Mono dllmap 配置文件名（见 CleanupCallback 注释） */
+        private const val LEGACY_DLL_MAP_CONFIG = "FNA.dll.config"
+
+        /**
+         * 递归移除游戏目录里自带的 Mono dllmap 配置
+         *
+         * @return 实际删除的文件数
+         */
+        private fun removeLegacyDllMapConfigs(gameStorageRoot: File): Int {
+            if (!gameStorageRoot.isDirectory) return 0
+            var removed = 0
+            gameStorageRoot.walkTopDown()
+                .filter { it.isFile && it.name.equals(LEGACY_DLL_MAP_CONFIG, ignoreCase = true) }
+                .forEach { file ->
+                    if (file.delete()) {
+                        removed++
+                        AppLog.i(TAG, "已移除自带的 dllmap 配置 / Removed legacy dllmap config: ${file.absolutePath}")
+                    } else {
+                        AppLog.w(TAG, "移除 dllmap 配置失败 / Failed to remove: ${file.absolutePath}")
+                    }
+                }
+            return removed
+        }
     }
 }

@@ -3,6 +3,8 @@ package com.app.ralaunch.core.common
 import android.content.Context
 import com.app.ralaunch.core.model.GameItem
 import com.app.ralaunch.feature.game.ui.legacy.GameActivity
+import com.app.ralaunch.feature.game.ui.sdl2.GameActivitySdl2
+import com.app.ralaunch.core.platform.runtime.SdlVersion
 import com.app.ralaunch.core.logging.AppLog
 import java.io.File
 
@@ -42,10 +44,16 @@ class GameLaunchManager(private val context: Context) {
 
         AppLog.i(TAG, "Game runtime: dotnet")
 
-        GameActivity.launch(
-            context = context,
-            gameStorageId = game.id
-        )
+        // RAL: 依据「SDL 版本」设置选择入口 Activity。
+        //  - SDL3：GameActivity（继承 SDLActivity，Android 视频后端）
+        //  - SDL2：GameActivitySdl2（不继承 SDLActivity，Wayland 视频后端 + 应用内合成器）
+        if (SettingsAccess.getInstance().selectedSdlVersion == SdlVersion.SDL2) {
+            AppLog.i(TAG, "SDL version: SDL2 (Wayland)")
+            GameActivitySdl2.launch(context = context, gameStorageId = game.id)
+        } else {
+            AppLog.i(TAG, "SDL version: SDL3 (Android)")
+            GameActivity.launch(context = context, gameStorageId = game.id)
+        }
 
         return true
     }

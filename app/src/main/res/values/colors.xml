@@ -44,6 +44,36 @@
     <color name="md_theme_light_outline">#79747E</color>
     <color name="md_theme_light_outlineVariant">#E0E0E0</color>
 
+
+    <!-- 暗色主题的 md_theme_dark_* 必须同时在 base 声明：
+         只在 values-night 声明会让「非 night 配置下引用这些颜色」直接崩溃，
+         lint 也会以 MissingDefaultResource 阻塞 release 构建。
+         这里与 values-night/colors.xml 取值一致，夜间配置仍以 values-night 为准。 -->
+    <color name="md_theme_dark_primary">#D0BCFF</color>
+    <color name="md_theme_dark_onPrimary">#381E72</color>
+    <color name="md_theme_dark_primaryContainer">#4F378B</color>
+    <color name="md_theme_dark_onPrimaryContainer">#EADDFF</color>
+    <color name="md_theme_dark_secondary">#CCC2DC</color>
+    <color name="md_theme_dark_onSecondary">#332D41</color>
+    <color name="md_theme_dark_secondaryContainer">#4A4458</color>
+    <color name="md_theme_dark_onSecondaryContainer">#E8DEF8</color>
+    <color name="md_theme_dark_tertiary">#81C784</color>
+    <color name="md_theme_dark_onTertiary">#2E7D32</color>
+    <color name="md_theme_dark_tertiaryContainer">#388E3C</color>
+    <color name="md_theme_dark_onTertiaryContainer">#C8E6C9</color>
+    <color name="md_theme_dark_error">#F2B8B5</color>
+    <color name="md_theme_dark_errorContainer">#8C1D18</color>
+    <color name="md_theme_dark_onError">#601410</color>
+    <color name="md_theme_dark_onErrorContainer">#F9DEDC</color>
+    <color name="md_theme_dark_background">#1C1B1F</color>
+    <color name="md_theme_dark_onBackground">#E6E1E5</color>
+    <color name="md_theme_dark_surface">#1C1B1F</color>
+    <color name="md_theme_dark_onSurface">#E6E1E5</color>
+    <color name="md_theme_dark_surfaceVariant">#49454F</color>
+    <color name="md_theme_dark_onSurfaceVariant">#CAC4D0</color>
+    <color name="md_theme_dark_outline">#938F99</color>
+    <color name="md_theme_dark_outlineVariant">#49454F</color>
+
     <!-- 浅色主题颜色（向后兼容） -->
     <!-- 背景色 - 使用精致的浅蓝色调 -->
     <color name="background_primary">#FAFBFC</color>

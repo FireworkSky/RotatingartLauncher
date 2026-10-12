@@ -18,6 +18,7 @@ object RendererRegistry {
     const val ID_GL4ES_ANGLE = "gl4es+angle"
     const val ID_MOBILEGLUES = "mobileglues"
     const val ID_ANGLE = "angle"
+    const val ID_VULKAN = "vulkan"
     const val ID_ZINK = "zink"
 
     private val rendererStore = LinkedHashMap<String, RendererInfo>()
@@ -109,6 +110,40 @@ object RendererRegistry {
 
         register(
             RendererInfo(
+                id = ID_VULKAN,
+                displayName = null,
+                description = null,
+                eglLibrary = null,
+                glesLibrary = null,
+                needsPreload = false,
+                minAndroidVersion = Build.VERSION_CODES.N
+            ) { _, env ->
+                env["RALCORE_RENDERER"] = "vulkan"
+                env["SDL_GPU_DRIVER"] = "vulkan"
+                env["FNA3D_OPENGL_DRIVER"] = null
+                env["FNA3D_OPENGL_LIBRARY"] = null
+                env["RALCORE_EGL"] = null
+                env["LIBGL_GLES"] = null
+                env["LIBGL_ES"] = null
+                env["LIBGL_MIPMAP"] = null
+                env["LIBGL_NORMALIZE"] = null
+                env["LIBGL_NOINTOVLHACK"] = null
+                env["LIBGL_NOERROR"] = null
+                env["GALLIUM_DRIVER"] = null
+                env["MESA_LOADER_DRIVER_OVERRIDE"] = null
+                env["MESA_GL_VERSION_OVERRIDE"] = null
+                env["MESA_GLSL_VERSION_OVERRIDE"] = null
+                env["MESA_NO_ERROR"] = null
+                env["ZINK_DESCRIPTORS"] = null
+                env["TU_DEBUG"] = null
+                env["MESA_LOG"] = null
+                env["MESA_DEBUG"] = null
+                env["LIBGL_DEBUG"] = null
+            }
+        )
+
+        register(
+            RendererInfo(
                 id = ID_ZINK,
                 displayName = null,
                 description = null,
@@ -156,6 +191,7 @@ object RendererRegistry {
             ID_GL4ES_ANGLE -> getSharedString(R.string.renderer_gl4es_angle, normalized)
             ID_MOBILEGLUES -> getSharedString(R.string.renderer_mobileglues, normalized)
             ID_ANGLE -> getSharedString(R.string.renderer_angle, normalized)
+            ID_VULKAN -> getSharedString(R.string.renderer_vulkan, normalized)
             ID_ZINK -> getSharedString(R.string.renderer_zink, normalized)
             else -> getRendererInfo(normalized)?.displayName ?: normalized
         }
@@ -170,6 +206,7 @@ object RendererRegistry {
             ID_GL4ES_ANGLE -> getSharedString(R.string.renderer_gl4es_angle_desc)
             ID_MOBILEGLUES -> getSharedString(R.string.renderer_mobileglues_desc)
             ID_ANGLE -> getSharedString(R.string.renderer_angle_desc)
+            ID_VULKAN -> getSharedString(R.string.renderer_vulkan_desc)
             ID_ZINK -> getSharedString(R.string.renderer_zink_desc)
             else -> getRendererInfo(normalized)?.description.orEmpty()
         }

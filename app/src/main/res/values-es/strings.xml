@@ -619,6 +619,11 @@
     <string name="init_component_sdl_desc">Biblioteca multiplataforma de multimedia y manejo de entrada</string>
     <string name="init_component_netcorehost_desc">Host de runtime de .NET Core</string>
     <string name="init_component_dotnet_desc">Entorno de runtime .NET 10</string>
+    <string name="init_component_mono_desc">Biblioteca de clases base (BCL) del runtime Mono</string>
+    <string name="settings_mono_llvm_title">Activar Mono LLVM JIT</string>
+    <string name="settings_mono_llvm_subtitle">Usar el backend LLVM para el JIT de Mono (MONO_ENV_OPTIONS=--llvm)</string>
+    <string name="settings_mono_verbose_log_title">Registro detallado de Mono</string>
+    <string name="settings_mono_verbose_log_subtitle">Registrar logs detallados del runtime Mono (MONO_LOG_LEVEL=debug, MONO_LOG_MASK=all)</string>
     <string name="init_component_monomod_desc">MonoMod es una herramienta universal de modificación de ensamblados .NET</string>
     <string name="init_component_patches_desc">Parches de corrección de juegos</string>
 

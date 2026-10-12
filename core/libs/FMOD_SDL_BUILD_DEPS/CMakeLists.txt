@@ -10,7 +10,10 @@ target_include_directories(fmod_SDL PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/../FMOD_SDL
 )
 target_link_libraries(fmod_SDL PRIVATE
-    SDL2
+    SDL3::SDL3
+)
+target_compile_definitions(fmod_SDL PRIVATE
+    USE_SDL3
 )
 target_compile_options(fmod_SDL PRIVATE
     -O3 -Wall -pedantic
