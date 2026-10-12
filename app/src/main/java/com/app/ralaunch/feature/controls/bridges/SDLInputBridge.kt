@@ -6,9 +6,12 @@ import com.app.ralaunch.core.logging.AppLog
 import android.view.KeyEvent
 import android.view.MotionEvent
 import com.app.ralaunch.feature.controls.ControlData
-import org.libsdl.app.SDLActivity
 import org.libsdl.app.SDLControllerManager
+import com.app.ralaunch.core.common.SettingsAccess
+import com.app.ralaunch.core.platform.runtime.SdlVersion
 import org.libsdl.app.VirtualXboxController
+import org.libsdl.app.SDLActivity as SDL3Activity
+import org.libsdl.app2.SDLActivity as SDL2Activity
 
 /**
  * SDL输入桥接实现
@@ -17,6 +20,85 @@ import org.libsdl.app.VirtualXboxController
  * 注意：游戏使用触屏控制，鼠标按键通过虚拟触屏点实现
  */
 class SDLInputBridge : ControlInputBridge {
+    // ==================== SDL 版本适配 ====================
+    // SDL3 与 SDL2 各自带一套 Java 胶水层（org.libsdl.app / org.libsdl.app2），
+    // 两边的 native 方法名与能力不同：SDL3 是 RAL 在 fork 里加的 onNativeMouseDirect/
+    // nativeGetMouseStateX/Y，SDL2 官方层只有 onNativeMouse。这里按当前设置分发。
+    private val useSdl2: Boolean
+        get() = runCatching {
+            SdlVersion.isSdl2(SettingsAccess.getInstance().selectedSdlVersion)
+        }.getOrDefault(false)
+
+    // SDL2 没有 nativeGetMouseStateX/Y，自己记最近一次鼠标位置
+    @Volatile private var lastMouseX: Float = 0f
+    @Volatile private var lastMouseY: Float = 0f
+    @Volatile private var virtualPadWarned = false
+
+    // SDL2 的 onNativeMouse(state, action, x, y, relative) 第一个参数是**按键状态掩码**
+    // （SDL_androidmouse.c: TranslateButton(changes) 依赖「变化位」），而 SDL3 的
+    // onNativeMouseDirect 传的是单个按钮。虚拟按键是逐个按下的，所以这里必须自己维护掩码，
+    // 否则右键(2)/中键(4) 会被当成「未变化」而失效。
+    @Volatile private var sdl2MouseButtonState: Int = 0
+
+    private fun onNativeMouseCompat(button: Int, action: Int, x: Float, y: Float, relative: Boolean) {
+        lastMouseX = x
+        lastMouseY = y
+        runCatching {
+            if (useSdl2) {
+                when (action) {
+                    MotionEvent.ACTION_DOWN -> sdl2MouseButtonState = sdl2MouseButtonState or button
+                    MotionEvent.ACTION_UP -> sdl2MouseButtonState = sdl2MouseButtonState and button.inv()
+                    else -> { /* MOVE / SCROLL：沿用当前掩码 */ }
+                }
+                SDL2Activity.onNativeMouse(sdl2MouseButtonState, action, x, y, relative)
+            } else {
+                SDL3Activity.onNativeMouseDirect(button, action, x, y, relative)
+            }
+        }.onFailure { AppLog.w(TAG, "onNativeMouse(Direct) 调用失败: ${it.message}") }
+    }
+
+    private fun warnVirtualPadUnsupported(where: String) {
+        if (!virtualPadWarned) {
+            virtualPadWarned = true
+            AppLog.w(TAG, "虚拟 Xbox 手柄不可用（$where），已忽略")
+        }
+    }
+
+    /**
+     * 虚拟手柄适配器：SDL3 与 SDL2 两套胶水层各有一份同名实现（org.libsdl.app /
+     * org.libsdl.app2，按钮与轴编号一致），这里只抹平「取实例」的类型差异。
+     */
+    private interface VirtualPad {
+        fun setLeftStick(x: Float, y: Float)
+        fun setRightStick(x: Float, y: Float)
+        fun setAxis(axis: Int, value: Float)
+        fun setButton(button: Int, pressed: Boolean)
+    }
+
+    private val virtualPad: VirtualPad? by lazy {
+        runCatching {
+            if (useSdl2) {
+                org.libsdl.app2.SDLControllerManager.getVirtualController()?.let { c ->
+                    object : VirtualPad {
+                        override fun setLeftStick(x: Float, y: Float) = c.setLeftStick(x, y)
+                        override fun setRightStick(x: Float, y: Float) = c.setRightStick(x, y)
+                        override fun setAxis(axis: Int, value: Float) = c.setAxis(axis, value)
+                        override fun setButton(button: Int, pressed: Boolean) = c.setButton(button, pressed)
+                    }
+                }
+            } else {
+                SDLControllerManager.getVirtualController()?.let { c ->
+                    object : VirtualPad {
+                        override fun setLeftStick(x: Float, y: Float) = c.setLeftStick(x, y)
+                        override fun setRightStick(x: Float, y: Float) = c.setRightStick(x, y)
+                        override fun setAxis(axis: Int, value: Float) = c.setAxis(axis, value)
+                        override fun setButton(button: Int, pressed: Boolean) = c.setButton(button, pressed)
+                    }
+                }
+            }
+        }.getOrNull()
+    }
+
     /**
      * 将SDL Scancode转换为Android KeyCode
      * SDLActivity.onNativeKeyDown期望接收Android KeyCode（如KEYCODE_A=29），不是ASCII！
@@ -163,13 +245,14 @@ class SDLInputBridge : ControlInputBridge {
                 try {
                     // 调用SDLActivity的静态native方法
                     if (finalIsDown) {
-                        SDLActivity.onNativeKeyDown(finalKeycode)
+                        if (useSdl2) SDL2Activity.onNativeKeyDown(finalKeycode) else SDL3Activity.onNativeKeyDown(finalKeycode)
                         //                        AppLog.d(TAG, "SDLActivity.onNativeKeyDown(" + finalKeycode + ") called successfully");
                     } else {
-                        SDLActivity.onNativeKeyUp(finalKeycode)
+                        if (useSdl2) SDL2Activity.onNativeKeyUp(finalKeycode) else SDL3Activity.onNativeKeyUp(finalKeycode)
                         //                        AppLog.d(TAG, "SDLActivity.onNativeKeyUp(" + finalKeycode + ") called successfully");
                     }
-                } catch (e: Exception) {
+                } catch (e: Throwable) {
+                    // UnsatisfiedLinkError 属于 Error，早期用 catch(Exception) 兜不住
                     AppLog.e(TAG, "Error in SDL native key method: keycode=" + finalKeycode, e)
                 }
             })
@@ -179,15 +262,17 @@ class SDLInputBridge : ControlInputBridge {
     }
 
     fun sdlOnNativeMouseDirect(button: Int, action: Int, x: Float, y: Float, relative: Boolean) {
-        SDLActivity.onNativeMouseDirect(button, action, x, y, relative)
+        onNativeMouseCompat(button, action, x, y, relative)
     }
 
     fun sdlNativeGetMouseStateX(): Int {
-        return SDLActivity.nativeGetMouseStateX()
+        if (useSdl2) return lastMouseX.toInt()
+        return SDL3Activity.nativeGetMouseStateX()
     }
 
     fun sdlNativeGetMouseStateY(): Int {
-        return SDLActivity.nativeGetMouseStateY()
+        if (useSdl2) return lastMouseY.toInt()
+        return SDL3Activity.nativeGetMouseStateY()
     }
 
     override fun sendMouseButton(button: ControlData.KeyCode, isDown: Boolean) {
@@ -222,7 +307,7 @@ class SDLInputBridge : ControlInputBridge {
     override fun sendMousePosition(x: Float, y: Float) {
         try {
             // 调用SDLActivity的静态native方法，使用绝对位置（relative = false）
-            SDLActivity.onNativeMouseDirect(0, MotionEvent.ACTION_MOVE, x, y, false)
+            onNativeMouseCompat(0, MotionEvent.ACTION_MOVE, x, y, false)
         } catch (e: Exception) {
             AppLog.e(TAG, "Error sending mouse position", e)
         }
@@ -230,7 +315,7 @@ class SDLInputBridge : ControlInputBridge {
 
     override fun sendMouseMove(deltaX: Float, deltaY: Float) {
         try {
-            SDLActivity.onNativeMouseDirect(0, MotionEvent.ACTION_MOVE, deltaX, deltaY, true)
+            onNativeMouseCompat(0, MotionEvent.ACTION_MOVE, deltaX, deltaY, true)
         } catch (e: Exception) {
             AppLog.e(TAG, "Error sending mouse move", e)
         }
@@ -248,12 +333,11 @@ class SDLInputBridge : ControlInputBridge {
 
     override fun sendXboxLeftStick(x: Float, y: Float) {
         try {
-            val controller =
-                SDLControllerManager.getVirtualController()
+            val controller = virtualPad
             if (controller != null) {
                 controller.setLeftStick(x, y)
             } else {
-                AppLog.w(TAG, "Virtual Xbox controller not available")
+                warnVirtualPadUnsupported("虚拟手柄输入")
             }
         } catch (e: Exception) {
             AppLog.e(TAG, "Error sending Xbox left stick", e)
@@ -262,12 +346,11 @@ class SDLInputBridge : ControlInputBridge {
 
     override fun sendXboxRightStick(x: Float, y: Float) {
         try {
-            val controller =
-                SDLControllerManager.getVirtualController()
+            val controller = virtualPad
             if (controller != null) {
                 controller.setRightStick(x, y)
             } else {
-                AppLog.w(TAG, "Virtual Xbox controller not available")
+                warnVirtualPadUnsupported("虚拟手柄输入")
             }
         } catch (e: Exception) {
             AppLog.e(TAG, "Error sending Xbox right stick", e)
@@ -276,10 +359,9 @@ class SDLInputBridge : ControlInputBridge {
 
     override fun sendXboxButton(xboxButton: ControlData.KeyCode, isDown: Boolean) {
         try {
-            val controller =
-                SDLControllerManager.getVirtualController()
+            val controller = virtualPad
             if (controller == null) {
-                AppLog.w(TAG, "Virtual Xbox controller not available")
+                warnVirtualPadUnsupported("虚拟手柄输入")
                 return
             }
 
@@ -297,10 +379,9 @@ class SDLInputBridge : ControlInputBridge {
 
     override fun sendXboxTrigger(xboxTrigger: ControlData.KeyCode, value: Float) {
         try {
-            val controller =
-                SDLControllerManager.getVirtualController()
+            val controller = virtualPad
             if (controller == null) {
-                AppLog.w(TAG, "Virtual Xbox controller not available")
+                warnVirtualPadUnsupported("虚拟手柄输入")
                 return
             }
 

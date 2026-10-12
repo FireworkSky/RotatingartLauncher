@@ -4,7 +4,13 @@ import android.app.Activity
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.activity.compose.LocalActivityResultRegistryOwner
+import androidx.compose.runtime.Composable
+import androidx.activity.result.ActivityResultRegistryOwner
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.ComposeView
+import androidx.lifecycle.LifecycleOwner
+import androidx.savedstate.SavedStateRegistryOwner
 import androidx.lifecycle.setViewTreeLifecycleOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import com.app.ralaunch.R
@@ -16,8 +22,6 @@ import com.app.ralaunch.core.common.SettingsAccess
 import com.app.ralaunch.core.logging.AppLog
 import com.app.ralaunch.feature.main.ui.background.FPSDisplayView
 import org.koin.java.KoinJavaComponent
-import org.libsdl.app.SDLSurface
-import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.material3.MaterialTheme
 import com.app.ralaunch.core.common.DynamicColorManager
 import com.app.ralaunch.core.theme.RaLaunchTheme
@@ -50,10 +54,17 @@ class GameVirtualControlsManager {
         _toggleFloatingBallEvent.tryEmit(Unit)
     }
 
+    /**
+     * 初始化虚拟按键与悬浮球。
+     *
+     * [sdlSurface] 只作为「未被子控件消费的触摸事件」的转发目标，因此这里只要求 [View]：
+     * SDL3（org.libsdl.app.SDLSurface）与 SDL2（org.libsdl.app2.SDLSurface）是两套独立的
+     * Java 胶水层，类型互不相容，用 View 才能两边共用。
+     */
     fun initialize(
         activity: Activity,
         sdlLayout: ViewGroup?,
-        sdlSurface: SDLSurface?,
+        sdlSurface: View?,
         onExitGame: () -> Unit = {}
     ) {
         try {
@@ -108,13 +119,27 @@ class GameVirtualControlsManager {
         var composeActiveRect: android.graphics.RectF? = null
 
         composeOverlay = ComposeView(activity).apply {
-            // 设置 ViewTree owners (必须，否则 Compose 不工作)
-            if (activity is AppCompatActivity) {
-                setViewTreeLifecycleOwner(activity)
-                setViewTreeSavedStateRegistryOwner(activity)
+            // 设置 ViewTree owners（必须，否则 ComposeView 在 onAttachedToWindow 直接抛
+            // IllegalStateException: ViewTreeLifecycleOwner not found）。
+            // AppCompatActivity 自带这两个 owner；SDL 的胶水层是普通 Activity，
+            // 由 GameActivity / GameActivitySdl2 委托 ComposeViewTreeOwner 提供（见该类的说明）。
+            val owner = activity
+            if (owner is LifecycleOwner && owner is SavedStateRegistryOwner) {
+                setViewTreeLifecycleOwner(owner)
+                setViewTreeSavedStateRegistryOwner(owner)
+            } else {
+                AppLog.e(
+                    "GameVirtualControls",
+                    "Activity ${activity.javaClass.name} 未提供 LifecycleOwner/SavedStateRegistryOwner，" +
+                        "Compose 悬浮菜单将无法工作（需委托 ComposeViewTreeOwner）"
+                )
             }
 
-            setContent {
+            // Compose 的 rememberLauncherForActivityResult 从 LocalActivityResultRegistryOwner 取注册表：
+            // AppCompat/ComponentActivity 会自带，而 SDL2 的官方胶水层是纯 Activity，
+            // 由 ComposeViewTreeOwner 提供一份（见该类注释）。
+            val resultRegistryOwner = activity as? ActivityResultRegistryOwner
+            val overlayContent: @Composable () -> Unit = {
                 RaLaunchTheme {
                     GameControlsOverlay(
                         controlLayoutView = control,
@@ -122,7 +147,7 @@ class GameVirtualControlsManager {
                         settingsManager = settings,
                         toggleFloatingBallEvent = toggleFloatingBallEvent,
                         onExitGame = { onExitGameCallback?.invoke() },
-                        onEditModeChanged = { inEditMode -> 
+                        onEditModeChanged = { inEditMode ->
                             isInEditMode = inEditMode
                             control.isModifiable = inEditMode
                         },
@@ -130,6 +155,17 @@ class GameVirtualControlsManager {
                             composeActiveRect = rect
                         }
                     )
+                }
+            }
+            setContent {
+                val ownerToProvide = resultRegistryOwner ?: LocalActivityResultRegistryOwner.current
+                if (ownerToProvide != null) {
+                    CompositionLocalProvider(
+                        LocalActivityResultRegistryOwner provides ownerToProvide,
+                        content = overlayContent
+                    )
+                } else {
+                    overlayContent()
                 }
             }
         }
