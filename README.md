@@ -23,7 +23,8 @@
 <br/>
 
 **Rotating Art Launcher** is an Android application that lets you run .NET-based desktop games on mobile devices.<br/>
-Supports FNA/XNA framework games and mod loaders like tModLoader, SMAPI, and Everest.
+Supports native/original releases of FNA/XNA and Mono games, as well as mod loaders like tModLoader, SMAPI, and Everest.<br/>
+The runtime supports both **SDL2 and SDL3**, with an integrated **Mono runtime** for compatible games.
 
 </div>
 
@@ -50,12 +51,14 @@ Supports FNA/XNA framework games and mod loaders like tModLoader, SMAPI, and Eve
 
 <div align="center">
 
-| Game | Mod Loader | Status |
-|:----:|:----------:|:------:|
+| Game | Edition / Runtime | Status |
+|:----:|:-----------------:|:------:|
+| **Terraria** | Original release · Mono | ✅ Supported |
+| **Celeste** | Original release · Mono / Everest | ✅ Supported |
+| **FEZ** | Original release · Mono | ✅ Supported |
 | **Terraria** | tModLoader | ✅ Supported |
 | **Stardew Valley** | SMAPI | ✅ Supported |
-| **Celeste** | Everest | ✅ Supported |
-| Other FNA/XNA .NET Games | — | 🚧 WIP |
+| Other FNA/XNA and Mono games | — | 🚧 In progress |
 
 </div>
 
@@ -65,11 +68,17 @@ Supports FNA/XNA framework games and mod loaders like tModLoader, SMAPI, and Eve
 <tr>
 <td width="50%" valign="top">
 
-### 🧩 .NET Runtime
+### 🧩 Runtime & Frameworks
 - Full **.NET 10.0 Runtime** integrated
+- Integrated **Mono runtime** for original Mono-based games
 - Native .NET assembly execution
 - **FNA / XNA** game framework support
 - Built-in **MonoMod patch system**
+
+### 🔌 SDL Compatibility
+- **SDL2** runtime and native libraries supported
+- **SDL3** runtime and native libraries supported
+- Select the SDL version required by the game at launch
 
 </td>
 <td width="50%" valign="top">
@@ -81,6 +90,7 @@ Supports FNA/XNA framework games and mod loaders like tModLoader, SMAPI, and Eve
 | GL4ES | Best compatibility |
 | GL4ES + ANGLE | Vulkan, for Snapdragon |
 | MobileGlues | GL 4.6 → GLES 3.2 |
+| SDL3 + Vulkan | Native SDL3 Vulkan renderer |
 
 </td>
 </tr>
@@ -139,7 +149,7 @@ Supports FNA/XNA framework games and mod loaders like tModLoader, SMAPI, and Eve
 1. Open Rotating Art Launcher
 2. Tap **"+"** to add a game (or download via GOG)
 3. Select the game executable
-4. Configure renderer and controls
+4. Configure the renderer, SDL version (**SDL2** or **SDL3**), runtime (**.NET** or **Mono**), and controls; with SDL3, **Vulkan** rendering is available
 5. Launch and enjoy 🎮
 
 ## 🛠️ Building from Source

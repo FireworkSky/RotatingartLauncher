@@ -23,7 +23,8 @@
 <br/>
 
 **Rotating Art Launcher** 是一款 Android 应用，让你在移动设备上运行基于 .NET 的桌面游戏。<br/>
-支持 FNA/XNA 框架游戏、tModLoader、SMAPI、Everest 等模组加载器。
+支持 FNA/XNA 和 Mono 游戏原版，以及 tModLoader、SMAPI、Everest 等模组加载器。<br/>
+运行时同时支持 **SDL2 和 SDL3**，并集成了适用于兼容游戏的 **Mono 运行时**。
 
 </div>
 
@@ -50,12 +51,14 @@
 
 <div align="center">
 
-| 游戏 | 模组加载器 | 状态 |
-|:----:|:----------:|:----:|
+| 游戏 | 版本 / 运行时 | 状态 |
+|:----:|:--------------:|:----:|
+| **Terraria** (泰拉瑞亚) | 原版 · Mono | ✅ 支持 |
+| **Celeste** (蔚蓝) | 原版 · Mono / Everest | ✅ 支持 |
+| **FEZ** | 原版 · Mono | ✅ 支持 |
 | **Terraria** (泰拉瑞亚) | tModLoader | ✅ 支持 |
 | **Stardew Valley** (星露谷物语) | SMAPI | ✅ 支持 |
-| **Celeste** (蔚蓝) | Everest | ✅ 支持 |
-| 其他 FNA/XNA .NET 游戏 | — | ✅ 支持 |
+| 其他 FNA/XNA 和 Mono 游戏 | — | 🚧 持续适配中 |
 
 </div>
 
@@ -65,11 +68,17 @@
 <tr>
 <td width="50%" valign="top">
 
-### 🧩 .NET 运行时
+### 🧩 运行时与游戏框架
 - 集成完整的 **.NET 10.0 Runtime**
+- 集成适用于原版 Mono 游戏的 **Mono 运行时**
 - 原生运行 .NET 程序集
 - 支持 **FNA / XNA** 游戏框架
 - 内置 **MonoMod 补丁系统**
+
+### 🔌 SDL 兼容性
+- 支持 **SDL2** 运行时和原生库
+- 支持 **SDL3** 运行时和原生库
+- 启动时可选择游戏所需的 SDL 版本
 
 </td>
 <td width="50%" valign="top">
@@ -81,6 +90,7 @@
 | GL4ES | 兼容性最佳 |
 | GL4ES + ANGLE | Vulkan 转译，推荐骁龙 |
 | MobileGlues | GL 4.6 → GLES 3.2 |
+| SDL3 + Vulkan | SDL3 原生 Vulkan 渲染后端 |
 
 </td>
 </tr>
@@ -139,7 +149,7 @@
 1. 打开 Rotating Art Launcher
 2. 点击 **「+」** 添加游戏（或通过 GOG 下载）
 3. 选择游戏可执行文件
-4. 配置渲染器和控件布局
+4. 配置渲染器、SDL 版本（**SDL2** 或 **SDL3**）、运行时（**.NET** 或 **Mono**）和控件布局；使用 SDL3 时可选择 **Vulkan** 渲染
 5. 启动游戏 🎮
 
 ## 🛠️ 从源码构建
