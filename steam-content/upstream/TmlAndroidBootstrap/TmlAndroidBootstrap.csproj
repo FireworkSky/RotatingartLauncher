@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>TmlAndroidBootstrap</AssemblyName>
+    <RootNamespace>TmlAndroidBootstrap</RootNamespace>
+    <MonoMod_ReallySkipCheckTargetRuntime>true</MonoMod_ReallySkipCheckTargetRuntime>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Reference Include="../../../third_party/MonoMod.Android/*.dll" Private="false" />
+    <None Include="../../../third_party/MonoMod.Android/*.dll"
+          Link="MonoMod.Android/%(Filename)%(Extension)"
+          CopyToOutputDirectory="PreserveNewest"
+          CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>
