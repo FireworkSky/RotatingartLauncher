@@ -8,7 +8,7 @@ RA 内置的 tModLoader 补丁体系是给 **CoreCLR（DOTNET_STARTUP_HOOKS）**
 | 组件 | 位置 | 作用 |
 |---|---|---|
 | 安装逻辑 | `TerrariaInstallPlugin` | 识别 1.3 的 `tModLoader.exe` 发行包，平铺覆盖到 Terraria 目录 |
-| 包装 exe | `tools/tml13-launcher` → `assets/prebuilt/tml13/TML13Launcher.exe` | 入口，加载 `tModLoader.exe` 并打运行时补丁 |
+| 包装 exe | `wrapper/TML13Launcher` → `assets/prebuilt/tml13/TML13Launcher.exe` | 入口，加载 `tModLoader.exe` 并打运行时补丁 |
 | FNA | `assets/prebuilt/tml13/FNA.dll`（FNA 源码编译，net40） | 新版 FNA3D 版，兼容 1.3 的 XNA4 API |
 | libgdiplus / libfontconfig | `jniLibs/arm64-v8a` | mono 的 System.Drawing；tML 1.3 用 Bitmap 读模组贴图 |
 | BCL 补充 | `assets/bcl-extra` | mono-bcl 里缺的 System.Xaml / TypeConverter 等 |
