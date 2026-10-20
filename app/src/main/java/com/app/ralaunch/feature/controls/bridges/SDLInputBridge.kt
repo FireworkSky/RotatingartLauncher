@@ -403,7 +403,21 @@ class SDLInputBridge : ControlInputBridge {
 
     override fun startTextInput() {
         try {
-            nativeStartTextInput()
+            if (useSdl2) {
+                // RAL: SDL2 路径没有 native 的 startTextInput（那份 JNI 走的是 SDL3），
+                // 直接调 SDL2 胶水层：showTextInput 会让 DummyEdit 拿到焦点并弹出输入法，
+                // 按键事件再经 handleKeyEvent 转发给 native（Terraria 1.3 是轮询 KeyboardState 的）。
+                // 同一个「键盘」键再按一次收起（控制包的按钮都没有 toggle 语义）。
+                if (SDL2Activity.isScreenKeyboardShown()) {
+                    SDL2Activity.hideSoftKeyboard()
+                    AppLog.i(TAG, "SDL2 软键盘：收起")
+                } else {
+                    SDL2Activity.showTextInput(0, 0, 1, 1)
+                    AppLog.i(TAG, "SDL2 软键盘：呼出")
+                }
+            } else {
+                nativeStartTextInput()
+            }
         } catch (e: Exception) {
             AppLog.e(TAG, "Error starting text input", e)
         }
@@ -411,7 +425,12 @@ class SDLInputBridge : ControlInputBridge {
 
     override fun stopTextInput() {
         try {
-            nativeStopTextInput()
+            if (useSdl2) {
+                SDL2Activity.hideSoftKeyboard()
+                AppLog.i(TAG, "SDL2 软键盘：收起")
+            } else {
+                nativeStopTextInput()
+            }
         } catch (e: Exception) {
             AppLog.e(TAG, "Error stopping text input", e)
         }

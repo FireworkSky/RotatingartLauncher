@@ -12,6 +12,9 @@ import android.os.Handler
 import android.os.Looper
 import android.os.Process
 import android.view.Display
+import android.view.Gravity
+import android.widget.FrameLayout
+import android.widget.TextView
 import android.view.KeyEvent
 import android.view.Surface
 import android.widget.Toast
@@ -146,6 +149,7 @@ class GameActivitySdl2 : SDLActivity(), GameContract.View, LifecycleOwner, Saved
 
     // RAL 悬浮菜单（悬浮球）与虚拟按键：与 SDL3 的 GameActivity 完全一致
     private val virtualControlsManager = GameVirtualControlsManager()
+
     private var fullscreenManager: GameFullscreenManager? = null
     private var lastRequestedRefreshRate: Float = 0f
 
@@ -286,6 +290,7 @@ class GameActivitySdl2 : SDLActivity(), GameContract.View, LifecycleOwner, Saved
         )
         AppLog.i(TAG, "虚拟按键与悬浮菜单已挂载")
     }
+
 
     /** 返回键：切换悬浮球可见性（与 SDL3 路径一致），不退出游戏 */
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {

@@ -1092,6 +1092,26 @@ public class SDLActivity extends Activity implements View.OnSystemUiVisibilityCh
     }
 
     /**
+     * RAL: 悬浮键盘按钮用 —— 主动收起软键盘。
+     * （SDL 只暴露了 showTextInput，隐藏走的是 native 侧 SDL_StopTextInput，
+     *  这里直接操作 DummyEdit 的 IME 即可。）
+     */
+    public static void hideSoftKeyboard() {
+        if (mSingleton == null) {
+            return;
+        }
+        mSingleton.commandHandler.post(new Runnable() {
+            public void run() {
+                if (mTextEdit != null) {
+                    InputMethodManager imm = (InputMethodManager) SDL.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+                    imm.hideSoftInputFromWindow(mTextEdit.getWindowToken(), 0);
+                    mScreenKeyboardShown = false;
+                }
+            }
+        });
+    }
+
+    /**
      * This method is called by SDL using JNI.
      */
     public static boolean isScreenKeyboardShown()
