@@ -151,19 +151,25 @@ abstract class BaseInstallPlugin : GameInstallPlugin {
         storageRootDir: File,
         actualGameDir: File,
         definition: GameDefinition,
-        iconPath: String?
+        iconPath: String?,
+        // RAL: tModLoader 1.3 用包装 exe 作为入口、并强制 mono 运行时
+        launchTargetOverride: String? = null,
+        runtimeOverride: String? = null,
+        envVars: Map<String, String?> = emptyMap()
     ) {
         val infoFile = File(storageRootDir, "game_info.json")
 
         // 使用目录名作为存储 ID（与 GameRepositoryServiceV3 保持一致）
         val storageId = storageRootDir.name
 
+        val launchTarget = launchTargetOverride ?: definition.launchTarget
+
         // 计算相对于 storageRootDir 的路径
         val gameExePathRelative = if (actualGameDir.canonicalPath == storageRootDir.canonicalPath) {
-            definition.launchTarget
+            launchTarget
         } else {
             val relativePath = actualGameDir.toRelativeString(storageRootDir)
-            "$relativePath/${definition.launchTarget}"
+            "$relativePath/$launchTarget"
         }
 
         val iconPathRelative = iconPath?.let { icon ->
@@ -182,7 +188,9 @@ abstract class BaseInstallPlugin : GameInstallPlugin {
             gameId = definition.gameId,
             gameExePathRelative = gameExePathRelative,
             iconPathRelative = iconPathRelative,
-            modLoaderEnabled = definition.isModLoader
+            modLoaderEnabled = definition.isModLoader,
+            dotNetRuntimeVersionOverride = runtimeOverride,
+            gameEnvVars = envVars
         )
 
         val json = Json {
@@ -268,17 +276,22 @@ abstract class BaseInstallPlugin : GameInstallPlugin {
         definition: GameDefinition,
         storageRootDir: File,
         actualGameDir: File,
-        iconPath: String?
+        iconPath: String?,
+        launchTargetOverride: String? = null,
+        runtimeOverride: String? = null,
+        envVars: Map<String, String?> = emptyMap()
     ): GameItem {
         // 使用目录名作为存储 ID（与 GameRepositoryServiceV3 保持一致）
         val storageId = storageRootDir.name
 
+        val launchTarget = launchTargetOverride ?: definition.launchTarget
+
         // 计算相对于 storageRootDir 的路径
         val gameExePathRelative = if (actualGameDir.canonicalPath == storageRootDir.canonicalPath) {
-            definition.launchTarget
+            launchTarget
         } else {
             val relativePath = actualGameDir.toRelativeString(storageRootDir)
-            "$relativePath/${definition.launchTarget}"
+            "$relativePath/$launchTarget"
         }
 
         val iconPathRelative = iconPath?.let { icon ->
@@ -300,7 +313,9 @@ abstract class BaseInstallPlugin : GameInstallPlugin {
             gameId = definition.gameId,
             gameExePathRelative = gameExePathRelative,
             iconPathRelative = iconPathRelative,
-            modLoaderEnabled = definition.isModLoader
+            modLoaderEnabled = definition.isModLoader,
+            dotNetRuntimeVersionOverride = runtimeOverride,
+            gameEnvVars = envVars
         )
     }
 
