@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    RAL.SteamBridge：被 SteamPatch 重写后的 Steamworks.NET.dll 调用的桥接层。
+    实现 Steam 原生 API（SteamAPI_Init / ISteamUGC / UT 回调派发 ...），
+    内部用 SteamKit2 匿名登入 Steam3 查询创意工坊，下载走进程内 DepotDownloader。
+
+    依赖 DepotDownloader.dll（源码见 https://github.com/SteamRE/DepotDownloader），
+    构建时用 -p:DepotDownloaderDll=<路径> 指定，或设置同名环境变量。
+  -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <AssemblyName>RAL.SteamBridge</AssemblyName>
+    <RootNamespace>RAL.SteamBridge</RootNamespace>
+    <Nullable>disable</Nullable>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="SteamKit2" Version="3.4.0" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(DepotDownloaderDll)' != ''">
+    <Reference Include="DepotDownloader">
+      <HintPath>$(DepotDownloaderDll)</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+</Project>

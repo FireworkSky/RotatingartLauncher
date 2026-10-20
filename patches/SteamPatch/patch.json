@@ -1,0 +1,24 @@
+{
+  "id": "com.app.ralaunch.tmodloader.steam",
+  "name": "Steam Workshop 支持",
+  "description": "用匿名 Steam3 会话接入真实 Steam 创意工坊：游戏内 Mod Browser 搜索/浏览/下载全部走 tModLoader 自己的代码路径，无需 Steam 客户端。",
+  "version": "1.0.0",
+  "author": "RA Launcher Team",
+  "dllFileName": "SteamPatch.dll",
+  "entryPoint": {
+    "typeName": "StartupHook",
+    "methodName": "Initialize"
+  },
+  "targetGames": [
+    "tModLoader"
+  ],
+  "priority": 500,
+  "enabled": true,
+  "features": [
+    "匿名 Steam3 登入（不依赖 steam_api / Steam 客户端）",
+    "内置 CM 列表，绕开被墙的 Web API",
+    "工坊搜索、物品详情、metadata/kvtags",
+    "真实下载（DepotDownloader 子进程）并落盘到 steamapps/workshop 与 Mods/",
+    "进度与完成回调按 Steamworks 原生语义投递"
+  ]
+}

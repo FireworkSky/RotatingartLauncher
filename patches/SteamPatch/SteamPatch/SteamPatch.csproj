@@ -1,0 +1,43 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    SteamPatch：tModLoader(1.4+) 的 DOTNET_STARTUP_HOOKS 补丁。
+    运行期把游戏目录里的 Steamworks.NET.dll 改写成调用 RAL.SteamBridge 的版本，
+    再把 Bridge 及其依赖从内嵌资源里解出/加载。
+
+    内嵌的二进制（bridge、SteamKit2、Cecil、DepotDownloader 等）由 build.sh 通过
+    EmbedPath 属性注入，源码仓库里不放大体积 dll。
+  -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <AssemblyName>SteamPatch</AssemblyName>
+    <RootNamespace>SteamPatch</RootNamespace>
+    <Nullable>disable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <EnableDefaultEmbeddedResourceItems>false</EnableDefaultEmbeddedResourceItems>
+    <EmbedPath Condition="'$(EmbedPath)' == ''">$(MSBuildThisFileDirectory)../build/embed</EmbedPath>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Mono.Cecil">
+      <HintPath>$(EmbedPath)/Mono.Cecil.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="0Harmony">
+      <HintPath>$(EmbedPath)/0Harmony.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="$(EmbedPath)/RAL.SteamBridge.dll" LogicalName="RAL.SteamBridge.dll" />
+    <EmbeddedResource Include="$(EmbedPath)/Mono.Cecil.dll" LogicalName="Mono.Cecil.dll" />
+    <EmbeddedResource Include="$(EmbedPath)/0Harmony.dll" LogicalName="0Harmony.dll" />
+    <EmbeddedResource Include="$(EmbedPath)/SteamKit2.dll" LogicalName="SteamKit2.dll" />
+    <EmbeddedResource Include="$(EmbedPath)/protobuf-net.dll" LogicalName="protobuf-net.dll" />
+    <EmbeddedResource Include="$(EmbedPath)/protobuf-net.Core.dll" LogicalName="protobuf-net.Core.dll" />
+    <EmbeddedResource Include="$(EmbedPath)/QRCoder.dll" LogicalName="QRCoder.dll" />
+    <EmbeddedResource Include="$(EmbedPath)/System.IO.Hashing.dll" LogicalName="System.IO.Hashing.dll" />
+    <EmbeddedResource Include="$(EmbedPath)/ZstdSharp.dll" LogicalName="ZstdSharp.dll" />
+    <EmbeddedResource Include="$(EmbedPath)/DepotDownloader.dll" LogicalName="DepotDownloader.dll" />
+    <EmbeddedResource Include="$(EmbedPath)/DepotDownloader.deps.json" LogicalName="DepotDownloader.deps.json" Condition="Exists('$(EmbedPath)/DepotDownloader.deps.json')" />
+    <EmbeddedResource Include="$(EmbedPath)/DepotDownloader.runtimeconfig.json" LogicalName="DepotDownloader.runtimeconfig.json" Condition="Exists('$(EmbedPath)/DepotDownloader.runtimeconfig.json')" />
+  </ItemGroup>
+</Project>
