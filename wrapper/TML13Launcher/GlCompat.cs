@@ -22,6 +22,7 @@ namespace TML13Launcher
     {
         private static readonly Queue<Action> s_queue = new Queue<Action>();
         private static bool s_lateFixesDone;
+        private static bool s_diagDone;
         private static int s_mainThreadId = -1;
 
         private static Assembly s_tml;
@@ -204,6 +205,24 @@ namespace TML13Launcher
 
         private static void HookTick<TGame>(Action<TGame> orig, TGame self)
         {
+            if (!s_diagDone && s_tml != null)
+            {
+                s_diagDone = true;
+                try
+                {
+                    var mainType = s_tml.GetType("Terraria.Main");
+                    var cfg = mainType?.GetField("Configuration", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public)
+                        ?.GetValue(null);
+                    var vm = mainType?.GetField("musicVolume", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public);
+                    var vs = mainType?.GetField("soundVolume", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public);
+                    Console.WriteLine("[TML13] Main.musicVolume=" + vm?.GetValue(null) + " Main.soundVolume=" + vs?.GetValue(null)
+                        + " cfgLoaded=" + (cfg != null));
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine("[TML13] config diag failed: " + e.Message);
+                }
+            }
             if (!s_lateFixesDone && s_tml != null)
             {
                 s_lateFixesDone = true;
