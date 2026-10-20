@@ -36,6 +36,11 @@ object Sdl2Environment {
     fun buildEnvVars(): Map<String, String?> {
         val envVars = mutableMapOf<String, String?>()
 
+        // FNA（托管侧）：新版 FNA 默认走 SDL3，SDL2 模式下必须显式切回 SDL2 后端，
+        // 否则托管 FNA 会去 dlopen("libSDL3.so")，而本模式只加载了 libSDL2.so
+        // （tModLoader 1.3 场景尤其明显：它配的是我们自带的 FNA）
+        envVars["FNA_PLATFORM_BACKEND"] = "SDL2"
+
         // FNA3D：SDL2 下只能用 OpenGL 驱动；Android/EGL 只提供 GLES，因此强制 ES3 上下文
         envVars["FNA3D_FORCE_DRIVER"] = "OpenGL"
         envVars["FNA3D_OPENGL_FORCE_ES3"] = "1"
