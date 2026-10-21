@@ -21,7 +21,9 @@ public sealed class SteamAppDownloader
     public static string CompletionMarker(uint appId) => $".steam-content-{appId}.complete";
 
     private const int MaxRetries = 5;
-    private const int MaxConcurrentFiles = 4;
+    // 并发度：文件级 8 + 每个文件内 4 个 chunk 并行（之前是文件级 4、chunk 串行，太慢）
+    private const int MaxConcurrentFiles = 8;
+    private const int MaxConcurrentChunksPerFile = 4;
     private static readonly TimeSpan ContentDirectoryTimeout = TimeSpan.FromSeconds(20);
 
     private readonly Action<SteamDownloadProgress>? _progress;
@@ -218,7 +220,7 @@ public sealed class SteamAppDownloader
         CancellationToken cancellationToken)
     {
         var response = await session.Apps.PICSGetProductInfo(
-            new[] { new SteamApps.PICSRequest(appId, session.AppAccessToken) },
+            new[] { new SteamApps.PICSRequest(appId, session.AccessTokenFor(appId)) },
             Enumerable.Empty<SteamApps.PICSRequest>())
             .ToTask().WaitAsync(cancellationToken).ConfigureAwait(false);
 
@@ -341,25 +343,43 @@ public sealed class SteamAppDownloader
         var temporary = destination + ".downloading";
         try
         {
-            await using (var stream = new FileStream(temporary, FileMode.Create, FileAccess.Write,
-                FileShare.None, 64 * 1024, FileOptions.Asynchronous | FileOptions.SequentialScan))
+            var handle = File.OpenHandle(
+                temporary, FileMode.Create, FileAccess.Write, FileShare.None,
+                FileOptions.Asynchronous);
+            try
             {
-                foreach (var chunk in file.Chunks.OrderBy(chunk => chunk.Offset))
+                using var chunkLimiter = new SemaphoreSlim(MaxConcurrentChunksPerFile);
+                var tasks = file.Chunks.OrderBy(chunk => chunk.Offset).Select(async chunk =>
                 {
-                    cancellationToken.ThrowIfCancellationRequested();
-                    if (waitForResume is not null)
-                        await waitForResume(cancellationToken).ConfigureAwait(false);
-                    var buffer = new byte[chunk.UncompressedLength];
-                    var written = await DownloadChunkWithRetryAsync(
-                            client, session, spec, depotId, chunk, buffer, depotKey, server,
-                            relativePath, cancellationToken)
-                        .ConfigureAwait(false);
+                    await chunkLimiter.WaitAsync(cancellationToken).ConfigureAwait(false);
+                    try
+                    {
+                        cancellationToken.ThrowIfCancellationRequested();
+                        if (waitForResume is not null)
+                            await waitForResume(cancellationToken).ConfigureAwait(false);
+                        var buffer = new byte[chunk.UncompressedLength];
+                        var written = await DownloadChunkWithRetryAsync(
+                                client, session, spec, depotId, chunk, buffer, depotKey, server,
+                                relativePath, cancellationToken)
+                            .ConfigureAwait(false);
 
-                    stream.Position = checked((long)chunk.Offset);
-                    await stream.WriteAsync(buffer.AsMemory(0, written), cancellationToken)
-                        .ConfigureAwait(false);
-                    output.ReportBytes(written);
-                }
+                        await RandomAccess.WriteAsync(
+                                handle, buffer.AsMemory(0, written), checked((long)chunk.Offset),
+                                cancellationToken)
+                            .ConfigureAwait(false);
+                        output.ReportBytes(written);
+                    }
+                    finally
+                    {
+                        chunkLimiter.Release();
+                    }
+                });
+                await Task.WhenAll(tasks).ConfigureAwait(false);
+                RandomAccess.SetLength(handle, checked((long)file.TotalSize));
+            }
+            finally
+            {
+                handle.Dispose();
             }
 
             if (!VerifyFile(temporary, file))

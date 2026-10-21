@@ -6,6 +6,11 @@ import com.app.ralaunch.feature.game.ui.legacy.GameActivity
 import com.app.ralaunch.feature.game.ui.sdl2.GameActivitySdl2
 import com.app.ralaunch.core.platform.runtime.SdlVersion
 import com.app.ralaunch.core.logging.AppLog
+import com.app.ralaunch.feature.steam.data.SteamCli
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import java.io.File
 
 /**
@@ -19,6 +24,8 @@ class GameLaunchManager(private val context: Context) {
     companion object {
         private const val TAG = "GameLaunchManager"
     }
+
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     fun launchGame(game: GameItem): Boolean {
         AppLog.d(TAG, ">>> launchGame called for: ${game.displayedName}")
@@ -44,6 +51,25 @@ class GameLaunchManager(private val context: Context) {
 
         AppLog.i(TAG, "Game runtime: dotnet")
 
+        val gameDir = gameFile.parentFile
+        val steamInstall = gameDir != null &&
+            (File(gameDir, "steam_appid.txt").exists() || File(gameDir, "steam-shim").exists())
+        if (steamInstall && gameDir != null) {
+            // Steam 版游戏：先把登录账号的 SteamID/昵称写进 steam-shim/identity.json，
+            // 再拉起游戏（Steamworks.NET shim 靠它把成就/云存档挂到账号上）
+            scope.launch {
+                runCatching { SteamCli.writeIdentityFile(context, gameDir) }
+                    .onFailure { AppLog.w(TAG, "写入 Steam 身份失败: ${it.message}") }
+                scope.launch(Dispatchers.Main) { startGameActivity(game) }
+            }
+            return true
+        }
+
+        startGameActivity(game)
+        return true
+    }
+
+    private fun startGameActivity(game: GameItem) {
         // RAL: 依据「SDL 版本」设置选择入口 Activity。
         //  - SDL3：GameActivity（继承 SDLActivity，Android 视频后端）
         //  - SDL2：GameActivitySdl2（不继承 SDLActivity，Android 原生后端 + 应用内 Surface）
@@ -54,7 +80,5 @@ class GameLaunchManager(private val context: Context) {
             AppLog.i(TAG, "SDL version: SDL3 (Android)")
             GameActivity.launch(context = context, gameStorageId = game.id)
         }
-
-        return true
     }
 }

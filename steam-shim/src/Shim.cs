@@ -57,6 +57,35 @@ namespace Steamworks {
 			return PtrToUtf8(ptr);
 		}
 
+		// 与启动器侧的 shim 端点（SteamContentCli --serve 起的 loopback TCP）通信
+		private static string Rpc(string jsonLine) {
+			try {
+				var portFile = Path.Combine(Dir, "port.txt");
+				if (!File.Exists(portFile)) return null;
+				int port;
+				if (!int.TryParse(File.ReadAllText(portFile).Trim(), out port) || port <= 0) return null;
+				using (var client = new System.Net.Sockets.TcpClient()) {
+					var task = client.ConnectAsync("127.0.0.1", port);
+					if (!task.Wait(1500)) return null;
+					using (var stream = client.GetStream()) {
+						var data = Encoding.UTF8.GetBytes(jsonLine + "\n");
+						stream.WriteTimeout = 3000;
+						stream.Write(data, 0, data.Length);
+						var buffer = new byte[65536];
+						stream.ReadTimeout = 3000;
+						int read = stream.Read(buffer, 0, buffer.Length);
+						if (read <= 0) return null;
+						return Encoding.UTF8.GetString(buffer, 0, read).Trim();
+					}
+				}
+			} catch {
+				return null;
+			}
+		}
+
+		internal static string JsonEscape(string value) =>
+			(value ?? string.Empty).Replace("\\", "\\\\").Replace("\"", "\\\"");
+
 		internal static string PtrToUtf8(IntPtr ptr) {
 			if (ptr == IntPtr.Zero) return string.Empty;
 			int len = 0;
@@ -223,11 +252,18 @@ namespace Steamworks {
 				if (i < 0) return null;
 				var colon = json.IndexOf(':', i);
 				if (colon < 0) return null;
-				var q1 = json.IndexOf('"', colon + 1);
-				if (q1 < 0) return null;
-				var q2 = json.IndexOf('"', q1 + 1);
-				if (q2 < 0) return null;
-				return json.Substring(q1 + 1, q2 - q1 - 1);
+				int start = colon + 1;
+				while (start < json.Length && (json[start] == ' ' || json[start] == '\t')) start++;
+				if (start >= json.Length) return null;
+				if (json[start] == '"') {
+					var q2 = json.IndexOf('"', start + 1);
+					if (q2 < 0) return null;
+					return json.Substring(start + 1, q2 - start - 1);
+				}
+				// 未加引号的数字（CLI 用 JsonSerializer 写 ulong 时会这样）
+				int end = start;
+				while (end < json.Length && json[end] != ',' && json[end] != '}') end++;
+				return json.Substring(start, end - start).Trim();
 			}
 		}
 
@@ -261,6 +297,19 @@ namespace Steamworks {
 
 			internal static bool RequestCurrentStats() {
 				LogOnce("RequestCurrentStats");
+				try {
+					var response = Rpc("{\"cmd\":\"achievement.list\"}");
+					if (response != null && response.Contains("\"achievements\"")) {
+						var start = response.IndexOf('[');
+						var end = response.LastIndexOf(']');
+						if (start >= 0 && end > start) {
+							foreach (var raw in response.Substring(start + 1, end - start - 1).Split(',')) {
+								var name = raw.Trim().Trim('"');
+								if (name.Length > 0) Achievements[name] = true;
+							}
+						}
+					}
+				} catch { }
 				EnsureLoaded();
 				QueueCallbackStruct(new UserStatsReceived_t {
 					m_nGameID = (ulong)Shim.AppId,
@@ -286,6 +335,7 @@ namespace Steamworks {
 				EnsureLoaded();
 				Achievements[name] = true;
 				Save();
+				Rpc("{\"cmd\":\"achievement.set\",\"name\":\"" + JsonEscape(name) + "\"}");
 				return true;
 			}
 
@@ -333,7 +383,10 @@ namespace Steamworks {
 				try {
 					var path = PathFor(file);
 					Directory.CreateDirectory(Path.GetDirectoryName(path));
-					File.WriteAllBytes(path, Slice(data, size));
+					var bytes = Slice(data, size);
+					File.WriteAllBytes(path, bytes);
+					Rpc("{\"cmd\":\"cloud.put\",\"file\":\"" + JsonEscape(file) +
+						"\",\"data\":\"" + Convert.ToBase64String(bytes) + "\"}");
 					return true;
 				} catch { return false; }
 			}
@@ -342,7 +395,18 @@ namespace Steamworks {
 				LogOnce("FileRead");
 				try {
 					var path = PathFor(file);
-					if (!File.Exists(path)) return 0;
+					if (!File.Exists(path)) {
+						var response = Rpc("{\"cmd\":\"cloud.get\",\"file\":\"" + JsonEscape(file) + "\"}");
+						if (response == null || !response.Contains("\"exists\":true")) return 0;
+						var start = response.IndexOf("\"data\":\"");
+						if (start < 0) return 0;
+						start += 8;
+						var end = response.IndexOf('"', start);
+						if (end <= start) return 0;
+						var fetched = Convert.FromBase64String(response.Substring(start, end - start));
+						Directory.CreateDirectory(Path.GetDirectoryName(path));
+						File.WriteAllBytes(path, fetched);
+					}
 					var bytes = File.ReadAllBytes(path);
 					var count = Math.Min(bytes.Length, size);
 					Array.Copy(bytes, buffer, count);

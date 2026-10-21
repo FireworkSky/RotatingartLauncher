@@ -38,7 +38,9 @@ return await ExecuteAsync(options).ConfigureAwait(false);
 
 async Task<int> ExecuteAsync(CliOptions options)
 {
-Emitter.Attach(options.EventsPath);
+// 注意：--serve 模式下事件文件是按请求 attach 的，这里只有显式传了 --events 才覆盖
+if (!string.IsNullOrWhiteSpace(options.EventsPath))
+    Emitter.Attach(options.EventsPath);
 try
 {
     if (options.WorkshopList)
@@ -50,6 +52,32 @@ try
             session, SteamAppCatalog.TModLoaderAppId, options.Query, options.Page, options.Count)
             .ConfigureAwait(false);
         EmitWorkshop(items);
+        Emit("done", null);
+        return 0;
+    }
+
+    if (options.IdentityOut is { } identityOut)
+    {
+        var store = new FileSteamCredentialStore(
+            options.CredentialsPath
+            ?? throw new ArgumentException("--identity 需要 --credentials"));
+        var credentials = await store.LoadAsync().ConfigureAwait(false)
+            ?? throw new InvalidOperationException("没有可用的 Steam 凭据，请先登录");
+        using var session = new SteamSession(credentials);
+        await session.ConnectAsync().ConfigureAwait(false);
+        var identity = new Dictionary<string, object?>
+        {
+            ["steamid"] = session.SteamId.ConvertToUInt64(),
+            ["persona"] = string.IsNullOrWhiteSpace(session.PersonaName)
+                ? credentials.AccountName
+                : session.PersonaName,
+            ["language"] = "schinese",
+            ["appid"] = options.App ?? SteamAppCatalog.TerrariaAppId.ToString(),
+        };
+        var path = identityOut;
+        Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(path))!);
+        await File.WriteAllTextAsync(path, JsonSerializer.Serialize(identity)).ConfigureAwait(false);
+        Emit("status", $"身份已写入 {path}");
         Emit("done", null);
         return 0;
     }
@@ -172,7 +200,8 @@ async Task<int> RunGameContentAsync(CliOptions options)
         Emit("status", $"验证 {spec.Name}（App {spec.AppId}）拥有状态...");
         if (!await session.VerifyOwnershipAsync(spec.AppId).ConfigureAwait(false))
         {
-            Emit("error", $"该 Steam 账号没有 {spec.Name}（App {spec.AppId}）");
+            Emit("error", $"该 Steam 账号没有 {spec.Name}（App {spec.AppId}）" +
+                $"  [ownership={session.LastOwnershipResult}]");
             return 2;
         }
 
@@ -263,6 +292,7 @@ void Emit(string type, string? message, SteamDownloadProgress? progress = null, 
 async Task<int> ServeAsync(string serveDir)
 {
     Directory.CreateDirectory(serveDir);
+    StartShimServer(serveDir);
     Emitter.Attach(Path.Combine(serveDir, "service.log.jsonl"));
     Emitter.WriteLine(JsonSerializer.Serialize(new Dictionary<string, object?> { ["type"] = "ready" }));
     var readyMarker = Path.Combine(serveDir, "service.ready");
@@ -297,10 +327,15 @@ async Task<int> ServeAsync(string serveDir)
                 var requestOptions = ParseArgs(requestArgs);
                 var code = await ExecuteAsync(requestOptions).ConfigureAwait(false);
                 File.WriteAllText(donePath, code.ToString());
+                if (code != 0)
+                {
+                    try { File.Copy(eventsPath, Path.Combine(serveDir, "last-events.jsonl"), overwrite: true); } catch { }
+                }
             }
             catch (Exception ex)
             {
                 try { File.WriteAllText(donePath, "4"); } catch { }
+                try { File.WriteAllText(Path.Combine(serveDir, "last-error.txt"), ex.ToString()); } catch { }
                 try { Emitter.WriteLine(JsonSerializer.Serialize(new Dictionary<string, object?> { ["type"] = "error", ["message"] = ex.ToString() })); } catch { }
             }
             finally
@@ -311,6 +346,136 @@ async Task<int> ServeAsync(string serveDir)
 
         Thread.Sleep(150);
     }
+}
+
+// 游戏侧 Steamworks shim 通过本地 TCP 调这个端点（成就/云存档/身份）
+void StartShimServer(string serveDir)
+{
+    var accountDir = Path.Combine(serveDir, "account");
+    Directory.CreateDirectory(accountDir);
+    var listener = new System.Net.Sockets.TcpListener(System.Net.IPAddress.Loopback, 0);
+    listener.Start();
+    var port = ((System.Net.IPEndPoint)listener.LocalEndpoint).Port;
+    File.WriteAllText(Path.Combine(serveDir, "shim-port.txt"), port.ToString());
+    Console.WriteLine($"[shim] 监听 127.0.0.1:{port}");
+
+    var thread = new Thread(() =>
+    {
+        while (true)
+        {
+            try
+            {
+                var client = listener.AcceptTcpClient();
+                var worker = new Thread(() => HandleShimClient(client, accountDir));
+                worker.IsBackground = true;
+                worker.Start();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("[shim] accept 失败: " + ex.Message);
+            }
+        }
+    }) { IsBackground = true };
+    thread.Start();
+}
+
+void HandleShimClient(System.Net.Sockets.TcpClient client, string accountDir)
+{
+    try
+    {
+        using (client)
+        using (var stream = client.GetStream())
+        using (var reader = new StreamReader(stream, System.Text.Encoding.UTF8))
+        using (var writer = new StreamWriter(stream, System.Text.Encoding.UTF8) { AutoFlush = true })
+        {
+            string? line;
+            while ((line = reader.ReadLine()) != null)
+            {
+                if (string.IsNullOrWhiteSpace(line)) continue;
+                string response;
+                try
+                {
+                    var request = JsonSerializer.Deserialize<JsonElement>(line);
+                    response = ShimCommand(request, accountDir);
+                }
+                catch (Exception ex)
+                {
+                    response = JsonSerializer.Serialize(new Dictionary<string, object?> { ["ok"] = false, ["error"] = ex.Message });
+                }
+                writer.WriteLine(response);
+            }
+        }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine("[shim] 客户端异常: " + ex.Message);
+    }
+}
+
+string ShimCommand(JsonElement request, string accountDir)
+{
+    var cmd = request.TryGetProperty("cmd", out var c) ? c.GetString() : null;
+    switch (cmd)
+    {
+        case "identity":
+        {
+            var credPath = Path.Combine(accountDir, "identity.json");
+            if (!File.Exists(credPath)) return JsonSerializer.Serialize(new Dictionary<string, object?> { ["ok"] = false, ["error"] = "no identity" });
+            return File.ReadAllText(credPath);
+        }
+        case "achievement.set":
+        {
+            var name = request.TryGetProperty("name", out var n) ? n.GetString() : null;
+            if (string.IsNullOrEmpty(name)) return "{\"ok\":false}";
+            AppendAchievement(accountDir, name);
+            return "{\"ok\":true}";
+        }
+        case "achievement.list":
+        {
+            var file = Path.Combine(accountDir, "achievements.txt");
+            var names = File.Exists(file) ? File.ReadAllLines(file) : Array.Empty<string>();
+            return JsonSerializer.Serialize(new Dictionary<string, object?> { ["ok"] = true, ["achievements"] = names });
+        }
+        case "cloud.put":
+        {
+            var file = request.TryGetProperty("file", out var f) ? f.GetString() : null;
+            var data = request.TryGetProperty("data", out var d) ? d.GetString() : null;
+            if (string.IsNullOrEmpty(file) || data is null) return "{\"ok\":false}";
+            var path = Path.Combine(accountDir, "cloud", file.Replace('\\', '/'));
+            Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+            File.WriteAllBytes(path, Convert.FromBase64String(data));
+            return "{\"ok\":true}";
+        }
+        case "cloud.get":
+        {
+            var file = request.TryGetProperty("file", out var f2) ? f2.GetString() : null;
+            if (string.IsNullOrEmpty(file)) return "{\"ok\":false}";
+            var path = Path.Combine(accountDir, "cloud", file.Replace('\\', '/'));
+            if (!File.Exists(path)) return "{\"ok\":true,\"exists\":false}";
+            var bytes = File.ReadAllBytes(path);
+            return JsonSerializer.Serialize(new Dictionary<string, object?> {
+                ["ok"] = true, ["exists"] = true, ["data"] = Convert.ToBase64String(bytes) });
+        }
+        case "cloud.list":
+        {
+            var root = Path.Combine(accountDir, "cloud");
+            var files = Directory.Exists(root)
+                ? Directory.GetFiles(root, "*", SearchOption.AllDirectories)
+                    .Select(p => p.Substring(root.Length + 1).Replace('\\', '/')).ToArray()
+                : Array.Empty<string>();
+            return JsonSerializer.Serialize(new Dictionary<string, object?> { ["ok"] = true, ["files"] = files });
+        }
+        default:
+            return JsonSerializer.Serialize(new Dictionary<string, object?> { ["ok"] = false, ["error"] = "unknown cmd " + cmd });
+    }
+}
+
+void AppendAchievement(string accountDir, string name)
+{
+    var file = Path.Combine(accountDir, "achievements.txt");
+    var existing = File.Exists(file) ? File.ReadAllLines(file) : Array.Empty<string>();
+    if (existing.Contains(name)) return;
+    File.AppendAllText(file, name + "\n");
 }
 
 static CliOptions ParseArgs(string[] args)
@@ -344,6 +509,7 @@ static CliOptions ParseArgs(string[] args)
             case "--verify-only": options.VerifyOnly = true; break;
             case "--anonymous": options.Anonymous = true; break;
             case "--login-only": options.LoginOnly = true; break;
+            case "--identity": options.IdentityOut = TakeValue(); break;
             case "--list": options.ListApps = true; break;
             case "--workshop-list": options.WorkshopList = true; break;
             case "--workshop-download": options.WorkshopDownloadId = ulong.Parse(TakeValue()); break;
@@ -390,6 +556,7 @@ internal sealed class CliOptions
     public bool VerifyOnly { get; set; }
     public bool Anonymous { get; set; }
     public bool LoginOnly { get; set; }
+    public string? IdentityOut { get; set; }
 }
 
 /// <summary>事件输出：stdout + 可选事件文件（宿主进程内运行、拿不到 stdout 时用）</summary>

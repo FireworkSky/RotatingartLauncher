@@ -68,6 +68,22 @@ Terraria 引用 `Steamworks.NET, Version=2024.8.0.0` 时直接命中我们这份
 4. **别开 mono LLVM**：`monoLlvmEnabled=true` 在 Android 上必崩，
    RAL 设置里关掉（`files/settings.json` 的 `monoLlvmEnabled=false`）。
 
+## 与启动器的同步（本地 TCP 端点）
+
+`SteamContentCli --serve` 会额外起一个 loopback TCP 端点，把端口写到
+`files/steam/service/shim-port.txt`；启动器在启动 Steam 游戏前把它复制成
+`<游戏目录>/steam-shim/port.txt`，shim 就按这个端口发 JSON 行命令：
+
+| 命令 | 说明 |
+|---|---|
+| `{"cmd":"achievement.list"}` | 已解锁成就列表（启动时灌进本地） |
+| `{"cmd":"achievement.set","name":"..."}` | 解锁成就（落 `files/steam/service/account/achievements.txt`） |
+| `{"cmd":"cloud.put","file":"Worlds/x.wld","data":"<base64>"}` | 云存档写入 |
+| `{"cmd":"cloud.get","file":"..."}` / `{"cmd":"cloud.list"}` | 云存档读取/列举 |
+
+数据目前落在应用私有的 `account/` 目录（本地多设备共享 + 准云存档）；**推送到 Steam 云端
+（IClientRemoteStorage / ClientStoreUserStats）还没做**。
+
 ## 还没做
 
 - 启动器侧的 shim 服务（SteamKit2 会话 → identity/成就上传/云存档同步，本地 TCP）

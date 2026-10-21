@@ -110,11 +110,54 @@ object SteamCli {
         }
 
         if (eventsFile.exists()) readFrom(eventsFile, offset, onEvent)
+        if (code != 0 && eventsFile.exists()) {
+            runCatching { eventsFile.copyTo(File(dir, "last-events.jsonl"), overwrite = true) }
+        }
         requestFile.delete()
         doneFile.delete()
         eventsFile.delete()
         AppLog.i(TAG, "Steam 请求结束，退出码 $code")
         code
+    }
+
+    /**
+     * 把登录账号的身份（SteamID/昵称）写成游戏目录下的 steam-shim/identity.json，
+     * 供 Steamworks.NET shim 读取。没登录或失败时返回 false（不阻塞启动）。
+     */
+    suspend fun writeIdentityFile(context: Context, gameDir: File): Boolean {
+        if (!hasCredentials(context)) return false
+        val shimDir = File(gameDir, "steam-shim")
+        shimDir.mkdirs()
+        val out = File(shimDir, "identity.json")
+        val appId = File(gameDir, "steam_appid.txt").takeIf { it.exists() }
+            ?.readText()?.trim()?.takeIf { it.isNotEmpty() }
+        val args = buildList {
+            add("--identity"); add(out.absolutePath)
+            add("--credentials"); add(credentialsFile(context).absolutePath)
+            if (appId != null) { add("--app"); add(appId) }
+        }
+        val code = run(context, args) { }
+        return if (code == 0 && out.exists()) {
+            AppLog.i(TAG, "Steam 身份已写入 ${out.absolutePath}")
+            copyShimPort(context, shimDir)
+            true
+        } else {
+            AppLog.w(TAG, "Steam 身份写入失败，退出码 $code")
+            false
+        }
+    }
+
+    /** 把 CLI 服务的 shim 端口写给游戏侧（steam-shim/port.txt） */
+    private fun copyShimPort(context: Context, shimDir: File) {
+        val source = File(controlDir(context), "shim-port.txt")
+        if (!source.exists()) {
+            AppLog.w(TAG, "shim 端口文件不存在：${source.absolutePath}")
+            return
+        }
+        val port = source.readText().trim()
+        if (port.isEmpty()) return
+        File(shimDir, "port.txt").writeText(port)
+        AppLog.i(TAG, "shim 端口已写给游戏：$port")
     }
 
     /** 宿主写入 Steam Guard 验证码（服务轮询该文件，读到即删除） */
@@ -215,25 +258,26 @@ object SteamCli {
         }
     }
 
-    /** 版本指纹：包版本 + 所有资产文件大小之和（原地换 DLL 也能触发重新展开） */
+    /** 版本指纹：包版本 + SteamContentCli/TmlAndroidContent 两个 dll 的 SHA-256 前缀 */
     private fun assetVersion(context: Context): String {
         val longVersion = runCatching {
             context.packageManager.getPackageInfo(context.packageName, 0).longVersionCode
         }.getOrDefault(0L)
-        return "$longVersion-${assetSize(context, ASSET_ROOT)}"
-    }
-
-    private fun assetSize(context: Context, path: String): Long {
-        val children = context.assets.list(path) ?: return 0
-        if (children.isEmpty()) {
-            return runCatching {
-                context.assets.open(path).use { it.available().toLong() }
-            }.getOrDefault(0L)
+        val hashes = listOf("SteamContentCli.dll", "TmlAndroidContent.dll").joinToString("-") { name ->
+            runCatching {
+                val digest = java.security.MessageDigest.getInstance("SHA-256")
+                context.assets.open("$ASSET_ROOT/$name").use { input ->
+                    val buffer = ByteArray(64 * 1024)
+                    while (true) {
+                        val read = input.read(buffer)
+                        if (read <= 0) break
+                        digest.update(buffer, 0, read)
+                    }
+                }
+                digest.digest().take(6).joinToString("") { "%02x".format(it) }
+            }.getOrDefault("x")
         }
-        return children.sumOf { child ->
-            val childPath = if (path.isEmpty()) child else "$path/$child"
-            assetSize(context, childPath)
-        }
+        return "$longVersion-$hashes"
     }
 
     private fun copyAssetDir(context: Context, assetPath: String, target: File) {

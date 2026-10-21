@@ -70,12 +70,28 @@ public sealed class SteamSession : IDisposable
             });
         });
         _callbacks.Subscribe<SteamUser.LoggedOnCallback>(callback =>
-            _loggedOn.TrySetResult(callback.Result));
+        {
+            if (callback.Result == EResult.OK)
+                SteamId = callback.ClientSteamID ?? default;
+            _loggedOn.TrySetResult(callback.Result);
+        });
+        _callbacks.Subscribe<SteamFriends.PersonaStateCallback>(callback =>
+        {
+            if (!string.IsNullOrEmpty(callback.Name))
+                PersonaName = callback.Name;
+        });
     }
 
     public bool IsAnonymous => _credentials is null;
 
+    /// <summary>登录后的 SteamID（匿名会话为 0）</summary>
+    public SteamID SteamId { get; private set; }
+
+    /// <summary>登录账号的昵称（来自 PersonaState 回调，可能为空）</summary>
+    public string PersonaName { get; private set; } = string.Empty;
+
     private readonly Dictionary<uint, ulong> _appAccessTokens = new();
+    private readonly HashSet<uint> _ownedApps = new();
 
     /// <summary>Terraria 的 app access token（旧接口兼容）；未验证时 0。</summary>
     public ulong AppAccessToken => AccessTokenFor(TerrariaAppId);
@@ -85,7 +101,10 @@ public sealed class SteamSession : IDisposable
     public ulong AccessTokenFor(uint appId) =>
         _appAccessTokens.TryGetValue(appId, out var token) ? token : 0UL;
 
-    public bool IsOwnershipVerified(uint appId) => _appAccessTokens.ContainsKey(appId);
+    public bool IsOwnershipVerified(uint appId) => _ownedApps.Contains(appId);
+
+    /// <summary>最近一次拥有校验的原始结果（诊断用）</summary>
+    public EResult LastOwnershipResult { get; private set; } = EResult.Invalid;
 
     public SteamApps Apps => _apps;
 
@@ -119,12 +138,21 @@ public sealed class SteamSession : IDisposable
         uint appId,
         CancellationToken cancellationToken = default)
     {
-        var result = await _apps.PICSGetAccessTokens(appId, null)
+        // PICS 的 app access token：免费 app 匿名也有，付费 app 只有持有 license 才有；
+        // PICS 查询（depots/分支）会用到，没有就按 0 传。
+        var tokens = await _apps.PICSGetAccessTokens(appId, null)
             .ToTask().WaitAsync(cancellationToken).ConfigureAwait(false);
-        if (!result.AppTokens.TryGetValue(appId, out var token) || token == 0)
+        var accessToken = tokens.AppTokens.TryGetValue(appId, out var token) ? token : 0UL;
+        _appAccessTokens[appId] = accessToken;
+
+        // 拥有权以 ownership ticket 为准（免费/付费 app 通用；DepotDownloader 的 AccountHasAccess 同理）
+        var ticket = await _apps.GetAppOwnershipTicket(appId)
+            .ToTask().WaitAsync(cancellationToken).ConfigureAwait(false);
+        LastOwnershipResult = ticket.Result;
+        if (ticket.Result != EResult.OK)
             return false;
 
-        _appAccessTokens[appId] = token;
+        _ownedApps.Add(appId);
         return true;
     }
 

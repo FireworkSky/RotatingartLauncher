@@ -10,7 +10,8 @@ public sealed record SteamLoginResult(SteamCredentials Credentials);
 public sealed class SteamLoginService : IDisposable
 {
     private static readonly TimeSpan ConnectionTimeout = TimeSpan.FromSeconds(30);
-    private static readonly TimeSpan AuthenticationTimeout = TimeSpan.FromMinutes(2);
+    // 两步验证时要等用户手输/看手机验证码，给足时间
+    private static readonly TimeSpan AuthenticationTimeout = TimeSpan.FromMinutes(10);
     private readonly SteamClient _client;
     private readonly CallbackManager _callbacks;
     private readonly SteamUser _user;
