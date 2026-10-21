@@ -16,9 +16,25 @@ namespace Steamworks {
 		internal static string DataDir;
 
 		private static readonly object Gate = new object();
-		private static readonly Queue<byte[]> Callbacks = new Queue<byte[]>();
+		private static readonly Queue<Tuple<int, byte[]>> Callbacks = new Queue<Tuple<int, byte[]>>();
 		private static readonly Dictionary<ulong, byte[]> CallResults = new Dictionary<ulong, byte[]>();
 		private static ulong nextCall = 0x1000;
+
+		private static readonly HashSet<string> LoggedOnce = new HashSet<string>();
+
+		internal static void LogOnce(string key) {
+			lock (Gate) {
+				if (!LoggedOnce.Add(key)) return;
+			}
+			Log("call " + key);
+		}
+
+		internal static void Log(string message) {
+			try {
+				File.AppendAllText(Path.Combine(Dir, "shim.log"),
+					DateTime.Now.ToString("HH:mm:ss.fff") + " " + message + "\n");
+			} catch { }
+		}
 
 		internal static string Dir {
 			get {
@@ -52,14 +68,23 @@ namespace Steamworks {
 
 		internal static byte[] Utf8(string s) => Encoding.UTF8.GetBytes(s);
 
-		internal static void QueueCallback(byte[] payload) {
-			lock (Gate) Callbacks.Enqueue(payload);
+		internal static void QueueCallback(int callbackId, byte[] payload) {
+			lock (Gate) Callbacks.Enqueue(Tuple.Create(callbackId, payload));
 		}
 
-		internal static ulong QueueCallResult(byte[] payload) {
+		internal static void QueueCallbackStruct<T>(T value) where T : struct {
+			QueueCallback(CallbackIdentities.GetCallbackIdentity(typeof(T)), Serialize(value));
+		}
+
+		internal static ulong QueueCallResult(int callbackId, byte[] payload) {
 			lock (Gate) {
 				var id = nextCall++;
 				CallResults[id] = payload;
+				QueueCallbackStruct(new SteamAPICallCompleted_t {
+					m_hAsyncCall = new SteamAPICall_t(id),
+					m_iCallback = callbackId,
+					m_cubParam = (uint)payload.Length,
+				});
 				return id;
 			}
 		}
@@ -75,54 +100,65 @@ namespace Steamworks {
 				if (Initialized) return ESteamAPIInitResult.k_ESteamAPIInitResult_OK;
 				Initialized = true;
 				LoadIdentity();
-				// 通知 Terraria：Steam 服务器已连接（它用这个回调判断 Steam 可用）
-				QueueCallback(MarshalStruct(new SteamServersConnected_t()));
+				Log($"Init steamid={SteamId} persona={PersonaName} app={AppId} dir={Dir}");
+				QueueCallbackStruct(new SteamServersConnected_t());
+				Log("Init -> OK");
 				return ESteamAPIInitResult.k_ESteamAPIInitResult_OK;
 			}
 
-			internal static void Shutdown() { Initialized = false; }
+			internal static void Shutdown() { Log("Shutdown"); Initialized = false; }
 
-			internal static bool RestartAppIfNecessary() { return false; }
+			internal static bool RestartAppIfNecessary() { LogOnce("RestartAppIfNecessary"); return false; }
 
 			internal static bool IsSteamRunning() { return true; }
 
-			internal static void RunCallbacks() { }
+			internal static void RunCallbacks() { LogOnce("RunCallbacks"); }
 
 			internal static void ManualDispatchInit() { }
 
 			internal static bool GetNextCallback(IntPtr pCallbackMsg) {
 				lock (Gate) {
 					if (Callbacks.Count == 0) return false;
-					var payload = Callbacks.Dequeue();
-					var cbId = BitConverter.ToInt32(payload, 0);
-					var size = payload.Length - 4;
-					Marshal.WriteInt32(pCallbackMsg, 0, 0);
-					Marshal.WriteInt32(pCallbackMsg, 4, cbId);
-					Marshal.WriteInt32(pCallbackMsg, 8, cbId);
-					var dest = Marshal.ReadIntPtr(pCallbackMsg, 16);
-					if (dest != IntPtr.Zero && size > 0)
-						Marshal.Copy(payload, 4, dest, size);
-					Marshal.WriteInt32(pCallbackMsg, 20, size);
+					var entry = Callbacks.Dequeue();
+					var size = entry.Item2.Length;
+					var ptr = Marshal.AllocHGlobal(size);
+					Marshal.Copy(entry.Item2, 0, ptr, size);
+					lastPayload = ptr;
+					// CallbackMsg_t: m_hSteamUser(0) m_iCallback(4) m_pubParam(8) m_cubParam(16)
+					Marshal.WriteInt32(pCallbackMsg, 0, 1);
+					Marshal.WriteInt32(pCallbackMsg, 4, entry.Item1);
+					Marshal.WriteIntPtr(pCallbackMsg, 8, ptr);
+					Marshal.WriteInt32(pCallbackMsg, 16, size);
 					return true;
 				}
 			}
 
-			internal static void FreeLastCallback() { }
+			internal static void FreeLastCallback() {
+				lock (Gate) {
+					if (lastPayload != IntPtr.Zero) {
+						Marshal.FreeHGlobal(lastPayload);
+						lastPayload = IntPtr.Zero;
+					}
+				}
+			}
 
 			internal static bool GetAPICallResult(SteamAPICall_t hSteamAPICall, IntPtr pCallback, int cubCallback, int iCallbackExpected, out bool pbFailed) {
 				pbFailed = false;
 				lock (Gate) {
 					byte[] payload;
 					if (!CallResults.TryGetValue(hSteamAPICall.m_SteamAPICall, out payload)) return false;
-					if (pCallback != IntPtr.Zero && payload.Length > 4)
-						Marshal.Copy(payload, 4, pCallback, Math.Min(payload.Length - 4, cubCallback));
+					if (pCallback != IntPtr.Zero && payload.Length > 0)
+						Marshal.Copy(payload, 0, pCallback, Math.Min(payload.Length, cubCallback));
 					return true;
 				}
 			}
 
-			internal static ulong GetSteamID() { return SteamId; }
+			internal static IntPtr lastPayload;
+			internal static ulong GetSteamID() { LogOnce("GetSteamID"); return SteamId; }
 
-			internal static bool BLoggedOn() { return Initialized; }
+			internal static void LogLine(string message) { Log(message); }
+
+			internal static bool BLoggedOn() { LogOnce("BLoggedOn"); return Initialized; }
 
 			internal static uint GetAuthSessionTicket(byte[] pTicket, int cbMaxTicket, out uint pcbTicket, ref SteamNetworkingIdentity identity) {
 				pcbTicket = 0;
@@ -133,7 +169,7 @@ namespace Steamworks {
 				return EBeginAuthSessionResult.k_EBeginAuthSessionResultOK;
 			}
 
-			internal static bool IsSubscribed() { return true; }
+			internal static bool IsSubscribed() { LogOnce("IsSubscribed"); return true; }
 
 			internal static uint GetAppInstallDir(IntPtr pchFolder, uint cchFolderBufferSize) {
 				// 用当前目录冒充安装目录
@@ -224,12 +260,13 @@ namespace Steamworks {
 			}
 
 			internal static bool RequestCurrentStats() {
+				LogOnce("RequestCurrentStats");
 				EnsureLoaded();
-				QueueCallback(MarshalStruct(new UserStatsReceived_t {
+				QueueCallbackStruct(new UserStatsReceived_t {
 					m_nGameID = (ulong)Shim.AppId,
 					m_eResult = EResult.k_EResultOK,
 					m_steamIDUser = new CSteamID(Shim.SteamId)
-				}));
+				});
 				return true;
 			}
 
@@ -238,12 +275,14 @@ namespace Steamworks {
 			internal static IntPtr GetAchievementName(uint index) { return IntPtr.Zero; }
 
 			internal static bool GetAchievement(string name, out bool achieved) {
+				LogOnce("GetAchievement");
 				EnsureLoaded();
 				achieved = Achievements.ContainsKey(name) && Achievements[name];
 				return achieved;
 			}
 
 			internal static bool SetAchievement(string name) {
+				LogOnce("SetAchievement");
 				EnsureLoaded();
 				Achievements[name] = true;
 				Save();
@@ -256,7 +295,7 @@ namespace Steamworks {
 				return achieved;
 			}
 
-			internal static bool StoreStats() { Save(); return true; }
+			internal static bool StoreStats() { LogOnce("StoreStats"); Save(); return true; }
 
 			internal static bool ResetAllStats(bool achievementsToo) {
 				if (achievementsToo) Achievements.Clear();
@@ -290,6 +329,7 @@ namespace Steamworks {
 			}
 
 			internal static bool FileWrite(string file, byte[] data, int size) {
+				LogOnce("FileWrite");
 				try {
 					var path = PathFor(file);
 					Directory.CreateDirectory(Path.GetDirectoryName(path));
@@ -299,6 +339,7 @@ namespace Steamworks {
 			}
 
 			internal static int FileRead(string file, byte[] buffer, int size) {
+				LogOnce("FileRead");
 				try {
 					var path = PathFor(file);
 					if (!File.Exists(path)) return 0;
@@ -347,21 +388,24 @@ namespace Steamworks {
 			internal static bool SetSyncPlatforms(string file, ERemoteStoragePlatform platforms) { return true; }
 
 			internal static ulong FileWriteAsync(string file, byte[] data, uint size) {
+				LogOnce("FileWriteAsync");
 				FileWrite(file, data, (int)size);
-				var result = MarshalStruct(new RemoteStorageFileWriteAsyncComplete_t { m_eResult = EResult.k_EResultOK });
-				return QueueCallResult(result);
+				return QueueCallResult(
+					CallbackIdentities.GetCallbackIdentity(typeof(RemoteStorageFileWriteAsyncComplete_t)),
+					Serialize(new RemoteStorageFileWriteAsyncComplete_t { m_eResult = EResult.k_EResultOK }));
 			}
 
 			internal static ulong FileReadAsync(string file, uint offset, uint count) {
 				var bytes = new byte[count];
 				var read = FileRead(file, bytes, (int)count);
-				var result = MarshalStruct(new RemoteStorageFileReadAsyncComplete_t {
-					m_hFileReadAsync = default(SteamAPICall_t),
-					m_eResult = read > 0 ? EResult.k_EResultOK : EResult.k_EResultFileNotFound,
-					m_nOffset = offset,
-					m_cubRead = (uint)read
-				});
-				return QueueCallResult(result);
+				return QueueCallResult(
+					CallbackIdentities.GetCallbackIdentity(typeof(RemoteStorageFileReadAsyncComplete_t)),
+					Serialize(new RemoteStorageFileReadAsyncComplete_t {
+						m_hFileReadAsync = default(SteamAPICall_t),
+						m_eResult = read > 0 ? EResult.k_EResultOK : EResult.k_EResultFileNotFound,
+						m_nOffset = offset,
+						m_cubRead = (uint)read
+					}));
 			}
 
 			internal static bool FileReadAsyncComplete(SteamAPICall_t call, byte[] buffer, uint count) {
@@ -381,16 +425,13 @@ namespace Steamworks {
 			}
 		}
 
-		// 把回调结构体序列化成 [callbackId(int32)][payload]
-		internal static byte[] MarshalStruct<T>(T value) where T : struct {
+		internal static byte[] Serialize<T>(T value) where T : struct {
 			var size = Marshal.SizeOf(typeof(T));
 			var ptr = Marshal.AllocHGlobal(size);
 			try {
 				Marshal.StructureToPtr(value, ptr, false);
-				var cbId = CallbackIdentities.GetCallbackIdentity(typeof(T));
-				var buffer = new byte[4 + size];
-				BitConverter.GetBytes(cbId).CopyTo(buffer, 0);
-				Marshal.Copy(ptr, buffer, 4, size);
+				var buffer = new byte[size];
+				Marshal.Copy(ptr, buffer, 0, size);
 				return buffer;
 			} finally {
 				Marshal.FreeHGlobal(ptr);

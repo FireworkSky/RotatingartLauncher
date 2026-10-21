@@ -47,6 +47,27 @@ Terraria 引用 `Steamworks.NET, Version=2024.8.0.0` 时直接命中我们这份
 - `stats.txt`：已解锁成就
 - `cloud/`：云存档文件镜像
 
+## 调试记录（踩过的坑）
+
+1. **`SteamAPI.Init()` 返回 false → "Please launch the game from your Steam client."**
+   `InitEx()` 还会调 `CSteamAPIContext.Init()`，它要求这些原生函数返回**非零**句柄：
+   `SteamAPI_GetHSteamPipe/GetHSteamUser`、`SteamInternal_CreateInterface`、
+   所有 `ISteamClient_GetISteamXxx`、`SteamAPI_SteamXxx_v0xx`。
+   生成器里对这批函数统一返回 `(IntPtr)1` / `1`，其它未实现的返回默认值。
+
+2. **`FORTIFY: pthread_mutex_lock called on a destroyed mutex` 直接 SIGABRT**
+   原因是我们自己派发回调时写错了 `CallbackMsg_t` 的布局。正确布局（Pack=4，arm64 也按 4 对齐）：
+   `m_hSteamUser:0 (int) / m_iCallback:4 (int) / m_pubParam:8 (IntPtr) / m_cubParam:16 (int)`。
+   回调体要 `Marshal.AllocHGlobal` 一份并保存指针，`FreeLastCallback` 负责释放。
+   异步接口（`CallResult<T>`）先入队 `SteamAPICallCompleted_t{ m_hAsyncCall, m_iCallback, m_cubParam }`，
+   再由 `SteamAPI_ManualDispatch_GetAPICallResult` 从 `CallResults[callId]` 拷贝。
+
+3. **必须用 SDL3 入口**：Steam 版 Terraria 1.4.5.8 的 FNA 走 SDL3，
+   用 `GameActivitySdl2`（SDL2 入口）启动会立刻崩（或黑屏）。
+
+4. **别开 mono LLVM**：`monoLlvmEnabled=true` 在 Android 上必崩，
+   RAL 设置里关掉（`files/settings.json` 的 `monoLlvmEnabled=false`）。
+
 ## 还没做
 
 - 启动器侧的 shim 服务（SteamKit2 会话 → identity/成就上传/云存档同步，本地 TCP）
