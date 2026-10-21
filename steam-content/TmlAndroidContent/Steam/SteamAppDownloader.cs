@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Text.Json;
 using System.Net;
 using SteamKit2;
 using SteamKit2.CDN;
@@ -34,6 +35,66 @@ public sealed class SteamAppDownloader
     /// 重试下载 / 重复安装都不再打这个接口。
     /// </summary>
     private static readonly ConcurrentDictionary<(uint AppId, string Branch), byte[]> BetaPasswords = new();
+
+    /// <summary>
+    /// beta 分支密码落盘缓存（app+branch → 密码字节，base64）。
+    /// 每个账号对同一个分支只需要成功校验一次，之后就一直用这份密码换私有 depot 段，
+    /// 不再请求 CheckAppBetaPassword（那个接口会 RateLimitExceeded）。
+    /// </summary>
+    private static string? _betaCacheFile;
+    private static readonly object BetaCacheLock = new();
+
+    public static void UseBetaCacheFile(string? path)
+    {
+        if (string.IsNullOrWhiteSpace(path)) return;
+        _betaCacheFile = path;
+        try
+        {
+            if (!File.Exists(path)) return;
+            var loaded = JsonSerializer.Deserialize<Dictionary<string, string>>(File.ReadAllText(path));
+            if (loaded is null) return;
+            foreach (var (key, value) in loaded)
+            {
+                var parts = key.Split('|');
+                if (parts.Length != 2 || !uint.TryParse(parts[0], out var appId)) continue;
+                BetaPasswords[(appId, parts[1])] = Convert.FromBase64String(value);
+            }
+        }
+        catch
+        {
+            // 缓存坏了就当没有
+        }
+    }
+
+    /// <summary>把成功校验拿到的分支密码记下来（每个账号每个分支只成功一次，之后长期复用）</summary>
+    public static void RememberBetaPassword(uint appId, string branch, byte[] password) =>
+        PersistBetaPassword(appId, branch, password);
+
+    /// <summary>已缓存的某个 app 的 beta 分支名（有缓存就不用再问 Steam）</summary>
+    public static IReadOnlyCollection<string> CachedBranches(uint appId) =>
+        BetaPasswords.Keys.Where(k => k.AppId == appId).Select(k => k.Branch).ToArray();
+
+    private static void PersistBetaPassword(uint appId, string branch, byte[] password)
+    {
+        BetaPasswords[(appId, branch)] = password;
+        var path = _betaCacheFile;
+        if (string.IsNullOrWhiteSpace(path)) return;
+        lock (BetaCacheLock)
+        {
+            try
+            {
+                var map = BetaPasswords.ToDictionary(
+                    kv => $"{kv.Key.AppId}|{kv.Key.Branch}",
+                    kv => Convert.ToBase64String(kv.Value));
+                Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(path))!);
+                File.WriteAllText(path, JsonSerializer.Serialize(map));
+            }
+            catch
+            {
+                // 写不进去不影响本次下载
+            }
+        }
+    }
 
     private readonly IReadOnlyCollection<uint> _skipDepots;
     private readonly string? _branchPassword;
@@ -322,7 +383,7 @@ public sealed class SteamAppDownloader
                 _status?.Invoke($"beta 校验失败：{beta.Result}（Steam 给的分支：[{names}]）— {hint}");
                 return null;
             }
-            BetaPasswords[(spec.AppId, spec.Branch)] = branchPassword;
+            PersistBetaPassword(spec.AppId, spec.Branch, branchPassword);
 
             var accessToken = session.AccessTokenFor(spec.AppId);
             var privateBeta = await session.Apps.PICSGetPrivateBeta(

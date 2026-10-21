@@ -67,14 +67,37 @@ try
             options.CredentialsPath ?? throw new ArgumentException("--beta-code 需要 --credentials"));
         var credentials = await store.LoadAsync().ConfigureAwait(false)
             ?? throw new InvalidOperationException("没有可用的 Steam 凭据，请先登录");
+
+        // 这个账号以前校验成功过 → 直接用缓存的分支，不再打 CheckAppBetaPassword（会限流）
+        SteamAppDownloader.UseBetaCacheFile(BetaCachePath(options));
+        var cachedBranches = SteamAppDownloader.CachedBranches(appId);
+        if (cachedBranches.Count > 0)
+        {
+            Emit("status", $"使用本地缓存的 beta 分支：{string.Join(",", cachedBranches)}（本账号已校验过）");
+            foreach (var name in cachedBranches)
+            {
+                Emit("branch", null, branchPayload: new Dictionary<string, object?>
+                {
+                    ["name"] = name,
+                    ["fromCache"] = true,
+                });
+            }
+            Emit("done", null);
+            return 0;
+        }
+
         using var session = new SteamSession(credentials);
         await session.ConnectAsync().ConfigureAwait(false);
         Emit("status", $"用 beta 密码向 Steam 查询 app {appId} 的隐藏分支...");
         var callback = await session.Apps.CheckAppBetaPassword(appId, options.BetaCode)
             .ToTask().WaitAsync(TimeSpan.FromSeconds(30)).ConfigureAwait(false);
         Emit("status", $"beta 校验结果：{callback.Result}，分支数：{callback.BetaPasswords?.Count ?? 0}");
+        if (callback.Result == EResult.RateLimitExceeded)
+            Emit("status", "Steam 限流（RateLimitExceeded）：等 1~2 分钟再点一次，成功后本账号就长期有效");
         foreach (var pair in callback.BetaPasswords ?? new Dictionary<string, byte[]>())
         {
+            if (pair.Value is { Length: > 0 })
+                SteamAppDownloader.RememberBetaPassword(appId, pair.Key, pair.Value);
             var payload = new Dictionary<string, object?>
             {
                 ["name"] = pair.Key,
@@ -333,6 +356,7 @@ async Task<int> RunGameContentAsync(CliOptions options)
             return 0;
         }
 
+        SteamAppDownloader.UseBetaCacheFile(BetaCachePath(options));
         var downloader = new SteamAppDownloader(
             progress => Emit("progress", progress.CurrentFile, progress: progress),
             message => Emit("status", message),
@@ -349,6 +373,16 @@ async Task<int> RunGameContentAsync(CliOptions options)
         try { await store.ClearAsync().ConfigureAwait(false); } catch (Exception) { }
         throw new SteamAuthenticationException(ex.Result);
     }
+}
+
+/// <summary>beta 分支密码缓存文件：放在凭据旁边（每个账号一份，成功校验一次即可长期复用）</summary>
+static string BetaCachePath(CliOptions options)
+{
+    var creds = options.CredentialsPath;
+    var dir = string.IsNullOrWhiteSpace(creds)
+        ? Path.Combine(Path.GetTempPath(), "steam-beta-cache")
+        : Path.GetDirectoryName(Path.GetFullPath(creds))!;
+    return Path.Combine(dir, "beta-passwords.json");
 }
 
 /// <summary>解析逗号分隔的 depot id 列表（--skip-depot 1281931,1281932）</summary>
