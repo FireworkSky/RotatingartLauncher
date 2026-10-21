@@ -1658,7 +1658,7 @@
     <string name="main_delete_game_irreversible">此操作将删除游戏文件，不可撤销</string>
     <string name="main_game_not_found">未找到游戏: %1$s</string>
     <string name="main_control_editor_placeholder">布局编辑器</string>
-    <string name="main_download">下载</string>
+    <string name="main_download">Steam</string>
     <string name="main_announcements">公告</string>
     <string name="main_import_game">导入游戏</string>
     <string name="main_control_store">控制包商店</string>

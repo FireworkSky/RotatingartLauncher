@@ -30,11 +30,7 @@ import com.app.ralaunch.feature.controls.packs.ControlPackRepositoryService
 import com.app.ralaunch.feature.controls.packs.vm.ControlPackViewModel
 import com.app.ralaunch.feature.controls.vm.ControlLayoutViewModel
 import com.app.ralaunch.feature.filebrowser.vm.FileBrowserViewModel
-import com.app.ralaunch.feature.gog.data.GogDownloader
-import com.app.ralaunch.feature.gog.data.api.GogAuthClient
-import com.app.ralaunch.feature.gog.data.api.GogWebsiteApi
-import com.app.ralaunch.feature.gog.domain.ModLoaderConfigManager
-import com.app.ralaunch.feature.gog.vm.GogViewModel
+import com.app.ralaunch.feature.steam.vm.SteamViewModel
 import com.app.ralaunch.feature.init.vm.InitializationViewModel
 import com.app.ralaunch.feature.installer.vm.InstallerViewModel
 import com.app.ralaunch.feature.main.update.LauncherUpdateChecker
@@ -173,22 +169,6 @@ val appModule = module {
     }
 
     single {
-        GogAuthClient(androidContext())
-    }
-
-    single {
-        GogWebsiteApi(get())
-    }
-
-    single {
-        GogDownloader(get())
-    }
-
-    single {
-        ModLoaderConfigManager(androidContext())
-    }
-
-    single {
         SponsorRepositoryService(androidContext())
     }
 
@@ -255,13 +235,7 @@ val appModule = module {
     }
 
     viewModel {
-        GogViewModel(
-            appContext = androidContext(),
-            authClient = get(),
-            websiteApi = get(),
-            downloader = get(),
-            modLoaderConfigManager = get()
-        )
+        SteamViewModel(androidContext())
     }
 
     viewModel {

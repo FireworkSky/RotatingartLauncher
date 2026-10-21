@@ -130,10 +130,79 @@ public sealed class SteamAppDownloader
         File.Move(temporaryMarker, marker, overwrite: true);
     }
 
+    /// <summary>
+    /// 创意工坊物品下载：workshopdepot 就是 appid 本身，manifest id 是 publishedFileId
+    /// （DepotDownloader 的 isUgc 分支就是这么干的）。匿名会话可用。
+    /// </summary>
+    public async Task DownloadWorkshopItemAsync(
+        SteamSession session,
+        uint appId,
+        ulong publishedFileId,
+        string targetDirectory,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(session);
+        ArgumentException.ThrowIfNullOrWhiteSpace(targetDirectory);
+        Directory.CreateDirectory(targetDirectory);
+
+        var spec = new SteamAppSpec(
+            appId, $"workshop:{publishedFileId}", "public", SteamAppCatalog.DefaultPlatform, null, "创意工坊物品");
+
+        var servers = (await LoadContentServersAsync(session, cancellationToken).ConfigureAwait(false))
+            .Where(server => server.Type is "SteamCache" or "CDN")
+            .OrderBy(server => server.WeightedLoad)
+            .ToList();
+        if (servers.Count == 0)
+            throw new InvalidOperationException("Steam returned no usable CDN servers.");
+
+        var output = new DownloadState(targetDirectory, _progress);
+        var failures = new List<(Server Server, Exception Error)>();
+        foreach (var server in servers)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            _status?.Invoke($"Trying Steam CDN {DescribeServer(server)}...");
+            try
+            {
+                await DownloadDepotAsync(
+                        session, spec, output, appId, publishedFileId, server, cancellationToken, null)
+                    .ConfigureAwait(false);
+                return;
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (Exception exception)
+            {
+                failures.Add((server, exception));
+            }
+        }
+
+        throw new IOException(
+            $"All Steam CDNs failed for workshop item {publishedFileId}. " +
+            string.Join("; ", failures.Select(f => $"{DescribeServer(f.Server)}: {f.Error.Message}")),
+            failures.LastOrDefault().Error);
+    }
+
     private static async Task<IReadOnlyCollection<Server>> LoadContentServersAsync(
         SteamSession session,
         CancellationToken cancellationToken)
     {
+        // CM 侧取 CDN 列表（不走 api.steampowered.com，国内可直连）；
+        // 拿不到再退回公开的 ContentServerDirectoryService。
+        try
+        {
+            var servers = await session.Content.GetServersForSteamPipe()
+                .WaitAsync(ContentDirectoryTimeout, cancellationToken)
+                .ConfigureAwait(false);
+            if (servers is { Count: > 0 })
+                return servers;
+        }
+        catch (Exception) when (!cancellationToken.IsCancellationRequested)
+        {
+            // 走下面兜底
+        }
+
         return await ContentServerDirectoryService.LoadAsync(
                 session.Configuration, cancellationToken)
             .WaitAsync(ContentDirectoryTimeout, cancellationToken)

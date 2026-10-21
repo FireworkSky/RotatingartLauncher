@@ -16,25 +16,36 @@ public sealed class SteamSession : IDisposable
     public const uint TerrariaAppId = 105600;
     private static readonly TimeSpan ConnectionTimeout = TimeSpan.FromSeconds(30);
 
-    private readonly SteamClient _client;
-    private readonly CallbackManager _callbacks;
-    private readonly SteamUser _user;
-    private readonly SteamApps _apps;
-    private readonly SteamContent _content;
+    private SteamClient? _client;
+    private CallbackManager _callbacks;
+    private SteamUser _user;
+    private SteamApps _apps;
+    private SteamContent _content;
     private readonly TaskCompletionSource _connected =
         new(TaskCreationOptions.RunContinuationsAsynchronously);
     private readonly TaskCompletionSource<EResult> _loggedOn =
         new(TaskCreationOptions.RunContinuationsAsynchronously);
-    private readonly SteamCredentials _credentials;
+    private readonly SteamCredentials? _credentials;
     private Thread? _callbackThread;
     private volatile bool _running;
     private int _disposed;
+
+    /// <summary>匿名会话：只够查 appinfo / 创意工坊；下载游戏内容仍要有 license。</summary>
+    public SteamSession()
+    {
+        _credentials = null;
+        Init();
+    }
 
     public SteamSession(SteamCredentials credentials)
     {
         ArgumentNullException.ThrowIfNull(credentials);
         _credentials = credentials;
+        Init();
+    }
 
+    private void Init()
+    {
         var configuration = SteamNetworking.Create();
         _client = new SteamClient(configuration);
         _callbacks = new CallbackManager(_client);
@@ -45,6 +56,12 @@ public sealed class SteamSession : IDisposable
         _callbacks.Subscribe<SteamClient.ConnectedCallback>(_ =>
         {
             _connected.TrySetResult();
+            if (_credentials is null)
+            {
+                _user.LogOnAnonymous();
+                return;
+            }
+
             _user.LogOn(new SteamUser.LogOnDetails
             {
                 Username = _credentials.AccountName,
@@ -55,6 +72,8 @@ public sealed class SteamSession : IDisposable
         _callbacks.Subscribe<SteamUser.LoggedOnCallback>(callback =>
             _loggedOn.TrySetResult(callback.Result));
     }
+
+    public bool IsAnonymous => _credentials is null;
 
     private readonly Dictionary<uint, ulong> _appAccessTokens = new();
 

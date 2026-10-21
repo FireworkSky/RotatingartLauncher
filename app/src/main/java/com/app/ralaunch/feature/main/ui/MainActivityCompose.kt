@@ -104,7 +104,7 @@ import com.app.ralaunch.feature.announcement.ui.AnnouncementScreenWrapper
 import com.app.ralaunch.feature.controls.packs.ui.ControlStoreScreenWrapper
 import com.app.ralaunch.feature.controls.ui.ControlLayoutScreenWrapper
 import com.app.ralaunch.feature.filebrowser.ui.FileBrowserScreenWrapper
-import com.app.ralaunch.feature.gog.ui.DownloadScreenWrapper
+import com.app.ralaunch.feature.steam.ui.SteamScreenWrapper
 import com.app.ralaunch.feature.installer.ui.InstallerScreenWrapper
 import com.app.ralaunch.feature.installer.ui.rememberInstallerRouteActions
 import com.app.ralaunch.feature.main.contracts.AppUpdateUiModel
@@ -705,12 +705,8 @@ class MainActivityCompose : BaseActivity() {
                             )
                         }
                         is Screen.Download -> {
-                            DownloadScreenWrapper(
-                                onBack = { navState.navigateToGames() },
-                                onNavigateToImport = { gamePath, modLoaderPath, gameName ->
-                                    installerActions.prefillFromDownload(gamePath, modLoaderPath, gameName)
-                                    navState.navigateTo(Screen.Import)
-                                }
+                            SteamScreenWrapper(
+                                onBack = { navState.navigateToGames() }
                             )
                         }
                         is Screen.Announcements -> AnnouncementScreenWrapper()

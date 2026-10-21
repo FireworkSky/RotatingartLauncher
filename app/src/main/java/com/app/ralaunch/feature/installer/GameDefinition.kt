@@ -43,6 +43,14 @@ data class GameDefinition(
         )
 
         // Terraria 游戏定义
+        val FEZ = GameDefinition(
+            displayName = "FEZ",
+            launchTarget = "FEZ.exe",
+            iconPatterns = listOf("FEZ"),
+            isModLoader = false,
+            gameId = "FEZ"
+        )
+
         val TERRARIA = GameDefinition(
             displayName = "Terraria",
             launchTarget = "Terraria.exe",

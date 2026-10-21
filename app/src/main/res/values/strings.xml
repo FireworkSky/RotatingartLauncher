@@ -1837,7 +1837,7 @@
     <string name="main_dotnet_runtime_optional">.NET Runtime (Optional)</string>
     <string name="main_dotnet_runtime_override">.NET Runtime Override</string>
     <string name="main_control_editor_placeholder">Layout Editor</string>
-    <string name="main_download">Download</string>
+    <string name="main_download">Steam</string>
     <string name="main_announcements">Announcements</string>
     <string name="main_import_game">Import Game</string>
     <string name="main_control_store">Control Store</string>
