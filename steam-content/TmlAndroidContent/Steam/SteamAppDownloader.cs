@@ -84,6 +84,13 @@ public sealed class SteamAppDownloader
                 var filtered = SteamAppCatalog.SelectDepots(privateSection, spec.Branch, spec.Platform)
                     .Where(d => platformDepots.Count == 0 || platformDepots.Contains(d.DepotId))
                     .ToList();
+                if (filtered.Count == 0)
+                {
+                    var ids = string.Join(",", privateBetaIds(privateSection));
+                    throw new InvalidOperationException(
+                        $"分支 {spec.Branch} 的私有 beta 数据里没有该平台的 depot（私有段 depot=[{ids}]，" +
+                        $"平台白名单=[{string.Join(",", platformDepots)}]）");
+                }
                 if (filtered.Count > 0)
                 {
                     var section = new KeyValue("depots");
@@ -269,6 +276,9 @@ public sealed class SteamAppDownloader
     private static string DescribeServer(Server server) =>
         $"{server.VHost ?? server.Host ?? "unknown"} ({server.Protocol})";
 
+    private static IEnumerable<string> privateBetaIds(KeyValue section) =>
+        section == KeyValue.Invalid ? Enumerable.Empty<string>() : section.Children.Select(c => c.Name);
+
     /// <summary>
     /// 受密码保护的 beta 分支：先用 beta 密码向 Steam 校验（CheckAppBetaPassword），
     /// 再用拿到的分支密码换「私有 beta depot 段」（PICSGetPrivateBeta）。
@@ -286,6 +296,7 @@ public sealed class SteamAppDownloader
             var names = beta.BetaPasswords is null
                 ? string.Empty
                 : string.Join(",", beta.BetaPasswords.Keys);
+            _status?.Invoke($"beta 密码校验结果：{beta.Result}，可见分支=[{names}]");
             if (beta.BetaPasswords is null || !beta.BetaPasswords.TryGetValue(spec.Branch, out var branchPassword))
             {
                 _status?.Invoke($"beta 密码不对（Steam 给的分支：{names}）");
@@ -296,7 +307,10 @@ public sealed class SteamAppDownloader
             var privateBeta = await session.Apps.PICSGetPrivateBeta(
                     spec.AppId, accessToken, spec.Branch, branchPassword)
                 .ToTask().WaitAsync(TimeSpan.FromSeconds(30), cancellationToken).ConfigureAwait(false);
-            _status?.Invoke($"已取到私有 beta 数据：{spec.Branch}");
+            var depotNames = privateBeta.DepotSection == KeyValue.Invalid
+                ? "(无)"
+                : string.Join(",", privateBeta.DepotSection.Children.Select(c => c.Name));
+            _status?.Invoke($"已取到私有 beta 数据：{spec.Branch}，depots=[{depotNames}]");
             return privateBeta.DepotSection;
         }
         catch (Exception ex)

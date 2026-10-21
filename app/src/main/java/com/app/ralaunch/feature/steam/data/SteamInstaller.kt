@@ -65,6 +65,10 @@ object SteamInstaller {
                 if (!betaCode.isNullOrBlank()) {
                     add("--beta-code"); add(betaCode)
                 }
+                if (game.appId == SteamCatalog.TMODLOADER_APP_ID) {
+                    // 共享内容 depot（原版素材）从已有 Terraria 安装合并，不下载
+                    add("--skip-depot"); add(SteamCatalog.TMODLOADER_CONTENT_DEPOT_ID.toString())
+                }
             },
         ) { event -> handleEvent(event, onStatus, onProgress, game) }
 
@@ -252,7 +256,11 @@ object SteamInstaller {
         game: SteamGame,
     ) {
         when (event.optString("type")) {
-            "status" -> onStatus(event.optString("message"))
+            "status" -> {
+                val text = event.optString("message")
+                AppLog.i(TAG, "[cli] $text")
+                onStatus(text)
+            }
             "progress" -> onProgress(
                 event.optDouble("percent", 0.0).toFloat().coerceIn(0f, 100f),
                 event.optString("current").takeIf { it.isNotBlank() },

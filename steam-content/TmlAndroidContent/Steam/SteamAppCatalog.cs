@@ -120,7 +120,13 @@ public static class SteamAppCatalog
 
             var gid = depot["manifests"][branch]["gid"].Value;
             if (!ulong.TryParse(gid, out var manifestId))
+            {
+                // 只对 public 兜底。其它分支（尤其受密码保护的 beta）绝不能悄悄退回 public，
+                // 否则会「下载成功但装的是正式版」，排查起来极难。
+                if (!string.Equals(branch, DefaultBranch, StringComparison.OrdinalIgnoreCase))
+                    continue;
                 gid = depot["manifests"]["public"]["gid"].Value;
+            }
             if (ulong.TryParse(gid, out manifestId))
                 result.Add((depotId, manifestId));
         }

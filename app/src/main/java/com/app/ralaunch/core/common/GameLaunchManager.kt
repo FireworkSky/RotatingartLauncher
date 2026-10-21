@@ -26,6 +26,9 @@ class GameLaunchManager(private val context: Context) {
 
         /** tModLoader 1.3 的包装启动器（它的 FNA 是 SDL2 后端） */
         private const val LEGACY_TML_LAUNCHER = "TML13Launcher.exe"
+
+        /** tModLoader 1.4 的入口（自带 FNA 也是 SDL2 后端） */
+        private const val TML_14_ENTRY = "tModLoader.dll"
     }
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -82,11 +85,15 @@ class GameLaunchManager(private val context: Context) {
         // RAL: 依据「SDL 版本」设置选择入口 Activity。
         //  - SDL3：GameActivity（继承 SDLActivity，Android 视频后端）
         //  - SDL2：GameActivitySdl2（不继承 SDLActivity，Android 原生后端 + 应用内 Surface）
-        // 例外：tModLoader 1.3（TML13Launcher + net40 FNA3D_sdl2）只有 SDL2 后端，
-        // 用 SDL3 入口拉起会直接起不来，所以对这种入口强制 SDL2。
-        val forcedSdl2 = game.gameExePathRelative?.endsWith(LEGACY_TML_LAUNCHER, ignoreCase = true) == true
+        // 例外：tModLoader 两个入口都用 SDL2 ——
+        //   1.3 = TML13Launcher.exe（net40 FNA3D_sdl2）
+        //   1.4 = tModLoader.dll（它的 Libraries/FNA 跑起来会打印 "SDL v2.32.10"，即 dlopen libSDL2）
+        // 用 SDL3 入口拉起时 SDL2 的 video driver 拿不到 Activity/Surface，会卡死在 SDL_Init(VIDEO)。
+        val exe = game.gameExePathRelative.orEmpty()
+        val forcedSdl2 = exe.endsWith(LEGACY_TML_LAUNCHER, ignoreCase = true) ||
+            exe.endsWith(TML_14_ENTRY, ignoreCase = true)
         if (forcedSdl2 || SettingsAccess.getInstance().selectedSdlVersion == SdlVersion.SDL2) {
-            AppLog.i(TAG, "SDL version: SDL2${if (forcedSdl2) " (forced: tModLoader 1.3)" else ""}")
+            AppLog.i(TAG, "SDL version: SDL2${if (forcedSdl2) " (forced: $exe)" else ""}")
             GameActivitySdl2.launch(context = context, gameStorageId = game.id)
         } else {
             AppLog.i(TAG, "SDL version: SDL3 (Android)")
