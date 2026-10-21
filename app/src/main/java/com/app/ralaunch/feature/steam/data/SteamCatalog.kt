@@ -37,7 +37,8 @@ object SteamCatalog {
             platform = "linux",
             launchTarget = "TML13Launcher.exe",
             requiresTerraria = true,
-            notes = "1.3-legacy = mono/net40 + FNA；会覆盖到已装的 Terraria 目录并换成启动包装器",
+            notes = "1.3：tModLoader.exe 与 Terraria.exe 同级（与 GOG 安装同一布局，mono + 包装启动器）；" +
+                "1.4：装到与 Terraria 同级的 tModLoader 目录（tModLoader.dll + .NET 10）",
             branches = listOf(
                 SteamBranch("public", "1.4 正式版"),
                 SteamBranch("1.3-legacy", "1.3 经典版"),

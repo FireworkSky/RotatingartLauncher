@@ -4,6 +4,7 @@ import android.content.Context
 import com.app.ralaunch.core.di.contract.IGameRepositoryServiceV3
 import com.app.ralaunch.core.logging.AppLog
 import com.app.ralaunch.core.model.GameItem
+import com.app.ralaunch.feature.installer.GameDefinition
 import com.app.ralaunch.feature.installer.plugins.SteamInstallPlugin
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -21,11 +22,6 @@ object SteamInstaller {
 
     private val plugin = SteamInstallPlugin()
 
-    private val skipOverlayNames = setOf(
-        "mscorlib.dll", "lib", "lib64", "steam_api.dll", "steam_api64.dll",
-        "steam_appid.txt", "installscript.vdf", "Terraria.bin.x86_64", "TerrariaServer.bin.x86_64",
-    )
-
     suspend fun install(
         context: Context,
         repository: IGameRepositoryServiceV3,
@@ -38,7 +34,7 @@ object SteamInstaller {
             ?: throw IllegalStateException("未知的 Steam 游戏：${game.name}")
 
         if (game.requiresTerraria && branch.startsWith("1.3")) {
-            return@withContext overlayTModLoader(context, repository, game.copy(branch = branch), definition, onStatus, onProgress)
+            return@withContext overlayTModLoader(context, repository, game.copy(branch = branch), onStatus, onProgress)
         }
 
         // 已有同 gameId 的安装（比如换分支）→ 复用目录并覆盖，不新建一份
@@ -49,8 +45,7 @@ object SteamInstaller {
             clearInstallDir(dir)
             dir
         } else {
-            val (rootPath, _) = repository.createGameStorageRoot(definition.gameId)
-            File(rootPath)
+            siblingInstallDir(repository, definition)
         }
         AppLog.i(TAG, "Steam 安装 ${game.name}（$branch）-> ${root.absolutePath}")
 
@@ -82,6 +77,30 @@ object SteamInstaller {
         val named = item.copy(displayedName = "${game.name}（${branchLabel(game, branch)}）")
         repository.upsert(named)
         named
+    }
+
+    /**
+     * tModLoader 1.4 的落地目录：与 Terraria 安装目录**同级**。
+     * GOG 的 tModLoader 安装也是 `.../Terraria` + `.../tModLoader` 这种摆放，
+     * 这里沿用同一套布局（名字固定为 gameId，换分支时复用同一目录）。
+     * 没有 Terraria 安装时退回随机目录（缺原版素材，但仍可安装）。
+     */
+    private fun siblingInstallDir(
+        repository: IGameRepositoryServiceV3,
+        definition: GameDefinition,
+    ): File {
+        val gamesDir = File(repository.getGameGlobalStorageDirFull())
+        val terraria = repository.games.value.firstOrNull { it.gameId == "Terraria" }
+        if (terraria == null) {
+            val (rootPath, _) = repository.createGameStorageRoot(definition.gameId)
+            return File(rootPath)
+        }
+        val terrariaDir = File(gamesDir, terraria.storageRootPathRelative)
+        val parent = terrariaDir.parentFile ?: gamesDir
+        return File(parent, definition.gameId).also {
+            it.mkdirs()
+            AppLog.i(TAG, "tModLoader 安装目录（与 Terraria 同级）: ${it.absolutePath}")
+        }
     }
 
     /** tML 1.4 独立安装需要 vanilla Terraria 的 Content 与程序集：从已有 Terraria 安装里拷 */
@@ -134,7 +153,6 @@ object SteamInstaller {
         context: Context,
         repository: IGameRepositoryServiceV3,
         game: SteamGame,
-        definition: com.app.ralaunch.feature.installer.GameDefinition,
         onStatus: (String) -> Unit,
         onProgress: (Float, String?) -> Unit,
     ): GameItem = withContext(Dispatchers.IO) {
@@ -147,7 +165,7 @@ object SteamInstaller {
             it.mkdirs()
         }
 
-        onStatus("下载 tModLoader 1.3（${game.branch}）...")
+        onStatus("下载 tModLoader 1.3（${branchLabel(game, game.branch)}）...")
         val code = SteamCli.run(
             context,
             listOf(
@@ -162,46 +180,23 @@ object SteamInstaller {
         try {
             if (code != 0) throw IllegalStateException("tModLoader 下载失败（退出码 $code）")
 
-            onStatus("覆盖到 Terraria 目录...")
-            copyOverlay(tempDir, targetDir)
-            installBootstrap(context, targetDir)
+            // 与 GOG 的 tModLoader 1.3 安装同一套布局：平铺到 Terraria.exe 同级目录
+            onStatus("平铺覆盖到 Terraria 目录（与 GOG 安装同一布局）...")
+            if (!plugin.overlayLegacyTModLoader(tempDir, targetDir)) {
+                throw IllegalStateException("tModLoader 1.3 文件覆盖失败")
+            }
         } finally {
             tempDir.deleteRecursively()
         }
 
         val updated = terraria.copy(
-            gameExePathRelative = game.launchTarget,
+            gameExePathRelative = SteamInstallPlugin.LEGACY_LAUNCHER,
             modLoaderEnabled = true,
-            dotNetRuntimeVersionOverride = "mono:4.5",
+            dotNetRuntimeVersionOverride = SteamInstallPlugin.LEGACY_RUNTIME,
         )
-        // 重写 game_info.json（保持图标与描述）
-        plugin.buildGameItem(
-            targetDir, targetDir, definition, game.launchTarget, "mono:4.5",
-        )
+        // upsert → saveGameInfo 会重写 game_info.json（保留图标与描述）
         repository.upsert(updated)
         updated
-    }
-
-    private fun copyOverlay(source: File, target: File) {
-        source.walkTopDown().forEach { file ->
-            if (file.isDirectory) return@forEach
-            val relative = file.toRelativeString(source).replace('\\', '/')
-            val name = relative.substringAfterLast('/')
-            if (name.lowercase() in skipOverlayNames) return@forEach
-            if (name.lowercase().startsWith("system.") || name.lowercase() == "system.dll") return@forEach
-            val destination = File(target, relative)
-            destination.parentFile?.mkdirs()
-            file.copyTo(destination, overwrite = true)
-        }
-    }
-
-    private fun installBootstrap(context: Context, targetDir: File) {
-        for (asset in listOf("TML13Launcher.exe", "FNA.dll")) {
-            val destination = File(targetDir, asset)
-            context.assets.open("prebuilt/tml13/$asset").use { input ->
-                destination.outputStream().use { output -> input.copyTo(output) }
-            }
-        }
     }
 
     private fun runtimeFor(game: SteamGame): String? = when (game.appId) {

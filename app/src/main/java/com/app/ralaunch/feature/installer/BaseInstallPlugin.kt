@@ -1,6 +1,7 @@
 package com.app.ralaunch.feature.installer
 
 import android.content.Context
+import com.app.ralaunch.RaLaunchApp
 import com.app.ralaunch.core.logging.AppLog
 import com.app.ralaunch.core.platform.runtime.AssemblyPatcher
 import org.koin.java.KoinJavaComponent
@@ -264,6 +265,102 @@ abstract class BaseInstallPlugin : GameInstallPlugin {
         }
     }
 
+    // ===== tModLoader 1.3（mono + FNA）平铺布局 =====
+    //
+    // tModLoader 1.3 无论是 GOG 的 ZIP 还是 Steam 的 1.3-legacy depot，落到磁盘上的
+    // 布局必须是同一份：tModLoader.exe 平铺在 Terraria.exe 同级目录，启动入口换成
+    // 包装 exe（[LEGACY_TML_LAUNCHER]），运行时走 mono。所以跳过规则、引导文件安装
+    // 都放在基类里，GOG / Steam 两条安装路径共用。
+
+    /**
+     * tModLoader 1.3 发行包的根目录（含 tModLoader.exe 的那一层）
+     */
+    protected fun findLegacyRoot(extractedDir: File): File {
+        if (File(extractedDir, "tModLoader.exe").exists()) return extractedDir
+        val subdirs = extractedDir.listFiles { file -> file.isDirectory } ?: return extractedDir
+        for (subdir in subdirs) {
+            if (File(subdir, "tModLoader.exe").exists()) return subdir
+        }
+        return if (subdirs.size == 1) subdirs[0] else extractedDir
+    }
+
+    /**
+     * 把 tModLoader 1.3 发行包平铺复制到 Terraria.exe 同级目录。
+     *
+     * 必须跳过的内容：
+     * - mscorlib/System.* 等 mono BCL：会抢在 RAL 自带 BCL 之前被加载，导致运行时版本错乱
+     * - lib/、lib64/：Linux glibc 平台库（带版本号的 .so），Android/bionic 用不到
+     * - FNA.dll / FNA.dll.config：旧版 FNA（自带 mojoshader/OpenAL 路径），安装时会换成
+     *   与新 FNA3D 配套的 FNA（见 [installLegacyBootstrap]）
+     * - mono 启动脚本 / x86 宿主 / 调试符号
+     *
+     * @param keepExistingGameFiles 保留游戏目录里已有的本体文件（Steam 覆盖安装时用）：
+     *        depot 自带一整份 Content/ 与 Terraria.exe，覆盖上去会顶掉现有的原版素材与
+     *        Steam 版程序集，这里直接沿用已有的那份。
+     */
+    protected fun copyLegacyOverlay(
+        source: File,
+        destination: File,
+        keepExistingGameFiles: Boolean = false
+    ) {
+        source.walkTopDown().forEach { file ->
+            if (file.isDirectory) return@forEach
+            val rel = file.toRelativeString(source).replace('\\', '/')
+            if (shouldSkipLegacyEntry(rel, keepExistingGameFiles)) return@forEach
+            val target = File(destination, rel)
+            target.parentFile?.mkdirs()
+            file.copyTo(target, overwrite = true)
+        }
+    }
+
+    private fun shouldSkipLegacyEntry(rel: String, keepExistingGameFiles: Boolean): Boolean {
+        val lower = rel.lowercase()
+        if (lower.startsWith("lib/") || lower.startsWith("lib64/")) return true
+        if (keepExistingGameFiles) {
+            // Content/ = 原版素材、Terraria.exe = Steam 版本体，都不该被 tModLoader 的覆盖
+            if (lower == "steam-shim" || lower.startsWith("steam-shim/")) return true
+            if (lower == "content" || lower.startsWith("content/")) return true
+            if (lower == "terraria.exe" || lower == "terrariaserver.exe") return true
+            if (lower == "steam_appid.txt" || lower == "installscript.vdf") return true
+        }
+        val name = lower.substringAfterLast('/')
+        if (name == "mscorlib.dll") return true
+        if (name == "system.dll" || name.startsWith("system.")) return true
+        if (name == "mono.posix.dll" || name == "mono.security.dll") return true
+        if (name == "monoconfig" || name == "monomachineconfig") return true
+        if (name == "fna.dll" || name == "fna.dll.config") return true
+        if (name == "open-folder") return true
+        if (name.startsWith("tmodloader.bin") || name.startsWith("tmodloaderserver.bin")) return true
+        if (name == "tmodloader" || name == "tmodloader-kick" || name == "tmodloader-mono") return true
+        if (name.startsWith("tmodloaderserver")) return true
+        if (name.endsWith(".pdb")) return true
+        return false
+    }
+
+    /**
+     * 安装 tModLoader 1.3 的运行期引导文件（来自 assets/prebuilt/tml13）：
+     * 包装 exe、配套 FNA（FNA3D/FAudio 版）。
+     *
+     * 说明：不再往游戏目录塞 MonoMod —— tModLoader 1.3 自带内嵌的 MonoMod 20.11，
+     * 包装 exe 通过 AssemblyResolve 复用同一份，避免版本打架（19/25 都不适配 mono）。
+     */
+    protected fun installLegacyBootstrap(gameDir: File) {
+        val assets = listOf(
+            LEGACY_TML_LAUNCHER,
+            "FNA.dll",
+        )
+        assets.forEach { name ->
+            try {
+                RaLaunchApp.getInstance().assets.open("prebuilt/tml13/$name").use { input ->
+                    File(gameDir, name).outputStream().use { output -> input.copyTo(output) }
+                }
+                AppLog.i(TAG, "已安装 tModLoader 1.3 引导文件: $name")
+            } catch (e: Exception) {
+                AppLog.w(TAG, "安装引导文件失败 $name: ${e.message}")
+            }
+        }
+    }
+
     /**
      * 从 GameDefinition 创建 GameItem
      *
@@ -337,5 +434,11 @@ abstract class BaseInstallPlugin : GameInstallPlugin {
 
     companion object {
         private const val TAG = "BaseInstallPlugin"
+
+        /** tModLoader 1.3 的启动入口：包装 exe（安装时写入，game_info 指向它） */
+        const val LEGACY_TML_LAUNCHER = "TML13Launcher.exe"
+
+        /** tModLoader 1.3 必须走 mono 运行时（mono:<版本>） */
+        const val LEGACY_TML_RUNTIME = "mono:4.5"
     }
 }

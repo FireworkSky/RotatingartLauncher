@@ -1,5 +1,6 @@
 package com.app.ralaunch.feature.installer.plugins
 
+import com.app.ralaunch.core.logging.AppLog
 import com.app.ralaunch.core.model.GameItem
 import com.app.ralaunch.feature.installer.BaseInstallPlugin
 import com.app.ralaunch.feature.installer.GameDefinition
@@ -56,6 +57,35 @@ class SteamInstallPlugin : BaseInstallPlugin() {
      */
     fun applyMonoModPatches(gameDir: File): Boolean =
         runCatching { installMonoMod(gameDir) }.getOrDefault(false)
+
+    /**
+     * 把 Steam 下载下来的 tModLoader 1.3 depot 平铺覆盖到 Terraria 目录。
+     *
+     * 与 GOG 的 tModLoader 1.3 安装走同一套规则（见 BaseInstallPlugin）：
+     * tModLoader.exe 与 Terraria.exe 同级、跳过 mono BCL / glibc 平台库 / 旧 FNA、
+     * 最后换成包装 exe + 配套 FNA。depot 自带的 Content/ 与 Terraria.exe 不覆盖，
+     * 沿用游戏目录里已有的那份原版素材与 Steam 版本体。
+     */
+    fun overlayLegacyTModLoader(downloadDir: File, terrariaDir: File): Boolean = runCatching {
+        val sourceDir = findLegacyRoot(downloadDir)
+        copyLegacyOverlay(sourceDir, terrariaDir, keepExistingGameFiles = true)
+        installLegacyBootstrap(terrariaDir)
+        AppLog.i(TAG, "tModLoader 1.3 已平铺到 ${terrariaDir.absolutePath}")
+        true
+    }.getOrElse {
+        AppLog.e(TAG, "tModLoader 1.3 覆盖失败: ${it.message}")
+        false
+    }
+
+    companion object {
+        private const val TAG = "SteamInstallPlugin"
+
+        /** tModLoader 1.3 的启动入口（包装 exe），与 GOG 安装一致 */
+        const val LEGACY_LAUNCHER = LEGACY_TML_LAUNCHER
+
+        /** tModLoader 1.3 的运行时（mono），与 GOG 安装一致 */
+        const val LEGACY_RUNTIME = LEGACY_TML_RUNTIME
+    }
 
     /**
      * 内容下载完成后生成游戏条目。
