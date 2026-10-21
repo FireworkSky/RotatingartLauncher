@@ -40,6 +40,12 @@ fun SteamScreenWrapper(
         onWorkshopQueryChange = viewModel::onWorkshopQuery,
         onWorkshopSearch = viewModel::searchWorkshop,
         onWorkshopDownload = viewModel::downloadWorkshop,
+        selectedBranches = state.selectedBranches,
+        unlockedBranches = state.unlockedBranches,
+        secretInput = state.secretInput,
+        onBranchSelect = viewModel::onBranchSelect,
+        onSecretInput = viewModel::onSecretInput,
+        onUnlockSecret = viewModel::unlockSecret,
         modifier = modifier,
     )
 }

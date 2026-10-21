@@ -4,6 +4,13 @@ package com.app.ralaunch.feature.steam.data
  * 支持从 Steam 下载的游戏清单，与 steam-content/TmlAndroidContent/Steam/SteamAppCatalog.cs 保持一致。
  * depot 清单运行时由 SteamContentCli 从 PICS 现查，这里只描述分支与启动入口。
  */
+/** 可选分支；secretCode 非空表示要输入秘密代码才显示 */
+data class SteamBranch(
+    val id: String,
+    val label: String,
+    val secretCode: String? = null,
+)
+
 data class SteamGame(
     val appId: Int,
     val name: String,
@@ -13,6 +20,8 @@ data class SteamGame(
     val launchTarget: String,
     /** 需要覆盖到已安装 Terraria 目录（tModLoader 1.3 就是这种） */
     val requiresTerraria: Boolean = false,
+    /** 可选分支（空表示只有默认分支）；下载时选择的分支会覆盖同 gameId 的旧安装 */
+    val branches: List<SteamBranch> = emptyList(),
     val notes: String = "",
 )
 
@@ -29,6 +38,12 @@ object SteamCatalog {
             launchTarget = "TML13Launcher.exe",
             requiresTerraria = true,
             notes = "1.3-legacy = mono/net40 + FNA；会覆盖到已装的 Terraria 目录并换成启动包装器",
+            branches = listOf(
+                SteamBranch("public", "1.4 正式版"),
+                SteamBranch("1.3-legacy", "1.3 经典版"),
+                SteamBranch("1.4.3-legacy", "1.4.3 旧版"),
+                SteamBranch("preview-v2026.09", "1.4.5 测试版", secretCode = "iamacontributor"),
+            ),
         ),
         SteamGame(
             appId = 224760,

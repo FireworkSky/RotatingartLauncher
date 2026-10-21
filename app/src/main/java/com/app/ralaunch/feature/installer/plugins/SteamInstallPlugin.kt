@@ -50,6 +50,14 @@ class SteamInstallPlugin : BaseInstallPlugin() {
     }
 
     /**
+     * 用 RAL 自带的 Android 版 MonoMod 替换游戏目录里的 MonoMod：
+     * tModLoader 1.4 自带的 MonoMod.Core 在 Android 上会
+     * `PlatformTriple.CreateCurrentSystem()` 抛 NotImplementedException，必须换成魔改版。
+     */
+    fun applyMonoModPatches(gameDir: File): Boolean =
+        runCatching { installMonoMod(gameDir) }.getOrDefault(false)
+
+    /**
      * 内容下载完成后生成游戏条目。
      * @param storageRoot 由 IGameRepositoryServiceV3.createGameStorageRoot 创建的目录
      * @param actualGameDir 真正放游戏文件的目录（通常等于 storageRoot，或它的子目录）

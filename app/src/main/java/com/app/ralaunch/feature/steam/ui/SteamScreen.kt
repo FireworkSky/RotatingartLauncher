@@ -48,6 +48,12 @@ fun SteamScreen(
     onWorkshopQueryChange: (String) -> Unit,
     onWorkshopSearch: () -> Unit,
     onWorkshopDownload: (WorkshopEntry) -> Unit,
+    selectedBranches: Map<Int, String>,
+    unlockedBranches: Set<String>,
+    secretInput: String,
+    onBranchSelect: (Int, String) -> Unit,
+    onSecretInput: (String) -> Unit,
+    onUnlockSecret: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     LazyColumn(
@@ -65,7 +71,7 @@ fun SteamScreen(
             Text("Steam 游戏", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 8.dp))
         }
         items(games, key = { it.appId }) { game ->
-            GameCard(game, state, onInstall)
+            GameCard(game, state, onInstall, selectedBranches, unlockedBranches, onBranchSelect)
         }
         item {
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
@@ -85,6 +91,9 @@ fun SteamScreen(
                 Spacer(Modifier.width(8.dp))
                 Button(onClick = onWorkshopSearch, enabled = !state.workshopBusy) { Text("搜索") }
             }
+        }
+        item {
+            SecretCodeRow(secretInput, onSecretInput, onUnlockSecret, state.unlockedBranches)
         }
         items(state.workshopItems, key = { it.publishedFileId }) { item ->
             WorkshopCard(item, onDownload = { onWorkshopDownload(item) })
@@ -176,7 +185,14 @@ private fun StatusCard(state: SteamUiState) {
 }
 
 @Composable
-private fun GameCard(game: SteamGame, state: SteamUiState, onInstall: (SteamGame) -> Unit) {
+private fun GameCard(
+    game: SteamGame,
+    state: SteamUiState,
+    onInstall: (SteamGame) -> Unit,
+    selectedBranches: Map<Int, String>,
+    unlockedBranches: Set<String>,
+    onBranchSelect: (Int, String) -> Unit,
+) {
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -187,7 +203,23 @@ private fun GameCard(game: SteamGame, state: SteamUiState, onInstall: (SteamGame
                     Text(installed, style = MaterialTheme.typography.bodySmall)
                 }
             }
-            Text("分支 ${game.branch} · ${game.platform} · appid ${game.appId}", style = MaterialTheme.typography.bodySmall)
+            val currentBranch = selectedBranches[game.appId] ?: game.branch
+            Text("分支 $currentBranch · ${game.platform} · appid ${game.appId}", style = MaterialTheme.typography.bodySmall)
+            if (game.branches.isNotEmpty()) {
+                val visible = game.branches.filter { branch ->
+                    branch.secretCode == null || branch.id in unlockedBranches
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    visible.forEach { branch ->
+                        val selected = branch.id == currentBranch
+                        if (selected) {
+                            Button(onClick = {}, enabled = false) { Text(branch.label) }
+                        } else {
+                            OutlinedButton(onClick = { onBranchSelect(game.appId, branch.id) }) { Text(branch.label) }
+                        }
+                    }
+                }
+            }
             if (game.notes.isNotBlank()) {
                 Text(game.notes, style = MaterialTheme.typography.bodySmall)
             }
@@ -199,6 +231,35 @@ private fun GameCard(game: SteamGame, state: SteamUiState, onInstall: (SteamGame
                     Spacer(Modifier.width(8.dp))
                     Text("需要先装好 Terraria", style = MaterialTheme.typography.bodySmall, modifier = Modifier.align(Alignment.CenterVertically))
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SecretCodeRow(
+    secretInput: String,
+    onSecretInput: (String) -> Unit,
+    onUnlockSecret: () -> Unit,
+    unlockedBranches: Set<String>,
+) {
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Text("秘密代码", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+            Text(
+                if (unlockedBranches.isEmpty()) "输入秘密代码可解锁隐藏分支" else "已解锁 ${unlockedBranches.size} 个隐藏分支",
+                style = MaterialTheme.typography.bodySmall,
+            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                OutlinedTextField(
+                    value = secretInput,
+                    onValueChange = onSecretInput,
+                    label = { Text("代码") },
+                    singleLine = true,
+                    modifier = Modifier.weight(1f),
+                )
+                Spacer(Modifier.width(8.dp))
+                Button(onClick = onUnlockSecret) { Text("解锁") }
             }
         }
     }

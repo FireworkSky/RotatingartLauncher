@@ -46,6 +46,11 @@ data class SteamUiState(
     val workshopQuery: String = "",
     val workshopBusy: Boolean = false,
     val workshopItems: List<WorkshopEntry> = emptyList(),
+    /** 每个 app 当前选中的分支（分支 id） */
+    val selectedBranches: Map<Int, String> = emptyMap(),
+    /** 已解锁的秘密代码对应的分支 id 集合 */
+    val unlockedBranches: Set<String> = emptySet(),
+    val secretInput: String = "",
     val message: String? = null,
 )
 
@@ -61,6 +66,37 @@ class SteamViewModel(context: Context) : ViewModel() {
 
     init {
         refreshLoginState()
+        val unlocked = appContext.getSharedPreferences("steam", Context.MODE_PRIVATE)
+            .getStringSet("unlocked_branches", emptySet()).orEmpty().toSet()
+        _state.update {
+            it.copy(
+                unlockedBranches = unlocked,
+                selectedBranches = games.associate { game -> game.appId to game.branch },
+            )
+        }
+    }
+
+    fun onBranchSelect(appId: Int, branchId: String) = _state.update {
+        it.copy(selectedBranches = it.selectedBranches + (appId to branchId))
+    }
+
+    fun onSecretInput(value: String) = _state.update { it.copy(secretInput = value) }
+
+    /** 输入秘密代码解锁隐藏分支 */
+    fun unlockSecret() {
+        val code = _state.value.secretInput.trim()
+        if (code.isEmpty()) return
+        val matched = games.flatMap { it.branches }
+            .filter { it.secretCode != null && it.secretCode.equals(code, ignoreCase = true) }
+            .map { it.id }
+        if (matched.isEmpty()) {
+            _state.update { it.copy(message = "秘密代码无效") }
+            return
+        }
+        val unlocked = _state.value.unlockedBranches + matched
+        appContext.getSharedPreferences("steam", Context.MODE_PRIVATE).edit()
+            .putStringSet("unlocked_branches", unlocked).apply()
+        _state.update { it.copy(unlockedBranches = unlocked, secretInput = "", message = "已解锁新分支") }
     }
 
     private fun refreshLoginState() {
@@ -130,6 +166,7 @@ class SteamViewModel(context: Context) : ViewModel() {
     }
 
     fun install(game: SteamGame) {
+        val branch = _state.value.selectedBranches[game.appId] ?: game.branch
         if (_state.value.busy) return
         if (!SteamCli.hasCredentials(appContext)) {
             _state.update { it.copy(message = "请先登录 Steam 账号") }
@@ -145,6 +182,7 @@ class SteamViewModel(context: Context) : ViewModel() {
                     context = appContext,
                     repository = repository,
                     game = game,
+                    branch = branch,
                     onStatus = { message -> _state.update { it.copy(status = message) } },
                     onProgress = { percent, file ->
                         _state.update { it.copy(progress = percent, currentFile = file) }
