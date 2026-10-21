@@ -42,7 +42,7 @@ object SteamCatalog {
         SteamGame(
             appId = TMODLOADER_APP_ID,
             name = "tModLoader",
-            branch = "1.3-legacy",
+            branch = "public",
             platform = "linux",
             launchTarget = "TML13Launcher.exe",
             requiresTerraria = true,
@@ -84,6 +84,24 @@ object SteamCatalog {
     )
 
     fun find(appId: Int): SteamGame? = all.firstOrNull { it.appId == appId }
+
+    /**
+     * tModLoader 安装页展示的三个版本。
+     * - `1.3-legacy`：mono/net40 + FNA，平铺进 Terraria 目录
+     * - `public`：默认（1.4.4.9 线，net8）
+     * - `1.4.5-dev`：测试版（net10 / 1.4.5 线），Steam 侧要 beta 密码才会返回，[SteamBranch.gated]
+     */
+    private val TMODLOADER_BRANCHES = listOf(
+        SteamBranch("1.3-legacy", "1.3 经典版"),
+        SteamBranch("public", "默认"),
+        SteamBranch("1.4.5-dev", "测试版", gated = true),
+    )
+
+    /** 安装页要展示的分支；[unlocked] 含 beta 密码时为 true，测试版才出现 */
+    fun branchesFor(appId: Int, unlocked: Boolean = false): List<SteamBranch> {
+        val list = if (appId == TMODLOADER_APP_ID) TMODLOADER_BRANCHES else emptyList()
+        return list.filter { !it.gated || unlocked }
+    }
 
     /** 分支 id → 展示用的中文标签（分支是否存在由 Steam 说了算） */
     fun branchLabel(branchId: String): String = when (branchId) {

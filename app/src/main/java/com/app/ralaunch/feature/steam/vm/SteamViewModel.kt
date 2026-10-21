@@ -71,42 +71,13 @@ class SteamViewModel(context: Context) : ViewModel() {
         refreshLoginState()
         val prefs = appContext.getSharedPreferences("steam", Context.MODE_PRIVATE)
         val savedCode = prefs.getString("beta_code", "").orEmpty()
+        val unlocked = savedCode.isNotBlank()
         _state.update {
             it.copy(
                 selectedBranches = games.associate { game -> game.appId to game.branch },
                 betaCode = savedCode,
+                branches = games.associate { game -> game.appId to SteamCatalog.branchesFor(game.appId, unlocked) },
             )
-        }
-        viewModelScope.launch { loadBranches() }
-        applyCachedBetaBranches()
-    }
-
-    /** 从 Steam 现查分支清单（不带 beta 密码：隐藏分支走缓存，避免 CheckAppBetaPassword 被限流） */
-    fun loadBranches() {
-        viewModelScope.launch {
-            val result = mutableMapOf<Int, List<SteamBranch>>()
-            games.forEach { game ->
-                val list = runCatching { SteamCli.listBranches(appContext, game.appId) }
-                    .getOrElse { emptyList() }
-                if (list.isNotEmpty()) result[game.appId] = list
-            }
-            if (result.isNotEmpty()) {
-                _state.update { it.copy(branches = result + it.branches) }
-            }
-        }
-    }
-
-    /** 上次解锁成功的隐藏分支（缓存），避免每次进页面都去请求 Steam */
-    private fun applyCachedBetaBranches() {
-        val prefs = appContext.getSharedPreferences("steam", Context.MODE_PRIVATE)
-        val cached = prefs.getStringSet("beta_branches", emptySet()).orEmpty()
-        if (cached.isEmpty()) return
-        _state.update { current ->
-            val merged = current.branches.toMutableMap()
-            val tml = SteamCatalog.TMODLOADER_APP_ID
-            val list = cached.map { SteamBranch(it, SteamCatalog.branchLabel(it), gated = true) }
-            merged[tml] = (merged[tml].orEmpty() + list).distinctBy { it.id }
-            current.copy(branches = merged)
         }
     }
 
@@ -118,42 +89,44 @@ class SteamViewModel(context: Context) : ViewModel() {
 
     /**
      * 秘密代码 = Steam 的 beta 密码。
-     * 交给 Steam 校验（IClientApps.CheckAppBetaPassword），校验通过才会返回受保护的分支名
-     * （tModLoader 的 1.4.5-dev），失败时 Steam 什么都不给 —— 所以不需要本地维护密码表。
+     * 交给 Steam 校验（IClientApps.CheckAppBetaPassword），校验通过才会返回受保护的
+     * `1.4.5-dev`；成功后把分支密码缓存起来，之后这台机器就长期免密（见 SteamAppDownloader）。
      */
     fun unlockSecret() {
         val code = _state.value.secretInput.trim()
         if (code.isEmpty()) return
         viewModelScope.launch {
-            // CheckAppBetaPassword 会被 Steam 限流：只查有隐藏分支的 app，且每次只发一条请求
+            // CheckAppBetaPassword 会被 Steam 限流：只查 tModLoader，一次一条请求
             _state.update { it.copy(busy = true, status = "向 Steam 校验秘密代码...") }
             val appId = SteamCatalog.TMODLOADER_APP_ID
             val list = runCatching { SteamCli.listBranches(appContext, appId, code) }
                 .getOrElse { emptyList() }
-            if (list.isNotEmpty()) {
-                appContext.getSharedPreferences("steam", Context.MODE_PRIVATE).edit()
-                    .putStringSet("beta_branches", list.map { it.id }.toSet()).apply()
-            }
-            val unlocked = if (list.isEmpty()) emptyMap() else mapOf(appId to list)
-            _state.update { current ->
-                if (unlocked.isEmpty()) {
-                    current.copy(busy = false, status = "", message = "秘密代码无效（Steam 没有返回任何分支）")
-                } else {
-                    val merged = current.branches.toMutableMap()
-                    unlocked.forEach { (appId, list) ->
-                        merged[appId] = (merged[appId].orEmpty() + list).distinctBy { it.id }
-                    }
-                    appContext.getSharedPreferences("steam", Context.MODE_PRIVATE).edit()
-                        .putString("beta_code", code).apply()
-                    current.copy(
+            if (list.isEmpty()) {
+                _state.update {
+                    it.copy(
                         busy = false,
                         status = "",
-                        betaCode = code,
-                        branches = merged,
-                        secretInput = "",
-                        message = "已解锁：" + unlocked.values.flatten().joinToString { it.label },
+                        message = "Steam 没有返回隐藏分支（密码不对，或刚才请求太频繁被限流 —— 等 1 分钟再试）",
                     )
                 }
+                return@launch
+            }
+            appContext.getSharedPreferences("steam", Context.MODE_PRIVATE).edit()
+                .putString("beta_code", code).apply()
+            // 测试版只在解锁后出现
+            appContext.getSharedPreferences("steam", Context.MODE_PRIVATE).edit()
+                .putStringSet("beta_branches", list.map { it.id }.toSet()).apply()
+            _state.update { current ->
+                current.copy(
+                    busy = false,
+                    status = "",
+                    betaCode = code,
+                    branches = games.associate { game ->
+                        game.appId to SteamCatalog.branchesFor(game.appId, unlocked = true)
+                    },
+                    secretInput = "",
+                    message = "已解锁：${list.joinToString { SteamCatalog.branchLabel(it.id) }}",
+                )
             }
         }
     }
