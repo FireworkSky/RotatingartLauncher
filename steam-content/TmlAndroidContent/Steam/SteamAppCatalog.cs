@@ -10,11 +10,21 @@ public sealed record SteamAppSpec(
     uint AppId,
     string Name,
     string Branch,
-    string? WindowsLaunchTarget,
+    string Platform,
+    string? LaunchTarget,
     string Notes)
 {
     /// <summary>tModLoader 的两个分支语义差别很大：1.3-legacy = mono/net40（我们支持的），public = 1.4/net8。</summary>
     public bool IsLegacyBranch => Branch != "public";
+
+    /// <summary>Linux depot 里的启动入口（多数是 apphost/脚本，实际托管程序集同名 .exe）。</summary>
+    public string PlatformLabel => Platform switch
+    {
+        "linux" => "Linux",
+        "macos" => "macOS",
+        "windows" => "Windows",
+        _ => Platform,
+    };
 }
 
 public static class SteamAppCatalog
@@ -31,18 +41,24 @@ public static class SteamAppCatalog
     public const uint TerrariaAppId = 105600;
     public const uint TModLoaderAppId = 1281930;
 
+    /// <summary>
+    /// 默认平台是 linux：Linux depot 里是托管程序集 + 内容，没有 Windows 那套 Steamworks exe 校验，
+    /// 对我们（mono / FNA 运行时）更合适。
+    /// </summary>
+    public const string DefaultPlatform = "linux";
+
     public static IReadOnlyList<SteamAppSpec> All { get; } = new[]
     {
-        new SteamAppSpec(TModLoaderAppId, "tModLoader", "1.3-legacy", "tModLoader.exe",
-            "1.3-legacy 分支是 mono/net40 + FNA 的老版本（我们运行时支持）；public 分支是 1.4/net8"),
-        new SteamAppSpec(224760, "FEZ", "public", "FEZ.exe",
-            "XNA 4.0 / .NET 4.0，FNA 可跑；无 Steam DRM 依赖"),
-        new SteamAppSpec(TerrariaAppId, "Terraria", "public", "Terraria.exe",
-            "Steam 版 exe 带 Steamworks 校验，安装时保留 DRM-free exe（GOG）即可不碰它"),
-        new SteamAppSpec(413150, "Stardew Valley", "public", "Stardew Valley.exe",
-            "1.6 起是 .NET 6 + MonoGame，需要 .NET 运行时；1.5.6 分支是 net461"),
-        new SteamAppSpec(504230, "Celeste", "public", "Celeste.exe",
-            "XNA 4.0 / .NET 4.0，FNA 可跑"),
+        new SteamAppSpec(TModLoaderAppId, "tModLoader", "1.3-legacy", DefaultPlatform, "tModLoader.exe",
+            "1.3-legacy 是 mono/net40 + FNA（我们运行时支持）；public 是 1.4/net8。Linux depot 1281933"),
+        new SteamAppSpec(224760, "FEZ", "public", DefaultPlatform, "FEZ.exe",
+            "XNA 4.0 / .NET 4.0，FNA 可跑。Linux depot 224762，启动脚本 ./FEZ"),
+        new SteamAppSpec(TerrariaAppId, "Terraria", "public", DefaultPlatform, "Terraria.exe",
+            "Linux depot 105602（Terraria.bin.x86_64 + Content/ + 托管程序集）"),
+        new SteamAppSpec(413150, "Stardew Valley", "public", DefaultPlatform, "Stardew Valley.exe",
+            "1.6 起 .NET6 + MonoGame；Linux depot 413153 启动脚本 StardewValley"),
+        new SteamAppSpec(504230, "Celeste", "public", DefaultPlatform, "Celeste.exe",
+            "XNA 4.0 / .NET 4.0；Linux depot 504233 启动脚本 ./Celeste"),
     };
 
     public static SteamAppSpec? Find(uint appId) => All.FirstOrDefault(a => a.AppId == appId);
@@ -54,7 +70,10 @@ public static class SteamAppCatalog
     /// 从 PICS 的 depots 段里挑出该分支、Windows 平台、非共享运行时的 depot 及 manifest gid。
     /// 分支不存在时回退到 public。
     /// </summary>
-    public static List<(uint DepotId, ulong ManifestId)> SelectDepots(KeyValue depotSection, string branch)
+    public static List<(uint DepotId, ulong ManifestId)> SelectDepots(
+        KeyValue depotSection,
+        string branch,
+        string platform)
     {
         var result = new List<(uint, ulong)>();
         if (depotSection == KeyValue.Invalid)
@@ -69,8 +88,9 @@ public static class SteamAppCatalog
 
             var config = depot["config"];
             var osList = config == KeyValue.Invalid ? null : config["oslist"].Value;
+            // 有 oslist 时只取目标平台；没有 oslist 的平台无关 depot（共享内容）照收
             if (!string.IsNullOrWhiteSpace(osList) &&
-                !osList.Contains("windows", StringComparison.OrdinalIgnoreCase))
+                !osList.Contains(platform, StringComparison.OrdinalIgnoreCase))
                 continue;
 
             var gid = depot["manifests"][branch]["gid"].Value;

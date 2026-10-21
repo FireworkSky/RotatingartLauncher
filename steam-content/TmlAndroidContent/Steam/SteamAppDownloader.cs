@@ -56,7 +56,7 @@ public sealed class SteamAppDownloader
         File.Delete(marker);
         var appInfo = await GetAppInfoAsync(session, spec.AppId, cancellationToken)
             .ConfigureAwait(false);
-        var depots = SteamAppCatalog.SelectDepots(appInfo.KeyValues["depots"], spec.Branch);
+        var depots = SteamAppCatalog.SelectDepots(appInfo.KeyValues["depots"], spec.Branch, spec.Platform);
         if (depots.Count == 0)
             throw new InvalidOperationException(
                 $"Steam returned no usable {spec.Branch} depots for {spec.Name}.");
@@ -69,7 +69,7 @@ public sealed class SteamAppDownloader
         if (servers.Count == 0)
             throw new InvalidOperationException("Steam returned no usable CDN servers.");
 
-        _status?.Invoke($"Preparing {depots.Count} {spec.Name} depots ({spec.Branch})...");
+        _status?.Invoke($"Preparing {depots.Count} {spec.Name} depots ({spec.Branch}, {spec.PlatformLabel})...");
         var output = new DownloadState(targetDirectory, _progress);
         foreach (var (depotId, manifestId) in depots)
         {

@@ -25,7 +25,8 @@ if (options.ListApps)
             ["appId"] = app.AppId,
             ["name"] = app.Name,
             ["branch"] = app.Branch,
-            ["launchTarget"] = app.WindowsLaunchTarget,
+            ["platform"] = app.Platform,
+            ["launchTarget"] = app.LaunchTarget,
             ["notes"] = app.Notes,
         }));
     return 0;
@@ -44,9 +45,10 @@ if (options.GameRoot is null)
     return 1;
 }
 
-// --branch 覆盖默认分支（例如 tModLoader 的 1.3-legacy / public）
+// --branch / --platform 覆盖默认（例如 tModLoader 的 1.3-legacy / public、linux / windows）
 var branch = options.Branch ?? spec.Branch;
-spec = spec with { Branch = branch };
+var platform = options.Platform ?? spec.Platform;
+spec = spec with { Branch = branch, Platform = platform };
 
 var credentialsPath = options.CredentialsPath
     ?? Path.Combine(options.GameRoot, "steam-content-credentials.json");
@@ -166,6 +168,7 @@ static CliOptions ParseArgs(string[] args)
             case "--game-root": options.GameRoot = TakeValue(); break;
             case "--app": options.App = TakeValue(); break;
             case "--branch": options.Branch = TakeValue(); break;
+            case "--platform": options.Platform = TakeValue(); break;
             case "--list": options.ListApps = true; break;
             case "--credentials": options.CredentialsPath = TakeValue(); break;
             case "--account": options.Account = TakeValue(); break;
@@ -175,7 +178,7 @@ static CliOptions ParseArgs(string[] args)
             case "--verify-only": options.VerifyOnly = true; break;
             case "--help":
             case "-h":
-                Console.WriteLine("SteamContentCli --game-root <dir> [--app <appid|name>] [--branch <branch>] [--credentials <file>]");
+                Console.WriteLine("SteamContentCli --game-root <dir> [--app <appid|name>] [--branch <branch>] [--platform linux|windows] [--credentials <file>]");
                 Console.WriteLine("               [--account <user> --password <pass>] [--guard <code>] [--proxy <url>] [--verify-only] [--list]");
                 Environment.Exit(0);
                 break;
@@ -189,6 +192,7 @@ internal sealed class CliOptions
 {
     public string? App { get; set; }
     public string? Branch { get; set; }
+    public string? Platform { get; set; }
     public bool ListApps { get; set; }
     public string? GameRoot { get; set; }
     public string? CredentialsPath { get; set; }
