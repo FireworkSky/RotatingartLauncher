@@ -171,6 +171,9 @@ class TerrariaInstallPlugin : BaseInstallPlugin() {
                     installMonoMod(finalExeParent)
                 }
 
+                // 发行包里的 FNA.dll.config 是 Linux dllmap，Android 上会让 FNA 初始化失败
+                removeStaleFnaConfig(finalExeParent)
+
                 // 提取图标
                 withContext(Dispatchers.Main) {
                     callback.onProgress(

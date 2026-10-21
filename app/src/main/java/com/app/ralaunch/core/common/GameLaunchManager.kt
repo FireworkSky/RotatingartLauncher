@@ -55,11 +55,17 @@ class GameLaunchManager(private val context: Context) {
         val steamInstall = gameDir != null &&
             (File(gameDir, "steam_appid.txt").exists() || File(gameDir, "steam-shim").exists())
         if (steamInstall && gameDir != null) {
-            // Steam 版游戏：先把登录账号的 SteamID/昵称写进 steam-shim/identity.json，
-            // 再拉起游戏（Steamworks.NET shim 靠它把成就/云存档挂到账号上）
+            // Steam 版游戏：先补上 Steamworks.NET shim，再把登录账号的 SteamID/昵称写进
+            // steam-shim/identity.json，最后拉起游戏（shim 靠它把成就/云存档挂到账号上）
             scope.launch {
-                runCatching { SteamCli.writeIdentityFile(context, gameDir) }
-                    .onFailure { AppLog.w(TAG, "写入 Steam 身份失败: ${it.message}") }
+                runCatching {
+                    // Terraria 的 Steam 版 exe 会直接 P/Invoke steam_api：没有 shim 就会
+                    // “Please launch the game from your Steam client” 然后 Environment.Exit
+                    if (File(gameDir, "Terraria.exe").exists()) {
+                        SteamCli.ensureSteamworksShim(context, gameDir)
+                    }
+                    SteamCli.writeIdentityFile(context, gameDir)
+                }.onFailure { AppLog.w(TAG, "Steam 启动前置失败: ${it.message}") }
                 scope.launch(Dispatchers.Main) { startGameActivity(game) }
             }
             return true

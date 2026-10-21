@@ -64,6 +64,14 @@ object SteamInstaller {
             throw IllegalStateException("Steam 下载失败（退出码 $code）")
         }
 
+        // Steam 版 Terraria 启动会直接 P/Invoke steam_api，装机时就补上 Steamworks.NET shim
+        if (game.appId == SteamCatalog.TERRARIA_APP_ID) {
+            SteamCli.ensureSteamworksShim(context, root)
+        }
+
+        // 包里的 FNA.dll.config 是 Linux dllmap，Android 上会让 FNA 直接初始化失败
+        plugin.cleanupFnaConfig(root)
+
         val isTmlStandalone = game.appId == SteamCatalog.TMODLOADER_APP_ID
         if (isTmlStandalone) {
             copyVanillaAssets(repository, root, onStatus)
@@ -187,6 +195,7 @@ object SteamInstaller {
             if (!plugin.overlayLegacyTModLoader(tempDir, targetDir)) {
                 throw IllegalStateException("tModLoader 1.3 文件覆盖失败")
             }
+            plugin.cleanupFnaConfig(targetDir)
         } finally {
             tempDir.deleteRecursively()
         }

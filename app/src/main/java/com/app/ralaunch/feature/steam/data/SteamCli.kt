@@ -121,6 +121,32 @@ object SteamCli {
     }
 
     /**
+     * 把 Steamworks.NET shim 放进 Steam 下载的游戏目录。
+     *
+     * 游戏侧 `SteamAPI.Init()` 会去加载 `Steamworks.NET.dll`；没有真 Steam 客户端时它会弹
+     * “Please launch the game from your Steam client” 并直接退出，所以安装/启动前必须用我们
+     * 这份（把原生层换成 SteamKit2 会话的实现）覆盖上去。大小不同才重写，避免每次都拷 400KB。
+     */
+    fun ensureSteamworksShim(context: Context, gameDir: File): Boolean {
+        val target = File(gameDir, "Steamworks.NET.dll")
+        return try {
+            val assetSize = context.assets.open(ASSET_SHIM).use { it.available().toLong() }
+            if (target.exists() && target.length() == assetSize) return true
+            context.assets.open(ASSET_SHIM).use { input ->
+                target.outputStream().use { output -> input.copyTo(output) }
+            }
+            AppLog.i(TAG, "已部署 Steamworks.NET shim -> ${target.absolutePath}")
+            true
+        } catch (e: Exception) {
+            AppLog.w(TAG, "部署 Steamworks.NET shim 失败: ${e.message}")
+            false
+        }
+    }
+
+    private const val ASSET_SHIM = "prebuilt/steam-shim/Steamworks.NET.dll"
+
+
+    /**
      * 把登录账号的身份（SteamID/昵称）写成游戏目录下的 steam-shim/identity.json，
      * 供 Steamworks.NET shim 读取。没登录或失败时返回 false（不阻塞启动）。
      */

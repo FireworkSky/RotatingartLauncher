@@ -338,6 +338,23 @@ abstract class BaseInstallPlugin : GameInstallPlugin {
     }
 
     /**
+     * 删掉游戏目录里的 `FNA.dll.config`。
+     *
+     * 这份 config 是 Linux 上的 mono dllmap（把 `DllImport("SDL2")` 之类映射到
+     * `libSDL2-2.0.so.0` / `libFNA3D.so.0` 这种 glibc 平台 soname），Android/bionic 上这些名字
+     * 都加载不到，留着会让 FNA 初始化直接失败。GOG 与 Steam 的 Terraria 包里都带它，装完必须删。
+     */
+    protected fun removeStaleFnaConfig(gameDir: File) {
+        val config = File(gameDir, "FNA.dll.config")
+        if (!config.exists()) return
+        if (config.delete()) {
+            AppLog.i(TAG, "已删除 FNA.dll.config（Linux dllmap，Android 用不到）: ${config.absolutePath}")
+        } else {
+            AppLog.w(TAG, "删除 FNA.dll.config 失败: ${config.absolutePath}")
+        }
+    }
+
+    /**
      * 安装 tModLoader 1.3 的运行期引导文件（来自 assets/prebuilt/tml13）：
      * 包装 exe、配套 FNA（FNA3D/FAudio 版）。
      *

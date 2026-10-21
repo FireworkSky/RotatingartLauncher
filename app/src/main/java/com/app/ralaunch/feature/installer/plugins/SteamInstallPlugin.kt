@@ -58,6 +58,9 @@ class SteamInstallPlugin : BaseInstallPlugin() {
     fun applyMonoModPatches(gameDir: File): Boolean =
         runCatching { installMonoMod(gameDir) }.getOrDefault(false)
 
+    /** 删掉 Steam 包里带进来的 FNA.dll.config（Linux dllmap，Android 用不到，会挡 FNA 初始化） */
+    fun cleanupFnaConfig(gameDir: File) = removeStaleFnaConfig(gameDir)
+
     /**
      * 把 Steam 下载下来的 tModLoader 1.3 depot 平铺覆盖到 Terraria 目录。
      *
