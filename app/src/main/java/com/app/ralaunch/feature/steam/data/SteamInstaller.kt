@@ -86,7 +86,7 @@ object SteamInstaller {
 
         val isTmlStandalone = game.appId == SteamCatalog.TMODLOADER_APP_ID
         if (isTmlStandalone) {
-            copyVanillaAssets(repository, root, onStatus)
+            copyVanillaAssets(repository, root, context, onStatus)
             onStatus("替换 Android 版 MonoMod...")
             val ok = plugin.applyMonoModPatches(root)
             AppLog.i(TAG, "MonoMod 替换${if (ok) "成功" else "失败"}")
@@ -148,21 +148,29 @@ object SteamInstaller {
     }
 
     /**
-     * tModLoader 1.4 **不需要**自己的 `Content/` 副本：它会自己去同级 Terraria 安装里找
-     * （日志：`Content folder of Terraria GOG Install Location assumed to be: ../Terraria/Content`），
-     * 所以这里只补一个图标给游戏列表用，不再合并 800MB 素材。
+     * tModLoader 用 tModLoader 自己的图标（`assets/prebuilt/tmodloader/tModLoader.png`），
+     * 不再借用 Terraria 的 `Terraria.png` —— 两个条目在列表里就不至于长得一样。
      *
-     * 同理也绝不拷程序集：Terraria 目录里那份是 mono/net40 的 `FNA.dll` + `System.*` BCL，
-     * 拷进 tML 1.4（.NET Core）目录会把它的依赖顶掉。
+     * 素材也**不需要**自己的 `Content/` 副本：1.4 会自己去同级 Terraria 安装里找
+     * （日志：`Content folder of Terraria GOG Install Location assumed to be: ../Terraria/Content`）。
      */
-    private fun copyVanillaAssets(repository: IGameRepositoryServiceV3, root: File, onStatus: (String) -> Unit) {
-        val vanilla = repository.games.value.firstOrNull { it.gameId == "Terraria" } ?: return
-        val vanillaDir = File(repository.getGameGlobalStorageDirFull(), vanilla.storageRootPathRelative)
-        if (!vanillaDir.exists()) return
-        onStatus("准备图标（素材沿用同级 Terraria 的 Content）...")
-        val icon = File(vanillaDir, "Terraria.png")
-        val target = File(root, "Terraria.png")
-        if (icon.exists() && !target.exists()) icon.copyTo(target, overwrite = false)
+    private fun copyVanillaAssets(
+        repository: IGameRepositoryServiceV3,
+        root: File,
+        context: Context,
+        onStatus: (String) -> Unit,
+    ) {
+        onStatus("准备 tModLoader 图标...")
+        try {
+            val target = File(root, "tModLoader.png")
+            if (!target.exists() || target.length() == 0L) {
+                context.assets.open("prebuilt/tmodloader/tModLoader.png").use { input ->
+                    target.outputStream().use { output -> input.copyTo(output) }
+                }
+            }
+        } catch (e: Exception) {
+            AppLog.w(TAG, "部署 tModLoader 图标失败: ${e.message}")
+        }
     }
 
     /** 覆盖安装：保留 Content/（tML 1.4 需要 Terraria 素材）与账号相关目录，其余清掉 */
