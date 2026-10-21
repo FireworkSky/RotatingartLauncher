@@ -294,9 +294,10 @@ abstract class BaseInstallPlugin : GameInstallPlugin {
      *   与新 FNA3D 配套的 FNA（见 [installLegacyBootstrap]）
      * - mono 启动脚本 / x86 宿主 / 调试符号
      *
-     * @param keepExistingGameFiles 保留游戏目录里已有的本体文件（Steam 覆盖安装时用）：
-     *        depot 自带一整份 Content/ 与 Terraria.exe，覆盖上去会顶掉现有的原版素材与
-     *        Steam 版程序集，这里直接沿用已有的那份。
+     * 素材（`Content/`）是**只补缺不覆盖**：tModLoader 1.3 缺的 `ChestStack_0.xnb` 这类文件
+     * 从发行包里补，但同名的 1.4.5.8 素材（尤其 `PixelShader.xnb`，`HorizonClouds` 这类
+     * 1.4.4+ 的 technique 都在里面）必须保持原样，否则同一目录里的 tModLoader 1.4
+     * 会在 `GameShaders.Misc[...]` 上拿到 null Effect 直接崩。
      */
     protected fun copyLegacyOverlay(
         source: File,
@@ -307,10 +308,26 @@ abstract class BaseInstallPlugin : GameInstallPlugin {
             if (file.isDirectory) return@forEach
             val rel = file.toRelativeString(source).replace('\\', '/')
             if (shouldSkipLegacyEntry(rel, keepExistingGameFiles)) return@forEach
+            if (shouldSkipLegacyAsset(rel)) return@forEach
             val target = File(destination, rel)
             target.parentFile?.mkdirs()
-            file.copyTo(target, overwrite = true)
+            // 素材目录只补缺失文件；程序集等其它文件照旧覆盖
+            val isContent = rel.lowercase().startsWith("content/")
+            file.copyTo(target, overwrite = !isContent)
         }
+    }
+
+    /**
+     * 1.3 发行包里**不能**覆盖到 1.4 目录上的素材：
+     * - `PixelShader/ScreenShader/TileShader.xnb`：1.4.4+ 的新 technique 在这里，换了就崩
+     * - 7 个 `TModLoaderPatch` 自己做大小写修正的原版素材，多留一份大小写变体会让
+     *   `TryFixFileCasings` 的 `File.Move` 目标已存在而抛 IOException
+     */
+    private fun shouldSkipLegacyAsset(rel: String): Boolean {
+        val lower = rel.lowercase()
+        if (lower == "content/pixelshader.xnb" || lower == "content/screenshader.xnb" ||
+            lower == "content/tileshader.xnb") return true
+        return lower in CASE_FIXED_ASSETS
     }
 
     private fun shouldSkipLegacyEntry(rel: String, keepExistingGameFiles: Boolean): Boolean {
@@ -451,6 +468,17 @@ abstract class BaseInstallPlugin : GameInstallPlugin {
 
     companion object {
         private const val TAG = "BaseInstallPlugin"
+
+        /** tModLoader 的 androidfix 补丁会修正这 7 个素材的大小写，不能同时存在两种大小写 */
+        private val CASE_FIXED_ASSETS = setOf(
+            "content/images/npc_517.xnb",
+            "content/images/gore_240.xnb",
+            "content/images/projectile_179.xnb",
+            "content/images/projectile_189.xnb",
+            "content/images/projectile_618.xnb",
+            "content/images/tiles_650.xnb",
+            "content/images/item_2648.xnb",
+        )
 
         /** tModLoader 1.3 的启动入口：包装 exe（安装时写入，game_info 指向它） */
         const val LEGACY_TML_LAUNCHER = "TML13Launcher.exe"

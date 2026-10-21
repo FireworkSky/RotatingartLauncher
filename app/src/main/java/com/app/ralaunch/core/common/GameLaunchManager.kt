@@ -21,6 +21,15 @@ import java.io.File
  */
 class GameLaunchManager(private val context: Context) {
 
+    /** 游戏包内是否自带 SDL3 原生库（tModLoader 1.4.5 用 SDL3，1.4.4 用 SDL2） */
+    private fun gameShipsSdl3(gameDir: File): Boolean {
+        val native = File(gameDir, "Libraries/Native")
+        if (!native.isDirectory) return false
+        return runCatching {
+            native.walkTopDown().any { it.isFile && it.name.startsWith("libSDL3") }
+        }.getOrDefault(false)
+    }
+
     companion object {
         private const val TAG = "GameLaunchManager"
 
@@ -85,14 +94,21 @@ class GameLaunchManager(private val context: Context) {
         // RAL: 依据「SDL 版本」设置选择入口 Activity。
         //  - SDL3：GameActivity（继承 SDLActivity，Android 视频后端）
         //  - SDL2：GameActivitySdl2（不继承 SDLActivity，Android 原生后端 + 应用内 Surface）
-        // 例外：tModLoader 两个入口都用 SDL2 ——
-        //   1.3 = TML13Launcher.exe（net40 FNA3D_sdl2）
-        //   1.4 = tModLoader.dll（它的 Libraries/FNA 跑起来会打印 "SDL v2.32.10"，即 dlopen libSDL2）
-        // 用 SDL3 入口拉起时 SDL2 的 video driver 拿不到 Activity/Surface，会卡死在 SDL_Init(VIDEO)。
+        // tModLoader 要按「包里带的原生库」决定入口，不能写死：
+        //   1.3            = TML13Launcher.exe（net40 FNA3D_sdl2）→ 固定 SDL2
+        //   1.4 (net8)     = 带 libSDL2-2.0.so → FNA 走 SDL2 → GameActivitySdl2
+        //   1.4.5-dev (net10) = 带 libSDL3.so.0 → FNA 走 SDL3 → GameActivity
+        // 入口和后端不一致时会卡死在 SDL_Init(VIDEO)（拿不到 Activity/Surface）。
         val exe = game.gameExePathRelative.orEmpty()
+        val gameDir = game.gameExePathFull?.let { File(it).parentFile }
+        val sdl3Shipped = gameDir != null && gameShipsSdl3(gameDir)
         val forcedSdl2 = exe.endsWith(LEGACY_TML_LAUNCHER, ignoreCase = true) ||
-            exe.endsWith(TML_14_ENTRY, ignoreCase = true)
-        if (forcedSdl2 || SettingsAccess.getInstance().selectedSdlVersion == SdlVersion.SDL2) {
+            (exe.endsWith(TML_14_ENTRY, ignoreCase = true) && !sdl3Shipped)
+        val forcedSdl3 = exe.endsWith(TML_14_ENTRY, ignoreCase = true) && sdl3Shipped
+        if (forcedSdl3) {
+            AppLog.i(TAG, "SDL version: SDL3 (forced: $exe, 包内带 libSDL3)")
+            GameActivity.launch(context = context, gameStorageId = game.id)
+        } else if (forcedSdl2 || SettingsAccess.getInstance().selectedSdlVersion == SdlVersion.SDL2) {
             AppLog.i(TAG, "SDL version: SDL2${if (forcedSdl2) " (forced: $exe)" else ""}")
             GameActivitySdl2.launch(context = context, gameStorageId = game.id)
         } else {
