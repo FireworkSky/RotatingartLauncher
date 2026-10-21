@@ -92,7 +92,7 @@ object GameLauncher {
     init {
         // RAL: 依据「SDL 版本」设置决定加载哪套 SDL。GameLauncher 在 :game 进程内运行，
         // SDL2 与 SDL3 必须互斥加载，否则会发生 native 库冲突。
-        // SDL2-Wayland 路径额外预载 Mesa（改名）与 wayland 客户端栈。
+        // SDL2 路径预载 SDL2 版的 FAudio/FNA3D（不含 Wayland/Mesa 相关依赖）。
         val useSdl2 = runCatching { SdlVersion.isSdl2(SettingsAccess.getInstance().selectedSdlVersion) }
             .getOrDefault(false)
         try {

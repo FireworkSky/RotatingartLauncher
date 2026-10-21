@@ -562,7 +562,7 @@ private fun GameSettingsPane(
 
                 SettingsDivider()
 
-                // RAL: SDL2/3 切换——位于"运行时"下方。SDL2 走 Wayland 后端 + 应用内合成器，
+                // RAL: SDL2/3 切换——位于"运行时"下方。SDL2 走 Android 原生后端（EGL + 原生 Surface），
                 // 不占用 SDL3 的 Java 绑定层，因此两套可共存于同一 APK。
                 SwitchSettingItem(
                     title = androidStringResource(R.string.settings_sdl_version_title),

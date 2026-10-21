@@ -46,9 +46,9 @@ class GameLaunchManager(private val context: Context) {
 
         // RAL: 依据「SDL 版本」设置选择入口 Activity。
         //  - SDL3：GameActivity（继承 SDLActivity，Android 视频后端）
-        //  - SDL2：GameActivitySdl2（不继承 SDLActivity，Wayland 视频后端 + 应用内合成器）
+        //  - SDL2：GameActivitySdl2（不继承 SDLActivity，Android 原生后端 + 应用内 Surface）
         if (SettingsAccess.getInstance().selectedSdlVersion == SdlVersion.SDL2) {
-            AppLog.i(TAG, "SDL version: SDL2 (Wayland)")
+            AppLog.i(TAG, "SDL version: SDL2 (native Android backend)")
             GameActivitySdl2.launch(context = context, gameStorageId = game.id)
         } else {
             AppLog.i(TAG, "SDL version: SDL3 (Android)")

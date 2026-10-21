@@ -457,11 +457,11 @@ class SettingsViewModel(
     }
 
     /**
-     * 切换 SDL 版本（SDL3 / SDL2-Wayland）。
+     * 切换 SDL 版本（SDL3 / SDL2）。
      *
      * 该选择决定游戏启动链走哪套 Activity：
      *  - SDL3：GameActivity（继承 SDLActivity，Android 视频后端）
-     *  - SDL2：GameActivitySdl2（不继承 SDLActivity，Wayland 视频后端 + 应用内合成器）
+     *  - SDL2：GameActivitySdl2（不继承 SDLActivity，Android 原生后端 + 应用内 Surface）
      */
     private fun setSdlVersion(version: String) {
         val normalized = SdlVersion.normalize(version)

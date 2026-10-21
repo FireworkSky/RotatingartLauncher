@@ -1634,9 +1634,9 @@
     <string name="settings_game_runtime_section">运行时</string>
     <string name="settings_game_runtime_subtitle">设置游戏默认使用的 .NET 运行时版本</string>
     <string name="settings_sdl_version_title">SDL 版本</string>
-    <string name="settings_sdl_version_subtitle">SDL2 走 Wayland 后端，使用内置合成器呈现画面，不占用 SDL3 的 Java 绑定层；SDL3 走 Android 后端，使用 SDLActivity 绑定</string>
-    <string name="settings_sdl_version_sdl2">SDL2 · Wayland</string>
-    <string name="settings_sdl_version_sdl3">SDL3 · Android</string>
+    <string name="settings_sdl_version_subtitle">SDL2 使用官方 SDL 2.32.10 的 Android 后端（EGL + 原生 Surface，不经过 SDLActivity 的 Java 绑定层）；SDL3 同样走 Android 后端，但通过 SDLActivity 的 Java 绑定层</string>
+    <string name="settings_sdl_version_sdl2">SDL2 · Native</string>
+    <string name="settings_sdl_version_sdl3">SDL3 · Activity</string>
     <string name="settings_game_renderer_section">渲染</string>
     <string name="download_enter">进入</string>
     <string name="gog_no_linux_version">该游戏没有 Linux 版本</string>

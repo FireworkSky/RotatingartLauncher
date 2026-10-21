@@ -1804,9 +1804,9 @@
     <string name="settings_game_runtime_section">Runtime</string>
     <string name="settings_game_runtime_subtitle">Set the default .NET runtime version for games</string>
     <string name="settings_sdl_version_title">SDL Version</string>
-    <string name="settings_sdl_version_subtitle">SDL2 runs on a Wayland backend with the built-in compositor and no Java binding layer; SDL3 uses the Android backend with the SDLActivity binding</string>
-    <string name="settings_sdl_version_sdl2">SDL2 · Wayland</string>
-    <string name="settings_sdl_version_sdl3">SDL3 · Android</string>
+    <string name="settings_sdl_version_subtitle">SDL2 uses the official SDL 2.32.10 Android backend (EGL + native Surface, no SDLActivity Java binding); SDL3 also uses the Android backend but goes through the SDLActivity Java binding</string>
+    <string name="settings_sdl_version_sdl2">SDL2 · Native</string>
+    <string name="settings_sdl_version_sdl3">SDL3 · Activity</string>
     <string name="settings_game_renderer_section">Rendering</string>
 
     <string name="download_enter">Enter</string>
