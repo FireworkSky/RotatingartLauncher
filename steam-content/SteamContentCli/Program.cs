@@ -72,6 +72,7 @@ try
         Emit("status", $"用 beta 密码向 Steam 查询 app {appId} 的隐藏分支...");
         var callback = await session.Apps.CheckAppBetaPassword(appId, options.BetaCode)
             .ToTask().WaitAsync(TimeSpan.FromSeconds(30)).ConfigureAwait(false);
+        Emit("status", $"beta 校验结果：{callback.Result}，分支数：{callback.BetaPasswords?.Count ?? 0}");
         foreach (var pair in callback.BetaPasswords ?? new Dictionary<string, byte[]>())
         {
             var payload = new Dictionary<string, object?>

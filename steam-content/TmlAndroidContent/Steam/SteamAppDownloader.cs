@@ -28,6 +28,13 @@ public sealed class SteamAppDownloader
 
     private readonly Action<SteamDownloadProgress>? _progress;
     private readonly Action<string>? _status;
+    /// <summary>
+    /// beta 分支密码缓存（app+branch → 32 字节分支密码）。
+    /// CheckAppBetaPassword 会被 Steam 限流（RateLimitExceeded），所以拿到一次就记下来，
+    /// 重试下载 / 重复安装都不再打这个接口。
+    /// </summary>
+    private static readonly ConcurrentDictionary<(uint AppId, string Branch), byte[]> BetaPasswords = new();
+
     private readonly IReadOnlyCollection<uint> _skipDepots;
     private readonly string? _branchPassword;
     private readonly string? _betaCode;
@@ -291,6 +298,16 @@ public sealed class SteamAppDownloader
     {
         try
         {
+            if (BetaPasswords.TryGetValue((spec.AppId, spec.Branch), out var cachedPassword))
+            {
+                _status?.Invoke($"使用缓存的 beta 分支密码：{spec.Branch}");
+                var cachedToken = session.AccessTokenFor(spec.AppId);
+                var cachedBeta = await session.Apps.PICSGetPrivateBeta(
+                        spec.AppId, cachedToken, spec.Branch, cachedPassword)
+                    .ToTask().WaitAsync(TimeSpan.FromSeconds(30), cancellationToken).ConfigureAwait(false);
+                return cachedBeta.DepotSection;
+            }
+
             var beta = await session.Apps.CheckAppBetaPassword(spec.AppId, _betaCode!)
                 .ToTask().WaitAsync(TimeSpan.FromSeconds(30), cancellationToken).ConfigureAwait(false);
             var names = beta.BetaPasswords is null
@@ -299,9 +316,13 @@ public sealed class SteamAppDownloader
             _status?.Invoke($"beta 密码校验结果：{beta.Result}，可见分支=[{names}]");
             if (beta.BetaPasswords is null || !beta.BetaPasswords.TryGetValue(spec.Branch, out var branchPassword))
             {
-                _status?.Invoke($"beta 密码不对（Steam 给的分支：{names}）");
+                var hint = beta.Result == EResult.RateLimitExceeded
+                    ? "Steam 限流（RateLimitExceeded），等 1~2 分钟再试"
+                    : "密码不对，或该账号无权访问这个分支";
+                _status?.Invoke($"beta 校验失败：{beta.Result}（Steam 给的分支：[{names}]）— {hint}");
                 return null;
             }
+            BetaPasswords[(spec.AppId, spec.Branch)] = branchPassword;
 
             var accessToken = session.AccessTokenFor(spec.AppId);
             var privateBeta = await session.Apps.PICSGetPrivateBeta(

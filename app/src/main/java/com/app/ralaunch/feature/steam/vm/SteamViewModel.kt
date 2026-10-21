@@ -78,19 +78,35 @@ class SteamViewModel(context: Context) : ViewModel() {
             )
         }
         viewModelScope.launch { loadBranches() }
+        applyCachedBetaBranches()
     }
 
-    /** 从 Steam 现查分支清单；已保存过 beta 密码的话顺带把隐藏分支也拉出来 */
+    /** 从 Steam 现查分支清单（不带 beta 密码：隐藏分支走缓存，避免 CheckAppBetaPassword 被限流） */
     fun loadBranches() {
         viewModelScope.launch {
-            val code = _state.value.betaCode.ifBlank { null }
             val result = mutableMapOf<Int, List<SteamBranch>>()
             games.forEach { game ->
-                val list = runCatching { SteamCli.listBranches(appContext, game.appId, code) }
+                val list = runCatching { SteamCli.listBranches(appContext, game.appId) }
                     .getOrElse { emptyList() }
                 if (list.isNotEmpty()) result[game.appId] = list
             }
-            if (result.isNotEmpty()) _state.update { it.copy(branches = result) }
+            if (result.isNotEmpty()) {
+                _state.update { it.copy(branches = result + it.branches) }
+            }
+        }
+    }
+
+    /** 上次解锁成功的隐藏分支（缓存），避免每次进页面都去请求 Steam */
+    private fun applyCachedBetaBranches() {
+        val prefs = appContext.getSharedPreferences("steam", Context.MODE_PRIVATE)
+        val cached = prefs.getStringSet("beta_branches", emptySet()).orEmpty()
+        if (cached.isEmpty()) return
+        _state.update { current ->
+            val merged = current.branches.toMutableMap()
+            val tml = SteamCatalog.TMODLOADER_APP_ID
+            val list = cached.map { SteamBranch(it, SteamCatalog.branchLabel(it), gated = true) }
+            merged[tml] = (merged[tml].orEmpty() + list).distinctBy { it.id }
+            current.copy(branches = merged)
         }
     }
 
@@ -109,13 +125,16 @@ class SteamViewModel(context: Context) : ViewModel() {
         val code = _state.value.secretInput.trim()
         if (code.isEmpty()) return
         viewModelScope.launch {
+            // CheckAppBetaPassword 会被 Steam 限流：只查有隐藏分支的 app，且每次只发一条请求
             _state.update { it.copy(busy = true, status = "向 Steam 校验秘密代码...") }
-            val unlocked = mutableMapOf<Int, List<SteamBranch>>()
-            games.forEach { game ->
-                val list = runCatching { SteamCli.listBranches(appContext, game.appId, code) }
-                    .getOrElse { emptyList() }
-                if (list.isNotEmpty()) unlocked[game.appId] = list
+            val appId = SteamCatalog.TMODLOADER_APP_ID
+            val list = runCatching { SteamCli.listBranches(appContext, appId, code) }
+                .getOrElse { emptyList() }
+            if (list.isNotEmpty()) {
+                appContext.getSharedPreferences("steam", Context.MODE_PRIVATE).edit()
+                    .putStringSet("beta_branches", list.map { it.id }.toSet()).apply()
             }
+            val unlocked = if (list.isEmpty()) emptyMap() else mapOf(appId to list)
             _state.update { current ->
                 if (unlocked.isEmpty()) {
                     current.copy(busy = false, status = "", message = "秘密代码无效（Steam 没有返回任何分支）")
