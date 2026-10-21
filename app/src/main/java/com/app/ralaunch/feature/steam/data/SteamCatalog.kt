@@ -4,11 +4,15 @@ package com.app.ralaunch.feature.steam.data
  * 支持从 Steam 下载的游戏清单，与 steam-content/TmlAndroidContent/Steam/SteamAppCatalog.cs 保持一致。
  * depot 清单运行时由 SteamContentCli 从 PICS 现查，这里只描述分支与启动入口。
  */
-/** 可选分支；secretCode 非空表示要输入秘密代码才显示 */
+/**
+ * 一个 Steam 分支。分支清单不再写死：普通分支由 CLI 从 PICS（depots.branches）现查，
+ * 受 beta 密码保护的分支（tModLoader 的 `1.4.5-dev`）只有把密码交给 Steam
+ * （`IClientApps.CheckAppBetaPassword`）才会返回，[gated] 标记这类分支。
+ */
 data class SteamBranch(
     val id: String,
     val label: String,
-    val secretCode: String? = null,
+    val gated: Boolean = false,
 )
 
 data class SteamGame(
@@ -20,8 +24,6 @@ data class SteamGame(
     val launchTarget: String,
     /** 需要覆盖到已安装 Terraria 目录（tModLoader 1.3 就是这种） */
     val requiresTerraria: Boolean = false,
-    /** 可选分支（空表示只有默认分支）；下载时选择的分支会覆盖同 gameId 的旧安装 */
-    val branches: List<SteamBranch> = emptyList(),
     val notes: String = "",
 )
 
@@ -46,12 +48,6 @@ object SteamCatalog {
             requiresTerraria = true,
             notes = "1.3：tModLoader.exe 与 Terraria.exe 同级（与 GOG 安装同一布局，mono + 包装启动器）；" +
                 "1.4：装到与 Terraria 同级的 tModLoader 目录（tModLoader.dll + .NET 10）",
-            branches = listOf(
-                SteamBranch("public", "1.4 正式版"),
-                SteamBranch("1.3-legacy", "1.3 经典版"),
-                SteamBranch("1.4.3-legacy", "1.4.3 旧版"),
-                SteamBranch("preview-v2026.09", "1.4.5 测试版", secretCode = "iamacontributor"),
-            ),
         ),
         SteamGame(
             appId = 224760,
@@ -88,4 +84,13 @@ object SteamCatalog {
     )
 
     fun find(appId: Int): SteamGame? = all.firstOrNull { it.appId == appId }
+
+    /** 分支 id → 展示用的中文标签（分支是否存在由 Steam 说了算） */
+    fun branchLabel(branchId: String): String = when (branchId) {
+        "public" -> "1.4 正式版"
+        "1.3-legacy" -> "1.3 经典版"
+        "1.4.3-legacy" -> "1.4.3 旧版"
+        "1.4.5-dev" -> "1.4.5 测试版"
+        else -> branchId
+    }
 }

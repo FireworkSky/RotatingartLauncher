@@ -16,6 +16,7 @@
 //       {"type":"workshop","items":[...]}
 //       {"type":"done"} / {"type":"error","message":...} / {"type":"need-guard","message":...}
 using System.Text.Json;
+using SteamKit2;
 using TmlAndroidContent.Steam;
 
 var options = ParseArgs(args);
@@ -52,6 +53,126 @@ try
             session, SteamAppCatalog.TModLoaderAppId, options.Query, options.Page, options.Count)
             .ConfigureAwait(false);
         EmitWorkshop(items);
+        Emit("done", null);
+        return 0;
+    }
+
+    // --beta-code 单独使用时是「查隐藏分支」；带 --game-root 时是下载参数，走下面的下载流程
+    if (!string.IsNullOrWhiteSpace(options.BetaCode) && !options.DumpDepots
+        && string.IsNullOrWhiteSpace(options.GameRoot))
+    {
+        var appId = ResolveSpec(options.App)?.AppId
+            ?? (uint.TryParse(options.App, out var betaApp) ? betaApp : SteamAppCatalog.TModLoaderAppId);
+        var store = new FileSteamCredentialStore(
+            options.CredentialsPath ?? throw new ArgumentException("--beta-code 需要 --credentials"));
+        var credentials = await store.LoadAsync().ConfigureAwait(false)
+            ?? throw new InvalidOperationException("没有可用的 Steam 凭据，请先登录");
+        using var session = new SteamSession(credentials);
+        await session.ConnectAsync().ConfigureAwait(false);
+        Emit("status", $"用 beta 密码向 Steam 查询 app {appId} 的隐藏分支...");
+        var callback = await session.Apps.CheckAppBetaPassword(appId, options.BetaCode)
+            .ToTask().WaitAsync(TimeSpan.FromSeconds(30)).ConfigureAwait(false);
+        foreach (var pair in callback.BetaPasswords ?? new Dictionary<string, byte[]>())
+        {
+            var payload = new Dictionary<string, object?>
+            {
+                ["name"] = pair.Key,
+                ["passwordLength"] = pair.Value?.Length ?? 0,
+                ["password"] = pair.Value is { Length: > 0 } bytes ? System.Text.Encoding.UTF8.GetString(bytes) : null,
+            };
+            Emit("branch", null, branchPayload: payload);
+        }
+        Emit("done", null);
+        return 0;
+    }
+
+    if (options.DumpDepots)
+    {
+        var appId = ResolveSpec(options.App)?.AppId
+            ?? (uint.TryParse(options.App, out var dumpApp) ? dumpApp : SteamAppCatalog.TModLoaderAppId);
+        var dumpStore = new FileSteamCredentialStore(
+            options.CredentialsPath ?? throw new ArgumentException("--dump-depots 需要 --credentials"));
+        var dumpCreds = await dumpStore.LoadAsync().ConfigureAwait(false)
+            ?? throw new InvalidOperationException("没有可用的 Steam 凭据，请先登录");
+        using var dumpSession = new SteamSession(dumpCreds);
+        await dumpSession.ConnectAsync().ConfigureAwait(false);
+        if (!string.IsNullOrWhiteSpace(options.BetaCode))
+        {
+            var beta = await dumpSession.Apps.CheckAppBetaPassword(appId, options.BetaCode)
+                .ToTask().WaitAsync(TimeSpan.FromSeconds(30)).ConfigureAwait(false);
+            Emit("status", $"beta 结果分支: {string.Join(",", beta.BetaPasswords?.Keys ?? Enumerable.Empty<string>())}");
+        }
+        var tokenResp = await dumpSession.Apps.PICSGetAccessTokens(appId, null).ToTask().ConfigureAwait(false);
+        var dumpToken = tokenResp.AppTokens.TryGetValue(appId, out var dt) ? dt : 0UL;
+        var infoResp = await dumpSession.Apps.PICSGetProductInfo(
+            new[] { new SteamApps.PICSRequest(appId, dumpToken) }, Array.Empty<SteamApps.PICSRequest>())
+            .ToTask().ConfigureAwait(false);
+        var dumpInfo = infoResp.Results?.SelectMany(r => r.Apps.Values).FirstOrDefault();
+        if (dumpInfo is null) { Emit("error", "没有 appinfo"); return 4; }
+        foreach (var depot in dumpInfo.KeyValues["depots"].Children)
+        {
+            var manifests = depot["manifests"];
+            if (manifests == KeyValue.Invalid) continue;
+            var names = string.Join(",", manifests.Children.Select(m => m.Name));
+            Emit("status", $"depot {depot.Name}: manifests=[{names}]");
+        }
+        Emit("done", null);
+        return 0;
+    }
+
+    if (options.ListBranches)
+    {
+        var appId = ResolveSpec(options.App)?.AppId
+            ?? (uint.TryParse(options.App, out var parsedApp) ? parsedApp : SteamAppCatalog.TModLoaderAppId);
+        // 匿名 PICS 看不到 beta 分支，有凭据就用账号会话
+        SteamSession session;
+        if (!string.IsNullOrWhiteSpace(options.CredentialsPath) && File.Exists(options.CredentialsPath))
+        {
+            var stored = await new FileSteamCredentialStore(options.CredentialsPath).LoadAsync().ConfigureAwait(false);
+            session = stored is null ? new SteamSession() : new SteamSession(stored);
+        }
+        else
+        {
+            session = new SteamSession();
+        }
+        using var _ = session;
+        await session.ConnectAsync().ConfigureAwait(false);
+        Emit("status", $"已连接 Steam（{session.SteamId.ConvertToUInt64()}），查询 app {appId} 的分支...");
+        var tokenResponse = await session.Apps.PICSGetAccessTokens(appId, null).ToTask().ConfigureAwait(false);
+        var token = tokenResponse.AppTokens.TryGetValue(appId, out var t) ? t : 0UL;
+        var infoResponse = await session.Apps.PICSGetProductInfo(
+            new[] { new SteamApps.PICSRequest(appId, token) }, Array.Empty<SteamApps.PICSRequest>())
+            .ToTask().ConfigureAwait(false);
+        var info = infoResponse.Results?.SelectMany(r => r.Apps.Values).FirstOrDefault();
+        if (info is null)
+        {
+            Emit("error", $"Steam 没有返回 app {appId} 的信息");
+            return 4;
+        }
+        // 分支信息在 PICS 里挂在 depots 段下面（"branches" / "privatebranches" 这两个伪 depot），
+        // 少数 app 会单独给顶层 branches 段，两边都试。
+        var branchSection = info.KeyValues["branches"];
+        if (branchSection == KeyValue.Invalid)
+            branchSection = info.KeyValues["depots"]["branches"];
+        if (branchSection == KeyValue.Invalid)
+            branchSection = info.KeyValues["depots"]["privatebranches"];
+        if (branchSection != KeyValue.Invalid)
+        {
+            foreach (var branch in branchSection.Children)
+            {
+                var password = branch["password"].Value;
+                var payload = new Dictionary<string, object?>
+                {
+                    ["name"] = branch.Name,
+                    ["description"] = branch["description"].Value ?? "",
+                    ["buildId"] = branch["buildid"].Value ?? "",
+                    ["passwordRequired"] = !string.IsNullOrEmpty(password)
+                        || string.Equals(branch["pwdrequired"].Value, "1", StringComparison.Ordinal),
+                    ["keys"] = string.Join(",", branch.Children.Select(c => c.Name)),
+                };
+                Emit("branch", null, branchPayload: payload);
+            }
+        }
         Emit("done", null);
         return 0;
     }
@@ -214,7 +335,9 @@ async Task<int> RunGameContentAsync(CliOptions options)
         var downloader = new SteamAppDownloader(
             progress => Emit("progress", progress.CurrentFile, progress: progress),
             message => Emit("status", message),
-            skipDepots: options.SkipDepots);
+            skipDepots: options.SkipDepots,
+            branchPassword: options.BranchPassword,
+            betaCode: options.BetaCode);
         Emit("status", $"开始下载 {spec.Name}（{spec.Branch}, {spec.PlatformLabel}）到 {options.GameRoot}");
         await downloader.DownloadAsync(session, spec, options.GameRoot).ConfigureAwait(false);
         Emit("done", null);
@@ -271,7 +394,7 @@ void EmitWorkshop(IReadOnlyList<SteamWorkshopItem> items)
     Emitter.WriteLine(JsonSerializer.Serialize(payload));
 }
 
-void Emit(string type, string? message, SteamDownloadProgress? progress = null, bool? owned = null, SteamAppSpec? app = null)
+void Emit(string type, string? message, SteamDownloadProgress? progress = null, bool? owned = null, SteamAppSpec? app = null, Dictionary<string, object?>? branchPayload = null)
 {
     var payload = new Dictionary<string, object?>();
     if (type == "progress" && progress is not null)
@@ -282,6 +405,11 @@ void Emit(string type, string? message, SteamDownloadProgress? progress = null, 
         payload["total"] = progress.TotalBytes;
         payload["files"] = $"{progress.CompletedFiles}/{progress.TotalFiles}";
         payload["current"] = progress.CurrentFile;
+    }
+    else if (type == "branch" && branchPayload is not null)
+    {
+        payload = branchPayload ?? new Dictionary<string, object?>();
+        payload["type"] = "branch";
     }
     else if (type == "app" && app is not null)
     {
@@ -512,6 +640,10 @@ static CliOptions ParseArgs(string[] args)
             case "--branch": options.Branch = TakeValue(); break;
             case "--platform": options.Platform = TakeValue(); break;
             case "--skip-depot": ParseDepotIds(TakeValue(), options.SkipDepots); break;
+            case "--list-branches": options.ListBranches = true; break;
+            case "--branch-password": options.BranchPassword = TakeValue(); break;
+            case "--beta-code": options.BetaCode = TakeValue(); break;
+            case "--dump-depots": options.DumpDepots = true; break;
             case "--credentials": options.CredentialsPath = TakeValue(); break;
             case "--account": options.Account = TakeValue(); break;
             case "--password": options.Password = TakeValue(); break;
@@ -574,6 +706,18 @@ internal sealed class CliOptions
 
     /// <summary>不下载的 depot（tModLoader 的共享内容 depot 就属于这种）</summary>
     public HashSet<uint> SkipDepots { get; } = new();
+
+    /// <summary>列出 app 的 Steam 分支（beta 分支的密码由 Steam 侧校验，必须原样传回去）</summary>
+    public bool ListBranches { get; set; }
+
+    /// <summary>受保护 beta 分支的密码（对应 PICS 里的 branches.<name>.password）</summary>
+    public string? BranchPassword { get; set; }
+
+    /// <summary>用 beta 密码向 Steam 换隐藏分支（IClientApps.CheckAppBetaPassword）</summary>
+    public string? BetaCode { get; set; }
+
+    /// <summary>调试：把 depots 段里所有 manifest 分支名打出来</summary>
+    public bool DumpDepots { get; set; }
 }
 
 /// <summary>事件输出：stdout + 可选事件文件（宿主进程内运行、拿不到 stdout 时用）</summary>

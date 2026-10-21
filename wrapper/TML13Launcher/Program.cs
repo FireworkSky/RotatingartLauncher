@@ -231,9 +231,57 @@ namespace TML13Launcher
             if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("HOME")))
                 Environment.SetEnvironmentVariable("HOME", s_gameDir);
 
-            PatchGLCallLocker(tmlAsm);
-            PatchInstallVerifier(tmlAsm);
-            GlCompat.Install(tmlAsm);
+            // 每一项单独兜底：某一个补丁失败不能连累 GlCompat（图像兼容层必须先装上）
+            Try("GlCompat.Install", () => GlCompat.Install(tmlAsm));
+            Try("GLCallLocker", () => PatchGLCallLocker(tmlAsm));
+            Try("InstallVerifier", () => PatchInstallVerifier(tmlAsm));
+        }
+
+        private static void Try(string name, Action action)
+        {
+            try
+            {
+                action();
+            }
+            catch (Exception e)
+            {
+                Log(name + " failed: " + e);
+            }
+        }
+
+        /// <summary>
+        /// 拦掉 tML 的 `Interface.MessageBoxShow`。
+        ///
+        /// 默认**不启用**：消息框内部是 System.Windows.Forms，Android 上没有 X11，
+        /// 真弹出来就会 `DllNotFoundException: libX11.so.6` 然后静默退出。但用 MonoMod 去
+        /// hook 这个方法会把 `Terraria.Main` 的静态构造提前拉起来（Main..cctor 里的
+        /// `Path.Combine(path1, ...)` 此时 path1 还是 null）→ `TypeInitializationException`，
+        /// 反而把后面的 GlCompat 一起带崩。
+        ///
+        /// 正确做法是从根上不触发它：tML 1.3 只在找不到素材目录时才弹框
+        /// （`Main.PostSocialInitialize` 找 `../Terraria/Content`），所以要求安装目录就叫
+        /// `Terraria`（见 SteamInstaller.deterministicInstallDir）。
+        /// </summary>
+        private static void PatchMessageBox(Assembly tmlAsm)
+        {
+            var ui = tmlAsm.GetType("Terraria.ModLoader.UI.Interface");
+            var show = ui?.GetMethod("MessageBoxShow",
+                BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic,
+                null,
+                new[] { typeof(string), typeof(string) },
+                null);
+            if (show == null)
+            {
+                Log("Interface.MessageBoxShow not found, skip patch");
+                return;
+            }
+
+            new MonoMod.RuntimeDetour.Hook(show,
+                new Action<Action<string, string>, string, string>((orig, text, caption) =>
+                {
+                    Log("MessageBoxShow suppressed: [" + caption + "] " + text);
+                }));
+            Log("Interface.MessageBoxShow hooked (suppressed, logged)");
         }
 
         /// <summary>

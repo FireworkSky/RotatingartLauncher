@@ -66,12 +66,16 @@ class SteamInstallPlugin : BaseInstallPlugin() {
      *
      * 与 GOG 的 tModLoader 1.3 安装走同一套规则（见 BaseInstallPlugin）：
      * tModLoader.exe 与 Terraria.exe 同级、跳过 mono BCL / glibc 平台库 / 旧 FNA、
-     * 最后换成包装 exe + 配套 FNA。depot 自带的 Content/ 与 Terraria.exe 不覆盖，
-     * 沿用游戏目录里已有的那份原版素材与 Steam 版本体。
+     * 最后换成包装 exe + 配套 FNA。
+     *
+     * depot 里的 `Content/` **必须覆盖**：tModLoader 1.3 是按 Terraria 1.3.5.3 编的，
+     * 它要的 `Images/ChestStack_0.xnb` 这类文件在 1.4.5.8 的 Content 里已经没了，
+     * 主素材目录（`../Terraria/Content`）+ 备用素材目录（`./Content`）都会找不到 →
+     * `Main.LoadTextures` 直接 ContentLoadException 崩掉。
      */
     fun overlayLegacyTModLoader(downloadDir: File, terrariaDir: File): Boolean = runCatching {
         val sourceDir = findLegacyRoot(downloadDir)
-        copyLegacyOverlay(sourceDir, terrariaDir, keepExistingGameFiles = true)
+        copyLegacyOverlay(sourceDir, terrariaDir, keepExistingGameFiles = false)
         installLegacyBootstrap(terrariaDir)
         AppLog.i(TAG, "tModLoader 1.3 已平铺到 ${terrariaDir.absolutePath}")
         true

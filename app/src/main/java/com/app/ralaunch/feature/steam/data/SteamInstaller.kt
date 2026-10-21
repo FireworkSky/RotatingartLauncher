@@ -27,6 +27,7 @@ object SteamInstaller {
         repository: IGameRepositoryServiceV3,
         game: SteamGame,
         branch: String = game.branch,
+        betaCode: String? = null,
         onStatus: (String) -> Unit,
         onProgress: (Float, String?) -> Unit,
     ): GameItem = withContext(Dispatchers.IO) {
@@ -44,20 +45,27 @@ object SteamInstaller {
             onStatus("覆盖已有安装：${dir.name}（分支 $branch）")
             clearInstallDir(dir)
             dir
-        } else {
+        } else if (game.appId == SteamCatalog.TMODLOADER_APP_ID) {
+            // tModLoader 要摆在 Terraria 目录同级（1.4 的两种布局之一）
             siblingInstallDir(repository, definition)
+        } else {
+            // 其它 Steam 游戏：目录名就用 gameId（Terraria 必须叫 Terraria，见 deterministicInstallDir）
+            deterministicInstallDir(repository, definition)
         }
         AppLog.i(TAG, "Steam 安装 ${game.name}（$branch）-> ${root.absolutePath}")
 
         val code = SteamCli.run(
             context,
-            listOf(
-                "--game-root", root.absolutePath,
-                "--app", game.appId.toString(),
-                "--branch", branch,
-                "--platform", game.platform,
-                "--credentials", SteamCli.credentialsFile(context).absolutePath,
-            ),
+            buildList {
+                add("--game-root"); add(root.absolutePath)
+                add("--app"); add(game.appId.toString())
+                add("--branch"); add(branch)
+                add("--platform"); add(game.platform)
+                add("--credentials"); add(SteamCli.credentialsFile(context).absolutePath)
+                if (!betaCode.isNullOrBlank()) {
+                    add("--beta-code"); add(betaCode)
+                }
+            },
         ) { event -> handleEvent(event, onStatus, onProgress, game) }
 
         if (code != 0) {
@@ -82,9 +90,33 @@ object SteamInstaller {
         val launchTarget = if (isTmlStandalone) "tModLoader.dll" else null
         val runtime = if (launchTarget == "tModLoader.dll") "10.0.4" else runtimeFor(game)
         val item = plugin.buildGameItem(root, root, definition, launchTarget, runtime)
-        val named = item.copy(displayedName = "${game.name}（${branchLabel(game, branch)}）")
+        val named = item.copy(displayedName = "${game.name}（${branchLabel(branch)}）")
         repository.upsert(named)
         named
+    }
+
+    /**
+     * Steam 下载的落地目录：**直接用 gameId 当目录名**，不留随机后缀。
+     *
+     * 这一条是硬要求，不是美观问题：tModLoader 1.3 的 `Main.PostSocialInitialize` 找素材用的是
+     * `../Terraria/Content`（退路是 `../Content`，再不行就弹「Content folder not found」并 Exit(1)）。
+     * 所以 Terraria 的安装目录必须正好叫 `Terraria`，`../Terraria/Content` 才会指回它自己 ——
+     * GOG 那份能跑就是因为目录名天然是 `Terraria`。同名的目录已被占用时退回随机目录。
+     */
+    private fun deterministicInstallDir(
+        repository: IGameRepositoryServiceV3,
+        definition: GameDefinition,
+    ): File {
+        val gamesDir = File(repository.getGameGlobalStorageDirFull())
+        val dir = File(gamesDir, definition.gameId)
+        if (!dir.exists()) {
+            dir.mkdirs()
+            AppLog.i(TAG, "安装目录（固定名）: ${dir.absolutePath}")
+            return dir
+        }
+        AppLog.w(TAG, "目录 ${dir.name} 已被占用，改用随机目录")
+        val (rootPath, _) = repository.createGameStorageRoot(definition.gameId)
+        return File(rootPath)
     }
 
     /**
@@ -154,8 +186,7 @@ object SteamInstaller {
         dir.mkdirs()
     }
 
-    private fun branchLabel(game: SteamGame, branch: String): String =
-        game.branches.firstOrNull { it.id == branch }?.label ?: branch
+    private fun branchLabel(branch: String): String = SteamCatalog.branchLabel(branch)
 
     private suspend fun overlayTModLoader(
         context: Context,
@@ -173,7 +204,7 @@ object SteamInstaller {
             it.mkdirs()
         }
 
-        onStatus("下载 tModLoader 1.3（${branchLabel(game, game.branch)}）...")
+        onStatus("下载 tModLoader 1.3（${branchLabel(game.branch)}）...")
         val code = SteamCli.run(
             context,
             listOf(

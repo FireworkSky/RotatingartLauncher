@@ -39,6 +39,9 @@ public static class SteamAppCatalog
     };
 
     public const uint TerrariaAppId = 105600;
+
+    /// <summary>默认分支（无密码、所有账号可见）</summary>
+    public const string DefaultBranch = "public";
     public const uint TModLoaderAppId = 1281930;
 
     /// <summary>
@@ -70,6 +73,28 @@ public static class SteamAppCatalog
     /// 从 PICS 的 depots 段里挑出该分支、Windows 平台、非共享运行时的 depot 及 manifest gid。
     /// 分支不存在时回退到 public。
     /// </summary>
+    /// <summary>
+    /// 只按平台挑 depot id（不看分支 manifest）。私有 beta 的 depot 段往往缺 oslist，
+    /// 用公开 appinfo 算出来的这套 id 去筛，避免把 Windows/macOS 的 depot 也下下来。
+    /// </summary>
+    public static HashSet<uint> SelectDepotIds(KeyValue depotSection, string platform)
+    {
+        var result = new HashSet<uint>();
+        if (depotSection == KeyValue.Invalid) return result;
+        foreach (var depot in depotSection.Children)
+        {
+            if (!uint.TryParse(depot.Name, out var depotId)) continue;
+            if (SharedRedistDepots.Contains(depotId)) continue;
+            var config = depot["config"];
+            var osList = config == KeyValue.Invalid ? null : config["oslist"].Value;
+            if (!string.IsNullOrWhiteSpace(osList) &&
+                !osList.Contains(platform, StringComparison.OrdinalIgnoreCase))
+                continue;
+            result.Add(depotId);
+        }
+        return result;
+    }
+
     public static List<(uint DepotId, ulong ManifestId)> SelectDepots(
         KeyValue depotSection,
         string branch,

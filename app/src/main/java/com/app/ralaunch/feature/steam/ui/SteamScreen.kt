@@ -30,6 +30,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import com.app.ralaunch.feature.steam.data.SteamBranch
+import com.app.ralaunch.feature.steam.data.SteamCatalog
 import com.app.ralaunch.feature.steam.data.SteamGame
 import com.app.ralaunch.feature.steam.vm.SteamUiState
 import com.app.ralaunch.feature.steam.vm.WorkshopEntry
@@ -49,7 +51,8 @@ fun SteamScreen(
     onWorkshopSearch: () -> Unit,
     onWorkshopDownload: (WorkshopEntry) -> Unit,
     selectedBranches: Map<Int, String>,
-    unlockedBranches: Set<String>,
+    branches: Map<Int, List<SteamBranch>>,
+    betaCode: String,
     secretInput: String,
     onBranchSelect: (Int, String) -> Unit,
     onSecretInput: (String) -> Unit,
@@ -71,7 +74,7 @@ fun SteamScreen(
             Text("Steam 游戏", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 8.dp))
         }
         items(games, key = { it.appId }) { game ->
-            GameCard(game, state, onInstall, selectedBranches, unlockedBranches, onBranchSelect)
+            GameCard(game, state, onInstall, selectedBranches, onBranchSelect)
         }
         item {
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
@@ -93,7 +96,7 @@ fun SteamScreen(
             }
         }
         item {
-            SecretCodeRow(secretInput, onSecretInput, onUnlockSecret, state.unlockedBranches)
+            SecretCodeRow(secretInput, onSecretInput, onUnlockSecret, betaCode)
         }
         items(state.workshopItems, key = { it.publishedFileId }) { item ->
             WorkshopCard(item, onDownload = { onWorkshopDownload(item) })
@@ -190,7 +193,6 @@ private fun GameCard(
     state: SteamUiState,
     onInstall: (SteamGame) -> Unit,
     selectedBranches: Map<Int, String>,
-    unlockedBranches: Set<String>,
     onBranchSelect: (Int, String) -> Unit,
 ) {
     Card(modifier = Modifier.fillMaxWidth()) {
@@ -205,10 +207,10 @@ private fun GameCard(
             }
             val currentBranch = selectedBranches[game.appId] ?: game.branch
             Text("分支 $currentBranch · ${game.platform} · appid ${game.appId}", style = MaterialTheme.typography.bodySmall)
-            if (game.branches.isNotEmpty()) {
-                val visible = game.branches.filter { branch ->
-                    branch.secretCode == null || branch.id in unlockedBranches
-                }
+            val branchList: List<SteamBranch> = state.branches[game.appId]
+                ?: listOf(SteamBranch(game.branch, SteamCatalog.branchLabel(game.branch)))
+            if (branchList.isNotEmpty()) {
+                val visible = branchList
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     visible.forEach { branch ->
                         val selected = branch.id == currentBranch
@@ -241,13 +243,14 @@ private fun SecretCodeRow(
     secretInput: String,
     onSecretInput: (String) -> Unit,
     onUnlockSecret: () -> Unit,
-    unlockedBranches: Set<String>,
+    betaCode: String,
 ) {
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Text("秘密代码", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
             Text(
-                if (unlockedBranches.isEmpty()) "输入秘密代码可解锁隐藏分支" else "已解锁 ${unlockedBranches.size} 个隐藏分支",
+                if (betaCode.isBlank()) "输入秘密代码可解锁隐藏分支（如 tModLoader 的 1.4.5 测试版）"
+                else "已解锁隐藏分支（秘密代码将由 Steam 校验）",
                 style = MaterialTheme.typography.bodySmall,
             )
             Row(verticalAlignment = Alignment.CenterVertically) {

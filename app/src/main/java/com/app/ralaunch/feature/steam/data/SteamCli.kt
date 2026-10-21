@@ -147,6 +147,42 @@ object SteamCli {
 
 
     /**
+     * 现查一个 app 的 Steam 分支（PICS 的 depots.branches）。
+     * 受 beta 密码保护的分支（tModLoader 的 1.4.5-dev）在公开 appinfo 里看不到，
+     * 必须把密码发给 Steam（--beta-code）才会被返回。
+     */
+    suspend fun listBranches(context: Context, appId: Int, betaCode: String? = null): List<SteamBranch> =
+        withContext(Dispatchers.IO) {
+            val branches = mutableListOf<SteamBranch>()
+            val args = buildList {
+                if (!betaCode.isNullOrBlank()) {
+                    add("--beta-code"); add(betaCode)
+                } else {
+                    add("--list-branches")
+                }
+                add("--app"); add(appId.toString())
+                if (hasCredentials(context)) {
+                    add("--credentials"); add(credentialsFile(context).absolutePath)
+                }
+            }
+            val code = run(context, args) { event ->
+                if (event.optString("type") == "branch") {
+                    val name = event.optString("name")
+                    if (name.isNotBlank()) {
+                        branches += SteamBranch(
+                            id = name,
+                            label = SteamCatalog.branchLabel(name),
+                            gated = !betaCode.isNullOrBlank(),
+                        )
+                    }
+                }
+            }
+            AppLog.i(TAG, "Steam 分支查询：app=$appId code=${if (betaCode.isNullOrBlank()) "none" else "***"} " +
+                "exit=$code branches=${branches.map { it.id }}")
+            branches
+        }
+
+    /**
      * 把登录账号的身份（SteamID/昵称）写成游戏目录下的 steam-shim/identity.json，
      * 供 Steamworks.NET shim 读取。没登录或失败时返回 false（不阻塞启动）。
      */

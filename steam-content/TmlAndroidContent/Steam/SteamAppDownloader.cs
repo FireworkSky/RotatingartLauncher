@@ -29,6 +29,8 @@ public sealed class SteamAppDownloader
     private readonly Action<SteamDownloadProgress>? _progress;
     private readonly Action<string>? _status;
     private readonly IReadOnlyCollection<uint> _skipDepots;
+    private readonly string? _branchPassword;
+    private readonly string? _betaCode;
     private readonly ConcurrentDictionary<(uint DepotId, string Host), string> _cdnAuthTokens = new();
 
     /// <param name="skipDepots">
@@ -38,11 +40,15 @@ public sealed class SteamAppDownloader
     public SteamAppDownloader(
         Action<SteamDownloadProgress>? progress = null,
         Action<string>? status = null,
-        IReadOnlyCollection<uint>? skipDepots = null)
+        IReadOnlyCollection<uint>? skipDepots = null,
+        string? branchPassword = null,
+        string? betaCode = null)
     {
         _progress = progress;
         _status = status;
         _skipDepots = skipDepots ?? Array.Empty<uint>();
+        _branchPassword = branchPassword;
+        _betaCode = betaCode;
     }
 
     public async Task DownloadAsync(
@@ -65,7 +71,38 @@ public sealed class SteamAppDownloader
         File.Delete(marker);
         var appInfo = await GetAppInfoAsync(session, spec.AppId, cancellationToken)
             .ConfigureAwait(false);
-        var depots = SteamAppCatalog.SelectDepots(appInfo.KeyValues["depots"], spec.Branch, spec.Platform);
+        // 受密码保护的 beta 分支（tModLoader 的 1.4.5-dev 这类）在公开 appinfo 里没有 manifest gid，
+        // 必须先拿 beta 密码向 Steam 换「私有 beta 的 depot 段」（CheckAppBetaPassword → PICSGetPrivateBeta）。
+        var depotSection = appInfo.KeyValues["depots"];
+        if (!string.IsNullOrWhiteSpace(_betaCode) && !string.Equals(spec.Branch, SteamAppCatalog.DefaultBranch, StringComparison.OrdinalIgnoreCase))
+        {
+            var privateSection = await TryGetPrivateBetaDepotSectionAsync(session, spec, cancellationToken).ConfigureAwait(false);
+            if (privateSection is not null && privateSection != KeyValue.Invalid)
+            {
+                // 私有段常常缺 oslist：用公开 appinfo 里该平台的 depot id 白名单筛一遍
+                var platformDepots = SteamAppCatalog.SelectDepotIds(appInfo.KeyValues["depots"], spec.Platform);
+                var filtered = SteamAppCatalog.SelectDepots(privateSection, spec.Branch, spec.Platform)
+                    .Where(d => platformDepots.Count == 0 || platformDepots.Contains(d.DepotId))
+                    .ToList();
+                if (filtered.Count > 0)
+                {
+                    var section = new KeyValue("depots");
+                    foreach (var (depotId, manifestId) in filtered)
+                    {
+                        var depotNode = new KeyValue(depotId.ToString());
+                        var manifests = new KeyValue("manifests");
+                        var branchNode = new KeyValue(spec.Branch);
+                        branchNode["gid"].Value = manifestId.ToString();
+                        manifests.Children.Add(branchNode);
+                        depotNode.Children.Add(manifests);
+                        section.Children.Add(depotNode);
+                    }
+                    depotSection = section;
+                    _status?.Invoke($"使用私有 beta 分支数据：{spec.Branch}（{filtered.Count} 个平台 depot）");
+                }
+            }
+        }
+        var depots = SteamAppCatalog.SelectDepots(depotSection, spec.Branch, spec.Platform);
         if (_skipDepots.Count > 0)
         {
             var skipped = depots.Where(depot => _skipDepots.Contains(depot.DepotId)).ToList();
@@ -232,6 +269,43 @@ public sealed class SteamAppDownloader
     private static string DescribeServer(Server server) =>
         $"{server.VHost ?? server.Host ?? "unknown"} ({server.Protocol})";
 
+    /// <summary>
+    /// 受密码保护的 beta 分支：先用 beta 密码向 Steam 校验（CheckAppBetaPassword），
+    /// 再用拿到的分支密码换「私有 beta depot 段」（PICSGetPrivateBeta）。
+    /// 公开 appinfo 里没有这类分支的 manifest gid，所以必须走这一条。
+    /// </summary>
+    private async Task<KeyValue?> TryGetPrivateBetaDepotSectionAsync(
+        SteamSession session,
+        SteamAppSpec spec,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var beta = await session.Apps.CheckAppBetaPassword(spec.AppId, _betaCode!)
+                .ToTask().WaitAsync(TimeSpan.FromSeconds(30), cancellationToken).ConfigureAwait(false);
+            var names = beta.BetaPasswords is null
+                ? string.Empty
+                : string.Join(",", beta.BetaPasswords.Keys);
+            if (beta.BetaPasswords is null || !beta.BetaPasswords.TryGetValue(spec.Branch, out var branchPassword))
+            {
+                _status?.Invoke($"beta 密码不对（Steam 给的分支：{names}）");
+                return null;
+            }
+
+            var accessToken = session.AccessTokenFor(spec.AppId);
+            var privateBeta = await session.Apps.PICSGetPrivateBeta(
+                    spec.AppId, accessToken, spec.Branch, branchPassword)
+                .ToTask().WaitAsync(TimeSpan.FromSeconds(30), cancellationToken).ConfigureAwait(false);
+            _status?.Invoke($"已取到私有 beta 数据：{spec.Branch}");
+            return privateBeta.DepotSection;
+        }
+        catch (Exception ex)
+        {
+            _status?.Invoke($"取私有 beta 数据失败：{ex.Message}");
+            return null;
+        }
+    }
+
     private static async Task<SteamApps.PICSProductInfoCallback.PICSProductInfo> GetAppInfoAsync(
         SteamSession session,
         uint appId,
@@ -267,7 +341,7 @@ public sealed class SteamAppDownloader
             throw new InvalidOperationException($"Could not get depot {depotId} key: {keyResponse.Result}");
 
         var requestCode = await session.Content.GetManifestRequestCode(
-            depotId, spec.AppId, manifestId, spec.Branch)
+            depotId, spec.AppId, manifestId, spec.Branch, _branchPassword)
             .WaitAsync(cancellationToken).ConfigureAwait(false);
         if (requestCode == 0)
             throw new InvalidOperationException($"Could not authorize depot {depotId} manifest.");
