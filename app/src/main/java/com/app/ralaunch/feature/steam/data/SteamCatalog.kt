@@ -29,6 +29,13 @@ object SteamCatalog {
     const val TERRARIA_APP_ID = 105600
     const val TMODLOADER_APP_ID = 1281930
 
+    /**
+     * tModLoader app 的「共享内容 depot」（PICS 里没有 oslist 的那个）：里面是原版素材。
+     * 1.3 平铺安装时保留游戏自己那份 Content（1.4.5.8），不需要再下一遍，也让下载不会因为
+     * 这个 depot 在本机 CDN 上取不到而整体失败。
+     */
+    const val TMODLOADER_CONTENT_DEPOT_ID = 1281931
+
     val all: List<SteamGame> = listOf(
         SteamGame(
             appId = TMODLOADER_APP_ID,

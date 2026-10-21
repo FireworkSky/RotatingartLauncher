@@ -174,6 +174,8 @@ object SteamInstaller {
                 "--branch", game.branch,
                 "--platform", game.platform,
                 "--credentials", SteamCli.credentialsFile(context).absolutePath,
+                // 共享内容 depot 是原版素材：平铺时保留游戏自己的 Content，不下载它
+                "--skip-depot", SteamCatalog.TMODLOADER_CONTENT_DEPOT_ID.toString(),
             ),
         ) { event -> handleEvent(event, onStatus, onProgress, game) }
 

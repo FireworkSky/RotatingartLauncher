@@ -149,11 +149,23 @@ public sealed class SteamSession : IDisposable
         var ticket = await _apps.GetAppOwnershipTicket(appId)
             .ToTask().WaitAsync(cancellationToken).ConfigureAwait(false);
         LastOwnershipResult = ticket.Result;
-        if (ticket.Result != EResult.OK)
-            return false;
+        if (ticket.Result == EResult.OK)
+        {
+            _ownedApps.Add(appId);
+            return true;
+        }
 
-        _ownedApps.Add(appId);
-        return true;
+        // 免费 app（tModLoader）账号可能还没有 license，先申请一个再判定
+        var freeLicense = await _apps.RequestFreeLicense(new[] { appId })
+            .ToTask().WaitAsync(cancellationToken).ConfigureAwait(false);
+        if (freeLicense.GrantedApps.Contains(appId))
+        {
+            _ownedApps.Add(appId);
+            LastOwnershipResult = EResult.OK;
+            return true;
+        }
+
+        return false;
     }
 
     public void Dispose()

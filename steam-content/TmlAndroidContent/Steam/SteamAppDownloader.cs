@@ -28,14 +28,21 @@ public sealed class SteamAppDownloader
 
     private readonly Action<SteamDownloadProgress>? _progress;
     private readonly Action<string>? _status;
+    private readonly IReadOnlyCollection<uint> _skipDepots;
     private readonly ConcurrentDictionary<(uint DepotId, string Host), string> _cdnAuthTokens = new();
 
+    /// <param name="skipDepots">
+    /// 明确不下载的 depot。目前只有 tModLoader 用到：它的共享内容 depot（1281931）是原版素材，
+    /// RAL 安装时保留游戏自己那份 Content，不需要再下一遍。
+    /// </param>
     public SteamAppDownloader(
         Action<SteamDownloadProgress>? progress = null,
-        Action<string>? status = null)
+        Action<string>? status = null,
+        IReadOnlyCollection<uint>? skipDepots = null)
     {
         _progress = progress;
         _status = status;
+        _skipDepots = skipDepots ?? Array.Empty<uint>();
     }
 
     public async Task DownloadAsync(
@@ -59,6 +66,17 @@ public sealed class SteamAppDownloader
         var appInfo = await GetAppInfoAsync(session, spec.AppId, cancellationToken)
             .ConfigureAwait(false);
         var depots = SteamAppCatalog.SelectDepots(appInfo.KeyValues["depots"], spec.Branch, spec.Platform);
+        if (_skipDepots.Count > 0)
+        {
+            var skipped = depots.Where(depot => _skipDepots.Contains(depot.DepotId)).ToList();
+            if (skipped.Count > 0)
+            {
+                depots = depots.Where(depot => !_skipDepots.Contains(depot.DepotId)).ToList();
+                _status?.Invoke(
+                    $"Skipping depot(s) {string.Join(", ", skipped.Select(s => s.DepotId))} " +
+                    $"(keep the game's own files)");
+            }
+        }
         if (depots.Count == 0)
             throw new InvalidOperationException(
                 $"Steam returned no usable {spec.Branch} depots for {spec.Name}.");

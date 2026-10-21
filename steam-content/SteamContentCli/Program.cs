@@ -213,7 +213,8 @@ async Task<int> RunGameContentAsync(CliOptions options)
 
         var downloader = new SteamAppDownloader(
             progress => Emit("progress", progress.CurrentFile, progress: progress),
-            message => Emit("status", message));
+            message => Emit("status", message),
+            skipDepots: options.SkipDepots);
         Emit("status", $"开始下载 {spec.Name}（{spec.Branch}, {spec.PlatformLabel}）到 {options.GameRoot}");
         await downloader.DownloadAsync(session, spec, options.GameRoot).ConfigureAwait(false);
         Emit("done", null);
@@ -223,6 +224,18 @@ async Task<int> RunGameContentAsync(CliOptions options)
     {
         try { await store.ClearAsync().ConfigureAwait(false); } catch (Exception) { }
         throw new SteamAuthenticationException(ex.Result);
+    }
+}
+
+/// <summary>解析逗号分隔的 depot id 列表（--skip-depot 1281931,1281932）</summary>
+static void ParseDepotIds(string value, HashSet<uint> target)
+{
+    foreach (var part in value.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+    {
+        if (uint.TryParse(part, out var depotId))
+            target.Add(depotId);
+        else
+            Console.WriteLine($"{{\"type\":\"status\",\"message\":\"忽略无法解析的 depot id: {part}\"}}");
     }
 }
 
@@ -498,6 +511,7 @@ static CliOptions ParseArgs(string[] args)
             case "--app": options.App = TakeValue(); break;
             case "--branch": options.Branch = TakeValue(); break;
             case "--platform": options.Platform = TakeValue(); break;
+            case "--skip-depot": ParseDepotIds(TakeValue(), options.SkipDepots); break;
             case "--credentials": options.CredentialsPath = TakeValue(); break;
             case "--account": options.Account = TakeValue(); break;
             case "--password": options.Password = TakeValue(); break;
@@ -557,6 +571,9 @@ internal sealed class CliOptions
     public bool Anonymous { get; set; }
     public bool LoginOnly { get; set; }
     public string? IdentityOut { get; set; }
+
+    /// <summary>不下载的 depot（tModLoader 的共享内容 depot 就属于这种）</summary>
+    public HashSet<uint> SkipDepots { get; } = new();
 }
 
 /// <summary>事件输出：stdout + 可选事件文件（宿主进程内运行、拿不到 stdout 时用）</summary>
