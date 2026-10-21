@@ -43,6 +43,22 @@ RAL(Kotlin) ── 安装/启动流程检测到缺少 Content ──▶ 调 Stea
 产物会拷到 `app/src/main/assets/steam/`（`SteamContentCli.dll` + 依赖 + runtimeconfig），随 APK 分发；
 运行时用 RAL 的 .NET 10 运行时（`runtimes/dotnet/...`）执行。
 
+## 为什么我们的 SteamPatch 不用代理，而作者这套要
+
+两者用的都是 SteamKit2，差别在连接配置：
+
+| | 我们的 SteamPatch / 工坊 | 作者的 TmlAndroidHost |
+|---|---|---|
+| CM 列表 | **内置 11 个 CM（TCP 27017）**，`WithDirectoryFetch(false)` 不查 `api.steampowered.com` | 默认 `WithDirectoryFetch(true)`，先请求 ISteamDirectory WebAPI 拿 CM 列表 → 被墙 |
+| 协议 | 强制 `ProtocolTypes.Tcp`（WebSocket 443 端点常被中间设备断掉） | `ProtocolTypes.All` |
+| 登录 | 匿名 `LogOnAnonymous()`，不碰网页登录接口 | 账号密码 + Guard，走认证接口 |
+| 内容服务器 | DepotDownloader 源码也打了补丁（StaticCmList/TCP），服务器目录走 CM 的 `IContentServerDirectoryService` | 未改，走默认路径 |
+| HTTP | IPv4-only + 放松"证书时间无效"这一种错误 | 默认双栈 |
+
+所以：**匿名 + 内置 CM 列表 + TCP** 这三件套让工坊查询/下载可以直连；账号登录因为要过认证端点，网络受限时仍建议 `--proxy`。
+
+本模块的 `TmlAndroidContent/Steam/SteamNetworking.cs` 已经把上面这些配置固化了（账号登录也走 TCP + 内置 CM），`--proxy` 仅在需要时启用。
+
 ## 注意
 
 - Steam 登录走 SteamKit2（`ProtocolTypes.All`，TCP/WebSocket 都试），部分网络环境需要 `--proxy`

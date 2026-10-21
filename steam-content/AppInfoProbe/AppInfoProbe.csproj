@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- 诊断工具：匿名登录取 5 个 app 的 PICS 信息（depot / 分支 / 启动项），
+       用来定"哪些 depot 是内容、哪些需要账号 license"。不随 APK 发布。 -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <AssemblyName>AppInfoProbe</AssemblyName>
+    <RootNamespace>AppInfoProbe</RootNamespace>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <UseSharedCompilation>false</UseSharedCompilation>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../TmlAndroidContent/TmlAndroidContent.csproj" />
+  </ItemGroup>
+</Project>

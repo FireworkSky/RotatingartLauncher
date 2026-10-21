@@ -15,9 +15,10 @@ public sealed record SteamDownloadProgress(
     public double Percentage => TotalBytes == 0 ? 100 : DownloadedBytes * 100d / TotalBytes;
 }
 
-public sealed class SteamTerrariaContentDownloader
+public sealed class SteamAppDownloader
 {
-    public const string CompletionMarker = ".tmodloader-content.complete";
+    /// <summary>下载完成标记文件名（按 app 区分，避免多游戏互相覆盖）。</summary>
+    public static string CompletionMarker(uint appId) => $".steam-content-{appId}.complete";
 
     private const int MaxRetries = 5;
     private const int MaxConcurrentFiles = 4;
@@ -27,7 +28,7 @@ public sealed class SteamTerrariaContentDownloader
     private readonly Action<string>? _status;
     private readonly ConcurrentDictionary<(uint DepotId, string Host), string> _cdnAuthTokens = new();
 
-    public SteamTerrariaContentDownloader(
+    public SteamAppDownloader(
         Action<SteamDownloadProgress>? progress = null,
         Action<string>? status = null)
     {
@@ -37,23 +38,28 @@ public sealed class SteamTerrariaContentDownloader
 
     public async Task DownloadAsync(
         SteamSession session,
+        SteamAppSpec spec,
         string targetDirectory,
         CancellationToken cancellationToken = default,
         Func<CancellationToken, ValueTask>? waitForResume = null)
     {
         ArgumentNullException.ThrowIfNull(session);
+        ArgumentNullException.ThrowIfNull(spec);
         ArgumentException.ThrowIfNullOrWhiteSpace(targetDirectory);
-        if (!session.TerrariaOwnershipVerified)
-            throw new InvalidOperationException("Terraria ownership must be verified before downloading.");
+        if (!session.IsOwnershipVerified(spec.AppId))
+            throw new InvalidOperationException(
+                $"Steam ownership of {spec.Name} (app {spec.AppId}) must be verified before downloading.");
 
-        _status?.Invoke("Requesting Terraria product information...");
+        var marker = Path.Combine(Path.GetFullPath(targetDirectory), CompletionMarker(spec.AppId));
+        _status?.Invoke($"Requesting {spec.Name} product information...");
         Directory.CreateDirectory(targetDirectory);
-        File.Delete(Path.Combine(Path.GetFullPath(targetDirectory), CompletionMarker));
-        var appInfo = await GetAppInfoAsync(session, SteamSession.TerrariaAppId, cancellationToken)
+        File.Delete(marker);
+        var appInfo = await GetAppInfoAsync(session, spec.AppId, cancellationToken)
             .ConfigureAwait(false);
-        var depots = ParsePublicDepots(appInfo.KeyValues["depots"]);
+        var depots = SteamAppCatalog.SelectDepots(appInfo.KeyValues["depots"], spec.Branch);
         if (depots.Count == 0)
-            throw new InvalidOperationException("Steam returned no public Terraria depots.");
+            throw new InvalidOperationException(
+                $"Steam returned no usable {spec.Branch} depots for {spec.Name}.");
 
         var servers = (await LoadContentServersAsync(session, cancellationToken)
                 .ConfigureAwait(false))
@@ -63,7 +69,7 @@ public sealed class SteamTerrariaContentDownloader
         if (servers.Count == 0)
             throw new InvalidOperationException("Steam returned no usable CDN servers.");
 
-        _status?.Invoke($"Preparing {depots.Count} Terraria content depots...");
+        _status?.Invoke($"Preparing {depots.Count} {spec.Name} depots ({spec.Branch})...");
         var output = new DownloadState(targetDirectory, _progress);
         foreach (var (depotId, manifestId) in depots)
         {
@@ -81,6 +87,7 @@ public sealed class SteamTerrariaContentDownloader
                 {
                     await DownloadDepotAsync(
                             session,
+                            spec,
                             output,
                             depotId,
                             manifestId,
@@ -114,7 +121,6 @@ public sealed class SteamTerrariaContentDownloader
             }
         }
 
-        var marker = Path.Combine(Path.GetFullPath(targetDirectory), CompletionMarker);
         var temporaryMarker = marker + ".tmp";
         await File.WriteAllTextAsync(
                 temporaryMarker,
@@ -156,30 +162,9 @@ public sealed class SteamTerrariaContentDownloader
         throw new InvalidOperationException($"Steam returned no product information for app {appId}.");
     }
 
-    private static List<(uint DepotId, ulong ManifestId)> ParsePublicDepots(KeyValue depotSection)
-    {
-        var result = new List<(uint, ulong)>();
-        foreach (var depot in depotSection.Children)
-        {
-            if (!uint.TryParse(depot.Name, out var depotId))
-                continue;
-
-            var config = depot["config"];
-            var osList = config == KeyValue.Invalid ? null : config["oslist"].Value;
-            if (!string.IsNullOrWhiteSpace(osList) &&
-                !osList.Contains("windows", StringComparison.OrdinalIgnoreCase))
-                continue;
-
-            var manifest = depot["manifests"]["public"]["gid"].Value;
-            if (ulong.TryParse(manifest, out var manifestId))
-                result.Add((depotId, manifestId));
-        }
-
-        return result;
-    }
-
     private async Task DownloadDepotAsync(
         SteamSession session,
+        SteamAppSpec spec,
         DownloadState output,
         uint depotId,
         ulong manifestId,
@@ -187,13 +172,13 @@ public sealed class SteamTerrariaContentDownloader
         CancellationToken cancellationToken,
         Func<CancellationToken, ValueTask>? waitForResume)
     {
-        var keyResponse = await session.Apps.GetDepotDecryptionKey(depotId, SteamSession.TerrariaAppId)
+        var keyResponse = await session.Apps.GetDepotDecryptionKey(depotId, spec.AppId)
             .ToTask().WaitAsync(cancellationToken).ConfigureAwait(false);
         if (keyResponse.Result != EResult.OK)
             throw new InvalidOperationException($"Could not get depot {depotId} key: {keyResponse.Result}");
 
         var requestCode = await session.Content.GetManifestRequestCode(
-            depotId, SteamSession.TerrariaAppId, manifestId, "public")
+            depotId, spec.AppId, manifestId, spec.Branch)
             .WaitAsync(cancellationToken).ConfigureAwait(false);
         if (requestCode == 0)
             throw new InvalidOperationException($"Could not authorize depot {depotId} manifest.");
@@ -201,7 +186,7 @@ public sealed class SteamTerrariaContentDownloader
         using var client = new Client(session.Client);
         _status?.Invoke($"Reading depot {depotId} manifest...");
         var manifest = await DownloadManifestWithRetryAsync(
-            client, depotId, manifestId, requestCode, server, keyResponse.DepotKey,
+            client, spec, depotId, manifestId, requestCode, server, keyResponse.DepotKey,
             session, cancellationToken).ConfigureAwait(false);
 
         var files = (manifest.Files ?? []).Where(file =>
@@ -215,7 +200,7 @@ public sealed class SteamTerrariaContentDownloader
             try
             {
                 await DownloadFileAsync(client, output, file, depotId, keyResponse.DepotKey,
-                    session, server, cancellationToken, waitForResume).ConfigureAwait(false);
+                    session, spec, server, cancellationToken, waitForResume).ConfigureAwait(false);
             }
             finally
             {
@@ -227,6 +212,7 @@ public sealed class SteamTerrariaContentDownloader
 
     private async Task<DepotManifest> DownloadManifestWithRetryAsync(
         Client client,
+        SteamAppSpec spec,
         uint depotId,
         ulong manifestId,
         ulong requestCode,
@@ -250,7 +236,7 @@ public sealed class SteamTerrariaContentDownloader
             {
                 lastError = exception;
                 cdnAuthToken = await GetCdnAuthTokenAsync(
-                        session, depotId, server, cancellationToken)
+                        session, spec, depotId, server, cancellationToken)
                     .ConfigureAwait(false);
                 if (cdnAuthToken is null && attempt == MaxRetries - 1)
                     throw;
@@ -273,6 +259,7 @@ public sealed class SteamTerrariaContentDownloader
         uint depotId,
         byte[] depotKey,
         SteamSession session,
+        SteamAppSpec spec,
         Server server,
         CancellationToken cancellationToken,
         Func<CancellationToken, ValueTask>? waitForResume)
@@ -295,7 +282,7 @@ public sealed class SteamTerrariaContentDownloader
                         await waitForResume(cancellationToken).ConfigureAwait(false);
                     var buffer = new byte[chunk.UncompressedLength];
                     var written = await DownloadChunkWithRetryAsync(
-                            client, session, depotId, chunk, buffer, depotKey, server,
+                            client, session, spec, depotId, chunk, buffer, depotKey, server,
                             relativePath, cancellationToken)
                         .ConfigureAwait(false);
 
@@ -322,6 +309,7 @@ public sealed class SteamTerrariaContentDownloader
     private async Task<int> DownloadChunkWithRetryAsync(
         Client client,
         SteamSession session,
+        SteamAppSpec spec,
         uint depotId,
         DepotManifest.ChunkData chunk,
         byte[] buffer,
@@ -349,7 +337,7 @@ public sealed class SteamTerrariaContentDownloader
             {
                 lastError = exception;
                 cdnAuthToken = await GetCdnAuthTokenAsync(
-                        session, depotId, server, cancellationToken)
+                        session, spec, depotId, server, cancellationToken)
                     .ConfigureAwait(false);
                 if (cdnAuthToken is not null)
                 {
@@ -394,6 +382,7 @@ public sealed class SteamTerrariaContentDownloader
 
     private async Task<string?> GetCdnAuthTokenAsync(
         SteamSession session,
+        SteamAppSpec spec,
         uint depotId,
         Server server,
         CancellationToken cancellationToken)
@@ -406,7 +395,7 @@ public sealed class SteamTerrariaContentDownloader
             return cachedToken;
 
         var response = await session.Content.GetCDNAuthToken(
-                SteamSession.TerrariaAppId, depotId, host)
+                spec.AppId, depotId, host)
             .WaitAsync(cancellationToken)
             .ConfigureAwait(false);
         if (response.Result != EResult.OK || string.IsNullOrWhiteSpace(response.Token))

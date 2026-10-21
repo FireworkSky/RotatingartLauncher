@@ -16,11 +16,37 @@ using System.Text.Json;
 using TmlAndroidContent.Steam;
 
 var options = ParseArgs(args);
+
+if (options.ListApps)
+{
+    foreach (var app in SteamAppCatalog.All)
+        Console.WriteLine(JsonSerializer.Serialize(new Dictionary<string, object?>
+        {
+            ["appId"] = app.AppId,
+            ["name"] = app.Name,
+            ["branch"] = app.Branch,
+            ["launchTarget"] = app.WindowsLaunchTarget,
+            ["notes"] = app.Notes,
+        }));
+    return 0;
+}
+
+var spec = ResolveSpec(options.App);
+if (spec is null)
+{
+    Emit("error", $"未知的 app：{options.App}（可用 --list 查看）");
+    return 1;
+}
+
 if (options.GameRoot is null)
 {
     Emit("error", "缺少 --game-root");
     return 1;
 }
+
+// --branch 覆盖默认分支（例如 tModLoader 的 1.3-legacy / public）
+var branch = options.Branch ?? spec.Branch;
+spec = spec with { Branch = branch };
 
 var credentialsPath = options.CredentialsPath
     ?? Path.Combine(options.GameRoot, "steam-content-credentials.json");
@@ -45,10 +71,10 @@ try
     Emit("status", "连接 Steam...");
     await session.ConnectAsync().ConfigureAwait(false);
 
-    Emit("status", "验证 Terraria 拥有状态...");
-    if (!await session.VerifyTerrariaOwnershipAsync().ConfigureAwait(false))
+    Emit("status", $"验证 {spec.Name}（App {spec.AppId}）拥有状态...");
+    if (!await session.VerifyOwnershipAsync(spec.AppId).ConfigureAwait(false))
     {
-        Emit("error", "该 Steam 账号没有 Terraria（App 105600）");
+        Emit("error", $"该 Steam 账号没有 {spec.Name}（App {spec.AppId}）");
         return 2;
     }
 
@@ -58,12 +84,12 @@ try
         return 0;
     }
 
-    var downloader = new SteamTerrariaContentDownloader(
+    var downloader = new SteamAppDownloader(
         progress => Emit("progress", progress.CurrentFile, progress: progress),
         message => Emit("status", message));
 
-    Emit("status", "开始下载 Terraria 内容...");
-    await downloader.DownloadAsync(session, options.GameRoot).ConfigureAwait(false);
+    Emit("status", $"开始下载 {spec.Name}（{spec.Branch}）到 {options.GameRoot}");
+    await downloader.DownloadAsync(session, spec, options.GameRoot).ConfigureAwait(false);
 
     Emit("done", null);
     return 0;
@@ -112,6 +138,15 @@ static void Emit(string type, string? message, SteamDownloadProgress? progress =
     Console.Out.Flush();
 }
 
+static SteamAppSpec? ResolveSpec(string? app)
+{
+    if (string.IsNullOrWhiteSpace(app))
+        return SteamAppCatalog.Find(SteamAppCatalog.TerrariaAppId);
+    if (uint.TryParse(app, out var appId))
+        return SteamAppCatalog.Find(appId);
+    return SteamAppCatalog.Find(app);
+}
+
 static CliOptions ParseArgs(string[] args)
 {
     var options = new CliOptions();
@@ -129,6 +164,9 @@ static CliOptions ParseArgs(string[] args)
         switch (arg)
         {
             case "--game-root": options.GameRoot = TakeValue(); break;
+            case "--app": options.App = TakeValue(); break;
+            case "--branch": options.Branch = TakeValue(); break;
+            case "--list": options.ListApps = true; break;
             case "--credentials": options.CredentialsPath = TakeValue(); break;
             case "--account": options.Account = TakeValue(); break;
             case "--password": options.Password = TakeValue(); break;
@@ -137,7 +175,8 @@ static CliOptions ParseArgs(string[] args)
             case "--verify-only": options.VerifyOnly = true; break;
             case "--help":
             case "-h":
-                Console.WriteLine("SteamContentCli --game-root <dir> [--credentials <file>] [--account <user> --password <pass>] [--guard <code>] [--proxy <url>] [--verify-only]");
+                Console.WriteLine("SteamContentCli --game-root <dir> [--app <appid|name>] [--branch <branch>] [--credentials <file>]");
+                Console.WriteLine("               [--account <user> --password <pass>] [--guard <code>] [--proxy <url>] [--verify-only] [--list]");
                 Environment.Exit(0);
                 break;
         }
@@ -148,6 +187,9 @@ static CliOptions ParseArgs(string[] args)
 
 internal sealed class CliOptions
 {
+    public string? App { get; set; }
+    public string? Branch { get; set; }
+    public bool ListApps { get; set; }
     public string? GameRoot { get; set; }
     public string? CredentialsPath { get; set; }
     public string? Account { get; set; }

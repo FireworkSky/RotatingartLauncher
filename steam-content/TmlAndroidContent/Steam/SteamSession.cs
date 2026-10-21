@@ -35,13 +35,7 @@ public sealed class SteamSession : IDisposable
         ArgumentNullException.ThrowIfNull(credentials);
         _credentials = credentials;
 
-        var configuration = SteamConfiguration.Create(builder =>
-            builder.WithProtocolTypes(ProtocolTypes.All)
-                .WithConnectionTimeout(ConnectionTimeout)
-                .WithHttpClientFactory(_ => new HttpClient
-                {
-                    Timeout = TimeSpan.FromSeconds(20),
-                }));
+        var configuration = SteamNetworking.Create();
         _client = new SteamClient(configuration);
         _callbacks = new CallbackManager(_client);
         _user = _client.GetHandler<SteamUser>()!;
@@ -62,9 +56,17 @@ public sealed class SteamSession : IDisposable
             _loggedOn.TrySetResult(callback.Result));
     }
 
-    public ulong AppAccessToken { get; private set; }
+    private readonly Dictionary<uint, ulong> _appAccessTokens = new();
 
-    public bool TerrariaOwnershipVerified { get; private set; }
+    /// <summary>Terraria 的 app access token（旧接口兼容）；未验证时 0。</summary>
+    public ulong AppAccessToken => AccessTokenFor(TerrariaAppId);
+
+    public bool TerrariaOwnershipVerified => IsOwnershipVerified(TerrariaAppId);
+
+    public ulong AccessTokenFor(uint appId) =>
+        _appAccessTokens.TryGetValue(appId, out var token) ? token : 0UL;
+
+    public bool IsOwnershipVerified(uint appId) => _appAccessTokens.ContainsKey(appId);
 
     public SteamApps Apps => _apps;
 
@@ -86,16 +88,24 @@ public sealed class SteamSession : IDisposable
             throw new SteamAuthenticationException(result);
     }
 
-    public async Task<bool> VerifyTerrariaOwnershipAsync(
+    public Task<bool> VerifyTerrariaOwnershipAsync(CancellationToken cancellationToken = default)
+        => VerifyOwnershipAsync(TerrariaAppId, cancellationToken);
+
+    /// <summary>
+    /// 用 PICS 的 access token 判断账号是否拥有该 app。
+    /// 免费 app（tModLoader）匿名也能拿到 token；付费 app 只有登录账号持有 license 才有。
+    /// 真正的下载授权由 depot key 请求在服务端再判一次。
+    /// </summary>
+    public async Task<bool> VerifyOwnershipAsync(
+        uint appId,
         CancellationToken cancellationToken = default)
     {
-        var result = await _apps.PICSGetAccessTokens(TerrariaAppId, null)
+        var result = await _apps.PICSGetAccessTokens(appId, null)
             .ToTask().WaitAsync(cancellationToken).ConfigureAwait(false);
-        if (!result.AppTokens.TryGetValue(TerrariaAppId, out var token))
+        if (!result.AppTokens.TryGetValue(appId, out var token) || token == 0)
             return false;
 
-        AppAccessToken = token;
-        TerrariaOwnershipVerified = true;
+        _appAccessTokens[appId] = token;
         return true;
     }
 

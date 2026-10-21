@@ -26,22 +26,8 @@ public sealed class SteamLoginService : IDisposable
 
     public SteamLoginService(Uri? proxyUri = null)
     {
-        var configuration = SteamConfiguration.Create(builder =>
-        {
-            // Let SteamKit choose a reachable Steam CM protocol on Android.
-            // Some mobile networks block the WebSocket endpoint while allowing TCP.
-            builder.WithProtocolTypes(ProtocolTypes.All)
-                .WithConnectionTimeout(ConnectionTimeout);
-            if (proxyUri is not null)
-            {
-                builder.WithHttpClientFactory(_ => new HttpClient(
-                    new HttpClientHandler
-                    {
-                        Proxy = new WebProxy(proxyUri),
-                        UseProxy = true,
-                    }));
-            }
-        });
+        // 内置 CM 列表 + TCP + 禁用目录 WebAPI，代理仅在显式传入时启用
+        var configuration = SteamNetworking.Create(proxyUri);
 
         _client = new SteamClient(configuration);
         _callbacks = new CallbackManager(_client);
