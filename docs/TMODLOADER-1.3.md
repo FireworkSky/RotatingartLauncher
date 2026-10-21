@@ -26,11 +26,31 @@ RA 内置的 tModLoader 补丁体系是给 **CoreCLR（DOTNET_STARTUP_HOOKS）**
 4. **嵌入程序集解析**：ReLogic / MonoMod(20.11) / Steamworks.NET / Mono.Cecil 等都在
    `tModLoader.exe` 的 manifest resource 里，包装 exe 按同样规则解析，便于在 EntryPoint 前反射打补丁。
 
-## FNA 侧的两处补丁（FNA 源码）
+## FNA 侧的三处补丁（FNA 源码）
 
 - `SDL2.SDL_RWFromMem(byte[], int)` 重载（旧 FNA 有，新绑定只剩 IntPtr 版本）；
 - `Texture.Name` setter 在 GraphicsDevice 尚未赋值时不再调用 `FNA3D_SetTextureName`
-  （`GraphicsResource.GraphicsDevice` setter 会先写 Name 再赋设备，旧 FNA 不做这件事）。
+  （`GraphicsResource.GraphicsDevice` setter 会先写 Name 再赋设备，旧 FNA 不做这件事）；
+- **已释放的 SoundEffectInstance / DynamicSoundEffectInstance 不再抛 `ObjectDisposedException`**
+  （`State` 返回 `Stopped`、`Play/Stop/Pause/Resume/SetVariable` 变空操作、`PendingBufferCount` 返回 0）。
+
+### 为什么需要第三条（死亡后卡死）
+
+玩家死亡后 `Terraria.Main.UpdateAudio` 每帧抛：
+
+```
+System.ObjectDisposedException: This object has already been disposed.
+Object name: 'SoundEffectInstance'.
+  at Microsoft.Xna.Framework.Audio.SoundEffectInstance.get_State ()
+  at (wrapper dynamic-method) Terraria.Main.DMD<Terraria.Main::UpdateAudio>(Main)
+  at Terraria.Main.DoUpdate (GameTime)
+```
+
+`UpdateAudio` 外层有 try/catch，异常被吞掉但**整帧 UpdateAudio 之后的内容不再执行**，
+于是画面停住、音频线程还在跑（音乐继续），看起来就是"卡死只能退出重进"。
+根因是一次 `SoundEffect.Dispose()`（FNA 会把该 SoundEffect 的所有实例一起释放）之后，
+Terraria 仍持有并查询旧实例。FNA 侧放宽语义（按"已停止"处理）即可恢复：
+相关环境音轨静音，但主循环不再被打断。
 
 ## 已知限制
 
