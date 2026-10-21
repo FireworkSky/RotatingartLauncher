@@ -148,34 +148,21 @@ object SteamInstaller {
     }
 
     /**
-     * tML 1.4 只从已有 Terraria 安装里补**素材**（`Content/` 与图标）。
+     * tModLoader 1.4 **不需要**自己的 `Content/` 副本：它会自己去同级 Terraria 安装里找
+     * （日志：`Content folder of Terraria GOG Install Location assumed to be: ../Terraria/Content`），
+     * 所以这里只补一个图标给游戏列表用，不再合并 800MB 素材。
      *
-     * 绝对不要拷程序集：tML 1.4 自带整套 .NET 10 依赖（`Libraries/` 里的 FNA、ReLogic…），
-     * 而 Terraria 目录里那份是 **mono/net40 的 FNA.dll + System.* BCL**，拷过去会把它的
-     * net10 FNA 顶掉，本地 BCL 还会抢在 .NET 10 共享框架之前被解析 —— tML 1.4 直接起不来。
+     * 同理也绝不拷程序集：Terraria 目录里那份是 mono/net40 的 `FNA.dll` + `System.*` BCL，
+     * 拷进 tML 1.4（.NET Core）目录会把它的依赖顶掉。
      */
     private fun copyVanillaAssets(repository: IGameRepositoryServiceV3, root: File, onStatus: (String) -> Unit) {
         val vanilla = repository.games.value.firstOrNull { it.gameId == "Terraria" } ?: return
         val vanillaDir = File(repository.getGameGlobalStorageDirFull(), vanilla.storageRootPathRelative)
         if (!vanillaDir.exists()) return
-        onStatus("合并 vanilla Terraria 素材（只拷 Content/，程序集用 tML 自带的）...")
-        val contentSrc = File(vanillaDir, "Content")
-        if (contentSrc.exists()) {
-            val dst = File(root, "Content")
-            contentSrc.walkTopDown().forEach { item ->
-                if (item.isDirectory) return@forEach
-                val target = File(dst, item.toRelativeString(contentSrc))
-                if (target.exists()) return@forEach
-                target.parentFile?.mkdirs()
-                item.copyTo(target, overwrite = false)
-            }
-        }
-        // 图标：游戏列表里显示用（不是游戏运行依赖）
-        listOf("Terraria.png").forEach { name ->
-            val src = File(vanillaDir, name)
-            val dst = File(root, name)
-            if (src.exists() && !dst.exists()) src.copyTo(dst, overwrite = false)
-        }
+        onStatus("准备图标（素材沿用同级 Terraria 的 Content）...")
+        val icon = File(vanillaDir, "Terraria.png")
+        val target = File(root, "Terraria.png")
+        if (icon.exists() && !target.exists()) icon.copyTo(target, overwrite = false)
     }
 
     /** 覆盖安装：保留 Content/（tML 1.4 需要 Terraria 素材）与账号相关目录，其余清掉 */
