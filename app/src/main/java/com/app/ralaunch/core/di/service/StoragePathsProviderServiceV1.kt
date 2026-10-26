@@ -14,6 +14,9 @@ class StoragePathsProviderServiceV1(
     fun gamesDirPathFull(): String =
         externalFilesDirPath().resolve(AppConstants.Dirs.GAMES).absolutePathString()
 
+    fun modulesDirPathFull(): String =
+        externalFilesDirPath().resolve(AppConstants.Dirs.MODULES).absolutePathString()
+
     fun logsDirPathFull(): String =
         externalFilesDirPath().resolve(AppConstants.Dirs.LOGS).absolutePathString()
 

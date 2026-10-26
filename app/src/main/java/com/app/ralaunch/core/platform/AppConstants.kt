@@ -31,6 +31,8 @@ object AppConstants {
         const val LEGACY_DOTNET = "dotnet"
         /** 补丁目录 */
         const val PATCHES = "patches"
+        /** 模块目录 */
+        const val MODULES = "modules"
     }
     
     // ==================== 文件名称 ====================
@@ -42,5 +44,9 @@ object AppConstants {
         const val GAME_INFO = "game_info.json"
         /** 设置 JSON */
         const val SETTINGS = "settings.json"
+        /** 模块列表 JSON（modules 根目录，包含有序模块 id 与启用状态） */
+        const val MODULE_MANAGER = "module_manager.json"
+        /** 单个模块元数据 JSON */
+        const val MODULE_META = "meta.json"
     }
 }

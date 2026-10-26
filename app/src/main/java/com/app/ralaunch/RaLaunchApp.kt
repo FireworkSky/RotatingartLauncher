@@ -21,6 +21,7 @@ import com.app.ralaunch.feature.controls.packs.ControlPackManager
 import com.app.ralaunch.feature.patch.data.PatchManager
 import com.app.ralaunch.utils.AppLogger
 import com.app.ralaunch.utils.GameManager
+import com.app.ralaunch.utils.ModuleManager
 import com.app.ralaunch.utils.RuntimeManager
 import com.kyant.fishnet.Fishnet
 import org.koin.android.ext.android.inject
@@ -82,16 +83,19 @@ class RaLaunchApp : Application(), KoinComponent {
         // 6. 初始化游戏管理器（games 目录固定后才能被各组件直接使用）
         GameManager.initialize(Path(StoragePathsProviderServiceV1(this).gamesDirPathFull()))
 
-        // 7. 应用主题设置
+        // 7. 初始化模块管理器（modules 目录固定后才能被各组件直接使用）
+        ModuleManager.initialize(Path(StoragePathsProviderServiceV1(this).modulesDirPathFull()))
+
+        // 8. 应用主题设置
         applyThemeFromSettings()
 
-        // 8. 初始化崩溃捕获
+        // 9. 初始化崩溃捕获
         initCrashHandler()
 
-        // 9. 后台安装补丁
+        // 10. 后台安装补丁
         installPatchesInBackground()
 
-        // 10. 设置环境变量
+        // 11. 设置环境变量
         setupEnvironmentVariables()
 
         applyIconAlias()
