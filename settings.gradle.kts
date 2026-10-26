@@ -27,3 +27,4 @@ rootProject.name = "Rotating-art-Launcher"
 
 include(":app")
 include(":ksp:jsonconfig-processor")
+include(":ksp:snapshoter-processor")

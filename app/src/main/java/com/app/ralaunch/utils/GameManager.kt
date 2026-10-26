@@ -6,6 +6,7 @@ import com.app.ralaunch.core.model.GameList
 import com.app.ralaunch.core.platform.AppConstants
 import com.app.ralaunch.feature.game.ui.legacy.GameActivity
 import com.app.ralaunch.jsonconfig.GameListFlowJsonConfigGenerated
+import com.app.ralaunch.models.snapshoter.snapshot
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -78,13 +79,13 @@ object GameManager {
         gameState.value = loadGames()
     }
 
-    /** 每个订阅者取得独立快照，修改 GameItem 不会改变管理器中的状态。 */
-    val games: Flow<List<GameItem>> = gameState.map { list -> list.map(::snapshot) }
+    /** 每个订阅者取得独立快照（snapshot 扩展），修改 GameItem 不会改变管理器中的状态。 */
+    val games: Flow<List<GameItem>> = gameState.map { list -> list.map { it.snapshot() } }
 
     val currentGames: List<GameItem>
-        get() = gameState.value.map(::snapshot)
+        get() = gameState.value.map { it.snapshot() }
 
-    fun get(id: String): GameItem? = gameState.value.find { it.id == id }?.let(::snapshot)
+    fun get(id: String): GameItem? = gameState.value.find { it.id == id }?.snapshot()
 
     /** 分配空目录，供安装插件或外部导入复制使用；完成后由调用方通过 [save] 或 [add] 登记，不提前发布半成品。 */
     suspend fun createDirectory(gameId: String): Path = withContext(Dispatchers.IO) {
@@ -218,9 +219,6 @@ object GameManager {
         )
     }
 
-    private fun snapshot(game: GameItem): GameItem =
-        game.copy(gameEnvVars = game.gameEnvVars.toMap())
-
     private fun loadGames(): List<GameItem> {
         indexConfig.load()
         return indexConfig.value.games.distinct().mapNotNull { id ->
@@ -230,18 +228,18 @@ object GameManager {
             config.load(infoFile(id))
             val game = config.value
             require(game.id == id) { "Game ID does not match its directory: $id" }
-            snapshot(game)
+            game.snapshot()
         }
     }
 
     /** 在 mutex 内调用；只写变更的游戏信息，排序/移除不重写其他游戏配置。 */
     private fun saveLocked(game: GameItem, index: Int): GameItem {
-        val saved = snapshot(game)
+        val saved = game.snapshot()
         validate(saved)
         val list = gameState.value.filterNot { it.id == saved.id }.toMutableList()
         list.add(index.coerceIn(0, list.size), saved)
         persist(list, saved)
-        return snapshot(saved)
+        return saved.snapshot()
     }
 
     private fun persist(games: List<GameItem>, changedGame: GameItem? = null) {

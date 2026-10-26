@@ -1,6 +1,7 @@
 package com.app.ralaunch.core.model
 
 import com.app.ralaunch.jsonconfig.FlowJsonConfig
+import com.app.ralaunch.models.snapshoter.Snapshoter
 import com.app.ralaunch.utils.GameManager
 import kotlinx.serialization.Serializable
 import kotlin.io.path.Path
@@ -24,6 +25,7 @@ import kotlin.io.path.Path
  * @property gameEnvVars 游戏环境变量（null 值表示在启动前 unset 对应变量）
  */
 // 构造参数默认值由 @FlowJsonConfig 生成代码要求（initial = GameItem()）
+@Snapshoter
 @FlowJsonConfig
 @Serializable
 data class GameItem(

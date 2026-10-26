@@ -115,6 +115,8 @@ android {
 dependencies {
     // KSP 处理器（@FlowJsonConfig 代码生成）
     ksp(project(":ksp:jsonconfig-processor"))
+    // KSP 处理器（@Snapshoter 深拷贝快照代码生成）
+    ksp(project(":ksp:snapshoter-processor"))
 
     // 本地 JAR/AAR 依赖
     implementation(files("../external/libs/libSystem.Security.Cryptography.Native.Android.jar"))
