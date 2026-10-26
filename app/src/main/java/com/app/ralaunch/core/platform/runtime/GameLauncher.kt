@@ -236,19 +236,12 @@ object GameLauncher {
                 Timber.d("未配置启动钩子 / No startup hooks configured")
             }
 
-            // 步骤7：设置 MonoMod 路径（供补丁使用）
-            // Step 7: Set MonoMod path (for patches)
-            val monoModPath = AssemblyPatcher.getMonoModInstallPath().toString()
-            Timber.i("MonoMod 路径 / path: $monoModPath")
-
+            // 步骤7：配置游戏环境变量
+            // Step 7: Configure game environment variables
             EnvVarsManager.quickSetEnvVars(
                 // 启动钩子配置
                 // Startup hooks configuration
                 "DOTNET_STARTUP_HOOKS" to startupHooks,
-
-                // MonoMod 路径，供补丁的 AssemblyResolve 使用
-                // MonoMod path, used by patch's AssemblyResolve
-                "MONOMOD_PATH" to monoModPath,
 
                 // 触摸输入配置
                 // Touch input configuration
@@ -316,8 +309,7 @@ object GameLauncher {
                     "XDG_DATA_HOME" to dataDir,
                     "XDG_CONFIG_HOME" to dataDir,
                     "XDG_CACHE_HOME" to cacheDir,
-                    "TMPDIR" to cacheDir,
-                    "MONOMOD_PATH" to monoModPath
+                    "TMPDIR" to cacheDir
                 ).apply {
                     startupHooks?.let { put("DOTNET_STARTUP_HOOKS", it) }
                 }

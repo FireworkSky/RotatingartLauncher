@@ -22,6 +22,7 @@ import com.app.ralaunch.utils.AppLogger
 import com.app.ralaunch.utils.GameManager
 import com.app.ralaunch.utils.ModuleManager
 import com.app.ralaunch.utils.modules.PatchModuleHandler
+import com.app.ralaunch.utils.modules.StaticPatchModuleHandler
 import com.app.ralaunch.utils.RuntimeManager
 import com.kyant.fishnet.Fishnet
 import org.koin.android.ext.android.inject
@@ -86,6 +87,7 @@ class RaLaunchApp : Application(), KoinComponent {
         // 7. 初始化模块管理器（modules 目录固定后才能被各组件直接使用）
         ModuleManager.initialize(Path(StoragePathsProviderServiceV1(this).modulesDirPathFull()))
         ModuleManager.registerHandler(PatchModuleHandler)
+        ModuleManager.registerHandler(StaticPatchModuleHandler)
 
         // 8. 应用主题设置
         applyThemeFromSettings()
@@ -143,7 +145,6 @@ class RaLaunchApp : Application(), KoinComponent {
     private fun installPatchesInBackground() {
         Thread({
             try {
-                com.app.ralaunch.core.common.util.PatchExtractor.extractPatchesIfNeeded(applicationContext)
                 runBlocking { PatchModuleHandler.installBuiltInPatches(applicationContext, false) }
             } catch (e: Exception) {
                 Timber.e("Failed to install patches: ${e.message}")

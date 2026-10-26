@@ -1,10 +1,9 @@
 package com.app.ralaunch.feature.installer
 
-import android.content.Context
 import timber.log.Timber
 import com.app.ralaunch.utils.GameManager
-import com.app.ralaunch.core.platform.runtime.AssemblyPatcher
-import org.koin.java.KoinJavaComponent
+import com.app.ralaunch.utils.modules.PatchModuleHandler
+import com.app.ralaunch.utils.modules.StaticPatchModuleHandler
 import com.app.ralaunch.core.model.GameItem
 import com.app.ralaunch.core.extractor.IconExtractor
 import com.app.ralaunch.strings.StringsResource.Strings
@@ -83,7 +82,9 @@ abstract class BaseInstallPlugin : GameInstallPlugin {
     }
 
     /**
-     * 保存 GameItem（保存权在插件）并发出完成进度与 [Event.Complete]
+     * 保存 GameItem（保存权在插件）并发出完成进度与 [Event.Complete]。
+     * 保存前把所有对该游戏适用的补丁模块自动注册为启用（见 [registerApplicableModules]），
+     * 安装后直接应用全部适用补丁；随后把适用的已启用静态补丁覆盖到游戏目录。
      */
     protected suspend fun finishInstall(
         gameItem: GameItem,
@@ -92,11 +93,47 @@ abstract class BaseInstallPlugin : GameInstallPlugin {
         callback?.invoke(
             Event.Progress(Strings.installer.finishing, 98)
         )
+        registerApplicableModules(gameItem)
         val saved = GameManager.save(gameItem, 0)
+        applyStaticPatches(saved)
         val message = Strings.installer.complete
         callback?.invoke(Event.Progress(message, 100))
         callback?.invoke(Event.Complete(message, saved))
         return Result.Success(saved)
+    }
+
+    /**
+     * 把所有对该游戏适用的补丁模块（[PatchModuleHandler]，targetGames 含 "*" 或该 gameId）
+     * 自动注册进 [GameItem.enabledModules]，新装游戏默认全量启用适用补丁。
+     * 模块总开关（[com.app.ralaunch.models.ModuleItem.enabled]）不在此处改动：
+     * 用户显式禁用的模块仍登记为该游戏启用，由启动链路按总开关二次过滤。
+     */
+    private fun registerApplicableModules(gameItem: GameItem) {
+        try {
+            val applicableIds = PatchModuleHandler.getApplicablePatches(gameItem.gameId).map { it.id }
+            if (applicableIds.isEmpty()) return
+            gameItem.enabledModules = (gameItem.enabledModules + applicableIds).distinct()
+            Timber.i("已自动注册 %d 个适用补丁模块为启用: %s", applicableIds.size, applicableIds)
+        } catch (e: Exception) {
+            Timber.e(e, "注册适用补丁模块失败")
+        }
+    }
+
+    /**
+     * 安装收尾：把适用的已启用静态补丁直接覆盖到游戏目录（纯覆盖、不可还原）。
+     * 静态补丁只在安装阶段应用一次，启动阶段不再执行；失败只记日志，不影响安装结果。
+     */
+    private fun applyStaticPatches(gameItem: GameItem) {
+        try {
+            val gameDirectory = GameManager.directory(gameItem.id)
+                .resolve(gameItem.gameExePathRelative).parent.toAbsolutePath().normalize()
+            val patches = StaticPatchModuleHandler.getApplicableAndEnabledStaticPatches(gameItem.gameId)
+            if (patches.isEmpty()) return
+            val replacedCount = StaticPatchModuleHandler.applyToGameDirectory(patches, gameDirectory)
+            Timber.i("已应用 ${patches.size} 个静态补丁，替换了 $replacedCount 个文件")
+        } catch (e: Exception) {
+            Timber.e(e, "应用静态补丁失败")
+        }
     }
 
     /**
@@ -203,38 +240,6 @@ abstract class BaseInstallPlugin : GameInstallPlugin {
 
         // 4. 如果都没有图标，返回第一个 EXE（尝试提取）
         return peFiles.firstOrNull { it.extension.lowercase() == "exe" }
-    }
-
-    /**
-     * 安装 MonoMod 库到游戏目录
-     * @param gameDir 游戏目录
-     * @return 是否成功
-     */
-    protected fun installMonoMod(gameDir: File): Boolean {
-        return try {
-            val context: Context = KoinJavaComponent.get(Context::class.java)
-
-            // 1. 解压 MonoMod 到目录
-            val extractSuccess = AssemblyPatcher.extractMonoMod(context)
-            if (!extractSuccess) {
-                Timber.w("MonoMod 解压失败")
-                return false
-            }
-
-            // 2. 应用补丁到游戏目录
-            val patchedCount = AssemblyPatcher.applyMonoModPatches(context, gameDir.absolutePath, true)
-
-            if (patchedCount >= 0) {
-                Timber.i("MonoMod 已应用，替换了 $patchedCount 个文件")
-                true
-            } else {
-                Timber.w("MonoMod 应用失败")
-                false
-            }
-        } catch (e: Exception) {
-            Timber.e(e, "MonoMod 安装异常")
-            false
-        }
     }
 
     /**

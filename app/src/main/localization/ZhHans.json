@@ -206,7 +206,6 @@
   "installer.complete": "安装完成!",
   "installer.failed": "安装失败",
   "installer.cancelled": "导入已取消",
-  "installer.monoMod": "安装 MonoMod 库...",
   "installer.pluginNotFound": "未找到支持此游戏的安装插件",
 
   "installer.celeste.name": "Celeste / Everest",
@@ -225,7 +224,6 @@
   "installer.smapi.installDatFailed": "解压 install.dat 失败: ${reason}",
   "installer.smapi.copyFiles": "复制 SMAPI 文件...",
   "installer.smapi.configure": "配置 SMAPI...",
-  "installer.smapi.applyMonoModPatch": "应用 MonoMod 补丁...",
   "installer.smapi.patchArm64": "修补 ARM64 架构...",
   "installer.smapi.patchConfig": "修补配置文件...",
 

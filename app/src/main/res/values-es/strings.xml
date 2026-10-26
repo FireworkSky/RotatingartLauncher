@@ -574,7 +574,6 @@
     <string name="init_component_sdl_desc">Biblioteca multiplataforma de multimedia y manejo de entrada</string>
     <string name="init_component_netcorehost_desc">Host de runtime de .NET Core</string>
     <string name="init_component_dotnet_desc">Entorno de runtime .NET 10</string>
-    <string name="init_component_monomod_desc">MonoMod es una herramienta universal de modificación de ensamblados .NET</string>
     <string name="init_component_patches_desc">Parches de corrección de juegos</string>
 
     <!-- Mensajes de EditControlDialog -->
@@ -1808,7 +1807,6 @@ Invitado: resultado=%3$d%4$s</string>
     <string name="install_finishing">Finalizando instalación...</string>
     <string name="install_complete">¡Instalación completa!</string>
     <string name="install_failed">Instalación fallida</string>
-    <string name="install_monomod">Instalando bibliotecas MonoMod...</string>
     <string name="install_everest">Instalando Everest...</string>
     <string name="install_everest_with_detail">Instalando Everest: %1$s</string>
     <string name="install_everest_miniinstaller">Ejecutando Everest MiniInstaller...</string>
@@ -1822,7 +1820,6 @@ Invitado: resultado=%3$d%4$s</string>
     <string name="install_extract_install_dat_failed">No se pudo extraer install.dat: %1$s</string>
     <string name="install_copy_smapi_files">Copiando archivos SMAPI...</string>
     <string name="install_configure_smapi">Configurando SMAPI...</string>
-    <string name="install_apply_monomod_patch">Aplicando parche MonoMod...</string>
     <string name="install_patch_arm64">Aplicando parche a arquitectura ARM64...</string>
     <string name="install_patch_config">Aplicando parche a archivos de configuración...</string>
     <string name="install_tmodloader_prepare_dir">Preparando directorio de tModLoader...</string>

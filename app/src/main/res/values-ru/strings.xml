@@ -577,7 +577,6 @@
     <string name="init_component_sdl_desc">Кроссплатформенная библиотека для мультимедиа и обработки ввода</string>
     <string name="init_component_netcorehost_desc">Хост среды выполнения .NET Core</string>
     <string name="init_component_dotnet_desc">Среда выполнения .NET10</string>
-    <string name="init_component_monomod_desc">MonoMod - универсальный инструмент модификации сборок .NET</string>
     <string name="init_component_patches_desc">Патчи исправления игры</string>
 
     <!-- EditControlDialog Messages -->
@@ -1802,7 +1801,6 @@
     <string name="install_finishing">Завершение установки...</string>
     <string name="install_complete">Установка завершена!</string>
     <string name="install_failed">Установка не удалась</string>
-    <string name="install_monomod">Установка библиотек MonoMod...</string>
     <string name="install_everest">Установка Эвереста...</string>
     <string name="install_everest_with_detail">Установка Эвереста: %1$s</string>
     <string name="install_everest_miniinstaller">Запуск Everest MiniInstaller...</string>
@@ -1816,7 +1814,6 @@
     <string name="install_extract_install_dat_failed">Не удалось извлечь install.dat: %1$s.</string>
     <string name="install_copy_smapi_files">Копирование файлов SMAPI...</string>
     <string name="install_configure_smapi">Настройка SMAPI...</string>
-    <string name="install_apply_monomod_patch">Применение патча MonoMod...</string>
     <string name="install_patch_arm64">Исправление архитектуры ARM64...</string>
     <string name="install_patch_config">Исправление файлов конфигурации...</string>
     <string name="install_tmodloader_prepare_dir">Подготовка каталога tModLoader...</string>

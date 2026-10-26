@@ -621,7 +621,6 @@
     <string name="init_component_sdl_desc">Cross-platform multimedia and input handling library</string>
     <string name="init_component_netcorehost_desc">.NET Core runtime host</string>
     <string name="init_component_dotnet_desc">.NET 10 runtime environment</string>
-    <string name="init_component_monomod_desc">MonoMod is a universal .NET assembly modding tool</string>
     <string name="init_component_patches_desc">Game fix patches</string>
 
     <!-- EditControlDialog Messages -->
@@ -1834,7 +1833,6 @@
     <string name="install_finishing">Finishing installation...</string>
     <string name="install_complete">Installation complete!</string>
     <string name="install_failed">Installation failed</string>
-    <string name="install_monomod">Installing MonoMod libraries...</string>
     <string name="install_everest">Installing Everest...</string>
     <string name="install_everest_with_detail">Installing Everest: %1$s</string>
     <string name="install_everest_miniinstaller">Running Everest MiniInstaller...</string>
@@ -1848,7 +1846,6 @@
     <string name="install_extract_install_dat_failed">Failed to extract install.dat: %1$s</string>
     <string name="install_copy_smapi_files">Copying SMAPI files...</string>
     <string name="install_configure_smapi">Configuring SMAPI...</string>
-    <string name="install_apply_monomod_patch">Applying MonoMod patch...</string>
     <string name="install_patch_arm64">Patching ARM64 architecture...</string>
     <string name="install_patch_config">Patching configuration files...</string>
     <string name="install_tmodloader_prepare_dir">Preparing tModLoader directory...</string>

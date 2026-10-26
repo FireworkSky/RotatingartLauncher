@@ -240,14 +240,6 @@ class SmapiInstallPlugin : BaseInstallPlugin() {
             is ArchiveExtractor.Result.Success -> {
                 callback?.invoke(
                     Event.Progress(
-                        Strings.installer.smapi.applyMonoModPatch,
-                        86
-                    )
-                )
-                installMonoMod(outputDir)
-
-                callback?.invoke(
-                    Event.Progress(
                         Strings.installer.smapi.patchArm64,
                         88
                     )
@@ -362,14 +354,6 @@ class SmapiInstallPlugin : BaseInstallPlugin() {
             )
             gameDepsJson.copyTo(smapiDepsJson, overwrite = true)
         }
-
-        callback?.invoke(
-            Event.Progress(
-                Strings.installer.smapi.applyMonoModPatch,
-                89
-            )
-        )
-        installMonoMod(outputDir)
 
         callback?.invoke(
             Event.Progress(

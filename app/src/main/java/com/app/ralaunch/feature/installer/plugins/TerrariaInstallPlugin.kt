@@ -145,15 +145,6 @@ class TerrariaInstallPlugin : BaseInstallPlugin() {
 
         if (isCancelled) return cancelledInstall(callback)
 
-        // 安装 MonoMod 库
-        callback?.invoke(
-            Event.Progress(
-                Strings.installer.monoMod,
-                90
-            )
-        )
-        installMonoMod(finalExeParent)
-
         // 提取图标
         callback?.invoke(
             Event.Progress(

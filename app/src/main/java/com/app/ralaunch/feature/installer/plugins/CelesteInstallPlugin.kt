@@ -134,15 +134,6 @@ class CelesteInstallPlugin : BaseInstallPlugin() {
             is ArchiveExtractor.Result.Success -> { /* 继续 */ }
         }
 
-        // 安装 MonoMod 库
-        callback?.invoke(
-            Event.Progress(
-                Strings.installer.monoMod,
-                85
-            )
-        )
-        installMonoMod(outputDir)
-
         // 执行 Everest MiniInstaller
         callback?.invoke(
             Event.Progress(

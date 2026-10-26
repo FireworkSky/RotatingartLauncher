@@ -606,7 +606,6 @@
     <string name="init_component_sdl_desc">跨平台多媒体和输入处理库</string>
     <string name="init_component_netcorehost_desc">.NET核心运行时宿主</string>
     <string name="init_component_dotnet_desc">.NET10运行时环境</string>
-    <string name="init_component_monomod_desc">MonoMod是一个通用的.NET程序集模组化工具</string>
     <string name="init_component_patches_desc">游戏修复补丁</string>
 
     <!-- EditControlDialog 消息 -->
@@ -1713,14 +1712,12 @@
     <string name="install_complete">安装完成!</string>
     <string name="install_failed">安装失败</string>
     <string name="install_everest_with_detail">安装 Everest: %1$s</string>
-    <string name="install_monomod">安装 MonoMod 库...</string>
     <string name="install_everest_miniinstaller">执行 Everest MiniInstaller...</string>
     <string name="install_everest_miniinstaller_patch_missing">未找到 Everest MiniInstaller 修补程序，或者存在多个同 ID 修补程序</string>
     <string name="install_everest_miniinstaller_failed">Everest MiniInstaller 执行失败，错误码：%1$d</string>
     <string name="install_extract_game_failed">游戏解压失败</string>
     <string name="install_smapi">安装 SMAPI...</string>
     <string name="install_smapi_with_detail">安装 SMAPI: %1$s</string>
-    <string name="install_apply_monomod_patch">应用 MonoMod 补丁...</string>
     <string name="install_patch_arm64">修补 ARM64 架构...</string>
     <string name="install_patch_config">修补配置文件...</string>
     <string name="install_extract_smapi_with_detail">解压 SMAPI: %1$s</string>

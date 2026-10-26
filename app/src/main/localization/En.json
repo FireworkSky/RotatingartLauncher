@@ -206,7 +206,6 @@
   "installer.complete": "Installation complete!",
   "installer.failed": "Installation failed",
   "installer.cancelled": "Import cancelled",
-  "installer.monoMod": "Installing MonoMod libraries...",
   "installer.pluginNotFound": "No installation plugin found for this game",
 
   "installer.celeste.name": "Celeste / Everest",
@@ -225,7 +224,6 @@
   "installer.smapi.installDatFailed": "Failed to extract install.dat: ${reason}",
   "installer.smapi.copyFiles": "Copying SMAPI files...",
   "installer.smapi.configure": "Configuring SMAPI...",
-  "installer.smapi.applyMonoModPatch": "Applying MonoMod patch...",
   "installer.smapi.patchArm64": "Patching ARM64 architecture...",
   "installer.smapi.patchConfig": "Patching configuration files...",
 
