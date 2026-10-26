@@ -6,6 +6,7 @@ import com.app.ralaunch.models.ModuleItem
 import com.app.ralaunch.models.ModuleList
 import com.app.ralaunch.core.platform.AppConstants
 import com.app.ralaunch.jsonconfig.ModuleListFlowJsonConfigGenerated
+import com.app.ralaunch.utils.modules.ModuleHandler
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,6 +23,7 @@ import java.io.InputStreamReader
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.Path
 import kotlin.io.path.copyToRecursively
@@ -40,6 +42,9 @@ import kotlin.io.path.readText
  * 管理器只持有/透传 meta 原始 [kotlinx.serialization.json.JsonObject]，永不回写 meta.json；
  * [ModuleItem.enabled] 是管理器状态，只存在于 module_manager.json。
  * 磁盘上的坏模块目录（meta 缺失/非法、id 不符）一律跳过并 Timber.w，不使 initialize/refresh 失败。
+ *
+ * 类型语义由 [ModuleHandler] 消费方承载：handler 按 type 经 [registerHandler] 注册，
+ * ModuleManager 只登记模块与透传 meta，不解析类型专属字段。
  *
  * ```
  * ModuleManager.initialize(modulesDirectory)
@@ -71,6 +76,18 @@ object ModuleManager {
 
     private val mutex = Mutex()
     private val moduleState = MutableStateFlow<List<ModuleItem>>(emptyList())
+
+    private val handlers = ConcurrentHashMap<String, ModuleHandler>()
+
+    /** 注册类型处理器；同 type 再次注册覆盖旧实例（应用启动接线或测试替换）。 */
+    fun registerHandler(handler: ModuleHandler) {
+        val previous = handlers.put(handler.type, handler)
+        if (previous != null && previous !== handler) {
+            Timber.i("Replaced module handler for type: %s", handler.type)
+        }
+    }
+
+    fun handler(type: String): ModuleHandler? = handlers[type]
 
     /** 固定受管理目录并从磁盘重建内存状态；应用启动或测试准备时调用，可重复调用。 */
     @Synchronized
@@ -246,14 +263,18 @@ object ModuleManager {
      */
     private fun readZipMeta(sourceZip: Path): ModuleItem? {
         return try {
-            ZipFile(sourceZip.toFile()).use { zip ->
-                val entry = zip.getEntry(AppConstants.Files.MODULE_META) ?: return null
-                val meta = InputStreamReader(zip.getInputStream(entry), StandardCharsets.UTF_8).use {
-                    Json.parseToJsonElement(it.readText())
+            ZipFile.builder()
+                .setPath(sourceZip)
+                .get()
+                .use { zip ->
+                    val entry = zip.getEntry(AppConstants.Files.MODULE_META) ?: return null
+                    val meta =
+                        InputStreamReader(zip.getInputStream(entry), StandardCharsets.UTF_8).use {
+                            Json.parseToJsonElement(it.readText())
+                        }
+                    if (meta !is JsonObject) return null
+                    metaItem(meta)
                 }
-                if (meta !is JsonObject) return null
-                metaItem(meta)
-            }
         } catch (e: Exception) {
             Timber.w(e, "Failed to read module archive meta: %s", sourceZip)
             null

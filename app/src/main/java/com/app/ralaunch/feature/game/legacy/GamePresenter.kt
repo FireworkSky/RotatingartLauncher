@@ -3,9 +3,8 @@ package com.app.ralaunch.feature.game.legacy
 import android.os.Build
 import com.app.ralaunch.R
 import com.app.ralaunch.core.platform.runtime.GameLauncher
-import com.app.ralaunch.feature.patch.data.Patch
-import com.app.ralaunch.feature.patch.data.PatchManager
-import org.koin.java.KoinJavaComponent
+import com.app.ralaunch.utils.modules.Patch
+import com.app.ralaunch.utils.modules.PatchModuleHandler
 import timber.log.Timber
 import com.app.ralaunch.feature.game.ui.legacy.GameActivity
 import java.io.BufferedReader
@@ -97,13 +96,8 @@ class GamePresenter : GameContract.Presenter {
             return -5
         }
 
-        val patchManager: PatchManager? = try {
-            KoinJavaComponent.getOrNull(PatchManager::class.java)
-        } catch (_: Exception) {
-            null
-        }
         val enabledPatches = if (gameId != null) {
-            patchManager?.getApplicableAndEnabledPatches(gameId, assemblyFile.toPath()) ?: emptyList()
+            PatchModuleHandler.getApplicableAndEnabledPatches(gameId, assemblyFile.toPath())
         } else {
             emptyList()
         }

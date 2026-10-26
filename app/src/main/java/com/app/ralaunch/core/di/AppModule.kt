@@ -26,7 +26,6 @@ import com.app.ralaunch.feature.installer.vm.InstallerViewModel
 import com.app.ralaunch.utils.LauncherUpdateChecker
 import com.app.ralaunch.feature.main.vm.MainViewModel
 import com.app.ralaunch.feature.main.vm.GameInfoEditViewModel
-import com.app.ralaunch.feature.patch.data.PatchManager
 import com.app.ralaunch.feature.patch.vm.PatchManagementViewModel
 import com.app.ralaunch.feature.script.JavaScriptExecutor
 import com.app.ralaunch.core.model.AppInfo
@@ -50,10 +49,7 @@ val appModule = module {
     }
 
     single {
-        LogExportHelper(
-            storagePathsProvider = get(),
-            patchManager = getOrNull()
-        )
+        LogExportHelper(storagePathsProvider = get())
     }
 
     // ==================== Repositories ====================
@@ -108,14 +104,6 @@ val appModule = module {
 
     single {
         JavaScriptExecutor()
-    }
-
-    single<PatchManager?> {
-        try {
-            PatchManager(null, false)
-        } catch (e: Exception) {
-            null
-        }
     }
 
     single {
@@ -187,8 +175,7 @@ val appModule = module {
 
     viewModel {
         PatchManagementViewModel(
-            appContext = androidContext(),
-            patchManager = getOrNull()
+            appContext = androidContext()
         )
     }
 

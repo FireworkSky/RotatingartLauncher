@@ -23,8 +23,8 @@ import com.app.ralaunch.core.platform.runtime.dotnet.DotNetLauncher
 import timber.log.Timber
 import com.app.ralaunch.core.common.util.NativeMethods
 import com.app.ralaunch.core.platform.runtime.RendererEnvironmentConfigurator
-import com.app.ralaunch.feature.patch.data.Patch
-import com.app.ralaunch.feature.patch.data.PatchManager
+import com.app.ralaunch.utils.modules.Patch
+import com.app.ralaunch.utils.modules.PatchModuleHandler
 import com.app.ralaunch.core.platform.android.ProcessLauncherService
 import org.libsdl.app.SDL
 import kotlin.io.path.Path
@@ -225,7 +225,7 @@ object GameLauncher {
             // 步骤6：配置启动钩子（补丁）
             // Step 6: Configure startup hooks (patches)
             val startupHooks = if (enabledPatches != null && enabledPatches.isNotEmpty())
-                PatchManager.constructStartupHooksEnvVar(enabledPatches) else null
+                PatchModuleHandler.constructStartupHooksEnvVar(enabledPatches) else null
 
             if (startupHooks != null) {
                 Timber.i("已配置 ${enabledPatches!!.size} 个补丁的启动钩子 / DOTNET_STARTUP_HOOKS configured with ${enabledPatches.size} patch(es)")

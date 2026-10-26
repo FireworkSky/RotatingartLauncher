@@ -23,6 +23,7 @@ import kotlin.io.path.Path
  * @property rendererOverride 渲染器覆盖（null 表示跟随全局设置）
  * @property dotNetRuntimeVersionOverride .NET 运行时版本覆盖（null 表示跟随全局设置）
  * @property gameEnvVars 游戏环境变量（null 值表示在启动前 unset 对应变量）
+ * @property enabledModules 该游戏启用的模块 id 列表（补丁等模块类型的按游戏启用状态；默认空 = 全部未启用）
  */
 // 构造参数默认值由 @FlowJsonConfig 生成代码要求（initial = GameItem()）
 @Snapshoter
@@ -38,7 +39,9 @@ data class GameItem(
     var modLoaderEnabled: Boolean = true,
     var rendererOverride: String? = null,
     var dotNetRuntimeVersionOverride: String? = null,
-    var gameEnvVars: Map<String, String?> = emptyMap()
+    var gameEnvVars: Map<String, String?> = emptyMap(),
+    /** 该游戏启用的模块 id 列表（补丁等模块类型的按游戏启用状态；默认空 = 全部未启用） */
+    var enabledModules: List<String> = emptyList()
 ) {
     /**
      * 游戏存储目录名称（相对于全局 games 目录）

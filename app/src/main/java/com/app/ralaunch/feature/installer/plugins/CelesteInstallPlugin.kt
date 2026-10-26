@@ -6,8 +6,7 @@ import com.app.ralaunch.strings.StringsResource.Strings
 import com.app.ralaunch.feature.installer.*
 import com.app.ralaunch.feature.installer.GameInstallPlugin.Event
 import com.app.ralaunch.feature.installer.GameInstallPlugin.Result
-import com.app.ralaunch.feature.patch.data.PatchManager
-import org.koin.java.KoinJavaComponent
+import com.app.ralaunch.utils.modules.PatchModuleHandler
 import java.io.File
 import kotlin.io.path.Path
 
@@ -152,12 +151,9 @@ class CelesteInstallPlugin : BaseInstallPlugin() {
             )
         )
 
-        val patchManager: PatchManager? = try {
-            KoinJavaComponent.getOrNull(PatchManager::class.java)
-        } catch (e: Exception) { null }
-        val patches = patchManager?.getPatchesByIds(
-            listOf("com.app.ralaunch.everest.miniinstaller.fix")
-        ) ?: emptyList()
+        val patches = PatchModuleHandler.getPatchesByIds(
+            listOf("ral.everest.miniinstaller.fix")
+        )
 
         if (patches.size != 1) {
             throw Exception(

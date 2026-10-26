@@ -7,7 +7,7 @@ import android.net.Uri
 import android.widget.Toast
 import androidx.core.content.FileProvider
 import com.app.ralaunch.R
-import com.app.ralaunch.feature.patch.data.PatchManager
+import com.app.ralaunch.utils.modules.PatchModuleHandler
 import com.app.ralaunch.core.platform.runtime.AndroidRendererRegistry
 import com.app.ralaunch.core.logging.LogFilePolicy
 import com.app.ralaunch.core.logging.service.LogExportHelper
@@ -20,6 +20,7 @@ import com.app.ralaunch.core.theme.AppThemeState
 import com.app.ralaunch.feature.sponsor.ui.SponsorsActivity
 import com.app.ralaunch.core.common.util.LocaleManager
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.koin.java.KoinJavaComponent
 import java.io.File
@@ -224,14 +225,9 @@ internal fun clearAppCache(context: Context) {
 internal fun forceReinstallPatches(context: Context) {
     Thread {
         try {
-            val patchManager: PatchManager? = try {
-                KoinJavaComponent.getOrNull(PatchManager::class.java)
-            } catch (e: Exception) { null }
-            patchManager?.let { pm ->
-                PatchManager.installBuiltInPatches(pm, true)
-                android.os.Handler(android.os.Looper.getMainLooper()).post {
-                    Toast.makeText(context, context.getString(R.string.patches_reinstalled), Toast.LENGTH_SHORT).show()
-                }
+            runBlocking { PatchModuleHandler.installBuiltInPatches(context, true) }
+            android.os.Handler(android.os.Looper.getMainLooper()).post {
+                Toast.makeText(context, context.getString(R.string.patches_reinstalled), Toast.LENGTH_SHORT).show()
             }
         } catch (e: Exception) {
             android.os.Handler(android.os.Looper.getMainLooper()).post {

@@ -11,7 +11,7 @@ import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import com.app.ralaunch.R
 import com.app.ralaunch.core.platform.runtime.GameLauncher
-import com.app.ralaunch.feature.patch.data.PatchManager
+import com.app.ralaunch.utils.modules.PatchModuleHandler
 import com.app.ralaunch.core.common.util.NativeMethods
 import org.koin.java.KoinJavaComponent
 import timber.log.Timber
@@ -142,10 +142,7 @@ class ProcessLauncherService : Service() {
             // 设置 stdin 管道：让 .NET Console.ReadLine() 可以读取我们写入的内容
             setupStdinPipe()
 
-            val patchManager: PatchManager? = try {
-                KoinJavaComponent.getOrNull(PatchManager::class.java)
-            } catch (e: Exception) { null }
-            val patches = if (gameId != null) patchManager?.getApplicableAndEnabledPatches(gameId, Paths.get(assemblyPath)) ?: emptyList() else emptyList()
+            val patches = if (gameId != null) PatchModuleHandler.getApplicableAndEnabledPatches(gameId, Paths.get(assemblyPath)) else emptyList()
             Timber.i("Game: $gameId, Applicable patches: ${patches.size}")
             GameLauncher.launchDotNetAssembly(assemblyPath, args ?: emptyArray(), patches)
         } catch (e: Exception) {

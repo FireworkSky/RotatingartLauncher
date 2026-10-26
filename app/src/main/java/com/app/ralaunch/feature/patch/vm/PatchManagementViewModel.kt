@@ -7,9 +7,10 @@ import androidx.lifecycle.viewModelScope
 import com.app.ralaunch.core.common.util.StreamUtils
 import com.app.ralaunch.core.common.util.TemporaryFileAcquirer
 import com.app.ralaunch.utils.GameManager
+import com.app.ralaunch.utils.ModuleManager
 import com.app.ralaunch.core.model.GameItem
-import com.app.ralaunch.feature.patch.data.Patch
-import com.app.ralaunch.feature.patch.data.PatchManager
+import com.app.ralaunch.utils.modules.Patch
+import com.app.ralaunch.utils.modules.PatchModuleHandler
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -19,7 +20,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.nio.file.Files
-import java.nio.file.Paths
 
 data class PatchManagementUiState(
     val games: List<GameItem> = emptyList(),
@@ -29,8 +29,7 @@ data class PatchManagementUiState(
 )
 
 class PatchManagementViewModel(
-    private val appContext: Context,
-    private val patchManager: PatchManager?
+    private val appContext: Context
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(PatchManagementUiState())
     val uiState: StateFlow<PatchManagementUiState> = _uiState.asStateFlow()
@@ -65,21 +64,22 @@ class PatchManagementViewModel(
     fun refreshPatches() {
         val selectedGame = _uiState.value.selectedGame
         val patches = selectedGame?.let { game ->
-            patchManager?.getApplicablePatches(game.gameId) ?: emptyList()
+            PatchModuleHandler.getApplicablePatches(game.gameId)
         } ?: emptyList()
         _uiState.update { it.copy(patches = patches) }
     }
 
     fun isPatchEnabled(patchId: String): Boolean {
-        val selectedGame = _uiState.value.selectedGame ?: return false
-        val gameAsmPath = selectedGame.gameExePathFull?.let { Paths.get(it) } ?: return false
-        return patchManager?.isPatchEnabled(gameAsmPath, patchId) ?: false
+        return _uiState.value.selectedGame?.enabledModules?.contains(patchId) == true
     }
 
     fun setPatchEnabled(patchId: String, enabled: Boolean) {
         val selectedGame = _uiState.value.selectedGame ?: return
-        val gameAsmPath = selectedGame.gameExePathFull?.let { Paths.get(it) } ?: return
-        patchManager?.setPatchEnabled(gameAsmPath, patchId, enabled)
+        viewModelScope.launch {
+            GameManager.configure(selectedGame.id) {
+                enabledModules = if (enabled) enabledModules + patchId else enabledModules - patchId
+            }
+        }
     }
 
     suspend fun importPatch(uri: Uri): Boolean {
@@ -92,11 +92,10 @@ class PatchManagementViewModel(
                             StreamUtils.transferTo(inputStream, outputStream)
                         }
                     }
-                    val result = patchManager?.installPatch(tempPatchPath) ?: false
-                    if (result) {
-                        refreshPatches()
-                    }
-                    result
+                    // 用户显式导入：总是重装
+                    ModuleManager.install(tempPatchPath, force = true)
+                    refreshPatches()
+                    true
                 }
             } catch (_: Exception) {
                 false

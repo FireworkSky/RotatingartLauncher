@@ -6,8 +6,8 @@ import com.app.ralaunch.utils.GameManager
 import com.app.ralaunch.core.di.service.StoragePathsProviderServiceV1
 import timber.log.Timber
 import com.app.ralaunch.core.logging.LogFilePolicy
-import com.app.ralaunch.feature.patch.data.Patch
-import com.app.ralaunch.feature.patch.data.PatchManager
+import com.app.ralaunch.utils.modules.Patch
+import com.app.ralaunch.utils.modules.PatchModuleHandler
 import java.io.File
 import java.nio.file.Paths
 import java.text.SimpleDateFormat
@@ -15,15 +15,12 @@ import java.util.Date
 import java.util.Locale
 
 internal class LogExportHelper(
-    private val logsDirPathProvider: () -> String,
-    private val patchManagerProvider: () -> PatchManager? = { null }
+    private val logsDirPathProvider: () -> String
 ) {
     constructor(
-        storagePathsProvider: StoragePathsProviderServiceV1,
-        patchManager: PatchManager? = null
+        storagePathsProvider: StoragePathsProviderServiceV1
     ) : this(
-        logsDirPathProvider = storagePathsProvider::logsDirPathFull,
-        patchManagerProvider = { patchManager }
+        logsDirPathProvider = storagePathsProvider::logsDirPathFull
     )
 
     fun getLogFiles(): List<File> {
@@ -109,11 +106,7 @@ internal class LogExportHelper(
 
     fun buildPatchManagementInfo(): String {
         return try {
-            val patchManager = patchManagerProvider()
-                ?: return buildDiagnosticSection("Patch Management Information") {
-                    appendLine("Status: Unavailable")
-                }
-            val installedPatches = patchManager.installedPatches
+            val installedPatches = PatchModuleHandler.patches()
             val games = GameManager.currentGames
 
             buildDiagnosticSection("Patch Management Information") {
@@ -125,17 +118,18 @@ internal class LogExportHelper(
                 }
 
                 installedPatches
-                    .sortedWith(compareByDescending<Patch> { it.manifest.priority }.thenBy { it.manifest.id })
+                    .sortedWith(compareByDescending<Patch> { it.manifest.priority }.thenBy { it.id })
                     .forEachIndexed { index, patch ->
+                        val module = patch.module
                         val manifest = patch.manifest
                         appendLine()
-                        appendLine("[${index + 1}] ${manifest.name.ifBlank { manifest.id.ifBlank { "Unknown" } }}")
-                        appendLine("  Id: ${manifest.id.ifBlank { "Unknown" }}")
-                        appendLine("  Version: ${manifest.version.ifBlank { "Unknown" }}")
-                        appendLine("  Author: ${manifest.author.ifBlank { "Unknown" }}")
+                        appendLine("[${index + 1}] ${module.name.ifBlank { module.id.ifBlank { "Unknown" } }}")
+                        appendLine("  Id: ${module.id.ifBlank { "Unknown" }}")
+                        appendLine("  Version: ${module.version.ifBlank { "Unknown" }}")
+                        appendLine("  Author: ${module.author.ifBlank { "Unknown" }}")
                         appendLine("  Priority: ${manifest.priority}")
                         val targetGames = manifest.targetGames
-                            ?.takeIf { it.isNotEmpty() }
+                            .takeIf { it.isNotEmpty() }
                             ?.joinToString(", ")
                             ?: "None"
                         appendLine("  Target Games: $targetGames")
@@ -154,13 +148,13 @@ internal class LogExportHelper(
 
                 games.forEach { game ->
                     val gameAsmPath = Paths.get(game.gameExePathFull ?: game.gameExePathRelative)
-                    val applicablePatches = patchManager.getApplicablePatches(game.gameId)
+                    val applicablePatches = PatchModuleHandler.getApplicablePatches(game.gameId)
                     val enabledPatchIds = applicablePatches
-                        .filter { patchManager.isPatchEnabled(gameAsmPath, it.manifest.id) }
-                        .map { it.manifest.id }
+                        .filter { it.id in game.enabledModules }
+                        .map { it.id }
                     val disabledPatchIds = applicablePatches
-                        .filterNot { patchManager.isPatchEnabled(gameAsmPath, it.manifest.id) }
-                        .map { it.manifest.id }
+                        .filterNot { it.id in game.enabledModules }
+                        .map { it.id }
 
                     appendLine()
                     appendLine("${game.displayedName.ifBlank { game.id }} (${game.gameId.ifBlank { "Unknown" }})")

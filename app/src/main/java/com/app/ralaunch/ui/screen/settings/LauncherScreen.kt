@@ -51,7 +51,7 @@ import com.app.ralaunch.ui.component.SettingsGroup
 import com.app.ralaunch.ui.component.Switch
 import com.app.ralaunch.utils.AssetIntegrityChecker
 import com.app.ralaunch.utils.AssetsManager
-import com.app.ralaunch.utils.PatchManager
+import com.app.ralaunch.utils.modules.PatchModuleHandler
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -282,7 +282,7 @@ fun LauncherScreen() {
                     onClick = {
                         scope.launch {
                             try {
-                                PatchManager.installBuiltInPatches(MainActivity.context!!)
+                                PatchModuleHandler.installBuiltInPatches(MainActivity.context!!)
                                 snackbarHostState.showSnackbar(
                                     message = Strings.settings.launcher.patchesInstalled,
                                     duration = SnackbarDuration.Short

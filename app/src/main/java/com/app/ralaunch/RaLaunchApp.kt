@@ -18,16 +18,17 @@ import com.app.ralaunch.core.di.service.VibrationManagerServiceV1
 import timber.log.Timber
 import com.app.ralaunch.core.model.ThemeMode
 import com.app.ralaunch.feature.controls.packs.ControlPackManager
-import com.app.ralaunch.feature.patch.data.PatchManager
 import com.app.ralaunch.utils.AppLogger
 import com.app.ralaunch.utils.GameManager
 import com.app.ralaunch.utils.ModuleManager
+import com.app.ralaunch.utils.modules.PatchModuleHandler
 import com.app.ralaunch.utils.RuntimeManager
 import com.kyant.fishnet.Fishnet
 import org.koin.android.ext.android.inject
 import org.koin.core.component.KoinComponent
 import java.io.File
 import kotlin.io.path.Path
+import kotlinx.coroutines.runBlocking
 
 
 /**
@@ -59,7 +60,6 @@ class RaLaunchApp : Application(), KoinComponent {
     // 延迟注入（在 Koin 初始化后才能使用）
     private val _vibrationManager: VibrationManagerServiceV1 by inject()
     private val _controlPackManager: ControlPackManager by inject()
-    private val _patchManager: PatchManager? by inject()
 
     override fun onCreate() {
         super.onCreate()
@@ -85,6 +85,7 @@ class RaLaunchApp : Application(), KoinComponent {
 
         // 7. 初始化模块管理器（modules 目录固定后才能被各组件直接使用）
         ModuleManager.initialize(Path(StoragePathsProviderServiceV1(this).modulesDirPathFull()))
+        ModuleManager.registerHandler(PatchModuleHandler)
 
         // 8. 应用主题设置
         applyThemeFromSettings()
@@ -140,16 +141,14 @@ class RaLaunchApp : Application(), KoinComponent {
      * 后台安装补丁
      */
     private fun installPatchesInBackground() {
-        _patchManager?.let { manager ->
-            Thread({
-                try {
-                    com.app.ralaunch.core.common.util.PatchExtractor.extractPatchesIfNeeded(applicationContext)
-                    PatchManager.installBuiltInPatches(manager, false)
-                } catch (e: Exception) {
-                    Timber.e("Failed to install patches: ${e.message}")
-                }
-            }, "PatchInstaller").start()
-        }
+        Thread({
+            try {
+                com.app.ralaunch.core.common.util.PatchExtractor.extractPatchesIfNeeded(applicationContext)
+                runBlocking { PatchModuleHandler.installBuiltInPatches(applicationContext, false) }
+            } catch (e: Exception) {
+                Timber.e("Failed to install patches: ${e.message}")
+            }
+        }, "PatchInstaller").start()
     }
 
     /**
@@ -256,9 +255,4 @@ class RaLaunchApp : Application(), KoinComponent {
      * 获取 ControlPackManager
      */
     fun getControlPackManager(): ControlPackManager = _controlPackManager
-
-    /**
-     * 获取 PatchManager
-     */
-    fun getPatchManager(): PatchManager? = _patchManager
 }

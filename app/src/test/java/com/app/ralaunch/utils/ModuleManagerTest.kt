@@ -2,6 +2,7 @@ package com.app.ralaunch.utils
 
 import android.app.Application
 import com.app.ralaunch.core.platform.AppConstants
+import com.app.ralaunch.utils.modules.ModuleHandler
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
@@ -11,6 +12,7 @@ import kotlinx.serialization.json.jsonPrimitive
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -71,6 +73,29 @@ class ModuleManagerTest {
         assertTrue(savedIds(root).isEmpty())
         ModuleManager.initialize(root)
         assertTrue(ModuleManager.currentModules.isEmpty())
+    }
+
+    @Test
+    fun `registerHandler stores handler by type and unregistered types return null`() {
+        ModuleManager.initialize(temporaryFolder.newFolder("modules").toPath())
+        val handler = object : ModuleHandler { override val type = "registry.probe" }
+
+        ModuleManager.registerHandler(handler)
+
+        assertTrue(ModuleManager.handler("registry.probe") === handler)
+        assertNull(ModuleManager.handler("registry.unknown"))
+    }
+
+    @Test
+    fun `registerHandler replaces existing handler for same type`() {
+        ModuleManager.initialize(temporaryFolder.newFolder("modules").toPath())
+        val first = object : ModuleHandler { override val type = "registry.replace" }
+        val second = object : ModuleHandler { override val type = "registry.replace" }
+
+        ModuleManager.registerHandler(first)
+        ModuleManager.registerHandler(second)
+
+        assertTrue(ModuleManager.handler("registry.replace") === second)
     }
 
     @Test

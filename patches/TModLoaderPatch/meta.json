@@ -1,5 +1,6 @@
 {
-  "id": "com.app.ralaunch.tmodloader.androidfix",
+  "type": "patch",
+  "id": "ral.tmodloader.androidfix",
   "name": "tModLoader Android 修复补丁",
   "description": "修复 tModLoader 在 Android 平台上的 InstallVerifier 空引用异常和 OpenToURL 崩溃",
   "version": "1.0.4",
@@ -13,6 +14,5 @@
     "tModLoader",
     "Terraria"
   ],
-  "priority": 200,
-  "enabled": true
+  "priority": 200
 }

@@ -2,9 +2,9 @@ package com.app.ralaunch.core.logging
 
 import com.app.ralaunch.core.logging.service.LogExportHelper
 import com.app.ralaunch.core.model.GameItem
-import com.app.ralaunch.feature.patch.data.PatchManager
-import com.app.ralaunch.feature.patch.data.PatchManagerConfig
 import com.app.ralaunch.utils.GameManager
+import com.app.ralaunch.utils.ModuleManager
+import com.app.ralaunch.utils.modules.PatchModuleHandler
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -128,41 +128,40 @@ class LogExportHelperTest {
         )
         managerFor(dir, listOf(fixture))
         val game = GameManager.get(fixture.id)!!
-        val patchStorage = Files.createDirectories(dir.toPath().resolve("patches"))
-        patchStorage.createPatchDir(
-            id = "enabled_patch",
+        writePatchModule(
+            dir,
+            id = "com.test.enabled_patch",
             name = "Enabled Patch",
             targetGames = listOf("celeste"),
             priority = 20
         )
-        patchStorage.createPatchDir(
-            id = "disabled_patch",
+        writePatchModule(
+            dir,
+            id = "com.test.disabled_patch",
             name = "Disabled Patch",
             targetGames = listOf("celeste"),
             priority = 10
         )
-        patchStorage.createPatchDir(
-            id = "other_patch",
+        writePatchModule(
+            dir,
+            id = "com.test.other_patch",
             name = "Other Patch",
             targetGames = listOf("terraria"),
             priority = 5
         )
+        ModuleManager.initialize(Files.createDirectories(dir.toPath().resolve("modules")))
+        ModuleManager.registerHandler(PatchModuleHandler)
+        runBlocking { GameManager.configure(game.id) { enabledModules = listOf("com.test.enabled_patch") } }
 
-        val config = PatchManagerConfig().apply {
-            disabledPatches[Paths.get(game.gameExePathFull!!).toAbsolutePath().normalize().toString()] =
-                arrayListOf("disabled_patch")
-        }
-        val patchManager = patchManagerFor(patchStorage, config)
-
-        val info = helperFor(dir, patchManager = patchManager).buildPatchManagementInfo()
+        val info = helperFor(dir).buildPatchManagementInfo()
 
         assertTrue(info.contains("Installed Patches: 3"))
-        assertTrue(info.contains("Id: enabled_patch"))
-        assertTrue(info.contains("Id: disabled_patch"))
-        assertTrue(info.contains("Id: other_patch"))
+        assertTrue(info.contains("Id: com.test.enabled_patch"))
+        assertTrue(info.contains("Id: com.test.disabled_patch"))
+        assertTrue(info.contains("Id: com.test.other_patch"))
         assertTrue(info.contains("Applicable Patches: 2"))
-        assertTrue(info.contains("Enabled Applicable Patch Ids: enabled_patch"))
-        assertTrue(info.contains("Disabled Applicable Patch Ids: disabled_patch"))
+        assertTrue(info.contains("Enabled Applicable Patch Ids: com.test.enabled_patch"))
+        assertTrue(info.contains("Disabled Applicable Patch Ids: com.test.disabled_patch"))
     }
 
     private fun withTempLogDir(block: (File) -> Unit) {
@@ -181,13 +180,9 @@ class LogExportHelperTest {
         }
     }
 
-    private fun helperFor(
-        logsDir: File,
-        patchManager: PatchManager? = null
-    ): LogExportHelper =
+    private fun helperFor(logsDir: File): LogExportHelper =
         LogExportHelper(
-            logsDirPathProvider = { logsDir.absolutePath },
-            patchManagerProvider = { patchManager }
+            logsDirPathProvider = { logsDir.absolutePath }
         )
 
     private fun managerFor(logsDir: File, games: List<GameItem>) = runBlocking {
@@ -201,25 +196,28 @@ class LogExportHelperTest {
         GameManager.initialize(root)
     }
 
-    private fun Path.createPatchDir(
+    /** 在 modules 根写入一个补丁模块目录（meta.json 含补丁专属字段与 DLL）。 */
+    private fun writePatchModule(
+        logsDir: File,
         id: String,
         name: String,
         targetGames: List<String>,
         priority: Int
     ) {
-        val patchDir = resolve(id)
-        Files.createDirectories(patchDir)
+        val moduleDir = logsDir.toPath().resolve("modules").resolve(id)
+        Files.createDirectories(moduleDir)
         Files.write(
-            patchDir.resolve("patch.json"),
+            moduleDir.resolve("meta.json"),
             """
             {
+              "type": "patch",
               "id": "$id",
               "name": "$name",
               "description": "Test patch",
               "version": "1.2.3",
               "author": "Tester",
               "targetGames": [${targetGames.joinToString(",") { "\"$it\"" }}],
-              "dllFileName": "$id.dll",
+              "dllFileName": "${id.substringAfterLast('.')}.dll",
               "entryPoint": {
                 "typeName": "Test.Entry",
                 "methodName": "Start"
@@ -231,28 +229,6 @@ class LogExportHelperTest {
             }
             """.trimIndent().toByteArray(Charsets.UTF_8)
         )
-    }
-
-    private fun patchManagerFor(patchStoragePath: Path, config: PatchManagerConfig): PatchManager {
-        val unsafeClass = Class.forName("sun.misc.Unsafe")
-        val unsafeField = unsafeClass.getDeclaredField("theUnsafe").apply { isAccessible = true }
-        val unsafe = unsafeField.get(null)
-        val manager = unsafeClass
-            .getMethod("allocateInstance", Class::class.java)
-            .invoke(unsafe, PatchManager::class.java) as PatchManager
-
-        setPrivateField(manager, "patchStoragePath", patchStoragePath)
-        setPrivateField(manager, "configFilePath", patchStoragePath.resolve(PatchManagerConfig.CONFIG_FILE_NAME))
-        setPrivateField(manager, "config", config)
-
-        return manager
-    }
-
-    private fun setPrivateField(target: Any, name: String, value: Any) {
-        target.javaClass.getDeclaredField(name).apply {
-            isAccessible = true
-            set(target, value)
-        }
     }
 
 }

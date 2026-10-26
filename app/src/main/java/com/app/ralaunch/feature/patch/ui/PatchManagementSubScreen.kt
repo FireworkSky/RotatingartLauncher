@@ -32,7 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.app.ralaunch.R
 import com.app.ralaunch.core.model.GameItem
-import com.app.ralaunch.feature.patch.data.Patch
+import com.app.ralaunch.utils.modules.Patch
 import com.app.ralaunch.feature.patch.vm.PatchManagementViewModel
 import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
@@ -126,7 +126,7 @@ fun PatchManagementSubScreen(
                     selectedGame = uiState.selectedGame,
                     isPatchEnabled = viewModel::isPatchEnabled,
                     onPatchEnabledChange = { patch, enabled ->
-                        viewModel.setPatchEnabled(patch.manifest.id, enabled)
+                        viewModel.setPatchEnabled(patch.id, enabled)
                         val statusText = if (enabled) {
                             context.getString(R.string.patch_enabled)
                         } else {
@@ -138,7 +138,7 @@ fun PatchManagementSubScreen(
                                 context.getString(
                                     R.string.patch_status_changed_message,
                                     selectedGame.displayedName,
-                                    patch.manifest.name,
+                                    patch.module.name,
                                     statusText
                                 ),
                                 Toast.LENGTH_SHORT
@@ -345,7 +345,7 @@ private fun PatchListPanel(
                         items(patches) { patch ->
                             PatchItem(
                                 patch = patch,
-                                isEnabled = isPatchEnabled(patch.manifest.id),
+                                isEnabled = isPatchEnabled(patch.id),
                                 onCheckedChange = { enabled ->
                                     onPatchEnabledChange(patch, enabled)
                                 }
@@ -380,13 +380,13 @@ private fun PatchItem(
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = patch.manifest.name,
+                    text = patch.module.name,
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Medium
                 )
-                if (patch.manifest.description.isNotEmpty()) {
+                if (patch.module.description.isNotEmpty()) {
                     Text(
-                        text = patch.manifest.description,
+                        text = patch.module.description,
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 2,

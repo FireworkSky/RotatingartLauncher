@@ -1,5 +1,6 @@
 {
-  "id": "com.app.ralaunch.tmodloader.hostandplaypatch",
+  "type": "patch",
+  "id": "ral.tmodloader.hostandplaypatch",
   "name": "Host & Play (多人服务器支持)",
   "description": "通过新的dotnet进程开启服务器",
   "version": "1.0.1",
@@ -14,7 +15,6 @@
     "Terraria"
   ],
   "priority": 50,
-  "enabled": true,
   "environmentVariables": {
     "HOSTANDPLAY_ENABLED": "1"
   },

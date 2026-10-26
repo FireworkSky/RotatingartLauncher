@@ -1,5 +1,6 @@
 {
-  "id": "com.app.ralaunch.tmodloader.consolepatch",
+  "type": "patch",
+  "id": "ral.tmodloader.consolepatch",
   "name": "Android 控制台兼容补丁 (通用)",
   "description": "修复 Android 平台不支持 Console.Title、Console.ForegroundColor、Console.Clear 和 PosixSignalRegistration 等功能的问题。适用于所有 .NET 游戏。",
   "version": "1.0.1",
@@ -12,7 +13,5 @@
   "targetGames": [
     "*"
   ],
-  "priority": 300,
-  "enabled": true
+  "priority": 300
 }
-
