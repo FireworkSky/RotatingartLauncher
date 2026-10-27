@@ -26,6 +26,7 @@ import com.app.ralaunch.core.platform.runtime.RendererEnvironmentConfigurator
 import com.app.ralaunch.utils.modules.Patch
 import com.app.ralaunch.utils.modules.PatchModuleHandler
 import com.app.ralaunch.core.platform.android.ProcessLauncherService
+import com.app.ralaunch.utils.ModuleManager
 import org.libsdl.app.SDL
 import kotlin.io.path.Path
 import kotlin.io.path.createDirectories
@@ -247,6 +248,8 @@ object GameLauncher {
                 // null unsets to avoid stale values from a previous patched launch in-process)
                 "DOTNET_STARTUP_HOOKS" to bootstrapAssemblyPath?.toString(),
                 "RAL_PATCHES" to patchesEnvVar,
+                // TODO: 去除硬编码 module id
+                "MONOMOD_PATH" to ModuleManager.directory("ral.monomod.libs").toString(),
 
                 // 触摸输入配置
                 // Touch input configuration
@@ -315,10 +318,7 @@ object GameLauncher {
                     "XDG_CONFIG_HOME" to dataDir,
                     "XDG_CACHE_HOME" to cacheDir,
                     "TMPDIR" to cacheDir
-                ).apply {
-                    bootstrapAssemblyPath?.let { put("DOTNET_STARTUP_HOOKS", it.toString()) }
-                    patchesEnvVar?.let { put("RAL_PATCHES", it) }
-                }
+                )
                 val resolvedGameEnvVars = EnvVarsManager.interpolateEnvVars(
                     envVars = gameEnvVars,
                     availableInterpolations = availableInterpolations
