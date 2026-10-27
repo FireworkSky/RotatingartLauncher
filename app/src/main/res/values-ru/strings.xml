@@ -1687,7 +1687,6 @@
     <string name="main_dotnet_runtime_optional">Среда выполнения .NET (необязательно)</string>
     <string name="main_dotnet_runtime_override">Переопределение среды выполнения .NET</string>
     <string name="main_control_editor_placeholder">Редактор макетов</string>
-    <string name="main_announcements">Объявления</string>
     <string name="main_import_game">Импортировать игру</string>
     <string name="main_control_store">Контрольный магазин</string>
     <string name="main_file_browser">Файловый браузер</string>
@@ -1732,13 +1731,6 @@
     <string name="renderer_follow_global">Следуйте за глобальным</string>
     <string name="runtime_follow_global_settings">Следовать глобальным настройкам</string>
     <string name="runtime_follow_global">Следовать глобальным</string>
-    <string name="announcement_load_content_failed">Не удалось загрузить контент</string>
-    <string name="announcement_load_failed">Не удалось загрузить объявления.</string>
-    <string name="announcement_empty">Нет объявлений</string>
-    <string name="announcement_no_content">Нет контента</string>
-    <string name="main_announcement_dialog_title">Новое объявление</string>
-    <string name="main_announcement_dialog_action_learn_more">Подробнее</string>
-    <string name="main_announcement_dialog_action_view">Открыть объявление</string>
     <string name="init_runtime_components_title">Компоненты среды выполнения</string>
     <string name="init_runtime_components_subtitle">Установите компоненты среды выполнения, необходимые для игр.</string>
     <string name="init_runtime_components_hint">Для первого запуска требуется извлечение времени выполнения. Обычно это занимает всего несколько минут.</string>

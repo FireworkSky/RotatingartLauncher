@@ -3,13 +3,11 @@ package com.app.ralaunch.feature.main.ui
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.*
-import androidx.compose.foundation.border
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -71,7 +69,6 @@ typealias NavigationDestination = NavDestination
 fun AppNavigationRail(
     currentDestination: NavDestination?,
     onNavigate: (NavDestination) -> Unit,
-    showAnnouncementBadge: Boolean = false,
     modifier: Modifier = Modifier,
     labelProvider: (NavDestination) -> String = { it.route },
     logo: (@Composable () -> Unit)? = null
@@ -254,7 +251,6 @@ fun AppNavigationRail(
                         unselectedIcon = destination.unselectedIcon,
                         label = label,
                         isSelected = selectedDest == destination,
-                        showBadge = destination == NavDestination.ANNOUNCEMENTS && showAnnouncementBadge,
                         onClick = { onNavigate(destination) },
                         onPositioned = { rootCenterY ->
                             itemCenterYs[destination] = rootCenterY
@@ -278,7 +274,6 @@ private fun SilkyNavItem(
     unselectedIcon: ImageVector,
     label: String,
     isSelected: Boolean,
-    showBadge: Boolean = false,
     onClick: () -> Unit,
     onPositioned: (Float) -> Unit,
     modifier: Modifier = Modifier
@@ -351,20 +346,6 @@ private fun SilkyNavItem(
                         tint = contentColor,
                         modifier = Modifier.size(iconSize)
                     )
-                    if (showBadge) {
-                        Box(
-                            modifier = Modifier
-                                .align(Alignment.TopEnd)
-                                .size(9.dp)
-                                .clip(CircleShape)
-                                .background(MaterialTheme.colorScheme.error)
-                                .border(
-                                    width = 1.dp,
-                                    color = MaterialTheme.colorScheme.surface,
-                                    shape = CircleShape
-                                )
-                        )
-                    }
                 }
             }
 

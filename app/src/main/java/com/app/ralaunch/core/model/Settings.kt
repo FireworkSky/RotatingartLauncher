@@ -158,10 +158,6 @@ data class AppSettings(
     val multiplayerEnabled: Boolean = false,
     val multiplayerDisclaimerAccepted: Boolean = false,
 
-    // 公告
-    val lastAnnouncementId: String = "",
-    val isAnnouncementBadgeShown: Boolean = false,
-
     // Runtime 设置
     val selectedDotnetRuntimeVersion: String = "",
     val selectedBox64RuntimeVersion: String = ""

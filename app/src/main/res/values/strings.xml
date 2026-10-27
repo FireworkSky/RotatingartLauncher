@@ -1713,7 +1713,6 @@
     <string name="main_dotnet_runtime_optional">.NET Runtime (Optional)</string>
     <string name="main_dotnet_runtime_override">.NET Runtime Override</string>
     <string name="main_control_editor_placeholder">Layout Editor</string>
-    <string name="main_announcements">Announcements</string>
     <string name="main_import_game">Import Game</string>
     <string name="main_control_store">Control Store</string>
     <string name="main_file_browser">File Browser</string>
@@ -1758,14 +1757,6 @@
     <string name="renderer_follow_global">Follow Global</string>
     <string name="runtime_follow_global_settings">Follow global settings</string>
     <string name="runtime_follow_global">Follow Global</string>
-
-    <string name="announcement_load_content_failed">Failed to load content</string>
-    <string name="announcement_load_failed">Failed to load announcements</string>
-    <string name="announcement_empty">No announcements</string>
-    <string name="announcement_no_content">No content</string>
-    <string name="main_announcement_dialog_title">New announcement</string>
-    <string name="main_announcement_dialog_action_learn_more">Learn more</string>
-    <string name="main_announcement_dialog_action_view">View announcement</string>
 
     <string name="init_runtime_components_title">Runtime Components</string>
     <string name="init_runtime_components_subtitle">Install runtime components required by games</string>

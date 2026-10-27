@@ -28,9 +28,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
@@ -64,7 +62,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.core.content.edit
@@ -98,14 +95,12 @@ import com.app.ralaunch.core.platform.android.provider.RaLaunchFileProvider
 import com.app.ralaunch.core.theme.AppThemeState
 import com.app.ralaunch.core.theme.RaLaunchTheme
 import com.app.ralaunch.core.ui.BaseActivity
-import com.app.ralaunch.feature.announcement.ui.AnnouncementScreenWrapper
 import com.app.ralaunch.feature.controls.packs.ui.ControlStoreScreenWrapper
 import com.app.ralaunch.feature.controls.ui.ControlLayoutScreenWrapper
 import com.app.ralaunch.feature.filebrowser.ui.FileBrowserScreenWrapper
 import com.app.ralaunch.feature.installer.ui.InstallerScreenWrapper
 import com.app.ralaunch.feature.installer.ui.rememberInstallerRouteActions
 import com.app.ralaunch.feature.main.contracts.AppUpdateUiModel
-import com.app.ralaunch.feature.main.contracts.ForceAnnouncementUiModel
 import com.app.ralaunch.feature.main.contracts.MainUiEffect
 import com.app.ralaunch.feature.main.contracts.MainUiEvent
 import com.app.ralaunch.feature.main.contracts.MainUiState
@@ -117,7 +112,6 @@ import com.app.ralaunch.feature.settings.ui.RESTORE_SETTINGS_AFTER_RECREATE_KEY
 import com.app.ralaunch.feature.settings.ui.SettingsScreenWrapper
 import com.app.ralaunch.feature.settings.ui.buildRendererOptions
 import dev.chrisbanes.haze.HazeState
-import dev.jeziellago.compose.markdowntext.MarkdownText
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -639,19 +633,12 @@ class MainActivityCompose : BaseActivity() {
             }
         }
 
-        LaunchedEffect(currentDestination, state.showAnnouncementBadge) {
-            if (currentDestination == NavDestination.ANNOUNCEMENTS && state.showAnnouncementBadge) {
-                onEvent(MainUiEvent.AnnouncementTabOpened)
-            }
-        }
-
         Box(modifier = Modifier.fillMaxSize()) {
             MainApp(
                 modifier = Modifier
                     .fillMaxSize()
                     .graphicsLayer { alpha = pageAlpha },
                 navState = navState,
-                showAnnouncementBadge = state.showAnnouncementBadge,
                 externalHazeState = hazeState,
                 backgroundLayer = {
                     AppBackground(
@@ -698,7 +685,6 @@ class MainActivityCompose : BaseActivity() {
                                 onOpenStore = { navState.navigateToControlStore() }
                             )
                         }
-                        is Screen.Announcements -> AnnouncementScreenWrapper()
                         is Screen.Settings -> {
                             SettingsScreenWrapper(
                                 navState = navState,
@@ -793,7 +779,7 @@ class MainActivityCompose : BaseActivity() {
                 )
             }
 
-            if (!showMissingPermissionDialog && state.forceAnnouncement == null && updateDownloadUiState == null) {
+            if (!showMissingPermissionDialog && updateDownloadUiState == null) {
                 state.availableUpdate?.let { update ->
                     AppUpdateComposeDialog(
                         update = update,
@@ -812,20 +798,6 @@ class MainActivityCompose : BaseActivity() {
                     onInstall = { installDownloadedUpdateFromDialog() },
                     onRetry = { retryUpdateDownload() }
                 )
-            }
-
-            if (!showMissingPermissionDialog && updateDownloadUiState == null) {
-                state.forceAnnouncement?.let { announcement ->
-                    ForceAnnouncementComposeDialog(
-                        announcement = announcement,
-                        onLearnMore = {
-                            onEvent(MainUiEvent.AnnouncementPopupLearnMoreClicked)
-                        },
-                        onConfirm = {
-                            onEvent(MainUiEvent.AnnouncementPopupViewClicked)
-                        }
-                    )
-                }
             }
         }
     }
@@ -1038,119 +1010,6 @@ private fun AppUpdateComposeDialog(
             }
         }
     )
-}
-
-@Composable
-private fun ForceAnnouncementComposeDialog(
-    announcement: ForceAnnouncementUiModel,
-    onLearnMore: () -> Unit,
-    onConfirm: () -> Unit
-) {
-    val markdownContent = remember(announcement.markdown) {
-        announcement.markdown
-            ?.trim()
-            ?.takeIf { it.isNotBlank() }
-    }
-    val markdownScrollState = rememberScrollState()
-    val configuration = LocalConfiguration.current
-    val compactHeight = configuration.screenHeightDp.dp < 520.dp
-    val widthFraction = if (configuration.screenWidthDp.dp >= 1000.dp) 0.78f else 0.92f
-    val heightFraction = if (compactHeight) 0.94f else 0.88f
-    val contentPadding = if (compactHeight) 16.dp else 24.dp
-    val contentSpacing = if (compactHeight) 8.dp else 10.dp
-
-    Dialog(
-        onDismissRequest = {},
-        properties = DialogProperties(
-            usePlatformDefaultWidth = false,
-            dismissOnBackPress = false,
-            dismissOnClickOutside = false
-        )
-    ) {
-        Box(
-            modifier = Modifier.fillMaxSize()
-        ) {
-            Surface(
-                modifier = Modifier
-                    .align(Alignment.Center)
-                    .fillMaxWidth(widthFraction)
-                    .fillMaxHeight(heightFraction),
-                color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                shape = RoundedCornerShape(24.dp)
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(contentPadding),
-                    verticalArrangement = Arrangement.spacedBy(contentSpacing)
-                ) {
-                    Text(
-                        text = stringResource(R.string.main_announcement_dialog_title),
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                    Text(
-                        text = announcement.title,
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.SemiBold,
-                        maxLines = if (compactHeight) 2 else 3,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    Text(
-                        text = announcement.publishedAt,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-
-                    if (announcement.tags.isNotEmpty()) {
-                        Text(
-                            text = announcement.tags.joinToString("  ·  "),
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    }
-
-                    Surface(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .weight(1f),
-                        color = MaterialTheme.colorScheme.surfaceContainer,
-                        shape = RoundedCornerShape(16.dp)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .verticalScroll(markdownScrollState)
-                                .padding(14.dp)
-                        ) {
-                            if (!markdownContent.isNullOrBlank()) {
-                                MarkdownText(markdown = markdownContent)
-                            } else {
-                                Text(
-                                    text = stringResource(R.string.announcement_no_content),
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                        }
-                    }
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.End
-                    ) {
-                        TextButton(onClick = onLearnMore) {
-                            Text(stringResource(R.string.main_announcement_dialog_action_learn_more))
-                        }
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Button(onClick = onConfirm) {
-                            Text(stringResource(R.string.main_announcement_dialog_action_view))
-                        }
-                    }
-                }
-            }
-        }
-    }
 }
 
 @Composable

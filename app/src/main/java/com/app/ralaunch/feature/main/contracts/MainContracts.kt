@@ -10,20 +10,10 @@ data class MainUiState(
     val isLoading: Boolean = true,
     val backgroundType: BackgroundType = BackgroundType.None,
     val isVideoPlaying: Boolean = true,
-    val showAnnouncementBadge: Boolean = false,
-    val forceAnnouncement: ForceAnnouncementUiModel? = null,
     val gamePendingDeletion: GameItemUi? = null,
     val deletePosition: Int = -1,
     val isDeletingGame: Boolean = false,
     val availableUpdate: AppUpdateUiModel? = null
-)
-
-data class ForceAnnouncementUiModel(
-    val announcementId: String,
-    val title: String,
-    val publishedAt: String,
-    val tags: List<String> = emptyList(),
-    val markdown: String? = null
 )
 
 data class AppUpdateUiModel(
@@ -53,9 +43,6 @@ sealed interface MainUiEvent {
     data object UpdateCloudActionClicked : MainUiEvent
     data object AppResumed : MainUiEvent
     data object AppPaused : MainUiEvent
-    data object AnnouncementTabOpened : MainUiEvent
-    data object AnnouncementPopupLearnMoreClicked : MainUiEvent
-    data object AnnouncementPopupViewClicked : MainUiEvent
 }
 
 sealed interface MainUiEffect {

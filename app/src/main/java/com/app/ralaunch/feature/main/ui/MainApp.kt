@@ -63,7 +63,6 @@ import dev.chrisbanes.haze.haze
 fun MainApp(
     navState: NavState,
     modifier: Modifier = Modifier,
-    showAnnouncementBadge: Boolean = false,
     // 背景层 (视频/图片) - 作为毛玻璃源
     backgroundLayer: @Composable BoxScope.() -> Unit = {},
     // 外部提供的 HazeState（可选，不提供则内部创建）
@@ -98,20 +97,17 @@ fun MainApp(
                 val navGamesLabel = stringResource(R.string.game_list_title)
                 val navControlsLabel = stringResource(R.string.main_control_layout)
                 val navImportLabel = stringResource(R.string.main_import_game)
-                val navAnnouncementsLabel = stringResource(R.string.main_announcements)
                 val navSettingsLabel = stringResource(R.string.main_settings)
 
                 // 左侧导航栏（会自动从 LocalHazeState 获取模糊状态）
                 AppNavigationRail(
                     currentDestination = currentDest,
                     onNavigate = { navState.navigateTo(it) },
-                    showAnnouncementBadge = showAnnouncementBadge,
                     labelProvider = { destination ->
                         when (destination) {
                             NavDestination.GAMES -> navGamesLabel
                             NavDestination.CONTROLS -> navControlsLabel
                             NavDestination.IMPORT -> navImportLabel
-                            NavDestination.ANNOUNCEMENTS -> navAnnouncementsLabel
                             NavDestination.SETTINGS -> navSettingsLabel
                         }
                     },

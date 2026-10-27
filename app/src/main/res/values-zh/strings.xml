@@ -1538,7 +1538,6 @@
     <string name="main_delete_game_irreversible">此操作将删除游戏文件，不可撤销</string>
     <string name="main_game_not_found">未找到游戏: %1$s</string>
     <string name="main_control_editor_placeholder">布局编辑器</string>
-    <string name="main_announcements">公告</string>
     <string name="main_import_game">导入游戏</string>
     <string name="main_control_store">控制包商店</string>
     <string name="main_file_browser">文件浏览</string>
@@ -1578,13 +1577,6 @@
     <string name="main_update_size_mb">%1$.1f MB</string>
     <string name="main_update_size_kb">%1$.1f KB</string>
     <string name="main_update_size_bytes">%1$d B</string>
-    <string name="announcement_load_content_failed">加载内容失败</string>
-    <string name="announcement_load_failed">加载公告失败</string>
-    <string name="announcement_empty">暂无公告</string>
-    <string name="announcement_no_content">暂无内容</string>
-    <string name="main_announcement_dialog_title">发现新公告</string>
-    <string name="main_announcement_dialog_action_learn_more">了解</string>
-    <string name="main_announcement_dialog_action_view">查看公告</string>
     <string name="init_runtime_components_title">运行环境组件</string>
     <string name="init_runtime_components_subtitle">安装游戏所需的运行时组件</string>
     <string name="init_runtime_components_hint">首次运行需要解压运行环境，仅需几分钟</string>

@@ -11,8 +11,6 @@ import com.app.ralaunch.core.di.service.ThemeManagerServiceV1
 import com.app.ralaunch.core.di.service.VibrationManagerServiceV1
 import com.app.ralaunch.core.logging.service.LogExportHelper
 import com.app.ralaunch.core.platform.AppConstants
-import com.app.ralaunch.feature.announcement.AnnouncementRepositoryService
-import com.app.ralaunch.feature.announcement.vm.AnnouncementViewModel
 import com.app.ralaunch.feature.controls.editors.vm.ControlEditorViewModel
 import com.app.ralaunch.feature.controls.packs.ControlPackManager
 import com.app.ralaunch.feature.controls.packs.ControlPackRepositoryService
@@ -79,10 +77,6 @@ val appModule = module {
         ControlPackManager(androidContext())
     }
 
-    single {
-        AnnouncementRepositoryService(androidContext())
-    }
-
     /*single {
         LauncherUpdateChecker(androidContext())
     }*/
@@ -104,7 +98,6 @@ val appModule = module {
     viewModel {
         MainViewModel(
             appContext = androidContext(),
-            announcementRepositoryService = get(),
             launcherUpdateChecker = get()
         )
     }
@@ -116,13 +109,6 @@ val appModule = module {
     viewModel {
         InstallerViewModel(
             appContext = androidContext()
-        )
-    }
-
-    viewModel {
-        AnnouncementViewModel(
-            appContext = androidContext(),
-            repositoryService = get()
         )
     }
 

@@ -8,14 +8,10 @@ import com.app.ralaunch.core.config.AppConfig
 import timber.log.Timber
 import com.app.ralaunch.R
 import com.app.ralaunch.utils.GameManager
-import com.app.ralaunch.core.navigation.NavDestination
-import com.app.ralaunch.core.navigation.NavigationEvent
 import com.app.ralaunch.core.model.GameItem
 import com.app.ralaunch.core.model.applyFromUiModel
 import com.app.ralaunch.core.model.toUiModels
-import com.app.ralaunch.feature.announcement.AnnouncementRepositoryService
 import com.app.ralaunch.feature.main.contracts.AppUpdateUiModel
-import com.app.ralaunch.feature.main.contracts.ForceAnnouncementUiModel
 import com.app.ralaunch.feature.main.contracts.MainUiEffect
 import com.app.ralaunch.feature.main.contracts.MainUiEvent
 import com.app.ralaunch.feature.main.contracts.MainUiState
@@ -35,7 +31,6 @@ import kotlinx.coroutines.withContext
 
 class MainViewModel(
     private val appContext: Context,
-    private val announcementRepositoryService: AnnouncementRepositoryService,
     private val launcherUpdateChecker: LauncherUpdateChecker
 ) : ViewModel() {
 
@@ -48,7 +43,6 @@ class MainViewModel(
     private val gameItemsMap = mutableMapOf<String, GameItem>()
     private var isUpdateCheckInProgress = false
     private var lastUpdateCheckAt: Long = 0L
-    private var latestAnnouncementId: String? = null
 
     companion object {
         private const val UPDATE_CHECK_INTERVAL_MS = 60_000L
@@ -57,8 +51,6 @@ class MainViewModel(
     init {
         observeGames()
         onEvent(MainUiEvent.CheckAppUpdate)
-        loadAnnouncementBadgeFromSettings()
-        checkAnnouncementUnreadOnStartup()
     }
 
     fun onEvent(event: MainUiEvent) {
@@ -83,9 +75,6 @@ class MainViewModel(
                 checkAppUpdate(force = false)
             }
             is MainUiEvent.AppPaused -> _uiState.update { it.copy(isVideoPlaying = false) }
-            is MainUiEvent.AnnouncementTabOpened -> markAnnouncementsAsRead()
-            is MainUiEvent.AnnouncementPopupLearnMoreClicked -> markAnnouncementsAsRead()
-            is MainUiEvent.AnnouncementPopupViewClicked -> openAnnouncementScreen()
         }
     }
 
@@ -114,105 +103,6 @@ class MainViewModel(
                             uiGames.indexOfFirst { it.id == id }.takeIf { it >= 0 } ?: -1
                         } ?: -1,
                         isLoading = false
-                    )
-                }
-            }
-        }
-    }
-
-    private fun checkAnnouncementUnreadOnStartup() {
-        viewModelScope.launch(Dispatchers.IO) {
-            val result = announcementRepositoryService.fetchAnnouncements(forceRefresh = false)
-            result.onSuccess { announcements ->
-                val latestAnnouncement = announcements.firstOrNull()
-                val latestId = latestAnnouncement
-                    ?.id
-                    ?.trim()
-                    ?.takeIf { it.isNotBlank() }
-                latestAnnouncementId = latestId
-
-                val settings = AppConfig.value
-                val lastAnnouncementId = settings.lastAnnouncementId.trim()
-                val shouldShowBadge = latestId != null && latestId != lastAnnouncementId
-                if (settings.isAnnouncementBadgeShown != shouldShowBadge) {
-                    runCatching {
-                        AppConfig.s.isAnnouncementBadgeShown = shouldShowBadge
-                    }.onFailure { error ->
-                        Timber.w(error, "Failed to persist isAnnouncementBadgeShown: ${error.message}")
-                    }
-                }
-
-                val forceAnnouncement = latestAnnouncement
-                    ?.takeIf { shouldShowBadge }
-                    ?.let { latest ->
-                        val announcementId = latest.id.trim()
-                        if (announcementId.isBlank()) {
-                            null
-                        } else {
-                            val markdown = announcementRepositoryService.fetchAnnouncementMarkdown(
-                                announcementId = announcementId,
-                                forceRefresh = false
-                            ).getOrNull()
-
-                            ForceAnnouncementUiModel(
-                                announcementId = announcementId,
-                                title = latest.title,
-                                publishedAt = latest.publishedAt,
-                                tags = latest.tags,
-                                markdown = markdown
-                            )
-                        }
-                    }
-
-                withContext(Dispatchers.Main) {
-                    _uiState.update {
-                        it.copy(
-                            showAnnouncementBadge = shouldShowBadge,
-                            forceAnnouncement = forceAnnouncement
-                        )
-                    }
-                }
-            }.onFailure { error ->
-                Timber.w(error, "Failed to fetch announcements on startup: ${error.message}")
-            }
-        }
-    }
-
-    private fun loadAnnouncementBadgeFromSettings() {
-        viewModelScope.launch(Dispatchers.IO) {
-            val shouldShowBadge = runCatching {
-                AppConfig.value.isAnnouncementBadgeShown
-            }.getOrDefault(false)
-            withContext(Dispatchers.Main) {
-                _uiState.update { it.copy(showAnnouncementBadge = shouldShowBadge) }
-            }
-        }
-    }
-
-    private fun markAnnouncementsAsRead() {
-        val state = _uiState.value
-        if (!state.showAnnouncementBadge && state.forceAnnouncement == null) return
-
-        val latestId = latestAnnouncementId
-            ?.trim()
-            ?.takeIf { it.isNotBlank() }
-
-        viewModelScope.launch(Dispatchers.IO) {
-            runCatching {
-                AppConfig.updateSave {
-                    it.copy(
-                        isAnnouncementBadgeShown = false,
-                        lastAnnouncementId = if (latestId != null) latestId else it.lastAnnouncementId
-                    )
-                }
-            }.onFailure { error ->
-                Timber.w(error, "Failed to persist announcement read state: ${error.message}")
-            }
-            withContext(Dispatchers.Main) {
-                _uiState.update {
-                    it.copy(
-                        showAnnouncementBadge = false,
-                        forceAnnouncement = null
                     )
                 }
             }
@@ -322,15 +212,6 @@ class MainViewModel(
                 emitEffect(MainUiEffect.ExitLauncher)
             }
         }
-    }
-
-    private fun openAnnouncementScreen() {
-        emitEffect(
-            MainUiEffect.Navigate(
-                NavigationEvent.NavigateToDestination(NavDestination.ANNOUNCEMENTS)
-            )
-        )
-        markAnnouncementsAsRead()
     }
 
     private fun checkAppUpdate(

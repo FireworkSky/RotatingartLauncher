@@ -24,9 +24,6 @@ sealed class Screen(
     /** 导入游戏页 */
     data object Import : Screen("import")
 
-    /** 公告页 */
-    data object Announcements : Screen("announcements")
-    
     /** 设置页 */
     data object Settings : Screen("settings")
     
@@ -68,7 +65,6 @@ sealed class Screen(
                 "games" -> Games
                 "controls" -> Controls
                 "import" -> Import
-                "announcements" -> Announcements
                 "settings" -> Settings
                 "control_store" -> ControlStore
                 "initialization" -> Initialization
@@ -105,11 +101,6 @@ enum class NavDestination(
         screen = Screen.Import,
         selectedIcon = Icons.Filled.Add,
         unselectedIcon = Icons.Outlined.Add
-    ),
-    ANNOUNCEMENTS(
-        screen = Screen.Announcements,
-        selectedIcon = Icons.Filled.Notifications,
-        unselectedIcon = Icons.Outlined.NotificationsNone
     ),
     SETTINGS(
         screen = Screen.Settings,
