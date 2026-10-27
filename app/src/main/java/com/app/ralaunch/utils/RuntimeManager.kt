@@ -58,26 +58,17 @@ object RuntimeManager {
 
     private var filesRootPath: Path? = null
     private var runtimesRootPath: Path? = null
-    private var legacyDotnetRootPath: Path? = null
-
-    // ====== Migration State ======
-
-    @Volatile
-    private var legacyDotnetMigrationChecked = false
-    private val migrationLock = Any()
 
     // ====== Initialization ======
 
     fun initialize(filesDir: File) {
         filesRootPath = filesDir.toPath().toAbsolutePath().normalize()
         runtimesRootPath = filesRootPath?.resolve(AppConstants.Dirs.RUNTIMES)
-        legacyDotnetRootPath = filesRootPath?.resolve("dotnet")
     }
 
-    fun initialize(filesRootPath: Path, runtimesRootPath: Path, legacyDotnetRootPath: Path) {
+    fun initialize(filesRootPath: Path, runtimesRootPath: Path) {
         this.filesRootPath = filesRootPath.toAbsolutePath().normalize()
         this.runtimesRootPath = runtimesRootPath.toAbsolutePath().normalize()
-        this.legacyDotnetRootPath = legacyDotnetRootPath.toAbsolutePath().normalize()
     }
 
     // ====== Path Methods ======
@@ -224,55 +215,5 @@ object RuntimeManager {
         // （该字段在 MainActivity 未创建的场景下为 null，如交互式预览）
         return com.app.ralaunch.RaLaunchApp.getAppContext()
             .getSharedPreferences(AppConstants.PREFS_NAME, 0)
-    }
-
-    // ====== Migration ======
-
-    fun migrateLegacyInstallations() {
-        if (legacyDotnetMigrationChecked) return
-
-        synchronized(migrationLock) {
-            if (legacyDotnetMigrationChecked) return
-            migrateLegacyDotnetIfNeeded()
-            legacyDotnetMigrationChecked = true
-        }
-    }
-
-    private fun migrateLegacyDotnetIfNeeded() {
-        val legacyRootPath = legacyDotnetRootPath ?: return
-        val legacyFile = legacyRootPath.toFile()
-
-        if (!legacyFile.exists() || !legacyFile.isDirectory) return
-
-        if (!isRuntimeLayoutValid(RuntimeType.DOTNET, legacyRootPath)) {
-            return
-        }
-
-        val version = detectDotNetRuntimeVersion(legacyRootPath)
-        if (version.isNullOrBlank()) {
-            return
-        }
-
-        val targetPath = getRuntimeInstallPath(RuntimeType.DOTNET, version)
-        val targetFile = targetPath.toFile()
-        targetFile.parentFile?.mkdirs()
-
-        when {
-            targetFile.exists() && isRuntimeLayoutValid(RuntimeType.DOTNET, targetPath) -> {
-                legacyFile.deleteRecursively()
-            }
-            targetFile.exists() -> {
-                return
-            }
-            else -> {
-                legacyFile.renameTo(targetFile)
-            }
-        }
-
-        if (getSelectedRuntimeVersion(RuntimeType.DOTNET).isNullOrBlank()) {
-            runBlocking {
-                setSelectedRuntimeVersion(RuntimeType.DOTNET, version)
-            }
-        }
     }
 }

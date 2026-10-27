@@ -222,26 +222,31 @@ object GameLauncher {
             Timber.d("  - 大核亲和性 / Big core affinity: ${AppConfig.c.setThreadAffinityToBigCore}")
             Timber.d("  - 多点触控 / Touch multitouch: ${AppConfig.c.touchMultitouchEnabled}")
 
-            // 步骤6：配置启动钩子（补丁）
-            // Step 6: Configure startup hooks (patches)
-            val startupHooks = if (enabledPatches != null && enabledPatches.isNotEmpty())
-                PatchModuleHandler.constructStartupHooksEnvVar(enabledPatches) else null
-
-            if (startupHooks != null) {
-                Timber.i("已配置 ${enabledPatches!!.size} 个补丁的启动钩子 / DOTNET_STARTUP_HOOKS configured with ${enabledPatches.size} patch(es)")
-                Timber.d("DOTNET_STARTUP_HOOKS 值 / value: $startupHooks")
-                val hookCount = startupHooks.split(":").filter { it.isNotEmpty() }.size
-                Timber.d("实际钩子数量 / Actual hook count: $hookCount")
-            } else {
-                Timber.d("未配置启动钩子 / No startup hooks configured")
+            // 步骤6：配置 Bootstrap 启动钩子（程序集在应用初始化时已部署；
+            // 补丁列表经 RAL_PATCHES 由 Bootstrap 统一加载）
+            // Step 6: Configure Bootstrap startup hook (assembly deployed at app init;
+            // patch list loaded via RAL_PATCHES)
+            val patchesEnvVar = if (!enabledPatches.isNullOrEmpty())
+                PatchModuleHandler.constructPatchesEnvVar(enabledPatches) else null
+            val bootstrapAssemblyFile = if (patchesEnvVar != null)
+                PatchModuleHandler.bootstrapAssemblyFile() else null
+            val bootstrapAssemblyPath = if (bootstrapAssemblyFile?.exists() == true)
+                bootstrapAssemblyFile else null
+            if (bootstrapAssemblyPath != null) {
+                Timber.i("Bootstrap 启动钩子就绪 / Bootstrap hook ready: $bootstrapAssemblyPath")
+                Timber.d("RAL_PATCHES 值 / value: $patchesEnvVar")
+            } else if (patchesEnvVar != null) {
+                Timber.e("Bootstrap 程序集缺失，本次启动不加载补丁 / Bootstrap assembly missing, launching unpatched")
             }
 
             // 步骤7：配置游戏环境变量
             // Step 7: Configure game environment variables
             EnvVarsManager.quickSetEnvVars(
-                // 启动钩子配置
-                // Startup hooks configuration
-                "DOTNET_STARTUP_HOOKS" to startupHooks,
+                // 启动钩子与补丁列表配置（Bootstrap 单钩子 + RAL_PATCHES，null 时 unset 防遗留）
+                // Startup hook & patch list configuration (Bootstrap single hook + RAL_PATCHES;
+                // null unsets to avoid stale values from a previous patched launch in-process)
+                "DOTNET_STARTUP_HOOKS" to bootstrapAssemblyPath?.toString(),
+                "RAL_PATCHES" to patchesEnvVar,
 
                 // 触摸输入配置
                 // Touch input configuration
@@ -311,7 +316,8 @@ object GameLauncher {
                     "XDG_CACHE_HOME" to cacheDir,
                     "TMPDIR" to cacheDir
                 ).apply {
-                    startupHooks?.let { put("DOTNET_STARTUP_HOOKS", it) }
+                    bootstrapAssemblyPath?.let { put("DOTNET_STARTUP_HOOKS", it.toString()) }
+                    patchesEnvVar?.let { put("RAL_PATCHES", it) }
                 }
                 val resolvedGameEnvVars = EnvVarsManager.interpolateEnvVars(
                     envVars = gameEnvVars,

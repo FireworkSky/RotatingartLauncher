@@ -1,0 +1,14 @@
+<Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+  </Configurations>
+  <Project Path="ConsolePatch/ConsolePatch.csproj" />
+  <Project Path="EverestMiniInstallerPatch/EverestMiniInstallerPatch.csproj" />
+  <Project Path="EverestPatch/EverestPatch.csproj" />
+  <Project Path="FPSDisplayPatch/FPSDisplayPatch.csproj" />
+  <Project Path="HostAndPlayPatch/HostAndPlayPatch.csproj" />
+  <Project Path="MonoGameGLESPatch/MonoGameGLESPatch.csproj" />
+  <Project Path="MonoGamePatch/MonoGamePatch.csproj" />
+  <Project Path="PlatformFixPatch/PlatformFixPatch.csproj" />
+  <Project Path="TModLoaderPatch/TModLoaderPatch.csproj" />
+</Solution>

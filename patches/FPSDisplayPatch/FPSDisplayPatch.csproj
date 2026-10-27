@@ -12,6 +12,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\managed\RAL.Bootstrap.CoreCLR\RAL.Bootstrap.CoreCLR.csproj"
+                      Private="false" ExcludeAssets="runtime" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Reference Include="FNA">
       <HintPath>..\external\tModLoader\Libraries\FNA\1.0.0\FNA.dll</HintPath>
     </Reference>

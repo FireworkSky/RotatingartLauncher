@@ -3,11 +3,11 @@
   "id": "ral.smapi.monogamegles",
   "name": "MonoGame GLES 兼容补丁",
   "description": "修复星露谷物语 MonoGame Desktop 在 Android 原生 GLES 渲染器下的兼容性问题。将 OpenGL 2.1 上下文请求改为 OpenGL ES 3.0，修正 BoundApi 为 ES 模式。适用于不使用 gl4es 的情况。",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "author": "RA Launcher Team",
   "dllFileName": "MonoGameGLESPatch.dll",
   "entryPoint": {
-    "typeName": "MonoGameGLESPatch.MonoGameGLESPatcher",
+    "typeName": "MonoGameGLESPatch.PatchEntry",
     "methodName": "Initialize"
   },
   "targetGames": [

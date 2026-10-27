@@ -5,6 +5,7 @@ import com.app.ralaunch.core.platform.AppConstants
 import com.app.ralaunch.utils.GameManager
 import com.app.ralaunch.utils.ModuleManager
 import kotlinx.coroutines.runBlocking
+import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
@@ -14,6 +15,7 @@ import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 import java.nio.file.Files
 import java.nio.file.Path
@@ -193,7 +195,7 @@ class PatchModuleHandlerTest {
     }
 
     @Test
-    fun `constructStartupHooksEnvVar deduplicates ids and joins distinct paths with colon`() = runBlocking {
+    fun `constructPatchesEnvVar deduplicates ids and joins distinct paths with colon`() = runBlocking {
         writePatchModule("com.example.first", targetGames = listOf("*"), dllFileName = "First.dll")
         writePatchModule("com.example.second", targetGames = listOf("*"), dllFileName = "Second.dll")
         ModuleManager.initialize(modulesRoot)
@@ -201,12 +203,27 @@ class PatchModuleHandlerTest {
         val first = patches.single { it.id == "com.example.first" }
         val second = patches.single { it.id == "com.example.second" }
 
-        val envVar = PatchModuleHandler.constructStartupHooksEnvVar(listOf(first, second, first))
+        val envVar = PatchModuleHandler.constructPatchesEnvVar(listOf(first, second, first))
 
         val expected = listOf("com.example.first" to "First.dll", "com.example.second" to "Second.dll")
             .joinToString(":") { (id, dll) -> ModuleManager.directory(id).resolve(dll).toString() }
         assertEquals(expected, envVar)
         assertEquals(2, envVar.split(":").count { it.isNotEmpty() })
+    }
+
+    @Test
+    fun `deployBootstrapAssembly copies apk asset to filesDir bootstrap dir`() {
+        val context = RuntimeEnvironment.getApplication()
+        val expected = context.assets.open("bootstrap/RAL.Bootstrap.CoreCLR.dll").use { it.readBytes() }
+
+        assertTrue(PatchModuleHandler.deployBootstrapAssembly(context))
+
+        val target = PatchModuleHandler.bootstrapAssemblyFile(context)
+        assertTrue(target.toFile().isFile)
+        assertArrayEquals(expected, Files.readAllBytes(target))
+
+        // 幂等：再次部署（覆盖写）仍成功
+        assertTrue(PatchModuleHandler.deployBootstrapAssembly(context))
     }
 
     /** 生成 zip：条目直接位于压缩包根（同模块包布局契约）。 */

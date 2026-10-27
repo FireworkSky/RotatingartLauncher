@@ -3,11 +3,11 @@
   "id": "ral.tmodloader.hostandplaypatch",
   "name": "Host & Play (多人服务器支持)",
   "description": "通过新的dotnet进程开启服务器",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "author": "RAL",
   "dllFileName": "HostAndPlayPatch.dll",
   "entryPoint": {
-    "typeName": "HostAndPlayPatch.StartupHook",
+    "typeName": "HostAndPlayPatch.PatchEntry",
     "methodName": "Initialize"
   },
   "targetGames": [

@@ -3,11 +3,11 @@
   "id": "ral.smapi.platformfix",
   "name": "SMAPI Android 平台检测修复补丁",
   "description": "修复 SMAPI 在 Android 上的平台检测问题，阻止 PressAnyKeyToExit 调用导致的异常退出。仅适用于星露谷物语/SMAPI。",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "author": "RA Launcher Team",
   "dllFileName": "PlatformFixPatch.dll",
   "entryPoint": {
-    "typeName": "PlatformFixPatch.PlatformFixPatcher",
+    "typeName": "PlatformFixPatch.PatchEntry",
     "methodName": "Initialize"
   },
   "targetGames": [

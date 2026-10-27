@@ -8,7 +8,14 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Lib.Harmony.Thin" Version="2.4.2" />
+    <PackageReference Include="Lib.Harmony.Thin" Version="2.4.2">
+      <Private>False</Private>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\managed\RAL.Bootstrap.CoreCLR\RAL.Bootstrap.CoreCLR.csproj"
+                      Private="false" ExcludeAssets="runtime" />
   </ItemGroup>
 
 </Project>

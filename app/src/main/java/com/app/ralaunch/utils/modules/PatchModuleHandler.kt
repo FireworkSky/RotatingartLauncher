@@ -1,8 +1,11 @@
 package com.app.ralaunch.utils.modules
 
 import android.content.Context
+import com.app.ralaunch.RaLaunchApp
 import com.app.ralaunch.core.extractor.ArchiveExtractor
+import com.app.ralaunch.core.extractor.AssetExtractor
 import com.app.ralaunch.core.common.util.TemporaryFileAcquirer
+import com.app.ralaunch.core.platform.AppConstants
 import com.app.ralaunch.models.ModuleItem
 import com.app.ralaunch.utils.GameManager
 import com.app.ralaunch.utils.ModuleManager
@@ -12,6 +15,7 @@ import timber.log.Timber
 import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.io.path.ExperimentalPathApi
+import kotlin.io.path.createDirectories
 import kotlin.io.path.extension
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.listDirectoryEntries
@@ -31,6 +35,8 @@ object PatchModuleHandler : ModuleHandler {
     override val type = TYPE
     const val TYPE = "patch"
     private const val BUILT_IN_PATCH_ASSET_DIR = "patches"
+    private const val BOOTSTRAP_ASSEMBLY_NAME = "RAL.Bootstrap.CoreCLR.dll"
+    private const val BOOTSTRAP_ASSET_PATH = "bootstrap/RAL.Bootstrap.CoreCLR.dll"
 
     /** 全部已安装补丁（无法解码清单的模块跳过）。 */
     fun patches(): List<Patch> =
@@ -104,10 +110,10 @@ object PatchModuleHandler : ModuleHandler {
         }
 
     /**
-     * Construct the environment variable string for startup hooks from a list of patches.
+     * Construct the RAL_PATCHES environment variable string from a list of patches.
      */
-    fun constructStartupHooksEnvVar(patches: List<Patch>): String {
-        Timber.d("constructStartupHooksEnvVar: Input patches count = ${patches.size}")
+    fun constructPatchesEnvVar(patches: List<Patch>): String {
+        Timber.d("constructPatchesEnvVar: Input patches count = ${patches.size}")
         patches.forEachIndexed { index, p ->
             Timber.d("  [$index] id=${p.id}, path=${p.getEntryAssemblyAbsolutePath()}")
         }
@@ -117,7 +123,7 @@ object PatchModuleHandler : ModuleHandler {
             .filter { p ->
                 val isNew = seenPatchIds.add(p.id)
                 if (!isNew) {
-                    Timber.w("constructStartupHooksEnvVar: Duplicate patch ID filtered: ${p.id}")
+                    Timber.w("constructPatchesEnvVar: Duplicate patch ID filtered: ${p.id}")
                 }
                 isNew
             }
@@ -125,7 +131,34 @@ object PatchModuleHandler : ModuleHandler {
             .distinct()
             .joinToString(":")
 
-        Timber.d("constructStartupHooksEnvVar: Result = $result")
+        Timber.d("constructPatchesEnvVar: Result = $result")
         return result
+    }
+
+    /**
+     * Bootstrap 程序集落盘路径（filesDir/bootstrap/RAL.Bootstrap.CoreCLR.dll，
+     * 由 [deployBootstrapAssembly] 在应用初始化时写入）。
+     */
+    fun bootstrapAssemblyFile(): Path =
+        Paths.get(
+            RaLaunchApp.getInstance().filesDir.absolutePath,
+            AppConstants.Dirs.BOOTSTRAP,
+            BOOTSTRAP_ASSEMBLY_NAME
+        )
+
+    /**
+     * 从 APK assets/bootstrap 部署 RAL.Bootstrap.CoreCLR 程序集到 filesDir
+     * （应用初始化时调用，不在游戏启动链路）。
+     * 每次覆盖写入以跟随 APK 更新；失败打日志返回 false（游戏届时无补丁启动）。
+     */
+    fun deployBootstrapAssembly(): Boolean = try {
+        val target = bootstrapAssemblyFile()
+        target.parent?.createDirectories()
+        AssetExtractor.copyAssetToFile(RaLaunchApp.getInstance(), BOOTSTRAP_ASSET_PATH, target)
+        Timber.i("Bootstrap assembly deployed: $target")
+        true
+    } catch (e: Exception) {
+        Timber.e(e, "Failed to deploy RAL.Bootstrap.CoreCLR.dll")
+        false
     }
 }

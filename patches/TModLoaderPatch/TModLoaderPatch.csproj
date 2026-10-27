@@ -14,6 +14,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\managed\RAL.Bootstrap.CoreCLR\RAL.Bootstrap.CoreCLR.csproj"
+                      Private="false" ExcludeAssets="runtime" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Reference Include="tModLoader">
       <HintPath>..\external\tModLoader\tModLoader.dll</HintPath>
       <Private>False</Private>

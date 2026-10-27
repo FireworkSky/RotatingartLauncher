@@ -12,7 +12,6 @@ import com.app.ralaunch.core.config.AppConfig
 import com.app.ralaunch.core.common.util.DensityAdapter
 import com.app.ralaunch.core.common.util.LocaleManager
 import com.app.ralaunch.core.di.KoinInitializer
-import com.app.ralaunch.core.di.contract.IRuntimeManagerServiceV2
 import com.app.ralaunch.core.di.service.StoragePathsProviderServiceV1
 import com.app.ralaunch.core.di.service.VibrationManagerServiceV1
 import timber.log.Timber
@@ -95,10 +94,13 @@ class RaLaunchApp : Application(), KoinComponent {
         // 9. 初始化崩溃捕获
         initCrashHandler()
 
-        // 10. 后台安装补丁
+        // 10. 部署 Bootstrap 程序集（补丁系统统一启动钩子，游戏启动前必须就位）
+        PatchModuleHandler.deployBootstrapAssembly()
+
+        // 11. 后台安装补丁
         installPatchesInBackground()
 
-        // 11. 设置环境变量
+        // 12. 设置环境变量
         setupEnvironmentVariables()
 
         applyIconAlias()

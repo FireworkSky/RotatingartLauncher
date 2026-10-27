@@ -29,6 +29,8 @@ object AppConstants {
         const val RUNTIMES = "runtimes"
         /** 旧版 .NET 运行时目录 */
         const val LEGACY_DOTNET = "dotnet"
+        /** Bootstrap 存放目录 */
+        const val BOOTSTRAP = "bootstrap"
         /** 补丁目录 */
         const val PATCHES = "patches"
         /** 模块目录 */
