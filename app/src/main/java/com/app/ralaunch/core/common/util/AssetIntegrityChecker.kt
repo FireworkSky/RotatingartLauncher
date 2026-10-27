@@ -2,12 +2,11 @@ package com.app.ralaunch.core.common.util
 
 import android.content.Context
 import com.app.ralaunch.R
-import com.app.ralaunch.core.di.contract.IRuntimeManagerServiceV2
+import com.app.ralaunch.utils.RuntimeManager
 import timber.log.Timber
 import com.app.ralaunch.core.platform.AppConstants
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.koin.java.KoinJavaComponent
 import java.io.File
 
 /**
@@ -327,9 +326,9 @@ object AssetIntegrityChecker {
         val sb = StringBuilder()
 
         // .NET Runtime 状态
-        val dotnetRuntime = runtimeManager().getSelectedRuntime(IRuntimeManagerServiceV2.RuntimeType.DOTNET)
+        val dotnetRuntime = RuntimeManager.getSelectedRuntime(RuntimeManager.RuntimeType.DOTNET)
         val dotnetStatus = if (dotnetRuntime != null && hasValidDotNetLayout(dotnetRuntime.rootPath.toFile())) {
-            val versions = runtimeManager().getInstalledVersions(IRuntimeManagerServiceV2.RuntimeType.DOTNET)
+            val versions = RuntimeManager.getInstalledVersions(RuntimeManager.RuntimeType.DOTNET)
             if (versions.isNotEmpty()) {
                 context.getString(
                     R.string.asset_check_status_dotnet_installed_versions,
@@ -352,7 +351,7 @@ object AssetIntegrityChecker {
         componentName: String
     ): List<CheckResult.Issue> {
         val issues = mutableListOf<CheckResult.Issue>()
-        val selectedRuntime = runtimeManager().getSelectedRuntime(IRuntimeManagerServiceV2.RuntimeType.DOTNET)
+        val selectedRuntime = RuntimeManager.getSelectedRuntime(RuntimeManager.RuntimeType.DOTNET)
         if (selectedRuntime == null) {
             issues.add(
                 CheckResult.Issue(
@@ -453,7 +452,4 @@ object AssetIntegrityChecker {
     private fun MutableList<CheckResult.Issue>.addIfNotNull(issue: CheckResult.Issue?) {
         if (issue != null) add(issue)
     }
-
-    private fun runtimeManager(): IRuntimeManagerServiceV2 =
-        KoinJavaComponent.get(IRuntimeManagerServiceV2::class.java)
 }

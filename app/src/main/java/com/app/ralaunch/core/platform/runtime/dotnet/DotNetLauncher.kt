@@ -2,9 +2,8 @@ package com.app.ralaunch.core.platform.runtime.dotnet
 
 import com.app.ralaunch.core.config.AppConfig
 import timber.log.Timber
-import com.app.ralaunch.core.di.contract.IRuntimeManagerServiceV2
 import com.app.ralaunch.core.platform.runtime.EnvVarsManager
-import org.koin.java.KoinJavaComponent
+import com.app.ralaunch.utils.RuntimeManager
 
 object DotNetLauncher {
     private val XIAOMI_COMPAT_ENV_KEYS = arrayOf(
@@ -33,10 +32,7 @@ object DotNetLauncher {
         args: Array<String>,
         dotNetRuntimeVersionOverride: String? = null
     ): Int {
-        val runtimeManager: IRuntimeManagerServiceV2 =
-            KoinJavaComponent.get(IRuntimeManagerServiceV2::class.java)
         val dotnetRuntime = resolveDotNetRuntime(
-            runtimeManager = runtimeManager,
             versionOverride = dotNetRuntimeVersionOverride
         ) ?: run {
             Timber.e("Failed to resolve selected dotnet runtime")
@@ -111,13 +107,12 @@ object DotNetLauncher {
     }
 
     private fun resolveDotNetRuntime(
-        runtimeManager: IRuntimeManagerServiceV2,
         versionOverride: String?
-    ): IRuntimeManagerServiceV2.InstalledRuntime? {
+    ): RuntimeManager.InstalledRuntime? {
         val normalizedOverride = versionOverride?.trim()?.takeIf { it.isNotEmpty() }
         if (normalizedOverride != null) {
-            val overriddenRuntime = runtimeManager
-                .getInstalledRuntimes(IRuntimeManagerServiceV2.RuntimeType.DOTNET)
+            val overriddenRuntime = RuntimeManager
+                .getInstalledRuntimes(RuntimeManager.RuntimeType.DOTNET)
                 .firstOrNull { it.version == normalizedOverride }
             if (overriddenRuntime != null) {
                 Timber.i("Using per-game .NET runtime override: $normalizedOverride")
@@ -125,7 +120,7 @@ object DotNetLauncher {
             }
             Timber.w("Requested .NET runtime override is not installed: $normalizedOverride, falling back to selected runtime")
         }
-        return runtimeManager.getSelectedRuntime(IRuntimeManagerServiceV2.RuntimeType.DOTNET)
+        return RuntimeManager.getSelectedRuntime(RuntimeManager.RuntimeType.DOTNET)
     }
 
     private external fun getNativeDotNetLauncherHostfxrLastErrorMsg(): String

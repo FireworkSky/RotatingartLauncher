@@ -35,8 +35,6 @@ object PatchModuleHandler : ModuleHandler {
     override val type = TYPE
     const val TYPE = "patch"
     private const val BUILT_IN_PATCH_ASSET_DIR = "patches"
-    private const val BOOTSTRAP_ASSEMBLY_NAME = "RAL.Bootstrap.CoreCLR.dll"
-    private const val BOOTSTRAP_ASSET_PATH = "bootstrap/RAL.Bootstrap.CoreCLR.dll"
 
     /** 全部已安装补丁（无法解码清单的模块跳过）。 */
     fun patches(): List<Patch> =
@@ -134,6 +132,9 @@ object PatchModuleHandler : ModuleHandler {
         Timber.d("constructPatchesEnvVar: Result = $result")
         return result
     }
+
+    private const val BOOTSTRAP_ASSEMBLY_NAME = "RAL.Bootstrap.CoreCLR.dll"
+    private const val BOOTSTRAP_ASSET_PATH = "bootstrap/RAL.Bootstrap.CoreCLR.dll"
 
     /**
      * Bootstrap 程序集落盘路径（filesDir/bootstrap/RAL.Bootstrap.CoreCLR.dll，

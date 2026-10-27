@@ -91,7 +91,6 @@ import com.app.ralaunch.R
 import com.app.ralaunch.core.common.util.AssetIntegrityChecker
 import com.app.ralaunch.core.common.util.LocaleManager
 import com.app.ralaunch.core.config.AppConfig
-import com.app.ralaunch.core.di.contract.IRuntimeManagerServiceV2
 import com.app.ralaunch.core.logging.LogFilePolicy
 import com.app.ralaunch.core.model.AppInfo
 import com.app.ralaunch.core.model.AppSettings
@@ -118,6 +117,7 @@ import com.app.ralaunch.feature.settings.ui.SettingsScreenContent
 import com.app.ralaunch.feature.settings.ui.SettingsSection
 import com.app.ralaunch.feature.settings.ui.SliderSettingItem
 import com.app.ralaunch.feature.settings.ui.SwitchSettingItem
+import com.app.ralaunch.utils.RuntimeManager
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -135,16 +135,15 @@ fun SettingsScreenWrapper(
     val activity = context as? Activity ?: return
     var currentCategory by rememberSaveable { mutableStateOf(SettingsCategory.APPEARANCE) }
     val assetStatusSummaryState = remember { mutableStateOf("") }
-    val runtimeManager: IRuntimeManagerServiceV2 = koinInject()
     var installedDotNetRuntimeVersions by remember { mutableStateOf(emptyList<String>()) }
 
     LaunchedEffect(Unit) {
         assetStatusSummaryState.value = AssetIntegrityChecker.getStatusSummary(context)
     }
 
-    LaunchedEffect(runtimeManager) {
+    LaunchedEffect(Unit) {
         installedDotNetRuntimeVersions = withContext(Dispatchers.IO) {
-            runtimeManager.getInstalledVersions(IRuntimeManagerServiceV2.RuntimeType.DOTNET)
+            RuntimeManager.getInstalledVersions(RuntimeManager.RuntimeType.DOTNET)
         }
     }
 

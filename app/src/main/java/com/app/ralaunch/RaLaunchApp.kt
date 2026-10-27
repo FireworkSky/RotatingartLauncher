@@ -77,7 +77,7 @@ class RaLaunchApp : Application(), KoinComponent {
         // 4. 初始化日志系统（Timber：Logcat + 文件日志）
         AppLogger.init(this)
 
-        // 5. 启动时迁移旧运行时布局
+        // 5. 初始化运行时管理器（runtimes 目录固定后才能被各组件直接使用）
         RuntimeManager.initialize(this.filesDir)
 
         // 6. 初始化游戏管理器（games 目录固定后才能被各组件直接使用）

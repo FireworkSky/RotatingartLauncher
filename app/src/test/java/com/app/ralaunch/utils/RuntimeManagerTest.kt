@@ -1,15 +1,12 @@
-package com.app.ralaunch.core.di.service
+package com.app.ralaunch.utils
 
 import com.app.ralaunch.core.config.AppConfig
-import com.app.ralaunch.core.di.contract.IRuntimeManagerServiceV2
 import com.app.ralaunch.core.model.AppSettings
 import io.mockk.every
 import io.mockk.mockkObject
 import io.mockk.unmockkAll
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertTrue
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -18,12 +15,10 @@ import kotlin.io.path.createDirectories
 import kotlin.io.path.createFile
 import kotlin.io.path.createTempDirectory
 import kotlin.io.path.deleteRecursively
-import kotlin.io.path.exists
-import kotlin.io.path.notExists
 import kotlin.io.path.writeText
 
 @OptIn(ExperimentalPathApi::class)
-class RuntimeManagerServiceV2Test {
+class RuntimeManagerTest {
 
     @Before
     fun setUp() {
@@ -43,86 +38,58 @@ class RuntimeManagerServiceV2Test {
     @Test
     fun `getSelectedRuntime falls back to newest installed version`() {
         val runtimesRoot = createTempDirectory("runtime-root-")
-        val legacyDotnetRoot = createTempDirectory("legacy-dotnet-")
 
         try {
             createDotNetRuntimeLayout(runtimesRoot.resolve("dotnet").resolve("10.0.0"), "10.0.0")
             createDotNetRuntimeLayout(runtimesRoot.resolve("dotnet").resolve("10.0.4"), "10.0.4")
 
             AppConfig.c.selectedDotnetRuntimeVersion = "9.0.0"
-            val service = RuntimeManagerServiceV2(runtimesRoot, legacyDotnetRoot)
+            RuntimeManager.initialize(runtimesRoot)
 
-            val selected = service.getSelectedRuntime(IRuntimeManagerServiceV2.RuntimeType.DOTNET)
+            val selected = RuntimeManager.getSelectedRuntime(RuntimeManager.RuntimeType.DOTNET)
 
             assertNotNull(selected)
             assertEquals("10.0.4", selected?.version)
         } finally {
             runtimesRoot.deleteRecursively()
-            legacyDotnetRoot.deleteRecursively()
         }
     }
 
     @Test
     fun `getSelectedRuntime respects persisted version when installed`() {
         val runtimesRoot = createTempDirectory("runtime-root-")
-        val legacyDotnetRoot = createTempDirectory("legacy-dotnet-")
 
         try {
             createDotNetRuntimeLayout(runtimesRoot.resolve("dotnet").resolve("10.0.0"), "10.0.0")
             createDotNetRuntimeLayout(runtimesRoot.resolve("dotnet").resolve("10.0.4"), "10.0.4")
 
             AppConfig.c.selectedDotnetRuntimeVersion = "10.0.0"
-            val service = RuntimeManagerServiceV2(runtimesRoot, legacyDotnetRoot)
+            RuntimeManager.initialize(runtimesRoot)
 
-            val selected = service.getSelectedRuntime(IRuntimeManagerServiceV2.RuntimeType.DOTNET)
+            val selected = RuntimeManager.getSelectedRuntime(RuntimeManager.RuntimeType.DOTNET)
 
             assertNotNull(selected)
             assertEquals("10.0.0", selected?.version)
         } finally {
             runtimesRoot.deleteRecursively()
-            legacyDotnetRoot.deleteRecursively()
-        }
-    }
-
-    @Test
-    fun `getInstalledRuntimes does not migrate legacy dotnet automatically`() {
-        val runtimesRoot = createTempDirectory("runtime-root-")
-        val legacyParent = createTempDirectory("legacy-parent-")
-        val legacyDotnetRoot = legacyParent.resolve("dotnet")
-
-        try {
-            createDotNetRuntimeLayout(legacyDotnetRoot, "10.0.4")
-
-            val service = RuntimeManagerServiceV2(runtimesRoot, legacyDotnetRoot)
-
-            val installed = service.getInstalledRuntimes(IRuntimeManagerServiceV2.RuntimeType.DOTNET)
-
-            assertTrue(installed.isEmpty())
-            assertTrue(legacyDotnetRoot.exists())
-            assertFalse(runtimesRoot.resolve("dotnet").resolve("10.0.4").exists())
-        } finally {
-            runtimesRoot.deleteRecursively()
-            legacyParent.deleteRecursively()
         }
     }
 
     @Test
     fun `box64 discovery accepts versioned directories with contents`() {
         val runtimesRoot = createTempDirectory("runtime-root-")
-        val legacyDotnetRoot = createTempDirectory("legacy-dotnet-")
 
         try {
             val box64RuntimeDir = runtimesRoot.resolve("box64").resolve("2.0.0").createDirectories()
             box64RuntimeDir.resolve("box64").createFile().writeText("binary")
 
-            val service = RuntimeManagerServiceV2(runtimesRoot, legacyDotnetRoot)
+            RuntimeManager.initialize(runtimesRoot)
 
-            val installed = service.getInstalledRuntimes(IRuntimeManagerServiceV2.RuntimeType.BOX64)
+            val installed = RuntimeManager.getInstalledRuntimes(RuntimeManager.RuntimeType.BOX64)
 
             assertEquals(listOf("2.0.0"), installed.map { it.version })
         } finally {
             runtimesRoot.deleteRecursively()
-            legacyDotnetRoot.deleteRecursively()
         }
     }
 

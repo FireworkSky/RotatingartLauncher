@@ -5,13 +5,13 @@ import android.content.SharedPreferences
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.app.ralaunch.R
-import com.app.ralaunch.core.di.contract.IRuntimeManagerServiceV2
 import com.app.ralaunch.core.extractor.ArchiveExtractor
 import com.app.ralaunch.core.extractor.AssetExtractor
 import com.app.ralaunch.core.platform.AppConstants
 import com.app.ralaunch.feature.init.model.ComponentState
 import com.app.ralaunch.feature.init.model.InitStep
 import com.app.ralaunch.feature.init.model.InitUiState
+import com.app.ralaunch.utils.RuntimeManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -35,8 +35,7 @@ sealed class InitializationEffect {
 
 class InitializationViewModel(
     private val appContext: Context,
-    private val prefs: SharedPreferences,
-    private val runtimeManager: IRuntimeManagerServiceV2
+    private val prefs: SharedPreferences
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(InitUiState())
     val uiState: StateFlow<InitUiState> = _uiState.asStateFlow()
@@ -143,7 +142,7 @@ class InitializationViewModel(
 
             updateComponent(index, 30, false, appContext.getString(R.string.init_extracting))
 
-            val runtimeType = IRuntimeManagerServiceV2.RuntimeType.fromDirName(component.name)
+            val runtimeType = RuntimeManager.RuntimeType.fromDirName(component.name)
                 ?: error("Unsupported runtime component: ${component.name}")
             val stagingRootDir = Path(appContext.cacheDir.absolutePath, "runtime-staging")
             val stagingDir = stagingRootDir.resolve(component.name)
@@ -176,18 +175,18 @@ class InitializationViewModel(
             }
 
             val runtimeVersion = when (runtimeType) {
-                IRuntimeManagerServiceV2.RuntimeType.DOTNET -> runtimeManager.detectDotNetRuntimeVersion(stagingDir)
-                IRuntimeManagerServiceV2.RuntimeType.BOX64 -> throw IllegalStateException("Box64 archive extraction is not configured")
+                RuntimeManager.RuntimeType.DOTNET -> RuntimeManager.detectDotNetRuntimeVersion(stagingDir)
+                RuntimeManager.RuntimeType.BOX64 -> throw IllegalStateException("Box64 archive extraction is not configured")
             } ?: throw IllegalStateException("Failed to detect runtime version for ${component.name}")
 
-            val installDir = runtimeManager.getRuntimeInstallPath(runtimeType, runtimeVersion)
-            val runtimeTypeDir = runtimeManager.getRuntimeTypeRootPath(runtimeType)
+            val installDir = RuntimeManager.getRuntimeInstallPath(runtimeType, runtimeVersion)
+            val runtimeTypeDir = RuntimeManager.getRuntimeTypeRootPath(runtimeType)
             runtimeTypeDir.createDirectories()
             if (installDir.exists()) {
                 installDir.deleteRecursively()
             }
             stagingDir.moveTo(installDir)
-            runtimeManager.setSelectedRuntimeVersion(runtimeType, runtimeVersion)
+            RuntimeManager.setSelectedRuntimeVersion(runtimeType, runtimeVersion)
 
             tempFile.delete()
             updateComponent(index, 100, true, appContext.getString(R.string.init_complete))

@@ -2,7 +2,7 @@ package com.app.ralaunch.feature.main.vm
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.app.ralaunch.core.di.contract.IRuntimeManagerServiceV2
+import com.app.ralaunch.utils.RuntimeManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -15,9 +15,7 @@ data class GameInfoEditUiState(
     val globalDotNetRuntimeVersion: String? = null
 )
 
-class GameInfoEditViewModel(
-    private val runtimeManager: IRuntimeManagerServiceV2
-) : ViewModel() {
+class GameInfoEditViewModel : ViewModel() {
 
     private val _uiState = MutableStateFlow(GameInfoEditUiState())
     val uiState: StateFlow<GameInfoEditUiState> = _uiState.asStateFlow()
@@ -28,11 +26,11 @@ class GameInfoEditViewModel(
 
     private fun loadRuntimeOptions() {
         viewModelScope.launch(Dispatchers.IO) {
-            val installedVersions = runtimeManager.getInstalledVersions(
-                IRuntimeManagerServiceV2.RuntimeType.DOTNET
+            val installedVersions = RuntimeManager.getInstalledVersions(
+                RuntimeManager.RuntimeType.DOTNET
             )
-            val selectedVersion = runtimeManager.getSelectedRuntimeVersion(
-                IRuntimeManagerServiceV2.RuntimeType.DOTNET
+            val selectedVersion = RuntimeManager.getSelectedRuntimeVersion(
+                RuntimeManager.RuntimeType.DOTNET
             ) ?: installedVersions.firstOrNull()
             _uiState.update {
                 it.copy(

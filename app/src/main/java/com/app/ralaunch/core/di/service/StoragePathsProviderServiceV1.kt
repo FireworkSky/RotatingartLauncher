@@ -23,14 +23,6 @@ class StoragePathsProviderServiceV1(
     fun settingsFilePathFull(): String =
         Path(context.filesDir.absolutePath).resolve(AppConstants.Files.SETTINGS).absolutePathString()
 
-    fun filesDirPathFull(): String = Path(context.filesDir.absolutePath).absolutePathString()
-
-    fun runtimesDirPathFull(): String =
-        Path(context.filesDir.absolutePath).resolve(AppConstants.Dirs.RUNTIMES).absolutePathString()
-
-    fun legacyDotnetDirPathFull(): String =
-        Path(context.filesDir.absolutePath).resolve(AppConstants.Dirs.LEGACY_DOTNET).absolutePathString()
-
     private fun externalFilesDirPath() = run {
         val externalFilesDir = requireNotNull(context.getExternalFilesDir(null)) {
             "External files directory is unavailable"

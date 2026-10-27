@@ -14,12 +14,10 @@ import androidx.compose.runtime.setValue
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
-import com.app.ralaunch.core.di.contract.IRuntimeManagerServiceV2
 import com.app.ralaunch.core.platform.AppConstants
 import com.app.ralaunch.ui.screen.InitializationScreen
 import com.app.ralaunch.ui.screen.MainScreen
 import com.app.ralaunch.ui.theme.RaLaunchTheme
-import org.koin.mp.KoinPlatform.getKoin
 import androidx.core.content.edit
 
 /*******************************************************************************
@@ -47,7 +45,6 @@ import androidx.core.content.edit
 
 class MainActivity : ComponentActivity() {
 
-    private lateinit var runtimeManager: IRuntimeManagerServiceV2
     private lateinit var prefs: SharedPreferences
 
     // 使用Compose状态来实时跟踪权限
@@ -65,7 +62,6 @@ class MainActivity : ComponentActivity() {
         setupFullscreen()
         super.onCreate(savedInstanceState)
 
-        runtimeManager = getKoin().get<IRuntimeManagerServiceV2>()
         prefs = getSharedPreferences(AppConstants.PREFS_NAME, 0)
 
         // 初始化权限状态

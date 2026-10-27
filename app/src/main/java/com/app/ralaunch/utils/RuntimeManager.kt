@@ -1,8 +1,7 @@
 package com.app.ralaunch.utils
 
-import androidx.core.content.edit
+import com.app.ralaunch.core.config.AppConfig
 import com.app.ralaunch.core.platform.AppConstants
-import kotlinx.coroutines.runBlocking
 import java.io.File
 import java.nio.file.Path
 import kotlin.io.path.name
@@ -32,9 +31,6 @@ import kotlin.io.path.name
 
 object RuntimeManager {
 
-    const val SELECTED_DOTNET_RUNTIME_VERSION = "selected_dotnet_runtime_version"
-    const val SELECTED_BOX64_RUNTIME_VERSION = "selected_box64_runtime_version"
-
     // ====== Runtime Type Enum ======
 
     enum class RuntimeType(val dirName: String) {
@@ -56,18 +52,16 @@ object RuntimeManager {
 
     // ====== Path Providers ======
 
-    private var filesRootPath: Path? = null
     private var runtimesRootPath: Path? = null
 
     // ====== Initialization ======
 
     fun initialize(filesDir: File) {
-        filesRootPath = filesDir.toPath().toAbsolutePath().normalize()
-        runtimesRootPath = filesRootPath?.resolve(AppConstants.Dirs.RUNTIMES)
+        runtimesRootPath = filesDir.toPath().toAbsolutePath().normalize()
+            .resolve(AppConstants.Dirs.RUNTIMES)
     }
 
-    fun initialize(filesRootPath: Path, runtimesRootPath: Path) {
-        this.filesRootPath = filesRootPath.toAbsolutePath().normalize()
+    fun initialize(runtimesRootPath: Path) {
         this.runtimesRootPath = runtimesRootPath.toAbsolutePath().normalize()
     }
 
@@ -83,10 +77,6 @@ object RuntimeManager {
 
     fun getRuntimeInstallPath(type: RuntimeType, version: String): Path {
         return getRuntimeTypeRootPath(type).resolve(version.trim())
-    }
-
-    private fun getRuntimeStorageRootPath(): Path {
-        return filesRootPath ?: getRuntimesRootPath().parent ?: getRuntimesRootPath()
     }
 
     // ====== Installed Runtimes ======
@@ -122,22 +112,22 @@ object RuntimeManager {
     }
 
     fun getSelectedRuntimeVersion(type: RuntimeType): String? {
-        val prefs = getSharedPreferences()
-        val key = when (type) {
-            RuntimeType.DOTNET -> SELECTED_DOTNET_RUNTIME_VERSION
-            RuntimeType.BOX64 -> SELECTED_BOX64_RUNTIME_VERSION
-        }
-        return prefs.getString(key, null)
+        val selected = when (type) {
+            RuntimeType.DOTNET -> AppConfig.c.selectedDotnetRuntimeVersion
+            RuntimeType.BOX64 -> AppConfig.c.selectedBox64RuntimeVersion
+        }.trim()
+
+        return selected.ifBlank { null }
     }
 
     suspend fun setSelectedRuntimeVersion(type: RuntimeType, version: String) {
         val normalizedVersion = version.trim()
-        val prefs = getSharedPreferences()
-        val key = when (type) {
-            RuntimeType.DOTNET -> SELECTED_DOTNET_RUNTIME_VERSION
-            RuntimeType.BOX64 -> SELECTED_BOX64_RUNTIME_VERSION
+        AppConfig.updateSave {
+            when (type) {
+                RuntimeType.DOTNET -> it.copy(selectedDotnetRuntimeVersion = normalizedVersion)
+                RuntimeType.BOX64 -> it.copy(selectedBox64RuntimeVersion = normalizedVersion)
+            }
         }
-        prefs.edit {putString(key, normalizedVersion)}
     }
 
     // ====== Detection ======
@@ -208,12 +198,5 @@ object RuntimeManager {
             }
         }
         return 0
-    }
-
-    private fun getSharedPreferences(): android.content.SharedPreferences {
-        // 使用 Application 级上下文，避免依赖 MainActivity 静态字段
-        // （该字段在 MainActivity 未创建的场景下为 null，如交互式预览）
-        return com.app.ralaunch.RaLaunchApp.getAppContext()
-            .getSharedPreferences(AppConstants.PREFS_NAME, 0)
     }
 }

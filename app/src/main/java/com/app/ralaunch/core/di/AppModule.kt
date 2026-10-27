@@ -4,10 +4,8 @@ import android.content.Context
 import android.content.SharedPreferences
 import androidx.activity.ComponentActivity
 import androidx.appcompat.app.AppCompatActivity
-import com.app.ralaunch.core.di.contract.IRuntimeManagerServiceV2
 import com.app.ralaunch.core.di.contract.IThemeManagerServiceV1
 import com.app.ralaunch.core.di.service.PermissionManagerServiceV1
-import com.app.ralaunch.core.di.service.RuntimeManagerServiceV2
 import com.app.ralaunch.core.di.service.StoragePathsProviderServiceV1
 import com.app.ralaunch.core.di.service.ThemeManagerServiceV1
 import com.app.ralaunch.core.di.service.VibrationManagerServiceV1
@@ -50,14 +48,6 @@ val appModule = module {
 
     single {
         LogExportHelper(storagePathsProvider = get())
-    }
-
-    // ==================== Repositories ====================
-
-    single<IRuntimeManagerServiceV2> {
-        RuntimeManagerServiceV2(
-            pathsProvider = get()
-        )
     }
 
     single<SharedPreferences> {
@@ -121,9 +111,7 @@ val appModule = module {
     }
 
     viewModel {
-        GameInfoEditViewModel(
-            runtimeManager = get()
-        )
+        GameInfoEditViewModel()
     }
 
     viewModel {
@@ -161,8 +149,7 @@ val appModule = module {
     viewModel {
         InitializationViewModel(
             appContext = androidContext(),
-            prefs = get(),
-            runtimeManager = get()
+            prefs = get()
         )
     }
 
