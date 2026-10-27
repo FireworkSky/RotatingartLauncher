@@ -227,19 +227,12 @@
 
     <!-- Gestión de Parches -->
     <string name="patch_management">Gestión de parches</string>
-    <string name="patch_management_desc">Gestionar el estado de habilitación/deshabilitación de parches del juego</string>
-    <string name="patch_dialog_title">Gestión de parches</string>
     <string name="patch_dialog_desc">Selecciona un juego, luego habilita/deshabilita parches para él a la derecha</string>
-    <string name="patch_enabled">Habilitado</string>
-    <string name="patch_disabled">Deshabilitado</string>
     <string name="patch_no_games">Sin juegos</string>
     <string name="patch_assembly_patch">Parche de ensamblado</string>
     <string name="patch_tmodloader_only">Solo funciona para tModLoader</string>
     <string name="patch_status_changed">Estado del parche actualizado</string>
     <string name="game_list_title">Lista de juegos</string>
-    <string name="patch_list_title">Lista de parches</string>
-    <string name="no_game_selected">Por favor selecciona un juego primero</string>
-    <string name="no_patches_for_game">No hay parches disponibles para este juego</string>
 
     <!-- Varios -->
     <string name="miscellaneous">Varios</string>
@@ -1067,9 +1060,6 @@
     <string name="mod_manager_view_mode_list">Cambiado a vista de lista</string>
     <string name="mod_manager_home">Inicio</string>
     <string name="editor_toggle_touch">Habilitar evento táctil</string>
-    <string name="patch_dialog_import">Importar parche</string>
-    <string name="patch_dialog_import_successful">Paquete de parches importado con éxito</string>
-    <string name="patch_dialog_import_failed">Error al importar paquete de parches, revisa los registros para más información</string>
     <string name="patch_dialog_import_title">⚠️ Advertencia</string>
     <string name="patch_dialog_import_message">Los paquetes de parches tienen la capacidad de cargar archivos ejecutables.\nInstalar paquetes de parches con código malicioso puede resultar en:\n- Fuga de datos personales e información de privacidad\n- Daño al dispositivo\nAntes de la instalación, por favor confirma que:\n- Confías en la fuente de este paquete de parches\n- Entiendes la funcionalidad específica del paquete de parches\n- Has respaldado datos importantes\nContinuar con la instalación indica que entiendes y aceptas los riesgos asociados.</string>
     
@@ -1303,7 +1293,6 @@
     <string name="renderer_mobileglues_desc">OpenGL 4.6 traducido a OpenGL ES 3.2 (capa de traducción moderna)</string>
     <string name="renderer_zink">Zink (Mesa Vulkan)</string>
     <string name="renderer_zink_desc">OpenGL de escritorio sobre Vulkan (Mesa Zink + Turnip)</string>
-    <string name="patch_status_changed_message">%1$s - %2$s: %3$s</string>
     <string name="import_storage_init_failed">No se pudo inicializar el almacenamiento del juego</string>
     <string name="appearance_image_background_set">Fondo de imagen establecido, opacidad ajustada automáticamente al 90%%</string>
     <string name="appearance_background_image_set">Imagen de fondo establecida</string>

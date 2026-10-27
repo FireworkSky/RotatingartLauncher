@@ -112,7 +112,6 @@ import com.app.ralaunch.feature.main.contracts.MainUiState
 import com.app.ralaunch.feature.main.ui.background.AppBackground
 import com.app.ralaunch.feature.main.ui.background.BackgroundType
 import com.app.ralaunch.feature.main.vm.MainViewModel
-import com.app.ralaunch.feature.patch.ui.PatchManagementSubScreen
 import com.app.ralaunch.feature.settings.ui.LogViewerSubScreen
 import com.app.ralaunch.feature.settings.ui.RESTORE_SETTINGS_AFTER_RECREATE_KEY
 import com.app.ralaunch.feature.settings.ui.SettingsScreenWrapper
@@ -752,11 +751,6 @@ class MainActivityCompose : BaseActivity() {
                             } else {
                                 PlaceholderScreen(stringResource(R.string.main_game_not_found, targetScreen.storageId))
                             }
-                        }
-                        is Screen.PatchManagement -> {
-                            PatchManagementSubScreen(
-                                onBack = { navState.goBack() }
-                            )
                         }
                         is Screen.LogViewer -> {
                             LogViewerSubScreen(

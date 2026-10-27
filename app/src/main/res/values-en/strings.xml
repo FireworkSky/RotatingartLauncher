@@ -268,20 +268,12 @@
 
     <!-- Patch Management -->
     <string name="patch_management">Patch Management</string>
-    <string name="patch_management_desc">Manage game patch enable/disable status</string>
-    <string name="patch_dialog_title">Patch Management</string>
     <string name="patch_dialog_desc">Select a game, then enable/disable patches for it on the right</string>
-    <string name="patch_enabled">Enabled</string>
-    <string name="patch_disabled">Disabled</string>
     <string name="patch_no_games">No Games</string>
     <string name="patch_assembly_patch">Assembly Patch</string>
     <string name="patch_tmodloader_only">Only works for tModLoader</string>
     <string name="patch_status_changed">Patch status updated</string>
-    <string name="patch_status_changed_message">%1$s - %2$s: %3$s</string>
     <string name="game_list_title">Game List</string>
-    <string name="patch_list_title">Patch List</string>
-    <string name="no_game_selected">Please select a game first</string>
-    <string name="no_patches_for_game">No patches available for this game</string>
 
     <!-- Miscellaneous -->
     <string name="miscellaneous">Miscellaneous</string>
@@ -1142,9 +1134,6 @@
     <string name="mod_manager_view_mode_list">Switched to list view</string>
     <string name="mod_manager_home">Home</string>
     <string name="editor_toggle_touch">Enable Touch Event</string>
-    <string name="patch_dialog_import">Import Patch</string>
-    <string name="patch_dialog_import_successful">Patch imported successfully</string>
-    <string name="patch_dialog_import_failed">Patch import failed, check logs for more information</string>
     <string name="patch_dialog_import_title">⚠️ Warning</string>
     <string name="patch_dialog_import_message">Patches have the ability to load executable files.\nInstalling patches with malicious code may result in:\n- Personal data and privacy information leakage\n- Device damage\nBefore installation, please confirm that:\n- You trust the source of this patch\n- You understand the patch\'s specific functionality\n- You have backed up important data\nContinuing with installation indicates that you understand and accept the associated risks.</string>
 

@@ -24,7 +24,6 @@ import com.app.ralaunch.feature.installer.vm.InstallerViewModel
 import com.app.ralaunch.utils.LauncherUpdateChecker
 import com.app.ralaunch.feature.main.vm.MainViewModel
 import com.app.ralaunch.feature.main.vm.GameInfoEditViewModel
-import com.app.ralaunch.feature.patch.vm.PatchManagementViewModel
 import com.app.ralaunch.feature.script.JavaScriptExecutor
 import com.app.ralaunch.core.model.AppInfo
 import com.app.ralaunch.feature.sponsor.SponsorRepositoryService
@@ -157,12 +156,6 @@ val appModule = module {
         ControlLayoutViewModel(
             appContext = androidContext(),
             packManager = get()
-        )
-    }
-
-    viewModel {
-        PatchManagementViewModel(
-            appContext = androidContext()
         )
     }
 

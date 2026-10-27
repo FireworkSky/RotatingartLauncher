@@ -250,19 +250,12 @@
 
     <!-- Patch Management -->
     <string name="patch_management">Управление патчами</string>
-    <string name="patch_management_desc">Управление состоянием включения патчей игры</string>
-    <string name="patch_dialog_title">Управление патчами</string>
     <string name="patch_dialog_desc">Выберите игру, затем справа включите или выключите патчи для этой игры</string>
-    <string name="patch_enabled">Включено</string>
-    <string name="patch_disabled">Отключено</string>
     <string name="patch_no_games">Нет игр</string>
     <string name="patch_assembly_patch">Патч сборки</string>
     <string name="patch_tmodloader_only">Действует только для tModLoader</string>
     <string name="patch_status_changed">Статус патча обновлен</string>
     <string name="game_list_title">Список игр</string>
-    <string name="patch_list_title">Список патчей</string>
-    <string name="no_game_selected">Пожалуйста, сначала выберите игру</string>
-    <string name="no_patches_for_game">Для этой игры нет доступных патчей</string>
     
     <!-- Miscellaneous -->
     <string name="miscellaneous">Разное</string>
@@ -1070,9 +1063,6 @@
     <string name="mod_manager_view_mode_list">Переключено на вид списка</string>
     <string name="mod_manager_home">Главная папка</string>
     <string name="editor_toggle_touch">Включить события касания</string>
-    <string name="patch_dialog_import">Импортировать патч</string>
-    <string name="patch_dialog_import_successful">Пакет патчей успешно импортирован</string>
-    <string name="patch_dialog_import_failed">Импорт пакета патчей не удался, проверьте логи для получения дополнительной информации</string>
     <string name="patch_dialog_import_title">⚠️ Предупреждение</string>
     <string name="patch_dialog_import_message">Пакет патчей имеет возможность загружать исполняемые файлы.\nУстановка пакета патчей, содержащего вредоносный код, может привести к:\n- Утечке личных данных и конфиденциальной информации\n- Повреждению устройства\nПеред установкой убедитесь, что:\n- Вы доверяете источнику этого пакета патчей\n- Вы понимаете конкретные функции пакета патчей\n- Вы создали резервную копию важных данных\nПродолжение установки означает, что вы понимаете и принимаете связанные риски.</string>
     
@@ -1305,7 +1295,6 @@
     <string name="renderer_mobileglues_desc">OpenGL 4.6 переведен в OpenGL ES 3.2 (современный уровень перевода)</string>
     <string name="renderer_zink">Цинк (Меса Вулкан)</string>
     <string name="renderer_zink_desc">Рабочий стол OpenGL поверх Vulkan (Mesa Zink + Turnip)</string>
-    <string name="patch_status_changed_message">%1$s – %2$s: %3$s</string>
     <string name="import_storage_init_failed">Не удалось инициализировать игровое хранилище.</string>
     <string name="control_layout_created">Макет создан</string>
     <string name="key_selector_keyboard_mode">Клавиатура</string>

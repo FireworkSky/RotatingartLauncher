@@ -259,19 +259,12 @@
 
     <!-- 补丁管理 -->
     <string name="patch_management">补丁管理</string>
-    <string name="patch_management_desc">管理游戏补丁的启用状态</string>
-    <string name="patch_dialog_title">补丁管理</string>
     <string name="patch_dialog_desc">选择游戏后,在右侧为该游戏开启或关闭补丁</string>
-    <string name="patch_enabled">已启用</string>
-    <string name="patch_disabled">已禁用</string>
     <string name="patch_no_games">暂无游戏</string>
     <string name="patch_assembly_patch">程序集补丁</string>
     <string name="patch_tmodloader_only">仅对 tModLoader 生效</string>
     <string name="patch_status_changed">补丁状态已更新</string>
     <string name="game_list_title">游戏列表</string>
-    <string name="patch_list_title">补丁列表</string>
-    <string name="no_game_selected">请先选择游戏</string>
-    <string name="no_patches_for_game">此游戏没有可用的补丁</string>
     
     <!-- 杂项 -->
     <string name="miscellaneous">杂项</string>
@@ -1135,9 +1128,6 @@
     <string name="mod_manager_home">主目录</string>
     <string name="settings_about">关于</string>
     <string name="editor_toggle_touch">开启触摸事件</string>
-    <string name="patch_dialog_import">导入补丁</string>
-    <string name="patch_dialog_import_successful">补丁包导入成功</string>
-    <string name="patch_dialog_import_failed">补丁包导入失败，检查日志获取更多信息</string>
     <string name="patch_dialog_import_title">⚠️警告</string>
     <string name="patch_dialog_import_message">补丁包有装载可执行文件的能力。\n安装含有恶意代码的补丁包可能导致：\n- 个人数据和隐私信息泄露\n- 设备损坏\n安装前请确认：\n- 您信任此补丁包的来源\n- 您了解补丁包的具体功能\n- 您已备份重要数据\n继续安装表示您已了解并接受相关风险。</string>
     
@@ -1883,7 +1873,6 @@
     <string name="renderer_mobileglues_desc">OpenGL 4.6 翻译到 OpenGL ES 3.2（现代翻译层）</string>
     <string name="renderer_zink">Zink (Mesa Vulkan)</string>
     <string name="renderer_zink_desc">基于 Vulkan 的桌面 OpenGL（Mesa Zink + Turnip）</string>
-    <string name="patch_status_changed_message">%1$s - %2$s：%3$s</string>
     <string name="appearance_image_background_set">图片背景已设置，不透明度已自动调整为 90%%</string>
     <string name="appearance_video_background_set">视频背景已设置，不透明度已自动调整为 90%%</string>
     <string name="game_launch_no_params">未提供启动参数</string>

@@ -52,9 +52,6 @@ sealed class Screen(
         route = "game_detail/$storageId"
     )
 
-    /** 补丁管理 */
-    data object PatchManagement : Screen("patch_management")
-
     /** 日志查看器 */
     data object LogViewer : Screen("log_viewer")
     
@@ -77,7 +74,6 @@ sealed class Screen(
                 "initialization" -> Initialization
                 "file_browser" -> FileBrowser(parts.getOrNull(1) ?: "")
                 "game_detail" -> parts.getOrNull(1)?.let { GameDetail(it) }
-                "patch_management" -> PatchManagement
                 "log_viewer" -> LogViewer
                 "control_editor" -> ControlEditor(parts.getOrNull(1))
                 else -> null

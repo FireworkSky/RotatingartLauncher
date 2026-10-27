@@ -28,7 +28,6 @@ import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Download
-import androidx.compose.material.icons.filled.Extension
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FilterAlt
 import androidx.compose.material.icons.filled.Forum
@@ -96,7 +95,6 @@ import com.app.ralaunch.core.model.AppInfo
 import com.app.ralaunch.core.model.AppSettings
 import com.app.ralaunch.core.navigation.NavState
 import com.app.ralaunch.core.navigation.navigateToLogViewer
-import com.app.ralaunch.core.navigation.navigateToPatchManagement
 import com.app.ralaunch.core.platform.runtime.AndroidRendererRegistry
 import com.app.ralaunch.core.platform.runtime.RendererRegistry
 import com.app.ralaunch.core.ui.dialog.DotNetRuntimeOption
@@ -726,15 +724,6 @@ private fun LauncherSettingsPane(
         }
 
         SettingsSection(title = androidStringResource(R.string.patch_management)) {
-            ClickableSettingItem(
-                title = androidStringResource(R.string.patch_management),
-                subtitle = androidStringResource(R.string.patch_management_desc),
-                icon = Icons.Default.Extension,
-                onClick = { navState.navigateToPatchManagement() }
-            )
-
-            SettingsDivider()
-
             ClickableSettingItem(
                 title = androidStringResource(R.string.force_reinstall_patches),
                 subtitle = androidStringResource(R.string.force_reinstall_patches_desc),

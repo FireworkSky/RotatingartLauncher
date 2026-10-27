@@ -314,9 +314,3 @@ private fun ControlScreen() = PlaceholderScreen(
     title = "控制台",
     subtitle = "管理游戏和系统设置"
 )
-
-@Composable
-private fun PluginsScreen() = PlaceholderScreen(
-    title = "插件管理",
-    subtitle = "管理和配置已安装的插件"
-)
