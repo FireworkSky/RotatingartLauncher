@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <OutputType>Library</OutputType>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Lib.Harmony.Thin" Version="2.3.3">
+      <Private>False</Private>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="tModLoader">
+      <HintPath>..\external\tModLoader\tModLoader.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="FNA">
+      <HintPath>..\external\tModLoader\Libraries\FNA\1.0.0\FNA.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+  </ItemGroup>
+
+</Project>

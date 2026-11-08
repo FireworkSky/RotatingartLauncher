@@ -1,5 +1,5 @@
 #!/data/data/com.termux/files/usr/bin/bash
-# 从仓库内 vendored 源码编译「SDL2 版」FNA3D / FAudio（RAL 的 SDL2-Wayland 路径专用）
+# 从仓库内 vendored 源码编译「SDL2 版」FNA3D / FAudio（RAL 的 SDL2 Android 路径专用）
 #
 # 为什么必须自己编：
 #   - 包内默认的 libFNA3D.so / libFAudio.so 链接 SDL3，在 SDL2 流程里会走
@@ -11,7 +11,7 @@ set -euo pipefail
 
 export NDK=${NDK:-/data/data/com.termux/files/usr/opt/android-ndk}
 export API=${API:-28}
-export WORK=${WORK:-/data/data/com.termux/files/home/sdl2wayland}
+export WORK=${WORK:-/data/data/com.termux/files/home/sdl2android}
 export PREFIX=${PREFIX:-$WORK/prefix}
 export RAL=${RAL:-/data/data/com.termux/files/home/RotatingartLauncher}
 export LIBS=${LIBS:-$RAL/app/src/main/jniLibs/arm64-v8a}

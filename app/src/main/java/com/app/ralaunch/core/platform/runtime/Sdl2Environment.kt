@@ -7,7 +7,7 @@ package com.app.ralaunch.core.platform.runtime
  *  - SDL3：org.libsdl.app.SDLActivity
  *  - SDL2：org.libsdl.app2.SDLActivity（官方胶水层，包名整体 +2）
  * 因此 SDL2 走的是 SDL 官方的 Android 视频后端 + 系统 EGL/GLES（厂商 GPU 加速），
- * 不再需要内嵌 Wayland 合成器与软件光栅 Mesa。
+ * 不再需要旧的内嵌合成器与软件光栅 Mesa。
  *
  * 这里只做两件事：
  *  1) 让 FNA3D 走 OpenGL/GLES3（SDL_GPU 分支需要 SDL3，SDL2 下不可用）；
@@ -65,7 +65,7 @@ object Sdl2Environment {
         // FAudio AudioEngine(FACT)，于是引擎初始化直接崩。AAudio 驱动该标志为 FALSE，可以多开。
         envVars["SDL_AUDIODRIVER"] = "aaudio"
 
-        // 清除 Wayland 合成器 / Mesa 软光栅专用变量（SDL2 路径不再使用）
+        // 清除旧合成器 / Mesa 软光栅专用变量（SDL2 Android 路径不再使用）
         envVars["WAYLAND_DISPLAY"] = null
         envVars["XDG_RUNTIME_DIR"] = null
         envVars["LIBGL_DRIVERS_PATH"] = null

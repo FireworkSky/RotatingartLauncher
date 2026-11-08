@@ -13,6 +13,10 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.Objects
 import java.util.stream.Collectors
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 
 /**
  * 补丁管理器
@@ -21,6 +25,10 @@ class PatchManager @JvmOverloads constructor(
     customStoragePath: String? = null,
     installPatchesImmediately: Boolean = false
 ) {
+    private val _patchRevision = MutableStateFlow(0L)
+    /** Emits whenever the installed patch set changes. */
+    val patchRevision: StateFlow<Long> = _patchRevision.asStateFlow()
+
     private val patchStoragePath: Path
     private val configFilePath: Path
     private var config: PatchManagerConfig
@@ -166,6 +174,8 @@ class PatchManager @JvmOverloads constructor(
                 }
             }
         ).extract()
+
+        _patchRevision.update { it + 1L }
 
         return true
     }

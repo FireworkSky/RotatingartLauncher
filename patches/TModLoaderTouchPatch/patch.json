@@ -1,0 +1,18 @@
+{
+  "id": "com.app.ralaunch.tmodloader.touch",
+  "name": "tModLoader Touch Input",
+  "description": "Native FNA touch input and hidden game cursor.",
+  "version": "1.0.10",
+  "author": "RA Launcher Team",
+  "dllFileName": "TModLoaderTouchPatch.dll",
+  "entryPoint": {
+    "typeName": "TModLoaderTouchPatch.Patcher",
+    "methodName": "Initialize"
+  },
+  "targetGames": [
+    "tModLoader",
+    "Terraria"
+  ],
+  "priority": 210,
+  "enabled": true
+}

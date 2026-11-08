@@ -27,6 +27,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.app.ralaunch.R
+import com.app.ralaunch.core.platform.runtime.SdlVersion
 import com.app.ralaunch.core.ui.component.GlassSurface
 
 /**
@@ -441,6 +442,78 @@ fun SwitchSettingItem(
             }
 
             Switch(checked = checked, onCheckedChange = onCheckedChange)
+        }
+    }
+}
+
+/** SDL 版本选择项，使用单选分段按钮而不是二态开关。 */
+@Composable
+fun SdlVersionSettingItem(
+    title: String,
+    subtitle: String? = null,
+    icon: ImageVector? = null,
+    selectedVersion: String,
+    onVersionSelected: (String) -> Unit
+) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        color = Color.Transparent
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            if (icon != null) {
+                Box(
+                    modifier = Modifier
+                        .size(32.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.5f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.width(14.dp))
+            }
+
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                if (subtitle != null) {
+                    Text(
+                        text = subtitle,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
+            SingleChoiceSegmentedButtonRow {
+                SegmentedButton(
+                    selected = selectedVersion == SdlVersion.SDL2,
+                    onClick = { onVersionSelected(SdlVersion.SDL2) },
+                    shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2)
+                ) {
+                    Text(stringResource(R.string.settings_sdl_version_sdl2))
+                }
+                SegmentedButton(
+                    selected = selectedVersion == SdlVersion.SDL3,
+                    onClick = { onVersionSelected(SdlVersion.SDL3) },
+                    shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2)
+                ) {
+                    Text(stringResource(R.string.settings_sdl_version_sdl3))
+                }
+            }
         }
     }
 }

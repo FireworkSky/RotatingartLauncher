@@ -562,20 +562,13 @@ private fun GameSettingsPane(
 
                 SettingsDivider()
 
-                // RAL: SDL2/3 切换——位于"运行时"下方。SDL2 走 Wayland 后端 + 应用内合成器，
-                // 不占用 SDL3 的 Java 绑定层，因此两套可共存于同一 APK。
-                SwitchSettingItem(
+                // RAL: SDL2/3 版本选择。两套都使用 Android 视频后端和各自的 Java 胶水层。
+                SdlVersionSettingItem(
                     title = androidStringResource(R.string.settings_sdl_version_title),
                     subtitle = androidStringResource(R.string.settings_sdl_version_subtitle),
                     icon = Icons.Default.Layers,
-                    checked = SdlVersion.isSdl2(selectedSdlVersion),
-                    onCheckedChange = { useSdl2 ->
-                        viewModel.onEvent(
-                            SettingsEvent.SetSdlVersion(
-                                if (useSdl2) SdlVersion.SDL2 else SdlVersion.SDL3
-                            )
-                        )
-                    }
+                    selectedVersion = selectedSdlVersion,
+                    onVersionSelected = { viewModel.onEvent(SettingsEvent.SetSdlVersion(it)) }
                 )
 
                 SettingsDivider()

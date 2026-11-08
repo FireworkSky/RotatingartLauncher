@@ -40,14 +40,11 @@ add_subdirectory(${LIBS_DIR}/dobby)
 add_subdirectory(${LIBS_DIR}/spdlog-1.17.0)
 
 # =========================
-# SDL2（真实 SDL2 + Wayland 后端，替代 sdl2-compat）
+# SDL2（真实 SDL2 + Android 后端，替代 sdl2-compat）
 # =========================
 # 已移除 sdl2-compat：它以 SDL3 模拟 SDL2 ABI，对按真实 SDL2 语义编写的游戏兼容性不足。
-# 改为内建真实 SDL2（2.32.10，Wayland 视频后端）：
-#   - Wayland 后端不需要 Android Java 绑定层（org.libsdl.app.*），
-#     故可与 SDL3 的 Java 绑定共存于同一 APK，不会发生类冲突。
-#   - 画面由应用内 Wayland 合成器呈现到 Android Surface。
-# SDL2-Wayland 构建落地后再在此接入（add_subdirectory 或 import 预编译库）。
+# SDL2（2.32.10）由 scripts/sdl2/build-sdl2.sh 使用官方 Android 构建脚本生成，
+# 通过 org.libsdl.app2 Java 胶水层与 SDL3 的 org.libsdl.app 共存于同一 APK。
 #
 # 仍需沿用「文件名 libSDL2.so + SONAME libSDL2-2.0.so.0」策略：
 # 例如 Terraria 的 libnfd.so 记录 DT_NEEDED=libSDL2-2.0.so.0，
@@ -72,8 +69,7 @@ add_library(${CMAKE_PROJECT_NAME} SHARED
         src/thread_affinity_manager.cpp
 )
 
-# RAL: 曾在此编译内嵌 Wayland 合成器（core/src/wlcomp + vendored libwayland-server/libffi）。
-# 该方案已废弃并删除；SDL2 路径改用 SDL 官方 Android 视频后端 + org.libsdl.app2 胶水层，
+# RAL: 旧的内嵌合成器方案已废弃并删除；SDL2 路径改用 SDL 官方 Android 视频后端 + org.libsdl.app2 胶水层，
 # 详见 scripts/sdl2/README.md。
 
 target_link_libraries(${CMAKE_PROJECT_NAME}

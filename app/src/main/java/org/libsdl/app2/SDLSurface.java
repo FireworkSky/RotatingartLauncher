@@ -14,6 +14,7 @@ import android.view.Display;
 import android.view.InputDevice;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
+import android.view.PointerIcon;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -78,6 +79,14 @@ public class SDLSurface extends SurfaceView implements SurfaceHolder.Callback,
 
     public Surface getNativeSurface() {
         return getHolder().getSurface();
+    }
+
+    @Override
+    public PointerIcon onResolvePointerIcon(MotionEvent event, int pointerIndex) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            return PointerIcon.getSystemIcon(getContext(), PointerIcon.TYPE_NULL);
+        }
+        return super.onResolvePointerIcon(event, pointerIndex);
     }
 
     // Called when we have a valid drawing surface

@@ -37,6 +37,14 @@ class PatchManagementViewModel(
     val uiState: StateFlow<PatchManagementUiState> = _uiState.asStateFlow()
 
     init {
+        patchManager?.let { manager ->
+            viewModelScope.launch {
+                manager.patchRevision.collectLatest {
+                    refreshPatches()
+                }
+            }
+        }
+
         viewModelScope.launch {
             gameRepository.games.collectLatest { repositoryGames ->
                 val currentSelected = _uiState.value.selectedGame

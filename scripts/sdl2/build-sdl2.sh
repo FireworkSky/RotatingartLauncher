@@ -14,7 +14,7 @@ set -euo pipefail
 
 export NDK=${NDK:-/data/data/com.termux/files/usr/opt/android-ndk}
 export API=${API:-28}
-export WORK=${WORK:-/data/data/com.termux/files/home/sdl2wayland}
+export WORK=${WORK:-/data/data/com.termux/files/home/sdl2android}
 export SRC=${SRC:-/data/data/com.termux/files/home/sdl2src}
 
 mkdir -p "$WORK/log" "$WORK/ndklibs"
@@ -28,6 +28,7 @@ import os, sys
 root = os.path.join(sys.argv[1], "SDL2-2.32.10")
 SRC_A = os.path.join(root, "src/core/android/SDL_android.c")
 SRC_E = os.path.join(root, "src/video/SDL_egl.c")
+SRC_GL = os.path.join(root, "src/video/android/SDL_androidgl.c")
 
 def patch(path, old, new, tag):
     s = open(path, encoding="utf-8").read()
@@ -41,7 +42,7 @@ def patch(path, old, new, tag):
     return s
 
 # ---- 补丁1/2：SDL_EGL_CreateSurface 的两处 Android 调用改为运行期判断驱动名 ----
-# 否则 Wayland 后端下 nw 是 wl_egl_window*，被当 ANativeWindow* 用 -> 空指针跳到地址 0
+# 否则非 Android 后端下 nw 可能不是 ANativeWindow*，被错误使用会导致崩溃
 patch(SRC_E,
 """#ifdef SDL_VIDEO_DRIVER_ANDROID
     /* On Android, EGL_NATIVE_VISUAL_ID is an attribute of the EGLConfig that is
@@ -54,8 +55,8 @@ patch(SRC_E,
     ANativeWindow_setBuffersGeometry(nw, 0, 0, format_wanted);
 #endif""",
 """#ifdef SDL_VIDEO_DRIVER_ANDROID
-    /* RAL: 编译期宏为真不等于运行的是 Android 视频驱动。Wayland 下 nw 是
-     * wl_egl_window*，交给 ANativeWindow_setBuffersGeometry 会崩。改运行期判断。 */
+    /* RAL: 编译期宏为真不等于运行的是 Android 视频驱动。非 Android 后端下 nw 可能不是
+     * ANativeWindow*，交给 ANativeWindow_setBuffersGeometry 会崩。改运行期判断。 */
     if (SDL_strcmp(_this->name, "Android") == 0) {
         _this->egl_data->eglGetConfigAttrib(_this->egl_data->egl_display,
                                             _this->egl_data->egl_config,
@@ -85,6 +86,43 @@ patch(SRC_E,
 patch(SRC_A,
 """#define SDL_JAVA_PREFIX                               org_libsdl_app""",
 """#define SDL_JAVA_PREFIX                               org_libsdl_app2""", "补丁3a JNI 前缀")
+
+# DT_NEEDED 依赖可能在 Java 层之前加载 SDL2，此时 JNI_OnLoad 尚未填充 mJavaVM。
+# 从 nativeSetupJNI 收到的 JNIEnv 恢复 JavaVM，避免后续 Android_JNI_GetEnv 返回空指针。
+patch(SRC_A,
+"""    /* Save JNIEnv of SDLActivity */
+    Android_JNI_SetEnv(env);
+
+    if (!mJavaVM) {
+        __android_log_print(ANDROID_LOG_ERROR, "SDL", "failed to found a JavaVM");
+    }""",
+"""    /* Save JNIEnv of SDLActivity */
+    Android_JNI_SetEnv(env);
+
+    if (!mJavaVM) {
+        /* SDL can be loaded as a DT_NEEDED dependency before JNI_OnLoad is
+         * invoked. Recover the VM from the JNIEnv supplied by Java. */
+        if ((*env)->GetJavaVM(env, &mJavaVM) != JNI_OK || !mJavaVM) {
+            __android_log_print(ANDROID_LOG_ERROR, "SDL", "failed to obtain a JavaVM");
+        }
+    }""", "补丁7 JNI JavaVM 恢复")
+
+patch(SRC_A,
+"""void Android_JNI_InitTouch(void)
+{
+    JNIEnv *env = Android_JNI_GetEnv();
+    (*env)->CallStaticVoidMethod(env, mActivityClass, midInitTouch);
+}""",
+"""void Android_JNI_InitTouch(void)
+{
+    JNIEnv *env = Android_JNI_GetEnv();
+    if (!env || !mActivityClass || !midInitTouch) {
+        __android_log_print(ANDROID_LOG_ERROR, "SDL",
+                            "Skipping touch initialization because JNI is not ready");
+        return;
+    }
+    (*env)->CallStaticVoidMethod(env, mActivityClass, midInitTouch);
+}""", "补丁8 触摸 JNI 空指针保护")
 
 patch(os.path.join(root, "src/hidapi/android/hid.cpp"),
 """#define SDL_JAVA_PREFIX                                 org_libsdl_app""",
@@ -322,6 +360,88 @@ patch(SRC_A,
 """#include "SDL_android.h"
 #include "../../events/SDL_touch_c.h"
 """, "补丁6d include")
+
+# ---- 补丁9：沿用 SDL3 Android 后端的真实交换帧采样，供现有 FPSDisplayView 读取 ----
+FPS_TRACKING = '''
+/* RAL: Adapted from core/libs/SDL/src/video/android/SDL_androidgl.c (SDL3).
+ * Use successful game buffer swaps, not the Android UI refresh rate. */
+#include <time.h>
+
+#define FPS_SAMPLE_COUNT 5
+#define FPS_UPDATE_INTERVAL_NS 100000000ULL
+
+static Uint64 frame_times[FPS_SAMPLE_COUNT];
+static int frame_index;
+static int frame_count;
+static Uint64 last_update_ns;
+static float fps_smoothed;
+
+static void Android_UpdateFPS(void)
+{
+    struct timespec ts;
+    Uint64 current_ns;
+    Uint64 window_duration_ns;
+    int oldest_index;
+    int newest_index;
+    int frame_intervals;
+    float fps_current;
+    float frame_time_ms;
+    char fps_env_buffer[64];
+
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    current_ns = (Uint64)ts.tv_sec * 1000000000ULL + (Uint64)ts.tv_nsec;
+
+    /* Discard pre-pause samples instead of counting time spent in background. */
+    if (frame_count > 0 &&
+        current_ns - frame_times[(frame_index + FPS_SAMPLE_COUNT - 1) % FPS_SAMPLE_COUNT] > 1000000000ULL) {
+        frame_count = 0;
+        frame_index = 0;
+        fps_smoothed = 0.0f;
+        last_update_ns = 0;
+    }
+
+    frame_times[frame_index] = current_ns;
+    frame_index = (frame_index + 1) % FPS_SAMPLE_COUNT;
+    if (frame_count < FPS_SAMPLE_COUNT) {
+        ++frame_count;
+    }
+    if (frame_count < 2 || current_ns - last_update_ns < FPS_UPDATE_INTERVAL_NS) {
+        return;
+    }
+    last_update_ns = current_ns;
+
+    oldest_index = (frame_index - frame_count + FPS_SAMPLE_COUNT) % FPS_SAMPLE_COUNT;
+    newest_index = (frame_index - 1 + FPS_SAMPLE_COUNT) % FPS_SAMPLE_COUNT;
+    window_duration_ns = frame_times[newest_index] - frame_times[oldest_index];
+    if (window_duration_ns == 0) {
+        return;
+    }
+    frame_intervals = frame_count - 1;
+    fps_current = (float)frame_intervals * 1000000000.0f / (float)window_duration_ns;
+    frame_time_ms = (float)window_duration_ns / (float)frame_intervals / 1000000.0f;
+    fps_smoothed = (fps_smoothed <= 0.0f) ? fps_current : (fps_smoothed * 0.5f + fps_current * 0.5f);
+
+    SDL_snprintf(fps_env_buffer, sizeof(fps_env_buffer), "%.1f", fps_smoothed);
+    SDL_setenv("RAL_FPS", fps_env_buffer, 1);
+    SDL_snprintf(fps_env_buffer, sizeof(fps_env_buffer), "%.2f", frame_time_ms);
+    SDL_setenv("RAL_FRAME_TIME", fps_env_buffer, 1);
+}
+'''
+
+patch(SRC_GL,
+"""#include <dlfcn.h>
+""",
+"""#include <dlfcn.h>
+""" + FPS_TRACKING, "补丁9a FPS 采样")
+
+patch(SRC_GL,
+"""    retval = SDL_EGL_SwapBuffers(_this, ((SDL_WindowData *)window->driverdata)->egl_surface);
+""",
+"""    retval = SDL_EGL_SwapBuffers(_this, ((SDL_WindowData *)window->driverdata)->egl_surface);
+    if (retval == 0) {
+        Android_UpdateFPS();
+    }
+""", "补丁9b 记录成功交换帧")
 EOPY
 }
 

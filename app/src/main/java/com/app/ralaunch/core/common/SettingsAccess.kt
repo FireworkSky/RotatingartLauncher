@@ -92,7 +92,7 @@ object SettingsAccess {
     val isTouchMultitouchEnabled: Boolean
         get() = settings.touchMultitouchEnabled
 
-    /** 选中的 SDL 版本（"sdl3"/"sdl2"），归一化后返回；默认 SDL3 */
+    /** 选中的 SDL 版本（"sdl3"/"sdl2"），归一化后返回；默认 SDL2 */
     val selectedSdlVersion: String
         get() = SdlVersion.normalize(settings.selectedSdlVersion)
 

@@ -54,7 +54,7 @@ import org.libsdl.app2.SDLActivity
  *
  * 分工：
  *  - 窗口 / Surface / 触摸 / 按键 / 剪贴板 / 手柄等由 SDL 的 Java 胶水层负责，
- *    我们不再自己创建 SurfaceView，也不使用内嵌 Wayland 合成器；
+ *    我们不再自己创建 SurfaceView，窗口和 Surface 由 SDL2 Android 胶水层管理；
  *  - 游戏本体（.NET/Mono 程序集）仍由 [GamePresenter] 启动，跑在独立线程上
  *    （SDL_Init 与 GL 上下文都在该线程上建立，因此不能占用 UI 线程，
  *     否则 Activity 无法完成首帧绘制，系统会一直保留启动窗口导致「有日志没画面」）。
@@ -147,6 +147,8 @@ class GameActivitySdl2 : SDLActivity(), GameContract.View, LifecycleOwner, Saved
     @Volatile
     private var gameThreadStarted = false
 
+    private var gameThread: Thread? = null
+
     // RAL 悬浮菜单（悬浮球）与虚拟按键：与 SDL3 的 GameActivity 完全一致
     private val virtualControlsManager = GameVirtualControlsManager()
 
@@ -161,6 +163,8 @@ class GameActivitySdl2 : SDLActivity(), GameContract.View, LifecycleOwner, Saved
      * 这样窗口/Surface/输入仍由 SDL 胶水层负责，只是不用它跑 C 的 main()。
      */
     override fun shouldStartNativeMain(): Boolean = false
+
+    override fun isNativeMainRunning(): Boolean = gameThread?.isAlive == true
 
     /**
      * 强制横屏。
@@ -205,7 +209,7 @@ class GameActivitySdl2 : SDLActivity(), GameContract.View, LifecycleOwner, Saved
         } catch (_: Exception) {
         }
 
-        // FNA3D 走 OpenGL/ES3，并清掉 Vulkan/SDL_GPU/Mesa/Wayland 残留（见 Sdl2Environment）
+        // FNA3D 走 OpenGL/ES3，并清掉 Vulkan/SDL_GPU/Mesa/旧合成器残留（见 Sdl2Environment）
         Sdl2Environment.apply()
 
         // Compose（虚拟按键 / 悬浮菜单）需要 ViewTree owners：SDL 的胶水层是普通 Activity，
@@ -310,9 +314,11 @@ class GameActivitySdl2 : SDLActivity(), GameContract.View, LifecycleOwner, Saved
      * 太早启动会拿到空 Surfac；这里等 SDLSurface 报告就绪。
      */
     private fun startGameWhenSurfaceReady() {
-        if (gameThreadStarted) return
+        if (gameThreadStarted || isFinishing || isDestroyed || !mIsResumedCalled) return
 
-        val surfaceReady = runCatching { mSurface != null && mSurface.mIsSurfaceReady }
+        val surfaceReady = runCatching {
+            mSurface != null && mSurface.mIsSurfaceReady && mCurrentNativeState == NativeState.RESUMED
+        }
             .getOrDefault(false)
         if (!surfaceReady) {
             window.decorView.postDelayed({ startGameWhenSurfaceReady() }, 50L)
@@ -325,7 +331,7 @@ class GameActivitySdl2 : SDLActivity(), GameContract.View, LifecycleOwner, Saved
         // 关键：游戏主循环不能占用 UI 线程，否则本 Activity 无法完成首帧绘制，
         // 系统会一直保留启动窗口（Splash Screen）并把本 Activity 的图层判为 hidden，
         // 现象就是「日志一切正常、屏幕上却没有画面」。
-        Thread({
+        gameThread = Thread({
             val code = runCatching { presenter.launchGame() }.getOrElse { error ->
                 AppLog.e(TAG, "launchGame 异常: ${error.message}", error)
                 -1
@@ -340,7 +346,7 @@ class GameActivitySdl2 : SDLActivity(), GameContract.View, LifecycleOwner, Saved
                     ).show()
                 }
             }
-        }, "ral-game").start()
+        }, "ral-game").apply { start() }
     }
 
     private fun applyThemeMode() {

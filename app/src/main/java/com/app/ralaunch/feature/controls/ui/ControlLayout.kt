@@ -394,6 +394,9 @@ class ControlLayout : FrameLayout {
                 if (!controlView.controlData.isPassThrough) {
                     TouchPointerTracker.consumePointer(pointerId)
                 }
+                // Native consumption suppresses mouse synthesis, not raw touch.
+                // SDL must see DOWN before MOVE/UP, even for overlay-owned fingers.
+                mSDLSurface?.dispatchTouchEvent(event)
                 return true
             }
         }

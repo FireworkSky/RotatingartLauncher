@@ -327,6 +327,11 @@ public class SDLActivity extends Activity implements View.OnSystemUiVisibilityCh
         return true;
     }
 
+    /** RAL: Managed games own their main thread, but still need SDL's pause/resume signals. */
+    protected boolean isNativeMainRunning() {
+        return mSDLThread != null;
+    }
+
     // Setup
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -702,7 +707,7 @@ public class SDLActivity extends Activity implements View.OnSystemUiVisibilityCh
 
         // Try a transition to paused state
         if (mNextNativeState == NativeState.PAUSED) {
-            if (mSDLThread != null) {
+            if (mSingleton != null && mSingleton.isNativeMainRunning()) {
                 nativePause();
             }
             if (mSurface != null) {
@@ -727,7 +732,7 @@ public class SDLActivity extends Activity implements View.OnSystemUiVisibilityCh
                     mSDLThread.start();
 
                     // No nativeResume(), don't signal Android_ResumeSem
-                } else if (mSDLThread != null) {
+                } else if (mSingleton != null && mSingleton.isNativeMainRunning()) {
                     nativeResume();
                 }
                 mSurface.handleResume();

@@ -77,8 +77,8 @@
             <meta-data android:name="SDL_HINT_ORIENTATIONS" android:value="LandscapeLeft LandscapeRight" />
         </activity>
 
-        <!-- SDL2（Wayland 后端）游戏运行界面：与 GameActivity 共用 :game 进程与主题。
-             不继承 SDLActivity（无 Java 绑定层），画面由应用内 Wayland 合成器呈现。 -->
+        <!-- SDL2 Android 游戏运行界面：与 GameActivity 共用 :game 进程与主题，
+             使用 org.libsdl.app2 的 SDL2 Java 胶水层。 -->
         <activity
             android:name=".feature.game.ui.sdl2.GameActivitySdl2"
             android:exported="true"
