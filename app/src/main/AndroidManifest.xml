@@ -43,7 +43,7 @@
         <!-- 初始化 Activity - 应用启动入口 -->
         <activity
             android:name=".feature.init.ui.InitializationActivity"
-            android:configChanges="orientation|screenSize|keyboardHidden|screenLayout|smallestScreenSize|uiMode"
+            android:configChanges="orientation|screenSize|keyboard|keyboardHidden|navigation|screenLayout|smallestScreenSize|uiMode"
             android:exported="true"
             android:screenOrientation="sensorLandscape"
             android:theme="@style/FullScreenTheme"
@@ -57,7 +57,7 @@
         <!-- 主活动 (纯 Compose 版本) -->
         <activity
             android:name=".feature.main.ui.MainActivityCompose"
-            android:configChanges="orientation|screenSize|keyboardHidden|screenLayout|smallestScreenSize|uiMode"
+            android:configChanges="orientation|screenSize|keyboard|keyboardHidden|navigation|screenLayout|smallestScreenSize|uiMode"
             android:exported="false"
             android:screenOrientation="sensorLandscape"
             android:theme="@style/FullScreenTheme"
@@ -65,7 +65,7 @@
         <activity
             android:name=".feature.game.ui.legacy.GameActivity"
             android:exported="true"
-            android:configChanges="orientation|keyboardHidden|screenSize|screenLayout|smallestScreenSize|uiMode"
+            android:configChanges="orientation|keyboard|keyboardHidden|navigation|screenSize|screenLayout|smallestScreenSize|uiMode"
             android:screenOrientation="sensorLandscape"
             android:theme="@style/GameTheme"
             android:hardwareAccelerated="true"
@@ -82,7 +82,7 @@
         <activity
             android:name=".feature.game.ui.sdl2.GameActivitySdl2"
             android:exported="true"
-            android:configChanges="orientation|keyboardHidden|screenSize|screenLayout|smallestScreenSize|uiMode"
+            android:configChanges="orientation|keyboard|keyboardHidden|navigation|screenSize|screenLayout|smallestScreenSize|uiMode"
             android:screenOrientation="sensorLandscape"
             android:theme="@style/GameTheme"
             android:hardwareAccelerated="true"
@@ -93,6 +93,7 @@
         <activity
             android:name=".feature.controls.editors.ui.ControlEditorActivity"
             android:exported="false"
+            android:configChanges="orientation|screenSize|keyboard|keyboardHidden|navigation|screenLayout|smallestScreenSize|uiMode"
             android:label="@string/control_editor_activity_label"
             android:screenOrientation="sensorLandscape"
             android:launchMode="singleTop"
@@ -111,7 +112,7 @@
             android:theme="@style/Theme.raLaunch"
             android:launchMode="singleTask"
             android:screenOrientation="sensorLandscape"
-            android:configChanges="orientation|screenSize|keyboardHidden|screenLayout|smallestScreenSize|uiMode" />
+            android:configChanges="orientation|screenSize|keyboard|keyboardHidden|navigation|screenLayout|smallestScreenSize|uiMode" />
 
         <!-- 赞助商展示页面 -->
         <activity
@@ -119,7 +120,7 @@
             android:exported="false"
             android:theme="@style/Theme.raLaunch"
             android:screenOrientation="sensorLandscape"
-            android:configChanges="orientation|screenSize|keyboardHidden|screenLayout|smallestScreenSize|uiMode" />
+            android:configChanges="orientation|screenSize|keyboard|keyboardHidden|navigation|screenLayout|smallestScreenSize|uiMode" />
 
         <!-- 通用进程启动服务 -->
         <service

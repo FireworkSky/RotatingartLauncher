@@ -589,6 +589,11 @@ public class SDLActivity extends Activity implements View.OnSystemUiVisibilityCh
            return;
         }
 
+        // RAL: 插拔键盘/鼠标、连接手柄会触发 keyboard/navigation 配置变化。
+        // Activity 不再重建后，系统可能已经释放 pointer capture；重新申请，
+        // 否则相对鼠标模式下「不按键滑动」不再产生移动事件。
+        SDLActivity.getMotionListener().reclaimRelativeMouseModeIfNeeded();
+
         if (mCurrentLocale == null || !mCurrentLocale.equals(newConfig.locale)) {
             mCurrentLocale = newConfig.locale;
             SDLActivity.onNativeLocaleChanged();

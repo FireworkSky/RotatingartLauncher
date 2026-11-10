@@ -1,8 +1,8 @@
 {
   "id": "com.app.ralaunch.tmodloader.touch",
   "name": "tModLoader Touch Input",
-  "description": "Native FNA touch input and hidden game cursor.",
-  "version": "1.0.10",
+  "description": "Native FNA touch input with native mouse fallback when no touch is active.",
+  "version": "1.0.11",
   "author": "RA Launcher Team",
   "dllFileName": "TModLoaderTouchPatch.dll",
   "entryPoint": {
