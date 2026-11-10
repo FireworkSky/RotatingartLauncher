@@ -23,6 +23,7 @@ internal static class TouchInputPatch
     private static int _primaryFingerId = NO_FINGER;
     private static Vector2 _lastPosition;
     private static bool _touchPressed;
+    private static bool _touchInputActive;
     private static long _activeTouchDevice;
     private static TouchLocation[] _touches = Array.Empty<TouchLocation>();
     private static TouchLocation[] _previousTouches = Array.Empty<TouchLocation>();
@@ -53,8 +54,6 @@ internal static class TouchInputPatch
                 cursorVisibilityChanged,
                 prefix: new HarmonyMethod(typeof(TouchInputPatch), nameof(HideNativeCursorPrefix))
             );
-            SDL2.SDL.SDL_ShowCursor(0);
-
             var playerInputType = tModLoaderAssembly.GetType("Terraria.GameInput.PlayerInput");
             var mouseInput = playerInputType?.GetMethod(
                 "MouseInput",
@@ -150,7 +149,7 @@ internal static class TouchInputPatch
                 Console.WriteLine("[TModLoaderTouchPatch] Main.DrawInterface_36_Cursor not found; cursor override may remain visible.");
             }
 
-            Console.WriteLine("[TModLoaderTouchPatch] Native touch-only input applied; mouse input and game cursor disabled.");
+            Console.WriteLine("[TModLoaderTouchPatch] Native touch adapter applied; touch frames use touch input, otherwise the original mouse path is preserved.");
         }
         catch (Exception ex)
         {
@@ -232,22 +231,33 @@ internal static class TouchInputPatch
     {
         try
         {
+            if (!TryReadTouch(out var position, out var pressed))
+            {
+                // 没有触摸：释放触屏接管，让 tModLoader 原生的鼠标输入照常运行。
+                _touchInputActive = false;
+                return true;
+            }
+
+            _touchInputActive = true;
             SDL2.SDL.SDL_ShowCursor(0);
-            TryReadTouch(out var position, out var pressed);
             ApplyTouchToPlayerInput(position, pressed);
             return false;
         }
         catch (Exception ex)
         {
             ResetTouchState();
-            ApplyTouchToPlayerInput(default, pressed: false);
-            Console.WriteLine($"[TModLoaderTouchPatch] Touch polling failed; mouse input remains disabled: {ex.Message}");
-            return false;
+            _touchInputActive = false;
+            Console.WriteLine($"[TModLoaderTouchPatch] Touch polling failed; falling back to native mouse: {ex.Message}");
+            return true;
         }
     }
 
     public static void MouseGetStatePostfix(ref MouseState __result)
     {
+        // 只有触摸帧才覆盖 Mouse.GetState；其他时候保留物理鼠标的原始状态。
+        if (!_touchInputActive)
+            return;
+
         __result = new MouseState(
             (int)_lastPosition.X,
             (int)_lastPosition.Y,
@@ -262,27 +272,33 @@ internal static class TouchInputPatch
 
     public static bool HideGameCursorPrefix()
     {
+        if (!_touchInputActive)
+            return true;
+
         SDL2.SDL.SDL_ShowCursor(0);
         return false;
     }
 
     public static bool SkipGameCursorLayer()
     {
-        return false;
+        return !_touchInputActive;
     }
 
     public static bool SkipDirectCursorTextureDraw()
     {
-        return false;
+        return !_touchInputActive;
     }
 
     public static bool HideNativeCursorPrefix()
     {
+        if (!_touchInputActive)
+            return true;
+
         SDL2.SDL.SDL_ShowCursor(0);
         return false;
     }
 
-    private static void TryReadTouch(out Vector2 position, out bool pressed)
+    private static bool TryReadTouch(out Vector2 position, out bool pressed)
     {
         var touches = TouchPanel.GetState();
         TouchLocation selected = default;
@@ -321,7 +337,7 @@ internal static class TouchInputPatch
             _touchPressed = false;
             position = _lastPosition;
             pressed = false;
-            return;
+            return false;
         }
 
         position = selected.Position;
@@ -334,6 +350,7 @@ internal static class TouchInputPatch
             _primaryFingerId = NO_FINGER;
         }
 
+        return true;
     }
 
     private static void ApplyTouchToPlayerInput(Vector2 position, bool pressed)
@@ -395,6 +412,7 @@ internal static class TouchInputPatch
         _primaryFingerId = NO_FINGER;
         _lastPosition = default;
         _touchPressed = false;
+        _touchInputActive = false;
     }
 
 }

@@ -99,14 +99,14 @@ class GameVirtualControlsManager {
                 fpsDisplayView?.start()
 
                 // 添加 Compose 悬浮菜单
-                setupComposeOverlay(activity, layout)
+                setupComposeOverlay(activity, layout, sdlSurface)
             }
         } catch (e: Exception) {
             AppLog.e("GameVirtualControls", "Failed to initialize virtual controls", e)
         }
     }
 
-    private fun setupComposeOverlay(activity: Activity, parentLayout: ViewGroup) {
+    private fun setupComposeOverlay(activity: Activity, parentLayout: ViewGroup, sdlSurface: View?) {
         val packManager: ControlPackManager = KoinJavaComponent.get(ControlPackManager::class.java)
         val settings = settingsManager ?: return
         val control = controlLayout ?: return
@@ -172,6 +172,23 @@ class GameVirtualControlsManager {
 
         // 使用包装 FrameLayout 处理触摸事件分发
         val wrapperLayout = object : android.widget.FrameLayout(activity) {
+            /**
+             * 外接鼠标的悬停/滚轮走 generic motion，不会触发 dispatchTouchEvent。
+             * 这层覆盖在 SDLSurface 之上，若不主动转发，鼠标不按键滑动时游戏收不到
+             * ACTION_HOVER_MOVE（表现为「按住左键能拖动，松开后不跟随」）。
+             */
+            override fun dispatchGenericMotionEvent(ev: android.view.MotionEvent?): Boolean {
+                if (ev != null && sdlSurface != null && isMouseGenericMotion(ev)) {
+                    // 鼠标在悬浮菜单/属性面板区域内时仍交给 Compose（滚轮滚动列表等），
+                    // 其余区域的悬停/滚轮直接转给 SDL，避免被覆盖层吞掉。
+                    val inComposeActiveArea = composeActiveRect?.contains(ev.x, ev.y) == true
+                    if (!inComposeActiveArea) {
+                        return sdlSurface.dispatchGenericMotionEvent(ev)
+                    }
+                }
+                return super.dispatchGenericMotionEvent(ev)
+            }
+
             override fun dispatchTouchEvent(ev: android.view.MotionEvent?): Boolean {
                 if (ev == null) return false
                 
@@ -264,6 +281,14 @@ class GameVirtualControlsManager {
     fun stop() {
         fpsDisplayView?.stop()
         com.app.ralaunch.core.common.ConsoleManager.stop()
+    }
+
+    private fun isMouseGenericMotion(event: android.view.MotionEvent): Boolean {
+        val source = event.source
+        return source == android.view.InputDevice.SOURCE_MOUSE ||
+            source == (android.view.InputDevice.SOURCE_MOUSE or android.view.InputDevice.SOURCE_TOUCHSCREEN) ||
+            source == android.view.InputDevice.SOURCE_MOUSE_RELATIVE ||
+            (event.pointerCount > 0 && event.getToolType(0) == android.view.MotionEvent.TOOL_TYPE_MOUSE)
     }
 
     private fun disableClippingRecursive(view: View) {

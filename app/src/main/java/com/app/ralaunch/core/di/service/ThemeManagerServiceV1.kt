@@ -141,9 +141,22 @@ class ThemeManagerServiceV1(private val activity: AppCompatActivity) : IThemeMan
         get() = settingsManager.backgroundVideoPath
 
     /**
+     * 最近一次已知的 uiMode，用于区分「日夜模式变化」与插拔键盘/鼠标、
+     * 连接手柄等无关的配置变化。后者不应触发 Activity 重建。
+     */
+    private var lastUiMode: Int = activity.resources.configuration.uiMode
+
+    /**
      * 处理配置变化（主题切换）
      */
     fun handleConfigurationChanged(newConfig: Configuration) {
+        val previousUiMode = lastUiMode
+        lastUiMode = newConfig.uiMode
+
+        val nightModeChanged =
+            (previousUiMode and Configuration.UI_MODE_NIGHT_MASK) !=
+                (newConfig.uiMode and Configuration.UI_MODE_NIGHT_MASK)
+        if (!nightModeChanged) return
         if (settingsManager.themeMode != ThemeMode.FOLLOW_SYSTEM) return
 
         // 先关闭所有对话框
