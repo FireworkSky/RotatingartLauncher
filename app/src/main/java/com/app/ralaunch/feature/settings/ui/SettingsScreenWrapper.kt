@@ -631,6 +631,16 @@ private fun GameSettingsPane(
 
                 SettingsDivider()
 
+                SwitchSettingItem(
+                    title = androidStringResource(R.string.settings_game_half_resolution_title),
+                    subtitle = androidStringResource(R.string.settings_game_half_resolution_subtitle),
+                    icon = Icons.Default.Layers,
+                    checked = halfResolutionRendering,
+                    onCheckedChange = { viewModel.onEvent(SettingsEvent.SetHalfResolutionRendering(it)) }
+                )
+
+                SettingsDivider()
+
                 ClickableSettingItem(
                     title = androidStringResource(R.string.settings_game_fps_limit_title),
                     subtitle = androidStringResource(R.string.settings_game_fps_limit_subtitle),

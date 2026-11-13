@@ -117,6 +117,9 @@ data class AppSettings(
     var verboseLogging: Boolean = false,
     var setThreadAffinityToBigCore: Boolean = false,
 
+    // 渲染实验
+    var halfResolutionRendering: Boolean = false,
+
     // FNA 设置
     var fnaRenderer: String = "native",
     var fnaMapBufferRangeOptimization: Boolean = true,

@@ -220,6 +220,10 @@ object SettingsAccess {
         get() = settings.touchEventEnabled
         set(value) = update { touchEventEnabled = value }
 
+    var isHalfResolutionRendering: Boolean
+        get() = settings.halfResolutionRendering
+        set(value) = update { halfResolutionRendering = value }
+
     var isKillLauncherUIAfterLaunch: Boolean
         get() = settings.killLauncherUIAfterLaunch
         set(value) = update { killLauncherUIAfterLaunch = value }
