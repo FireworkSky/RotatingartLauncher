@@ -13,7 +13,6 @@ import java.io.InputStreamReader
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-import java.util.concurrent.CopyOnWriteArrayList
 
 /**
  * 命令控制台管理器（单例）
@@ -25,6 +24,7 @@ object ConsoleManager {
     private const val TAG = "ConsoleManager"
     private const val MAX_LOG_LINES = 500
     private const val MAX_DEBUG_LOG_LINES = 30
+    private const val UI_PUBLISH_INTERVAL_MS = 200L
 
     /** 只收集包含这些关键词的 tag（不区分大小写） */
     private val ALLOWED_TAG_KEYWORDS = listOf(
@@ -64,9 +64,12 @@ object ConsoleManager {
     private val _debugLogVisible = MutableStateFlow(false)
     val debugLogVisible: StateFlow<Boolean> = _debugLogVisible.asStateFlow()
 
-    private val logBuffer = CopyOnWriteArrayList<LogEntry>()
+    private val logBuffer = java.util.ArrayDeque<LogEntry>()
+    private val bufferLock = Any()
     private var logcatThread: Thread? = null
-    private var isRunning = false
+    @Volatile private var logcatProcess: Process? = null
+    @Volatile private var isRunning = false
+    private var lastUiPublishAt = 0L
     private val timeFormat = SimpleDateFormat("HH:mm:ss", Locale.getDefault())
 
     /**
@@ -78,8 +81,11 @@ object ConsoleManager {
 
         logcatThread = Thread({
             try {
-                // 使用 tag 格式：X/Tag: message，不清除旧缓冲
-                val process = Runtime.getRuntime().exec(arrayOf("logcat", "-v", "tag", "-T", "100"))
+                // 只看当前游戏进程，避免读取整台设备的 logcat 造成无效 CPU 开销
+                val process = Runtime.getRuntime().exec(
+                    arrayOf("logcat", "--pid=${android.os.Process.myPid()}", "-v", "tag", "-T", "100")
+                )
+                logcatProcess = process
                 val reader = BufferedReader(InputStreamReader(process.inputStream))
                 var line: String?
                 while (isRunning) {
@@ -89,6 +95,8 @@ object ConsoleManager {
                         if (entry != null) {
                             addLog(entry)
                         }
+                    } else if (line == null) {
+                        break
                     }
                 }
                 process.destroy()
@@ -96,6 +104,8 @@ object ConsoleManager {
                 if (isRunning) {
                     AppLog.e(TAG, "日志收集异常: ${e.message}")
                 }
+            } finally {
+                logcatProcess = null
             }
         }, "ConsoleLogCollector").apply {
             isDaemon = true
@@ -107,7 +117,10 @@ object ConsoleManager {
      * 停止收集日志
      */
     fun stop() {
+        if (!isRunning) return
         isRunning = false
+        logcatProcess?.destroy()
+        logcatProcess = null
         logcatThread?.interrupt()
         logcatThread = null
     }
@@ -116,13 +129,26 @@ object ConsoleManager {
      * 手动添加一条日志
      */
     fun addLog(entry: LogEntry) {
-        logBuffer.add(entry)
-        // 裁剪缓冲
-        while (logBuffer.size > MAX_LOG_LINES) {
-            logBuffer.removeAt(0)
+        var snapshot: List<LogEntry>? = null
+        synchronized(bufferLock) {
+            logBuffer.addLast(entry)
+            // 裁剪缓冲
+            while (logBuffer.size > MAX_LOG_LINES) {
+                logBuffer.removeFirst()
+            }
+
+            // 高频日志时不要每行都复制 500 条列表并推给 Compose，限制 UI 刷新频率
+            val now = System.currentTimeMillis()
+            if (now - lastUiPublishAt >= UI_PUBLISH_INTERVAL_MS) {
+                lastUiPublishAt = now
+                snapshot = logBuffer.toList()
+            }
         }
-        _logs.value = logBuffer.toList()
-        _recentLogs.value = logBuffer.takeLast(MAX_DEBUG_LOG_LINES)
+
+        snapshot?.let { logs ->
+            _logs.value = logs
+            _recentLogs.value = logs.takeLast(MAX_DEBUG_LOG_LINES)
+        }
 
         // 智能提示：检测服务器输出并给出操作提示
         if (entry.tag != HINT_TAG) {
