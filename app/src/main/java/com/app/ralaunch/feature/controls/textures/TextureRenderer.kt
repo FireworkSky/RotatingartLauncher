@@ -14,6 +14,11 @@ object TextureRenderer {
     private val matrix = Matrix()
     private val srcRect = Rect()
     private val dstRectF = RectF()
+    private val paddedBounds = RectF()
+    private var lastTintColor: Int = Int.MIN_VALUE
+    private var lastTintFilter: PorterDuffColorFilter? = null
+    private var lastTileBitmap: Bitmap? = null
+    private var lastTileShader: BitmapShader? = null
     
     /**
      * 渲染纹理到 Canvas
@@ -46,16 +51,20 @@ object TextureRenderer {
             .toInt()
             .coerceIn(0, 255)
         
-        // 设置着色
+        // 设置着色（复用 PorterDuffColorFilter，避免每帧分配）
         if (config.tintColor != 0) {
-            paint.colorFilter = PorterDuffColorFilter(config.tintColor, PorterDuff.Mode.SRC_IN)
+            if (lastTintColor != config.tintColor) {
+                lastTintColor = config.tintColor
+                lastTintFilter = PorterDuffColorFilter(config.tintColor, PorterDuff.Mode.SRC_IN)
+            }
+            paint.colorFilter = lastTintFilter
         } else {
             paint.colorFilter = null
         }
         
         // 计算内边距
         val padding = min(bounds.width(), bounds.height()) * config.padding
-        val paddedBounds = RectF(
+        paddedBounds.set(
             bounds.left + padding,
             bounds.top + padding,
             bounds.right - padding,
@@ -172,9 +181,12 @@ object TextureRenderer {
             paint.colorFilter = null
         }
         
-        // 创建平铺 Shader
-        val shader = BitmapShader(bitmap, Shader.TileMode.REPEAT, Shader.TileMode.REPEAT)
-        paint.shader = shader
+        // 创建平铺 Shader（同一 Bitmap 复用一个实例，避免每帧分配）
+        if (lastTileBitmap !== bitmap || lastTileShader == null) {
+            lastTileBitmap = bitmap
+            lastTileShader = BitmapShader(bitmap, Shader.TileMode.REPEAT, Shader.TileMode.REPEAT)
+        }
+        paint.shader = lastTileShader
         
         canvas.drawRect(bounds, paint)
         

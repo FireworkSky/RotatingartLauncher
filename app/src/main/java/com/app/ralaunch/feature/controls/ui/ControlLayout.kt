@@ -48,6 +48,9 @@ class ControlLayout : FrameLayout {
      */
     private val mPointerToControl: MutableMap<Int, ControlView> = HashMap()
 
+    /** 触摸热路径复用，避免每次 MOVE 为每个指针分配 Rect。 */
+    private val mTempHitRect = android.graphics.Rect()
+
     /**
      * 获取当前布局
      */
@@ -364,25 +367,21 @@ class ControlLayout : FrameLayout {
         val x = event.getX(actionIndex)
         val y = event.getY(actionIndex)
 
-        AppLog.d(TAG, "handlePointerDown: pointerId=$pointerId x=$x y=$y")
-
         // 从后往前遍历控件（后添加的在上层），找到第一个接受触摸的控件
         for (i in childCount - 1 downTo 0) {
             val child = getChildAt(i)
             val controlView = child as? ControlView ?: continue
             if (child.visibility != VISIBLE) continue
 
-            // 获取控件边界并检查触摸点是否在内
-            val childRect = android.graphics.Rect()
-            child.getHitRect(childRect)
-            if (!childRect.contains(x.toInt(), y.toInt())) continue
+            // 获取控件边界并检查触摸点是否在内（复用 Rect，避免触摸热路径分配）
+            child.getHitRect(mTempHitRect)
+            if (!mTempHitRect.contains(x.toInt(), y.toInt())) continue
 
             // 转换为本地坐标并尝试让控件接受触摸
-            val localX = x - childRect.left
-            val localY = y - childRect.top
+            val localX = x - mTempHitRect.left
+            val localY = y - mTempHitRect.top
 
             if (controlView.tryAcquireTouch(pointerId, localX, localY)) {
-                AppLog.d(TAG, "  Control ${controlView.javaClass.simpleName} accepted pointer $pointerId")
                 val wasEmpty = mPointerToControl.isEmpty()
                 mPointerToControl[pointerId] = controlView
 
@@ -402,7 +401,6 @@ class ControlLayout : FrameLayout {
         }
 
         // 没有控件接受，转发给 SDLSurface
-        AppLog.d(TAG, "  No control accepted pointer $pointerId, forwarding to SDL")
         mSDLSurface?.dispatchTouchEvent(event)
         return true
     }
@@ -416,13 +414,11 @@ class ControlLayout : FrameLayout {
         for (i in 0 until event.pointerCount) {
             val pointerId = event.getPointerId(i)
             mPointerToControl[pointerId]?.let { controlView ->
-                val view = controlView as View
-                val childRect = android.graphics.Rect()
-                view.getHitRect(childRect)
+                (controlView as View).getHitRect(mTempHitRect)
                 controlView.handleTouchMove(
                     pointerId,
-                    event.getX(i) - childRect.left,
-                    event.getY(i) - childRect.top
+                    event.getX(i) - mTempHitRect.left,
+                    event.getY(i) - mTempHitRect.top
                 )
             }
         }

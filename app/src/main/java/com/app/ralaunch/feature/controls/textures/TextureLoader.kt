@@ -31,8 +31,11 @@ class TextureLoader private constructor(context: Context) {
     companion object {
         private const val TAG = "TextureLoader"
         
-        /** 缓存大小: 可用内存的 1/8 */
-        private val MAX_CACHE_SIZE = (Runtime.getRuntime().maxMemory() / 8).toInt()
+        /** 缓存大小：可用内存的 1/8，但游戏进程里额外限制到 32MB，避免虚拟控件纹理长期占用过多 native 内存 */
+        private val MAX_CACHE_SIZE = minOf(
+            (Runtime.getRuntime().maxMemory() / 8).toInt(),
+            32 * 1024 * 1024
+        )
         
         /** 支持的图片格式 */
         private val SUPPORTED_IMAGE_EXTENSIONS = setOf("png", "jpg", "jpeg", "webp", "bmp")

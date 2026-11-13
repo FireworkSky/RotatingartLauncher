@@ -46,6 +46,7 @@ class VirtualText(
     private lateinit var mStrokePaint: Paint
     private lateinit var mTextPaint: TextPaint
     private val mRectF: RectF
+    private val mTextBounds = Rect()
 
     init {
         mRectF = RectF()
@@ -163,9 +164,8 @@ class VirtualText(
 
         // 自动计算文字大小以适应区域
         mTextPaint.textSize = 20f // 临时设置用于测量
-        val textBounds = Rect()
-        mTextPaint.getTextBounds(displayText, 0, displayText.length, textBounds)
-        val textAspectRatio = textBounds.width() / max(textBounds.height(), 1).toFloat()
+        mTextPaint.getTextBounds(displayText, 0, displayText.length, mTextBounds)
+        val textAspectRatio = mTextBounds.width() / max(mTextBounds.height(), 1).toFloat()
 
         mTextPaint.textSize = min(height / 2f, width / max(textAspectRatio, 1f))
 
