@@ -28,22 +28,23 @@ internal static class DisplaySettingsPatch
 
     public static void SetDisplayModePrefix()
     {
-        if (!TryReadScale(out float scale))
+        if (!TryReadScale(out _))
         {
             return;
         }
 
         // TML 默认 minScreenH = 720，SetDisplayMode 会把半分辨率高度
-        // （468/540）强制抬回 720。这里不能直接设成 1：UIWorkshopHub 等界面
-        // 会用 minScreenH 计算布局高度。按渲染倍率缩小即可。
+        // （468/540）强制抬回 720。这里只在 SetDisplayMode 执行期间解除下限。
         if (_originalMinScreenH <= 0)
         {
             _originalMinScreenW = Main.minScreenW > 0 ? Main.minScreenW : 800;
             _originalMinScreenH = Main.minScreenH > 0 ? Main.minScreenH : 720;
         }
 
-        Main.minScreenW = Math.Max(1, (int)(_originalMinScreenW * scale));
-        Main.minScreenH = Math.Max(1, (int)(_originalMinScreenH * scale));
+        // postfix 会恢复原值；UIWorkshopHub 等界面用 minScreenH 做布局高度，
+        // 不能永久改成 1。
+        Main.minScreenW = 1;
+        Main.minScreenH = 1;
     }
 
     public static void SetDisplayModePostfix()
@@ -51,6 +52,12 @@ internal static class DisplaySettingsPatch
         if (!TryReadScale(out _))
         {
             return;
+        }
+
+        if (_originalMinScreenH > 0)
+        {
+            Main.minScreenW = _originalMinScreenW;
+            Main.minScreenH = _originalMinScreenH;
         }
 
         GraphicsDevice? device = Main.graphics?.GraphicsDevice;
