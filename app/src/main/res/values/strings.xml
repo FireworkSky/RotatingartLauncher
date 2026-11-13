@@ -188,7 +188,8 @@
     <string name="settings_game_shader_low_precision_title">Low Precision Shader</string>
     <string name="settings_game_shader_low_precision_subtitle">Reduce shader precision to improve performance</string>
     <string name="settings_game_half_resolution_title">Half-Resolution Rendering (Experimental)</string>
-    <string name="settings_game_half_resolution_subtitle">Render the game internally at 50% resolution, then let FNA3D upscale it to full screen. Restart game to apply.</string>
+    <string name="settings_game_half_resolution_subtitle">Experimental: render internally at 50% resolution, then let FNA3D upscale to full screen. UI scaling or compatibility issues may occur. Restart game to apply.</string>
+    <string name="settings_game_half_resolution_warning_toast">Experimental feature enabled. Restart the game to apply; UI scaling or compatibility issues may occur.</string>
     <string name="settings_game_fps_limit_title">FPS Limit</string>
     <string name="settings_game_fps_limit_subtitle">Limit max game FPS to save power</string>
 

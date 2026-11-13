@@ -182,8 +182,9 @@
     <string name="settings_game_quality_preset_subtitle">选择画质等级，低画质可提高性能</string>
     <string name="settings_game_shader_low_precision_title">低精度着色器</string>
     <string name="settings_game_shader_low_precision_subtitle">降低 Shader 精度以提升性能</string>
-    <string name="settings_game_half_resolution_title">半分辨率渲染（实验）</string>
-    <string name="settings_game_half_resolution_subtitle">游戏内部以 50% 分辨率渲染，再由 FNA3D 放大到全屏；重启游戏生效</string>
+    <string name="settings_game_half_resolution_title">半分辨率渲染（实验性）</string>
+    <string name="settings_game_half_resolution_subtitle">实验性功能：游戏内部以 50% 分辨率渲染，再由 FNA3D 放大到全屏；可能出现 UI 缩放或兼容性问题，重启游戏生效</string>
+    <string name="settings_game_half_resolution_warning_toast">已启用实验性功能。重启游戏后生效，可能出现 UI 缩放或兼容性问题</string>
     <string name="settings_game_fps_limit_title">帧率限制</string>
     <string name="settings_game_fps_limit_subtitle">限制游戏最大帧率，可节省电量</string>
 

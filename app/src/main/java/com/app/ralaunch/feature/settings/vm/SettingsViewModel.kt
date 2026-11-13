@@ -564,7 +564,17 @@ class SettingsViewModel(
         viewModelScope.launch {
             settingsRepository.update { halfResolutionRendering = enabled }
             _uiState.update { it.copy(halfResolutionRendering = enabled) }
-            sendEffect(SettingsEffect.ShowToast(getAppString(R.string.settings_restart_required_toast)))
+            sendEffect(
+                SettingsEffect.ShowToast(
+                    getAppString(
+                        if (enabled) {
+                            R.string.settings_game_half_resolution_warning_toast
+                        } else {
+                            R.string.settings_restart_required_toast
+                        }
+                    )
+                )
+            )
         }
     }
 
