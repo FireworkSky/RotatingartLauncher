@@ -15,14 +15,6 @@ internal static class DisplaySettingsPatch
 
     // SetDisplayMode 是 TML 写 screenWidth/screenHeight 和 PreferredBackBuffer 的入口。
     // 主菜单路径可能不走 UpdateDisplaySettings，所以这里也要同步一次。
-    public static void UIScalePrefix(ref float value)
-    {
-        if (TryReadScale(out float scale))
-        {
-            value *= scale;
-        }
-    }
-
     private static int _originalMinScreenW;
     private static int _originalMinScreenH;
 

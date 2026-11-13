@@ -101,17 +101,6 @@ public static class Patcher
                 );
             }
 
-            var uiScaleSetter = typeof(Main)
-                .GetProperty(nameof(Main.UIScale))
-                ?.GetSetMethod(nonPublic: false);
-            if (uiScaleSetter != null)
-            {
-                _harmony.Patch(
-                    uiScaleSetter,
-                    prefix: new HarmonyMethod(typeof(DisplaySettingsPatch), nameof(DisplaySettingsPatch.UIScalePrefix))
-                );
-            }
-
             Console.WriteLine("[TModLoaderFullscreenPatch] Android EGL fullscreen present enabled.");
             return 0;
         }
