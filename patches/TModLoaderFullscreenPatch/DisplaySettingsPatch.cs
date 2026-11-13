@@ -23,17 +23,27 @@ internal static class DisplaySettingsPatch
         }
     }
 
+    private static int _originalMinScreenW;
+    private static int _originalMinScreenH;
+
     public static void SetDisplayModePrefix()
     {
-        if (!TryReadScale(out _))
+        if (!TryReadScale(out float scale))
         {
             return;
         }
 
         // TML 默认 minScreenH = 720，SetDisplayMode 会把半分辨率高度
-        // （468/540）强制抬回 720，导致按 720 渲染而 FBO 只有 468/540。
-        Main.minScreenW = 1;
-        Main.minScreenH = 1;
+        // （468/540）强制抬回 720。这里不能直接设成 1：UIWorkshopHub 等界面
+        // 会用 minScreenH 计算布局高度。按渲染倍率缩小即可。
+        if (_originalMinScreenH <= 0)
+        {
+            _originalMinScreenW = Main.minScreenW > 0 ? Main.minScreenW : 800;
+            _originalMinScreenH = Main.minScreenH > 0 ? Main.minScreenH : 720;
+        }
+
+        Main.minScreenW = Math.Max(1, (int)(_originalMinScreenW * scale));
+        Main.minScreenH = Math.Max(1, (int)(_originalMinScreenH * scale));
     }
 
     public static void SetDisplayModePostfix()
