@@ -1,20 +1,11 @@
 using System;
 using System.Globalization;
-using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
 using Terraria;
 
 namespace TModLoaderFullscreenPatch;
 
 internal static class DisplaySettingsPatch
 {
-    public static void UpdateDisplaySettingsPostfix(Main __instance)
-    {
-        SyncToBackbuffer(__instance.GraphicsDevice);
-    }
-
-    // SetDisplayMode 是 TML 写 screenWidth/screenHeight 和 PreferredBackBuffer 的入口。
-    // 主菜单路径可能不走 UpdateDisplaySettings，所以这里也要同步一次。
     private static int _originalMinScreenW;
     private static int _originalMinScreenH;
 
@@ -50,39 +41,6 @@ internal static class DisplaySettingsPatch
         {
             Main.minScreenW = _originalMinScreenW;
             Main.minScreenH = _originalMinScreenH;
-        }
-
-        GraphicsDevice? device = Main.graphics?.GraphicsDevice;
-        if (device != null)
-        {
-            SyncToBackbuffer(device);
-        }
-    }
-
-    private static void SyncToBackbuffer(GraphicsDevice? device)
-    {
-        if (device == null || !TryReadScale(out _))
-        {
-            return;
-        }
-
-        PresentationParameters parameters = device.PresentationParameters;
-        if (parameters.BackBufferWidth <= 0 || parameters.BackBufferHeight <= 0)
-        {
-            return;
-        }
-
-        // TML 会把 screenWidth/screenHeight 写成它自己的窗口配置值（例如 1102x720），
-        // 但实际 FBO 已经是半分辨率（1102x468）。这里强制同步，避免按更高的尺寸
-        // 渲染后下半部分被裁掉。
-        Main.screenWidth = parameters.BackBufferWidth;
-        Main.screenHeight = parameters.BackBufferHeight;
-
-        GraphicsDeviceManager? manager = Main.graphics;
-        if (manager != null)
-        {
-            manager.PreferredBackBufferWidth = parameters.BackBufferWidth;
-            manager.PreferredBackBufferHeight = parameters.BackBufferHeight;
         }
     }
 

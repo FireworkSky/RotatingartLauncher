@@ -70,21 +70,6 @@ public static class Patcher
                 throw new MissingMethodException(typeof(GraphicsDevice).FullName, nameof(GraphicsDevice.Reset));
             }
 
-            var updateDisplaySettings = typeof(Main).GetMethod(
-                nameof(Main.UpdateDisplaySettings),
-                BindingFlags.Instance | BindingFlags.Public,
-                null,
-                Type.EmptyTypes,
-                null
-            );
-            if (updateDisplaySettings != null)
-            {
-                _harmony.Patch(
-                    updateDisplaySettings,
-                    postfix: new HarmonyMethod(typeof(DisplaySettingsPatch), nameof(DisplaySettingsPatch.UpdateDisplaySettingsPostfix))
-                );
-            }
-
             var setDisplayMode = typeof(Main).GetMethod(
                 nameof(Main.SetDisplayMode),
                 BindingFlags.Static | BindingFlags.Public,
