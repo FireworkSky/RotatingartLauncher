@@ -101,6 +101,8 @@ public static class Patcher
                 );
             }
 
+            SilkyUICompatPatch.TryPatch(_harmony);
+
             Console.WriteLine("[TModLoaderFullscreenPatch] Android EGL fullscreen present enabled.");
             return 0;
         }
