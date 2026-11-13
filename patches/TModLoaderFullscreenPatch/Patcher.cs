@@ -101,38 +101,6 @@ public static class Patcher
                 );
             }
 
-            var drawInterface = typeof(Main).GetMethod(
-                "DrawInterface",
-                BindingFlags.Instance | BindingFlags.NonPublic,
-                null,
-                new[] { typeof(GameTime) },
-                null
-            );
-            if (drawInterface != null)
-            {
-                _harmony.Patch(
-                    drawInterface,
-                    prefix: new HarmonyMethod(typeof(UIScaleCompatPatch), nameof(UIScaleCompatPatch.ApplyForFrame))
-                );
-            }
-
-            var drawMenu = typeof(Main).GetMethod(
-                "DrawMenu",
-                BindingFlags.Instance | BindingFlags.NonPublic,
-                null,
-                new[] { typeof(GameTime) },
-                null
-            );
-            if (drawMenu != null)
-            {
-                _harmony.Patch(
-                    drawMenu,
-                    prefix: new HarmonyMethod(typeof(UIScaleCompatPatch), nameof(UIScaleCompatPatch.ApplyForFrame))
-                );
-            }
-
-            SilkyUICompatPatch.TryPatch(_harmony);
-
             Console.WriteLine("[TModLoaderFullscreenPatch] Android EGL fullscreen present enabled.");
             return 0;
         }
