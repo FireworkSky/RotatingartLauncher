@@ -3,7 +3,7 @@ using System.Globalization;
 using System.Runtime.CompilerServices;
 using Microsoft.Xna.Framework.Graphics;
 
-namespace TModLoaderFullscreenPatch;
+namespace TModLoaderRenderScalePatch;
 
 internal static class RenderScalePatch
 {
@@ -50,7 +50,7 @@ internal static class RenderScalePatch
         // 用实际 EGL Surface 尺寸作为基准，而不是游戏传入的 2340x1080。
         // 在部分设备上窗口/系统栏会让真实 Surface 小于物理屏（例如 2204x937），
         // 用 2340x1080 推半分辨率会和最终 Present 的目标尺寸不匹配。
-        if (FullscreenPresentPatch.TryGetCurrentSurfaceSize(out int surfaceWidth, out int surfaceHeight))
+        if (EglSurfaceSize.TryGetCurrentSurfaceSize(out int surfaceWidth, out int surfaceHeight))
         {
             baseSize[0] = surfaceWidth;
             baseSize[1] = surfaceHeight;

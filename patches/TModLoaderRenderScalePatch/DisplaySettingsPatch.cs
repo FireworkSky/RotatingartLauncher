@@ -2,7 +2,7 @@ using System;
 using System.Globalization;
 using Terraria;
 
-namespace TModLoaderFullscreenPatch;
+namespace TModLoaderRenderScalePatch;
 
 internal static class DisplaySettingsPatch
 {

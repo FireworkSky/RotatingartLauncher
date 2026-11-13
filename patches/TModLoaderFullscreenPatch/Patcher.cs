@@ -1,7 +1,5 @@
 using HarmonyLib;
-using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Terraria;
 using System;
 using System.Reflection;
 
@@ -32,59 +30,6 @@ public static class Patcher
                 present,
                 prefix: new HarmonyMethod(typeof(FullscreenPresentPatch), nameof(FullscreenPresentPatch.PresentPrefix))
             );
-
-            var resetWithParams = typeof(GraphicsDevice).GetMethod(
-                nameof(GraphicsDevice.Reset),
-                BindingFlags.Instance | BindingFlags.Public,
-                null,
-                new[] { typeof(PresentationParameters) },
-                null
-            );
-            if (resetWithParams != null)
-            {
-                _harmony.Patch(
-                    resetWithParams,
-                    prefix: new HarmonyMethod(typeof(RenderScalePatch), nameof(RenderScalePatch.ResetPrefix)),
-                    postfix: new HarmonyMethod(typeof(RenderScalePatch), nameof(RenderScalePatch.ResetPostfix))
-                );
-            }
-
-            var resetWithAdapter = typeof(GraphicsDevice).GetMethod(
-                nameof(GraphicsDevice.Reset),
-                BindingFlags.Instance | BindingFlags.Public,
-                null,
-                new[] { typeof(PresentationParameters), typeof(GraphicsAdapter) },
-                null
-            );
-            if (resetWithAdapter != null)
-            {
-                _harmony.Patch(
-                    resetWithAdapter,
-                    prefix: new HarmonyMethod(typeof(RenderScalePatch), nameof(RenderScalePatch.ResetPrefix)),
-                    postfix: new HarmonyMethod(typeof(RenderScalePatch), nameof(RenderScalePatch.ResetPostfix))
-                );
-            }
-
-            if (resetWithParams == null && resetWithAdapter == null)
-            {
-                throw new MissingMethodException(typeof(GraphicsDevice).FullName, nameof(GraphicsDevice.Reset));
-            }
-
-            var setDisplayMode = typeof(Main).GetMethod(
-                nameof(Main.SetDisplayMode),
-                BindingFlags.Static | BindingFlags.Public,
-                null,
-                new[] { typeof(int), typeof(int), typeof(bool) },
-                null
-            );
-            if (setDisplayMode != null)
-            {
-                _harmony.Patch(
-                    setDisplayMode,
-                    prefix: new HarmonyMethod(typeof(DisplaySettingsPatch), nameof(DisplaySettingsPatch.SetDisplayModePrefix)),
-                    postfix: new HarmonyMethod(typeof(DisplaySettingsPatch), nameof(DisplaySettingsPatch.SetDisplayModePostfix))
-                );
-            }
 
             Console.WriteLine("[TModLoaderFullscreenPatch] Android EGL fullscreen present enabled.");
             return 0;
