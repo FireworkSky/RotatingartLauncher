@@ -70,17 +70,6 @@ public static class Patcher
                 throw new MissingMethodException(typeof(GraphicsDevice).FullName, nameof(GraphicsDevice.Reset));
             }
 
-            var viewportSetter = typeof(GraphicsDevice)
-                .GetProperty(nameof(GraphicsDevice.Viewport))
-                ?.GetSetMethod(nonPublic: false);
-            if (viewportSetter != null)
-            {
-                _harmony.Patch(
-                    viewportSetter,
-                    prefix: new HarmonyMethod(typeof(RenderScalePatch), nameof(RenderScalePatch.ViewportPrefix))
-                );
-            }
-
             var updateDisplaySettings = typeof(Main).GetMethod(
                 nameof(Main.UpdateDisplaySettings),
                 BindingFlags.Instance | BindingFlags.Public,

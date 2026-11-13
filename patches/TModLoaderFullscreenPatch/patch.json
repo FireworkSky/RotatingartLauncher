@@ -2,7 +2,7 @@
   "id": "com.app.ralaunch.tmodloader.fullscreen",
   "name": "tModLoader Android 全屏与渲染缩放补丁",
   "description": "将 FNA 每帧画面呈现到完整 EGL Surface（正式功能），并在启用渲染缩放时以半分辨率渲染后放大到全屏（实验性）。",
-  "version": "1.0.15",
+  "version": "1.0.16",
   "author": "RA Launcher Team",
   "dllFileName": "TModLoaderFullscreenPatch.dll",
   "entryPoint": {

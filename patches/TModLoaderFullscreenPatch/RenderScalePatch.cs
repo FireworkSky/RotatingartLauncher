@@ -76,26 +76,6 @@ internal static class RenderScalePatch
         LogReset("postfix", __instance, presentationParameters);
     }
 
-    public static void ViewportPrefix(GraphicsDevice __instance, ref Viewport value)
-    {
-        if (!TryReadScale(out _))
-        {
-            return;
-        }
-
-        var targets = __instance.GetRenderTargets();
-        if (targets != null && targets.Length > 0)
-        {
-            return;
-        }
-
-        var parameters = __instance.PresentationParameters;
-        if (value.Width > parameters.BackBufferWidth || value.Height > parameters.BackBufferHeight)
-        {
-            value = new Viewport(0, 0, parameters.BackBufferWidth, parameters.BackBufferHeight);
-        }
-    }
-
     private static void ClampViewport(GraphicsDevice device, PresentationParameters parameters)
     {
         var viewport = device.Viewport;
