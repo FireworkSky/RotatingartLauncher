@@ -8,7 +8,12 @@ import com.app.ralaunch.core.logging.AppLog
 import com.app.ralaunch.core.logging.LogFilePolicy
 import com.app.ralaunch.feature.patch.data.Patch
 import com.app.ralaunch.feature.patch.data.PatchManager
+import java.io.BufferedWriter
 import java.io.File
+import java.io.OutputStream
+import java.io.OutputStreamWriter
+import java.io.StringWriter
+import java.io.Writer
 import java.nio.file.Paths
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -49,28 +54,46 @@ internal class LogExportHelper(
     }
 
     fun buildExportContent(): String {
+        val buffer = StringWriter()
+        writeExportTo(buffer)
+        return buffer.toString()
+    }
+
+    /**
+     * 将导出内容直接写入流，避免先把所有日志读成一个巨大 String
+     * 再转 ByteArray，降低导出快照/日志时的峰值内存。
+     */
+    fun writeExportTo(output: OutputStream) {
+        BufferedWriter(OutputStreamWriter(output, Charsets.UTF_8)).let { writer ->
+            writeExportTo(writer)
+            writer.flush()
+        }
+    }
+
+    fun writeExportTo(writer: Writer) {
+        writer.appendDiagnosticSection(buildDeviceInfo())
+        writer.appendDiagnosticSection(buildGameRepositoryInfo())
+        writer.appendDiagnosticSection(buildPatchManagementInfo())
+
         val files = getLogFiles()
+        files.forEachIndexed { index, file ->
+            val banner = "=============== ${file.name} ==============="
 
-        return buildString {
-            appendDiagnosticSection(buildDeviceInfo())
-            appendDiagnosticSection(buildGameRepositoryInfo())
-            appendDiagnosticSection(buildPatchManagementInfo())
-
-            files.forEachIndexed { index, file ->
-                val banner = "=============== ${file.name} ==============="
-
-                appendLine("=".repeat(banner.length))
-                appendLine(banner)
-                appendLine("=".repeat(banner.length))
-                append(file.readText())
-                if (!endsWith("\n")) {
-                    appendLine()
-                }
-                if (index != files.lastIndex) {
-                    appendLine()
+            writer.appendLine("=".repeat(banner.length))
+            writer.appendLine(banner)
+            writer.appendLine("=".repeat(banner.length))
+            // 按行流式拷贝，避免 file.readText() 把整个日志文件载入内存。
+            file.bufferedReader().useLines { lines ->
+                lines.forEach { line ->
+                    writer.append(line)
+                    writer.append('\n')
                 }
             }
+            if (index != files.lastIndex) {
+                writer.appendLine()
+            }
         }
+        writer.flush()
     }
 
     fun buildGameRepositoryInfo(): String {
@@ -222,13 +245,10 @@ internal class LogExportHelper(
         }
     }
 
-    private fun StringBuilder.appendDiagnosticSection(section: String) {
+    private fun Writer.appendDiagnosticSection(section: String) {
         if (section.isBlank()) return
-        if (isNotEmpty() && !endsWith("\n")) {
-            appendLine()
-        }
         append(section)
-        if (!endsWith("\n")) {
+        if (!section.endsWith("\n")) {
             appendLine()
         }
         appendLine()

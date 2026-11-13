@@ -144,7 +144,17 @@ internal fun openSponsorsPage(context: Context) {
 
 internal fun loadLogs(context: Context): List<String> {
     return try {
-        logExportHelper().getAppLogFiles().firstOrNull()?.readLines()?.takeLast(LOG_VIEW_LIMIT) ?: emptyList()
+        val logFile = logExportHelper().getAppLogFiles().firstOrNull() ?: return emptyList()
+        val tail = java.util.ArrayDeque<String>(LOG_VIEW_LIMIT)
+        logFile.bufferedReader().useLines { lines ->
+            lines.forEach { line ->
+                if (tail.size == LOG_VIEW_LIMIT) {
+                    tail.removeFirst()
+                }
+                tail.addLast(line)
+            }
+        }
+        tail.toList()
     } catch (e: Exception) {
         listOf(context.getString(R.string.settings_logs_read_failed, e.message ?: ""))
     }
@@ -153,9 +163,8 @@ internal fun loadLogs(context: Context): List<String> {
 internal suspend fun exportLogs(context: Context, uri: Uri) {
     withContext(Dispatchers.IO) {
         try {
-            val logs = logExportHelper().buildExportContent()
             context.contentResolver.openOutputStream(uri)?.use { output ->
-                output.write(logs.toByteArray(Charsets.UTF_8))
+                logExportHelper().writeExportTo(output)
             }
             withContext(Dispatchers.Main) {
                 Toast.makeText(context, context.getString(R.string.log_exported), Toast.LENGTH_SHORT).show()
@@ -171,8 +180,6 @@ internal suspend fun exportLogs(context: Context, uri: Uri) {
 internal suspend fun shareLogs(context: Context) {
     withContext(Dispatchers.IO) {
         try {
-            val logs = logExportHelper().buildExportContent()
-
             val shareDir = File(context.cacheDir, "shared_logs").apply {
                 mkdirs()
             }
@@ -181,7 +188,9 @@ internal suspend fun shareLogs(context: Context) {
             }?.forEach(File::delete)
 
             val logFile = File(shareDir, LogFilePolicy.appLogFileName())
-            logFile.writeText(logs, Charsets.UTF_8)
+            logFile.outputStream().use { output ->
+                logExportHelper().writeExportTo(output)
+            }
 
             val fileUri = FileProvider.getUriForFile(
                 context,

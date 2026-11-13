@@ -16,8 +16,10 @@ import com.app.ralaunch.core.logging.service.AndroidFileLogger
 import com.app.ralaunch.core.common.util.DensityAdapter
 import com.app.ralaunch.core.common.util.LocaleManager
 import com.app.ralaunch.core.model.ThemeMode
+import com.app.ralaunch.feature.controls.textures.TextureLoader
 import com.app.ralaunch.feature.patch.data.PatchManager
 import com.kyant.fishnet.Fishnet
+import coil.Coil
 import org.koin.android.ext.android.inject
 import org.koin.core.component.KoinComponent
 import java.io.File
@@ -94,6 +96,18 @@ class RaLaunchApp : Application(), KoinComponent {
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
         LocaleManager.applyLanguage(this)
+    }
+
+    /**
+     * 系统内存紧张时释放可重建的图片缓存：Coil 的游戏图标、控件纹理缓存。
+     * 只清缓存引用，不回收仍被 View 使用的 Bitmap，避免崩溃。
+     */
+    override fun onTrimMemory(level: Int) {
+        super.onTrimMemory(level)
+        runCatching { Coil.imageLoader(this).memoryCache?.trimMemory(level) }
+            .onFailure { AppLog.w(TAG, "Failed to trim Coil memory cache: ${it.message}") }
+        runCatching { TextureLoader.getInstance(this).trimMemory(level) }
+            .onFailure { AppLog.w(TAG, "Failed to trim texture cache: ${it.message}") }
     }
 
     private fun applyThemeFromSettings() {
