@@ -3,7 +3,6 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Reflection;
-using Terraria;
 
 namespace TModLoaderRenderScalePatch;
 
@@ -52,22 +51,6 @@ public static class Patcher
             if (resetWithParams == null && resetWithAdapter == null)
             {
                 throw new MissingMethodException(typeof(GraphicsDevice).FullName, nameof(GraphicsDevice.Reset));
-            }
-
-            var setDisplayMode = typeof(Main).GetMethod(
-                nameof(Main.SetDisplayMode),
-                BindingFlags.Static | BindingFlags.Public,
-                null,
-                new[] { typeof(int), typeof(int), typeof(bool) },
-                null
-            );
-            if (setDisplayMode != null)
-            {
-                _harmony.Patch(
-                    setDisplayMode,
-                    prefix: new HarmonyMethod(typeof(DisplaySettingsPatch), nameof(DisplaySettingsPatch.SetDisplayModePrefix)),
-                    postfix: new HarmonyMethod(typeof(DisplaySettingsPatch), nameof(DisplaySettingsPatch.SetDisplayModePostfix))
-                );
             }
 
             Console.WriteLine("[TModLoaderRenderScalePatch] Half-resolution render scale enabled.");

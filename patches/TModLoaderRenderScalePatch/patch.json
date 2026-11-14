@@ -1,8 +1,8 @@
 {
   "id": "com.app.ralaunch.tmodloader.renderscale",
   "name": "tModLoader 渲染缩放（实验性）",
-  "description": "实验性功能：按 RAL_RENDER_SCALE 降低 FNA3D 内部渲染分辨率，再由全屏补丁放大到完整 EGL Surface。",
-  "version": "1.0.2",
+  "description": "实验性功能：按 RAL_RENDER_SCALE 缩小 GraphicsDevice.Reset 的 backbuffer，由 FNA3D 放大到完整 EGL Surface。",
+  "version": "1.0.3",
   "author": "RA Launcher Team",
   "dllFileName": "TModLoaderRenderScalePatch.dll",
   "entryPoint": {

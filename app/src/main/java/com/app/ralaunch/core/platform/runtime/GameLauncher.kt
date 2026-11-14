@@ -331,8 +331,8 @@ object GameLauncher {
                 "SDL_TOUCH_MOUSE_EVENTS" to "0",
                 "SDL_TOUCH_MOUSE_MULTITOUCH" to if (settings.isTouchMultitouchEnabled) "1" else "0",
 
-                // 内部渲染倍率：FNA3D faux-backbuffer 半分辨率渲染后放大到全屏
-                "RAL_RENDER_SCALE" to if (settings.isHalfResolutionRendering) "0.5" else null,
+                // 内部渲染倍率（实验性）：0.8 保证高度 ≥ 720，TML 不会抬高 screen 尺寸
+                "RAL_RENDER_SCALE" to if (settings.isHalfResolutionRendering) "0.8" else null,
 
                 // 音频配置
                 // Audio configuration

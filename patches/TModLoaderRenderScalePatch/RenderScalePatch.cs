@@ -19,7 +19,7 @@ internal static class RenderScalePatch
         _logCount++;
         var viewport = device.Viewport;
         Console.WriteLine(
-            $"[TModLoaderFullscreenPatch] Reset {stage}: " +
+            $"[TModLoaderRenderScalePatch] Reset {stage}: " +
             $"params={parameters.BackBufferWidth}x{parameters.BackBufferHeight}, " +
             $"viewport={viewport.X},{viewport.Y} {viewport.Width}x{viewport.Height}"
         );
@@ -72,23 +72,7 @@ internal static class RenderScalePatch
         PresentationParameters presentationParameters
     )
     {
-        ClampViewport(__instance, presentationParameters);
         LogReset("postfix", __instance, presentationParameters);
-    }
-
-    private static void ClampViewport(GraphicsDevice device, PresentationParameters parameters)
-    {
-        var viewport = device.Viewport;
-        if (viewport.Width > parameters.BackBufferWidth ||
-            viewport.Height > parameters.BackBufferHeight)
-        {
-            device.Viewport = new Viewport(
-                0,
-                0,
-                parameters.BackBufferWidth,
-                parameters.BackBufferHeight
-            );
-        }
     }
 
     private static bool TryReadScale(out float scale)
