@@ -589,40 +589,34 @@ private fun shareLog(
         val sdf = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault())
         val logFile = File(logDir, "crash_${sdf.format(Date())}.log")
         val logExportHelper: LogExportHelper = KoinJavaComponent.get(LogExportHelper::class.java)
-        val exportedLogs = logExportHelper.buildExportContent()
 
-        val logContent = buildString {
-            append("=" .repeat(60))
-            append("\n")
-            append("                    ${context.getString(R.string.crash_report_file_title)}\n")
-            append("=" .repeat(60))
-            append("\n\n")
+        // 逐段写入文件，避免 buildExportContent() 生成超大 String + ByteArray 造成峰值内存。
+        logFile.bufferedWriter(Charsets.UTF_8).use { writer ->
+            writer.append("=".repeat(60))
+            writer.append('\n')
+            writer.append("                    ${context.getString(R.string.crash_report_file_title)}\n")
+            writer.append("=".repeat(60))
+            writer.append("\n\n")
 
             errorDetails?.takeIf { it.isNotEmpty() }?.let {
-                append("【${context.getString(R.string.crash_report_basic_info_section)}】\n")
-                append(it)
-                append("\n\n")
+                writer.append("【${context.getString(R.string.crash_report_basic_info_section)}】\n")
+                writer.append(it)
+                writer.append("\n\n")
             }
 
             stackTrace?.takeIf { it.isNotEmpty() }?.let {
-                append("【${context.getString(R.string.crash_report_detailed_logs_section)}】\n")
-                append("-".repeat(40))
-                append("\n")
-                append(it)
+                writer.append("【${context.getString(R.string.crash_report_detailed_logs_section)}】\n")
+                writer.append("-".repeat(40))
+                writer.append('\n')
+                writer.append(it)
             }
 
-            exportedLogs.takeIf { it.isNotBlank() }?.let {
-                append("\n\n")
-                append("【${context.getString(R.string.settings_developer_export_logs_title)}】\n")
-                append("-".repeat(40))
-                append("\n")
-                append(it)
-            }
-
-            if (isBlank()) append(context.getString(R.string.crash_report_unavailable))
+            writer.append("\n\n")
+            writer.append("【${context.getString(R.string.settings_developer_export_logs_title)}】\n")
+            writer.append("-".repeat(40))
+            writer.append('\n')
+            logExportHelper.writeExportTo(writer)
         }
-
-        logFile.writeText(logContent, Charsets.UTF_8)
 
         val fileUri = FileProvider.getUriForFile(
             context,

@@ -85,6 +85,13 @@ class VirtualButton(
     private lateinit var mTextPaint: TextPaint
     private val mRectF = RectF()
     private val mClipPath = Path()
+    private val mTextClipPath = Path()
+    private val mGlowPaint = Paint(Paint.ANTI_ALIAS_FLAG)
+    private val mCorePaint = Paint(Paint.ANTI_ALIAS_FLAG)
+    private val mTextBounds = Rect()
+    private val mHitRect = Rect()
+    private val mHitTestPath = Path()
+    private val mHitTestRegion = Region()
 
     // 按钮状态
     private var mIsPressed = false
@@ -166,10 +173,9 @@ class VirtualButton(
 
     override fun isTouchInBounds(x: Float, y: Float): Boolean {
         // 将父视图坐标转换为本地坐标
-        val childRect = Rect()
-        getHitRect(childRect)
-        val localX = x - childRect.left
-        val localY = y - childRect.top
+        getHitRect(mHitRect)
+        val localX = x - mHitRect.left
+        val localY = y - mHitRect.top
         
         return isLocalTouchInBounds(localX, localY)
     }
@@ -225,29 +231,27 @@ class VirtualButton(
                 distance <= radius
             }
             ControlData.Button.Shape.RECTANGLE -> {
-                // 使用圆角矩形路径检查触摸点
+                // 使用圆角矩形路径检查触摸点（复用 Path/Region，避免每次按下分配）
                 val cornerRadius = dpToPx(castedData.cornerRadius)
-                val path = Path()
-                path.addRoundRect(0f, 0f, width.toFloat(), height.toFloat(), cornerRadius, cornerRadius, Path.Direction.CW)
-                val region = Region()
-                region.setPath(path, Region(0, 0, width, height))
-                region.contains(localX.toInt(), localY.toInt())
+                mHitTestPath.reset()
+                mHitTestPath.addRoundRect(0f, 0f, width.toFloat(), height.toFloat(), cornerRadius, cornerRadius, Path.Direction.CW)
+                mHitTestRegion.setPath(mHitTestPath, Region(0, 0, width, height))
+                mHitTestRegion.contains(localX.toInt(), localY.toInt())
             }
             ControlData.Button.Shape.POLYGON -> {
                 // 检查多边形触摸区域
                 if (castedData.polygonPoints.size >= 3) {
-                    val path = Path()
                     val w = width.toFloat()
                     val h = height.toFloat()
                     val points = castedData.polygonPoints
-                    path.moveTo(points[0].x * w, points[0].y * h)
+                    mHitTestPath.reset()
+                    mHitTestPath.moveTo(points[0].x * w, points[0].y * h)
                     for (i in 1 until points.size) {
-                        path.lineTo(points[i].x * w, points[i].y * h)
+                        mHitTestPath.lineTo(points[i].x * w, points[i].y * h)
                     }
-                    path.close()
-                    val region = Region()
-                    region.setPath(path, Region(0, 0, width, height))
-                    region.contains(localX.toInt(), localY.toInt())
+                    mHitTestPath.close()
+                    mHitTestRegion.setPath(mHitTestPath, Region(0, 0, width, height))
+                    mHitTestRegion.contains(localX.toInt(), localY.toInt())
                 } else {
                     // 默认矩形检查
                     localX >= 0 && localX <= width && localY >= 0 && localY <= height
@@ -433,19 +437,17 @@ class VirtualButton(
                             val outerRadius = radius * (1.0f - margin)
                             val innerRadius = radius * (1.0f - 2.5f * margin)
 
-                            // 绘制外圈发光感
-                            val glowPaint = Paint(mBackgroundPaint).apply {
-                                color = if (mIsPressed || mIsToggled) castedData.bgColor else 0x327D7D7D
-                                alpha = (castedData.opacity * 255 * 0.4f).toInt()
-                            }
-                            canvas.drawCircle(centerXDraw, centerYDraw, outerRadius, glowPaint)
+                            // 绘制外圈发光感（复用 Paint，避免每帧分配）
+                            mGlowPaint.set(mBackgroundPaint)
+                            mGlowPaint.color = if (mIsPressed || mIsToggled) castedData.bgColor else 0x327D7D7D
+                            mGlowPaint.alpha = (castedData.opacity * 255 * 0.4f).toInt()
+                            canvas.drawCircle(centerXDraw, centerYDraw, outerRadius, mGlowPaint)
 
                             // 绘制内层核心
-                            val corePaint = Paint(mBackgroundPaint).apply {
-                                color = if (mIsPressed || mIsToggled) -0x1 else -0x828283
-                                alpha = (castedData.opacity * 255).toInt()
-                            }
-                            canvas.drawCircle(centerXDraw, centerYDraw, innerRadius, corePaint)
+                            mCorePaint.set(mBackgroundPaint)
+                            mCorePaint.color = if (mIsPressed || mIsToggled) -0x1 else -0x828283
+                            mCorePaint.alpha = (castedData.opacity * 255).toInt()
+                            canvas.drawCircle(centerXDraw, centerYDraw, innerRadius, mCorePaint)
                         }
                     }
                 }
@@ -506,9 +508,9 @@ class VirtualButton(
 
             // 根据控件形状设置裁剪区域
             if (shape == ControlData.Button.Shape.CIRCLE) {
-                canvas.clipPath(Path().apply {
-                    addCircle(centerXDraw, centerYDraw, radius, Path.Direction.CW)
-                })
+                mTextClipPath.reset()
+                mTextClipPath.addCircle(centerXDraw, centerYDraw, radius, Path.Direction.CW)
+                canvas.clipPath(mTextClipPath)
             } else {
                 val padding = dpToPx(2f)
                 canvas.clipRect(padding, padding, width - padding, height - padding)
@@ -522,9 +524,8 @@ class VirtualButton(
             when {
                 castedData.mode == ControlData.Button.Mode.GAMEPAD -> {
                     mTextPaint.textSize = 20f
-                    val textBounds = Rect()
-                    mTextPaint.getTextBounds(displayText, 0, displayText.length, textBounds)
-                    val textAspectRatio = textBounds.width() / max(textBounds.height(), 1).toFloat()
+                    mTextPaint.getTextBounds(displayText, 0, displayText.length, mTextBounds)
+                    val textAspectRatio = mTextBounds.width() / max(mTextBounds.height(), 1).toFloat()
                     mTextPaint.textSize = min(height / 2f, width / max(textAspectRatio, 1f))
                 }
                 castedData.keycode == ControlData.KeyCode.SPECIAL_TOUCHPAD_RIGHT_BUTTON -> {

@@ -82,22 +82,26 @@ fun GameControlsOverlay(
     // 调试日志状态
     val debugLogVisible by ConsoleManager.debugLogVisible.collectAsState()
     
-    // 初始化菜单状态 & 启动日志收集
+    // 初始化菜单状态
     LaunchedEffect(Unit) {
         menuState.isFpsDisplayEnabled = settingsManager.isFPSDisplayEnabled
         menuState.isTouchEventEnabled = settingsManager.isTouchEventEnabled
-        ConsoleManager.start()
-        
+
         // 初始化布局切换状态（优先使用快速切换列表，如果为空则显示全部）
         val quickSwitchPacks = packManager.getQuickSwitchPacks()
         val packsToShow = quickSwitchPacks.ifEmpty { packManager.getInstalledPacks() }
         menuState.availablePacks = packsToShow.map { it.id to it.name }
         menuState.activePackId = packManager.getSelectedPackId()
     }
-    
-    // 同步调试日志状态到菜单
+
+    // 只有打开调试日志时才启动 logcat 收集，避免游戏过程中一直读全系统 logcat。
     LaunchedEffect(debugLogVisible) {
         menuState.isDebugLogEnabled = debugLogVisible
+        if (debugLogVisible) {
+            ConsoleManager.start()
+        } else {
+            ConsoleManager.stop()
+        }
     }
     
     // 监听返回键切换悬浮球可见性

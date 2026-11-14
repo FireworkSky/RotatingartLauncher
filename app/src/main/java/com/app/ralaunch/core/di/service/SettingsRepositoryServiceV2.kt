@@ -2,11 +2,13 @@ package com.app.ralaunch.core.di.service
 
 import com.app.ralaunch.core.di.contract.ISettingsRepositoryServiceV2
 import com.app.ralaunch.core.model.AppSettings
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.encodeToString
 import kotlin.io.path.Path
@@ -44,7 +46,7 @@ class SettingsRepositoryServiceV2(
 
     override suspend fun updateSettings(settings: AppSettings) {
         writeMutex.withLock {
-            val persisted = persistSettings(settings.copy())
+            val persisted = withContext(Dispatchers.IO) { persistSettings(settings.copy()) }
             currentSettings = persisted
             _settings.value = persisted.copy()
         }
@@ -53,7 +55,7 @@ class SettingsRepositoryServiceV2(
     override suspend fun update(block: AppSettings.() -> Unit) {
         writeMutex.withLock {
             val updated = currentSettings.copy().apply(block)
-            val persisted = persistSettings(updated)
+            val persisted = withContext(Dispatchers.IO) { persistSettings(updated) }
             currentSettings = persisted
             _settings.value = persisted.copy()
         }

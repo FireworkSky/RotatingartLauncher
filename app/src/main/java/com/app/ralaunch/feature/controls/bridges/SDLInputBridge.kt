@@ -40,6 +40,9 @@ class SDLInputBridge : ControlInputBridge {
     // 否则右键(2)/中键(4) 会被当成「未变化」而失效。
     @Volatile private var sdl2MouseButtonState: Int = 0
 
+    // 复用主线程 Handler，避免每次虚拟按键 down/up 都 new 一个 Handler
+    private val mainHandler by lazy { Handler(Looper.getMainLooper()) }
+
     private fun onNativeMouseCompat(button: Int, action: Int, x: Float, y: Float, relative: Boolean) {
         lastMouseX = x
         lastMouseY = y
@@ -237,7 +240,6 @@ class SDLInputBridge : ControlInputBridge {
 //                  ", isDown=" + isDown + ", calling SDLActivity.onNativeKey" + (isDown ? "Down" : "Up"));
 
             // 确保在主线程上调用SDL方法（SDL的native方法需要在主线程调用）
-            val mainHandler = Handler(Looper.getMainLooper())
             val finalKeycode = keycode
             val finalIsDown = isDown
 

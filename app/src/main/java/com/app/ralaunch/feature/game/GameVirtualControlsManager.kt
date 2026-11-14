@@ -1,6 +1,7 @@
 package com.app.ralaunch.feature.game
 
 import android.app.Activity
+import android.content.Context
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
@@ -17,6 +18,7 @@ import com.app.ralaunch.R
 import com.app.ralaunch.feature.controls.bridges.SDLInputBridge
 import com.app.ralaunch.feature.controls.editors.ui.GameControlsOverlay
 import com.app.ralaunch.feature.controls.packs.ControlPackManager
+import com.app.ralaunch.feature.controls.textures.TextureLoader
 import com.app.ralaunch.feature.controls.ui.ControlLayout
 import com.app.ralaunch.core.common.SettingsAccess
 import com.app.ralaunch.core.logging.AppLog
@@ -42,6 +44,7 @@ class GameVirtualControlsManager {
     private var settingsManager: SettingsAccess? = null
     private var composeOverlay: ComposeView? = null
     private var onExitGameCallback: (() -> Unit)? = null
+    private var appContext: Context? = null
     
     // 悬浮球可见性切换事件流
     private val _toggleFloatingBallEvent = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
@@ -69,6 +72,7 @@ class GameVirtualControlsManager {
     ) {
         try {
             settingsManager = SettingsAccess
+            appContext = activity.applicationContext
             inputBridge = SDLInputBridge()
             onExitGameCallback = onExitGame
 
@@ -281,6 +285,15 @@ class GameVirtualControlsManager {
     fun stop() {
         fpsDisplayView?.stop()
         com.app.ralaunch.core.common.ConsoleManager.stop()
+
+        // 游戏进程退出/Activity 销毁时主动断开覆盖层与纹理缓存的强引用。
+        composeOverlay = null
+        controlLayout = null
+        inputBridge = null
+        fpsDisplayView = null
+        onExitGameCallback = null
+        runCatching { appContext?.let { TextureLoader.getInstance(it).clearCache() } }
+        appContext = null
     }
 
     private fun isMouseGenericMotion(event: android.view.MotionEvent): Boolean {

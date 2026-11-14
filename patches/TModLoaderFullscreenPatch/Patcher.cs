@@ -30,6 +30,7 @@ public static class Patcher
                 present,
                 prefix: new HarmonyMethod(typeof(FullscreenPresentPatch), nameof(FullscreenPresentPatch.PresentPrefix))
             );
+
             Console.WriteLine("[TModLoaderFullscreenPatch] Android EGL fullscreen present enabled.");
             return 0;
         }

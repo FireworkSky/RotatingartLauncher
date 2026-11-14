@@ -34,7 +34,9 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import com.app.ralaunch.R
 import com.app.ralaunch.core.logging.LogFilePolicy
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
@@ -56,7 +58,7 @@ fun LogViewerSubScreen(
     }
 
     LaunchedEffect(Unit) {
-        logs = loadLogs(context)
+        logs = withContext(Dispatchers.IO) { loadLogs(context) }
     }
 
     Scaffold(

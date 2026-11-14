@@ -1,5 +1,6 @@
 package com.app.ralaunch.feature.controls.textures
 
+import android.content.ComponentCallbacks2
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -30,8 +31,11 @@ class TextureLoader private constructor(context: Context) {
     companion object {
         private const val TAG = "TextureLoader"
         
-        /** 缓存大小: 可用内存的 1/8 */
-        private val MAX_CACHE_SIZE = (Runtime.getRuntime().maxMemory() / 8).toInt()
+        /** 缓存大小：可用内存的 1/8，但游戏进程里额外限制到 32MB，避免虚拟控件纹理长期占用过多 native 内存 */
+        private val MAX_CACHE_SIZE = minOf(
+            (Runtime.getRuntime().maxMemory() / 8).toInt(),
+            32 * 1024 * 1024
+        )
         
         /** 支持的图片格式 */
         private val SUPPORTED_IMAGE_EXTENSIONS = setOf("png", "jpg", "jpeg", "webp", "bmp")
@@ -270,6 +274,30 @@ class TextureLoader private constructor(context: Context) {
         bitmapCache.evictAll()
         svgCache.evictAll()
         AppLog.i(TAG, "Texture cache cleared")
+    }
+
+    /**
+     * 响应系统内存压力：只释放缓存强引用，不 recycle 正在被 View 使用的 Bitmap，
+     * 避免回收后仍绘制导致崩溃。真正无人引用的 Bitmap 会由 GC 回收。
+     */
+    fun trimMemory(level: Int) {
+        when {
+            level >= ComponentCallbacks2.TRIM_MEMORY_COMPLETE -> {
+                bitmapCache.evictAll()
+                svgCache.evictAll()
+                AppLog.i(TAG, "Texture caches cleared on TRIM_MEMORY_COMPLETE")
+            }
+            level >= ComponentCallbacks2.TRIM_MEMORY_MODERATE -> {
+                bitmapCache.evictAll()
+                AppLog.i(TAG, "Bitmap cache cleared on TRIM_MEMORY_MODERATE")
+            }
+            level >= ComponentCallbacks2.TRIM_MEMORY_UI_HIDDEN ||
+                level == ComponentCallbacks2.TRIM_MEMORY_RUNNING_CRITICAL ||
+                level == ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW -> {
+                bitmapCache.evictAll()
+                AppLog.i(TAG, "Bitmap cache cleared on memory pressure level=$level")
+            }
+        }
     }
     
     /**

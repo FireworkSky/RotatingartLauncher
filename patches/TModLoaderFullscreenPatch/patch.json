@@ -1,8 +1,8 @@
 {
   "id": "com.app.ralaunch.tmodloader.fullscreen",
   "name": "tModLoader Android 全屏补丁",
-  "description": "将 FNA 每帧画面呈现到 Android 完整 EGL Surface，修复画面只占左下角的问题。",
-  "version": "1.0.1",
+  "description": "将 FNA 每帧画面呈现到完整 EGL Surface，修复画面只占左下角的问题。",
+  "version": "1.1.1",
   "author": "RA Launcher Team",
   "dllFileName": "TModLoaderFullscreenPatch.dll",
   "entryPoint": {

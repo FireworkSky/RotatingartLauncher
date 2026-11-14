@@ -69,6 +69,7 @@ data class SettingsUiState(
     val qualityLevel: QualityLevel = QualityLevel.HIGH,
     val shaderLowPrecision: Boolean = false,
     val targetFps: FpsLimit = FpsLimit.UNLIMITED,
+    val halfResolutionRendering: Boolean = false,
 
     // 开发者设置
     val loggingEnabled: Boolean = false,
@@ -126,6 +127,7 @@ sealed class SettingsEvent {
     data class SetQualityLevel(val level: QualityLevel) : SettingsEvent()
     data class SetShaderLowPrecision(val enabled: Boolean) : SettingsEvent()
     data class SetTargetFps(val fps: FpsLimit) : SettingsEvent()
+    data class SetHalfResolutionRendering(val enabled: Boolean) : SettingsEvent()
 
     // 开发者
     data class SetLoggingEnabled(val enabled: Boolean) : SettingsEvent()
@@ -207,6 +209,7 @@ class SettingsViewModel(
             is SettingsEvent.SetQualityLevel -> setQualityLevel(event.level)
             is SettingsEvent.SetShaderLowPrecision -> setShaderLowPrecision(event.enabled)
             is SettingsEvent.SetTargetFps -> setTargetFps(event.fps)
+            is SettingsEvent.SetHalfResolutionRendering -> setHalfResolutionRendering(event.enabled)
 
             // 开发者
             is SettingsEvent.SetLoggingEnabled -> setLoggingEnabled(event.enabled)
@@ -274,6 +277,7 @@ class SettingsViewModel(
                     qualityLevel = QualityLevel.fromValue(settings.qualityLevel),
                     shaderLowPrecision = settings.shaderLowPrecision,
                     targetFps = FpsLimit.fromValue(settings.targetFps),
+                    halfResolutionRendering = settings.halfResolutionRendering,
                     // 开发者
                     loggingEnabled = settings.logSystemEnabled,
                     verboseLogging = settings.verboseLogging,
@@ -553,6 +557,24 @@ class SettingsViewModel(
             settingsRepository.update { shaderLowPrecision = enabled }
             _uiState.update { it.copy(shaderLowPrecision = enabled) }
             sendEffect(SettingsEffect.ShowToast(getAppString(R.string.settings_restart_required_toast)))
+        }
+    }
+
+    private fun setHalfResolutionRendering(enabled: Boolean) {
+        viewModelScope.launch {
+            settingsRepository.update { halfResolutionRendering = enabled }
+            _uiState.update { it.copy(halfResolutionRendering = enabled) }
+            sendEffect(
+                SettingsEffect.ShowToast(
+                    getAppString(
+                        if (enabled) {
+                            R.string.settings_game_half_resolution_warning_toast
+                        } else {
+                            R.string.settings_restart_required_toast
+                        }
+                    )
+                )
+            )
         }
     }
 

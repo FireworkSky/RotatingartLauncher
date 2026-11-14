@@ -114,8 +114,12 @@ class FPSDisplayView @JvmOverloads constructor(
 
     private val updateRunnable = object : Runnable {
         override fun run() {
-            updateData()
-            invalidate()
+            // 关闭 FPS 显示时不要继续读 sysfs / 构建字符串，避免游戏进程里的无谓
+            // 主线程系统调用和临时对象分配。
+            if (visibility == VISIBLE) {
+                updateData()
+                invalidate()
+            }
             handler.postDelayed(this, UPDATE_INTERVAL)
         }
     }

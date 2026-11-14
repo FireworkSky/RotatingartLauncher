@@ -52,6 +52,9 @@ object GameLauncher {
     private const val TAG = "GameLauncher"
 
     /**
+     * 安装 FNA3D 渲染倍率 Hook（项目自有 native 层，不修改 vendored FNA3D 源码）。
+     */
+    /**
      * 默认数据目录名称
      * Default data directory name
      */
@@ -327,6 +330,9 @@ object GameLauncher {
                 // Touch input configuration
                 "SDL_TOUCH_MOUSE_EVENTS" to "0",
                 "SDL_TOUCH_MOUSE_MULTITOUCH" to if (settings.isTouchMultitouchEnabled) "1" else "0",
+
+                // 内部渲染倍率（实验性）：0.8 保证高度 ≥ 720，TML 不会抬高 screen 尺寸
+                "RAL_RENDER_SCALE" to if (settings.isHalfResolutionRendering) "0.8" else null,
 
                 // 音频配置
                 // Audio configuration
