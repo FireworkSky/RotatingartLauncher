@@ -1,4 +1,5 @@
 using HarmonyLib;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Reflection;
@@ -66,6 +67,36 @@ public static class Patcher
                     setDisplayMode,
                     prefix: new HarmonyMethod(typeof(DisplaySettingsPatch), nameof(DisplaySettingsPatch.SetDisplayModePrefix)),
                     postfix: new HarmonyMethod(typeof(DisplaySettingsPatch), nameof(DisplaySettingsPatch.SetDisplayModePostfix))
+                );
+            }
+
+            var drawInterface = typeof(Main).GetMethod(
+                "DrawInterface",
+                BindingFlags.Instance | BindingFlags.NonPublic,
+                null,
+                new[] { typeof(GameTime) },
+                null
+            );
+            if (drawInterface != null)
+            {
+                _harmony.Patch(
+                    drawInterface,
+                    prefix: new HarmonyMethod(typeof(UIScaleCompatPatch), nameof(UIScaleCompatPatch.ApplyForFrame))
+                );
+            }
+
+            var drawMenu = typeof(Main).GetMethod(
+                "DrawMenu",
+                BindingFlags.Instance | BindingFlags.NonPublic,
+                null,
+                new[] { typeof(GameTime) },
+                null
+            );
+            if (drawMenu != null)
+            {
+                _harmony.Patch(
+                    drawMenu,
+                    prefix: new HarmonyMethod(typeof(UIScaleCompatPatch), nameof(UIScaleCompatPatch.ApplyForFrame))
                 );
             }
 

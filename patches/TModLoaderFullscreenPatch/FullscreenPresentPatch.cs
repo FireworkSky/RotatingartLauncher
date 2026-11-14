@@ -73,10 +73,16 @@ internal static class FullscreenPresentPatch
                 var manager = Main.graphics;
                 int preferredWidth = manager?.PreferredBackBufferWidth ?? -1;
                 int preferredHeight = manager?.PreferredBackBufferHeight ?? -1;
+                string screenTargetSize = Main.screenTarget != null
+                    ? $"{Main.screenTarget.Width}x{Main.screenTarget.Height}"
+                    : "null";
+                string tileTargetSize = Main.instance?.tileTarget != null
+                    ? $"{Main.instance.tileTarget.Width}x{Main.instance.tileTarget.Height}"
+                    : "null";
                 string signature =
                     $"{width}x{height}|{parameters.BackBufferWidth}x{parameters.BackBufferHeight}|" +
                     $"{viewport.Width}x{viewport.Height}|{preferredWidth}x{preferredHeight}|" +
-                    $"{Main.screenWidth}x{Main.screenHeight}";
+                    $"{Main.screenWidth}x{Main.screenHeight}|{screenTargetSize}|{tileTargetSize}";
                 if (signature != _lastPresentSignature)
                 {
                     _lastPresentSignature = signature;
@@ -87,7 +93,8 @@ internal static class FullscreenPresentPatch
                         $"viewport={viewport.X},{viewport.Y} {viewport.Width}x{viewport.Height}, " +
                         $"scissor={scissor.Width}x{scissor.Height}, " +
                         $"preferred={preferredWidth}x{preferredHeight}, " +
-                        $"screen={Main.screenWidth}x{Main.screenHeight}."
+                        $"screen={Main.screenWidth}x{Main.screenHeight}, " +
+                        $"screenTarget={screenTargetSize}, tileTarget={tileTargetSize}."
                     );
                 }
             }
