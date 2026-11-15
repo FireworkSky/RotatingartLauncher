@@ -2074,4 +2074,5 @@
     <string name="install_plugin_display_name_terraria_tmodloader">Terraria / tModLoader</string>
     <string name="install_plugin_display_name_stardew_smapi">Stardew Valley / SMAPI</string>
     <string name="shared_unknown">未知</string>
+    <string name="game_launch_sdl2_compatibility">此游戏仅支持 SDL2，本次启动将自动使用 SDL2。</string>
 </resources>

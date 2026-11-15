@@ -1,6 +1,8 @@
 package com.app.ralaunch.core.common
 
 import android.content.Context
+import android.widget.Toast
+import com.app.ralaunch.R
 import com.app.ralaunch.core.model.GameItem
 import com.app.ralaunch.feature.game.ui.legacy.GameActivity
 import com.app.ralaunch.feature.game.ui.sdl2.GameActivitySdl2
@@ -47,7 +49,13 @@ class GameLaunchManager(private val context: Context) {
         // RAL: 依据「SDL 版本」设置选择入口 Activity。
         //  - SDL3：GameActivity（继承 SDLActivity，Android 视频后端）
         //  - SDL2：GameActivitySdl2（org.libsdl.app2，Android 视频后端）
-        if (SettingsAccess.getInstance().selectedSdlVersion == SdlVersion.SDL2) {
+        val selected = SettingsAccess.selectedSdlVersion
+        val effective = SdlVersion.resolveForGame(selected, gameFile)
+        if (effective != selected) {
+            AppLog.w(TAG, "FNA only supports SDL2; using SDL2 instead of ${SdlVersion.displayName(selected)} for ${game.id}")
+            Toast.makeText(context, R.string.game_launch_sdl2_compatibility, Toast.LENGTH_LONG).show()
+        }
+        if (effective == SdlVersion.SDL2) {
             AppLog.i(TAG, "SDL version: SDL2 (Android)")
             GameActivitySdl2.launch(context = context, gameStorageId = game.id)
         } else {

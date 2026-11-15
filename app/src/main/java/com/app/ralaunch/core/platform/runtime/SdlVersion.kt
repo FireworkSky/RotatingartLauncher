@@ -1,5 +1,8 @@
 package com.app.ralaunch.core.platform.runtime
 
+import com.google.gson.JsonParser
+import java.io.File
+
 /**
  * SDL 版本选择。
  *
@@ -20,6 +23,36 @@ object SdlVersion {
         if (raw?.trim()?.lowercase() == SDL2) SDL2 else SDL3
 
     fun isSdl2(raw: String?): Boolean = normalize(raw) == SDL2
+
+    /** Inspect FNA before choosing the Activity, without initializing either SDL backend. */
+    fun resolveForGame(selected: String?, assembly: File): String {
+        val requested = normalize(selected)
+        if (requested == SDL2) return SDL2
+        val fna = findFna(assembly) ?: return requested
+        val metadata = runCatching { fna.readText(Charsets.ISO_8859_1) }.getOrNull()
+            ?: return requested
+        return if (metadata.startsWith("MZ") &&
+            metadata.contains("\u0000SDL2_FNAPlatform\u0000") &&
+            !metadata.contains("\u0000SDL3_FNAPlatform\u0000")
+        ) SDL2 else requested
+    }
+
+    private fun findFna(assembly: File): File? {
+        val directory = assembly.parentFile ?: return null
+        directory.resolve("FNA.dll").takeIf { it.isFile }?.let { return it }
+        val libraries = directory.resolve("Libraries/FNA")
+        val depsFile = directory.resolve("${assembly.nameWithoutExtension}.deps.json")
+        val version = runCatching {
+            JsonParser.parseString(depsFile.readText()).asJsonObject
+                .getAsJsonObject("libraries").keySet()
+                .singleOrNull { it.startsWith("FNA/") }?.substringAfter('/')
+        }.getOrNull()
+        if (version != null) {
+            return libraries.resolve("$version/FNA.dll").takeIf { it.isFile }
+        }
+        return libraries.listFiles()?.map { it.resolve("FNA.dll") }
+            ?.filter { it.isFile }?.singleOrNull()
+    }
 
     /** 展示用名称 */
     fun displayName(raw: String?): String =

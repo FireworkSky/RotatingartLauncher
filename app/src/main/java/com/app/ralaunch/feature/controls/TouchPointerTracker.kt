@@ -29,7 +29,7 @@ object TouchPointerTracker {
      */
     private inline fun notifySdl(what: String, sdl3Call: () -> Unit, sdl2Call: () -> Unit) {
         runCatching {
-            if (SdlVersion.isSdl2(SettingsAccess.getInstance().selectedSdlVersion)) {
+            if (SdlVersion.isSdl2(SettingsAccess.runtimeSdlVersion)) {
                 sdl2Call()
             } else {
                 sdl3Call()

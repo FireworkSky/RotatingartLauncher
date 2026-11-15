@@ -96,6 +96,14 @@ object SettingsAccess {
     val selectedSdlVersion: String
         get() = SdlVersion.normalize(settings.selectedSdlVersion)
 
+    /** SDL's JNI and native libraries must follow the active Activity after compatibility fallback. */
+    val runtimeSdlVersion: String
+        get() = when {
+            org.libsdl.app2.SDL.getContext() is org.libsdl.app2.SDLActivity -> SdlVersion.SDL2
+            org.libsdl.app.SDL.getContext() is org.libsdl.app.SDLActivity -> SdlVersion.SDL3
+            else -> selectedSdlVersion
+        }
+
     var isUseSdl2: Boolean
         get() = SdlVersion.isSdl2(settings.selectedSdlVersion)
         set(value) = update { selectedSdlVersion = if (value) SdlVersion.SDL2 else SdlVersion.SDL3 }

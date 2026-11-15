@@ -78,7 +78,7 @@ object RendererEnvironmentConfigurator {
      * FNA3D 找不到可用驱动（"No supported FNA3D driver found!"），此处纠正。
      */
     private fun applySdl2EnvironmentIfNeeded(context: Context?) {
-        val useSdl2 = runCatching { SdlVersion.isSdl2(SettingsAccess.getInstance().selectedSdlVersion) }
+        val useSdl2 = runCatching { SdlVersion.isSdl2(SettingsAccess.runtimeSdlVersion) }
             .getOrDefault(false)
         if (!useSdl2) return
 

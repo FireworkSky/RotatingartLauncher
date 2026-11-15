@@ -2105,4 +2105,5 @@
     <string name="settings_about_open_source_section">Open Source</string>
     <string name="settings_about_open_source_subtitle">View open-source libraries used by this app</string>
     <string name="about_core_developer">Core Developer</string>
+    <string name="game_launch_sdl2_compatibility">This game requires SDL2. Using SDL2 for this launch.</string>
 </resources>

@@ -96,7 +96,7 @@ object GameLauncher {
         // RAL: 依据「SDL 版本」设置决定加载哪套 SDL。GameLauncher 在 :game 进程内运行，
         // SDL2 与 SDL3 必须互斥加载，否则会发生 native 库冲突。
         // SDL2 Android 路径使用独立的 SDL2 Java 胶水层和系统图形栈。
-        val useSdl2 = runCatching { SdlVersion.isSdl2(SettingsAccess.getInstance().selectedSdlVersion) }
+        val useSdl2 = runCatching { SdlVersion.isSdl2(SettingsAccess.runtimeSdlVersion) }
             .getOrDefault(false)
         try {
             System.loadLibrary("fmodL")
@@ -410,6 +410,11 @@ object GameLauncher {
 
             // 步骤11：按选中的运行时引擎启动（CoreCLR / Mono）
             // Step 11: Launch with the selected runtime engine (CoreCLR / Mono)
+            // The managed backend cannot override the Activity that owns SDL's Android JNI bindings.
+            val sdlBackend = SdlVersion.displayName(SettingsAccess.runtimeSdlVersion)
+            EnvVarsManager.quickSetEnvVars(mapOf("FNA_PLATFORM_BACKEND" to sdlBackend))
+            AppLog.i(TAG, "FNA platform backend: $sdlBackend (active Activity)")
+
             val runtimeSpec = resolveRuntimeSpec(dotNetRuntimeVersionOverride)
             val decodedRuntime = RuntimeSpec.decode(runtimeSpec)
             lastUsedEngine = decodedRuntime.engine

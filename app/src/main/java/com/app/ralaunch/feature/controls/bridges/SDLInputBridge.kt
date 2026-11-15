@@ -26,7 +26,7 @@ class SDLInputBridge : ControlInputBridge {
     // nativeGetMouseStateX/Y，SDL2 官方层只有 onNativeMouse。这里按当前设置分发。
     private val useSdl2: Boolean
         get() = runCatching {
-            SdlVersion.isSdl2(SettingsAccess.getInstance().selectedSdlVersion)
+            SdlVersion.isSdl2(SettingsAccess.runtimeSdlVersion)
         }.getOrDefault(false)
 
     // SDL2 没有 nativeGetMouseStateX/Y，自己记最近一次鼠标位置
