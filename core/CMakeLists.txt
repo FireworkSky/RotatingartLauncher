@@ -29,6 +29,7 @@ set(LIBS_DIR ${CMAKE_SOURCE_DIR}/libs)
 
 include(cmake/Gl4esOptions.cmake)
 include(cmake/SdlOptions.cmake)
+include(cmake/Sdl2CompatOptions.cmake)
 include(cmake/FaudioOptions.cmake)
 include(cmake/Fna3dOptions.cmake)
 
@@ -40,15 +41,13 @@ add_subdirectory(${LIBS_DIR}/dobby)
 add_subdirectory(${LIBS_DIR}/spdlog-1.17.0)
 
 # =========================
-# SDL2（真实 SDL2 + Android 后端，替代 sdl2-compat）
+# SDL2（独立 Android 后端）与 SDL3 的 SDL2 ABI 兼容层
 # =========================
-# 已移除 sdl2-compat：它以 SDL3 模拟 SDL2 ABI，对按真实 SDL2 语义编写的游戏兼容性不足。
+# SDL3 路径预载 libSDL2_compat.so，让旧 FNA 的 SDL2 API 调用转到 SDL3。
 # SDL2（2.32.10）由 scripts/sdl2/build-sdl2.sh 使用官方 Android 构建脚本生成，
 # 通过 org.libsdl.app2 Java 胶水层与 SDL3 的 org.libsdl.app 共存于同一 APK。
 #
-# 仍需沿用「文件名 libSDL2.so + SONAME libSDL2-2.0.so.0」策略：
-# 例如 Terraria 的 libnfd.so 记录 DT_NEEDED=libSDL2-2.0.so.0，
-# 预加载 libSDL2.so 后其 SONAME 与之一致，即可按已加载库命中。
+# SDL2 路径继续显式加载真正的 libSDL2.so；每个游戏进程只使用一种 SDL2 ABI 实现。
 
 # =========================
 # 主程序（保持独立）

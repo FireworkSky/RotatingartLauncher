@@ -17,6 +17,7 @@ package com.app.ralaunch.core.platform.runtime
 
 import android.content.Context
 import android.os.Environment
+import java.io.File
 import com.app.ralaunch.core.common.SettingsAccess
 import org.koin.java.KoinJavaComponent
 import com.app.ralaunch.core.platform.runtime.dotnet.DotNetLauncher
@@ -94,7 +95,7 @@ object GameLauncher {
      */
     init {
         // RAL: 依据「SDL 版本」设置决定加载哪套 SDL。GameLauncher 在 :game 进程内运行，
-        // SDL2 与 SDL3 必须互斥加载，否则会发生 native 库冲突。
+        // 真正的 SDL2 与 SDL3 的 SDL2 兼容层必须互斥加载。
         // SDL2 Android 路径使用独立的 SDL2 Java 胶水层和系统图形栈。
         val useSdl2 = runCatching { SdlVersion.isSdl2(SettingsAccess.runtimeSdlVersion) }
             .getOrDefault(false)
@@ -122,9 +123,11 @@ object GameLauncher {
                 System.loadLibrary("FNA3D_sdl2")
             } else {
                 // SDL3 版同样以 _sdl3 命名，理由见上（游戏侧按 SONAME 命中已加载的这份）
+                System.loadLibrary("SDL3")
+                System.loadLibrary("SDL2_compat")
                 System.loadLibrary("FAudio_sdl3")
                 System.loadLibrary("FNA3D_sdl3")
-                System.loadLibrary("SDL3")
+                AppLog.i(TAG, "SDL3 runtime with sdl2-compat loaded for SDL2 API consumers")
             }
             System.loadLibrary("main")
             System.loadLibrary("openal32")
@@ -411,9 +414,13 @@ object GameLauncher {
             // 步骤11：按选中的运行时引擎启动（CoreCLR / Mono）
             // Step 11: Launch with the selected runtime engine (CoreCLR / Mono)
             // The managed backend cannot override the Activity that owns SDL's Android JNI bindings.
-            val sdlBackend = SdlVersion.displayName(SettingsAccess.runtimeSdlVersion)
+            val sdlBackend = if (SdlVersion.requiresSdl2Compat(File(assemblyPath))) {
+                "SDL2"
+            } else {
+                SdlVersion.displayName(SettingsAccess.runtimeSdlVersion)
+            }
             EnvVarsManager.quickSetEnvVars(mapOf("FNA_PLATFORM_BACKEND" to sdlBackend))
-            AppLog.i(TAG, "FNA platform backend: $sdlBackend (active Activity)")
+            AppLog.i(TAG, "FNA API backend: $sdlBackend; SDL runtime: ${SettingsAccess.runtimeSdlVersion}")
 
             val runtimeSpec = resolveRuntimeSpec(dotNetRuntimeVersionOverride)
             val decodedRuntime = RuntimeSpec.decode(runtimeSpec)

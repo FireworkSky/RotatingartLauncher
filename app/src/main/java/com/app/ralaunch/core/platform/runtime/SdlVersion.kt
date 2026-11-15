@@ -24,17 +24,14 @@ object SdlVersion {
 
     fun isSdl2(raw: String?): Boolean = normalize(raw) == SDL2
 
-    /** Inspect FNA before choosing the Activity, without initializing either SDL backend. */
-    fun resolveForGame(selected: String?, assembly: File): String {
-        val requested = normalize(selected)
-        if (requested == SDL2) return SDL2
-        val fna = findFna(assembly) ?: return requested
+    /** Older FNA keeps its SDL2 managed backend while sdl2-compat supplies the SDL3 runtime. */
+    fun requiresSdl2Compat(assembly: File): Boolean {
+        val fna = findFna(assembly) ?: return false
         val metadata = runCatching { fna.readText(Charsets.ISO_8859_1) }.getOrNull()
-            ?: return requested
-        return if (metadata.startsWith("MZ") &&
+            ?: return false
+        return metadata.startsWith("MZ") &&
             metadata.contains("\u0000SDL2_FNAPlatform\u0000") &&
             !metadata.contains("\u0000SDL3_FNAPlatform\u0000")
-        ) SDL2 else requested
     }
 
     private fun findFna(assembly: File): File? {

@@ -21,26 +21,26 @@ class SdlVersionTest {
     }
 
     @Test
-    fun sdl2OnlyFnaUsesSdl2EvenWhenSdl3IsSelected() {
+    fun sdl2OnlyFnaRequiresCompat() {
         val game = game()
         fna(game.resolveSibling("Libraries/FNA/1.0.0/FNA.dll"))
-        assertEquals(SdlVersion.SDL2, SdlVersion.resolveForGame(SdlVersion.SDL3, game))
+        assertEquals(true, SdlVersion.requiresSdl2Compat(game))
     }
 
     @Test
     fun dualBackendFnaKeepsSelectedVersion() {
         val game = game()
         fna(game.resolveSibling("FNA.dll"), sdl3 = true)
-        assertEquals(SdlVersion.SDL3, SdlVersion.resolveForGame(SdlVersion.SDL3, game))
-        assertEquals(SdlVersion.SDL2, SdlVersion.resolveForGame(SdlVersion.SDL2, game))
+        assertEquals(false, SdlVersion.requiresSdl2Compat(game))
+        assertEquals(SdlVersion.SDL2, SdlVersion.normalize(SdlVersion.SDL2))
     }
 
     @Test
     fun missingOrUnrecognizedFnaKeepsSelectedVersion() {
         val game = game()
-        assertEquals(SdlVersion.SDL3, SdlVersion.resolveForGame(SdlVersion.SDL3, game))
+        assertEquals(false, SdlVersion.requiresSdl2Compat(game))
         game.resolveSibling("FNA.dll").writeText("unrecognized assembly")
-        assertEquals(SdlVersion.SDL3, SdlVersion.resolveForGame(SdlVersion.SDL3, game))
+        assertEquals(false, SdlVersion.requiresSdl2Compat(game))
     }
 
     @Test
@@ -48,7 +48,7 @@ class SdlVersionTest {
         val game = game()
         fna(game.resolveSibling("FNA.dll"), sdl3 = true)
         fna(game.resolveSibling("Libraries/FNA/1.0.0/FNA.dll"))
-        assertEquals(SdlVersion.SDL3, SdlVersion.resolveForGame(SdlVersion.SDL3, game))
+        assertEquals(false, SdlVersion.requiresSdl2Compat(game))
     }
 
     @Test
@@ -57,8 +57,8 @@ class SdlVersionTest {
         fna(game.resolveSibling("Libraries/FNA/1.0.0/FNA.dll"))
         fna(game.resolveSibling("Libraries/FNA/2.0.0/FNA.dll"), sdl3 = true)
         game.resolveSibling("Game.deps.json").writeText("""{"libraries":{"FNA/2.0.0":{}}}""")
-        assertEquals(SdlVersion.SDL3, SdlVersion.resolveForGame(SdlVersion.SDL3, game))
+        assertEquals(false, SdlVersion.requiresSdl2Compat(game))
         game.resolveSibling("Game.deps.json").writeText("""{"libraries":{"FNA/1.0.0":{}}}""")
-        assertEquals(SdlVersion.SDL2, SdlVersion.resolveForGame(SdlVersion.SDL3, game))
+        assertEquals(true, SdlVersion.requiresSdl2Compat(game))
     }
 }
