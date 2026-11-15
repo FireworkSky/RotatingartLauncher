@@ -45,6 +45,34 @@ internal static class FullscreenPresentPatch
         }
     }
 
+    internal static bool SynchronizeDrawableSize(IntPtr window, int width, int height)
+    {
+        if (window == IntPtr.Zero || width <= 0 || height <= 0)
+            return false;
+
+        SDL2.SDL.SDL_GL_GetDrawableSize(window, out int oldWidth, out int oldHeight);
+        if (oldWidth == width && oldHeight == height)
+            return false;
+
+        // Android SDL2 reports its logical window size as the GL drawable size.
+        // FNA3D must see the real Surface size to allocate a scaling backbuffer.
+        SDL2.SDL.SDL_SetWindowSize(window, width, height);
+        SDL2.SDL.SDL_GL_GetDrawableSize(window, out int newWidth, out int newHeight);
+        bool changed = newWidth != oldWidth || newHeight != oldHeight;
+        if (changed)
+            Console.WriteLine($"[TModLoaderFullscreenPatch] SDL drawable synchronized: {oldWidth}x{oldHeight} -> {newWidth}x{newHeight}.");
+        return changed;
+    }
+
+    public static void ResetPrefix(PresentationParameters presentationParameters)
+    {
+        if (SDL2.SDL.SDL_GetCurrentVideoDriver() == "Android" &&
+            TryGetCurrentSurfaceSize(out int width, out int height))
+        {
+            SynchronizeDrawableSize(presentationParameters.DeviceWindowHandle, width, height);
+        }
+    }
+
     public static bool PresentPrefix(GraphicsDevice __instance)
     {
         try
@@ -63,6 +91,15 @@ internal static class FullscreenPresentPatch
             if (device == IntPtr.Zero)
             {
                 return true;
+            }
+
+            if (SynchronizeDrawableSize(__instance.PresentationParameters.DeviceWindowHandle, width, height))
+            {
+                // The initial device or a recreated Surface may precede a managed Reset.
+                // Rebuild with the corrected drawable size, then redraw on the next frame.
+                __instance.Reset(__instance.PresentationParameters);
+                _lastPresentSignature = "";
+                return false;
             }
 
             if (_presentLogCount < 20)

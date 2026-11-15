@@ -31,6 +31,15 @@ public static class Patcher
                 prefix: new HarmonyMethod(typeof(FullscreenPresentPatch), nameof(FullscreenPresentPatch.PresentPrefix))
             );
 
+            var reset = typeof(GraphicsDevice).GetMethod(
+                nameof(GraphicsDevice.Reset),
+                new[] { typeof(PresentationParameters), typeof(GraphicsAdapter) }
+            ) ?? throw new MissingMethodException(typeof(GraphicsDevice).FullName, nameof(GraphicsDevice.Reset));
+            _harmony.Patch(
+                reset,
+                prefix: new HarmonyMethod(typeof(FullscreenPresentPatch), nameof(FullscreenPresentPatch.ResetPrefix))
+            );
+
             Console.WriteLine("[TModLoaderFullscreenPatch] Android EGL fullscreen present enabled.");
             return 0;
         }
