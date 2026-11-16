@@ -116,6 +116,7 @@ class FPSDisplayView @JvmOverloads constructor(
         override fun run() {
             // 关闭 FPS 显示时不要继续读 sysfs / 构建字符串，避免游戏进程里的无谓
             // 主线程系统调用和临时对象分配。
+            updateVisibility()
             if (visibility == VISIBLE) {
                 updateData()
                 invalidate()
@@ -133,6 +134,7 @@ class FPSDisplayView @JvmOverloads constructor(
     }
 
     fun start() {
+        handler.removeCallbacks(updateRunnable)
         updateVisibility()
         handler.post(updateRunnable)   
     }
@@ -143,6 +145,7 @@ class FPSDisplayView @JvmOverloads constructor(
 
     fun refreshVisibility() {
         updateVisibility()
+        if (visibility == VISIBLE) updateData()
         invalidate()
     }
 

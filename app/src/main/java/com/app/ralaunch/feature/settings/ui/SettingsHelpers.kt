@@ -5,14 +5,12 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
-import androidx.core.content.FileProvider
 import com.app.ralaunch.R
 import com.app.ralaunch.core.common.util.FileUtils
 import com.app.ralaunch.feature.patch.data.PatchManager
 import com.app.ralaunch.core.platform.runtime.AndroidRendererRegistry
 import com.app.ralaunch.core.logging.LogFilePolicy
 import com.app.ralaunch.core.logging.service.LogExportHelper
-import com.app.ralaunch.core.platform.android.provider.RaLaunchFileProvider
 import com.app.ralaunch.core.ui.dialog.RendererOption
 import com.app.ralaunch.core.model.BackgroundType
 import com.app.ralaunch.core.di.contract.ISettingsRepositoryServiceV2
@@ -142,24 +140,6 @@ internal fun openSponsorsPage(context: Context) {
     }
 }
 
-internal fun loadLogs(context: Context): List<String> {
-    return try {
-        val logFile = logExportHelper().getAppLogFiles().firstOrNull() ?: return emptyList()
-        val tail = java.util.ArrayDeque<String>(LOG_VIEW_LIMIT)
-        logFile.bufferedReader().useLines { lines ->
-            lines.forEach { line ->
-                if (tail.size == LOG_VIEW_LIMIT) {
-                    tail.removeFirst()
-                }
-                tail.addLast(line)
-            }
-        }
-        tail.toList()
-    } catch (e: Exception) {
-        listOf(context.getString(R.string.settings_logs_read_failed, e.message ?: ""))
-    }
-}
-
 internal suspend fun exportLogs(context: Context, uri: Uri) {
     withContext(Dispatchers.IO) {
         try {
@@ -178,53 +158,8 @@ internal suspend fun exportLogs(context: Context, uri: Uri) {
 }
 
 internal suspend fun shareLogs(context: Context) {
-    withContext(Dispatchers.IO) {
-        try {
-            val shareDir = File(context.cacheDir, "shared_logs").apply {
-                mkdirs()
-            }
-            shareDir.listFiles { file ->
-                LogFilePolicy.isManagedLogFile(file)
-            }?.forEach(File::delete)
-
-            val logFile = File(shareDir, LogFilePolicy.appLogFileName())
-            logFile.outputStream().use { output ->
-                logExportHelper().writeExportTo(output)
-            }
-
-            val fileUri = FileProvider.getUriForFile(
-                context,
-                RaLaunchFileProvider.AUTHORITY,
-                logFile
-            )
-
-            val shareTitle = context.getString(R.string.export_share_log)
-            val shareIntent = Intent(Intent.ACTION_SEND).apply {
-                type = "text/plain"
-                putExtra(Intent.EXTRA_STREAM, fileUri)
-                putExtra(
-                    Intent.EXTRA_SUBJECT,
-                    "${context.getString(R.string.app_name)} ${context.getString(R.string.settings_developer_export_logs_title)}"
-                )
-                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            }
-
-            withContext(Dispatchers.Main) {
-                context.startActivity(
-                    Intent.createChooser(shareIntent, shareTitle).apply {
-                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                    }
-                )
-            }
-        } catch (e: Exception) {
-            withContext(Dispatchers.Main) {
-                Toast.makeText(context, context.getString(R.string.log_export_failed, e.message ?: ""), Toast.LENGTH_SHORT).show()
-            }
-        }
-    }
+    logExportHelper().shareLogs(context)
 }
-
-private const val LOG_VIEW_LIMIT = 500
 
 private fun logExportHelper(): LogExportHelper =
     KoinJavaComponent.get(LogExportHelper::class.java)

@@ -13,6 +13,8 @@ import android.os.Process
 import android.view.Gravity
 import android.widget.FrameLayout
 import android.widget.TextView
+import android.view.MotionEvent
+import com.app.ralaunch.core.logging.service.TouchInputDiagnostics
 import android.view.KeyEvent
 import android.widget.Toast
 import com.app.ralaunch.R
@@ -154,6 +156,7 @@ class GameActivitySdl2 : SDLActivity(), GameContract.View, LifecycleOwner, Saved
 
     private var fullscreenManager: GameFullscreenManager? = null
     private val refreshRateService: RefreshRateService by inject()
+    private val touchDiagnostics: TouchInputDiagnostics by inject()
 
     // ==================== SDL 胶水层扩展点 ====================
 
@@ -227,6 +230,7 @@ class GameActivitySdl2 : SDLActivity(), GameContract.View, LifecycleOwner, Saved
 
         initializeFullscreenManager()
         initializeVirtualControls()
+        touchDiagnostics.startSession(this, "sdl2")
         requestHighRefreshRate("onCreate")
 
         AppLog.i(TAG, "=== GameActivitySdl2 (SDL2 · Android) Process Started ===")
@@ -236,6 +240,15 @@ class GameActivitySdl2 : SDLActivity(), GameContract.View, LifecycleOwner, Saved
     override fun onStart() {
         super.onStart()
         composeOwner.onStart()
+    }
+
+    override fun dispatchTouchEvent(event: MotionEvent): Boolean {
+        touchDiagnostics.motion("activity-in", event, window.decorView) {
+            "focus=${hasWindowFocus()} controls=${virtualControlsManager.controlLayout?.isControlsVisible}"
+        }
+        val handled = super.dispatchTouchEvent(event)
+        touchDiagnostics.motion("activity-out", event, window.decorView) { "handled=$handled" }
+        return handled
     }
 
     override fun onResume() {
@@ -378,6 +391,7 @@ class GameActivitySdl2 : SDLActivity(), GameContract.View, LifecycleOwner, Saved
         AppLog.d(TAG, "GameActivitySdl2.onDestroy()")
         composeOwner.onDestroy()
         virtualControlsManager.stop()
+        touchDiagnostics.stop()
         instance = null
         presenter.detach()
         super.onDestroy()

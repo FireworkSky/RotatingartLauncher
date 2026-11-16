@@ -9,6 +9,8 @@ import java.util.Locale
 
 object LogFilePolicy {
     const val RETENTION_DAYS = 2
+    const val DOTNET_OUTPUT_FILE = "dotnet-output.log"
+    const val COREHOST_TRACE_FILE = "corehost-trace.log"
 
     private const val PREFIX = "ralaunch_"
     private const val EXTENSION = ".log"
@@ -29,7 +31,11 @@ object LogFilePolicy {
 
     fun isLogcatLogFile(file: File): Boolean = file.isFile && logcatLogFileRegex.matches(file.name)
 
-    fun isManagedLogFile(file: File): Boolean = isAppLogFile(file) || isLogcatLogFile(file)
+    fun isRuntimeLogFile(file: File): Boolean = file.isFile && file.name in setOf(
+        DOTNET_OUTPUT_FILE, "$DOTNET_OUTPUT_FILE.previous", COREHOST_TRACE_FILE, "$COREHOST_TRACE_FILE.previous"
+    )
+
+    fun isManagedLogFile(file: File): Boolean = isAppLogFile(file) || isLogcatLogFile(file) || isRuntimeLogFile(file)
 
     fun filesOlderThanRetention(directory: File, nowMillis: Long = System.currentTimeMillis()): List<File> {
         val cutoffMillis = nowMillis - RETENTION_DAYS * 24L * 60L * 60L * 1000L

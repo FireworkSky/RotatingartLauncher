@@ -20,6 +20,7 @@ import com.app.ralaunch.core.logging.LogFilePolicy
 import com.app.ralaunch.core.logging.LogLevel
 import com.app.ralaunch.core.logging.contract.Logger
 import com.app.ralaunch.core.logging.service.AndroidFileLogger
+import com.app.ralaunch.core.logging.service.TouchInputDiagnostics
 import com.app.ralaunch.core.logging.service.LogExportHelper
 import com.app.ralaunch.core.platform.android.service.RefreshRateService
 import com.app.ralaunch.core.platform.AppConstants
@@ -81,6 +82,8 @@ val appModule = module {
             logcatFileLogger = get(named(LOGCAT_FILE_LOGGER))
         )
     }
+
+    single { TouchInputDiagnostics(androidContext(), get(), get()) }
 
     single<Logger> {
         get<AndroidFileLogger>()
@@ -203,7 +206,11 @@ val appModule = module {
             runtimeManager = get(),
             refreshRateService = get(),
             fileLogger = get(),
-            appInfo = getOrNull<AppInfo>() ?: AppInfo()
+            appInfo = getOrNull<AppInfo>() ?: AppInfo(),
+            logEntriesProvider = { query, issuesOnly, source ->
+                get<LogExportHelper>().readRecentEntries(query = query, issuesOnly = issuesOnly, sourceFilter = source)
+            },
+            logSourcesProvider = { get<LogExportHelper>().getPreviewLogFiles().map { it.name }.sorted() }
         )
     }
 

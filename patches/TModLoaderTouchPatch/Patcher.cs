@@ -14,6 +14,34 @@ public static class Patcher
     private static Harmony? _harmony;
     private static readonly object LogSync = new();
     private static string? _logPath;
+    private static System.Threading.Timer? _heartbeat;
+    private static readonly System.Collections.Generic.Dictionary<string, (long Count, long Last, long Next)> Samples = new();
+
+    internal static void StartHeartbeat()
+    {
+        _heartbeat ??= new System.Threading.Timer(_ =>
+        {
+            try { TouchInputPatch.ReportHeartbeat(); }
+            catch { /* Diagnostics must not terminate the game. */ }
+        }, null, 10000, 10000);
+    }
+
+    internal static void Trace(string stage, Func<string> details, bool edge = false)
+    {
+        try
+        {
+            lock (LogSync)
+            {
+                long now = Environment.TickCount64;
+                Samples.TryGetValue(stage, out var sample);
+                long count = sample.Count + 1;
+                bool emit = sample.Count == 0 || now >= sample.Next || (edge && now - sample.Last >= 100);
+                Samples[stage] = (count, emit ? now : sample.Last, emit ? now + 5000 : sample.Next);
+                if (emit) Log($"Trace {stage}: samples={count}, tick={now}, {details()}");
+            }
+        }
+        catch { /* Diagnostic collection must not change input behavior. */ }
+    }
 
     internal static void Log(string message)
     {
@@ -52,7 +80,10 @@ public static class Patcher
                 _logPath = null;
                 Log($"Cannot create diagnostic file: {ex}");
             }
-            Log($"Initializing touch patch 1.0.13 (mod mode, no mouse fallback); diagnostic file={_logPath ?? "unavailable"}.");
+            Log($"Initializing touch patch 1.0.14 (mod mode, no mouse fallback); diagnostic file={_logPath ?? "unavailable"}; " +
+                $"pid={Environment.ProcessId}, tick={Environment.TickCount64}, " +
+                $"SDL_TOUCH_MOUSE_EVENTS={Environment.GetEnvironmentVariable("SDL_TOUCH_MOUSE_EVENTS")}, " +
+                $"SDL_MOUSE_TOUCH_EVENTS={Environment.GetEnvironmentVariable("SDL_MOUSE_TOUCH_EVENTS")}.");
             _harmony = new Harmony("com.ralaunch.tmodloader.touch");
 
             var loadedAssembly = AppDomain.CurrentDomain.GetAssemblies()

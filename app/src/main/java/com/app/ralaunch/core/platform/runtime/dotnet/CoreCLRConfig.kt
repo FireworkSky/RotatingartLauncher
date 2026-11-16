@@ -3,6 +3,10 @@ package com.app.ralaunch.core.platform.runtime.dotnet
 import android.content.Context
 import com.app.ralaunch.core.platform.runtime.EnvVarsManager
 import com.app.ralaunch.core.common.SettingsAccess
+import com.app.ralaunch.core.di.service.StoragePathsProviderServiceV1
+import com.app.ralaunch.core.logging.LogFilePolicy
+import com.app.ralaunch.core.logging.AppLog
+import java.io.File
 import org.koin.java.KoinJavaComponent
 
 /**
@@ -26,7 +30,20 @@ object CoreCLRConfig {
      */
     fun applyConfigAndInitHooking() {
         val settings = SettingsAccess
-        val context: Context = KoinJavaComponent.get(Context::class.java)
+        val paths: StoragePathsProviderServiceV1 = KoinJavaComponent.get(StoragePathsProviderServiceV1::class.java)
+        val logDirectory = File(paths.logsDirPathFull()).apply { mkdirs() }
+        val verbose = settings.isLogSystemEnabled && settings.isVerboseLogging
+        if (verbose) {
+            val trace = File(logDirectory, LogFilePolicy.COREHOST_TRACE_FILE)
+            runCatching {
+                if (trace.exists()) trace.copyTo(File(logDirectory, "${trace.name}.previous"), overwrite = true)
+                trace.delete()
+            }.onFailure { AppLog.w(TAG, "Cannot rotate host trace; game launch will continue", it) }
+        }
+        EnvVarsManager.quickSetEnvVars(loggingEnvironment(verbose, logDirectory.absolutePath))
+        EnvVarsManager.quickSetEnvVar("RAL_DOTNET_OUTPUT_FILE", if (settings.isLogSystemEnabled) {
+            File(logDirectory, LogFilePolicy.DOTNET_OUTPUT_FILE).absolutePath
+        } else null)
         EnvVarsManager.quickSetEnvVars(
             // 应用 GC 配置
             "DOTNET_gcServer" to if (settings.isServerGC) "1" else "0",
@@ -39,24 +56,30 @@ object CoreCLRConfig {
             "DOTNET_TC_QuickJit" to if (settings.isTieredCompilation && settings.isQuickJIT) "1" else "0",
             "DOTNET_JitOptimizeType" to settings.jitOptimizeType.toString(),
 
-            // 应用日志配置
-            "COMPlus_DebugWriteToStdErr" to "1",
-            "COREHOST_TRACE" to if (settings.isVerboseLogging) "1" else "0",
-            "COREHOST_TRACEFILE" to
-                    if (settings.isVerboseLogging)
-                        context.getExternalFilesDir(null)?.resolve("corehost_trace.txt")?.absolutePath
-                    else
-                        null,
-
             // 应用版本前滚策略
             "DOTNET_ROLL_FORWARD" to "LatestMajor",
             "DOTNET_ROLL_FORWARD_ON_NO_CANDIDATE_FX" to "2",
             "DOTNET_ROLL_FORWARD_TO_PRERELEASE" to "1",
         )
 
-        if (settings.isVerboseLogging) {
-            CoreHostHooks.initTraceHooks()
+        AppLog.i(TAG, "Runtime diagnostics: host/CoreCLR trace=$verbose")
+    }
+
+    internal fun loggingEnvironment(verbose: Boolean, directory: String): Map<String, String?> = buildMap {
+        for (prefix in listOf("COREHOST_", "DOTNET_HOST_")) {
+            put("${prefix}TRACE", if (verbose) "1" else "0")
+            put("${prefix}TRACE_VERBOSITY", if (verbose) "4" else null)
+            put("${prefix}TRACEFILE", if (verbose) File(directory, LogFilePolicy.COREHOST_TRACE_FILE).absolutePath else null)
         }
+        for (prefix in listOf("DOTNET_", "COMPlus_")) {
+            put("${prefix}LogEnable", if (verbose) "1" else "0")
+            put("${prefix}LogToConsole", if (verbose) "1" else "0")
+            put("${prefix}LogLevel", if (verbose) "a" else null) // CoreCLR DWORD values use hexadecimal: a = 10.
+            put("${prefix}LogFacility", if (verbose) "ffffffff" else null)
+            put("${prefix}LogFacility2", if (verbose) "ffffffff" else null)
+            put("${prefix}LogToFile", "0")
+        }
+        put("COMPlus_DebugWriteToStdErr", if (verbose) "1" else "0")
     }
 
     /**

@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.app.ralaunch.core.di.contract.IRuntimeManagerServiceV2
 import com.app.ralaunch.core.logging.service.AndroidFileLogger
+import com.app.ralaunch.core.logging.LogEntry
+import com.app.ralaunch.feature.settings.model.LogViewerState
 import com.app.ralaunch.core.platform.runtime.RendererRegistry
 import com.app.ralaunch.core.platform.runtime.RuntimeSpec
 import com.app.ralaunch.core.platform.runtime.SdlVersion
@@ -25,6 +27,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import com.app.ralaunch.core.platform.android.service.RefreshRateService
@@ -166,7 +171,9 @@ class SettingsViewModel(
     private val runtimeManager: IRuntimeManagerServiceV2,
     private val refreshRateService: RefreshRateService,
     private val fileLogger: AndroidFileLogger? = null,
-    private val appInfo: AppInfo = AppInfo()
+    private val appInfo: AppInfo = AppInfo(),
+    private val logEntriesProvider: (String, Boolean, String?) -> List<LogEntry> = { _, _, _ -> emptyList() },
+    private val logSourcesProvider: () -> List<String> = { emptyList() }
 ) : ViewModel() {
 
     private val refreshRateMutex = Mutex()
@@ -175,6 +182,60 @@ class SettingsViewModel(
 
     private val _effect = MutableSharedFlow<SettingsEffect>(extraBufferCapacity = 16)
     val effect: SharedFlow<SettingsEffect> = _effect.asSharedFlow()
+
+    private var recentLogEntries: List<LogEntry> = emptyList()
+    private var logReadJob: Job? = null
+    private val _logViewerState = MutableStateFlow(LogViewerState())
+    val logViewerState: StateFlow<LogViewerState> = _logViewerState.asStateFlow()
+
+    fun refreshLogs() {
+        readLogs(debounce = false)
+    }
+
+    private fun readLogs(debounce: Boolean) {
+        logReadJob?.cancel()
+        logReadJob = viewModelScope.launch {
+            _logViewerState.update { it.copy(loading = true, error = null) }
+            if (debounce) delay(200)
+            val requested = _logViewerState.value
+            try {
+                val (sources, entries) = withContext(Dispatchers.IO) {
+                    logSourcesProvider() to logEntriesProvider(requested.query, requested.issuesOnly, requested.source)
+                }
+                recentLogEntries = entries
+                _logViewerState.update { state ->
+                    filterLogs(state.copy(
+                        sources = sources,
+                        source = state.source?.takeIf { it in sources },
+                        loading = false
+                    ))
+                }
+            } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                throw cancelled
+            } catch (exception: Exception) {
+                _logViewerState.update { it.copy(loading = false, error = exception.message ?: exception.javaClass.simpleName) }
+            }
+        }
+    }
+
+    fun setLogQuery(query: String) {
+        _logViewerState.update { filterLogs(it.copy(query = query)) }
+        readLogs(debounce = true)
+    }
+
+    fun setLogIssuesOnly(issuesOnly: Boolean) {
+        _logViewerState.update { filterLogs(it.copy(issuesOnly = issuesOnly)) }
+        refreshLogs()
+    }
+
+    fun setLogSource(source: String?) {
+        _logViewerState.update { filterLogs(it.copy(source = source)) }
+        refreshLogs()
+    }
+
+    private fun filterLogs(state: LogViewerState): LogViewerState = state.copy(
+        entries = recentLogEntries.asReversed().filter { it.matches(state.query, state.issuesOnly, state.source) }
+    )
 
     init {
         loadSettings()

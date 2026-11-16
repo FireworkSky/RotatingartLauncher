@@ -2011,9 +2011,9 @@
     <string name="settings_appearance_language_subtitle">После изменения требуется перезагрузка</string>
     <string name="settings_developer_logging_section">Журналы</string>
     <string name="settings_developer_logging_enable_title">Включить ведение журнала</string>
-    <string name="settings_developer_logging_enable_subtitle">Запись журналов выполнения приложений</string>
+    <string name="settings_developer_logging_enable_subtitle">Записывать журнал лаунчера и вывод консоли .NET</string>
     <string name="settings_developer_verbose_logging_title">Подробное ведение журнала</string>
-    <string name="settings_developer_verbose_logging_subtitle">Вывод дополнительной отладочной информации</string>
+    <string name="settings_developer_verbose_logging_subtitle">Отладка и трассировка хоста .NET/CoreCLR со следующего запуска игры</string>
     <string name="settings_developer_view_logs_title">Просмотр журналов</string>
     <string name="settings_developer_view_logs_subtitle">Просмотр последних журналов выполнения</string>
     <string name="settings_developer_export_logs_title">Экспорт журналов</string>
@@ -2053,4 +2053,6 @@
     <string name="settings_about_open_source_section">Открытый исходный код</string>
     <string name="settings_about_open_source_subtitle">Просмотр библиотек с открытым исходным кодом, используемых этим приложением</string>
     <string name="about_core_developer">Основной разработчик</string>
+    <string name="control_editor_share_logs">Поделиться журналами</string>
+    <string name="settings_logs_occurrences">Повторений: %1$d · Последнее: %2$s</string>
 </resources>

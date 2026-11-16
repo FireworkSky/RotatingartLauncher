@@ -2,7 +2,7 @@
   "id": "com.app.ralaunch.tmodloader.touch",
   "name": "tModLoader Touch Input",
   "description": "Mod touch input without mouse fallback, with late device detection and runtime diagnostics. Select SDL touch in launcher settings to use SDL mouse synthesis instead.",
-  "version": "1.0.13",
+  "version": "1.0.14",
   "author": "RA Launcher Team",
   "dllFileName": "TModLoaderTouchPatch.dll",
   "entryPoint": {

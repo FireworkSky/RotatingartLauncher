@@ -1739,9 +1739,9 @@
 
     <string name="settings_developer_logging_section">日志</string>
     <string name="settings_developer_logging_enable_title">启用日志系统</string>
-    <string name="settings_developer_logging_enable_subtitle">记录应用运行日志</string>
+    <string name="settings_developer_logging_enable_subtitle">记录启动器日志和 .NET 控制台输出</string>
     <string name="settings_developer_verbose_logging_title">详细日志</string>
-    <string name="settings_developer_verbose_logging_subtitle">输出更多调试信息</string>
+    <string name="settings_developer_verbose_logging_subtitle">启用调试日志及 .NET 主机/CoreCLR 诊断，下次启动游戏生效</string>
     <string name="settings_developer_view_logs_title">查看日志</string>
     <string name="settings_developer_view_logs_subtitle">查看最近的运行日志</string>
     <string name="settings_developer_export_logs_title">导出日志</string>
@@ -2091,4 +2091,13 @@
     <string name="settings_refresh_advanced_help">各品牌均使用 Android 标准显示模式与 Surface 刷新率接口。授权修改系统设置后可提高保存的刷新率上限，关闭时恢复本功能修改前的值。部分系统还需在系统设置中为本应用启用高刷新率。小米、红米、POCO 可通过一次 ADB 授权修改已有的厂商刷新率设置，不会绕过系统权限。省电、温控限制以及屏幕硬件不支持的刷新率无法解除。</string>
     <string name="settings_refresh_copy_command">复制授权命令</string>
     <string name="settings_refresh_open_display_settings">打开显示设置</string>
+    <string name="control_editor_share_logs">分享日志</string>
+    <string name="settings_logs_search">搜索内容、标签、进程 ID 和异常堆栈</string>
+    <string name="settings_logs_issues">警告 / 异常</string>
+    <string name="settings_logs_all_sources">全部来源</string>
+    <string name="settings_logs_latest">最新</string>
+    <string name="settings_logs_recent">匹配 %1$d 条 · 最新在前 · 每来源预览最近 1 MB、最多显示 1,000 条匹配 · 导出含完整日志</string>
+    <string name="settings_logs_no_matches">最近日志中没有匹配记录，请尝试全部来源或导出完整日志。</string>
+    <string name="settings_logs_disabled">日志采集已关闭，请在高级设置中启用后重新复现问题。</string>
+    <string name="settings_logs_occurrences">出现 %1$d 次 · 最近 %2$s</string>
 </resources>

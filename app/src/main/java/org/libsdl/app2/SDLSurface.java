@@ -37,8 +37,8 @@ public class SDLSurface extends SurfaceView implements SurfaceHolder.Callback,
 
     // Keep track of the surface size to normalize touch events
     protected float mWidth, mHeight;
-    private long mNextTouchDiagnostic;
-    private long mTouchEventCount;
+    private final kotlin.Lazy<com.app.ralaunch.core.logging.service.TouchInputDiagnostics> mTouchDiagnostics =
+        org.koin.java.KoinJavaComponent.inject(com.app.ralaunch.core.logging.service.TouchInputDiagnostics.class);
 
     // Is SurfaceView ready for rendering
     public boolean mIsSurfaceReady;
@@ -211,15 +211,7 @@ public class SDLSurface extends SurfaceView implements SurfaceHolder.Callback,
         int touchDevId = event.getDeviceId();
         final int pointerCount = event.getPointerCount();
         int action = event.getActionMasked();
-        mTouchEventCount++;
-        long now = android.os.SystemClock.uptimeMillis();
-        if (now >= mNextTouchDiagnostic) {
-            mNextTouchDiagnostic = now + 30000;
-            com.app.ralaunch.core.logging.AppLog.i("SDLTouch",
-                "SDL2 input: events=" + mTouchEventCount + ", device=" + touchDevId
-                + ", source=" + event.getSource() + ", tool=" + event.getToolType(event.getActionIndex())
-                + ", action=" + action + ", pointers=" + pointerCount + ", surface=" + mWidth + "x" + mHeight);
-        }
+        mTouchDiagnostics.getValue().motion("sdl2-receive", event, this);
         int pointerFingerId;
         int i = -1;
         float x,y,p;
@@ -254,6 +246,8 @@ public class SDLSurface extends SurfaceView implements SurfaceHolder.Callback,
             y = motionListener.getEventY(event);
 
             SDLActivity.onNativeMouse(mouseButton, action, x, y, motionListener.inRelativeMode());
+            mTouchDiagnostics.getValue().nativeDispatch(event, this, "sdl2", "native-mouse",
+                touchDevId, event.getPointerId(event.getActionIndex()), action, x, y);
         } else {
             switch(action) {
                 case MotionEvent.ACTION_MOVE:
@@ -268,6 +262,8 @@ public class SDLSurface extends SurfaceView implements SurfaceHolder.Callback,
                             p = 1.0f;
                         }
                         SDLActivity.onNativeTouch(touchDevId, pointerFingerId, action, x, y, p);
+                        mTouchDiagnostics.getValue().nativeDispatch(event, this, "sdl2", "native-touch",
+                            touchDevId, pointerFingerId, action, x, y);
                     }
                     break;
 
@@ -293,6 +289,8 @@ public class SDLSurface extends SurfaceView implements SurfaceHolder.Callback,
                         p = 1.0f;
                     }
                     SDLActivity.onNativeTouch(touchDevId, pointerFingerId, action, x, y, p);
+                    mTouchDiagnostics.getValue().nativeDispatch(event, this, "sdl2", "native-touch",
+                        touchDevId, pointerFingerId, action, x, y);
                     break;
 
                 case MotionEvent.ACTION_CANCEL:
@@ -307,6 +305,8 @@ public class SDLSurface extends SurfaceView implements SurfaceHolder.Callback,
                             p = 1.0f;
                         }
                         SDLActivity.onNativeTouch(touchDevId, pointerFingerId, MotionEvent.ACTION_UP, x, y, p);
+                        mTouchDiagnostics.getValue().nativeDispatch(event, this, "sdl2", "native-touch",
+                            touchDevId, pointerFingerId, MotionEvent.ACTION_UP, x, y);
                     }
                     break;
 

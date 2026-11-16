@@ -39,6 +39,8 @@ class LogcatReader(
                 if (running.get()) {
                     logger.e(TAG, "LogcatReader error", e)
                 }
+            } finally {
+                if (readerThread === Thread.currentThread()) running.set(false)
             }
         }, "LogcatReader").apply {
             isDaemon = true
@@ -63,7 +65,8 @@ class LogcatReader(
         filterTags: Array<String>? = null,
         minLevel: LogLevel = LogLevel.VERBOSE
     ): String = buildString {
-        append("logcat --pid=$pid -v threadtime")
+        // A new reader must not append the whole ring buffer again after a settings refresh.
+        append("logcat --pid=$pid -v threadtime -T 1")
         if (!filterTags.isNullOrEmpty()) {
             append(" *:S")
             filterTags.forEach { append(" $it:${minLevel.logcatPriority}") }
@@ -76,9 +79,17 @@ class LogcatReader(
         if (line.isEmpty() || line.startsWith("---------")) return
 
         val parsed = parseLine(line) ?: return
-        if (shouldFilterTag(parsed.tag)) return
+        if (isCompatibilityNoise(parsed.tag, parsed.message)) return
+        // Framework tags can carry the only explanation for a crash or renderer failure.
+        if (parsed.level !in setOf("W", "E", "F", "A") && shouldFilterTag(parsed.tag)) return
 
-        fileLogger.writeRawLine(parsed.format())
+        val level = when (parsed.level) {
+            "F", "A", "E" -> LogLevel.ERROR
+            "W" -> LogLevel.WARN
+            else -> if (parsed.tag.startsWith("DOTNET")) LogLevel.WARN else LogLevel.INFO
+        }
+        // Console stack traces arrive at INFO. Flush them before the game process exits.
+        fileLogger.writeRawLine(parsed.format(), level)
     }
 
     internal fun parseLine(line: String): ParsedLogLine? {
@@ -115,6 +126,12 @@ class LogcatReader(
     companion object {
         private const val TAG = "LogcatReader"
 
+        internal fun isCompatibilityNoise(tag: String, message: String): Boolean = when (tag) {
+            "BLASTBufferQueue" -> message.contains("Faking releaseBufferCallback from transactionCompleteCallback")
+            "AccessibilityNodeInfo" -> message.trim() == "getSpanTextList mText is not instanceof Spanned"
+            else -> false
+        }
+
         private val THREADTIME_LINE = Regex(
             "^(\\d{2}-\\d{2}\\s+\\d{2}:\\d{2}:\\d{2}\\.\\d{3})" +
                 "(?:\\s+(?!\\d+\\s)[0-9A-Za-z_.]+)?\\s+(\\d+)\\s+(\\d+)\\s+([A-Z])\\s+" +
@@ -131,10 +148,10 @@ class LogcatReader(
             "FramePredict", "FirstFrameSpeedUp", "InsetsController", "ViewRootImpl",
             "Choreographer", "HandWritingStubImpl", "ViewRootImplStubImpl",
             "MiInputConsumer", "CompatChangeReporter", "ContentCatcher", "SecurityManager",
-            "ComputilityLevel", "Activity", "libc", "SplineOverScroller",
+            "ComputilityLevel", "Activity", "SplineOverScroller",
             "BufferQueueProducer", "BLASTBufferQueue",
             "oplus.android.OplusFrameworkFactoryImpl", "DynamicFramerate [AnimationSpeedAware]",
-            "OplusViewDragTouchViewHelper"
+            "OplusViewDragTouchViewHelper", "AccessibilityNodeInfo", "AccessibilityManager", "DecorView"
         )
     }
 

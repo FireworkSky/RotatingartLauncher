@@ -51,6 +51,7 @@ fun GameControlsOverlay(
     settingsManager: SettingsAccess,
     toggleFloatingBallEvent: SharedFlow<Unit>,
     onExitGame: () -> Unit,
+    onFpsDisplayChanged: (Boolean) -> Unit = {},
     onEditModeChanged: (Boolean) -> Unit = {},
     onActiveAreaChanged: (android.graphics.RectF?) -> Unit = {},
     modifier: Modifier = Modifier
@@ -86,7 +87,6 @@ fun GameControlsOverlay(
     LaunchedEffect(Unit) {
         menuState.isControlsVisible = controlLayoutView.isControlsVisible
         menuState.isFpsDisplayEnabled = settingsManager.isFPSDisplayEnabled
-        menuState.isTouchEventEnabled = settingsManager.isTouchEventEnabled
 
         // 初始化布局切换状态（优先使用快速切换列表，如果为空则显示全部）
         val quickSwitchPacks = packManager.getQuickSwitchPacks()
@@ -194,6 +194,9 @@ fun GameControlsOverlay(
         }
     }
     
+    val currentFpsCallback by rememberUpdatedState(onFpsDisplayChanged)
+    var isSharingLogs by remember { mutableStateOf(false) }
+
     // 回调实现
     val callbacks = remember(controlLayoutView, packManager, settingsManager, context) {
         object : FloatingMenuCallbacks {
@@ -289,10 +292,22 @@ fun GameControlsOverlay(
             
             override fun onFpsDisplayChanged(enabled: Boolean) {
                 settingsManager.isFPSDisplayEnabled = enabled
+                currentFpsCallback(enabled)
             }
             
-            override fun onTouchEventChanged(enabled: Boolean) {
-                settingsManager.isTouchEventEnabled = enabled
+            override fun onShareLogs() {
+                if (isSharingLogs) return
+                isSharingLogs = true
+                scope.launch {
+                    try {
+                        val logs = org.koin.java.KoinJavaComponent.get<com.app.ralaunch.core.logging.service.LogExportHelper>(
+                            com.app.ralaunch.core.logging.service.LogExportHelper::class.java
+                        )
+                        logs.shareLogs(context)
+                    } finally {
+                        isSharingLogs = false
+                    }
+                }
             }
             
             override fun onExitGame() {

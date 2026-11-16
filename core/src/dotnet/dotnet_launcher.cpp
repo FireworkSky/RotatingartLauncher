@@ -1,9 +1,11 @@
 
 #include <jni.h>
 #include <mutex>
+#include <cstdlib>
 
 #include "logger.hpp"
 #include "dotnet/dotnet_launcher.hpp"
+#include "dotnet/dotnet_output_capture.hpp"
 
 #include "dotnethost/nethost.hpp"
 #include "dotnethost/hostfxr.hpp"
@@ -56,6 +58,7 @@ int DotnetLauncher::hostfxr_launch(const std::string& assembly_path,
                                     std::vector<std::string> args,
                                     const std::string& dotnet_root) {
     try {
+        DotnetOutputCapture output_capture(std::getenv("RAL_DOTNET_OUTPUT_FILE"));
         set_last_error("");
 
         // 参数校验

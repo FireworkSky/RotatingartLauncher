@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Reflection;
+using System.Runtime.InteropServices;
 
 /// <summary>
 /// DOTNET_STARTUP_HOOKS 入口类
@@ -20,9 +21,32 @@ internal class StartupHook
         // 注册程序集解析器,从 monomod 目录加载依赖
         AppDomain.CurrentDomain.AssemblyResolve += OnAssemblyResolve;
 
+        LogRuntimeDiagnostics();
+
         // 调用补丁初始化方法
         int result = ConsolePatch.ConsolePatcher.Initialize(IntPtr.Zero, 0);
         Console.WriteLine($"[StartupHook] ConsolePatcher.Initialize returned: {result}");
+    }
+
+    private static void LogRuntimeDiagnostics()
+    {
+        Console.WriteLine($"[MonoModDiagnostics] Runtime={RuntimeInformation.FrameworkDescription}; ProcessArchitecture={RuntimeInformation.ProcessArchitecture}; OSArchitecture={RuntimeInformation.OSArchitecture}; OS={RuntimeInformation.OSDescription}");
+        try
+        {
+            var utils = Assembly.Load("MonoMod.Utils");
+            var detection = utils.GetType("MonoMod.Utils.PlatformDetection", throwOnError: true)!;
+            Console.WriteLine($"[MonoModDiagnostics] Detected OS={detection.GetProperty("OS")!.GetValue(null)}; Architecture={detection.GetProperty("Architecture")!.GetValue(null)}");
+            foreach (var name in new[] { "MonoMod.Utils", "MonoMod.Core", "MonoMod.RuntimeDetour" })
+            {
+                var assembly = Assembly.Load(name);
+                var version = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
+                Console.WriteLine($"[MonoModDiagnostics] {name} {version}; Path={assembly.Location}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[MonoModDiagnostics] Failed to inspect platform: {ex}");
+        }
     }
 
     /// <summary>

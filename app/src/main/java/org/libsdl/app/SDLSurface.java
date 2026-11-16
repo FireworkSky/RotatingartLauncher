@@ -39,9 +39,8 @@ public class SDLSurface extends SurfaceView implements SurfaceHolder.Callback,
 
     // Keep track of the surface size to normalize touch events
     protected float mWidth, mHeight;
-    private long mNextTouchDiagnostic;
-    private long mTouchEventCount;
-    private boolean mReportedTouchDisabled;
+    private final kotlin.Lazy<com.app.ralaunch.core.logging.service.TouchInputDiagnostics> mTouchDiagnostics =
+        org.koin.java.KoinJavaComponent.inject(com.app.ralaunch.core.logging.service.TouchInputDiagnostics.class);
 
     // Is SurfaceView ready for rendering
     public boolean mIsSurfaceReady;
@@ -261,15 +260,7 @@ public class SDLSurface extends SurfaceView implements SurfaceHolder.Callback,
         int touchDevId = event.getDeviceId();
         final int pointerCount = event.getPointerCount();
         int action = event.getActionMasked();
-        mTouchEventCount++;
-        long now = android.os.SystemClock.uptimeMillis();
-        if (now >= mNextTouchDiagnostic) {
-            mNextTouchDiagnostic = now + 30000;
-            com.app.ralaunch.core.logging.AppLog.i("SDLTouch",
-                "SDL3 input: events=" + mTouchEventCount + ", device=" + touchDevId
-                + ", source=" + event.getSource() + ", tool=" + event.getToolType(event.getActionIndex())
-                + ", action=" + action + ", pointers=" + pointerCount + ", surface=" + mWidth + "x" + mHeight);
-        }
+        mTouchDiagnostics.getValue().motion("sdl3-receive", event, this);
         int pointerId;
         int i = 0;
         float x,y,p;
@@ -292,6 +283,8 @@ public class SDLSurface extends SurfaceView implements SurfaceHolder.Callback,
                 relative = motionListener.inRelativeMode();
 
                 SDLActivity.onNativeMouse(buttonState, action, x, y, relative);
+                mTouchDiagnostics.getValue().nativeDispatch(event, this, "sdl3", "native-mouse",
+                    touchDevId, event.getPointerId(i), action, x, y);
             } else if (toolType == MotionEvent.TOOL_TYPE_STYLUS || toolType == MotionEvent.TOOL_TYPE_ERASER) {
                 pointerId = event.getPointerId(i);
                 x = event.getX(i);
@@ -307,21 +300,9 @@ public class SDLSurface extends SurfaceView implements SurfaceHolder.Callback,
                 int buttonState = (event.getButtonState() >> 4) | (1 << (toolType == MotionEvent.TOOL_TYPE_STYLUS ? 0 : 30));
 
                 SDLActivity.onNativePen(pointerId, buttonState, action, x, y, p);
+                mTouchDiagnostics.getValue().nativeDispatch(event, this, "sdl3", "native-pen",
+                    touchDevId, pointerId, action, x, y);
             } else { // MotionEvent.TOOL_TYPE_FINGER or MotionEvent.TOOL_TYPE_UNKNOWN
-                try {
-                    var settingsManager = com.app.ralaunch.core.common.SettingsAccess.getInstance();
-                    if (!settingsManager.isTouchEventEnabled()) {
-                        if (!mReportedTouchDisabled) {
-                            mReportedTouchDisabled = true;
-                            com.app.ralaunch.core.logging.AppLog.w("SDLTouch",
-                                "Native touch forwarding blocked: Touch Events is disabled in control settings.");
-                        }
-                        return true;
-                    }
-                    mReportedTouchDisabled = false;
-                } catch (Exception ignored) {
-                }
-
                 pointerId = event.getPointerId(i);
                 x = getNormalizedX(event.getX(i));
                 y = getNormalizedY(event.getY(i));
@@ -333,6 +314,8 @@ public class SDLSurface extends SurfaceView implements SurfaceHolder.Callback,
                 }
 
                 SDLActivity.onNativeTouch(touchDevId, pointerId, action, x, y, p);
+                mTouchDiagnostics.getValue().nativeDispatch(event, this, "sdl3", "native-touch",
+                    touchDevId, pointerId, action, x, y);
             }
 
             // Non-primary up/down

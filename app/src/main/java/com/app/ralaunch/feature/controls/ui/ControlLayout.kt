@@ -38,6 +38,19 @@ import kotlin.math.sqrt
 class ControlLayout : FrameLayout {
     // SDLSurface 引用，用于转发触摸事件
     private var mSDLSurface: View? = null
+    private val touchDiagnostics: com.app.ralaunch.core.logging.service.TouchInputDiagnostics by lazy {
+        KoinJavaComponent.get(com.app.ralaunch.core.logging.service.TouchInputDiagnostics::class.java)
+    }
+
+    private fun forwardTouchToSdl(event: MotionEvent): Boolean {
+        val handled = mSDLSurface?.dispatchTouchEvent(event) ?: false
+        touchDiagnostics.motion("controls->surface", event, this) {
+            "handled=$handled target=${mSDLSurface?.javaClass?.name} visible=$mVisible edit=$mModifiable " +
+                "owners=" + mPointerToControl.entries.joinToString { "${it.key}:${it.value.javaClass.simpleName}" }
+        }
+        return handled
+    }
+
 
     private var mControls: MutableList<ControlView> = ArrayList()
     var inputBridge: ControlInputBridge? = null
@@ -335,7 +348,7 @@ class ControlLayout : FrameLayout {
                 event.getToolType(0) == MotionEvent.TOOL_TYPE_MOUSE
 
         if (isMouseEvent) {
-            return mSDLSurface?.dispatchTouchEvent(event) ?: false
+            return forwardTouchToSdl(event)
         }
 
         val action = event.actionMasked
@@ -353,7 +366,7 @@ class ControlLayout : FrameLayout {
                 handleCancel(event)
             else -> {
                 // 对于其他事件，转发给 SDLSurface
-                mSDLSurface?.dispatchTouchEvent(event)
+                forwardTouchToSdl(event)
                 true
             }
         }
@@ -395,13 +408,13 @@ class ControlLayout : FrameLayout {
                 }
                 // Native consumption suppresses mouse synthesis, not raw touch.
                 // SDL must see DOWN before MOVE/UP, even for overlay-owned fingers.
-                mSDLSurface?.dispatchTouchEvent(event)
+                forwardTouchToSdl(event)
                 return true
             }
         }
 
         // 没有控件接受，转发给 SDLSurface
-        mSDLSurface?.dispatchTouchEvent(event)
+        forwardTouchToSdl(event)
         return true
     }
 
@@ -424,7 +437,7 @@ class ControlLayout : FrameLayout {
         }
 
         // 转发给 SDL（SDL 会过滤已消费的指针）
-        mSDLSurface?.dispatchTouchEvent(event)
+        forwardTouchToSdl(event)
         return true
     }
 
@@ -448,7 +461,7 @@ class ControlLayout : FrameLayout {
             }
         }
 
-        mSDLSurface?.dispatchTouchEvent(event)
+        forwardTouchToSdl(event)
         return true
     }
 
@@ -473,7 +486,7 @@ class ControlLayout : FrameLayout {
             mOnControlChangedListener?.onControlInUse(false)
         }
 
-        mSDLSurface?.dispatchTouchEvent(event)
+        forwardTouchToSdl(event)
         return true
     }
 

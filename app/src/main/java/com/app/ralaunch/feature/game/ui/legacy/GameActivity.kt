@@ -10,6 +10,8 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.os.Process
+import android.view.MotionEvent
+import com.app.ralaunch.core.logging.service.TouchInputDiagnostics
 import android.view.KeyEvent
 import android.view.ViewGroup
 import android.widget.Toast
@@ -129,6 +131,7 @@ class GameActivity : SDLActivity(), GameContract.View {
     private var fullscreenManager: GameFullscreenManager? = null
     private val virtualControlsManager = GameVirtualControlsManager()
     private val refreshRateService: RefreshRateService by inject()
+    private val touchDiagnostics: TouchInputDiagnostics by inject()
 
     // ==================== 生命周期 ====================
 
@@ -148,6 +151,7 @@ class GameActivity : SDLActivity(), GameContract.View {
         forceLandscapeOrientation()
         initializeFullscreenManager()
         initializeVirtualControls()
+        touchDiagnostics.startSession(this, "sdl3")
         requestHighRefreshRate("onCreate")
         AppLog.i(TAG, "=== GameActivity Process Started ===")
         AppLog.i(TAG, "Game process PID: ${android.os.Process.myPid()}")
@@ -215,6 +219,15 @@ class GameActivity : SDLActivity(), GameContract.View {
         }
     }
 
+    override fun dispatchTouchEvent(event: MotionEvent): Boolean {
+        touchDiagnostics.motion("activity-in", event, window.decorView) {
+            "focus=${hasWindowFocus()} controls=${virtualControlsManager.controlLayout?.isControlsVisible}"
+        }
+        val handled = super.dispatchTouchEvent(event)
+        touchDiagnostics.motion("activity-out", event, window.decorView) { "handled=$handled" }
+        return handled
+    }
+
     override fun onResume() {
         super.onResume()
         requestHighRefreshRate("onResume")
@@ -239,6 +252,7 @@ class GameActivity : SDLActivity(), GameContract.View {
         AppLog.d(TAG, "GameActivity.onDestroy() called")
 
         virtualControlsManager.stop()
+        touchDiagnostics.stop()
         presenter.detach()
 
         super.onDestroy()

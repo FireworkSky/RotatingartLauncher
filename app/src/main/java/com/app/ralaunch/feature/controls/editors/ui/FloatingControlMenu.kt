@@ -70,7 +70,6 @@ class FloatingMenuState(
     
     // 游戏内特有状态
     var isFpsDisplayEnabled by mutableStateOf(false)
-    var isTouchEventEnabled by mutableStateOf(true)
     var isControlsVisible by mutableStateOf(true)
     
     // 调试日志状态
@@ -172,7 +171,7 @@ interface FloatingMenuCallbacks {
     fun onToggleEditMode() {}
     fun onToggleControls() {}
     fun onFpsDisplayChanged(enabled: Boolean) {}
-    fun onTouchEventChanged(enabled: Boolean) {}
+    fun onShareLogs() {}
     fun onExitGame() {}
     
     // 布局切换回调
@@ -540,18 +539,14 @@ private fun InGameMenu(
                             }
                         )
 
-                        // 触摸事件开关
-                        MenuSwitchItem(
-                            icon = Icons.Default.TouchApp,
-                            label = stringResource(R.string.control_editor_touch_controls),
-                            checked = state.isTouchEventEnabled,
-                            onCheckedChange = { 
-                                state.isTouchEventEnabled = it
-                                callbacks.onTouchEventChanged(it)
-                            }
-                        )
-                        
                         HorizontalDivider()
+
+                        MenuRowItem(
+                            icon = Icons.Default.Share,
+                            label = stringResource(R.string.control_editor_share_logs),
+                            isActive = false,
+                            onClick = { callbacks.onShareLogs() }
+                        )
 
                         // 调试日志
                         MenuSwitchItem(

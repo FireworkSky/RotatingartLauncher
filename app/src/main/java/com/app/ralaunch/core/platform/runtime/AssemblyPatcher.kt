@@ -12,6 +12,8 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
+import java.security.MessageDigest
+import com.google.gson.JsonParser
 
 /**
  * 程序集补丁工具
@@ -20,6 +22,41 @@ object AssemblyPatcher {
     private const val TAG = "AssemblyPatcher"
     const val MONOMOD_DIR = "monomod"
     private const val ASSETS_MONOMOD_ZIP = "MonoMod.zip"
+    private const val BUNDLE_STATE_FILE = "bundle-state.json"
+
+    /** Refresh the shared bundle and existing game copies after an APK update. */
+    @JvmStatic
+    @Synchronized
+    fun ensureMonoModForGame(context: Context, gameDirectory: String): Boolean {
+        return try {
+            val target = getMonoModInstallPath().toFile()
+            val digest = MessageDigest.getInstance("SHA-256")
+            context.assets.open(ASSETS_MONOMOD_ZIP).use { input ->
+                val buffer = ByteArray(8192)
+                while (true) {
+                    val count = input.read(buffer)
+                    if (count < 0) break
+                    digest.update(buffer, 0, count)
+                }
+            }
+            val bundleHash = digest.digest().joinToString("") { "%02x".format(it) }
+            val marker = File(target, BUNDLE_STATE_FILE)
+            val installedHash = runCatching {
+                JsonParser.parseString(marker.readText()).asJsonObject.get("sha256").asString
+            }.getOrNull()
+            val complete = listOf("MonoMod.Utils.dll", "MonoMod.Core.dll", "MonoMod.RuntimeDetour.dll")
+                .all { File(target, it).let { dll -> dll.isFile && dll.length() > 0 } }
+            if (installedHash != bundleHash || !complete) {
+                if (!extractMonoMod(context)) return false
+                marker.writeText("{\"sha256\":\"$bundleHash\"}\n")
+                AppLog.i(TAG, "Updated MonoMod bundle: $bundleHash")
+            }
+            applyMonoModPatches(context, gameDirectory, verboseLog = false) >= 0
+        } catch (exception: Exception) {
+            AppLog.e(TAG, "Failed to refresh MonoMod before game launch", exception)
+            false
+        }
+    }
 
     @JvmStatic
     fun getMonoModInstallPath(): Path {
@@ -52,7 +89,7 @@ object AssemblyPatcher {
                             AppLog.i(TAG, "MonoMod 解压完成")
                         }
                         override fun onError(message: String, ex: Exception?, state: HashMap<String, Any?>?) {
-                            AppLog.e(TAG, "解压错误: $message", ex)
+                            throw IllegalStateException("MonoMod extraction failed: $message", ex)
                         }
                     }
                 ).extract()
@@ -158,6 +195,9 @@ object AssemblyPatcher {
 
     private fun replaceAssembly(targetFile: File, assemblyData: ByteArray): Boolean {
         return try {
+            if (targetFile.length() == assemblyData.size.toLong() && targetFile.readBytes().contentEquals(assemblyData)) {
+                return true
+            }
             FileOutputStream(targetFile).use { it.write(assemblyData) }
             true
         } catch (e: Exception) {

@@ -2049,9 +2049,9 @@
 
     <string name="settings_developer_logging_section">Logs</string>
     <string name="settings_developer_logging_enable_title">Enable Logging</string>
-    <string name="settings_developer_logging_enable_subtitle">Record application runtime logs</string>
+    <string name="settings_developer_logging_enable_subtitle">Record launcher logs and .NET console output</string>
     <string name="settings_developer_verbose_logging_title">Verbose Logging</string>
-    <string name="settings_developer_verbose_logging_subtitle">Output more debug information</string>
+    <string name="settings_developer_verbose_logging_subtitle">Enable debug logs and .NET host/CoreCLR tracing; takes effect on the next game launch</string>
     <string name="settings_developer_view_logs_title">View Logs</string>
     <string name="settings_developer_view_logs_subtitle">View recent runtime logs</string>
     <string name="settings_developer_export_logs_title">Export Logs</string>
@@ -2108,4 +2108,6 @@
     <string name="settings_refresh_advanced_help">All brands use standard Android display mode and Surface frame rate requests. Optional system permission raises the stored peak refresh rate; switching off restores values changed by this feature. Some ROMs also require a high refresh rate for this app in system settings. Xiaomi/Redmi/POCO compatibility can additionally update existing vendor settings after a one-time ADB permission grant. No permission bypass is performed. Battery saving, thermal limits and unsupported displays cannot be overridden.</string>
     <string name="settings_refresh_copy_command">Copy authorization command</string>
     <string name="settings_refresh_open_display_settings">Open display settings</string>
+    <string name="control_editor_share_logs">Share logs</string>
+    <string name="settings_logs_occurrences">%1$d occurrences · Last %2$s</string>
 </resources>

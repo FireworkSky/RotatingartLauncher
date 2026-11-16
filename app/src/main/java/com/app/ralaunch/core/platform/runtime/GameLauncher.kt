@@ -321,6 +321,9 @@ object GameLauncher {
             // Step 7: Set MonoMod path (for patches)
             val monoModPath = AssemblyPatcher.getMonoModInstallPath().toString()
             AppLog.i(TAG, "MonoMod 路径 / path: $monoModPath")
+            if (!AssemblyPatcher.ensureMonoModForGame(appContext, File(assemblyPath).parentFile!!.absolutePath)) {
+                throw IllegalStateException("Cannot update MonoMod dependencies; see AssemblyPatcher logs")
+            }
 
             EnvVarsManager.quickSetEnvVars(
                 // 启动钩子配置

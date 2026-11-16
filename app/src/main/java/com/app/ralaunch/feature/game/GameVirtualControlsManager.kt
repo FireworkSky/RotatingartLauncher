@@ -36,6 +36,9 @@ import kotlinx.coroutines.flow.asSharedFlow
  * 使用 Compose UI 实现悬浮菜单
  */
 class GameVirtualControlsManager {
+    private val touchDiagnostics: com.app.ralaunch.core.logging.service.TouchInputDiagnostics by lazy {
+        KoinJavaComponent.get(com.app.ralaunch.core.logging.service.TouchInputDiagnostics::class.java)
+    }
 
     var controlLayout: ControlLayout? = null
         private set
@@ -153,6 +156,7 @@ class GameVirtualControlsManager {
                         settingsManager = settings,
                         toggleFloatingBallEvent = toggleFloatingBallEvent,
                         onExitGame = { onExitGameCallback?.invoke() },
+                        onFpsDisplayChanged = { fpsDisplayView?.refreshVisibility() },
                         onEditModeChanged = { inEditMode ->
                             isInEditMode = inEditMode
                             control.isModifiable = inEditMode
@@ -196,6 +200,15 @@ class GameVirtualControlsManager {
             }
 
             override fun dispatchTouchEvent(ev: android.view.MotionEvent?): Boolean {
+                if (ev == null) return false
+                val handled = dispatchOverlayTouchEvent(ev)
+                touchDiagnostics.motion("overlay", ev, this) {
+                    "handled=$handled target=$currentTouchTarget edit=$isInEditMode activeRect=$composeActiveRect"
+                }
+                return handled
+            }
+
+            private fun dispatchOverlayTouchEvent(ev: android.view.MotionEvent?): Boolean {
                 if (ev == null) return false
                 
                 when (ev.actionMasked) {

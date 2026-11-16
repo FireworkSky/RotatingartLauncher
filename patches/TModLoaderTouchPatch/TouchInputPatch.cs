@@ -34,6 +34,9 @@ internal static class TouchInputPatch
     private static long _nextDiagnostic, _nextError;
     private static int _lastDeviceCount = -1;
     private static bool _reportedFingers;
+    private static bool _lastDiagnosticPressed;
+    private static bool _lastFinalPressed;
+    private static long _pressedSamples, _releasedSamples, _finalPressedSamples;
 
     public static void Apply(Harmony harmony, Assembly tModLoaderAssembly)
     {
@@ -80,6 +83,18 @@ internal static class TouchInputPatch
                 mouseInput,
                 prefix: new HarmonyMethod(typeof(TouchInputPatch), nameof(PlayerInputMouseInputPrefix))
             );
+
+            // Optional observation only: failure here must not uninstall the working input adapter.
+            try
+            {
+                harmony.Patch(AccessTools.Method(typeof(PlayerInput), "UpdateInput"),
+                    postfix: new HarmonyMethod(typeof(TouchInputPatch), nameof(FinalInputDiagnosticPostfix)));
+                Patcher.Log("Final PlayerInput.UpdateInput diagnostic hook installed.");
+            }
+            catch (Exception diagnosticError)
+            {
+                Patcher.Log($"Final input diagnostic unavailable: {diagnosticError}");
+            }
 
             var mouseGetState = typeof(Mouse).GetMethod(
                 nameof(Mouse.GetState),
@@ -160,6 +175,7 @@ internal static class TouchInputPatch
             }
 
             Patcher.Log($"Adapter applied. FNA={typeof(TouchPanel).Assembly.FullName}; touch capacity={_touches.Length}. Waiting for runtime polling and input diagnostics.");
+            Patcher.StartHeartbeat();
         }
         catch (Exception ex)
         {
@@ -242,6 +258,17 @@ internal static class TouchInputPatch
             if (!stillDown)
                 _touches[written++] = new TouchLocation(previous.Id, TouchLocationState.Released, previous.Position, previous.State, previous.Position);
         }
+        bool edge = false;
+        for (int i = 0; i < written; i++)
+            edge |= _touches[i].State == TouchLocationState.Pressed || _touches[i].State == TouchLocationState.Released;
+        Patcher.Trace("fna-touch", () =>
+        {
+            string contacts = "";
+            for (int i = 0; i < written; i++)
+                contacts += $" {_touches[i].Id}:{_touches[i].State}@{_touches[i].Position}";
+            return $"polls={_pollCount}, device={device}, active={activeCount}, written={written}, " +
+                $"display={TouchPanel.DisplayWidth}x{TouchPanel.DisplayHeight}, contacts=[{contacts.Trim()}]";
+        }, edge);
     }
 
     private static long GetActiveTouchDevice()
@@ -272,6 +299,15 @@ internal static class TouchInputPatch
             _touchInputActive = TryReadTouch(out var position, out var pressed);
             SDL2.SDL.SDL_ShowCursor(0);
             ApplyTouchToPlayerInput(position, pressed);
+            if (pressed) _pressedSamples++; else _releasedSamples++;
+            bool edge = pressed != _lastDiagnosticPressed;
+            _lastDiagnosticPressed = pressed;
+            Patcher.Trace("adapter", () =>
+                $"calls={_mouseInputCalls}, pressSamples={_pressedSamples}, releaseSamples={_releasedSamples}, " +
+                $"selected={_primaryFingerId}, active={_touchInputActive}, pressed={pressed}, touch={position}, " +
+                $"rawScale={PlayerInput.RawMouseScale}, mouse={PlayerInput.MouseInfo.X},{PlayerInput.MouseInfo.Y}, " +
+                $"keys=[{string.Join(",", PlayerInput.MouseKeys)}], gameActive={Main.instance?.IsActive}, " +
+                $"menu={Main.gameMenu}/{Main.menuMode}, screen={Main.screenWidth}x{Main.screenHeight}", edge);
             return false;
         }
         catch (Exception ex)
@@ -283,6 +319,19 @@ internal static class TouchInputPatch
             ReportError("Touch adapter failed; mouse fallback is disabled", ex);
             return false;
         }
+    }
+
+    public static void FinalInputDiagnosticPostfix()
+    {
+        bool pressed = Main.mouseLeft;
+        if (pressed) _finalPressedSamples++;
+        bool edge = pressed != _lastFinalPressed;
+        _lastFinalPressed = pressed;
+        Patcher.Trace("terraria-input", () =>
+            $"left={Main.mouseLeft}, leftRelease={Main.mouseLeftRelease}, " +
+            $"triggerLeft={PlayerInput.Triggers.Current.MouseLeft}, pressedSamples={_finalPressedSamples}, " +
+            $"mouse={Main.mouseX},{Main.mouseY}, inputMode={PlayerInput.CurrentInputMode}, " +
+            $"gameActive={Main.instance?.IsActive}, menu={Main.gameMenu}/{Main.menuMode}", edge);
     }
 
     public static void MouseGetStatePostfix(ref MouseState __result)
@@ -455,6 +504,16 @@ internal static class TouchInputPatch
             deviceList += $" {id}:{SDL2.SDL.SDL_GetNumTouchFingers(id)}";
         }
         Patcher.Log($"Runtime: mode=mod, mouseFallback=disabled, polls={_pollCount}, mouseInputCalls={_mouseInputCalls}, devices={devices} [{deviceList.Trim()}], activeDevice={device}, fingers={fingers}, display={TouchPanel.DisplayWidth}x{TouchPanel.DisplayHeight}, adapterActive={_touchInputActive}.");
+    }
+
+    internal static void ReportHeartbeat()
+    {
+        // Read counters only. SDL polling and game state must stay on the game thread.
+        Patcher.Log($"Heartbeat: tick={Environment.TickCount64}, polls={System.Threading.Volatile.Read(ref _pollCount)}, " +
+            $"mouseInputCalls={System.Threading.Volatile.Read(ref _mouseInputCalls)}, " +
+            $"pressSamples={System.Threading.Volatile.Read(ref _pressedSamples)}, " +
+            $"releaseSamples={System.Threading.Volatile.Read(ref _releasedSamples)}, " +
+            $"finalPressedSamples={System.Threading.Volatile.Read(ref _finalPressedSamples)}.");
     }
 
     private static void ReportError(string message, Exception error)

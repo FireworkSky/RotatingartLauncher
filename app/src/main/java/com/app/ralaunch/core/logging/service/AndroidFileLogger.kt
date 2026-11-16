@@ -85,10 +85,10 @@ class AndroidFileLogger(
 
     fun currentLogcatFile(): File? = logcatFileLogger?.currentLogFile()
 
-    fun writeRawLine(line: String) {
+    fun writeRawLine(line: String, level: LogLevel = LogLevel.INFO) {
         synchronized(lock) { writer }?.enqueue(
             line = line,
-            priority = LogLevel.FileWritePriority.LOW
+            priority = level.fileWritePriority
         )
     }
 
