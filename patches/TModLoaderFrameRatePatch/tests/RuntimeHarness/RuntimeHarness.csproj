@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <BuildMod>false</BuildMod>
+    <OutputTmlReferences>true</OutputTmlReferences>
+    <TmlRoot Condition="'$(TmlRoot)' == ''">D:/Steam/steamapps/common/tModLoader</TmlRoot>
+  </PropertyGroup>
+  <Import Project="$(TmlRoot)/tMLMod.targets" />
+  <ItemGroup>
+    <Compile Include="../../Patcher.cs" />
+    <Compile Include="../../FramePacer.cs" />
+    <Compile Include="Program.cs" />
+    <Content Include="$(TmlRoot)/Libraries/Native/Windows/*" Link="Native/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

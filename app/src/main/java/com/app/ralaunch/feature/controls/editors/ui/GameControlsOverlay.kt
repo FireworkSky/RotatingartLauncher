@@ -84,6 +84,7 @@ fun GameControlsOverlay(
     
     // 初始化菜单状态
     LaunchedEffect(Unit) {
+        menuState.isControlsVisible = controlLayoutView.isControlsVisible
         menuState.isFpsDisplayEnabled = settingsManager.isFPSDisplayEnabled
         menuState.isTouchEventEnabled = settingsManager.isTouchEventEnabled
 

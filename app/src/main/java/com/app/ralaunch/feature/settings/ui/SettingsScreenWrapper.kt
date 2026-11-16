@@ -1,10 +1,14 @@
 package com.app.ralaunch.feature.settings.ui
 
 import android.app.Activity
+import android.content.Intent
+import android.net.Uri
+import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -72,6 +76,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
@@ -86,10 +91,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModelStoreOwner
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.app.ralaunch.R
 import com.app.ralaunch.core.common.SettingsAccess
 import com.app.ralaunch.core.common.util.AssetIntegrityChecker
@@ -100,6 +110,7 @@ import com.app.ralaunch.core.navigation.navigateToLogViewer
 import com.app.ralaunch.core.navigation.navigateToPatchManagement
 import com.app.ralaunch.core.platform.runtime.RuntimeSpec
 import com.app.ralaunch.core.platform.runtime.SdlVersion
+import com.app.ralaunch.core.model.TouchInputMode
 import com.app.ralaunch.core.platform.runtime.AndroidRendererRegistry
 import com.app.ralaunch.core.ui.dialog.DotNetRuntimeOption
 import com.app.ralaunch.core.ui.dialog.DotNetRuntimeSelectDialog
@@ -413,6 +424,25 @@ private fun ControlsSettingsPane(
     with(uiState) {
         SettingsPaneColumn {
             SettingsSection(title = androidStringResource(R.string.settings_controls_touch_section)) {
+                ChoiceSettingItem(
+                    title = androidStringResource(R.string.settings_touch_input_mode_title),
+                    subtitle = androidStringResource(
+                        if (touchInputMode == TouchInputMode.MOD) R.string.settings_touch_input_mode_mod_description
+                        else R.string.settings_touch_input_mode_sdl_description
+                    ),
+                    icon = Icons.Default.TouchApp,
+                    selectedValue = touchInputMode.value,
+                    options = listOf(
+                        TouchInputMode.MOD.value to androidStringResource(R.string.settings_touch_input_mode_mod),
+                        TouchInputMode.SDL.value to androidStringResource(R.string.settings_touch_input_mode_sdl)
+                    ),
+                    onValueSelected = {
+                        viewModel.onEvent(SettingsEvent.SetTouchInputMode(TouchInputMode.fromValue(it)))
+                    }
+                )
+
+                SettingsDivider()
+
                 SwitchSettingItem(
                     title = androidStringResource(R.string.settings_controls_multitouch_title),
                     subtitle = androidStringResource(R.string.settings_controls_multitouch_subtitle),
@@ -603,6 +633,10 @@ private fun GameSettingsPane(
             }
 
             SettingsSection(title = androidStringResource(R.string.settings_game_quality_section)) {
+                RefreshRateSettings(viewModel, uiState)
+
+                SettingsDivider()
+
                 ClickableSettingItem(
                     title = androidStringResource(R.string.settings_game_quality_preset_title),
                     subtitle = androidStringResource(R.string.settings_game_quality_preset_subtitle),
@@ -679,6 +713,100 @@ private fun GameSettingsPane(
                 onDismiss = { showRendererDialog = false }
             )
         }
+    }
+}
+
+@Composable
+private fun RefreshRateSettings(viewModel: SettingsViewModel, uiState: SettingsUiState) {
+    val context = LocalContext.current
+    val owner = LocalLifecycleOwner.current
+    val clipboard = LocalClipboardManager.current
+    var showAdvancedHelp by remember { mutableStateOf(false) }
+    val permissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+        viewModel.onEvent(SettingsEvent.RefreshRefreshRateAccess)
+    }
+    DisposableEffect(owner, viewModel) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                viewModel.onEvent(SettingsEvent.RefreshRefreshRateAccess)
+            }
+        }
+        owner.lifecycle.addObserver(observer)
+        viewModel.onEvent(SettingsEvent.RefreshRefreshRateAccess)
+        onDispose { owner.lifecycle.removeObserver(observer) }
+    }
+
+    val status = uiState.refreshRateStatus
+    SwitchSettingItem(
+        title = androidStringResource(R.string.settings_unlock_refresh_rate_title),
+        subtitle = androidStringResource(R.string.settings_unlock_refresh_rate_desc),
+        icon = Icons.Default.Speed,
+        checked = uiState.unlockRefreshRateLimit,
+        onCheckedChange = { viewModel.onEvent(SettingsEvent.SetUnlockRefreshRateLimit(it)) }
+    )
+    if (uiState.unlockRefreshRateLimit || status.restorePending) {
+        val statusText = when {
+            status.restorePending -> R.string.settings_refresh_restore_pending
+            status.failed -> R.string.settings_refresh_write_failed
+            !status.canWriteSettings -> R.string.settings_refresh_permission_missing
+            else -> R.string.settings_refresh_permission_granted
+        }
+        ClickableSettingItem(
+            title = androidStringResource(R.string.settings_refresh_permission_title),
+            subtitle = androidStringResource(statusText),
+            icon = Icons.Default.Security,
+            onClick = {
+                try {
+                    permissionLauncher.launch(Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS,
+                        Uri.parse("package:${context.packageName}")))
+                } catch (_: Exception) {
+                    Toast.makeText(context, R.string.settings_refresh_permission_unavailable, Toast.LENGTH_LONG).show()
+                }
+            }
+        )
+        ClickableSettingItem(
+            title = androidStringResource(R.string.settings_refresh_system_title),
+            subtitle = androidStringResource(
+                if (status.needsVendorPermission && !status.canWriteSecureSettings)
+                    R.string.settings_refresh_vendor_permission_missing
+                else R.string.settings_refresh_system_desc
+            ),
+            icon = Icons.Default.Tune,
+            onClick = { showAdvancedHelp = true }
+        )
+    }
+    if (showAdvancedHelp) {
+        val command = "adb shell pm grant ${context.packageName} android.permission.WRITE_SECURE_SETTINGS"
+        AlertDialog(
+            onDismissRequest = { showAdvancedHelp = false },
+            title = { Text(androidStringResource(R.string.settings_refresh_system_title)) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text(androidStringResource(R.string.settings_refresh_advanced_help))
+                    if (status.needsVendorPermission && !status.canWriteSecureSettings) {
+                        SelectionContainer { Text(command, fontFamily = FontFamily.Monospace) }
+                        TextButton(onClick = { clipboard.setText(AnnotatedString(command)) }) {
+                            Text(androidStringResource(R.string.settings_refresh_copy_command))
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    try {
+                        permissionLauncher.launch(Intent(Settings.ACTION_DISPLAY_SETTINGS))
+                    } catch (_: Exception) {
+                        Toast.makeText(context, R.string.settings_refresh_permission_unavailable, Toast.LENGTH_LONG).show()
+                    }
+                    showAdvancedHelp = false
+                }) { Text(androidStringResource(R.string.settings_refresh_open_display_settings)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showAdvancedHelp = false }) {
+                    Text(androidStringResource(R.string.close))
+                }
+            }
+        )
     }
 }
 

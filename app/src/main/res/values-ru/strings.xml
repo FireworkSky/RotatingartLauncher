@@ -1463,11 +1463,6 @@
     <string name="multiplayer_nodes_count">%d узлов</string>
     <string name="multiplayer_unknown_host">Неизвестный хост</string>
     <string name="documents_provider_root_summary">РаЛаунч</string>
-    <string name="process_launcher_channel_name">Средство запуска процессов</string>
-    <string name="process_launcher_channel_description">Уведомления о статусе фоновых процессов</string>
-    <string name="process_launcher_notification_title">Фоновый процесс</string>
-    <string name="process_launcher_status_starting">%1$s начинается...</string>
-    <string name="process_launcher_status_running">%1$s работает</string>
     <string name="easytier_vpn_channel_name">Мультиплеер EasyTier</string>
     <string name="easytier_vpn_channel_description">Статус подключения EasyTier VPN</string>
     <string name="easytier_vpn_notification_title">Мультиплеер EasyTier</string>

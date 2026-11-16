@@ -3,12 +3,55 @@
 Run from the repository root:
 
 ```powershell
+python scripts/touch/check_touch_adapter.py
 python scripts/touch/tests/check_multitouch.py
 python scripts/touch/tests/check_overlay_routing.py
 python scripts/touch/tests/check_gameplay_controls.py
 python scripts/touch/tests/check_inventory_controls.py
 dotnet build patches/TModLoaderTouchPatch/TModLoaderTouchPatch.csproj -c Release --no-restore
 ```
+
+`check_touch_adapter.py` is a standalone check for the bundled touch adapter.
+It extracts the current patch's input methods and runs them with the referenced
+FNA touch types and deterministic SDL device snapshots. It covers late device
+detection, cursor visibility before/after touch, blocking mouse fallback,
+synthetic-device exclusion, four-finger reordering over 300 frames, and recovery
+from native polling failures. The initial reproduction failed the device gate
+and idle cursor checks. These checks do not replace tests on the affected phone.
+
+Touch patch 1.0.13 keeps FNA's normal `TouchPanel.Update` path enabled through
+`FrameworkDispatcher.Update`, preserving mod hooks when touch devices appear
+after game initialization. Mod mode always owns the cursor input path, hides
+the cursor, and supplies a released touch mouse state while idle or recovering
+from polling failure. Native mouse movement, buttons and wheel cannot trigger
+an automatic fallback.
+
+Settings > Controls > Touch input mode offers Mod touch and SDL touch. The
+choice is saved in `settings.json` as `touchInputMode: "mod"` or `"sdl"` and
+takes effect on the next game launch. Old settings and unknown values use mod
+mode without resetting other preferences. Mod mode disables SDL's touch/mouse
+synthesis in both directions. SDL mode enables touch-to-mouse synthesis and
+omits the launcher touch adapter from startup hooks, preserving the installed
+patches and their enabled states so switching back can restore the adapter.
+The existing Touch Events switch still controls SDL3 event forwarding.
+
+Runtime diagnostics include the FNA assembly, polling and Terraria input-hook
+counts, SDL device IDs/finger counts, and touch display dimensions. The first
+sample, first detected finger, device-list changes, and a 30-second heartbeat
+are logged; repeated exceptions are limited to once per five seconds. Logs are
+also written beside the installed patch DLL in `touch-input.log`, with one
+previous log retained and a 1 MiB rotation threshold. Launcher log export
+includes both files even if console/logcat capture is unavailable. Android
+`SDLTouch` diagnostics show incoming event source/tool/device and surface size.
+SDL3 also reports when the existing Touch Events setting blocks forwarding.
+
+For a remote-device reproduction, install the updated launcher, reproduce the
+failure, wait 30 seconds, and export logs from settings. Check for `Adapter
+applied`, `Terraria input hook running`, `Runtime:`, and `SDLTouch` to locate the
+boundary that stopped receiving input. Missing initialization remains a patch
+loading problem; zero native fingers despite Android events needs routing or
+SDL investigation. A visible virtual joystick alone does not prove native
+touch events are reaching FNA.
 
 The test uses the actual input methods extracted from the launcher patch and
 MobileJoystick source, deterministic SDL snapshots, and the real referenced FNA
@@ -34,6 +77,7 @@ Harmony touch patch, so no replacement FNA assembly is required.
 References:
 
 - https://wiki.libsdl.org/SDL2/SDL_GetTouchFinger
+- https://wiki.libsdl.org/SDL2/SDL_HINT_TOUCH_MOUSE_EVENTS
 - https://github.com/libsdl-org/SDL/blob/release-2.32.10/src/events/SDL_touch.c
 - https://github.com/FNA-XNA/FNA/blob/master/src/FNAPlatform/SDL2_FNAPlatform.cs
 

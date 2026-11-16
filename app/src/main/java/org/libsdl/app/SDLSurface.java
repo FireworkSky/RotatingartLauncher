@@ -39,6 +39,9 @@ public class SDLSurface extends SurfaceView implements SurfaceHolder.Callback,
 
     // Keep track of the surface size to normalize touch events
     protected float mWidth, mHeight;
+    private long mNextTouchDiagnostic;
+    private long mTouchEventCount;
+    private boolean mReportedTouchDisabled;
 
     // Is SurfaceView ready for rendering
     public boolean mIsSurfaceReady;
@@ -258,6 +261,15 @@ public class SDLSurface extends SurfaceView implements SurfaceHolder.Callback,
         int touchDevId = event.getDeviceId();
         final int pointerCount = event.getPointerCount();
         int action = event.getActionMasked();
+        mTouchEventCount++;
+        long now = android.os.SystemClock.uptimeMillis();
+        if (now >= mNextTouchDiagnostic) {
+            mNextTouchDiagnostic = now + 30000;
+            com.app.ralaunch.core.logging.AppLog.i("SDLTouch",
+                "SDL3 input: events=" + mTouchEventCount + ", device=" + touchDevId
+                + ", source=" + event.getSource() + ", tool=" + event.getToolType(event.getActionIndex())
+                + ", action=" + action + ", pointers=" + pointerCount + ", surface=" + mWidth + "x" + mHeight);
+        }
         int pointerId;
         int i = 0;
         float x,y,p;
@@ -299,8 +311,14 @@ public class SDLSurface extends SurfaceView implements SurfaceHolder.Callback,
                 try {
                     var settingsManager = com.app.ralaunch.core.common.SettingsAccess.getInstance();
                     if (!settingsManager.isTouchEventEnabled()) {
+                        if (!mReportedTouchDisabled) {
+                            mReportedTouchDisabled = true;
+                            com.app.ralaunch.core.logging.AppLog.w("SDLTouch",
+                                "Native touch forwarding blocked: Touch Events is disabled in control settings.");
+                        }
                         return true;
                     }
+                    mReportedTouchDisabled = false;
                 } catch (Exception ignored) {
                 }
 

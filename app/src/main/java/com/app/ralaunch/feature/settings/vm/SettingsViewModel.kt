@@ -11,6 +11,7 @@ import com.app.ralaunch.core.model.BackgroundType
 import com.app.ralaunch.core.model.FpsLimit
 import com.app.ralaunch.core.model.QualityLevel
 import com.app.ralaunch.core.model.ThemeMode
+import com.app.ralaunch.core.model.TouchInputMode
 import com.app.ralaunch.core.di.contract.ISettingsRepositoryServiceV2
 import com.app.ralaunch.core.common.util.getAppString
 import com.app.ralaunch.R
@@ -24,6 +25,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import com.app.ralaunch.core.platform.android.service.RefreshRateService
 
 /**
  * 设置页面 UI 状态 - 跨平台
@@ -41,6 +45,7 @@ data class SettingsUiState(
 
     // 控制设置
     val touchMultitouchEnabled: Boolean = true,
+    val touchInputMode: TouchInputMode = TouchInputMode.MOD,
     val mouseRightStickEnabled: Boolean = false,
     val vibrationEnabled: Boolean = true,
     val vibrationStrength: Float = 0.5f,
@@ -70,6 +75,8 @@ data class SettingsUiState(
     val shaderLowPrecision: Boolean = false,
     val targetFps: FpsLimit = FpsLimit.UNLIMITED,
     val halfResolutionRendering: Boolean = false,
+    val unlockRefreshRateLimit: Boolean = false,
+    val refreshRateStatus: RefreshRateService.Status = RefreshRateService.Status(),
 
     // 开发者设置
     val loggingEnabled: Boolean = false,
@@ -104,6 +111,7 @@ sealed class SettingsEvent {
 
     // 控制
     data class SetTouchMultitouch(val enabled: Boolean) : SettingsEvent()
+    data class SetTouchInputMode(val mode: TouchInputMode) : SettingsEvent()
     data class SetVibrationEnabled(val enabled: Boolean) : SettingsEvent()
     data class SetVibrationStrength(val strength: Float) : SettingsEvent()
     data class SetVirtualControllerAsFirst(val enabled: Boolean) : SettingsEvent()
@@ -128,6 +136,8 @@ sealed class SettingsEvent {
     data class SetShaderLowPrecision(val enabled: Boolean) : SettingsEvent()
     data class SetTargetFps(val fps: FpsLimit) : SettingsEvent()
     data class SetHalfResolutionRendering(val enabled: Boolean) : SettingsEvent()
+    data class SetUnlockRefreshRateLimit(val enabled: Boolean) : SettingsEvent()
+    data object RefreshRefreshRateAccess : SettingsEvent()
 
     // 开发者
     data class SetLoggingEnabled(val enabled: Boolean) : SettingsEvent()
@@ -154,10 +164,12 @@ sealed class SettingsEffect {
 class SettingsViewModel(
     private val settingsRepository: ISettingsRepositoryServiceV2,
     private val runtimeManager: IRuntimeManagerServiceV2,
+    private val refreshRateService: RefreshRateService,
     private val fileLogger: AndroidFileLogger? = null,
     private val appInfo: AppInfo = AppInfo()
 ) : ViewModel() {
 
+    private val refreshRateMutex = Mutex()
     private val _uiState = MutableStateFlow(SettingsUiState())
     val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
 
@@ -186,6 +198,7 @@ class SettingsViewModel(
 
             // 控制
             is SettingsEvent.SetTouchMultitouch -> setTouchMultitouch(event.enabled)
+            is SettingsEvent.SetTouchInputMode -> setTouchInputMode(event.mode)
             is SettingsEvent.SetVibrationEnabled -> setVibrationEnabled(event.enabled)
             is SettingsEvent.SetVibrationStrength -> setVibrationStrength(event.strength)
             is SettingsEvent.SetVirtualControllerAsFirst -> setVirtualControllerAsFirst(event.enabled)
@@ -210,6 +223,8 @@ class SettingsViewModel(
             is SettingsEvent.SetShaderLowPrecision -> setShaderLowPrecision(event.enabled)
             is SettingsEvent.SetTargetFps -> setTargetFps(event.fps)
             is SettingsEvent.SetHalfResolutionRendering -> setHalfResolutionRendering(event.enabled)
+            is SettingsEvent.SetUnlockRefreshRateLimit -> updateRefreshRate(event.enabled)
+            is SettingsEvent.RefreshRefreshRateAccess -> updateRefreshRate()
 
             // 开发者
             is SettingsEvent.SetLoggingEnabled -> setLoggingEnabled(event.enabled)
@@ -248,6 +263,7 @@ class SettingsViewModel(
                     language = settings.language,
                     // 控制
                     touchMultitouchEnabled = settings.touchMultitouchEnabled,
+                    touchInputMode = TouchInputMode.fromValue(settings.touchInputMode),
                     vibrationEnabled = settings.vibrationEnabled,
                     vibrationStrength = settings.virtualControllerVibrationIntensity,
                     virtualControllerAsFirst = settings.virtualControllerAsFirst,
@@ -278,6 +294,7 @@ class SettingsViewModel(
                     shaderLowPrecision = settings.shaderLowPrecision,
                     targetFps = FpsLimit.fromValue(settings.targetFps),
                     halfResolutionRendering = settings.halfResolutionRendering,
+                    unlockRefreshRateLimit = settings.unlockRefreshRateLimit,
                     // 开发者
                     loggingEnabled = settings.logSystemEnabled,
                     verboseLogging = settings.verboseLogging,
@@ -292,6 +309,20 @@ class SettingsViewModel(
                     appVersion = appInfo.versionName,
                     buildInfo = appInfo.versionCode.toString()
                 )
+            }
+        }
+    }
+
+    private fun updateRefreshRate(enabled: Boolean? = null) {
+        viewModelScope.launch {
+            refreshRateMutex.withLock {
+                if (enabled != null) {
+                    settingsRepository.update { unlockRefreshRateLimit = enabled }
+                }
+                val selected = settingsRepository.getSettingsSnapshot().unlockRefreshRateLimit
+                _uiState.update { it.copy(unlockRefreshRateLimit = selected) }
+                val status = refreshRateService.reconcile()
+                _uiState.update { it.copy(unlockRefreshRateLimit = selected, refreshRateStatus = status) }
             }
         }
     }
@@ -364,6 +395,13 @@ class SettingsViewModel(
     }
 
     // ==================== 控制设置 ====================
+
+    private fun setTouchInputMode(mode: TouchInputMode) {
+        viewModelScope.launch {
+            settingsRepository.update { touchInputMode = mode.value }
+            _uiState.update { it.copy(touchInputMode = mode) }
+        }
+    }
 
     private fun setTouchMultitouch(enabled: Boolean) {
         viewModelScope.launch {

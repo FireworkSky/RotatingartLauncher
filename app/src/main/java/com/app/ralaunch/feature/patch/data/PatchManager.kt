@@ -2,6 +2,7 @@ package com.app.ralaunch.feature.patch.data
 
 import android.content.Context
 import com.app.ralaunch.core.logging.AppLog
+import com.app.ralaunch.core.model.TouchInputMode
 import com.app.ralaunch.core.extractor.BasicSevenZipExtractor
 import com.app.ralaunch.core.extractor.ExtractorCollection
 import com.app.ralaunch.core.common.util.FileUtils
@@ -26,7 +27,7 @@ class PatchManager @JvmOverloads constructor(
     installPatchesImmediately: Boolean = false
 ) {
     private val _patchRevision = MutableStateFlow(0L)
-    /** Emits whenever the installed patch set changes. */
+    /** Emits when installed patches or their per-game enabled state change. */
     val patchRevision: StateFlow<Long> = _patchRevision.asStateFlow()
 
     private val patchStoragePath: Path
@@ -45,6 +46,7 @@ class PatchManager @JvmOverloads constructor(
 
         // 清理旧的共享 DLL 文件 (MonoMod/Harmony 现在在游戏目录中按版本管理)
         cleanLegacySharedDlls()
+        cleanRetiredPatches()
 
         // 如果指定立即安装，则在当前线程安装补丁（用于向后兼容）
         if (installPatchesImmediately) {
@@ -113,6 +115,7 @@ class PatchManager @JvmOverloads constructor(
                         .map { Patch.fromPatchPath(it) }
                         .filter { it != null }
                         .map { it!! }
+                        .filter { it.manifest.id != RETIRED_HOST_AND_PLAY_PATCH_ID }
                         .collect(Collectors.toCollection(::ArrayList))
                 }
             } catch (e: IOException) {
@@ -146,6 +149,11 @@ class PatchManager @JvmOverloads constructor(
         val manifest = PatchManifest.fromZip(patchZipPath)
         if (manifest == null) {
             AppLog.w(TAG, "补丁安装失败: 无法读取补丁清单, path: $patchZipPath")
+            return false
+        }
+
+        if (manifest.id == RETIRED_HOST_AND_PLAY_PATCH_ID) {
+            AppLog.w(TAG, "Host & Play 补丁已移除，请使用 MobileServer 模组开房")
             return false
         }
 
@@ -188,8 +196,10 @@ class PatchManager @JvmOverloads constructor(
      * Set whether a patch is enabled for a specific game.
      */
     fun setPatchEnabled(gameAsmPath: Path, patchId: String, enabled: Boolean) {
+        if (config.isPatchEnabled(gameAsmPath, patchId) == enabled) return
         config.setPatchEnabled(gameAsmPath, patchId, enabled)
         saveConfig()
+        _patchRevision.update { it + 1L }
     }
 
     /**
@@ -224,6 +234,23 @@ class PatchManager @JvmOverloads constructor(
 
     //region Legacy Cleanup
 
+    internal fun cleanRetiredPatches() {
+        val patchPath = patchStoragePath.resolve(RETIRED_HOST_AND_PLAY_PATCH_ID)
+        if (Files.exists(patchPath) &&
+            !FileUtils.deleteDirectoryRecursivelyWithinRoot(patchPath, patchStoragePath)
+        ) {
+            AppLog.w(TAG, "旧 Host & Play 补丁清理失败，已禁止加载: $patchPath")
+        }
+
+        var configChanged = false
+        for (patchIds in config.enabledPatches.values + config.disabledPatches.values) {
+            if (patchIds.removeAll { it == RETIRED_HOST_AND_PLAY_PATCH_ID }) {
+                configChanged = true
+            }
+        }
+        if (configChanged) saveConfig()
+    }
+
     private fun cleanLegacySharedDlls() {
         for (dllName in LEGACY_SHARED_DLLS) {
             val dllPath = patchStoragePath.resolve(dllName)
@@ -244,6 +271,7 @@ class PatchManager @JvmOverloads constructor(
         private const val TAG = "PatchManager"
         private const val IS_DEFAULT_PATCH_STORAGE_DIR_EXTERNAL = true
         private const val PATCH_STORAGE_DIR = "patches"
+        private const val RETIRED_HOST_AND_PLAY_PATCH_ID = "com.app.ralaunch.tmodloader.hostandplaypatch"
 
         private val LEGACY_SHARED_DLLS = arrayOf(
             "0Harmony.dll",
@@ -336,7 +364,11 @@ class PatchManager @JvmOverloads constructor(
          * Construct the environment variable string for startup hooks from a list of patches.
          */
         @JvmStatic
-        fun constructStartupHooksEnvVar(patches: List<Patch>): String {
+        @JvmOverloads
+        fun constructStartupHooksEnvVar(
+            patches: List<Patch>,
+            touchInputMode: TouchInputMode = TouchInputMode.MOD
+        ): String {
             AppLog.d(TAG, "constructStartupHooksEnvVar: Input patches count = ${patches.size}")
             patches.forEachIndexed { index, p ->
                 AppLog.d(TAG, "  [$index] id=${p.manifest.id}, path=${p.getEntryAssemblyAbsolutePath()}")
@@ -344,6 +376,11 @@ class PatchManager @JvmOverloads constructor(
 
             val seenPatchIds = linkedSetOf<String>()
             val result = patches
+                .filterNot { it.manifest.id == RETIRED_HOST_AND_PLAY_PATCH_ID }
+                .filterNot {
+                    touchInputMode == TouchInputMode.SDL &&
+                        it.manifest.id == "com.app.ralaunch.tmodloader.touch"
+                }
                 .filter { p ->
                     val isNew = seenPatchIds.add(p.manifest.id)
                     if (!isNew) {

@@ -1464,11 +1464,6 @@
     <string name="multiplayer_nodes_count">%d nodos</string>
     <string name="multiplayer_unknown_host">Host desconocido</string>
     <string name="documents_provider_root_summary">RaLaunch</string>
-    <string name="process_launcher_channel_name">Lanzador de procesos</string>
-    <string name="process_launcher_channel_description">Notificaciones de estado del proceso en segundo plano</string>
-    <string name="process_launcher_notification_title">Proceso en segundo plano</string>
-    <string name="process_launcher_status_starting">%1$s está iniciando...</string>
-    <string name="process_launcher_status_running">%1$s está en ejecución</string>
     <string name="easytier_vpn_channel_name">EasyTier Multijugador</string>
     <string name="easytier_vpn_channel_description">Estado de conexión VPN de EasyTier</string>
     <string name="easytier_vpn_notification_title">EasyTier Multijugador</string>

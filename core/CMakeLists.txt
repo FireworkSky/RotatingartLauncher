@@ -63,7 +63,6 @@ add_library(${CMAKE_PROJECT_NAME} SHARED
         src/sdl/sdl_entry.cpp
         src/sdl/sdl_input_bridge_extend.cpp
         src/native_stdio.cpp
-        src/game_launcher.cpp
         src/shared_envvars.cpp
         src/thread_affinity_manager.cpp
 )

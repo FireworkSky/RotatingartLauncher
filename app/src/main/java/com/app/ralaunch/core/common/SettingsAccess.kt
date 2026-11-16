@@ -4,6 +4,7 @@ import com.app.ralaunch.core.model.BackgroundType
 import com.app.ralaunch.core.model.AppSettings
 import com.app.ralaunch.core.model.KeyboardType
 import com.app.ralaunch.core.model.ThemeMode
+import com.app.ralaunch.core.model.TouchInputMode
 import com.app.ralaunch.core.di.contract.ISettingsRepositoryServiceV2
 import com.app.ralaunch.core.platform.runtime.RendererRegistry
 import com.app.ralaunch.core.platform.runtime.SdlVersion
@@ -29,6 +30,9 @@ object SettingsAccess {
             settingsRepository.update(block)
         }
     }
+
+    val unlockRefreshRateLimit: Boolean
+        get() = settings.unlockRefreshRateLimit
 
     // ==================== 便捷方法 ====================
 
@@ -227,6 +231,9 @@ object SettingsAccess {
     var isTouchEventEnabled: Boolean
         get() = settings.touchEventEnabled
         set(value) = update { touchEventEnabled = value }
+
+    val touchInputMode: TouchInputMode
+        get() = TouchInputMode.fromValue(settings.touchInputMode)
 
     var isHalfResolutionRendering: Boolean
         get() = settings.halfResolutionRendering

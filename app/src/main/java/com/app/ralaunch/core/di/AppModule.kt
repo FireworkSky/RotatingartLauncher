@@ -21,6 +21,7 @@ import com.app.ralaunch.core.logging.LogLevel
 import com.app.ralaunch.core.logging.contract.Logger
 import com.app.ralaunch.core.logging.service.AndroidFileLogger
 import com.app.ralaunch.core.logging.service.LogExportHelper
+import com.app.ralaunch.core.platform.android.service.RefreshRateService
 import com.app.ralaunch.core.platform.AppConstants
 import com.app.ralaunch.feature.announcement.AnnouncementRepositoryService
 import com.app.ralaunch.feature.announcement.vm.AnnouncementViewModel
@@ -134,6 +135,8 @@ val appModule = module {
         }
     }
 
+    single { RefreshRateService(androidContext(), get()) }
+
     // ==================== Managers ====================
 
     single {
@@ -198,6 +201,7 @@ val appModule = module {
         SettingsViewModel(
             settingsRepository = get<ISettingsRepositoryServiceV2>(),
             runtimeManager = get(),
+            refreshRateService = get(),
             fileLogger = get(),
             appInfo = getOrNull<AppInfo>() ?: AppInfo()
         )

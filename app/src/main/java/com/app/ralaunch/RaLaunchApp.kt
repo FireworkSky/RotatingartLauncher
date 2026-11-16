@@ -16,6 +16,7 @@ import com.app.ralaunch.core.logging.service.AndroidFileLogger
 import com.app.ralaunch.core.common.util.DensityAdapter
 import com.app.ralaunch.core.common.util.LocaleManager
 import com.app.ralaunch.core.model.ThemeMode
+import com.app.ralaunch.core.platform.android.service.RefreshRateService
 import com.app.ralaunch.feature.controls.textures.TextureLoader
 import com.app.ralaunch.feature.patch.data.PatchManager
 import com.kyant.fishnet.Fishnet
@@ -59,6 +60,7 @@ class RaLaunchApp : Application(), KoinComponent {
     private val _runtimeManager: IRuntimeManagerServiceV2 by inject()
     private val _fileLogger: AndroidFileLogger by inject()
     private val _storagePathsProvider: StoragePathsProviderServiceV1 by inject()
+    private val refreshRateService: RefreshRateService by inject()
 
     override fun onCreate() {
         super.onCreate()
@@ -78,6 +80,8 @@ class RaLaunchApp : Application(), KoinComponent {
 
         // 5. 应用主题设置
         applyThemeFromSettings()
+        // Reapply saved refresh preferences, or retry a pending restore, on launcher startup.
+        if (isMainAppProcess()) refreshRateService.onAppStart()
 
         // 6. 初始化崩溃捕获
         initCrashHandler()

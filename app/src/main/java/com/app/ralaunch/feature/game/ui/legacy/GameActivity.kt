@@ -5,15 +5,12 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ActivityInfo
-import android.hardware.display.DisplayManager
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.os.Process
-import android.view.Display
 import android.view.KeyEvent
-import android.view.Surface
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatDelegate
@@ -21,6 +18,8 @@ import com.app.ralaunch.feature.game.GameVirtualControlsManager
 import com.app.ralaunch.core.error.ui.CrashReportActivity
 import com.app.ralaunch.feature.game.legacy.GameContract
 import com.app.ralaunch.feature.game.legacy.GamePresenter
+import org.koin.android.ext.android.inject
+import com.app.ralaunch.core.platform.android.service.RefreshRateService
 import com.app.ralaunch.core.common.SettingsAccess
 import com.app.ralaunch.core.common.GameFullscreenManager
 import com.app.ralaunch.core.logging.AppLog
@@ -129,7 +128,7 @@ class GameActivity : SDLActivity(), GameContract.View {
     // 管理器
     private var fullscreenManager: GameFullscreenManager? = null
     private val virtualControlsManager = GameVirtualControlsManager()
-    private var lastRequestedRefreshRate: Float = 0f
+    private val refreshRateService: RefreshRateService by inject()
 
     // ==================== 生命周期 ====================
 
@@ -336,87 +335,11 @@ class GameActivity : SDLActivity(), GameContract.View {
     }
 
     private fun requestHighRefreshRate(caller: String) {
-        val display = getCurrentDisplay() ?: run {
-            AppLog.w(TAG, "[$caller] Display is null, skip refresh vote")
-            return
-        }
-
-        val targetMode = selectTargetMode(display)
-        val targetRefresh = targetMode?.refreshRate ?: display.refreshRate
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && targetMode != null) {
-            try {
-                val params = window.attributes
-                if (params.preferredDisplayModeId != targetMode.modeId) {
-                    params.preferredDisplayModeId = targetMode.modeId
-                    window.attributes = params
-                }
-                AppLog.i(
-                    TAG,
-                    "[$caller] Requested display mode id=${targetMode.modeId}, " +
-                        "rate=${targetMode.refreshRate}Hz, size=${targetMode.physicalWidth}x${targetMode.physicalHeight}"
-                )
-            } catch (e: Exception) {
-                AppLog.w(TAG, "[$caller] Failed to request preferred display mode: ${e.message}")
-            }
-        }
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            val sdlSurface = mSurface?.holder?.surface
-            if (sdlSurface != null && sdlSurface.isValid) {
-                try {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                        sdlSurface.setFrameRate(
-                            targetRefresh,
-                            Surface.FRAME_RATE_COMPATIBILITY_DEFAULT,
-                            Surface.CHANGE_FRAME_RATE_ALWAYS
-                        )
-                    } else {
-                        sdlSurface.setFrameRate(
-                            targetRefresh,
-                            Surface.FRAME_RATE_COMPATIBILITY_DEFAULT
-                        )
-                    }
-                    AppLog.i(TAG, "[$caller] Surface frame-rate vote applied: ${targetRefresh}Hz")
-                } catch (e: Throwable) {
-                    AppLog.w(TAG, "[$caller] Failed to apply frame-rate vote: ${e.message}")
-                }
-            } else {
-                AppLog.d(TAG, "[$caller] SDL surface is not ready for frame-rate vote")
-            }
-        }
-
-        if (lastRequestedRefreshRate != targetRefresh) {
-            lastRequestedRefreshRate = targetRefresh
-            AppLog.i(TAG, "[$caller] Target refresh updated to ${targetRefresh}Hz")
-        }
-    }
-
-    private fun getCurrentDisplay(): Display? {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            display?.let { return it }
-        }
-        val displayManager = getSystemService(DisplayManager::class.java) ?: return null
-        return displayManager.getDisplay(Display.DEFAULT_DISPLAY)
-    }
-
-    private fun selectTargetMode(display: Display): Display.Mode? {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-            return null
-        }
-
-        return try {
-            val currentMode = display.mode ?: return null
-            val supportedModes = display.supportedModes ?: return null
-            val sameResolutionModes = supportedModes.filter {
-                it.physicalWidth == currentMode.physicalWidth &&
-                    it.physicalHeight == currentMode.physicalHeight
-            }
-            val candidates = if (sameResolutionModes.isNotEmpty()) sameResolutionModes else supportedModes.toList()
-            candidates.maxByOrNull { it.refreshRate }
-        } catch (e: Exception) {
-            AppLog.w(TAG, "Failed to select target display mode: ${e.message}")
-            null
-        }
+        refreshRateService.requestGameRefreshRate(
+            this,
+            mSurface?.holder?.surface,
+            SettingsAccess.unlockRefreshRateLimit,
+            caller
+        )
     }
 }

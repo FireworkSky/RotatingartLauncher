@@ -1,8 +1,8 @@
 {
   "id": "com.app.ralaunch.tmodloader.touch",
   "name": "tModLoader Touch Input",
-  "description": "Native FNA touch input with native mouse fallback when no touch is active.",
-  "version": "1.0.11",
+  "description": "Mod touch input without mouse fallback, with late device detection and runtime diagnostics. Select SDL touch in launcher settings to use SDL mouse synthesis instead.",
+  "version": "1.0.13",
   "author": "RA Launcher Team",
   "dllFileName": "TModLoaderTouchPatch.dll",
   "entryPoint": {

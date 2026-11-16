@@ -37,6 +37,8 @@ public class SDLSurface extends SurfaceView implements SurfaceHolder.Callback,
 
     // Keep track of the surface size to normalize touch events
     protected float mWidth, mHeight;
+    private long mNextTouchDiagnostic;
+    private long mTouchEventCount;
 
     // Is SurfaceView ready for rendering
     public boolean mIsSurfaceReady;
@@ -209,6 +211,15 @@ public class SDLSurface extends SurfaceView implements SurfaceHolder.Callback,
         int touchDevId = event.getDeviceId();
         final int pointerCount = event.getPointerCount();
         int action = event.getActionMasked();
+        mTouchEventCount++;
+        long now = android.os.SystemClock.uptimeMillis();
+        if (now >= mNextTouchDiagnostic) {
+            mNextTouchDiagnostic = now + 30000;
+            com.app.ralaunch.core.logging.AppLog.i("SDLTouch",
+                "SDL2 input: events=" + mTouchEventCount + ", device=" + touchDevId
+                + ", source=" + event.getSource() + ", tool=" + event.getToolType(event.getActionIndex())
+                + ", action=" + action + ", pointers=" + pointerCount + ", surface=" + mWidth + "x" + mHeight);
+        }
         int pointerFingerId;
         int i = -1;
         float x,y,p;

@@ -1,0 +1,15 @@
+{
+  "id": "com.app.ralaunch.tmodloader.framerate",
+  "name": "tModLoader 120 FPS 补丁",
+  "description": "解除前台 60 FPS 绘制限制，最高 120 FPS；保留原生 60 Hz 游戏逻辑。实际帧率取决于设备性能和系统限制，不包含实体运动插值。",
+  "version": "0.1.1",
+  "author": "RA Launcher Team",
+  "dllFileName": "TModLoaderFrameRatePatch.dll",
+  "entryPoint": {
+    "typeName": "TModLoaderFrameRatePatch.Patcher",
+    "methodName": "Initialize"
+  },
+  "targetGames": ["tModLoader"],
+  "priority": 130,
+  "enabled": true
+}

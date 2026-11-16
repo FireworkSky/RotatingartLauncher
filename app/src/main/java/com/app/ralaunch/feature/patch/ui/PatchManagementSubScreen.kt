@@ -124,7 +124,7 @@ fun PatchManagementSubScreen(
                 PatchListPanel(
                     patches = uiState.patches,
                     selectedGame = uiState.selectedGame,
-                    isPatchEnabled = viewModel::isPatchEnabled,
+                    enabledPatchIds = uiState.enabledPatchIds,
                     onPatchEnabledChange = { patch, enabled ->
                         viewModel.setPatchEnabled(patch.manifest.id, enabled)
                         val statusText = if (enabled) {
@@ -290,7 +290,7 @@ private fun DefaultGameIcon() {
 private fun PatchListPanel(
     patches: List<Patch>,
     selectedGame: GameItem?,
-    isPatchEnabled: (String) -> Boolean,
+    enabledPatchIds: Set<String>,
     onPatchEnabledChange: (Patch, Boolean) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -345,7 +345,7 @@ private fun PatchListPanel(
                         items(patches) { patch ->
                             PatchItem(
                                 patch = patch,
-                                isEnabled = isPatchEnabled(patch.manifest.id),
+                                isEnabled = patch.manifest.id in enabledPatchIds,
                                 onCheckedChange = { enabled ->
                                     onPatchEnabledChange(patch, enabled)
                                 }

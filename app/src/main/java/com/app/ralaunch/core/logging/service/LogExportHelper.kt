@@ -74,6 +74,7 @@ internal class LogExportHelper(
         writer.appendDiagnosticSection(buildDeviceInfo())
         writer.appendDiagnosticSection(buildGameRepositoryInfo())
         writer.appendDiagnosticSection(buildPatchManagementInfo())
+        writeTouchDiagnostics(writer)
 
         val files = getLogFiles()
         files.forEachIndexed { index, file ->
@@ -94,6 +95,25 @@ internal class LogExportHelper(
             }
         }
         writer.flush()
+    }
+
+    private fun writeTouchDiagnostics(writer: Writer) {
+        try {
+            val patch = patchManagerProvider()?.installedPatches?.firstOrNull {
+                it.manifest.id == "com.app.ralaunch.tmodloader.touch"
+            } ?: return
+            listOf("touch-input.log.previous", "touch-input.log").forEach { name ->
+                val file = patch.patchPath.resolve(name).toFile()
+                if (file.isFile) {
+                    writer.appendLine("=============== Touch Input Diagnostics: $name ===============")
+                    file.bufferedReader().use { it.copyTo(writer) }
+                    writer.appendLine()
+                }
+            }
+        } catch (e: Exception) {
+            AppLog.w(TAG, "Failed to export touch input diagnostics", e)
+            writer.appendLine("Touch Input Diagnostics: ${e.message}")
+        }
     }
 
     fun buildGameRepositoryInfo(): String {

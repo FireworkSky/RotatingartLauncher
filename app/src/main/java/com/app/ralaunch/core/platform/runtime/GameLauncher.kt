@@ -19,6 +19,7 @@ import android.content.Context
 import android.os.Environment
 import java.io.File
 import com.app.ralaunch.core.common.SettingsAccess
+import com.app.ralaunch.core.model.TouchInputMode
 import org.koin.java.KoinJavaComponent
 import com.app.ralaunch.core.platform.runtime.dotnet.DotNetLauncher
 import com.app.ralaunch.core.platform.runtime.mono.MonoLauncher
@@ -28,7 +29,6 @@ import com.app.ralaunch.core.common.util.NativeMethods
 import com.app.ralaunch.core.platform.runtime.RendererEnvironmentConfigurator
 import com.app.ralaunch.feature.patch.data.Patch
 import com.app.ralaunch.feature.patch.data.PatchManager
-import com.app.ralaunch.core.platform.android.ProcessLauncherService
 import org.libsdl.app.SDL
 import kotlin.io.path.Path
 import kotlin.io.path.createDirectories
@@ -300,16 +300,18 @@ object GameLauncher {
             AppLog.d(TAG, "应用用户设置 / Applying settings configuration...")
             AppLog.d(TAG, "  - 大核亲和性 / Big core affinity: ${settings.setThreadAffinityToBigCoreEnabled}")
             AppLog.d(TAG, "  - 多点触控 / Touch multitouch: ${settings.isTouchMultitouchEnabled}")
+            val touchInputMode = settings.touchInputMode
+            AppLog.i(TAG, "Touch input mode: ${touchInputMode.value}; automatic mouse fallback: disabled")
 
             // 步骤6：配置启动钩子（补丁）
             // Step 6: Configure startup hooks (patches)
             val startupHooks = if (enabledPatches != null && enabledPatches.isNotEmpty())
-                PatchManager.constructStartupHooksEnvVar(enabledPatches) else null
+                PatchManager.constructStartupHooksEnvVar(enabledPatches, touchInputMode).ifBlank { null } else null
 
             if (startupHooks != null) {
-                AppLog.i(TAG, "已配置 ${enabledPatches!!.size} 个补丁的启动钩子 / DOTNET_STARTUP_HOOKS configured with ${enabledPatches.size} patch(es)")
                 AppLog.d(TAG, "DOTNET_STARTUP_HOOKS 值 / value: $startupHooks")
                 val hookCount = startupHooks.split(":").filter { it.isNotEmpty() }.size
+                AppLog.i(TAG, "已配置 $hookCount 个补丁的启动钩子 / DOTNET_STARTUP_HOOKS configured with $hookCount patch(es)")
                 AppLog.d(TAG, "实际钩子数量 / Actual hook count: $hookCount")
             } else {
                 AppLog.d(TAG, "未配置启动钩子 / No startup hooks configured")
@@ -331,7 +333,8 @@ object GameLauncher {
 
                 // 触摸输入配置
                 // Touch input configuration
-                "SDL_TOUCH_MOUSE_EVENTS" to "0",
+                "SDL_TOUCH_MOUSE_EVENTS" to if (touchInputMode == TouchInputMode.SDL) "1" else "0",
+                "SDL_MOUSE_TOUCH_EVENTS" to if (touchInputMode == TouchInputMode.MOD) "0" else "1",
                 "SDL_TOUCH_MOUSE_MULTITOUCH" to if (settings.isTouchMultitouchEnabled) "1" else "0",
 
                 // 内部渲染倍率（实验性）：0.8 保证高度 ≥ 720，TML 不会抬高 screen 尺寸
@@ -451,45 +454,6 @@ object GameLauncher {
             return result
         } catch (e: Exception) {
             AppLog.e(TAG, "启动程序集失败 / Failed to launch assembly: $assemblyPath", e)
-            return -1
-        }
-    }
-
-    /**
-     * 在新进程中启动 .NET 程序集
-     * Launch a .NET assembly in a new process
-     *
-     * 此方法由 Native 层调用，用于在独立进程中启动子程序集。
-     * 例如：某些游戏可能需要启动额外的工具或服务器进程。
-     *
-     * This method is called from native layer to launch sub-assemblies in separate processes.
-     * For example: some games may need to launch additional tools or server processes.
-     *
-     * @param assemblyPath 程序集的完整路径
-     *                     Full path to the assembly
-     * @param args 传递给程序集的命令行参数
-     *             Command line arguments for the assembly
-     * @param title 进程标题，用于日志和调试
-     *              Process title for logging and debugging
-     * @param gameId 游戏标识符，用于匹配相关补丁
-     *               Game identifier for matching related patches
-     * @return 启动结果：0 表示成功，-1 表示失败
-     *         Launch result: 0 for success, -1 for failure
-     */
-    @JvmStatic
-    fun launchNewDotNetProcess(assemblyPath: String, args: Array<String>, title: String, gameId: String): Int {
-        try {
-            AppLog.i(TAG, "=== 收到新进程启动请求 / launchNewDotNetProcess called ===")
-            AppLog.i(TAG, "程序集 / Assembly: $assemblyPath")
-            AppLog.i(TAG, "标题 / Title: $title")
-            AppLog.i(TAG, "游戏ID / Game ID: $gameId")
-            AppLog.i(TAG, "参数 / Arguments: ${args.joinToString(", ")}")
-
-            ProcessLauncherService.launch(assemblyPath, args, title, gameId)
-
-            return 0
-        } catch (e: Exception) {
-            AppLog.e(TAG, "启动新 .NET 进程失败 / Failed to launch new .NET process", e)
             return -1
         }
     }

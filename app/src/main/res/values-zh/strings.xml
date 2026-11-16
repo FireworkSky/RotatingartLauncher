@@ -1813,11 +1813,6 @@
     <string name="asset_check_status_dotnet_not_installed">✗ .NET Runtime 未安装</string>
     <string name="asset_check_status_runtime_libs_installed">✓ 运行时库 (%1$d 个库)</string>
     <string name="asset_check_status_runtime_libs_not_extracted">✗ 运行时库未解压</string>
-    <string name="process_launcher_status_starting">%1$s 正在启动...</string>
-    <string name="process_launcher_status_running">%1$s 正在运行</string>
-    <string name="process_launcher_channel_name">进程启动器</string>
-    <string name="process_launcher_channel_description">后台进程运行通知</string>
-    <string name="process_launcher_notification_title">后台进程</string>
     <string name="extract_failed">解压失败</string>
     <string name="install_plugin_not_found">未找到支持此游戏的安装插件</string>
     <string name="extract_7zip_library_load_failed">7-Zip 原生库加载失败</string>
@@ -2075,4 +2070,25 @@
     <string name="install_plugin_display_name_stardew_smapi">Stardew Valley / SMAPI</string>
     <string name="shared_unknown">未知</string>
     <string name="game_launch_sdl2_compatibility">此游戏仅支持 SDL2，本次启动将自动使用 SDL2。</string>
+    <string name="settings_touch_input_mode_title">触屏输入模式</string>
+    <string name="settings_touch_input_mode_mod">模组触屏</string>
+    <string name="settings_touch_input_mode_sdl">SDL 触屏</string>
+    <string name="settings_touch_input_mode_mod_description">使用触屏模组操作并隐藏鼠标，需要安装触屏模组，下次启动游戏生效。</string>
+    <string name="settings_touch_input_mode_sdl_description">使用 SDL 触屏鼠标操作，下次启动游戏生效。</string>
+
+    <!-- Optional Android refresh rate override -->
+    <string name="settings_unlock_refresh_rate_title">解锁刷新率限制</string>
+    <string name="settings_unlock_refresh_rate_desc">为 SDL2、SDL3 请求屏幕支持的最高刷新率，保存后持续生效。游戏超过 60 FPS 仍可能需要帧率补丁。</string>
+    <string name="settings_refresh_permission_title">允许修改系统刷新率</string>
+    <string name="settings_refresh_permission_missing">未授权：目前仅请求游戏窗口高刷新率。点击授权以修改系统刷新率上限。</string>
+    <string name="settings_refresh_permission_granted">已获得修改系统设置权限；省电、温控等系统策略仍可能限制刷新率。</string>
+    <string name="settings_refresh_restore_pending">原设置尚未恢复。请重新授权系统权限并返回此页，将自动重试恢复。</string>
+    <string name="settings_refresh_write_failed">系统拒绝修改刷新率。点击检查权限，详细原因已写入启动器日志。</string>
+    <string name="settings_refresh_permission_unavailable">无法打开系统设置页，请在 Android 设置中检查此应用的权限。</string>
+    <string name="settings_refresh_system_title">系统显示设置与兼容说明</string>
+    <string name="settings_refresh_system_desc">检查系统屏幕刷新率及应用单独的刷新率限制。</string>
+    <string name="settings_refresh_vendor_permission_missing">此设备还有厂商刷新率策略，点击查看额外授权说明。</string>
+    <string name="settings_refresh_advanced_help">各品牌均使用 Android 标准显示模式与 Surface 刷新率接口。授权修改系统设置后可提高保存的刷新率上限，关闭时恢复本功能修改前的值。部分系统还需在系统设置中为本应用启用高刷新率。小米、红米、POCO 可通过一次 ADB 授权修改已有的厂商刷新率设置，不会绕过系统权限。省电、温控限制以及屏幕硬件不支持的刷新率无法解除。</string>
+    <string name="settings_refresh_copy_command">复制授权命令</string>
+    <string name="settings_refresh_open_display_settings">打开显示设置</string>
 </resources>

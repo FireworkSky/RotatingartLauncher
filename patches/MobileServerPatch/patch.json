@@ -1,0 +1,15 @@
+{
+  "id": "com.app.ralaunch.tmodloader.mobileserver",
+  "name": "tModLoader 同进程开房补丁",
+  "description": "将 MobileServer 的同进程局域网开房集成到启动器。支持主持并游玩与 /mobilehost；当前适配 tML 2026.9.3.1。启用原 MobileServer 模组时自动避让。",
+  "version": "0.1.0",
+  "author": "RA Launcher Team",
+  "dllFileName": "MobileServerPatch.dll",
+  "entryPoint": {
+    "typeName": "MobileServerPatch.Patcher",
+    "methodName": "Initialize"
+  },
+  "targetGames": ["tModLoader"],
+  "priority": 120,
+  "enabled": true
+}

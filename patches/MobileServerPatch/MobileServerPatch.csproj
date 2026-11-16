@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>disable</Nullable>
+    <OutputType>Library</OutputType>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Remove="tests/**/*.cs" />
+    <PackageReference Include="MonoMod.RuntimeDetour" Version="25.3.2" PrivateAssets="all" />
+    <Reference Include="tModLoader" HintPath="../external/tModLoader/tModLoader.dll" Private="false" />
+    <Reference Include="FNA" HintPath="../external/tModLoader/Libraries/FNA/1.0.0/FNA.dll" Private="false" />
+  </ItemGroup>
+</Project>

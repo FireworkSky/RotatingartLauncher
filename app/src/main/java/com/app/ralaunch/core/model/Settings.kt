@@ -75,6 +75,16 @@ enum class KeyboardType(val value: String, val displayName: String) {
     }
 }
 
+enum class TouchInputMode(val value: String) {
+    MOD("mod"),
+    SDL("sdl");
+
+    companion object {
+        fun fromValue(value: String): TouchInputMode =
+            entries.find { it.value == value.trim().lowercase() } ?: MOD
+    }
+}
+
 /**
  * 应用设置 (跨平台版本)
  */
@@ -99,6 +109,7 @@ data class AppSettings(
     var virtualControllerAsFirst: Boolean = false,
     var backButtonOpenMenu: Boolean = false,
     var touchMultitouchEnabled: Boolean = true,
+    var touchInputMode: String = TouchInputMode.MOD.value,
     var fpsDisplayEnabled: Boolean = false,
     var fpsDisplayX: Float = -1f,
     var fpsDisplayY: Float = -1f,
@@ -119,6 +130,8 @@ data class AppSettings(
 
     // 渲染实验
     var halfResolutionRendering: Boolean = false,
+    /** Opt-in Android display refresh override; old settings retain the system policy. */
+    var unlockRefreshRateLimit: Boolean = false,
 
     // FNA 设置
     var fnaRenderer: String = "native",

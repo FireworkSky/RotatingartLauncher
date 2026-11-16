@@ -22,6 +22,7 @@ import com.app.ralaunch.feature.controls.textures.TextureLoader
 import com.app.ralaunch.feature.controls.ui.ControlLayout
 import com.app.ralaunch.core.common.SettingsAccess
 import com.app.ralaunch.core.logging.AppLog
+import com.app.ralaunch.core.model.TouchInputMode
 import com.app.ralaunch.feature.main.ui.background.FPSDisplayView
 import org.koin.java.KoinJavaComponent
 import androidx.compose.material3.MaterialTheme
@@ -79,6 +80,7 @@ class GameVirtualControlsManager {
             controlLayout = ControlLayout(activity).apply {
                 this.inputBridge = this@GameVirtualControlsManager.inputBridge
                 loadLayoutFromPackManager()
+                isControlsVisible = SettingsAccess.touchInputMode == TouchInputMode.SDL
             }
             disableClippingRecursive(controlLayout!!)
 

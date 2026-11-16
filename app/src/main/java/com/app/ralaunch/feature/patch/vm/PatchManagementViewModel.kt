@@ -25,7 +25,8 @@ data class PatchManagementUiState(
     val games: List<GameItem> = emptyList(),
     val selectedGame: GameItem? = null,
     val selectedGameIndex: Int = -1,
-    val patches: List<Patch> = emptyList()
+    val patches: List<Patch> = emptyList(),
+    val enabledPatchIds: Set<String> = emptySet()
 )
 
 class PatchManagementViewModel(
@@ -76,14 +77,18 @@ class PatchManagementViewModel(
         val patches = selectedGame?.let { game ->
             patchManager?.getApplicablePatches(game.gameId) ?: emptyList()
         } ?: emptyList()
-        _uiState.update { it.copy(patches = patches) }
+        val gameAsmPath = selectedGame?.let { game ->
+            Paths.get(game.gameExePathFull ?: game.gameExePathRelative)
+        }
+        val enabledPatchIds = if (gameAsmPath == null) emptySet() else patches
+            .filter { patchManager?.isPatchEnabled(gameAsmPath, it.manifest.id) == true }
+            .map { it.manifest.id }
+            .toSet()
+        _uiState.update { it.copy(patches = patches, enabledPatchIds = enabledPatchIds) }
     }
 
     fun isPatchEnabled(patchId: String): Boolean {
-        val selectedGame = _uiState.value.selectedGame ?: return false
-        val gameAsmPath = selectedGame.gameExePathFull?.let { Paths.get(it) }
-            ?: Paths.get(selectedGame.gameExePathRelative)
-        return patchManager?.isPatchEnabled(gameAsmPath, patchId) ?: false
+        return patchId in _uiState.value.enabledPatchIds
     }
 
     fun setPatchEnabled(patchId: String, enabled: Boolean) {

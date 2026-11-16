@@ -28,8 +28,7 @@ object ConsoleManager {
 
     /** 只收集包含这些关键词的 tag（不区分大小写） */
     private val ALLOWED_TAG_KEYWORDS = listOf(
-        "dotnet", "corehost", "gamelauncher", "processlauncher",
-        "serverlauncher", "serverlaunch", "mono", "console",
+        "dotnet", "corehost", "gamelauncher", "mono", "console",
         "tmodloader", "terraria", "fna", "sdl",
     )
 

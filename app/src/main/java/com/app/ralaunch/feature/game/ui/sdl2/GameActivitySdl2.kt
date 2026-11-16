@@ -5,21 +5,20 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ActivityInfo
-import android.hardware.display.DisplayManager
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.os.Process
-import android.view.Display
 import android.view.Gravity
 import android.widget.FrameLayout
 import android.widget.TextView
 import android.view.KeyEvent
-import android.view.Surface
 import android.widget.Toast
 import com.app.ralaunch.R
 import com.app.ralaunch.core.common.GameFullscreenManager
+import org.koin.android.ext.android.inject
+import com.app.ralaunch.core.platform.android.service.RefreshRateService
 import com.app.ralaunch.core.common.SettingsAccess
 import com.app.ralaunch.core.common.util.DensityAdapter
 import com.app.ralaunch.core.common.util.LocaleManager
@@ -65,6 +64,7 @@ class GameActivitySdl2 : SDLActivity(), GameContract.View, LifecycleOwner, Saved
     companion object {
         private const val TAG = "GameActivitySdl2"
         private const val CONTROL_EDITOR_REQUEST_CODE = 2001
+        private const val GAME_STACK_SIZE_BYTES = 8L * 1024 * 1024
 
         // 与 GameActivity（SDL3）完全相同的 extras，保证 GamePresenter 的解析逻辑两边通用
         const val EXTRA_GAME_STORAGE_ID = "GAME_STORAGE_ID"
@@ -153,7 +153,7 @@ class GameActivitySdl2 : SDLActivity(), GameContract.View, LifecycleOwner, Saved
     private val virtualControlsManager = GameVirtualControlsManager()
 
     private var fullscreenManager: GameFullscreenManager? = null
-    private var lastRequestedRefreshRate: Float = 0f
+    private val refreshRateService: RefreshRateService by inject()
 
     // ==================== SDL 胶水层扩展点 ====================
 
@@ -331,7 +331,7 @@ class GameActivitySdl2 : SDLActivity(), GameContract.View, LifecycleOwner, Saved
         // 关键：游戏主循环不能占用 UI 线程，否则本 Activity 无法完成首帧绘制，
         // 系统会一直保留启动窗口（Splash Screen）并把本 Activity 的图层判为 hidden，
         // 现象就是「日志一切正常、屏幕上却没有画面」。
-        gameThread = Thread({
+        gameThread = Thread(null, {
             val code = runCatching { presenter.launchGame() }.getOrElse { error ->
                 AppLog.e(TAG, "launchGame 异常: ${error.message}", error)
                 -1
@@ -346,7 +346,7 @@ class GameActivitySdl2 : SDLActivity(), GameContract.View, LifecycleOwner, Saved
                     ).show()
                 }
             }
-        }, "ral-game").apply { start() }
+        }, "ral-game", GAME_STACK_SIZE_BYTES).apply { start() }
     }
 
     private fun applyThemeMode() {
@@ -431,73 +431,12 @@ class GameActivitySdl2 : SDLActivity(), GameContract.View, LifecycleOwner, Saved
     override fun getActivityIntent(): Intent = intent
 
     private fun requestHighRefreshRate(caller: String) {
-        val display = getCurrentDisplay() ?: run {
-            AppLog.w(TAG, "[$caller] Display is null, skip refresh vote")
-            return
-        }
-        val targetMode = selectTargetMode(display)
-        val targetRefresh = targetMode?.refreshRate ?: display.refreshRate
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && targetMode != null) {
-            try {
-                val params = window.attributes
-                if (params.preferredDisplayModeId != targetMode.modeId) {
-                    params.preferredDisplayModeId = targetMode.modeId
-                    window.attributes = params
-                }
-            } catch (e: Exception) {
-                AppLog.w(TAG, "[$caller] 设置显示模式失败: ${e.message}")
-            }
-        }
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            val sdlSurface = mSurface?.holder?.surface
-            if (sdlSurface != null && sdlSurface.isValid) {
-                try {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                        sdlSurface.setFrameRate(
-                            targetRefresh,
-                            Surface.FRAME_RATE_COMPATIBILITY_DEFAULT,
-                            Surface.CHANGE_FRAME_RATE_ALWAYS
-                        )
-                    } else {
-                        sdlSurface.setFrameRate(targetRefresh, Surface.FRAME_RATE_COMPATIBILITY_DEFAULT)
-                    }
-                } catch (e: Throwable) {
-                    AppLog.w(TAG, "[$caller] Surface 刷新率投票失败: ${e.message}")
-                }
-            }
-        }
-
-        if (lastRequestedRefreshRate != targetRefresh) {
-            lastRequestedRefreshRate = targetRefresh
-            AppLog.i(TAG, "[$caller] 目标刷新率 ${targetRefresh}Hz")
-        }
-    }
-
-    private fun getCurrentDisplay(): Display? {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            display?.let { return it }
-        }
-        val displayManager = getSystemService(DisplayManager::class.java) ?: return null
-        return displayManager.getDisplay(Display.DEFAULT_DISPLAY)
-    }
-
-    private fun selectTargetMode(display: Display): Display.Mode? {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) return null
-        return try {
-            val currentMode = display.mode ?: return null
-            val supportedModes = display.supportedModes ?: return null
-            val sameResolutionModes = supportedModes.filter {
-                it.physicalWidth == currentMode.physicalWidth &&
-                    it.physicalHeight == currentMode.physicalHeight
-            }
-            val candidates = if (sameResolutionModes.isNotEmpty()) sameResolutionModes else supportedModes.toList()
-            candidates.maxByOrNull { it.refreshRate }
-        } catch (e: Exception) {
-            AppLog.w(TAG, "选择显示模式失败: ${e.message}")
-            null
-        }
+        refreshRateService.requestGameRefreshRate(
+            this,
+            mSurface?.holder?.surface,
+            SettingsAccess.unlockRefreshRateLimit,
+            caller
+        )
     }
 
     override fun getAppVersionName(): String? {

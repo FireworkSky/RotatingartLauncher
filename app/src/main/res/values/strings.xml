@@ -1476,11 +1476,6 @@
     <string name="documents_provider_root_summary">RaLaunch</string>
 
     <!-- Platform: Process launcher -->
-    <string name="process_launcher_channel_name">Process Launcher</string>
-    <string name="process_launcher_channel_description">Background process status notifications</string>
-    <string name="process_launcher_notification_title">Background Process</string>
-    <string name="process_launcher_status_starting">%1$s is starting...</string>
-    <string name="process_launcher_status_running">%1$s is running</string>
 
     <!-- Platform: EasyTier VPN service -->
     <string name="easytier_vpn_channel_name">EasyTier Multiplayer</string>
@@ -2106,4 +2101,25 @@
     <string name="settings_about_open_source_subtitle">View open-source libraries used by this app</string>
     <string name="about_core_developer">Core Developer</string>
     <string name="game_launch_sdl2_compatibility">This game requires SDL2. Using SDL2 for this launch.</string>
+    <string name="settings_touch_input_mode_title">Touch input mode</string>
+    <string name="settings_touch_input_mode_mod">Mod touch</string>
+    <string name="settings_touch_input_mode_sdl">SDL touch</string>
+    <string name="settings_touch_input_mode_mod_description">Use mod touch controls and hide the cursor. Requires a touch mod; takes effect on the next game launch.</string>
+    <string name="settings_touch_input_mode_sdl_description">Use SDL touch mouse controls. Takes effect on the next game launch.</string>
+
+    <!-- Optional Android refresh rate override -->
+    <string name="settings_unlock_refresh_rate_title">Unlock refresh rate limit</string>
+    <string name="settings_unlock_refresh_rate_desc">Request the highest refresh rate supported by the screen for SDL2 and SDL3. Saved for future launches; a separate game patch may be needed above 60 FPS.</string>
+    <string name="settings_refresh_permission_title">Allow system refresh rate changes</string>
+    <string name="settings_refresh_permission_missing">Not authorized: only the game window can request a higher refresh rate. Tap to authorize system changes.</string>
+    <string name="settings_refresh_permission_granted">System settings permission granted. Device power and temperature policies can still limit refresh rate.</string>
+    <string name="settings_refresh_restore_pending">Restore pending. Restore system permissions and return here to retry restoring the original values.</string>
+    <string name="settings_refresh_write_failed">The system rejected a refresh rate change. Tap to check permissions; details are in the launcher log.</string>
+    <string name="settings_refresh_permission_unavailable">System settings page unavailable. Open the app permissions in Android settings.</string>
+    <string name="settings_refresh_system_title">System display settings and compatibility</string>
+    <string name="settings_refresh_system_desc">Check the screen refresh rate and any per-app limits in system settings.</string>
+    <string name="settings_refresh_vendor_permission_missing">This device has an additional vendor refresh policy. Tap for authorization instructions.</string>
+    <string name="settings_refresh_advanced_help">All brands use standard Android display mode and Surface frame rate requests. Optional system permission raises the stored peak refresh rate; switching off restores values changed by this feature. Some ROMs also require a high refresh rate for this app in system settings. Xiaomi/Redmi/POCO compatibility can additionally update existing vendor settings after a one-time ADB permission grant. No permission bypass is performed. Battery saving, thermal limits and unsupported displays cannot be overridden.</string>
+    <string name="settings_refresh_copy_command">Copy authorization command</string>
+    <string name="settings_refresh_open_display_settings">Open display settings</string>
 </resources>

@@ -454,6 +454,26 @@ fun SdlVersionSettingItem(
     icon: ImageVector? = null,
     selectedVersion: String,
     onVersionSelected: (String) -> Unit
+) = ChoiceSettingItem(
+    title = title,
+    subtitle = subtitle,
+    icon = icon,
+    selectedValue = selectedVersion,
+    options = listOf(
+        SdlVersion.SDL2 to stringResource(R.string.settings_sdl_version_sdl2),
+        SdlVersion.SDL3 to stringResource(R.string.settings_sdl_version_sdl3)
+    ),
+    onValueSelected = onVersionSelected
+)
+
+@Composable
+fun ChoiceSettingItem(
+    title: String,
+    subtitle: String? = null,
+    icon: ImageVector? = null,
+    selectedValue: String,
+    options: List<Pair<String, String>>,
+    onValueSelected: (String) -> Unit
 ) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
@@ -498,20 +518,27 @@ fun SdlVersionSettingItem(
                 }
             }
 
-            SingleChoiceSegmentedButtonRow {
-                SegmentedButton(
-                    selected = selectedVersion == SdlVersion.SDL2,
-                    onClick = { onVersionSelected(SdlVersion.SDL2) },
-                    shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2)
-                ) {
-                    Text(stringResource(R.string.settings_sdl_version_sdl2))
-                }
-                SegmentedButton(
-                    selected = selectedVersion == SdlVersion.SDL3,
-                    onClick = { onVersionSelected(SdlVersion.SDL3) },
-                    shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2)
-                ) {
-                    Text(stringResource(R.string.settings_sdl_version_sdl3))
+            Spacer(modifier = Modifier.width(12.dp))
+
+            SingleChoiceSegmentedButtonRow(
+                modifier = Modifier.width(184.dp).height(40.dp)
+            ) {
+                options.forEachIndexed { index, (value, label) ->
+                    SegmentedButton(
+                        selected = selectedValue == value,
+                        onClick = { onValueSelected(value) },
+                        modifier = Modifier.height(40.dp),
+                        shape = SegmentedButtonDefaults.itemShape(index = index, count = options.size),
+                        icon = {}
+                    ) {
+                        Text(
+                            text = label,
+                            style = MaterialTheme.typography.labelMedium,
+                            maxLines = 1,
+                            softWrap = false,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
                 }
             }
         }

@@ -27,6 +27,13 @@ internal static class TouchInputPatch
     private static long _activeTouchDevice;
     private static TouchLocation[] _touches = Array.Empty<TouchLocation>();
     private static TouchLocation[] _previousTouches = Array.Empty<TouchLocation>();
+    private static readonly FieldInfo _touchDeviceExists = typeof(TouchPanel).GetField(
+        "TouchDeviceExists", BindingFlags.Static | BindingFlags.NonPublic)
+        ?? throw new MissingFieldException("FNA TouchPanel.TouchDeviceExists not found");
+    private static long _pollCount, _mouseInputCalls;
+    private static long _nextDiagnostic, _nextError;
+    private static int _lastDeviceCount = -1;
+    private static bool _reportedFingers;
 
     public static void Apply(Harmony harmony, Assembly tModLoaderAssembly)
     {
@@ -40,6 +47,10 @@ internal static class TouchInputPatch
                 ?? throw new MissingFieldException("FNA TouchPanel touch storage not found");
             _previousTouches = new TouchLocation[_touches.Length];
             harmony.Patch(updateTouchPanel, prefix: new HarmonyMethod(typeof(TouchInputPatch), nameof(UpdateTouchPanelStatePrefix)));
+            harmony.Patch(
+                AccessTools.Method(typeof(FrameworkDispatcher), nameof(FrameworkDispatcher.Update)),
+                prefix: new HarmonyMethod(typeof(TouchInputPatch), nameof(FrameworkDispatcherUpdatePrefix))
+            );
 
             var cursorVisibilityChanged = platform!.GetMethod(
                 "OnIsMouseVisibleChanged",
@@ -62,8 +73,7 @@ internal static class TouchInputPatch
 
             if (mouseInput == null)
             {
-                Console.WriteLine("[TModLoaderTouchPatch] PlayerInput.MouseInput not found; native touch adapter disabled.");
-                return;
+                throw new MissingMethodException("PlayerInput.MouseInput not found");
             }
 
             harmony.Patch(
@@ -149,20 +159,47 @@ internal static class TouchInputPatch
                 Console.WriteLine("[TModLoaderTouchPatch] Main.DrawInterface_36_Cursor not found; cursor override may remain visible.");
             }
 
-            Console.WriteLine("[TModLoaderTouchPatch] Native touch adapter applied; touch frames use touch input, otherwise the original mouse path is preserved.");
+            Patcher.Log($"Adapter applied. FNA={typeof(TouchPanel).Assembly.FullName}; touch capacity={_touches.Length}. Waiting for runtime polling and input diagnostics.");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[TModLoaderTouchPatch] Native touch adapter failed: {ex.Message}");
+            Patcher.Log($"Native touch adapter failed: {ex}");
+            harmony.UnpatchAll(harmony.Id);
+            throw;
         }
     }
 
     private static bool UpdateTouchPanelStatePrefix()
     {
+        try
+        {
+            PollTouchState();
+        }
+        catch (Exception ex)
+        {
+            Array.Clear(_touches, 0, _touches.Length);
+            ResetTouchState();
+            ReportError("Native touch state polling failed", ex);
+        }
+        return false;
+    }
+
+    // FNA otherwise skips TouchPanel.Update until a device is detected at game
+    // creation or a FINGERDOWN is dispatched. Keep its normal update path (and
+    // mod hooks) running, including devices first discovered after startup.
+    public static void FrameworkDispatcherUpdatePrefix()
+    {
+        _touchDeviceExists.SetValue(null, true);
+    }
+
+    private static void PollTouchState()
+    {
+        _pollCount++;
         Array.Copy(_touches, _previousTouches, _touches.Length);
         Array.Clear(_touches, 0, _touches.Length);
-        long device = GetActiveTouchDevice(0);
-        int count = Math.Min(SDL2.SDL.SDL_GetNumTouchFingers(device), _touches.Length);
+        long device = GetActiveTouchDevice();
+        int count = device == 0 ? 0 : Math.Max(0, Math.Min(SDL2.SDL.SDL_GetNumTouchFingers(device), _touches.Length));
+        ReportPolling(device, count);
         int written = 0;
         for (int i = 0; i < count; i++)
         {
@@ -205,10 +242,9 @@ internal static class TouchInputPatch
             if (!stillDown)
                 _touches[written++] = new TouchLocation(previous.Id, TouchLocationState.Released, previous.Position, previous.State, previous.Position);
         }
-        return false;
     }
 
-    private static long GetActiveTouchDevice(int fallbackIndex)
+    private static long GetActiveTouchDevice()
     {
         if (_activeTouchDevice != 0 && SDL2.SDL.SDL_GetNumTouchFingers(_activeTouchDevice) > 0)
             return _activeTouchDevice;
@@ -216,29 +252,24 @@ internal static class TouchInputPatch
         for (int i = 0; i < deviceCount; i++)
         {
             long device = SDL2.SDL.SDL_GetTouchDevice(i);
-            int fingerCount = SDL2.SDL.SDL_GetNumTouchFingers(device);
             // SDL_MOUSE_TOUCHID (-1) represents mouse-to-touch synthesis.
-            if (device != 0 && device != -1 && fingerCount > 0)
+            if (device != 0 && device != -1 && SDL2.SDL.SDL_GetNumTouchFingers(device) > 0)
             {
                 _activeTouchDevice = device;
                 return device;
             }
         }
-        return _activeTouchDevice != 0 ? _activeTouchDevice : SDL2.SDL.SDL_GetTouchDevice(fallbackIndex);
+        _activeTouchDevice = 0;
+        return 0;
     }
 
     public static bool PlayerInputMouseInputPrefix()
     {
         try
         {
-            if (!TryReadTouch(out var position, out var pressed))
-            {
-                // 没有触摸：释放触屏接管，让 tModLoader 原生的鼠标输入照常运行。
-                _touchInputActive = false;
-                return true;
-            }
-
-            _touchInputActive = true;
+            _mouseInputCalls++;
+            if (_mouseInputCalls == 1) Patcher.Log("Terraria input hook running.");
+            _touchInputActive = TryReadTouch(out var position, out var pressed);
             SDL2.SDL.SDL_ShowCursor(0);
             ApplyTouchToPlayerInput(position, pressed);
             return false;
@@ -246,18 +277,18 @@ internal static class TouchInputPatch
         catch (Exception ex)
         {
             ResetTouchState();
-            _touchInputActive = false;
-            Console.WriteLine($"[TModLoaderTouchPatch] Touch polling failed; falling back to native mouse: {ex.Message}");
-            return true;
+            PlayerInput.MouseKeys.Clear();
+            PlayerInput.MouseInfoOld = PlayerInput.MouseInfo;
+            PlayerInput.MouseInfo = default;
+            ReportError("Touch adapter failed; mouse fallback is disabled", ex);
+            return false;
         }
     }
 
     public static void MouseGetStatePostfix(ref MouseState __result)
     {
-        // 只有触摸帧才覆盖 Mouse.GetState；其他时候保留物理鼠标的原始状态。
-        if (!_touchInputActive)
-            return;
-
+        // Mod touch mode stays in control even on idle/error frames. SDL mouse
+        // input is available only after explicitly selecting SDL touch mode.
         __result = new MouseState(
             (int)_lastPosition.X,
             (int)_lastPosition.Y,
@@ -272,28 +303,22 @@ internal static class TouchInputPatch
 
     public static bool HideGameCursorPrefix()
     {
-        if (!_touchInputActive)
-            return true;
-
         SDL2.SDL.SDL_ShowCursor(0);
         return false;
     }
 
     public static bool SkipGameCursorLayer()
     {
-        return !_touchInputActive;
+        return false;
     }
 
     public static bool SkipDirectCursorTextureDraw()
     {
-        return !_touchInputActive;
+        return false;
     }
 
     public static bool HideNativeCursorPrefix()
     {
-        if (!_touchInputActive)
-            return true;
-
         SDL2.SDL.SDL_ShowCursor(0);
         return false;
     }
@@ -415,4 +440,28 @@ internal static class TouchInputPatch
         _touchInputActive = false;
     }
 
+    private static void ReportPolling(long device, int fingers)
+    {
+        int devices = SDL2.SDL.SDL_GetNumTouchDevices();
+        long now = Environment.TickCount64;
+        if (devices == _lastDeviceCount && now < _nextDiagnostic && (fingers == 0 || _reportedFingers)) return;
+        _lastDeviceCount = devices;
+        _nextDiagnostic = now + 30000;
+        _reportedFingers |= fingers > 0;
+        string deviceList = "";
+        for (int i = 0; i < devices; i++)
+        {
+            long id = SDL2.SDL.SDL_GetTouchDevice(i);
+            deviceList += $" {id}:{SDL2.SDL.SDL_GetNumTouchFingers(id)}";
+        }
+        Patcher.Log($"Runtime: mode=mod, mouseFallback=disabled, polls={_pollCount}, mouseInputCalls={_mouseInputCalls}, devices={devices} [{deviceList.Trim()}], activeDevice={device}, fingers={fingers}, display={TouchPanel.DisplayWidth}x{TouchPanel.DisplayHeight}, adapterActive={_touchInputActive}.");
+    }
+
+    private static void ReportError(string message, Exception error)
+    {
+        long now = Environment.TickCount64;
+        if (now < _nextError) return;
+        _nextError = now + 5000;
+        Patcher.Log($"{message}: {error}");
+    }
 }
