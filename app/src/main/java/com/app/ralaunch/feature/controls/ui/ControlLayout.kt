@@ -448,6 +448,10 @@ class ControlLayout : FrameLayout {
     private fun handlePointerUp(event: MotionEvent, pointerId: Int): Boolean {
         AppLog.d(TAG, "handlePointerUp: pointerId=$pointerId")
 
+        // Keep overlay ownership through native UP so it cannot release a mouse
+        // button held by another finger or by a virtual control.
+        forwardTouchToSdl(event)
+
         mPointerToControl.remove(pointerId)?.let { controlView ->
             AppLog.d(TAG, "  Releasing pointer $pointerId from ${controlView.javaClass.simpleName}")
             if (!controlView.controlData.isPassThrough) {
@@ -461,7 +465,6 @@ class ControlLayout : FrameLayout {
             }
         }
 
-        forwardTouchToSdl(event)
         return true
     }
 
@@ -471,6 +474,9 @@ class ControlLayout : FrameLayout {
      */
     private fun handleCancel(event: MotionEvent): Boolean {
         AppLog.d(TAG, "handleCancel: clearing ${mPointerToControl.size} pointers")
+
+        // Native cancellation must see the same ownership as DOWN/MOVE.
+        forwardTouchToSdl(event)
 
         val hadPointers = mPointerToControl.isNotEmpty()
         mPointerToControl.forEach { (pointerId, controlView) ->
@@ -486,7 +492,6 @@ class ControlLayout : FrameLayout {
             mOnControlChangedListener?.onControlInUse(false)
         }
 
-        forwardTouchToSdl(event)
         return true
     }
 

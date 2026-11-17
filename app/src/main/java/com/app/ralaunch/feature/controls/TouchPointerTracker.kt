@@ -23,7 +23,8 @@ object TouchPointerTracker {
      * 两条路径的实现方式不同：
      *  - SDL3：org.libsdl.app.SDLActivity 的 native 方法（由 SDL fork 的 SDL_touch.c 实现，
      *    被占用的触点不会合成鼠标事件）；
-     *  - SDL2：org.libsdl.app2.SDLActivity 的 Java 实现（app2 胶水层在转发触摸前过滤掉这些触点）。
+     *  - SDL2：org.libsdl.app2.SDLActivity 的 native 方法（SDL2 fork 同样在鼠标合成时过滤）。
+     * 两条 JNI 路径均接收 Android 原始 pointerId；SDL3 在 native 边界转换为从 1 开始的 fingerId。
      * 同时吞掉 Throwable：native 方法在库尚未加载时会抛 UnsatisfiedLinkError（Error 而非 Exception），
      * 早期用 catch(Exception) 兜不住，会在玩家第一次触摸虚拟按键时直接崩掉进程。
      */
