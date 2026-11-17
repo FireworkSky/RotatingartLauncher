@@ -116,11 +116,11 @@ class LogcatReaderTest {
         val reader = LogcatReader(RecordingLogger(), disabledFileLogger())
 
         assertEquals(
-            "logcat --pid=123 -v threadtime *:V",
+            "logcat --pid=123 -v threadtime -T 1 *:V",
             reader.buildCommand(123, minLevel = LogLevel.VERBOSE)
         )
         assertEquals(
-            "logcat --pid=123 -v threadtime *:I",
+            "logcat --pid=123 -v threadtime -T 1 *:I",
             reader.buildCommand(123, minLevel = LogLevel.INFO)
         )
     }
