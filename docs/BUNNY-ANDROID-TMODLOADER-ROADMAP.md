@@ -252,3 +252,12 @@ Isso aproxima o ambiente de execução do projeto de referência, mas não subst
 O conversor também continua dependendo de um perfil de conteúdo real; o perfil não está incluído no repositório e a variante de conversão não é ativada sem -PbunnyTerrariaProfile=.... O APK oficial Terraria Mobile sozinho ainda não fornece automaticamente todos os metadados XNB/XACT que o conversor exige.
 
 **Validação desta atualização:** commits publicados, mas nenhuma execução de GitHub Actions apareceu para a branch, nenhum APK foi produzido e nenhum .tmod foi carregado. O próximo bloqueio técnico é integrar o host Android gerenciado e obter um perfil de conteúdo compatível; não marcar o carregamento de mods como funcional antes de teste em aparelho.
+
+
+## Encaminhamento de inicialização via host dedicado — 2026-11-25
+
+O GameLauncher agora não tenta mais iniciar tModLoader.dll diretamente pelo hostfxr genérico quando detecta o perfil Android. Nessa situação, procura MobileLauncher.Host.dll e exige os arquivos de runtimeconfig/deps, MobileLauncher.Bootstrap.dll, MobileLauncher.Patches.dll, MobileLauncher.Controls.dll e a pasta MonoMod.Android ao lado do host. Se faltar qualquer componente, interrompe com uma mensagem explícita listando o que está ausente. Se o conjunto estiver presente, inicia MobileLauncher.Host.dll com o CoreCLR exigido pelo pacote e repassa os argumentos do jogo.
+
+Essa mudança implementa o ponto de despacho para o bootstrap correto e evita confundir uma chamada genérica de tModLoader.dll com inicialização Android real.
+
+**Ainda não é um bootstrap completo:** os assemblies do host dedicado e seus componentes ainda não foram portados/compilados/empacotados nesta branch. Portanto, com a instalação atual, o comportamento esperado é um erro claro de bootstrap ausente, não a abertura do jogo. O próximo trabalho é portar os componentes sob a licença GPL-3.0 do projeto de referência, incluir a ponte JNI nativa correspondente e empacotar o host ARM64 com o runtime compatível. Depois será necessário compilar e testar em aparelho.
