@@ -78,6 +78,12 @@ android {
         versionName = "2.2.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        externalNativeBuild {
+            cmake {
+                arguments += "-DBUNNY_MOBILE_TERRARIA_CONVERTER=${if (bunnyTerrariaEnabled) "ON" else "OFF"}"
+            }
+        }
     }
 
     sourceSets.named("main") {
@@ -93,7 +99,6 @@ android {
         cmake {
             path = file("../core/CMakeLists.txt")
             version = if (useLocalToolchain) "3.30.5" else "3.22.1"
-            arguments("-DBUNNY_MOBILE_TERRARIA_CONVERTER=${if (bunnyTerrariaEnabled) "ON" else "OFF"}")
         }
     }
 
