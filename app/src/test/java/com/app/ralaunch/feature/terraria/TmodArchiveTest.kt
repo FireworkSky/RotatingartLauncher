@@ -51,7 +51,19 @@ class TmodArchiveTest {
         }
     }
 
-    private fun createTmod(): File {
+    @Test
+    fun rejectsMalformedLoaderVersion() {
+        val file = createTmod(loaderVersion = "not-a-version")
+        try {
+            assertThrows(IllegalArgumentException::class.java) {
+                TmodArchive.inspect(file)
+            }
+        } finally {
+            file.delete()
+        }
+    }
+
+    private fun createTmod(loaderVersion: String = "2026.09.3.1"): File {
         fun writeString(output: DataOutputStream, value: String) {
             val bytes = value.toByteArray(Charsets.UTF_8)
             var remaining = bytes.size
@@ -78,7 +90,7 @@ class TmodArchiveTest {
         val bytes = ByteArrayOutputStream()
         DataOutputStream(bytes).use { output ->
             output.write("TMOD".toByteArray(Charsets.US_ASCII))
-            writeString(output, "2026.09.3.1")
+            writeString(output, loaderVersion)
             output.write(digest)
             output.write(ByteArray(256))
             output.writeInt(Integer.reverseBytes(payload.size))
