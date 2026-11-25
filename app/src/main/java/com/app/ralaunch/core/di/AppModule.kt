@@ -172,7 +172,7 @@ val appModule = module {
 
     single<PatchManager?> {
         try {
-            PatchManager(null, false)
+            PatchManager(null, true)
         } catch (e: Exception) {
             null
         }
