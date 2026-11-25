@@ -66,7 +66,7 @@ object TerrariaMobileInstallService {
             val plugin = InstallPluginRegistry.getPluginById("terraria") as? TerrariaInstallPlugin
                 ?: error("O instalador Terraria do Bunny não está registrado.")
 
-            progress("Instalando tModLoader e preparando a pasta de mods…", 84)
+            reportProgress("Instalando tModLoader e preparando a pasta de mods…", 84)
             val gameItem = suspendCancellableCoroutine { continuation ->
                 plugin.installConvertedResources(
                     resources,
