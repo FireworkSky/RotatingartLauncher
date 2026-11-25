@@ -54,3 +54,36 @@ Cada mod depende de versão do tModLoader, bibliotecas e requisitos próprios. A
 ## Limites desta etapa
 
 Este documento registra a mudança de arquitetura e evita uma falsa promessa de injeção no app oficial. Nenhuma DLL de mod foi executada por esta alteração; nenhum APK foi compilado ou validado em aparelho. A próxima implementação deve migrar/adaptar o host Android tModLoader, não marcar .bmod como runtime funcional.
+
+
+## Atualização de implementação — conversão de Terraria PE
+
+Foi localizado um caminho comunitário mais específico: **FireworkSky/tML-Pocket-Launcher** (GPL-3.0), que documenta uma sessão em aparelho Android ARM64 chegando ao menu com Terraria 1.4.4.9 e tModLoader 2026.09.3.1. O projeto também contém uma conversão de recursos da instalação PE para o formato de conteúdo esperado pelo tModLoader desktop. Referências:
+
+- Projeto: https://github.com/FireworkSky/tML-Pocket-Launcher
+- Guia PE: https://github.com/FireworkSky/tML-Pocket-Launcher/blob/main/docs/terraria-pe.md
+- Guia de desenvolvimento e validação: https://github.com/FireworkSky/tML-Pocket-Launcher/blob/main/docs/development.md
+
+### O que a conversão realmente faz
+
+A conversão não copia o APK para dentro de outro APK nem injeta o tModLoader no processo oficial. Ela lê o APK base e os APKs divididos instalados pelo Android, encontra os contêineres Unity (`data.unity3d` e `resources.resource`) e converte os recursos necessários para o formato de conteúdo PC que o tModLoader/FNA espera. O jogo modificado é iniciado pelo runtime próprio do launcher.
+
+O perfil de conversão usado pelo projeto de referência contém metadados de texturas, shaders compilados, inventário de sons/fontes e fallback de texturas. Esse perfil é preparado a partir de uma instalação desktop legítima de Terraria e da versão exata do tModLoader. Portanto, não é correto prometer uma conversão completa usando apenas o APK Android sem antes resolver e validar esses recursos auxiliares.
+
+### Trabalho já feito nesta branch
+
+- `TerrariaAndroidDetector` agora enumera o APK base e os APKs divididos da instalação oficial.
+- Verifica a assinatura UnityFS do contêiner `assets/bin/Data/data.unity3d`.
+- Verifica a presença de `assets/bin/Data/resources.resource`.
+- A tela de estado informa se a estrutura de origem parece conversível, sem afirmar que a conversão ou o runtime já estão prontos.
+- Foram adicionados testes unitários para assinatura inválida, ausência de stream e recursos distribuídos entre APK base e split.
+
+### Próxima implementação obrigatória
+
+1. Portar/adaptar o conversor nativo C++/JNI do projeto de referência e suas dependências LZ4, vgmstream, Ogg e Vorbis.
+2. Preparar um perfil local de conversão para tModLoader 2026.09.3.1 / Terraria 1.4.4.9, sem distribuir conteúdo proprietário.
+3. Integrar a conversão numa tarefa em segundo plano, com cancelamento, validação de espaço livre e instalação atômica em armazenamento privado do Bunny.
+4. Conectar o resultado ao instalador e ao GameLauncher já existentes, usando os patches tModLoader Android correspondentes.
+5. Validar no aparelho: menu, mundo, salvamento e carregamento de um mod pequeno real.
+
+**Estado honesto:** o detector e a inspeção de origem foram implementados nesta branch; o conversor nativo ainda não foi integrado. Não existe ainda APK Bunny validado com um mod carregado.
