@@ -3,6 +3,11 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:enableOnBackInvokedCallback="false">
 
+    <queries>
+        <!-- Permite verificar a presença do Terraria Android sem pedir permissão em tempo de execução. -->
+        <package android:name="com.and.games505.TerrariaPaid" />
+    </queries>
+
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- VPN 权限 (EasyTier 联机功能) -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
