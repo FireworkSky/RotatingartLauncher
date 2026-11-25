@@ -1,21 +1,25 @@
-name: Build Debug APK
+name: Bunny Evolution Android validation
 
 on:
   workflow_dispatch:
   push:
     branches:
       - main
+      - bunny-evolution-dev
     paths:
       - 'app/**'
+      - 'core/**'
+      - 'external/**'
       - 'shared/**'
       - 'gradle/**'
       - 'gradlew'
       - 'settings.gradle*'
       - 'build.gradle*'
+      - '.gitmodules'
       - '.github/workflows/build-debug-apk.yml'
 
 jobs:
-  build:
+  validate:
     runs-on: ubuntu-latest
 
     steps:
@@ -34,18 +38,21 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Install Android NDK r28 and CMake
-        run: sdkmanager --install 'ndk;28.0.12433566' 'cmake;3.22.1'
+      - name: Install Android NDK and CMake
+        run: sdkmanager --install 'ndk;29.0.14206865' 'cmake;3.22.1'
 
       - name: Make Gradle wrapper executable
         run: chmod +x ./gradlew
 
+      - name: Run unit tests
+        run: ./gradlew testDebugUnitTest --no-daemon
+
       - name: Build debug APK
-        run: ./gradlew assembleDebug
+        run: ./gradlew assembleDebug --no-daemon
 
       - name: Upload debug APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: rotatingartlauncher-debug-apk
+          name: bunny-evolution-debug-apk
           path: app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
