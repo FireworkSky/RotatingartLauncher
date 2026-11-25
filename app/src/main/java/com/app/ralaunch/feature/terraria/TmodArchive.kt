@@ -48,7 +48,9 @@ internal object TmodArchive {
             }
 
             val loaderVersion = text()
-            require(loaderVersion.isNotBlank()) { "Versão do tModLoader ausente no mod." }
+            require(loaderVersion.matches(Regex("""(?:\d+\.){1,3}\d+"""))) {
+                "Versão do tModLoader inválida no mod."
+            }
             val expectedHash = ByteArray(20)
             input.readFully(expectedHash)
             input.seek(input.filePointer + 256)
