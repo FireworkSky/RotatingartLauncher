@@ -246,6 +246,7 @@ class TerrariaInstallPlugin : BaseInstallPlugin() {
                     "A conversão não contém a pasta Content."
                 }
                 require(modLoaderFile.isFile) { "Pacote tModLoader não encontrado." }
+                val requiredDotNetRuntime = readRequiredDotNetRuntimeVersion(modLoaderFile)
                 if (!gameStorageRootFull.exists()) {
                     check(gameStorageRootFull.mkdirs()) { "Não foi possível criar a pasta do jogo." }
                 }
@@ -293,13 +294,15 @@ class TerrariaInstallPlugin : BaseInstallPlugin() {
                     gameStorageRootFull,
                     actualTModLoaderDir,
                     GameDefinition.TMODLOADER,
-                    iconPath
+                    iconPath,
+                    runtimeOverride = requiredDotNetRuntime
                 )
                 val item = createGameItem(
                     GameDefinition.TMODLOADER,
                     gameStorageRootFull,
                     actualTModLoaderDir,
-                    iconPath
+                    iconPath,
+                    runtimeOverride = requiredDotNetRuntime
                 )
                 withContext(Dispatchers.Main) {
                     callback.onProgress("Instalação Bunny preparada.", 100)
@@ -311,6 +314,37 @@ class TerrariaInstallPlugin : BaseInstallPlugin() {
                     callback.onError(error.message ?: "Falha ao instalar Terraria PE com tModLoader.")
                 }
             }
+        }
+    }
+
+    /**
+     * Reads the framework requirement from the official tModLoader package.
+     * Never launch this game with an arbitrary globally selected .NET runtime.
+     */
+    private fun readRequiredDotNetRuntimeVersion(archive: File): String {
+        ZipFile(archive).use { zip ->
+            val entry = zip.getEntry("tModLoader.runtimeconfig.json")
+                ?: zip.entries().asSequence().firstOrNull {
+                    it.name.endsWith("/tModLoader.runtimeconfig.json")
+                }
+                ?: error("O pacote tModLoader não contém tModLoader.runtimeconfig.json.")
+            val config = zip.getInputStream(entry).bufferedReader().use {
+                org.json.JSONObject(it.readText())
+            }
+            val options = config.optJSONObject("runtimeOptions")
+                ?: error("O runtimeconfig do tModLoader está inválido.")
+            val framework = options.optJSONObject("framework")
+                ?: options.optJSONArray("frameworks")?.optJSONObject(0)
+                ?: error("O runtimeconfig não declara um framework .NET.")
+            val name = framework.optString("name")
+            val version = framework.optString("version")
+            require(name == "Microsoft.NETCore.App") {
+                "Framework .NET não suportado pelo Bunny: " + name
+            }
+            require(Regex("[0-9]+\\.[0-9]+\\.[0-9]+").matches(version)) {
+                "Versão do runtime .NET inválida no pacote tModLoader: " + version
+            }
+            return version
         }
     }
 
