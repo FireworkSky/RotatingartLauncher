@@ -17,26 +17,38 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.app.ralaunch.feature.terraria.conversion.TerrariaPeConversion
+import java.io.File
+import kotlinx.coroutines.launch
 
 /**
- * Bunny's Terraria PE discovery panel. Resource recognition is only the first
- * conversion prerequisite; it does not mean that a playable tModLoader profile
- * has already been generated.
+ * Bunny's Terraria PE discovery and resource-conversion panel.
+ * A successful conversion prepares content only; it does not claim that the
+ * tModLoader runtime has launched or loaded a mod.
  */
 @Composable
 fun TerrariaAndroidStatusCard(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     var detection by remember { mutableStateOf<TerrariaAndroidDetector.Detection?>(null) }
+    var converting by remember { mutableStateOf(false) }
+    var conversionMessage by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(context) {
         detection = TerrariaAndroidDetector.detect(context)
     }
+
+    val profileAvailable = remember(detection) {
+        runCatching { TerrariaPeConversion.profileAvailable(context) }.getOrDefault(false)
+    }
+    val installed = detection as? TerrariaAndroidDetector.Detection.Installed
 
     Card(
         modifier = modifier.fillMaxWidth(),
@@ -65,13 +77,24 @@ fun TerrariaAndroidStatusCard(
                     )
                     if (state.payload.conversionSourceAvailable) {
                         Text(
-                            "Estrutura Unity reconhecida. Os arquivos-base necessários para iniciar a conversão foram localizados; o perfil tModLoader ainda precisa ser preparado.",
+                            "Estrutura Unity reconhecida. Os arquivos-base para conversão foram localizados.",
                             style = MaterialTheme.typography.bodyMedium
                         )
                     } else {
                         Text(
-                            "Instalação detectada, mas os contêineres Unity esperados não foram encontrados. Esta instalação ainda não pode ser convertida pelo Bunny.",
+                            "Instalação detectada, mas os contêineres Unity esperados não foram encontrados.",
                             style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
+                    if (!profileAvailable) {
+                        Text(
+                            "Perfil de conversão ausente neste APK. Ele precisa ser preparado com os recursos de Terraria para PC e a versão correspondente do tModLoader.",
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    } else {
+                        Text(
+                            "Perfil pronto • tModLoader ${TerrariaPeConversion.targetTml(context)}",
+                            style = MaterialTheme.typography.bodySmall
                         )
                     }
                 }
@@ -79,7 +102,7 @@ fun TerrariaAndroidStatusCard(
 
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Button(
-                    enabled = detection is TerrariaAndroidDetector.Detection.Installed,
+                    enabled = installed != null,
                     onClick = {
                         val opened = runCatching {
                             TerrariaAndroidDetector.launch(context)
@@ -96,11 +119,45 @@ fun TerrariaAndroidStatusCard(
                     Text("Abrir Terraria")
                 }
 
-                OutlinedButton(onClick = {
-                    detection = TerrariaAndroidDetector.detect(context)
-                }) {
+                OutlinedButton(
+                    onClick = {
+                        detection = TerrariaAndroidDetector.detect(context)
+                        conversionMessage = null
+                    }
+                ) {
                     Text("Verificar novamente")
                 }
+            }
+
+            Button(
+                enabled = installed?.payload?.conversionSourceAvailable == true &&
+                    profileAvailable && !converting,
+                onClick = {
+                    converting = true
+                    conversionMessage = "Convertendo recursos do Terraria PE…"
+                    scope.launch {
+                        val output = File(
+                            context.filesDir,
+                            "bunny/terraria-android/resources-${System.currentTimeMillis()}"
+                        )
+                        try {
+                            TerrariaPeConversion.convert(context, output) { _, _, _ -> true }
+                            conversionMessage =
+                                "Recursos convertidos e verificados. A integração com a instalação e inicialização do tModLoader ainda está em desenvolvimento."
+                        } catch (error: Exception) {
+                            output.deleteRecursively()
+                            conversionMessage = "Falha na conversão: ${error.message ?: "erro desconhecido"}"
+                        } finally {
+                            converting = false
+                        }
+                    }
+                }
+            ) {
+                Text(if (converting) "Convertendo…" else "Converter recursos")
+            }
+
+            conversionMessage?.let {
+                Text(it, style = MaterialTheme.typography.bodySmall)
             }
         }
     }
