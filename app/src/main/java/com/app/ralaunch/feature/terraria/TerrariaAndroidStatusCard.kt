@@ -23,7 +23,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.app.ralaunch.feature.terraria.conversion.TerrariaPeConversion
-import java.io.File
 import kotlinx.coroutines.launch
 
 /**
@@ -40,6 +39,7 @@ fun TerrariaAndroidStatusCard(
     var detection by remember { mutableStateOf<TerrariaAndroidDetector.Detection?>(null) }
     var converting by remember { mutableStateOf(false) }
     var conversionMessage by remember { mutableStateOf<String?>(null) }
+    var conversionProgress by remember { mutableStateOf(0) }
 
     LaunchedEffect(context) {
         detection = TerrariaAndroidDetector.detect(context)
@@ -123,6 +123,7 @@ fun TerrariaAndroidStatusCard(
                     onClick = {
                         detection = TerrariaAndroidDetector.detect(context)
                         conversionMessage = null
+                        conversionProgress = 0
                     }
                 ) {
                     Text("Verificar novamente")
@@ -134,30 +135,33 @@ fun TerrariaAndroidStatusCard(
                     profileAvailable && !converting,
                 onClick = {
                     converting = true
-                    conversionMessage = "Convertendo recursos do Terraria PE…"
+                    conversionProgress = 0
+                    conversionMessage = "Preparando Terraria com tModLoader…"
                     scope.launch {
-                        val output = File(
-                            context.filesDir,
-                            "bunny/terraria-android/resources-${System.currentTimeMillis()}"
-                        )
                         try {
-                            TerrariaPeConversion.convert(context, output) { _, _, _ -> true }
-                            conversionMessage =
-                                "Recursos convertidos e verificados. A integração com a instalação e inicialização do tModLoader ainda está em desenvolvimento."
+                            val game = TerrariaMobileInstallService.install(context) { message, percent ->
+                                scope.launch {
+                                    conversionMessage = message
+                                    conversionProgress = percent
+                                }
+                            }
+                            conversionMessage = game.displayedName + " foi adicionado à biblioteca do Bunny."
+                            conversionProgress = 100
                         } catch (error: Exception) {
-                            output.deleteRecursively()
-                            conversionMessage = "Falha na conversão: ${error.message ?: "erro desconhecido"}"
+                            conversionMessage = "Falha na preparação: " + (error.message ?: "erro desconhecido")
                         } finally {
                             converting = false
                         }
                     }
                 }
             ) {
-                Text(if (converting) "Convertendo…" else "Converter recursos")
+                Text(if (converting) "Preparando…" else "Preparar jogo com mods")
             }
-
             conversionMessage?.let {
-                Text(it, style = MaterialTheme.typography.bodySmall)
+                Text(
+                    if (converting) it + " (" + conversionProgress + "%)" else it,
+                    style = MaterialTheme.typography.bodySmall
+                )
             }
         }
     }
