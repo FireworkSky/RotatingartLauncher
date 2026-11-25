@@ -148,3 +148,25 @@ Commits:
 - Foi consultado o caminho documentado pelo tModLoader para Linux: os dados ficam em $XDG_DATA_HOME/Terraria/tModLoader, com os mods dentro de Mods. Isso sustenta o caminho usado pelo launcher quando XDG_DATA_HOME está configurado.
 
 **Validação pendente:** o GitHub Actions continua sem registrar execução para a branch (workflow_runs vazio e status sem checks). Assim, os commits mais recentes ainda não foram compilados nem tiveram os testes executados. O runtime mobile-only também continua sem perfil gerado. Não existe ainda prova de mod simples carregado em jogo.
+
+## Atualização de 25/11/2026 — referência Android com mod carregado
+
+Foi revisada a documentação atual do projeto comunitário FireworkSky/tML-Pocket-Launcher. Ela relata que um aparelho ARM64 chegou ao menu usando Terraria 1.4.4.9, tModLoader 2026.09.3.1 e o mod cliente MobileJoystick. Isso é uma referência técnica concreta de que um host Android próprio pode iniciar o tModLoader e carregar ao menos um mod integrado; não prova que o Bunny já faça isso nem que qualquer arquivo .tmod externo funcione.
+
+Fontes consultadas:
+- https://github.com/FireworkSky/tML-Pocket-Launcher
+- https://github.com/FireworkSky/tML-Pocket-Launcher/blob/main/docs/development.md
+- https://github.com/FireworkSky/tML-Pocket-Launcher/blob/main/docs/terraria-pe.md
+
+A documentação de desenvolvimento também confirma dois requisitos distintos que não podem ser confundidos:
+- O APK padrão não inclui o conversor PE. A variante com conversor precisa de um perfil de build.
+- O perfil de conversão de referência ainda é preparado com inventário/layout de texturas, shaders compilados, inventário de sons/fontes e metadados XACT obtidos de referências desktop. Portanto, esse projeto de referência também não resolve automaticamente o requisito de gerar tudo somente com o Terraria Mobile.
+
+### Direção de implementação no Bunny
+
+1. Portar o host Android ARM64 e os patches móveis necessários para tModLoader 2026.09.3.1, respeitando as licenças dos componentes.
+2. Integrar um mod de teste mínimo compilado para a versão exata do host e registrar no log a confirmação de carregamento.
+3. Substituir as dependências de inventário desktop por geração/validação a partir do APK PE e dos artefatos públicos compatíveis do tModLoader. Não aceitar conversão parcial como completa.
+4. Executar o APK em aparelho ARM64, entrar em mundo, salvar e reiniciar. Só então testar importação de um .tmod externo.
+
+**Estado em 25/11/2026:** foi identificada uma referência comunitária que relata menu Android e um mod cliente carregado, mas o Bunny ainda não incorporou esse host nem provou carregar um mod. O perfil mobile-only continua ausente. Não existe teste em Galaxy A07 nem APK Bunny validado.
