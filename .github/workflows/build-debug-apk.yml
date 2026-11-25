@@ -55,8 +55,8 @@ jobs:
       - name: Install Android NDK and CMake
         run: sdkmanager --install 'ndk;29.0.14206865' 'cmake;3.22.1'
 
-      - name: Compile optional Terraria PE converter sources
-        run: .\\gradlew.bat :app:compileDebugKotlin :app:externalNativeBuildDebug --no-daemon -PbunnyTerrariaProfile=build\\converter-smoke-profile.zip
+      - name: Compile launcher Kotlin and native libraries
+        run: .\\gradlew.bat :app:compileDebugKotlin :app:externalNativeBuildDebug --no-daemon
 
       - name: Run unit tests
         run: .\\gradlew.bat testDebugUnitTest --no-daemon
