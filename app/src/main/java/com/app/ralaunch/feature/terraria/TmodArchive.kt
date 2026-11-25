@@ -20,6 +20,12 @@ internal object TmodArchive {
         val entries: Int,
     )
 
+    fun requireCompatible(metadata: Metadata, installedVersion: String) {
+        require(metadata.loaderVersion == installedVersion) {
+            "Este mod foi criado para tModLoader ${metadata.loaderVersion}, mas o Bunny está usando $installedVersion."
+        }
+    }
+
     fun inspect(file: File, verifyHash: Boolean = true): Metadata =
         RandomAccessFile(file, "r").use { input ->
             fun int32(): Int = Integer.reverseBytes(input.readInt())
