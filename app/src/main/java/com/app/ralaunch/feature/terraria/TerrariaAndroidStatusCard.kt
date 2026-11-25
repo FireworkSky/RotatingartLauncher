@@ -115,7 +115,7 @@ fun TerrariaAndroidStatusCard(
                     }
                     if (!profileAvailable) {
                         Text(
-                            "Perfil mobile-only ainda não disponível. O Bunny precisa gerar e validar esse perfil diretamente dos arquivos do Terraria Mobile; não é necessário instalar Terraria de PC no seu aparelho.",
+                            "Perfil mobile-only ainda não disponível. Esta versão ainda depende de um perfil de conversão preparado com referências desktop durante a compilação. O objetivo é eliminar essa dependência e gerar os recursos a partir do Terraria Mobile.",
                             style = MaterialTheme.typography.bodySmall
                         )
                     } else {
