@@ -126,7 +126,7 @@ object DotNetLauncher {
             val candidates = runtimeManager
                 .getInstalledRuntimes(IRuntimeManagerServiceV2.RuntimeType.DOTNET)
                 .filter { isRuntimePatchCompatible(it.version, normalizedOverride) }
-            val overriddenRuntime = candidates.maxByOrNull { it.version }
+            val overriddenRuntime = candidates.firstOrNull()
             if (overriddenRuntime != null) {
                 AppLog.i(TAG, "Using required .NET runtime " + normalizedOverride + " with installed " + overriddenRuntime.version)
                 return overriddenRuntime
