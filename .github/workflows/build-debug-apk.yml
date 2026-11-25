@@ -50,7 +50,7 @@ jobs:
           java-version: '21'
 
       - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
+        uses: android-actions/setup-android@v4
 
       - name: Install Android NDK and CMake
         run: sdkmanager --install 'ndk;29.0.14206865' 'cmake;3.22.1'
