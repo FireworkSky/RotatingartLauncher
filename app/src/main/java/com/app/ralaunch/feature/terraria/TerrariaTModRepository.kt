@@ -30,20 +30,7 @@ object TerrariaTModRepository {
             val storageRoot = File(repository.getGameGlobalStorageDirFull(), game.id)
             require(storageRoot.isDirectory) { "Pasta da instalação tModLoader não encontrada." }
 
-            val assembly = File(storageRoot, game.gameExePathRelative).canonicalFile
-            require(assembly.isFile && assembly.name == "tModLoader.dll") {
-                "A instalação tModLoader do Bunny está incompleta."
-            }
-            val runtimeDirectory = checkNotNull(assembly.parentFile)
-            val marker = File(runtimeDirectory, "bunny-runtime.json")
-            require(marker.isFile) {
-                "Não foi possível confirmar a versão do tModLoader instalado. Reinstale pelo Bunny antes de importar mods."
-            }
-            val installedVersion = runCatching {
-                org.json.JSONObject(marker.readText()).getString("loaderVersion")
-            }.getOrElse {
-                throw IllegalStateException("O registro da versão do tModLoader está inválido.")
-            }
+            val installedVersion = TerrariaRuntimeMarker.read(storageRoot, game.gameExePathRelative)
 
             val displayName = queryDisplayName(context, uri)
             require(displayName.endsWith(".tmod", ignoreCase = true)) {
