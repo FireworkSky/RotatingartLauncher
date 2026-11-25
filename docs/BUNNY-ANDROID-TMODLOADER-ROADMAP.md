@@ -170,3 +170,26 @@ A documentação de desenvolvimento também confirma dois requisitos distintos q
 4. Executar o APK em aparelho ARM64, entrar em mundo, salvar e reiniciar. Só então testar importação de um .tmod externo.
 
 **Estado em 25/11/2026:** foi identificada uma referência comunitária que relata menu Android e um mod cliente carregado, mas o Bunny ainda não incorporou esse host nem provou carregar um mod. O perfil mobile-only continua ausente. Não existe teste em Galaxy A07 nem APK Bunny validado.
+
+## Atualização de 25/11/2026 — compatibilidade de mods e verificação de versão
+
+O importador agora consulta um marcador criado ao final da instalação móvel (bunny-runtime.json, ao lado de tModLoader.dll) e compara a versão exata do runtime com a versão gravada no cabeçalho TMOD. Um mod feito para outra versão é recusado antes de entrar na lista de habilitados. O importador também deixa de substituir silenciosamente um enabled.json inválido por uma lista vazia.
+
+O leitor TMOD passou a rejeitar versões de loader malformadas, caminhos internos absolutos ou com segmentos . ou .., nomes duplicados e conteúdo descompactado acima do limite definido. Os testes unitários foram ampliados para cobrir versão inválida e caminho inseguro.
+
+Commits desta etapa:
+- 6f6ddb6 — grava a versão exata do runtime depois da instalação.
+- 57d8fb7 — bloqueia importação de mods com versão incompatível.
+- a562e26 — valida o campo de versão do cabeçalho TMOD.
+- 8e4fe72 — corrige a ordem de resolução do diretório da instalação.
+- ae4fbf0 — valida nomes e limites das entradas TMOD.
+- ed6dae5 — adiciona teste para caminho interno inseguro.
+
+### Bloqueios que continuam abertos
+
+1. O perfil de conversão mobile-only ainda não é gerado. O conversor atual depende de inventário de sons/fontes, layout de imagens, shaders e metadados XACT que o perfil atual recebe de referências desktop.
+2. O host de jogo Android do tML Pocket Launcher ainda não foi portado para esta base Bunny. A simples instalação do ZIP oficial e o lançamento de tModLoader.dll pelo GameLauncher não provam que SDL/FNA/FAudio, ciclo de vida Android, recursos e entrada estejam compatíveis.
+3. A workflow do branch está configurada para compilar APK e executar testes após alterações em app/** e core/**, mas a API do GitHub ainda retorna zero execuções e nenhum status de CI para os commits desta etapa. Portanto, não há compilação/teste confirmados.
+4. Não existe APK Bunny testado em aparelho, nem log de um mod simples carregado.
+
+**Decisão:** não considerar o Bunny pronto para mods. O próximo marco de código é portar/adaptar o host Android funcional de referência e substituir o perfil de conversão desktop por geração a partir dos recursos do APK PE e de componentes públicos compatíveis. Depois disso, compilar, iniciar, carregar um mod de teste pequeno, entrar em mundo e salvar no aparelho.
