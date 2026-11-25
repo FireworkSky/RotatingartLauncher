@@ -140,3 +140,11 @@ Commits:
 2. Preparar um perfil de conversão compatível com o APK Mobile 1.4.4.9 sem exigir que o usuário tenha Terraria PC instalado no aparelho.
 3. Confirmar o caminho de dados efetivamente usado pelo runtime no arranque Android.
 4. Instalar um mod de teste pequeno e confirmar no log que o tModLoader o carrega, depois entrar em mundo e salvar.
+## Atualização de 24/11/2026 — alinhamento da pasta de mods e interface mobile-only
+
+- O importador foi alinhado com o ambiente real do GameLauncher: ele define XDG_DATA_HOME como /storage/emulated/0/RALauncher quando o armazenamento compartilhado está disponível. Portanto, a pasta esperada é RALauncher/Terraria/tModLoader/Mods; se o launcher cair para o diretório do assembly, o caminho alternativo é relativo a game/tModLoader.
+- A instalação agora tenta movimentação atômica e usa substituição normal como fallback quando o sistema de arquivos não oferece suporte a ATOMIC_MOVE.
+- A tela não diz mais que o usuário precisa obter Terraria para PC. Ela informa que o perfil mobile-only ainda não foi gerado e que a preparação deve partir dos arquivos do Terraria Mobile.
+- Foi consultado o caminho documentado pelo tModLoader para Linux: os dados ficam em $XDG_DATA_HOME/Terraria/tModLoader, com os mods dentro de Mods. Isso sustenta o caminho usado pelo launcher quando XDG_DATA_HOME está configurado.
+
+**Validação pendente:** o GitHub Actions continua sem registrar execução para a branch (workflow_runs vazio e status sem checks). Assim, os commits mais recentes ainda não foram compilados nem tiveram os testes executados. O runtime mobile-only também continua sem perfil gerado. Não existe ainda prova de mod simples carregado em jogo.
