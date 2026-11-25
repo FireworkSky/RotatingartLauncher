@@ -93,3 +93,23 @@ O perfil de conversão usado pelo projeto de referência contém metadados de te
 6. Medir RAM e FPS no Galaxy A07 antes de testar mods maiores.
 
 **Estado honesto:** a cadeia de conversão, download e instalação foi implementada no código, mas ainda não foi compilada nem executada nesta sessão. O perfil real não está no repositório porque contém dados auxiliares derivados de arquivos proprietários. Ainda não existe evidência de um mod carregado pelo APK Bunny; não declarar o projeto pronto até os testes acima passarem.
+
+
+## Correção obrigatória: instalação somente Mobile
+
+A revisão do código em 24/11/2026 confirmou que a conversão atualmente commitada **ainda não atende** ao requisito de usar somente Terraria Mobile:
+
+- `MobileTerrariaConverter.prepareProfile` exige `PixelShader.xnb`, `ScreenShader.xnb`, `TileShader.xnb`, `TerrariaMusic.xgs`, `Sound Bank.xsb`, `images.tsv`, `assets.json` e `texture-fallback.zip` dentro de um perfil.
+- `scripts/build/prepare-bunny-terraria-profile.ps1` ainda exige explicitamente `TerrariaContent` de uma instalação desktop para inventário de sons/fontes e bancos XACT.
+- O conversor nativo usa o inventário para decidir quais XNBs produzir e usa os bancos XACT para reconstruir a música. Apenas extrair `data.unity3d` e `resources.resource` do APK não cria esses metadados.
+- O workflow anterior tentava compilar usando `build/converter-smoke-profile.zip`, que não é gerado por nenhum passo do workflow. Isso não é um teste válido de conversão.
+
+### Próxima implementação mobile-only
+
+1. Inspecionar os `TextAsset`, `Texture2D` e `AudioClip` presentes nos bundles do próprio APK e gerar um inventário de recursos mobile sem usar uma pasta Terraria desktop.
+2. Obter os shaders e demais componentes de compatibilidade apenas de artefatos públicos do tModLoader quando a licença e o formato permitirem; não assumir que o ZIP de release contém arquivos ausentes sem inspecioná-lo.
+3. Reconstruir metadados de música a partir de uma tabela de cues compatível com a versão exata, validando cada faixa disponível no APK. Não copiar bancos proprietários de uma instalação PC.
+4. Fazer o conversor produzir um relatório de cobertura: recursos convertidos, recursos opcionais ausentes e recursos obrigatórios ausentes. Se faltar um recurso obrigatório, parar antes de instalar e mostrar o nome exato.
+5. Só depois compilar o perfil gerado, abrir o menu do tModLoader e carregar um mod de teste pequeno.
+
+**Critério de bloqueio:** até os passos acima existirem e serem testados, a tela não deve sugerir que a instalação mobile-only está pronta. O perfil antigo permanece experimental e não pode ser tratado como solução para quem possui apenas Terraria Mobile.
