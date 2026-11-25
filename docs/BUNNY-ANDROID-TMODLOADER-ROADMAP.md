@@ -238,3 +238,17 @@ A instalação mobile agora lê `tModLoader.runtimeconfig.json` do ZIP oficial a
 O resolvedor CoreCLR agora procura um runtime instalado da mesma linha major/minor com patch igual ou superior ao exigido. Se não encontrar, recusa iniciar o jogo em vez de cair para um runtime global possivelmente incompatível. Foi adicionado teste unitário para patch compatível, patch antigo e versões major/minor diferentes.
 
 **Limite:** o teste unitário ainda não foi executado pelo Gradle/CI; o GitHub Actions continua sem execuções. A correção também não substitui o bootstrap Android específico do tModLoader nem prova que o runtime correto já está instalado no dispositivo.
+
+## Atualização de implementação — perfil de inicialização Android (25/11/2026)
+
+Foram publicados dois ajustes preliminares na branch:
+
+- GameLauncher agora reconhece uma instalação preparada na estrutura game/Terraria/Content + game/tModLoader/tModLoader.dll e configura as variáveis TML_ANDROID, TML_ANDROID_GAME_ROOT, TML_TMODLOADER_ASSEMBLY, TML_ANDROID_CONTENT, TML_ANDROID_TERRARIA_ROOT e TML_ANDROID_CACHE.
+- Para esse perfil, força o backend FNA/SDL2 e acrescenta -tmlsavedirectory quando o usuário ainda não forneceu esse argumento.
+- PatchManager instala os ZIPs de patches que já estão empacotados em assets/patches durante sua inicialização.
+
+Isso aproxima o ambiente de execução do projeto de referência, mas não substitui o host gerenciado Android. O launcher ainda passa tModLoader.dll diretamente ao hostfxr genérico. O projeto de referência usa MobileLauncher.Host e MobileLauncher.Bootstrap, incluindo resolução de assemblies, configuração dos serviços Android e inicialização controlada do entry point. Esses componentes ainda precisam ser integrados e compilados no Bunny antes de esperar que o tModLoader abra.
+
+O conversor também continua dependendo de um perfil de conteúdo real; o perfil não está incluído no repositório e a variante de conversão não é ativada sem -PbunnyTerrariaProfile=.... O APK oficial Terraria Mobile sozinho ainda não fornece automaticamente todos os metadados XNB/XACT que o conversor exige.
+
+**Validação desta atualização:** commits publicados, mas nenhuma execução de GitHub Actions apareceu para a branch, nenhum APK foi produzido e nenhum .tmod foi carregado. O próximo bloqueio técnico é integrar o host Android gerenciado e obter um perfil de conteúdo compatível; não marcar o carregamento de mods como funcional antes de teste em aparelho.
