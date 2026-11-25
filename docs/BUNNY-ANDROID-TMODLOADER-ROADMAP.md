@@ -219,3 +219,12 @@ Commits:
 - f64aeb3 — consulta a versão pelo marcador.
 - 4703e38 — adiciona o marcador isolado.
 - 9396644 — testa gravação, leitura e validação de caminhos do marcador.
+
+
+## Auditoria do host Android — 2026-11-25
+
+Foi adicionada a auditoria [BUNNY-ANDROID-HOST-INTEGRATION-AUDIT.md](BUNNY-ANDROID-HOST-INTEGRATION-AUDIT.md), comparando esta branch com o projeto de referência tML Pocket Launcher. A diferença crítica é que o projeto de referência inicia um host gerenciado próprio (`MobileLauncher.Host.dll`) que prepara CoreCLR, ambiente SDL/FNA, resolve assemblies do jogo e chama a entrada do tModLoader; não inicia simplesmente `tModLoader.dll` com o launcher genérico.
+
+A referência declara runtime Android .NET `10.0.4` no arquivo `android/runtime/runtime-version.txt`. Isso é um dado de referência para a release usada por aquele projeto, não prova de que o Bunny já tenha esse runtime instalado ou selecionado. A integração precisa validar o `runtimeconfig.json` do pacote exato e falhar claramente se o runtime correspondente não estiver disponível.
+
+A auditoria também registra que o perfil PE ainda exige metadados auxiliares preparados antes do APK. O requisito do projeto permanece: o usuário final não deve precisar instalar Terraria para PC. Nenhuma dessas lacunas foi marcada como resolvida.
