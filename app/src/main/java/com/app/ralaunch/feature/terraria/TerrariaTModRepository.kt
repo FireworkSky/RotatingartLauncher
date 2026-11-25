@@ -98,9 +98,7 @@ object TerrariaTModRepository {
                 // .tmod is a TMOD container, not a regular ZIP. Validate its own
                 // header, table, Info entry, payload length and integrity hash.
                 val metadata = TmodArchive.inspect(temporary, verifyHash = true)
-                require(metadata.loaderVersion == installedVersion) {
-                    "Este mod foi criado para tModLoader ${metadata.loaderVersion}, mas o Bunny está usando $installedVersion."
-                }
+                TmodArchive.requireCompatible(metadata, installedVersion)
                 val destination = File(modsDirectory, "${metadata.name}.tmod")
                 moveReplacing(temporary, destination)
 
