@@ -84,6 +84,8 @@ android {
         if (bunnyTerrariaEnabled) {
             java.srcDir("src/bunnyTerraria/java")
             assets.srcDir(bunnyTerrariaAssets)
+        } else {
+            java.srcDir("src/noBunnyTerraria/java")
         }
     }
 
