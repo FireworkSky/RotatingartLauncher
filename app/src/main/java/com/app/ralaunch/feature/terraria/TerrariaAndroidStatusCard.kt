@@ -31,9 +31,8 @@ import org.koin.java.KoinJavaComponent
 import kotlinx.coroutines.launch
 
 /**
- * Bunny's Terraria PE discovery and resource-conversion panel.
- * A successful conversion prepares content only; it does not claim that the
- * tModLoader runtime has launched or loaded a mod.
+ * Bunny's Terraria PE detection, isolated tModLoader installation and .tmod import panel.
+ * Runtime launch and real mod loading still require device validation.
  */
 @Composable
 fun TerrariaAndroidStatusCard(
