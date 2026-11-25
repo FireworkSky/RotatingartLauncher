@@ -434,8 +434,9 @@ object GameLauncher {
             } else {
                 SdlVersion.displayName(SettingsAccess.runtimeSdlVersion)
             }
-            EnvVarsManager.quickSetEnvVars(mapOf("FNA_PLATFORM_BACKEND" to sdlBackend))
-            AppLog.i(TAG, "FNA API backend: $sdlBackend; SDL runtime: ${SettingsAccess.runtimeSdlVersion}")
+            val effectiveSdlBackend = if (tmlMobileProfile != null) "SDL2" else sdlBackend
+            EnvVarsManager.quickSetEnvVars(mapOf("FNA_PLATFORM_BACKEND" to effectiveSdlBackend))
+            AppLog.i(TAG, "FNA API backend: $effectiveSdlBackend; SDL runtime: ${SettingsAccess.runtimeSdlVersion}")
 
             val runtimeSpec = resolveRuntimeSpec(dotNetRuntimeVersionOverride)
             val decodedRuntime = RuntimeSpec.decode(runtimeSpec)
