@@ -1,6 +1,8 @@
 package com.app.ralaunch.feature.terraria
 
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -13,6 +15,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -22,7 +25,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.app.ralaunch.core.di.contract.IGameRepositoryServiceV3
 import com.app.ralaunch.feature.terraria.conversion.TerrariaPeConversion
+import org.koin.java.KoinJavaComponent
 import kotlinx.coroutines.launch
 
 /**
@@ -36,6 +41,9 @@ fun TerrariaAndroidStatusCard(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val gameRepository = remember { KoinJavaComponent.get(IGameRepositoryServiceV3::class.java) }
+    val games by gameRepository.games.collectAsState()
+    var installedGameId by remember { mutableStateOf<String?>(null) }
     var detection by remember { mutableStateOf<TerrariaAndroidDetector.Detection?>(null) }
     var converting by remember { mutableStateOf(false) }
     var conversionMessage by remember { mutableStateOf<String?>(null) }
@@ -43,6 +51,26 @@ fun TerrariaAndroidStatusCard(
 
     LaunchedEffect(context) {
         detection = TerrariaAndroidDetector.detect(context)
+    }
+
+    LaunchedEffect(games) {
+        installedGameId = games.firstOrNull { it.gameId == "tModLoader" }?.id
+    }
+
+    val modPicker = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        val gameId = installedGameId
+        if (uri != null && gameId != null) {
+            scope.launch {
+                try {
+                    val mod = TerrariaTModRepository.installFromUri(context, gameId, uri)
+                    conversionMessage = "Mod " + mod.name + " instalado. Ele será carregado na próxima inicialização do tModLoader."
+                } catch (error: Exception) {
+                    conversionMessage = "Falha ao instalar mod: " + (error.message ?: "erro desconhecido")
+                }
+            }
+        }
     }
 
     val profileAvailable = remember(detection) {
@@ -162,6 +190,13 @@ fun TerrariaAndroidStatusCard(
                     if (converting) it + " (" + conversionProgress + "%)" else it,
                     style = MaterialTheme.typography.bodySmall
                 )
+            }
+
+            OutlinedButton(
+                enabled = installedGameId != null && !converting,
+                onClick = { modPicker.launch(arrayOf("*/*")) }
+            ) {
+                Text("Adicionar arquivo .tmod")
             }
         }
     }
