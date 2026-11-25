@@ -13,7 +13,13 @@ set(CMAKE_SKIP_BUILD_RPATH TRUE)
 set(CMAKE_SKIP_INSTALL_RPATH TRUE)
 set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
 
-project("main")
+project("main" LANGUAGES C CXX)
+
+option(BUNNY_MOBILE_TERRARIA_CONVERTER "Build the optional Terraria PE resource converter" OFF)
+if(BUNNY_MOBILE_TERRARIA_CONVERTER)
+    add_subdirectory(mobile-terraria)
+    install(TARGETS terraria_converter DESTINATION lib)
+endif()
 
 # =========================
 # 基础配置
