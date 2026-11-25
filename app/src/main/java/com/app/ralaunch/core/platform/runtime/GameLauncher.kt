@@ -294,6 +294,15 @@ object GameLauncher {
             )
             AppLog.d(TAG, "XDG 环境变量设置完成 / XDG environment variables set: OK")
 
+            // tModLoader Android profile: the mobile release needs explicit content roots and
+            // SDL/FNA settings; launching tModLoader.dll as an ordinary desktop .NET game
+            // leaves these unset and makes the loader look for desktop assets.
+            val tmlMobileProfile = configureTModLoaderMobileEnvironment(
+                assemblyPath = assemblyPath,
+                dataDirectory = dataDir,
+                cacheDirectory = cacheDir
+            )
+
             // 步骤5：应用用户设置
             // Step 5: Apply user settings
             val settings = SettingsAccess
@@ -432,6 +441,11 @@ object GameLauncher {
             val decodedRuntime = RuntimeSpec.decode(runtimeSpec)
             lastUsedEngine = decodedRuntime.engine
 
+            val launchArgs = if (tmlMobileProfile != null) {
+                if (args.any { it == "-tmlsavedirectory" }) args
+                else args + arrayOf("-tmlsavedirectory", dataDir)
+            } else args
+
             val result = if (decodedRuntime.isMono) {
                 AppLog.i(
                     TAG,
@@ -439,14 +453,14 @@ object GameLauncher {
                 )
                 MonoLauncher.launchAssembly(
                     assemblyPath = assemblyPath,
-                    args = args,
+                    args = launchArgs,
                     monoRuntimeVersionOverride = decodedRuntime.version
                 )
             } else {
                 AppLog.i(TAG, "通过 hostfxr 启动 .NET 运行时 / Launching .NET runtime with hostfxr...")
                 DotNetLauncher.hostfxrLaunch(
                     assemblyPath = assemblyPath,
-                    args = args,
+                    args = launchArgs,
                     dotNetRuntimeVersionOverride = decodedRuntime.version.ifBlank { null }
                 )
             }
@@ -459,6 +473,53 @@ object GameLauncher {
             AppLog.e(TAG, "启动程序集失败 / Failed to launch assembly: $assemblyPath", e)
             return -1
         }
+    }
+
+    /**
+     * Configures the explicit Android content layout used by Bunny's mobile-only
+     * Terraria PE conversion. Returns the game root when this is a prepared
+     * mobile tModLoader install, or null for ordinary desktop game installs.
+     */
+    private fun configureTModLoaderMobileEnvironment(
+        assemblyPath: String,
+        dataDirectory: String,
+        cacheDirectory: String
+    ): String? {
+        val assembly = File(assemblyPath)
+        if (!assembly.name.equals("tModLoader.dll", ignoreCase = true)) return null
+
+        val tmlDirectory = assembly.parentFile ?: return null
+        val gameRoot = tmlDirectory.parentFile ?: return null
+        val terrariaRoot = File(gameRoot, "Terraria")
+        val contentRoot = File(terrariaRoot, "Content")
+        if (!contentRoot.isDirectory) {
+            AppLog.w(TAG, "tModLoader detected, but Terraria PE Content/ is missing; mobile profile not applied")
+            return null
+        }
+
+        EnvVarsManager.quickSetEnvVars(
+            "TML_ANDROID" to "1",
+            "TML_ANDROID_GAME_ROOT" to gameRoot.absolutePath,
+            "TML_TMODLOADER_ASSEMBLY" to assembly.absolutePath,
+            "TML_ANDROID_CONTENT" to contentRoot.absolutePath,
+            "TML_ANDROID_TERRARIA_ROOT" to terrariaRoot.absolutePath,
+            "TML_ANDROID_CACHE" to cacheDirectory,
+            "HOME" to dataDirectory,
+            "XDG_DATA_HOME" to dataDirectory,
+            "XDG_CONFIG_HOME" to dataDirectory,
+            "FNA_PLATFORM_BACKEND" to "SDL2",
+            "FNA3D_OPENGL_FORCE_ES3" to "1",
+            "FNA3D_FORCE_DRIVER" to "OpenGL",
+            "FNA3D_MOJOSHADER_PROFILE" to "glsles3",
+            "SDL_TOUCH_MOUSE_EVENTS" to "0",
+            "SDL_MOUSE_TOUCH_EVENTS" to "0",
+            "SDL_AUDIODRIVER" to "aaudio"
+        )
+        AppLog.i(
+            TAG,
+            "Configured Bunny Android tModLoader profile: root=${gameRoot.absolutePath}, content=${contentRoot.absolutePath}"
+        )
+        return gameRoot.absolutePath
     }
 
     /**
