@@ -266,6 +266,9 @@ class TerrariaInstallPlugin : BaseInstallPlugin() {
                 }
                 tModLoaderDir.mkdirs()
                 installTModLoader(modLoaderFile, tModLoaderDir, callback)
+                check(File(tModLoaderDir, "tModLoader.dll").isFile) {
+                    "O pacote não contém tModLoader.dll na raiz instalada."
+                }
 
                 if (isCancelled) {
                     withContext(Dispatchers.Main) { callback.onCancelled() }
@@ -274,7 +277,9 @@ class TerrariaInstallPlugin : BaseInstallPlugin() {
                 withContext(Dispatchers.Main) {
                     callback.onProgress("Aplicando compatibilidade MonoMod…", 90)
                 }
-                installMonoMod(tModLoaderDir)
+                check(installMonoMod(tModLoaderDir)) {
+                    "Não foi possível aplicar os componentes de compatibilidade Android."
+                }
                 val iconPath = extractIcon(tModLoaderDir, GameDefinition.TMODLOADER)
 
                 check(staging.renameTo(finalGameDir)) {
