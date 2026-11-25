@@ -5,6 +5,7 @@ import com.app.ralaunch.RaLaunchApp
 import com.app.ralaunch.core.common.util.FileUtils
 import com.app.ralaunch.core.logging.AppLog
 import com.app.ralaunch.feature.installer.*
+import android.os.Environment
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -280,6 +281,7 @@ class TerrariaInstallPlugin : BaseInstallPlugin() {
                     "Não foi possível finalizar a instalação isolada."
                 }
                 val actualTModLoaderDir = File(finalGameDir, "tModLoader")
+                prepareTModLoaderDataDirectories(actualTModLoaderDir)
                 createGameInfo(
                     gameStorageRootFull,
                     actualTModLoaderDir,
@@ -301,6 +303,25 @@ class TerrariaInstallPlugin : BaseInstallPlugin() {
                 withContext(Dispatchers.Main) {
                     callback.onError(error.message ?: "Falha ao instalar Terraria PE com tModLoader.")
                 }
+            }
+        }
+    }
+
+    /**
+     * Pre-creates tModLoader's expected user-data folders. GameLauncher uses
+     * the shared RALauncher data root when available and falls back to the
+     * assembly directory when Android storage access is restricted.
+     */
+    private fun prepareTModLoaderDataDirectories(gameDir: File) {
+        val externalDataRoot = File(Environment.getExternalStorageDirectory(), "RALauncher")
+        val candidateRoots = listOf(
+            File(externalDataRoot, "Terraria/tModLoader"),
+            File(gameDir, "Terraria/tModLoader")
+        )
+        candidateRoots.forEach { root ->
+            runCatching {
+                File(root, "Mods").mkdirs()
+                File(root, "ModPacks").mkdirs()
             }
         }
     }
