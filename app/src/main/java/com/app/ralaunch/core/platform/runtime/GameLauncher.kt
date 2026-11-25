@@ -549,8 +549,10 @@ object GameLauncher {
         val terrariaRoot = File(gameRoot, "Terraria")
         val contentRoot = File(terrariaRoot, "Content")
         if (!contentRoot.isDirectory) {
-            AppLog.w(TAG, "tModLoader detected, but Terraria PE Content/ is missing; mobile profile not applied")
-            return null
+            throw IllegalStateException(
+                "Terraria PE Content/ is missing at ${contentRoot.absolutePath}. " +
+                    "Refusing to launch desktop tModLoader without the Android content profile."
+            )
         }
 
         EnvVarsManager.quickSetEnvVars(
