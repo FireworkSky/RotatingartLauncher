@@ -27,6 +27,21 @@ object TerrariaTModRepository {
                 "O jogo selecionado não é uma instalação tModLoader."
             }
 
+            val assembly = File(storageRoot, game.gameExePathRelative).canonicalFile
+            require(assembly.isFile && assembly.name == "tModLoader.dll") {
+                "A instalação tModLoader do Bunny está incompleta."
+            }
+            val runtimeDirectory = checkNotNull(assembly.parentFile)
+            val marker = File(runtimeDirectory, "bunny-runtime.json")
+            require(marker.isFile) {
+                "Não foi possível confirmar a versão do tModLoader instalado. Reinstale pelo Bunny antes de importar mods."
+            }
+            val installedVersion = runCatching {
+                org.json.JSONObject(marker.readText()).getString("loaderVersion")
+            }.getOrElse {
+                throw IllegalStateException("O registro da versão do tModLoader está inválido.")
+            }
+
             val displayName = queryDisplayName(context, uri)
             require(displayName.endsWith(".tmod", ignoreCase = true)) {
                 "Selecione um arquivo .tmod."
@@ -83,13 +98,17 @@ object TerrariaTModRepository {
                 // .tmod is a TMOD container, not a regular ZIP. Validate its own
                 // header, table, Info entry, payload length and integrity hash.
                 val metadata = TmodArchive.inspect(temporary, verifyHash = true)
+                require(metadata.loaderVersion == installedVersion) {
+                    "Este mod foi criado para tModLoader ${metadata.loaderVersion}, mas o Bunny está usando $installedVersion."
+                }
                 val destination = File(modsDirectory, "${metadata.name}.tmod")
                 moveReplacing(temporary, destination)
 
                 // tModLoader reads this list to decide which installed mods are enabled.
                 val enabledFile = File(modsDirectory, "enabled.json")
+                // Never silently replace a damaged enable list: that would disable all existing mods.
                 val enabled = if (enabledFile.isFile) {
-                    runCatching { JSONArray(enabledFile.readText()) }.getOrElse { JSONArray() }
+                    JSONArray(enabledFile.readText())
                 } else JSONArray()
                 val ids = (0 until enabled.length())
                     .mapNotNull { enabled.optString(it).takeIf(String::isNotBlank) }
