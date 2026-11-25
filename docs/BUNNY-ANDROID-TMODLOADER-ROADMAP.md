@@ -72,18 +72,24 @@ O perfil de conversão usado pelo projeto de referência contém metadados de te
 
 ### Trabalho já feito nesta branch
 
-- `TerrariaAndroidDetector` agora enumera o APK base e os APKs divididos da instalação oficial.
-- Verifica a assinatura UnityFS do contêiner `assets/bin/Data/data.unity3d`.
-- Verifica a presença de `assets/bin/Data/resources.resource`.
-- A tela de estado informa se a estrutura de origem parece conversível, sem afirmar que a conversão ou o runtime já estão prontos.
-- Foram adicionados testes unitários para assinatura inválida, ausência de stream e recursos distribuídos entre APK base e split.
+- `TerrariaAndroidDetector` enumera o APK base e os APKs divididos da instalação oficial.
+- Verifica a assinatura UnityFS de `assets/bin/Data/data.unity3d` e a presença de `assets/bin/Data/resources.resource`.
+- Foram adicionados testes unitários para assinatura inválida, ausência de stream e recursos distribuídos entre APK base e split APKs.
+- O conversor C++/JNI do projeto de referência foi portado para `core/mobile-terraria`, incluindo módulos Unity, XNB, LZX, FSB5 e arte de controles.
+- O CMake tem uma opção para compilar o conversor e suas dependências nativas somente na variante preparada com perfil.
+- O Gradle aceita `-PbunnyTerrariaProfile=<arquivo.zip>`, valida os componentes obrigatórios e inclui a implementação Kotlin opcional.
+- A conversão PE roda em thread de trabalho, valida espaço livre e grava o resultado em armazenamento privado.
+- O Bunny consulta a publicação oficial do tModLoader correspondente ao perfil, baixa `tModLoader.zip`, valida tamanho e SHA-256 publicado pelo GitHub e instala o runtime numa pasta separada.
+- A instalação cria as pastas `Mods` e `ModPacks`, registra o jogo no repositório e preserva o aplicativo Terraria original.
+- A tela permite importar um arquivo `.tmod` para a pasta que o tModLoader usará.
 
-### Próxima implementação obrigatória
+### Próximas validações obrigatórias
 
-1. Portar/adaptar o conversor nativo C++/JNI do projeto de referência e suas dependências LZ4, vgmstream, Ogg e Vorbis.
-2. Preparar um perfil local de conversão para tModLoader 2026.09.3.1 / Terraria 1.4.4.9, sem distribuir conteúdo proprietário.
-3. Integrar a conversão numa tarefa em segundo plano, com cancelamento, validação de espaço livre e instalação atômica em armazenamento privado do Bunny.
-4. Conectar o resultado ao instalador e ao GameLauncher já existentes, usando os patches tModLoader Android correspondentes.
-5. Validar no aparelho: menu, mundo, salvamento e carregamento de um mod pequeno real.
+1. Gerar o perfil local de conversão com recursos legítimos de Terraria PC e tModLoader 2026.09.3.1.
+2. Compilar o source set opcional e a biblioteca nativa no CI; corrigir qualquer erro de Kotlin/CMake/NDK.
+3. Gerar o APK com perfil real e instalar em aparelho ARM64.
+4. Confirmar conversão completa do APK PE, menu do tModLoader, controles, áudio e renderização.
+5. Importar um mod pequeno real, verificar o log de carregamento, entrar num mundo e salvar.
+6. Medir RAM e FPS no Galaxy A07 antes de testar mods maiores.
 
-**Estado honesto:** o detector e a inspeção de origem foram implementados nesta branch; o conversor nativo ainda não foi integrado. Não existe ainda APK Bunny validado com um mod carregado.
+**Estado honesto:** a cadeia de conversão, download e instalação foi implementada no código, mas ainda não foi compilada nem executada nesta sessão. O perfil real não está no repositório porque contém dados auxiliares derivados de arquivos proprietários. Ainda não existe evidência de um mod carregado pelo APK Bunny; não declarar o projeto pronto até os testes acima passarem.
