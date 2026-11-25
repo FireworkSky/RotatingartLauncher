@@ -101,18 +101,29 @@ object BunnyModRepository {
         val removed = folder.deleteRecursively(); setEnabled(context, id, false); return removed
     }
 
-    private fun enabledIds(context: Context): Set<String> = try {
-        val array = JSONObject(enabledFile(context).takeIf { it.isFile }?.readText() ?: "{}").optJSONArray("enabled") ?: return emptySet()
-        (0 until array.length()).mapNotNull { array.optString(it).takeIf(idPattern::matches) }.toSet()
-    } catch (_: Exception) { emptySet() }
+    private fun enabledIds(context: Context): Set<String> {
+        return try {
+            val array = JSONObject(enabledFile(context).takeIf { it.isFile }?.readText() ?: "{}")
+                .optJSONArray("enabled") ?: return emptySet()
+            (0 until array.length()).mapNotNull { array.optString(it).takeIf(idPattern::matches) }.toSet()
+        } catch (_: Exception) { emptySet() }
+    }
 
-    private fun parseInfo(folder: File, enabled: Set<String>): ModInfo? = try {
-        val file = File(folder, MANIFEST); if (!file.isFile || file.length() > MAX_MANIFEST_BYTES) return null
-        val json = JSONObject(file.readText()); val id = json.optString("id")
-        if (!idPattern.matches(id) || id != folder.name) return null
-        val listed = folder.walkTopDown().filter { it.isFile }.map { it.relativeTo(folder).invariantSeparatorsPath }.toList()
-        ModInfo(id, json.optString("name", id), json.optString("version", "0"), json.optString("author", "Desconhecido"),
-            json.optString("gameVersion", "unknown"), json.optInt("loaderApi", 1), json.optString("description", ""),
-            listed, id in enabled, runtimeReady = false)
-    } catch (_: Exception) { null }
+    private fun parseInfo(folder: File, enabled: Set<String>): ModInfo? {
+        return try {
+            val file = File(folder, MANIFEST)
+            if (!file.isFile || file.length() > MAX_MANIFEST_BYTES) return null
+            val json = JSONObject(file.readText())
+            val id = json.optString("id")
+            if (!idPattern.matches(id) || id != folder.name) return null
+            val listed = folder.walkTopDown().filter { it.isFile }
+                .map { it.relativeTo(folder).invariantSeparatorsPath }.toList()
+            ModInfo(
+                id, json.optString("name", id), json.optString("version", "0"),
+                json.optString("author", "Desconhecido"), json.optString("gameVersion", "unknown"),
+                json.optInt("loaderApi", 1), json.optString("description", ""),
+                listed, id in enabled, runtimeReady = false
+            )
+        } catch (_: Exception) { null }
+    }
 }
