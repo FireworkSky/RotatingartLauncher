@@ -258,6 +258,7 @@ class TerrariaInstallPlugin : BaseInstallPlugin() {
                 copyDirectory(File(convertedResources, "Content"), File(terrariaDir, "Content"))
 
                 if (isCancelled) {
+                    staging.deleteRecursively()
                     withContext(Dispatchers.Main) { callback.onCancelled() }
                     return@launch
                 }
@@ -271,6 +272,7 @@ class TerrariaInstallPlugin : BaseInstallPlugin() {
                 }
 
                 if (isCancelled) {
+                    staging.deleteRecursively()
                     withContext(Dispatchers.Main) { callback.onCancelled() }
                     return@launch
                 }
