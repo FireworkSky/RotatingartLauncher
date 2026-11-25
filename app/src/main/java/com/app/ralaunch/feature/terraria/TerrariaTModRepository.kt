@@ -100,11 +100,10 @@ object TerrariaTModRepository {
                 val metadata = TmodArchive.inspect(temporary, verifyHash = true)
                 TmodArchive.requireCompatible(metadata, installedVersion)
                 val destination = File(modsDirectory, "${metadata.name}.tmod")
-                moveReplacing(temporary, destination)
 
-                // tModLoader reads this list to decide which installed mods are enabled.
+                // Parse and stage the enable list before replacing the mod file. A
+                // damaged enabled.json must not leave a newly installed half-state.
                 val enabledFile = File(modsDirectory, "enabled.json")
-                // Never silently replace a damaged enable list: that would disable all existing mods.
                 val enabled = if (enabledFile.isFile) {
                     JSONArray(enabledFile.readText())
                 } else JSONArray()
@@ -115,6 +114,7 @@ object TerrariaTModRepository {
                 val stagedEnabled = File.createTempFile(".bunny-enabled-", ".json", modsDirectory)
                 try {
                     stagedEnabled.writeText(JSONArray(ids.sorted()).toString(2))
+                    moveReplacing(temporary, destination)
                     moveReplacing(stagedEnabled, enabledFile)
                 } finally {
                     stagedEnabled.delete()
