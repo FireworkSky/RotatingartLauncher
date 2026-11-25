@@ -143,7 +143,7 @@ jobs:
 
       - name: Prepare Debug APK
         id: prepare_debug
-        if: github.event_name == 'push' || github.event.inputs.build_debug == 'true' && steps.build_debug.outcome == 'success'
+        if: (github.event_name == 'push' || github.event.inputs.build_debug == 'true') && steps.build_debug.outcome == 'success'
         run: |
           DEBUG_DIR="app/build/outputs/apk/debug"
           
@@ -169,7 +169,7 @@ jobs:
           echo "✅ Debug APK 准备完成: $(ls -lh "$DEBUG_DIR/app-debug.apk")"
 
       - name: Upload Debug APK
-        if: github.event_name == 'push' || github.event.inputs.build_debug == 'true' && steps.prepare_debug.outcome == 'success'
+        if: (github.event_name == 'push' || github.event.inputs.build_debug == 'true') && steps.prepare_debug.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
           name: 1-RAL-Developer-Debug
