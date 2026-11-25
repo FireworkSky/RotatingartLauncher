@@ -207,3 +207,15 @@ Commits adicionais:
 - 72e6777 — prepara a lista de mods antes de substituir o arquivo importado.
 
 **Validação ainda pendente:** não foi possível executar Gradle/NDK nesta sessão. A consulta ao GitHub Actions continua retornando zero execuções para o branch, e não há APK nem log de jogo. A próxima afirmação de prontidão só deve ocorrer depois que a compilação e a execução do teste simples forem confirmadas.
+
+### Verificação isolada dos componentes Kotlin
+
+O marcador de runtime foi extraído para TerrariaRuntimeMarker, sem dependências Android: ele grava a versão junto do assembly, valida o formato e impede que um caminho canônico saia da pasta da instalação. Foram adicionados testes unitários para gravação/leitura, versão inválida e caminho externo.
+
+Nesta sessão, os dois componentes Kotlin puros (parser TMOD e marcador) foram compilados isoladamente com kotlinc e passaram por smoke checks com arquivos sintéticos. Isso confirma sintaxe e comportamento básico dessas classes, mas **não substitui** Gradle, compilação JNI/NDK, APK completo ou teste de jogo real.
+
+Commits:
+- ad4da36 — usa o marcador após instalar o runtime.
+- f64aeb3 — consulta a versão pelo marcador.
+- 4703e38 — adiciona o marcador isolado.
+- 9396644 — testa gravação, leitura e validação de caminhos do marcador.
