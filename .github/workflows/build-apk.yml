@@ -103,7 +103,7 @@ jobs:
           cache: 'gradle'  # 与上面的缓存互补
 
       - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
+        uses: android-actions/setup-android@v4
 
       - name: Install SDK Components
         id: install_sdk
