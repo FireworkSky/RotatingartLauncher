@@ -23,9 +23,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 
 /**
- * Small reusable status panel for Bunny Evolution's Terraria integration.
- * It deliberately launches the original game normally; it does not claim
- * that Android tModLoader support is available.
+ * Bunny's Terraria PE discovery panel. Resource recognition is only the first
+ * conversion prerequisite; it does not mean that a playable tModLoader profile
+ * has already been generated.
  */
 @Composable
 fun TerrariaAndroidStatusCard(
@@ -49,10 +49,10 @@ fun TerrariaAndroidStatusCard(
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             Text("Bunny Evolution", style = MaterialTheme.typography.titleLarge)
-            Text("Terraria Android 1.4.4.9", style = MaterialTheme.typography.titleMedium)
+            Text("Terraria Android • verificação de recursos", style = MaterialTheme.typography.titleMedium)
 
             when (val state = detection) {
-                null -> Text("Verificando se o Terraria está instalado…")
+                null -> Text("Verificando Terraria e os arquivos de instalação…")
                 TerrariaAndroidDetector.Detection.NotInstalled ->
                     Text("Terraria não encontrado. Instale a versão oficial para continuar.")
                 is TerrariaAndroidDetector.Detection.Error ->
@@ -60,9 +60,20 @@ fun TerrariaAndroidStatusCard(
                 is TerrariaAndroidDetector.Detection.Installed -> {
                     Text("Terraria encontrado • versão ${state.versionName ?: "desconhecida"}")
                     Text(
-                        "O jogo original pode ser aberto. O carregamento de mods Android ainda está em desenvolvimento.",
+                        "Pacotes APK legíveis: ${state.payload.readableArchiveCount}/${state.payload.archiveCount}",
                         style = MaterialTheme.typography.bodyMedium
                     )
+                    if (state.payload.conversionSourceAvailable) {
+                        Text(
+                            "Estrutura Unity reconhecida. Os arquivos-base necessários para iniciar a conversão foram localizados; o perfil tModLoader ainda precisa ser preparado.",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    } else {
+                        Text(
+                            "Instalação detectada, mas os contêineres Unity esperados não foram encontrados. Esta instalação ainda não pode ser convertida pelo Bunny.",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
                 }
             }
 
