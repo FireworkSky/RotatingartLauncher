@@ -193,3 +193,17 @@ Commits desta etapa:
 4. Não existe APK Bunny testado em aparelho, nem log de um mod simples carregado.
 
 **Decisão:** não considerar o Bunny pronto para mods. O próximo marco de código é portar/adaptar o host Android funcional de referência e substituir o perfil de conversão desktop por geração a partir dos recursos do APK PE e de componentes públicos compatíveis. Depois disso, compilar, iniciar, carregar um mod de teste pequeno, entrar em mundo e salvar no aparelho.
+
+### Ajuste de diagnóstico — host existente versus host validado
+
+A base Bunny já possui um host genérico .NET/SDL e bibliotecas nativas SDL, FNA3D e FAudio, além de configuração de CoreCLR e startup hooks. Portanto, não é correto dizer que não existe host Android algum. O que ainda falta é validar esse conjunto especificamente com a distribuição tModLoader escolhida, aplicar/confirmar os patches Android compatíveis com essa versão e comprovar o ciclo completo de jogo.
+
+A instalação também passou a preparar a lista de habilitação antes de substituir o pacote importado, para que um enabled.json inválido não deixe o novo mod instalado em estado parcial.
+
+Commits adicionais:
+- d2e2ca1 — centraliza a comparação de versão do mod com o runtime.
+- 13997e4 — usa a validação centralizada no importador.
+- 6c03708 — testa rejeição de mod com versão diferente.
+- 72e6777 — prepara a lista de mods antes de substituir o arquivo importado.
+
+**Validação ainda pendente:** não foi possível executar Gradle/NDK nesta sessão. A consulta ao GitHub Actions continua retornando zero execuções para o branch, e não há APK nem log de jogo. A próxima afirmação de prontidão só deve ocorrer depois que a compilação e a execução do teste simples forem confirmadas.
