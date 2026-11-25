@@ -63,7 +63,22 @@ class TmodArchiveTest {
         }
     }
 
-    private fun createTmod(loaderVersion: String = "2026.09.3.1"): File {
+    @Test
+    fun rejectsUnsafeInternalPaths() {
+        val file = createTmod(entryName = "../outside")
+        try {
+            assertThrows(IllegalArgumentException::class.java) {
+                TmodArchive.inspect(file)
+            }
+        } finally {
+            file.delete()
+        }
+    }
+
+    private fun createTmod(
+        loaderVersion: String = "2026.09.3.1",
+        entryName: String = "Info"
+    ): File {
         fun writeString(output: DataOutputStream, value: String) {
             val bytes = value.toByteArray(Charsets.UTF_8)
             var remaining = bytes.size
@@ -80,7 +95,7 @@ class TmodArchiveTest {
             writeString(payload, "SimpleTest")
             writeString(payload, "1.0.0")
             payload.writeInt(Integer.reverseBytes(1))
-            writeString(payload, "Info")
+            writeString(payload, entryName)
             payload.writeInt(Integer.reverseBytes(1))
             payload.writeInt(Integer.reverseBytes(1))
             payload.writeByte(0x42)
