@@ -35,13 +35,18 @@ object TerrariaTModRepository {
             val storageRoot = File(repository.getGameGlobalStorageDirFull(), game.id)
             require(storageRoot.isDirectory) { "Pasta da instalação tModLoader não encontrada." }
             // GameLauncher sets HOME and XDG_DATA_HOME to /storage/emulated/0/RALauncher.
-            // tModLoader 1.4.4 uses $XDG_DATA_HOME/Terraria/tModLoader/Mods.
+            // tModLoader uses $XDG_DATA_HOME/Terraria/tModLoader/Mods.
             val externalHome = File(
                 android.os.Environment.getExternalStorageDirectory(),
                 "RALauncher"
             )
-            val homeMods = File(externalHome, ".local/share/Terraria/tModLoader/Mods")
-            val fallbackMods = File(storageRoot, ".local/share/Terraria/tModLoader/Mods")
+            val homeMods = File(externalHome, "Terraria/tModLoader/Mods")
+            // If shared storage is unavailable, GameLauncher falls back to the
+            // assembly directory: <storageRoot>/game/tModLoader.
+            val fallbackMods = File(
+                storageRoot,
+                "game/tModLoader/Terraria/tModLoader/Mods"
+            )
             val modsDirectory = if (
                 (externalHome.isDirectory || externalHome.mkdirs()) && externalHome.canWrite()
             ) homeMods else fallbackMods
