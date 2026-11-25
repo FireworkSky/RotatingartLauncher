@@ -74,7 +74,7 @@ android {
         applicationId = "com.app.ralaunch"
         minSdk = 28
         targetSdk = 36
-        versionCode = 6
+        versionCode = 7
         versionName = "2.2.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
