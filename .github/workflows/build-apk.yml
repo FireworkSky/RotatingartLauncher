@@ -1,6 +1,20 @@
 name: Build RAL APK (Debug & Safe)
 
 on:
+  push:
+    branches:
+      - bunny-evolution-dev
+    paths:
+      - 'app/**'
+      - 'core/**'
+      - 'external/**'
+      - 'shared/**'
+      - 'gradle/**'
+      - 'gradlew'
+      - 'settings.gradle*'
+      - 'build.gradle*'
+      - '.gitmodules'
+      - '.github/workflows/build-apk.yml'
   workflow_dispatch:
     inputs:
       build_debug:
