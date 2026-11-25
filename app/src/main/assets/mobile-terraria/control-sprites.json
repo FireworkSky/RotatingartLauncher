@@ -1,0 +1,1520 @@
+{
+  "bundle_sha256": "82189edb50c84944f23267a9de724ccb440c690f5313f99747714956f45dbe21",
+  "alpha": "premultiplied RGB, integer floor",
+  "assets": {
+    "MobileControls/AimOnlyMode": {
+      "layers": [
+        {
+          "sprite": "FBDF6F51"
+        },
+        {
+          "sprite": "FCF32C11"
+        }
+      ]
+    },
+    "MobileControls/WorldAimCross": {
+      "sprite": "9A6CDD0D"
+    },
+    "MobileControls/WorldInteractCursor": {
+      "sprite": "06CC406F"
+    },
+    "MobileControls/AimReticle": {
+      "sprite": "B28F0F10"
+    },
+    "MobileControls/AimUseMode": {
+      "layers": [
+        {
+          "sprite": "FBDF6F51"
+        },
+        {
+          "sprite": "E0A1A2C8"
+        }
+      ]
+    },
+    "MobileControls/AttackAimOnly": {
+      "layers": [
+        {
+          "sprite": "D203E48A"
+        },
+        {
+          "sprite": "FCF32C11"
+        }
+      ]
+    },
+    "MobileControls/AttackAimUse": {
+      "layers": [
+        {
+          "sprite": "D203E48A"
+        },
+        {
+          "sprite": "718FC331"
+        }
+      ]
+    },
+    "MobileControls/BackpackIcon": {
+      "sprite": "53A078DB"
+    },
+    "MobileControls/Buff": {
+      "layers": [
+        {
+          "sprite": "41C430D2"
+        },
+        {
+          "sprite": "7537004E",
+          "crop": [
+            96,
+            0,
+            24,
+            28
+          ]
+        }
+      ]
+    },
+    "MobileControls/Chat": {
+      "layers": [
+        {
+          "sprite": "F8B93B39"
+        },
+        {
+          "sprite": "7051E2CC"
+        }
+      ]
+    },
+    "MobileControls/ChatBubble": {
+      "sprite": "7051E2CC"
+    },
+    "MobileControls/DirectionalArrowsOriginal": {
+      "sprite": "3B476A0D"
+    },
+    "MobileControls/GrappleHook": {
+      "layers": [
+        {
+          "sprite": "7096E6EF"
+        },
+        {
+          "sprite": "5B4C13DC",
+          "crop": [
+            34,
+            34,
+            34,
+            34
+          ]
+        }
+      ]
+    },
+    "MobileControls/GrappleHookIdle": {
+      "layers": [
+        {
+          "sprite": "7096E6EF"
+        },
+        {
+          "sprite": "5B4C13DC",
+          "crop": [
+            34,
+            34,
+            34,
+            34
+          ]
+        }
+      ]
+    },
+    "MobileControls/Heal": {
+      "layers": [
+        {
+          "sprite": "41C430D2"
+        },
+        {
+          "sprite": "7537004E",
+          "crop": [
+            24,
+            0,
+            24,
+            28
+          ]
+        }
+      ]
+    },
+    "MobileControls/ItemButtonFrame": {
+      "sprite": "41C430D2"
+    },
+    "MobileControls/JoystickArrowsOriginal": {
+      "sprite": "718FC331"
+    },
+    "MobileControls/JoystickBase": {
+      "sprite": "1BC25A13"
+    },
+    "MobileControls/JoystickFrame": {
+      "sprite": "712CE8D3"
+    },
+    "MobileControls/JoystickKnob": {
+      "layers": [
+        {
+          "sprite": "D203E48A"
+        },
+        {
+          "sprite": "3B476A0D"
+        }
+      ]
+    },
+    "MobileControls/JoystickKnobBaseOriginal": {
+      "sprite": "D203E48A"
+    },
+    "MobileControls/JoystickPad": {
+      "sprite": "1BC25A13"
+    },
+    "MobileControls/JoystickPadOriginal": {
+      "sprite": "1BC25A13"
+    },
+    "MobileControls/Jump": {
+      "layers": [
+        {
+          "sprite": "FBDF6F51"
+        },
+        {
+          "sprite": "528C13D1"
+        }
+      ]
+    },
+    "MobileControls/Mana": {
+      "layers": [
+        {
+          "sprite": "41C430D2"
+        },
+        {
+          "sprite": "7537004E",
+          "crop": [
+            72,
+            0,
+            24,
+            28
+          ]
+        }
+      ]
+    },
+    "MobileControls/Map": {
+      "layers": [
+        {
+          "sprite": "F8B93B39"
+        },
+        {
+          "sprite": "80987346"
+        }
+      ]
+    },
+    "MobileControls/MapStyle": {
+      "sprite": "D2A2C6BB"
+    },
+    "MobileControls/MinimapFrame": {
+      "sprite": "F2E36587"
+    },
+    "MobileControls/Mount": {
+      "layers": [
+        {
+          "sprite": "7096E6EF"
+        },
+        {
+          "sprite": "5B4C13DC",
+          "crop": [
+            34,
+            136,
+            34,
+            34
+          ]
+        }
+      ]
+    },
+    "MobileControls/MoveJumpHint": {
+      "sprite": "528C13D1"
+    },
+    "MobileControls/MoveJumpHintOriginal": {
+      "sprite": "528C13D1"
+    },
+    "MobileControls/PhoneAimCross": {
+      "sprite": "FCF32C11"
+    },
+    "MobileControls/PhoneAimModeGlyph": {
+      "sprite": "E0A1A2C8"
+    },
+    "MobileControls/PhoneAutoSelectGlyph": {
+      "sprite": "C7706A4D"
+    },
+    "MobileControls/PhoneEditorSlot": {
+      "sprite": "802F4950"
+    },
+    "MobileControls/PhoneEmptyGrappleGlyph": {
+      "sprite": "5B4C13DC",
+      "crop": [
+        34,
+        34,
+        34,
+        34
+      ]
+    },
+    "MobileControls/PhoneGrappleGlyph": {
+      "sprite": "58A828DD"
+    },
+    "MobileControls/PhoneGrapplePad": {
+      "sprite": "1BC25A13"
+    },
+    "MobileControls/PhoneGreenCircle": {
+      "sprite": "7096E6EF"
+    },
+    "MobileControls/PhoneInteractGlyph": {
+      "sprite": "06CC406F"
+    },
+    "MobileControls/PhoneInventoryGlyph": {
+      "sprite": "53A078DB"
+    },
+    "MobileControls/PhoneJumpGlyph": {
+      "sprite": "528C13D1"
+    },
+    "MobileControls/PhoneLoadoutGlyph": {
+      "sprite": "5B4C13DC",
+      "crop": [
+        0,
+        68,
+        34,
+        34
+      ]
+    },
+    "MobileControls/PhoneMenuGlyph": {
+      "sprite": "810A1A2F"
+    },
+    "MobileControls/PhoneMountGlyph": {
+      "sprite": "5B4C13DC",
+      "crop": [
+        34,
+        136,
+        34,
+        34
+      ]
+    },
+    "MobileControls/PhonePressedCircle": {
+      "sprite": "59EA3C90"
+    },
+    "MobileControls/PhonePurpleCircle": {
+      "sprite": "41C430D2"
+    },
+    "MobileControls/PhoneRadialGlyph": {
+      "sprite": "323E98A6"
+    },
+    "MobileControls/PhoneRadialRing": {
+      "sprite": "712CE8D3"
+    },
+    "MobileControls/PhoneSmartCursorGlyph": {
+      "sprite": "137FAF2F"
+    },
+    "MobileControls/PhoneSmartCursorOnGlyph": {
+      "sprite": "B932B68B"
+    },
+    "MobileControls/PhoneSmartInteractGlyph": {
+      "sprite": "463E0EB0"
+    },
+    "MobileControls/PhoneSwapGlyph": {
+      "sprite": "A68C57D8"
+    },
+    "MobileControls/PhoneTargetGlyph": {
+      "sprite": "1FCAB1AF"
+    },
+    "MobileControls/PhoneTealCircle": {
+      "sprite": "FBDF6F51"
+    },
+    "MobileControls/PhoneUnboundGlyph": {
+      "sprite": "FD36DBA6"
+    },
+    "MobileControls/PhoneUseGlyph": {
+      "sprite": "9CC7478F"
+    },
+    "MobileControls/PhoneUseProfileGlyph": {
+      "sprite": "D3F86F46"
+    },
+    "MobileControls/PhoneYellowCircle": {
+      "sprite": "59EA3C90"
+    },
+    "MobileControls/PhoneZoomInGlyph": {
+      "sprite": "B0AB9470"
+    },
+    "MobileControls/PhoneZoomOutGlyph": {
+      "sprite": "C5AB9C74"
+    },
+    "MobileControls/QuickPotions": {
+      "layers": [
+        {
+          "sprite": "FBDF6F51",
+          "at": [
+            6,
+            6
+          ]
+        },
+        {
+          "sprite": "7537004E",
+          "crop": [
+            24,
+            0,
+            24,
+            28
+          ],
+          "at": [
+            14,
+            2
+          ]
+        },
+        {
+          "sprite": "7537004E",
+          "crop": [
+            72,
+            0,
+            24,
+            28
+          ],
+          "at": [
+            32,
+            22
+          ]
+        },
+        {
+          "sprite": "7537004E",
+          "crop": [
+            96,
+            0,
+            24,
+            28
+          ],
+          "at": [
+            10,
+            34
+          ]
+        }
+      ],
+      "size": [
+        64,
+        64
+      ]
+    },
+    "MobileControls/RadialBuff": {
+      "sprite": "7537004E",
+      "crop": [
+        96,
+        0,
+        24,
+        28
+      ]
+    },
+    "MobileControls/Settings": {
+      "sprite": "810A1A2F"
+    },
+    "MobileControls/SmartCursor": {
+      "layers": [
+        {
+          "sprite": "FBDF6F51"
+        },
+        {
+          "sprite": "B932B68B"
+        }
+      ]
+    },
+    "MobileControls/SmartCursorOff": {
+      "layers": [
+        {
+          "sprite": "FBDF6F51"
+        },
+        {
+          "sprite": "137FAF2F"
+        }
+      ]
+    },
+    "MobileControls/TargetLockOff": {
+      "layers": [
+        {
+          "sprite": "FBDF6F51"
+        },
+        {
+          "sprite": "9CCC2136"
+        }
+      ]
+    },
+    "MobileControls/TargetLockOn": {
+      "layers": [
+        {
+          "sprite": "FBDF6F51"
+        },
+        {
+          "sprite": "1FCAB1AF"
+        }
+      ]
+    },
+    "MobileControls/ZoomIn": {
+      "layers": [
+        {
+          "sprite": "F8B93B39"
+        },
+        {
+          "sprite": "B0AB9470"
+        }
+      ]
+    },
+    "MobileControls/ZoomInPlus": {
+      "layers": [
+        {
+          "sprite": "FBDF6F51"
+        },
+        {
+          "sprite": "FCF32C11"
+        }
+      ]
+    },
+    "MobileControls/ZoomOut": {
+      "layers": [
+        {
+          "sprite": "F8B93B39"
+        },
+        {
+          "sprite": "C5AB9C74"
+        }
+      ]
+    },
+    "MobileControls/ZoomPair": {
+      "layers": [
+        {
+          "sprite": "FBDF6F51",
+          "at": [
+            6,
+            6
+          ]
+        },
+        {
+          "sprite": "C5AB9C74",
+          "at": [
+            0,
+            24
+          ]
+        },
+        {
+          "sprite": "B0AB9470",
+          "at": [
+            32,
+            8
+          ]
+        }
+      ],
+      "size": [
+        64,
+        64
+      ]
+    },
+    "MobileHud/Category0": {
+      "sprite": "1D8A8861"
+    },
+    "MobileHud/Category1": {
+      "sprite": "B8107F77"
+    },
+    "MobileHud/Category2": {
+      "sprite": "2B750FD9"
+    },
+    "MobileHud/Category3": {
+      "sprite": "5B3B1ABB"
+    },
+    "MobileHud/Category4": {
+      "sprite": "B73E5DCB"
+    },
+    "MobileHud/Category5": {
+      "sprite": "C1076FEB"
+    },
+    "MobileHud/Category6": {
+      "sprite": "0A2D9B41"
+    },
+    "MobileHud/Chat": {
+      "sprite": "7051E2CC"
+    },
+    "MobileHud/ChatPanel": {
+      "sprite": "3251BC48",
+      "palette": [
+        [
+          0,
+          0,
+          0,
+          255
+        ],
+        [
+          63,
+          65,
+          154,
+          165
+        ]
+      ]
+    },
+    "MobileHud/ChatSelected": {
+      "sprite": "7051E2CC",
+      "gold_contour": true
+    },
+    "MobileHud/Close": {
+      "sprite": "8BBB7E6A"
+    },
+    "MobileHud/Emote": {
+      "sprite": "59C14D0C",
+      "crop": [
+        0,
+        0,
+        32,
+        32
+      ]
+    },
+    "MobileHud/EmoteHeader": {
+      "sprite": "47898558"
+    },
+    "MobileHud/EmotePanel": {
+      "sprite": "3251BC48"
+    },
+    "MobileHud/EmoteSlot": {
+      "sprite": "F8B93B39"
+    },
+    "MobileHud/Map": {
+      "sprite": "80987346"
+    },
+    "MobileHud/MapSelected": {
+      "sprite": "80987346",
+      "gold_contour": true
+    },
+    "MobileHud/Minimap": {
+      "sprite": "D2A2C6BB"
+    },
+    "MobileHud/MinimapSelected": {
+      "sprite": "D2D1D2BC"
+    },
+    "MobileHud/Toolbar": {
+      "sprite": "A9F00BF2"
+    },
+    "MobileInventory/Bag": {
+      "sprite": "53A078DB"
+    },
+    "MobileInventory/BlockSwapOff": {
+      "sprite": "8FDB71F9",
+      "crop": [
+        36,
+        0,
+        36,
+        36
+      ]
+    },
+    "MobileInventory/BlockSwapOn": {
+      "sprite": "8FDB71F9",
+      "crop": [
+        0,
+        0,
+        36,
+        36
+      ]
+    },
+    "MobileInventory/Category0": {
+      "sprite": "DB2557E8"
+    },
+    "MobileInventory/Category10": {
+      "sprite": "90A6D11A"
+    },
+    "MobileInventory/Category11": {
+      "sprite": "8F318C46"
+    },
+    "MobileInventory/Category2": {
+      "sprite": "463E0EB0"
+    },
+    "MobileInventory/Category4": {
+      "sprite": "AF846BAE"
+    },
+    "MobileInventory/Category5": {
+      "sprite": "810A1A2F"
+    },
+    "MobileInventory/Category6": {
+      "sprite": "8D284C4E"
+    },
+    "MobileInventory/Category7": {
+      "sprite": "A0ED4E00"
+    },
+    "MobileInventory/Category8": {
+      "sprite": "2846ABA9"
+    },
+    "MobileInventory/Category9": {
+      "sprite": "002D0A86"
+    },
+    "MobileInventory/Craft": {
+      "sprite": "A9544B31"
+    },
+    "MobileInventory/CraftEmpty": {
+      "sprite": "A9544B31"
+    },
+    "MobileInventory/Defense": {
+      "sprite": "9EBCFEDD",
+      "crop": [
+        0,
+        0,
+        38,
+        48
+      ]
+    },
+    "MobileInventory/Deposit": {
+      "sprite": "57C8D68C"
+    },
+    "MobileInventory/EmptyAccessory": {
+      "sprite": "5B4C13DC",
+      "crop": [
+        68,
+        68,
+        34,
+        34
+      ]
+    },
+    "MobileInventory/EmptyAmmo": {
+      "sprite": "56930B98"
+    },
+    "MobileInventory/EmptyBody": {
+      "sprite": "5B4C13DC",
+      "crop": [
+        0,
+        68,
+        34,
+        34
+      ]
+    },
+    "MobileInventory/EmptyCoin": {
+      "sprite": "E47018AB"
+    },
+    "MobileInventory/EmptyDye": {
+      "sprite": "5B4C13DC",
+      "crop": [
+        34,
+        0,
+        34,
+        34
+      ]
+    },
+    "MobileInventory/EmptyGrapple": {
+      "sprite": "5B4C13DC",
+      "crop": [
+        34,
+        34,
+        34,
+        34
+      ]
+    },
+    "MobileInventory/EmptyHead": {
+      "sprite": "5B4C13DC",
+      "crop": [
+        0,
+        0,
+        34,
+        34
+      ]
+    },
+    "MobileInventory/EmptyLegs": {
+      "sprite": "5B4C13DC",
+      "crop": [
+        0,
+        136,
+        34,
+        34
+      ]
+    },
+    "MobileInventory/EmptyLightPet": {
+      "sprite": "5B4C13DC",
+      "crop": [
+        34,
+        102,
+        34,
+        34
+      ]
+    },
+    "MobileInventory/EmptyMinecart": {
+      "sprite": "5B4C13DC",
+      "crop": [
+        34,
+        68,
+        34,
+        34
+      ]
+    },
+    "MobileInventory/EmptyMount": {
+      "sprite": "5B4C13DC",
+      "crop": [
+        34,
+        136,
+        34,
+        34
+      ]
+    },
+    "MobileInventory/EmptyPet": {
+      "sprite": "5B4C13DC",
+      "crop": [
+        68,
+        34,
+        34,
+        34
+      ]
+    },
+    "MobileInventory/EmptyVanityAccessory": {
+      "sprite": "5B4C13DC",
+      "crop": [
+        68,
+        0,
+        34,
+        34
+      ]
+    },
+    "MobileInventory/EmptyVanityBody": {
+      "sprite": "5B4C13DC",
+      "crop": [
+        0,
+        102,
+        34,
+        34
+      ]
+    },
+    "MobileInventory/EmptyVanityHead": {
+      "sprite": "5B4C13DC",
+      "crop": [
+        0,
+        34,
+        34,
+        34
+      ]
+    },
+    "MobileInventory/EmptyVanityLegs": {
+      "sprite": "5B4C13DC",
+      "crop": [
+        0,
+        170,
+        34,
+        34
+      ]
+    },
+    "MobileInventory/Equipment": {
+      "sprite": "64DF11C8"
+    },
+    "MobileInventory/EquipmentGlyphs": {
+      "sprite": "5B4C13DC"
+    },
+    "MobileInventory/Favorite": {
+      "sprite": "AF846BAE"
+    },
+    "MobileInventory/Grid": {
+      "sprite": "4F7CAA61"
+    },
+    "MobileInventory/House": {
+      "sprite": "BD34C35C"
+    },
+    "MobileInventory/InventorySort": {
+      "sprite": "538C4AC8"
+    },
+    "MobileInventory/Link": {
+      "sprite": "002D0A86"
+    },
+    "MobileInventory/Loadout": {
+      "sprite": "5B4C13DC",
+      "crop": [
+        0,
+        68,
+        34,
+        34
+      ]
+    },
+    "MobileInventory/Loot": {
+      "sprite": "DF41AB13"
+    },
+    "MobileInventory/Pvp": {
+      "sprite": "D93ACD32"
+    },
+    "MobileInventory/QuickStack": {
+      "sprite": "B1190A52"
+    },
+    "MobileInventory/QuickStackCurrent": {
+      "sprite": "BF0509D0"
+    },
+    "MobileInventory/QuickStackNearby": {
+      "sprite": "B1190A52"
+    },
+    "MobileInventory/Restock": {
+      "sprite": "C1260DBF"
+    },
+    "MobileInventory/Ruler": {
+      "sprite": "8ABC98A5",
+      "crop": [
+        0,
+        0,
+        36,
+        36
+      ]
+    },
+    "MobileInventory/Search": {
+      "sprite": "82882C78"
+    },
+    "MobileInventory/Settings": {
+      "sprite": "BF169C3B"
+    },
+    "MobileInventory/SliderKnob": {
+      "sprite": "5902E24E"
+    },
+    "MobileInventory/SliderTrack": {
+      "sprite": "A76DE499"
+    },
+    "MobileInventory/Slot": {
+      "sprite": "3251BC48"
+    },
+    "MobileInventory/SlotShop": {
+      "sprite": "3251BC48",
+      "palette": [
+        [30, 34, 15, 255],
+        [117, 132, 49, 255]
+      ]
+    },
+    "MobileInventory/SlotFavorite": {
+      "sprite": "BB08AD19"
+    },
+    "MobileInventory/SlotFavoriteSelected": {
+      "sprite": "09287109"
+    },
+    "MobileInventory/SlotGreen": {
+      "sprite": "99247754"
+    },
+    "MobileInventory/SlotNew": {
+      "sprite": "0ED2CAE3"
+    },
+    "MobileInventory/SlotOccupied": {
+      "sprite": "00FCF607"
+    },
+    "MobileInventory/SlotPink": {
+      "sprite": "475C8CD7"
+    },
+    "MobileInventory/SlotPurple": {
+      "sprite": "BF1941E9"
+    },
+    "MobileInventory/SlotSelected": {
+      "sprite": "C58E1946"
+    },
+    "MobileInventory/SlotTeal": {
+      "sprite": "F8B93B39"
+    },
+    "MobileInventory/Sort": {
+      "sprite": "7AE39604"
+    },
+    "MobileInventory/Split": {
+      "sprite": "5F568D15"
+    },
+    "MobileInventory/TabSelected": {
+      "sprite": "5F38AB7E"
+    },
+    "MobileInventory/Tool": {
+      "sprite": "F8B93B39"
+    },
+    "MobileInventory/ToolOutline": {
+      "sprite": "B3158A52"
+    },
+    "MobileInventory/ToolSelected": {
+      "sprite": "47898558"
+    },
+    "MobileInventory/Trash": {
+      "sprite": "0BDE99F1"
+    },
+    "MobileInventory/Unfavorite": {
+      "sprite": "CA1C3500"
+    },
+    "MobileInventory/VisibilityOff": {
+      "sprite": "C411B0B9"
+    },
+    "MobileInventory/VisibilityOn": {
+      "sprite": "D7049250"
+    },
+    "MobileMenu/AddServerIcon": {
+      "sprite": "90359E0A"
+    },
+    "MobileMenu/Back": {
+      "sprite": "9945AC3F"
+    },
+    "MobileMenu/Button": {
+      "sprite": "47898558"
+    },
+    "MobileMenu/CharacterEye": {
+      "sprite": "D7049250"
+    },
+    "MobileMenu/CharacterHue": {
+      "sprite": "13BCBB3C"
+    },
+    "MobileMenu/CharacterInfo": {
+      "sprite": "D414C20E"
+    },
+    "MobileMenu/CharacterIris": {
+      "sprite": "D7049250",
+      "iris": true
+    },
+    "MobileMenu/CharacterPants": {
+      "sprite": "15268219"
+    },
+    "MobileMenu/CharacterShirt": {
+      "sprite": "34448092"
+    },
+    "MobileMenu/CharacterShoes": {
+      "sprite": "2846ABA9"
+    },
+    "MobileMenu/CharacterSkin": {
+      "sprite": "A7065E09"
+    },
+    "MobileMenu/CharacterUndershirt": {
+      "sprite": "FC0C0FE4"
+    },
+    "MobileMenu/CharacterVoice": {
+      "sprite": "8E944426"
+    },
+    "MobileMenu/CreationOption": {
+      "sprite": "47898558",
+      "palette": [
+        [
+          30,
+          42,
+          85,
+          255
+        ],
+        [
+          57,
+          76,
+          145,
+          255
+        ]
+      ]
+    },
+    "MobileMenu/CreationOptionSelected": {
+      "sprite": "47898558",
+      "palette": [
+        [
+          36,
+          47,
+          90,
+          255
+        ],
+        [
+          107,
+          127,
+          190,
+          255
+        ]
+      ]
+    },
+    "MobileMenu/CreationPopup": {
+      "sprite": "47898558",
+      "palette": [
+        [
+          9,
+          14,
+          35,
+          255
+        ],
+        [
+          32,
+          48,
+          96,
+          255
+        ]
+      ]
+    },
+    "MobileMenu/CreationRow": {
+      "sprite": "47898558",
+      "palette": [
+        [
+          65,
+          87,
+          155,
+          255
+        ],
+        [
+          43,
+          58,
+          116,
+          255
+        ]
+      ]
+    },
+    "MobileMenu/EditorActionGreen": {
+      "sprite": "99247754"
+    },
+    "MobileMenu/EditorActionTeal": {
+      "sprite": "F8B93B39"
+    },
+    "MobileMenu/EditorActionUnbound": {
+      "sprite": "9F20E98D"
+    },
+    "MobileMenu/EditorAdvanced": {
+      "sprite": "3C45EC07"
+    },
+    "MobileMenu/EditorAimCross": {
+      "sprite": "FCF32C11"
+    },
+    "MobileMenu/EditorApply": {
+      "sprite": "B8F6C8BC"
+    },
+    "MobileMenu/EditorButton": {
+      "sprite": "7B65AC6C"
+    },
+    "MobileMenu/EditorCopy": {
+      "sprite": "71040007"
+    },
+    "MobileMenu/EditorCustom": {
+      "sprite": "810A1A2F"
+    },
+    "MobileMenu/EditorDiscard": {
+      "sprite": "8BBB7E6A"
+    },
+    "MobileMenu/EditorGear": {
+      "sprite": "BF169C3B"
+    },
+    "MobileMenu/EditorGrappleGlyph": {
+      "sprite": "58A828DD"
+    },
+    "MobileMenu/EditorJoystick": {
+      "sprite": "BAE05011"
+    },
+    "MobileMenu/EditorJumpGlyph": {
+      "sprite": "528C13D1"
+    },
+    "MobileMenu/EditorMountGlyph": {
+      "sprite": "5B4C13DC",
+      "crop": [
+        34,
+        136,
+        34,
+        34
+      ]
+    },
+    "MobileMenu/EditorMove": {
+      "sprite": "3B476A0D"
+    },
+    "MobileMenu/EditorMultitouch": {
+      "sprite": "06CC406F"
+    },
+    "MobileMenu/EditorPlainButton": {
+      "sprite": "BAFC1349"
+    },
+    "MobileMenu/EditorPressed": {
+      "sprite": "C58E1946"
+    },
+    "MobileMenu/EditorRadial": {
+      "sprite": "323E98A6"
+    },
+    "MobileMenu/EditorRadialRing": {
+      "sprite": "712CE8D3"
+    },
+    "MobileMenu/EditorRedo": {
+      "sprite": "50D0DC52"
+    },
+    "MobileMenu/EditorSelected": {
+      "sprite": "47898558"
+    },
+    "MobileMenu/EditorSimple": {
+      "sprite": "D361F275"
+    },
+    "MobileMenu/EditorSliderTrack": {
+      "sprite": "A76DE499"
+    },
+    "MobileMenu/EditorToolButton": {
+      "sprite": "A9F00BF2"
+    },
+    "MobileMenu/EditorUnbound": {
+      "sprite": "FD36DBA6"
+    },
+    "MobileMenu/EditorUndo": {
+      "sprite": "0769B299"
+    },
+    "MobileMenu/EditorYellowCircle": {
+      "sprite": "59EA3C90"
+    },
+    "MobileMenu/ExpandDown": {
+      "sprite": "F6BBEB8C",
+      "flip_y": true
+    },
+    "MobileMenu/ExpandUp": {
+      "sprite": "F6BBEB8C"
+    },
+    "MobileMenu/HostIcon": {
+      "sprite": "608B3558"
+    },
+    "MobileMenu/JoinIcon": {
+      "sprite": "2B936827"
+    },
+    "MobileMenu/LocalIcon": {
+      "sprite": "608B3558"
+    },
+    "MobileMenu/MobileAdd": {
+      "sprite": "F29AC1B6"
+    },
+    "MobileMenu/MobileDelete": {
+      "sprite": "0BDE99F1"
+    },
+    "MobileMenu/MobileFavorite": {
+      "sprite": "AF846BAE"
+    },
+    "MobileMenu/MobilePlay": {
+      "sprite": "9C60FDAD"
+    },
+    "MobileMenu/MobileRename": {
+      "sprite": "11A35941"
+    },
+    "MobileMenu/MultiplayerButton": {
+      "sprite": "7B65AC6C"
+    },
+    "MobileMenu/MultiplayerPanel": {
+      "sprite": "47898558",
+      "palette": [
+        [
+          31,
+          41,
+          69,
+          255
+        ],
+        [
+          25,
+          36,
+          73,
+          185
+        ]
+      ]
+    },
+    "MobileMenu/MultiplayerRow": {
+      "sprite": "47898558",
+      "palette": [
+        [
+          80,
+          103,
+          163,
+          220
+        ],
+        [
+          45,
+          65,
+          126,
+          150
+        ]
+      ]
+    },
+    "MobileMenu/MultiplayerTab": {
+      "sprite": "47898558"
+    },
+    "MobileMenu/MultiplayerTitle": {
+      "sprite": "47898558"
+    },
+    "MobileMenu/Panel": {
+      "sprite": "3251BC48"
+    },
+    "MobileMenu/PauseAchievements": {
+      "sprite": "681A1BAD"
+    },
+    "MobileMenu/PauseBestiary": {
+      "sprite": "6BD92B14"
+    },
+    "MobileMenu/PauseButton": {
+      "sprite": "7B65AC6C"
+    },
+    "MobileMenu/PauseControls": {
+      "sprite": "06CC406F"
+    },
+    "MobileMenu/PauseInvite": {
+      "sprite": "F288EECF"
+    },
+    "MobileMenu/PauseJourney": {
+      "sprite": "8F318C46"
+    },
+    "MobileMenu/PauseResume": {
+      "sprite": "12579445"
+    },
+    "MobileMenu/PauseSaveExit": {
+      "sprite": "B98F6AE3"
+    },
+    "MobileMenu/PauseSettings": {
+      "sprite": "810A1A2F"
+    },
+    "MobileMenu/PlayerSliderKnob": {
+      "sprite": "5902E24E"
+    },
+    "MobileMenu/PreviewFrame": {
+      "sprite": "47898558",
+      "palette": [
+        [
+          78,
+          94,
+          133,
+          255
+        ],
+        [
+          22,
+          30,
+          52,
+          255
+        ]
+      ]
+    },
+    "MobileMenu/PreviewSelected": {
+      "sprite": "47898558",
+      "palette": [
+        [
+          150,
+          165,
+          224,
+          255
+        ],
+        [
+          78,
+          96,
+          170,
+          255
+        ]
+      ]
+    },
+    "MobileMenu/RemoteIcon": {
+      "sprite": "9E7B0290"
+    },
+    "MobileMenu/Row": {
+      "sprite": "47898558"
+    },
+    "MobileMenu/SelectionNormal": {
+      "sprite": "47898558",
+      "palette": [
+        [
+          66,
+          83,
+          124,
+          255
+        ],
+        [
+          43,
+          57,
+          99,
+          255
+        ]
+      ]
+    },
+    "MobileMenu/SelectionSelected": {
+      "sprite": "47898558",
+      "palette": [
+        [
+          90,
+          120,
+          190,
+          255
+        ],
+        [
+          72,
+          91,
+          155,
+          255
+        ]
+      ]
+    },
+    "MobileMenu/SwitchOn": {
+      "sprite": "FEA38818"
+    },
+    "MobileMenu/Tab0": {
+      "layers": [
+        {
+          "sprite": "47898558",
+          "frame": [
+            64,
+            52
+          ]
+        },
+        {
+          "sprite": "D414C20E"
+        }
+      ],
+      "size": [
+        64,
+        52
+      ]
+    },
+    "MobileMenu/Tab1": {
+      "layers": [
+        {
+          "sprite": "47898558",
+          "frame": [
+            64,
+            52
+          ]
+        },
+        {
+          "sprite": "5F3C13C1"
+        }
+      ],
+      "size": [
+        64,
+        52
+      ]
+    },
+    "MobileMenu/Tab2": {
+      "layers": [
+        {
+          "sprite": "47898558",
+          "frame": [
+            64,
+            52
+          ]
+        },
+        {
+          "sprite": "80987346"
+        }
+      ],
+      "size": [
+        64,
+        52
+      ]
+    },
+    "MobileMenu/Tab3": {
+      "layers": [
+        {
+          "sprite": "47898558",
+          "frame": [
+            64,
+            52
+          ]
+        },
+        {
+          "sprite": "7833D4AB"
+        }
+      ],
+      "size": [
+        64,
+        52
+      ]
+    },
+    "MobileMenu/Tab4": {
+      "layers": [
+        {
+          "sprite": "47898558",
+          "frame": [
+            64,
+            52
+          ]
+        },
+        {
+          "sprite": "3B3D7D3E"
+        }
+      ],
+      "size": [
+        64,
+        52
+      ]
+    },
+    "MobileMenu/Tab5": {
+      "layers": [
+        {
+          "sprite": "47898558",
+          "frame": [
+            64,
+            52
+          ]
+        },
+        {
+          "sprite": "06CC406F"
+        }
+      ],
+      "size": [
+        64,
+        52
+      ]
+    },
+    "MobileMenu/Tab6": {
+      "layers": [
+        {
+          "sprite": "47898558",
+          "frame": [
+            64,
+            52
+          ]
+        },
+        {
+          "sprite": "D7F8B092"
+        }
+      ],
+      "size": [
+        64,
+        52
+      ]
+    },
+    "MobileMenu/Title": {
+      "sprite": "47898558"
+    },
+    "MobileMenu/ToggleOff": {
+      "sprite": "28FA6B05"
+    },
+    "MobileMenu/ToggleOn": {
+      "sprite": "FEA38818"
+    },
+    "MobileMenu/WorldDice": {
+      "sprite": "3085DB46"
+    },
+    "MobileMenu/WorldDifficultyClassic": {
+      "sprite": "88B69DDB"
+    },
+    "MobileMenu/WorldDifficultyExpert": {
+      "sprite": "1CEFACF8"
+    },
+    "MobileMenu/WorldDifficultyJourney": {
+      "sprite": "F14B5559"
+    },
+    "MobileMenu/WorldDifficultyMaster": {
+      "sprite": "D1EE4F3C"
+    },
+    "MobileMenu/WorldDropdown": {
+      "sprite": "9E34FAA7"
+    },
+    "MobileMenu/WorldGeneral": {
+      "sprite": "D414C20E"
+    },
+    "MobileMenu/WorldName": {
+      "sprite": "3B583AE0"
+    },
+    "MobileMenu/WorldPreviewBorder": {
+      "sprite": "D6794D07"
+    },
+    "MobileMenu/WorldPreviewClassicBunny": {
+      "sprite": "9031EC3C"
+    },
+    "MobileMenu/WorldPreviewEvilCorruption": {
+      "sprite": "2C244CD0"
+    },
+    "MobileMenu/WorldPreviewEvilCrimson": {
+      "sprite": "D20D0DAD"
+    },
+    "MobileMenu/WorldPreviewEvilRandom": {
+      "sprite": "93E1B5B3"
+    },
+    "MobileMenu/WorldPreviewExpertBunny": {
+      "sprite": "32C2C47F"
+    },
+    "MobileMenu/WorldPreviewExpertSky": {
+      "sprite": "7562BEAF"
+    },
+    "MobileMenu/WorldPreviewJourneyBunny": {
+      "sprite": "20761E64"
+    },
+    "MobileMenu/WorldPreviewLarge": {
+      "sprite": "473E6793"
+    },
+    "MobileMenu/WorldPreviewMasterSky": {
+      "sprite": "E9A6B9E5"
+    },
+    "MobileMenu/WorldPreviewMedium": {
+      "sprite": "0C09AA02"
+    },
+    "MobileMenu/WorldPreviewSky": {
+      "sprite": "D79196EC"
+    },
+    "MobileMenu/WorldPreviewSmall": {
+      "sprite": "193E260C"
+    },
+    "MobileMenu/WorldSeed": {
+      "sprite": "D361F275"
+    },
+    "MobileMenu/WorldSizeLarge": {
+      "sprite": "28903287"
+    },
+    "MobileMenu/WorldSizeMedium": {
+      "sprite": "DAC889A4"
+    },
+    "MobileMenu/WorldSizeSmall": {
+      "sprite": "3DA7BE89"
+    }
+  }
+}
