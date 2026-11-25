@@ -123,19 +123,27 @@ object DotNetLauncher {
     ): IRuntimeManagerServiceV2.InstalledRuntime? {
         val normalizedOverride = versionOverride?.trim()?.takeIf { it.isNotEmpty() }
         if (normalizedOverride != null) {
-            val overriddenRuntime = runtimeManager
+            val candidates = runtimeManager
                 .getInstalledRuntimes(IRuntimeManagerServiceV2.RuntimeType.DOTNET)
-                .firstOrNull { it.version == normalizedOverride }
+                .filter { isRuntimePatchCompatible(it.version, normalizedOverride) }
+            val overriddenRuntime = candidates.maxByOrNull { it.version }
             if (overriddenRuntime != null) {
-                AppLog.i(TAG, "Using per-game .NET runtime override: $normalizedOverride")
+                AppLog.i(TAG, "Using required .NET runtime " + normalizedOverride + " with installed " + overriddenRuntime.version)
                 return overriddenRuntime
             }
-            AppLog.w(
-                TAG,
-                "Requested .NET runtime override is not installed: $normalizedOverride, falling back to selected runtime"
-            )
+            AppLog.e(TAG, "Required .NET runtime " + normalizedOverride + " is missing; refusing to use an unrelated selected runtime")
+            return null
         }
         return runtimeManager.getSelectedRuntime(IRuntimeManagerServiceV2.RuntimeType.DOTNET)
+    }
+
+    internal fun isRuntimePatchCompatible(installed: String, required: String): Boolean {
+        val installedParts = installed.split('.').map { it.toIntOrNull() ?: return false }
+        val requiredParts = required.split('.').map { it.toIntOrNull() ?: return false }
+        if (installedParts.size != 3 || requiredParts.size != 3) return installed == required
+        return installedParts[0] == requiredParts[0] &&
+            installedParts[1] == requiredParts[1] &&
+            installedParts[2] >= requiredParts[2]
     }
 
     private external fun getNativeDotNetLauncherHostfxrLastErrorMsg(): String
