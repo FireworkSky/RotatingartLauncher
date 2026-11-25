@@ -115,7 +115,7 @@ fun TerrariaAndroidStatusCard(
                     }
                     if (!profileAvailable) {
                         Text(
-                            "Perfil de conversão ausente neste APK. Ele precisa ser preparado com os recursos de Terraria para PC e a versão correspondente do tModLoader.",
+                            "Perfil mobile-only ainda não disponível. O Bunny precisa gerar e validar esse perfil diretamente dos arquivos do Terraria Mobile; não é necessário instalar Terraria de PC no seu aparelho.",
                             style = MaterialTheme.typography.bodySmall
                         )
                     } else {
