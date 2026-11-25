@@ -64,6 +64,19 @@ class TmodArchiveTest {
     }
 
     @Test
+    fun rejectsModBuiltForDifferentLoaderVersion() {
+        val metadata = TmodArchive.Metadata(
+            name = "SimpleTest",
+            version = "1.0.0",
+            loaderVersion = "2026.09.3.1",
+            entries = 1
+        )
+        assertThrows(IllegalArgumentException::class.java) {
+            TmodArchive.requireCompatible(metadata, "2026.09.4.0")
+        }
+    }
+
+    @Test
     fun rejectsUnsafeInternalPaths() {
         val file = createTmod(entryName = "../outside")
         try {
