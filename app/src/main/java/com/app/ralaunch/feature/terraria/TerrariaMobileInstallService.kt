@@ -98,7 +98,7 @@ object TerrariaMobileInstallService {
             }
 
             // Record the exact runtime version so the mod importer can reject mismatched packages.
-            writeRuntimeMarker(gameStorageRoot, gameItem.gameExePathRelative, version)
+            TerrariaRuntimeMarker.write(gameStorageRoot, gameItem.gameExePathRelative, version)
 
             reportProgress("Registrando o jogo no Bunny…", 99)
             repository.upsert(gameItem, 0)
@@ -109,39 +109,6 @@ object TerrariaMobileInstallService {
             storageRoot?.deleteRecursively()
             resources.deleteRecursively()
             throw error
-        }
-    }
-
-    private fun writeRuntimeMarker(storageRoot: File, assemblyRelativePath: String, version: String) {
-        val assembly = File(storageRoot, assemblyRelativePath).canonicalFile
-        require(assembly.isFile && assembly.name == "tModLoader.dll") {
-            "A instalação não contém o assembly tModLoader esperado."
-        }
-        val runtimeDirectory = checkNotNull(assembly.parentFile)
-        val marker = File(runtimeDirectory, "bunny-runtime.json")
-        val temporary = File.createTempFile(".bunny-runtime-", ".json", runtimeDirectory)
-        try {
-            temporary.writeText(
-                JSONObject()
-                    .put("loaderVersion", version)
-                    .put("terrariaVersion", "1.4.4.9")
-                    .put("source", "terraria-mobile")
-                    .toString(2)
-            )
-            try {
-                java.nio.file.Files.move(
-                    temporary.toPath(), marker.toPath(),
-                    java.nio.file.StandardCopyOption.ATOMIC_MOVE,
-                    java.nio.file.StandardCopyOption.REPLACE_EXISTING
-                )
-            } catch (_: java.nio.file.AtomicMoveNotSupportedException) {
-                java.nio.file.Files.move(
-                    temporary.toPath(), marker.toPath(),
-                    java.nio.file.StandardCopyOption.REPLACE_EXISTING
-                )
-            }
-        } finally {
-            temporary.delete()
         }
     }
 
