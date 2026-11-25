@@ -221,6 +221,90 @@ class TerrariaInstallPlugin : BaseInstallPlugin() {
         }
     }
     
+    /**
+     * Installs converted Terraria PE resources beside an Android-compatible
+     * tModLoader release. The official Terraria APK is never modified.
+     *
+     * [convertedResources] is the private output directory produced by
+     * TerrariaPeConversion and must contain a Content/ directory.
+     */
+    fun installConvertedResources(
+        convertedResources: File,
+        modLoaderFile: File,
+        gameStorageRootFull: File,
+        callback: InstallCallback
+    ) {
+        isCancelled = false
+        installJob = CoroutineScope(Dispatchers.IO).launch {
+            val staging = File(gameStorageRootFull, ".bunny-mobile-stage")
+            try {
+                withContext(Dispatchers.Main) {
+                    callback.onProgress("Preparando instalação isolada do Terraria PE…", 0)
+                }
+                require(File(convertedResources, "Content").isDirectory) {
+                    "A conversão não contém a pasta Content."
+                }
+                require(modLoaderFile.isFile) { "Pacote tModLoader não encontrado." }
+                if (!gameStorageRootFull.exists()) {
+                    check(gameStorageRootFull.mkdirs()) { "Não foi possível criar a pasta do jogo." }
+                }
+                val finalGameDir = File(gameStorageRootFull, "game")
+                require(!finalGameDir.exists()) { "Já existe uma instalação Bunny neste diretório." }
+                staging.deleteRecursively()
+                val terrariaDir = File(staging, "Terraria")
+                val tModLoaderDir = File(staging, "tModLoader")
+                check(terrariaDir.mkdirs()) { "Não foi possível preparar a pasta Terraria." }
+                copyDirectory(File(convertedResources, "Content"), File(terrariaDir, "Content"))
+
+                if (isCancelled) {
+                    withContext(Dispatchers.Main) { callback.onCancelled() }
+                    return@launch
+                }
+                withContext(Dispatchers.Main) {
+                    callback.onProgress("Instalando tModLoader Android…", 35)
+                }
+                tModLoaderDir.mkdirs()
+                installTModLoader(modLoaderFile, tModLoaderDir, callback)
+
+                if (isCancelled) {
+                    withContext(Dispatchers.Main) { callback.onCancelled() }
+                    return@launch
+                }
+                withContext(Dispatchers.Main) {
+                    callback.onProgress("Aplicando compatibilidade MonoMod…", 90)
+                }
+                installMonoMod(tModLoaderDir)
+                val iconPath = extractIcon(tModLoaderDir, GameDefinition.TMODLOADER)
+
+                check(staging.renameTo(finalGameDir)) {
+                    "Não foi possível finalizar a instalação isolada."
+                }
+                val actualTModLoaderDir = File(finalGameDir, "tModLoader")
+                createGameInfo(
+                    gameStorageRootFull,
+                    actualTModLoaderDir,
+                    GameDefinition.TMODLOADER,
+                    iconPath
+                )
+                val item = createGameItem(
+                    GameDefinition.TMODLOADER,
+                    gameStorageRootFull,
+                    actualTModLoaderDir,
+                    iconPath
+                )
+                withContext(Dispatchers.Main) {
+                    callback.onProgress("Instalação Bunny preparada.", 100)
+                    callback.onComplete(item)
+                }
+            } catch (error: Exception) {
+                staging.deleteRecursively()
+                withContext(Dispatchers.Main) {
+                    callback.onError(error.message ?: "Falha ao instalar Terraria PE com tModLoader.")
+                }
+            }
+        }
+    }
+
     private suspend fun extractGameFile(gameFile: File, outputDir: File, callback: InstallCallback): File? {
         val fileName = gameFile.name.lowercase()
         
