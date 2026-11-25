@@ -113,3 +113,30 @@ A revisão do código em 24/11/2026 confirmou que a conversão atualmente commit
 5. Só depois compilar o perfil gerado, abrir o menu do tModLoader e carregar um mod de teste pequeno.
 
 **Critério de bloqueio:** até os passos acima existirem e serem testados, a tela não deve sugerir que a instalação mobile-only está pronta. O perfil antigo permanece experimental e não pode ser tratado como solução para quem possui apenas Terraria Mobile.
+
+## Atualização de 24/11/2026 — primeiro conserto real no caminho de mods
+
+A revisão do importador encontrou um erro que impedia a instalação de mods tModLoader reais: o código tratava arquivos `.tmod` como ZIP comum usando `ZipFile`. O formato TMOD tem cabeçalho próprio (`TMOD`), versão do loader, hash, tabela de arquivos e área de dados; portanto, a validação anterior rejeitaria pacotes reais.
+
+Correções enviadas para `bunny-evolution-dev`:
+
+- Criado `TmodArchive.kt` para ler e validar o cabeçalho e a tabela do formato TMOD, conferir o tamanho do payload, exigir a entrada `Info` e verificar o SHA-1 antes de instalar.
+- O importador agora salva o arquivo usando o nome interno do mod, em vez de confiar no nome escolhido pelo arquivo do usuário.
+- Depois da instalação, o importador atualiza `Mods/enabled.json`, que é a lista de mods habilitados lida pelo tModLoader.
+- Criados testes unitários para pacote TMOD válido, arquivo ZIP comum disfarçado de `.tmod` e payload alterado.
+
+Commits:
+- `b87f4aa` — parser do formato TMOD.
+- `12d251a` — importação validada e ativação do mod.
+- `a126ce8` — testes unitários do parser.
+
+**O que isso resolve:** o Bunny deixa de confundir .tmod com ZIP e passa a preparar corretamente um pacote para o tModLoader.
+
+**O que ainda não prova:** o runtime Android ainda precisa iniciar com os recursos convertidos, reconhecer a pasta Mods, carregar um mod pequeno, entrar em mundo e salvar. Nenhum mod foi executado nesta etapa; não considerar o loader pronto ainda.
+
+### Próxima prova de execução
+
+1. Fazer o CI compilar Kotlin, JNI/CMake e executar `TmodArchiveTest`.
+2. Preparar um perfil de conversão compatível com o APK Mobile 1.4.4.9 sem exigir que o usuário tenha Terraria PC instalado no aparelho.
+3. Confirmar o caminho de dados efetivamente usado pelo runtime no arranque Android.
+4. Instalar um mod de teste pequeno e confirmar no log que o tModLoader o carrega, depois entrar em mundo e salvar.
