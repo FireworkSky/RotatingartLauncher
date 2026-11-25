@@ -447,7 +447,47 @@ object GameLauncher {
                 else args + arrayOf("-tmlsavedirectory", dataDir)
             } else args
 
-            val result = if (decodedRuntime.isMono) {
+            // tModLoader mobile must enter through its dedicated managed bootstrap.
+            // Calling tModLoader.dll directly with the generic hostfxr path skips the
+            // Android platform-service bridge and assembly resolver used by the mobile port.
+            val result = if (tmlMobileProfile != null) {
+                if (decodedRuntime.isMono) {
+                    throw IllegalStateException("The Android tModLoader bootstrap requires CoreCLR; Mono is not supported.")
+                }
+
+                val tmlDirectory = File(assemblyPath).parentFile
+                    ?: throw IllegalStateException("Cannot resolve tModLoader directory.")
+                val hostAssembly = File(tmlDirectory, "MobileLauncher.Host.dll")
+                val requiredBootstrapFiles = listOf(
+                    File(tmlDirectory, "MobileLauncher.Host.runtimeconfig.json"),
+                    File(tmlDirectory, "MobileLauncher.Host.deps.json"),
+                    File(tmlDirectory, "MobileLauncher.Bootstrap.dll"),
+                    File(tmlDirectory, "MobileLauncher.Patches.dll"),
+                    File(tmlDirectory, "MobileLauncher.Controls.dll")
+                )
+                val missingFiles = (listOf(hostAssembly) + requiredBootstrapFiles)
+                    .filterNot { it.isFile }
+                val monoModDirectory = File(tmlDirectory, "MonoMod.Android")
+                if (missingFiles.isNotEmpty() || !monoModDirectory.isDirectory) {
+                    val missing = missingFiles.joinToString { it.name }.let {
+                        if (it.isBlank()) "MonoMod.Android/" else "$it, MonoMod.Android/"
+                    }
+                    throw IllegalStateException(
+                        "tModLoader Android managed bootstrap is incomplete. Missing: $missing"
+                    )
+                }
+
+                AppLog.i(
+                    TAG,
+                    "Starting tModLoader through MobileLauncher.Host; game=" + assemblyPath +
+                        ", host=" + hostAssembly.absolutePath
+                )
+                DotNetLauncher.hostfxrLaunch(
+                    assemblyPath = hostAssembly.absolutePath,
+                    args = launchArgs,
+                    dotNetRuntimeVersionOverride = decodedRuntime.version.ifBlank { null }
+                )
+            } else if (decodedRuntime.isMono) {
                 AppLog.i(
                     TAG,
                     "通过 Mono 启动程序集 / Launching assembly with Mono, version=${decodedRuntime.version}"
