@@ -32,12 +32,12 @@ object TerrariaMobileInstallService {
 
     suspend fun install(
         context: Context,
-        progress: (message: String, percent: Int) -> Unit
+        reportProgress: (message: String, percent: Int) -> Unit
     ): GameItem = withContext(Dispatchers.IO) {
         val version = checkNotNull(TerrariaPeConversion.targetTml(context)) {
             "Este APK do Bunny não contém um perfil de conversão."
         }
-        progress("Verificando Terraria Android…", 2)
+        reportProgress("Verificando Terraria Android…", 2)
         val resources = File(
             context.filesDir,
             "bunny/terraria-android/converted-$version"
@@ -47,21 +47,22 @@ object TerrariaMobileInstallService {
 
         var storageRoot: File? = null
         try {
-            progress("Convertendo recursos do Terraria PE…", 5)
+            reportProgress("Convertendo recursos do Terraria PE…", 5)
             TerrariaPeConversion.convert(context, resources) { stage, current, total ->
                 val percent = if (total > 0) 5 + current * 55 / total else 5
-                progress(conversionLabel(stage), percent)
+                reportProgress(conversionLabel(stage), percent)
                 true
             }
 
-            progress("Baixando tModLoader $version…", 62)
+            reportProgress("Baixando tModLoader $version…", 62)
             val archive = downloadTModLoader(context, version) { percent ->
-                progress("Baixando tModLoader $version…", 62 + percent * 20 / 100)
+                reportProgress("Baixando tModLoader $version…", 62 + percent * 20 / 100)
             }
 
             val repository = KoinJavaComponent.get(IGameRepositoryServiceV3::class.java)
             val (rootPath, _) = repository.createGameStorageRoot("tModLoader")
-            storageRoot = File(rootPath)
+            val gameStorageRoot = File(rootPath)
+            storageRoot = gameStorageRoot
             val plugin = InstallPluginRegistry.getPluginById("terraria") as? TerrariaInstallPlugin
                 ?: error("O instalador Terraria do Bunny não está registrado.")
 
@@ -70,12 +71,10 @@ object TerrariaMobileInstallService {
                 plugin.installConvertedResources(
                     resources,
                     archive,
-                    storageRoot,
+                    gameStorageRoot,
                     object : InstallCallback {
                         override fun onProgress(message: String, progress: Int) {
-                            this@TerrariaMobileInstallService.run {
-                                progress(message, progress.coerceIn(84, 98))
-                            }
+                            reportProgress(message, progress.coerceIn(84, 98))
                         }
 
                         override fun onComplete(gameItem: GameItem) {
@@ -98,10 +97,10 @@ object TerrariaMobileInstallService {
                 continuation.invokeOnCancellation { plugin.cancel() }
             }
 
-            progress("Registrando o jogo no Bunny…", 99)
+            reportProgress("Registrando o jogo no Bunny…", 99)
             repository.upsert(gameItem, 0)
             resources.deleteRecursively()
-            progress("Terraria com tModLoader foi adicionado à biblioteca.", 100)
+            reportProgress("Terraria com tModLoader foi adicionado à biblioteca.", 100)
             gameItem
         } catch (error: Exception) {
             storageRoot?.deleteRecursively()
