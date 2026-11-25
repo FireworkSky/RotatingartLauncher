@@ -468,14 +468,29 @@ object GameLauncher {
                 val missingFiles = (listOf(hostAssembly) + requiredBootstrapFiles)
                     .filterNot { it.isFile }
                 val monoModDirectory = File(tmlDirectory, "MonoMod.Android")
-                if (missingFiles.isNotEmpty() || !monoModDirectory.isDirectory) {
-                    val missing = missingFiles.joinToString { it.name }.let {
-                        if (it.isBlank()) "MonoMod.Android/" else "$it, MonoMod.Android/"
+                val monoModAssemblies = monoModDirectory
+                    .takeIf { it.isDirectory }
+                    ?.listFiles { file -> file.isFile && file.extension.equals("dll", ignoreCase = true) }
+                    .orEmpty()
+                val missingComponents = buildList {
+                    addAll(missingFiles.map { it.name })
+                    if (!monoModDirectory.isDirectory) {
+                        add("MonoMod.Android/")
+                    } else if (monoModAssemblies.isEmpty()) {
+                        add("MonoMod.Android/*.dll")
                     }
+                }
+                if (missingComponents.isNotEmpty()) {
                     throw IllegalStateException(
-                        "tModLoader Android managed bootstrap is incomplete. Missing: $missing"
+                        "tModLoader Android managed bootstrap is incomplete. Missing: " +
+                            missingComponents.joinToString()
                     )
                 }
+                AppLog.i(
+                    TAG,
+                    "Android bootstrap preflight passed: host=" + hostAssembly.name +
+                        ", MonoMod assemblies=" + monoModAssemblies.size
+                )
 
                 AppLog.i(
                     TAG,
