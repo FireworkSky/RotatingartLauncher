@@ -34,7 +34,7 @@ val prepareBunnyTerrariaProfile by tasks.registering(Sync::class) {
         val archive = file(profilePath)
         require(archive.isFile) { "Bunny Terraria profile ZIP not found: $archive" }
         ZipFile(archive).use { zip ->
-            val required = listOf("profile.json", "assets.json", "images.tsv", "texture-fallback.zip")
+            val required = listOf("profile.json", "assets.json", "images.tsv", "texture-fallback.zip", "PixelShader.xnb", "ScreenShader.xnb", "TileShader.xnb", "TerrariaMusic.xgs", "Sound Bank.xsb")
             required.forEach { name ->
                 require(zip.getEntry(name)?.isDirectory == false) {
                     "Bunny Terraria profile is missing $name"
