@@ -84,17 +84,35 @@ internal object TmodArchive {
             require(count in 1..100_000) { "Tabela de arquivos TMOD inválida." }
 
             var packedTotal = 0L
+            var unpackedTotal = 0L
             var hasInfo = false
+            val entryNames = HashSet<String>(count)
             repeat(count) {
                 val entryName = text()
                 val unpacked = int32()
                 val packed = int32()
-                require(entryName.isNotBlank() && unpacked >= 0 && packed >= 0) {
-                    "Entrada inválida na tabela TMOD."
+                val pathParts = entryName.split('/')
+                require(
+                    entryName.isNotBlank() &&
+                        !entryName.startsWith('/') &&
+                        '\\' !in entryName &&
+                        '\u0000' !in entryName &&
+                        pathParts.none { it.isBlank() || it == "." || it == ".." } &&
+                        entryNames.add(entryName) &&
+                        unpacked >= 0 && packed >= 0
+                ) {
+                    "Nome ou tamanho de entrada inválido na tabela TMOD."
                 }
-                if (entryName == "Info") hasInfo = true
+                if (entryName == "Info") {
+                    require(unpacked > 0) { "Os metadados Info do mod estão vazios." }
+                    hasInfo = true
+                }
                 packedTotal = Math.addExact(packedTotal, packed.toLong())
+                unpackedTotal = Math.addExact(unpackedTotal, unpacked.toLong())
                 require(packedTotal <= payloadLength.toLong()) { "Tabela TMOD excede o tamanho do pacote." }
+                require(unpackedTotal <= 1024L * 1024 * 1024) {
+                    "O conteúdo descompactado do mod excede 1 GiB."
+                }
             }
             require(hasInfo) { "O pacote TMOD não contém metadados Info." }
             require(input.filePointer + packedTotal == input.length()) {
