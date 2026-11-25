@@ -126,7 +126,7 @@ jobs:
       # ==================== Debug 版本构建 ====================
       - name: Build Developer APK (Debug)
         id: build_debug
-        if: github.event.inputs.build_debug == 'true'
+        if: github.event_name == 'push' || github.event.inputs.build_debug == 'true'
         run: |
           echo "::group::构建 Debug 版本"
           ./gradlew clean assembleDebug --no-daemon --stacktrace 2>&1 | tee debug-build.log
@@ -143,7 +143,7 @@ jobs:
 
       - name: Prepare Debug APK
         id: prepare_debug
-        if: github.event.inputs.build_debug == 'true' && steps.build_debug.outcome == 'success'
+        if: github.event_name == 'push' || github.event.inputs.build_debug == 'true' && steps.build_debug.outcome == 'success'
         run: |
           DEBUG_DIR="app/build/outputs/apk/debug"
           
@@ -169,7 +169,7 @@ jobs:
           echo "✅ Debug APK 准备完成: $(ls -lh "$DEBUG_DIR/app-debug.apk")"
 
       - name: Upload Debug APK
-        if: github.event.inputs.build_debug == 'true' && steps.prepare_debug.outcome == 'success'
+        if: github.event_name == 'push' || github.event.inputs.build_debug == 'true' && steps.prepare_debug.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
           name: 1-RAL-Developer-Debug
@@ -181,7 +181,7 @@ jobs:
       # ==================== Safe Release 版本构建 ====================
       - name: Generate Signing Key
         id: gen_key
-        if: github.event.inputs.build_safe == 'true'
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.build_safe == 'true'
         run: |
           keytool -genkey -v \
             -keystore debug.keystore \
@@ -202,7 +202,7 @@ jobs:
 
       - name: Build Safe Release APK
         id: build_safe
-        if: github.event.inputs.build_safe == 'true' && steps.gen_key.outcome == 'success'
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.build_safe == 'true' && steps.gen_key.outcome == 'success'
         run: |
           echo "::group::构建 Safe Release 版本"
           ./gradlew assembleRelease --no-daemon --stacktrace 2>&1 | tee release-build.log
@@ -218,7 +218,7 @@ jobs:
 
       - name: Sign Safe APK
         id: sign_safe
-        if: github.event.inputs.build_safe == 'true' && steps.build_safe.outcome == 'success'
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.build_safe == 'true' && steps.build_safe.outcome == 'success'
         run: |
           RELEASE_DIR="app/build/outputs/apk/release"
           UNSIGNED=$(find "$RELEASE_DIR" -name "*-unsigned.apk" | head -1)
@@ -254,7 +254,7 @@ jobs:
           echo "✅ Safe APK 签名完成"
 
       - name: Upload Safe APK
-        if: github.event.inputs.build_safe == 'true' && steps.sign_safe.outcome == 'success'
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.build_safe == 'true' && steps.sign_safe.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
           name: 2-RAL-User-Safe-RECOMMENDED
