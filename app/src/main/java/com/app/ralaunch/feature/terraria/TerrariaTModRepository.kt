@@ -2,10 +2,10 @@ package com.app.ralaunch.feature.terraria
 
 import android.content.Context
 import android.net.Uri
-import android.os.Environment
 import android.provider.OpenableColumns
 import com.app.ralaunch.core.di.contract.IGameRepositoryServiceV3
 import java.io.File
+import java.nio.file.AtomicMoveNotSupportedException
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
 import kotlinx.coroutines.Dispatchers
@@ -34,15 +34,17 @@ object TerrariaTModRepository {
 
             val storageRoot = File(repository.getGameGlobalStorageDirFull(), game.id)
             require(storageRoot.isDirectory) { "Pasta da instalação tModLoader não encontrada." }
-            val externalHome = File(Environment.getExternalStorageDirectory(), "RALauncher")
-            val externalMods = File(externalHome, "Terraria/tModLoader/Mods")
-            val fallbackMods = File(storageRoot, "game/tModLoader/Terraria/tModLoader/Mods")
+            // GameLauncher sets HOME and XDG_DATA_HOME to /storage/emulated/0/RALauncher.
+            // tModLoader 1.4.4 uses $XDG_DATA_HOME/Terraria/tModLoader/Mods.
+            val externalHome = File(
+                android.os.Environment.getExternalStorageDirectory(),
+                "RALauncher"
+            )
+            val homeMods = File(externalHome, ".local/share/Terraria/tModLoader/Mods")
+            val fallbackMods = File(storageRoot, ".local/share/Terraria/tModLoader/Mods")
             val modsDirectory = if (
-                (externalHome.isDirectory || externalHome.mkdirs()) &&
-                externalHome.canWrite() &&
-                (externalMods.isDirectory || externalMods.mkdirs()) &&
-                externalMods.canWrite()
-            ) externalMods else fallbackMods
+                (externalHome.isDirectory || externalHome.mkdirs()) && externalHome.canWrite()
+            ) homeMods else fallbackMods
 
             check(modsDirectory.isDirectory || modsDirectory.mkdirs()) {
                 "Não foi possível criar a pasta Mods."
@@ -77,12 +79,7 @@ object TerrariaTModRepository {
                 // header, table, Info entry, payload length and integrity hash.
                 val metadata = TmodArchive.inspect(temporary, verifyHash = true)
                 val destination = File(modsDirectory, "${metadata.name}.tmod")
-                Files.move(
-                    temporary.toPath(),
-                    destination.toPath(),
-                    StandardCopyOption.ATOMIC_MOVE,
-                    StandardCopyOption.REPLACE_EXISTING
-                )
+                moveReplacing(temporary, destination)
 
                 // tModLoader reads this list to decide which installed mods are enabled.
                 val enabledFile = File(modsDirectory, "enabled.json")
@@ -96,12 +93,7 @@ object TerrariaTModRepository {
                 val stagedEnabled = File.createTempFile(".bunny-enabled-", ".json", modsDirectory)
                 try {
                     stagedEnabled.writeText(JSONArray(ids.sorted()).toString(2))
-                    Files.move(
-                        stagedEnabled.toPath(),
-                        enabledFile.toPath(),
-                        StandardCopyOption.ATOMIC_MOVE,
-                        StandardCopyOption.REPLACE_EXISTING
-                    )
+                    moveReplacing(stagedEnabled, enabledFile)
                 } finally {
                     stagedEnabled.delete()
                 }
@@ -111,6 +103,15 @@ object TerrariaTModRepository {
                 temporary.delete()
             }
         }
+
+    private fun moveReplacing(source: File, destination: File) {
+        try {
+            Files.move(source.toPath(), destination.toPath(),
+                StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)
+        } catch (_: AtomicMoveNotSupportedException) {
+            Files.move(source.toPath(), destination.toPath(), StandardCopyOption.REPLACE_EXISTING)
+        }
+    }
 
     private fun queryDisplayName(context: Context, uri: Uri): String {
         context.contentResolver.query(
