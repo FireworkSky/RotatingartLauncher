@@ -228,3 +228,13 @@ Foi adicionada a auditoria [BUNNY-ANDROID-HOST-INTEGRATION-AUDIT.md](BUNNY-ANDRO
 A referência declara runtime Android .NET `10.0.4` no arquivo `android/runtime/runtime-version.txt`. Isso é um dado de referência para a release usada por aquele projeto, não prova de que o Bunny já tenha esse runtime instalado ou selecionado. A integração precisa validar o `runtimeconfig.json` do pacote exato e falhar claramente se o runtime correspondente não estiver disponível.
 
 A auditoria também registra que o perfil PE ainda exige metadados auxiliares preparados antes do APK. O requisito do projeto permanece: o usuário final não deve precisar instalar Terraria para PC. Nenhuma dessas lacunas foi marcada como resolvida.
+
+
+
+## Correção de seleção do runtime .NET — 2026-11-25
+
+A instalação mobile agora lê `tModLoader.runtimeconfig.json` do ZIP oficial antes de registrar o jogo. O requisito `Microsoft.NETCore.App` é salvo como `runtimeOverride` da instalação Bunny. Isso evita depender silenciosamente do runtime global escolhido pelo usuário.
+
+O resolvedor CoreCLR agora procura um runtime instalado da mesma linha major/minor com patch igual ou superior ao exigido. Se não encontrar, recusa iniciar o jogo em vez de cair para um runtime global possivelmente incompatível. Foi adicionado teste unitário para patch compatível, patch antigo e versões major/minor diferentes.
+
+**Limite:** o teste unitário ainda não foi executado pelo Gradle/CI; o GitHub Actions continua sem execuções. A correção também não substitui o bootstrap Android específico do tModLoader nem prova que o runtime correto já está instalado no dispositivo.
