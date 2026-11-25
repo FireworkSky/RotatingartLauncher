@@ -212,7 +212,7 @@ Commits adicionais:
 
 O marcador de runtime foi extraído para TerrariaRuntimeMarker, sem dependências Android: ele grava a versão junto do assembly, valida o formato e impede que um caminho canônico saia da pasta da instalação. Foram adicionados testes unitários para gravação/leitura, versão inválida e caminho externo.
 
-Nesta sessão, os dois componentes Kotlin puros (parser TMOD e marcador) foram compilados isoladamente com kotlinc e passaram por smoke checks com arquivos sintéticos. Isso confirma sintaxe e comportamento básico dessas classes, mas **não substitui** Gradle, compilação JNI/NDK, APK completo ou teste de jogo real.
+Nesta sessão, versões isoladas equivalentes do parser TMOD e do marcador foram compiladas com kotlinc e passaram por smoke checks com arquivos sintéticos. Isso confirma a lógica básica reproduzida nesses checks, mas **não equivale** a compilar as fontes do projeto nem substitui Gradle, JNI/NDK, APK completo ou teste de jogo real.
 
 Commits:
 - ad4da36 — usa o marcador após instalar o runtime.
