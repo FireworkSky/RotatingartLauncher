@@ -15,18 +15,18 @@ set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
 
 project("main" LANGUAGES C CXX)
 
-option(BUNNY_MOBILE_TERRARIA_CONVERTER "Build the optional Terraria PE resource converter" OFF)
-if(BUNNY_MOBILE_TERRARIA_CONVERTER)
-    add_subdirectory(mobile-terraria)
-    install(TARGETS terraria_converter DESTINATION lib)
-endif()
-
 # =========================
 # 基础配置
 # =========================
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
+option(BUNNY_MOBILE_TERRARIA_CONVERTER "Build the optional Terraria PE resource converter" OFF)
+if(BUNNY_MOBILE_TERRARIA_CONVERTER)
+    add_subdirectory(mobile-terraria)
+    install(TARGETS terraria_converter DESTINATION lib)
+endif()
 
 # =========================
 # libs 根目录
