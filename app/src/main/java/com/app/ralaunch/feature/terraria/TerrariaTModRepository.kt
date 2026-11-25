@@ -27,6 +27,9 @@ object TerrariaTModRepository {
                 "O jogo selecionado não é uma instalação tModLoader."
             }
 
+            val storageRoot = File(repository.getGameGlobalStorageDirFull(), game.id)
+            require(storageRoot.isDirectory) { "Pasta da instalação tModLoader não encontrada." }
+
             val assembly = File(storageRoot, game.gameExePathRelative).canonicalFile
             require(assembly.isFile && assembly.name == "tModLoader.dll") {
                 "A instalação tModLoader do Bunny está incompleta."
@@ -46,9 +49,6 @@ object TerrariaTModRepository {
             require(displayName.endsWith(".tmod", ignoreCase = true)) {
                 "Selecione um arquivo .tmod."
             }
-
-            val storageRoot = File(repository.getGameGlobalStorageDirFull(), game.id)
-            require(storageRoot.isDirectory) { "Pasta da instalação tModLoader não encontrada." }
             // GameLauncher sets HOME and XDG_DATA_HOME to /storage/emulated/0/RALauncher.
             // tModLoader uses $XDG_DATA_HOME/Terraria/tModLoader/Mods.
             val externalHome = File(
